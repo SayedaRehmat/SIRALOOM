@@ -169,6 +169,80 @@ def qualify_source(
     return result
 
 
+def qualify_negative_source(
+    source: dict[str, Any], *, download_dir: Path, bcftools: str
+) -> dict[str, Any]:
+    """Prove a pinned malformed public VCF is rejected by both parsers."""
+    path = download_dir / f"{source['id']}.vcf"
+    result: dict[str, Any] = {
+        "source_id": source["id"],
+        "declared_version_expected": source["version"],
+        "source_class": source["source_class"],
+        "producer": source["producer"],
+        "source_url": source["url"],
+        "source_commit": source["commit"],
+        "source_path": source["path"],
+        "expected_git_blob_sha1": source["git_blob_sha1"],
+        "expected_size_bytes": source["size_bytes"],
+        "expected_outcome": source.get("expected_outcome", "REJECT"),
+        "status": "FAIL",
+    }
+    try:
+        payload = acquire(source, path)
+        result["source_integrity"] = {
+            "status": "VERIFIED",
+            "bytes": len(payload),
+            "git_blob_sha1": git_blob_sha1(payload),
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+    except Exception as exc:
+        result["failure_stage"] = "ACQUISITION_OR_SOURCE_INTEGRITY"
+        result["failure_type"] = type(exc).__name__
+        result["failure_message"] = str(exc)
+        return result
+
+    try:
+        profile = validate_vcf_strict(path)
+        result["strict_validation"] = {
+            "status": "UNEXPECTED_ACCEPT",
+            "declared_version": profile.get("fileformat"),
+        }
+    except StrictVCFValidationError as exc:
+        expected_code = source["expected_strict_error_code"]
+        result["strict_validation"] = {
+            "status": "EXPECTED_REJECTION" if exc.code == expected_code else "WRONG_REJECTION",
+            "error_code": exc.code,
+            "expected_error_code": expected_code,
+            "error_message": str(exc),
+        }
+    except Exception as exc:
+        result["strict_validation"] = {
+            "status": "UNEXPECTED_ERROR",
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+        }
+
+    parser_result = run_bcftools(bcftools, path)
+    expected_stderr = source.get("expected_bcftools_stderr_contains")
+    stderr_matches = (
+        expected_stderr is None
+        or expected_stderr.casefold() in parser_result.get("stderr_tail", "").casefold()
+    )
+    parser_rejected = parser_result.get("status") == "FAIL" and stderr_matches
+    result["bcftools_parser"] = {
+        **parser_result,
+        "status": "EXPECTED_REJECTION" if parser_rejected else "UNEXPECTED_RESULT",
+        "expected_stderr_fragment": expected_stderr,
+    }
+    result["status"] = (
+        "PASS"
+        if result.get("strict_validation", {}).get("status") == "EXPECTED_REJECTION"
+        and parser_rejected
+        else "FAIL"
+    )
+    return result
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", required=True, type=Path)
@@ -195,8 +269,12 @@ def main() -> int:
         )
         for source in manifest["sources"]
     ]
+    negative_reports = [
+        qualify_negative_source(source, download_dir=download_dir, bcftools=args.bcftools)
+        for source in manifest.get("negative_sources", [])
+    ]
     expected = {"VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"}
-    source_ids = [item["source_id"] for item in reports]
+    source_ids = [item["source_id"] for item in reports + negative_reports]
     failed = [item for item in reports if item["status"] != "PASS"]
     source_counts_by_version = {
         version: sum(item["declared_version_expected"] == version for item in reports)
@@ -229,6 +307,7 @@ def main() -> int:
         len(producers_by_version.get(version, [])) >= int(minimum_producers.get(version, 1))
         for version in expected
     )
+    failed_negative = [item for item in negative_reports if item["status"] != "PASS"]
     report = {
         "suite_id": manifest["suite_id"],
         "schema_version": manifest["schema_version"],
@@ -251,14 +330,19 @@ def main() -> int:
         "producer_diversity_complete": producer_diversity_complete,
         "passed_source_count": len(reports) - len(failed),
         "failed_source_count": len(failed),
+        "negative_source_count": len(negative_reports),
+        "passed_negative_source_count": len(negative_reports) - len(failed_negative),
+        "failed_negative_source_count": len(failed_negative),
         "execution_status": (
             "PASSED"
-            if not failed and sources_cover_all_versions and source_ids_unique
-            and minimum_source_coverage_complete and producer_diversity_complete
+            if not failed and not failed_negative and sources_cover_all_versions
+            and source_ids_unique and minimum_source_coverage_complete
+            and producer_diversity_complete
             else "FAILED"
         ),
         "clinical_validation_claim": False,
         "source_results": reports,
+        "negative_source_results": negative_reports,
     }
     report_path = output_dir / "public-vcf-version-corpus-report.json"
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -266,6 +350,9 @@ def main() -> int:
         "execution_status": report["execution_status"],
         "passed_source_count": report["passed_source_count"],
         "failed_source_count": report["failed_source_count"],
+        "negative_source_count": report["negative_source_count"],
+        "passed_negative_source_count": report["passed_negative_source_count"],
+        "failed_negative_source_count": report["failed_negative_source_count"],
         "report": str(report_path),
     }, indent=2))
     return 0 if report["execution_status"] == "PASSED" else 1
