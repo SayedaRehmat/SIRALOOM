@@ -991,7 +991,7 @@ def test_reference_validation_rejects_vcf_contig_length_disagreement(tmp_path):
 
 
 @pytest.mark.parametrize("version", ["VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
-def test_strict_validation_accepts_supported_vcf_4x_versions(tmp_path: Path, version: str):
+def test_strict_validation_accepts_recognized_vcf_4x_versions(tmp_path: Path, version: str):
     path = tmp_path / f"{version}.vcf"
     write_vcf(path, "1\t2\t.\tA\tG\t.\tPASS\t.\n", version=version)
 
@@ -2457,7 +2457,7 @@ def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scop
         assert profile.specification_document == (
             f"https://samtools.github.io/hts-specs/{version}.pdf"
         )
-        assert "feature compatibility matrix" in profile.notes
+        assert "requirement traceability matrix" in profile.notes
 
 
 def test_unknown_future_vcf_specification_does_not_get_an_implicit_profile():

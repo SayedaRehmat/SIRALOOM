@@ -73,7 +73,7 @@ VCF_SPECIFICATION_PROFILES: dict[str, VCFSpecificationProfile] = {
 }
 
 def get_vcf_specification_profile(version: str) -> VCFSpecificationProfile:
-    """Return the exact supported profile; unknown versions fail closed."""
+    """Return the exact recognized profile; unknown versions fail closed."""
     try:
         return VCF_SPECIFICATION_PROFILES[str(version)]
     except KeyError as exc:
