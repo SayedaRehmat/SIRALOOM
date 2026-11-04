@@ -137,6 +137,7 @@ def qualify_source(
                 "copy_number_variants": routing.get("cnv_variant_records", 0),
                 "repeat_expansions": routing.get("repeat_expansion_records", 0),
                 "mitochondrial_variants": routing.get("mitochondrial_variant_records", 0),
+                "gvcf_reference_blocks": routing.get("gvcf_reference_blocks", 0),
             }
             expected_category = source.get("expected_route_category")
             expected_category_count = route_category_counts.get(expected_category, 0)
@@ -189,9 +190,25 @@ def main() -> int:
         for source in manifest["sources"]
     ]
     expected = {"VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"}
-    observed = {item["declared_version_expected"] for item in reports}
     source_ids = [item["source_id"] for item in reports]
     failed = [item for item in reports if item["status"] != "PASS"]
+    source_counts_by_version = {
+        version: sum(item["declared_version_expected"] == version for item in reports)
+        for version in sorted(expected)
+    }
+    source_classes_by_version = {
+        version: sorted({
+            source["source_class"]
+            for source in manifest["sources"]
+            if source["version"] == version
+        })
+        for version in sorted(expected)
+    }
+    observed = {version for version, count in source_counts_by_version.items() if count > 0}
+    sources_cover_all_versions = observed == expected
+    source_ids_unique = len(source_ids) == len(set(source_ids))
+    at_least_one_source_per_version = all(count >= 1 for count in source_counts_by_version.values())
+    exactly_one_source_per_version = all(count == 1 for count in source_counts_by_version.values())
     report = {
         "suite_id": manifest["suite_id"],
         "schema_version": manifest["schema_version"],
@@ -199,13 +216,20 @@ def main() -> int:
         "repository_commit": os.environ.get("GITHUB_SHA"),
         "bcftools_version_output": version_output,
         "expected_versions": sorted(expected),
-        "sources_cover_all_versions": observed == expected,
+        "sources_cover_all_versions": sources_cover_all_versions,
         "source_count": len(reports),
         "unique_source_count": len(set(source_ids)),
-        "one_source_per_version": len(reports) == len(expected) and len(set(source_ids)) == len(expected) and observed == expected,
+        "source_counts_by_version": source_counts_by_version,
+        "source_classes_by_version": source_classes_by_version,
+        "at_least_one_source_per_version": at_least_one_source_per_version,
+        "exactly_one_source_per_version": exactly_one_source_per_version,
         "passed_source_count": len(reports) - len(failed),
         "failed_source_count": len(failed),
-        "execution_status": "PASSED" if not failed and observed == expected and len(reports) == len(expected) and len(set(source_ids)) == len(expected) else "FAILED",
+        "execution_status": (
+            "PASSED"
+            if not failed and sources_cover_all_versions and source_ids_unique
+            else "FAILED"
+        ),
         "clinical_validation_claim": False,
         "source_results": reports,
     }
