@@ -1218,7 +1218,7 @@ def _validate_simple_indel_padding(
             # Complex replacements retain bases on both sides and do not
             # require an additional padding base.
             continue
-        if pos == 1:
+        if pos <= 1:
             padded = ref[-1] == alt[-1]
             expected = "right"
         else:

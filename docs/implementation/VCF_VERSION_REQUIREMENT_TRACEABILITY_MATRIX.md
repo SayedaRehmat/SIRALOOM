@@ -273,3 +273,10 @@ would otherwise accept, while accepting decimal/exponent, INF/INFINITY and
 NAN forms specified by HTS. POS is now lexically constrained to unsigned
 decimal digits before integer conversion, preventing permissive acceptance of
 plus signs, decimal points or nonnumeric suffixes.
+
+
+The simple-indel padding rule treats POS=0 (the telomeric coordinate before
+the first reference base) like the contig-start case for right padding. This
+preserves the VCF allowance for telomeric positions 0 and N+1 while requiring
+the available following reference base as the padding base at the left
+telomere.
