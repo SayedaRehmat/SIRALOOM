@@ -2502,3 +2502,82 @@ def test_strict_validation_rejects_embedded_carriage_return(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_LINE_ENDING_INVALID"
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_structured_custom_metadata_requires_an_id_and_accepts_id_only(
+    tmp_path: Path, version: str
+):
+    valid = tmp_path / f"{version}-custom-valid.vcf"
+    valid.write_text(
+        f'##fileformat={version}\\n'
+        '##CUSTOM=<ID=ProducerMetadata>\\n'
+        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
+        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(valid)["records"] == 1
+
+    invalid = tmp_path / f"{version}-custom-no-id.vcf"
+    invalid.write_text(
+        f'##fileformat={version}\\n'
+        '##CUSTOM=<Description="missing identifier">\\n'
+        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
+        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(invalid)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("kind", ["FILTER", "ALT"])
+def test_filter_and_alt_structured_headers_require_quoted_description(
+    tmp_path: Path, kind: str
+):
+    path = tmp_path / f"missing-{kind.lower()}-description.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\\n'
+        f'##{kind}=<ID=custom>\\n'
+        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
+        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("metadata", ["##source", "##source=", "##=producer"])
+def test_unstructured_meta_information_must_have_nonempty_key_and_value(
+    tmp_path: Path, metadata: str
+):
+    path = tmp_path / "malformed-meta.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\\n'
+        f'{metadata}\\n'
+        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
+        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+@pytest.mark.parametrize("attribute", ["Source=ClinVar", "Version=20260101"])
+def test_info_optional_source_and_version_attributes_must_be_quoted(
+    tmp_path: Path, attribute: str
+):
+    path = tmp_path / "unquoted-info-optional-attribute.vcf"
+    path.write_text(
+        '##fileformat=VCFv4.5\\n'
+        f'##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency",{attribute}>\\n'
+        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
+        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tAF=0.5\\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

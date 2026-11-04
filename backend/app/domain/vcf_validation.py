@@ -720,6 +720,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     attributes.append("".join(current))
 
     parsed: dict[str, str] = {}
+    quoted_attributes: set[str] = set()
     for attribute in attributes:
         key, separator, value = attribute.partition("=")
         key, value = key.strip(), value.strip()
@@ -739,6 +740,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                     f"Malformed quoted {kind} header attribute at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
                 )
+            quoted_attributes.add(key)
             value = value[1:-1]
         elif '"' in value:
             raise StrictVCFValidationError(
@@ -753,6 +755,12 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"{kind} header definition lacks required attributes at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    for optional_key in ("Source", "Version"):
+        if optional_key in parsed and optional_key not in quoted_attributes:
+            raise StrictVCFValidationError(
+                f"{kind} {optional_key} must be a quoted string at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     identifier = parsed["ID"]
     field_id_pattern = INFO_KEY_RE if kind == "INFO" else FORMAT_KEY_RE
     if not field_id_pattern.fullmatch(identifier):
@@ -809,7 +817,15 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
-def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: bool = True) -> str:
+def _structured_header_id(
+    line: str,
+    kind: str,
+    line_no: int,
+    *,
+    require_id: bool = True,
+    required_attributes: set[str] | None = None,
+    quoted_attributes: set[str] | None = None,
+) -> str:
     """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
     if not line.startswith(prefix) or not line.endswith(">"):
@@ -858,6 +874,8 @@ def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: boo
 
     identifiers: list[str] = []
     seen_attributes: set[str] = set()
+    parsed_attributes: dict[str, str] = {}
+    quoted_keys: set[str] = set()
     for attribute in attributes:
         key, separator, raw_value = attribute.partition("=")
         key, value = key.strip(), raw_value.strip()
@@ -873,14 +891,31 @@ def _structured_header_id(line: str, kind: str, line_no: int, *, require_id: boo
                     f"Malformed quoted {kind} structured header attribute at line {line_no}",
                     code="VCF_HEADER_DEFINITION_INVALID",
                 )
+            quoted_keys.add(key)
             value = value[1:-1]
         elif '"' in value:
             raise StrictVCFValidationError(
                 f"Malformed quoted {kind} structured header attribute at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+        parsed_attributes[key] = value
         if key == "ID":
             identifiers.append(value)
+    required = set(required_attributes or ())
+    if require_id:
+        required.add("ID")
+    missing = required.difference(parsed_attributes)
+    if missing:
+        raise StrictVCFValidationError(
+            f"{kind} structured header lacks required attributes {sorted(missing)!r} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    unquoted = set(quoted_attributes or ()).difference(quoted_keys)
+    if unquoted:
+        raise StrictVCFValidationError(
+            f"{kind} structured header attributes {sorted(unquoted)!r} must be quoted at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     if (require_id and (len(identifiers) != 1 or not identifiers[0])) or len(identifiers) > 1:
         raise StrictVCFValidationError(
             f"{kind} structured header must contain exactly one non-empty ID at line {line_no}",
@@ -1654,15 +1689,26 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         code="VCF_HEADER_ORDER_INVALID",
                     )
                 header_key, separator, header_value = line[2:].partition("=")
-                if separator and header_value.startswith("<") and (
-                    header_key in {"INFO", "FORMAT", "FILTER", "ALT", "contig", "SAMPLE", "META"}
-                    or fileformat == "VCFv4.5"
-                ):
+                if not separator or not header_key or not header_value:
+                    raise StrictVCFValidationError(
+                        f"Malformed VCF meta-information line at line {line_no}",
+                        code="VCF_HEADER_DEFINITION_INVALID",
+                    )
+                if header_key == "fileformat" and header_value.startswith("<"):
+                    raise StrictVCFValidationError(
+                        "The fileformat value must be an unstructured version identifier",
+                        code="VCF_HEADER_DEFINITION_INVALID",
+                    )
+                if header_value.startswith("<"):
+                    required_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
+                    quoted_attributes = {"Description"} if header_key in {"FILTER", "ALT"} else set()
                     identifier = _structured_header_id(
                         line,
                         header_key,
                         line_no,
                         require_id=not (header_key == "PEDIGREE" and fileformat == "VCFv4.5"),
+                        required_attributes=required_attributes,
+                        quoted_attributes=quoted_attributes,
                     )
                     if (
                         header_key == "contig"

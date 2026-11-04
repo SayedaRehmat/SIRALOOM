@@ -118,3 +118,25 @@ atomic clauses. This matrix does not promote them to complete conformance.
 applicable normative clause remains unmapped, untested, unresolved or without
 reviewable evidence. VCFv4.0 may only be described as legacy-compatible unless
 an authoritative historical specification basis and complete review are established.
+
+
+## Additional normative header grammar findings (2026-11-04)
+
+The official VCFv4.5 text states that unstructured metadata values must be
+non-empty and must not begin with an angle bracket; structured metadata must
+be well formed, and custom structured lines require an ID. It also requires
+FILTER and ALT declarations to contain ID and Description, and Source/Version
+optional attributes to be quoted strings.
+
+The validator was tightened accordingly:
+- every structured metadata line is parsed for every supported version, not
+  only selected known header keys or v4.5;
+- generic structured metadata requires ID, with the existing VCFv4.5 PEDIGREE
+  exception preserved;
+- FILTER and ALT declarations require a quoted Description;
+- INFO/FORMAT Source and Version optional attributes must be quoted;
+- unstructured metadata requires a non-empty key and value.
+
+Regression cases cover each behavior across VCFv4.1–4.5 where applicable.
+These are implementation changes awaiting the queued CI run; they do not
+establish complete normative conformance.
