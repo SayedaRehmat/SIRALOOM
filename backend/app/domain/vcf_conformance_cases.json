@@ -1379,6 +1379,18 @@
           "##fileformat=VCFv4.0",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-001",
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-010",
+          "V40-CORE-012",
+          "V40-CORE-014",
+          "V40-CORE-017",
+          "V40-CORE-020",
+          "V40-CORE-021"
         ]
       },
       {
@@ -1390,6 +1402,18 @@
           "##fileformat=VCFv4.0",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-001",
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-010",
+          "V40-CORE-012",
+          "V40-CORE-014",
+          "V40-CORE-017",
+          "V40-CORE-020",
+          "V40-CORE-021"
         ]
       },
       {
@@ -1402,6 +1426,15 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t1/2"
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-017",
+          "V40-CORE-025",
+          "V40-CORE-030",
+          "V40-CORE-031"
         ]
       },
       {
@@ -1413,6 +1446,16 @@
           "##fileformat=VCFv4.0",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tAC\tA\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-008",
+          "V40-CORE-014",
+          "V40-CORE-015",
+          "V40-CORE-016",
+          "V40-CORE-017",
+          "V40-CORE-018",
+          "V40-CORE-030",
+          "V40-CORE-031"
         ]
       },
       {
@@ -1425,6 +1468,15 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t./."
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-024",
+          "V40-CORE-025",
+          "V40-CORE-026",
+          "V40-CORE-028"
         ]
       },
       {
@@ -1437,6 +1489,13 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1"
+        ],
+        "clause_ids": [
+          "V40-CORE-006",
+          "V40-CORE-007",
+          "V40-CORE-008",
+          "V40-CORE-024",
+          "V40-CORE-025"
         ]
       },
       {
@@ -1448,6 +1507,9 @@
           "##fileformat=VCFv4.0",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t0\t.\tA\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-012"
         ]
       },
       {
@@ -1459,6 +1521,9 @@
           "##fileformat=VCFv4.0",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tX\tC\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-014"
         ]
       },
       {
@@ -1471,6 +1536,9 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\trs1\tA\tC\t.\tPASS\t.",
           "1\t3\trs1\tA\tG\t.\tPASS\t."
+        ],
+        "clause_ids": [
+          "V40-CORE-013"
         ]
       },
       {
@@ -1483,6 +1551,10 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t2/2"
+        ],
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-025"
         ]
       }
     ]
