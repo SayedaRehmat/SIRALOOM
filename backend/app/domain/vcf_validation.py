@@ -24,27 +24,6 @@ BREAKEND_RE = re.compile(
     r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
 
-def _alt_identity_key(allele: str) -> tuple[str, ...]:
-    """Return VCF allele identity while respecting sequence and contig case rules."""
-    if DNA_RE.fullmatch(allele):
-        return ("SEQUENCE", allele.upper())
-    if BREAKEND_RE.fullmatch(allele):
-        if allele[0] in "[]":
-            bracket = allele[0]
-            closing = allele.find(bracket, 1)
-            locus = allele[1:closing]
-            contig, position = locus.rsplit(":", 1)
-            inserted_sequence = allele[closing + 1 :]
-            return ("BREAKEND", bracket, contig, position, inserted_sequence.upper())
-        opening = next(index for index, character in enumerate(allele) if character in "[]")
-        bracket = allele[opening]
-        locus = allele[opening + 1 : -1]
-        contig, position = locus.rsplit(":", 1)
-        inserted_sequence = allele[:opening]
-        return ("BREAKEND", inserted_sequence.upper(), bracket, contig, position)
-    # Symbolic allele IDs and remote contig names are case-sensitive.
-    return ("LITERAL", allele)
-
 FORBIDDEN_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 INFO_KEY_RE = re.compile(r"(?:[A-Za-z_][0-9A-Za-z_.]*|1000G)\Z")
 FORMAT_KEY_RE = re.compile(r"[A-Za-z_][0-9A-Za-z_.]*\Z")
@@ -1799,14 +1778,7 @@ def _validate_record(
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
-    alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
     _validate_simple_indel_padding(ref, alts, pos, line_no)
-
-    if fileformat == "VCFv4.5" and len(alt_identity_keys) != len(set(alt_identity_keys)):
-        raise StrictVCFValidationError(
-            f"ALT contains duplicate allele values at line {line_no}",
-            code="VCF_ALT_DUPLICATE",
-        )
 
     if qual != ".":
         if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and not VCF_FLOAT_VALUE_RE.fullmatch(qual):
