@@ -24,11 +24,11 @@ class VCFSpecificationProfile:
 VCF_SPECIFICATION_PROFILES: dict[str, VCFSpecificationProfile] = {
     "VCFv4.0": VCFSpecificationProfile(
         version="VCFv4.0",
-        support_status="LEGACY_COMPATIBILITY_ONLY",
-        validation_mode="LEGACY_PARSER_SMOKE_ONLY",
+        support_status="PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION",
+        validation_mode="VERSION_AWARE_PARTIAL",
         specification_repository=VCF_40_LEGACY_SPECIFICATION_URL,
         specification_document=VCF_40_LEGACY_SPECIFICATION_URL,
-        notes="Historical 1000 Genomes VCFv4.0 profile; retained for compatibility, not current GA4GH/HTS-specs normative conformance.",
+        notes="Historical 1000 Genomes VCFv4.0 profile with version-specific regression vectors; legacy specification qualification remains partial pending atomic clause review, source-byte preservation, complete traceability, and independent real-file qualification.",
     ),
     "VCFv4.1": VCFSpecificationProfile(
         version="VCFv4.1",
