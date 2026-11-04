@@ -280,3 +280,9 @@ the first reference base) like the contig-start case for right padding. This
 preserves the VCF allowance for telomeric positions 0 and N+1 while requiring
 the available following reference base as the padding base at the left
 telomere.
+
+
+VCFv4.3 introduced the explicit restriction that record ID values cannot
+contain whitespace, commas or angle brackets. The parser now applies that
+restriction to v4.3–4.5 while preserving the earlier v4.1/v4.2 ID token
+semantics. Tests cover both sides of the version boundary.

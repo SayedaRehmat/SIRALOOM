@@ -1531,7 +1531,15 @@ def _validate_record(
     if identifier != ".":
         record_ids = identifier.split(";")
         if (
-            any(not record_id or any(char.isspace() for char in record_id) for record_id in record_ids)
+            any(
+                not record_id
+                or any(char.isspace() for char in record_id)
+                or (
+                    fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+                    and any(char in {",", "<", ">"} for char in record_id)
+                )
+                for record_id in record_ids
+            )
             or ("." in record_ids and record_ids != ["."])
         ):
             raise StrictVCFValidationError(f"Malformed ID at line {line_no}: {identifier!r}", code="VCF_ID_INVALID")

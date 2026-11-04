@@ -2925,3 +2925,31 @@ def test_vcf_position_requires_unsigned_decimal_token(tmp_path: Path, pos: str):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_POS_INVALID"
+
+
+
+@pytest.mark.parametrize("identifier", ["id,comma", "id<angle", "id>angle"])
+def test_vcf43_plus_record_ids_reject_forbidden_characters(
+    tmp_path: Path, identifier: str
+):
+    path = tmp_path / "invalid-record-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t2\t{identifier}\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_ID_INVALID"
+
+
+def test_vcf42_record_id_preserves_legacy_comma_behavior(tmp_path: Path):
+    path = tmp_path / "legacy-comma-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\tlegacy,id\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
