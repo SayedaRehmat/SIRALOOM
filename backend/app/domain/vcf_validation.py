@@ -2022,15 +2022,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     gt = values[record_gt_index]
                     if gt in {"", "."}:
                         continue
-                    try:
-                        called = {
-                            int(item)
-                            for item in _gt_allele_tokens(gt, fileformat, line_no)
-                            if item != "."
-                        }
-                    except (ValueError, StrictVCFValidationError):
-                        continue
-                    if alt_index in called:
+                    # GT syntax was already validated for this record above.
+                    # Compare the validated allele tokens directly so a parse
+                    # exception cannot silently erase a called '*' carrier.
+                    called = _gt_allele_tokens(gt, fileformat, line_no)
+                    if str(alt_index) in called:
                         result.add(sample_index)
                 return result
 
