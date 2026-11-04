@@ -1,3 +1,4 @@
+import gzip
 import struct
 from pathlib import Path
 import zlib
@@ -6,9 +7,11 @@ import pytest
 
 from backend.app.domain.vcf_validation import (
     StrictVCFValidationError,
+    _open,
     _deleted_reference_interval,
     _validate_record,
     validate_vcf_reference_alleles,
+    declared_vcf_contig_md5s,
     validate_vcf_strict,
 )
 
@@ -518,6 +521,35 @@ def test_strict_validation_rejects_utf8_bom(tmp_path: Path, compressed: bool):
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_BOM_FORBIDDEN"
+
+
+@pytest.mark.parametrize("damage", ["invalid_header", "truncated_trailer", "corrupt_crc"])
+def test_shared_gzip_stream_reader_rejects_corrupt_or_truncated_stream(
+    tmp_path: Path, damage: str,
+):
+    path = tmp_path / f"damaged-{damage}.vcf.gz"
+    content = (
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tG\t.\tPASS\t.\n"
+    )
+    compressed = gzip.compress(content)
+    if damage == "invalid_header":
+        compressed = b"not-a-gzip-stream"
+    elif damage == "truncated_trailer":
+        compressed = compressed[:-5]
+    else:
+        corrupted = bytearray(compressed)
+        corrupted[-8] ^= 0xFF
+        compressed = bytes(corrupted)
+    path.write_bytes(compressed)
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        with _open(path) as handle:
+            handle.read()
+
+    assert exc.value.code == "VCF_COMPRESSION_INVALID"
+    assert "corrupt or truncated" in str(exc.value)
 
 
 @pytest.mark.parametrize("control", ["\x00", "\x08", "\x0b", "\x0c", "\x1f"])

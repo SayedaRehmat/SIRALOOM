@@ -5,6 +5,7 @@ import hashlib
 import re
 import struct
 import zlib
+from contextlib import contextmanager
 from math import comb, isnan
 from pathlib import Path
 
@@ -314,9 +315,28 @@ def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
     }
 
 
+@contextmanager
 def _open(path: str | Path):
+    """Open a VCF text stream and normalize compressed-stream failures.
+
+    gzip validates member headers, checksums, and trailers while the stream is
+    consumed, not necessarily when it is opened. Keep the read inside this
+    context so corrupt or truncated compressed input is reported as a domain
+    validation error by every VCF reader using this helper.
+    """
     p = Path(path)
-    return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+    compressed = p.name.lower().endswith((".gz", ".bgz"))
+    handle = gzip.open(p, "rt", encoding="utf-8") if compressed else open(
+        p, "rt", encoding="utf-8"
+    )
+    try:
+        with handle:
+            yield handle
+    except (gzip.BadGzipFile, EOFError, zlib.error) as exc:
+        raise StrictVCFValidationError(
+            f"VCF compressed stream is corrupt or truncated: {p.name}",
+            code="VCF_COMPRESSION_INVALID",
+        ) from exc
 
 
 def declared_vcf_contig_md5s(path: str | Path) -> dict[str, str]:
