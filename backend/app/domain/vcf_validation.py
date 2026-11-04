@@ -5,7 +5,7 @@ import hashlib
 import re
 import struct
 import zlib
-from math import comb, isnan
+from math import comb, isfinite, isnan
 from pathlib import Path
 
 from backend.app.domain.vcf_feature_compatibility import feature_compatibility_for_version
@@ -856,6 +856,7 @@ def _structured_header_id(
     required_attributes: set[str] | None = None,
     quoted_attributes: set[str] | None = None,
     fileformat: str | None = None,
+    parsed_attributes_out: dict[str, str] | None = None,
 ) -> str:
     """Validate structured header attributes and return their unique ID."""
     prefix = f"##{kind}=<"
@@ -991,7 +992,200 @@ def _structured_header_id(
                 f"Invalid ALT ID at line {line_no}: {identifier!r}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+    if parsed_attributes_out is not None:
+        parsed_attributes_out.update(parsed_attributes)
     return identifiers[0] if identifiers else ""
+
+
+def _validate_sample_mixture_metadata(
+    sample_metadata: list[tuple[int, dict[str, str]]],
+    sample_columns: list[str],
+) -> dict[str, object]:
+    """Validate optional VCF sample-to-genome and mixture annotations.
+
+    Genomes and Mixture use parallel semicolon-delimited lists in the VCF
+    sample-mixture representation. Missing mixture proportions remain missing;
+    known proportions must be finite fractions in [0, 1]. A complete numeric
+    mixture must sum to one. These checks validate metadata semantics only and
+    do not deconvolve samples or infer genotypes.
+    """
+    sample_genomes: dict[str, list[str]] = {}
+    genome_ids: set[str] = set()
+    mixture_count = 0
+
+    for line_no, attributes in sample_metadata:
+        sample_id = attributes.get("ID")
+        if not sample_id:
+            raise StrictVCFValidationError(
+                f"SAMPLE metadata has no ID at line {line_no}",
+                code="VCF_SAMPLE_METADATA_INVALID",
+            )
+
+        genomes_value = attributes.get("Genomes")
+        genomes: list[str] = []
+        if genomes_value not in {None, "."}:
+            genomes = genomes_value.split(";")
+            if any(not genome or genome == "." for genome in genomes):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Genomes contains an empty or missing genome identifier at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            if len(genomes) != len(set(genomes)):
+                raise StrictVCFValidationError(
+                    f"SAMPLE Genomes contains duplicate genome identifiers at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            sample_genomes[sample_id] = genomes
+            genome_ids.update(genomes)
+
+        mixture_value = attributes.get("Mixture")
+        if mixture_value in {None, "."}:
+            continue
+        if not genomes:
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture requires a corresponding Genomes list at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+
+        mixture_values = mixture_value.split(";")
+        if any(value == "" for value in mixture_values) or len(mixture_values) != len(genomes):
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture and Genomes cardinalities differ at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+
+        proportions: list[float] = []
+        contains_missing = False
+        for value in mixture_values:
+            if value == ".":
+                contains_missing = True
+                continue
+            try:
+                proportion = float(value)
+            except ValueError as exc:
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture contains a non-numeric proportion at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                ) from exc
+            if not isfinite(proportion) or not 0.0 <= proportion <= 1.0:
+                raise StrictVCFValidationError(
+                    f"SAMPLE Mixture proportions must be finite values in [0, 1] at line {line_no}",
+                    code="VCF_SAMPLE_MIXTURE_INVALID",
+                )
+            proportions.append(proportion)
+
+        if not contains_missing and abs(sum(proportions) - 1.0) > 1e-6:
+            raise StrictVCFValidationError(
+                f"SAMPLE Mixture proportions must sum to 1 at line {line_no}",
+                code="VCF_SAMPLE_MIXTURE_INVALID",
+            )
+        mixture_count += 1
+
+    mapping_complete = bool(sample_columns) and set(sample_genomes) == set(sample_columns)
+    return {
+        "sample_genomes": sample_genomes,
+        "genome_ids": genome_ids,
+        "mapping_complete": mapping_complete,
+        "mixture_count": mixture_count,
+    }
+
+
+def _validate_pedigree_relationships(
+    fileformat: str | None,
+    pedigree_metadata: list[tuple[int, dict[str, str]]],
+    genome_ids: set[str],
+    genome_mapping_complete: bool,
+) -> dict[str, object]:
+    """Validate VCFv4.3+ pedigree ancestry edges as an acyclic genome graph.
+
+    Legacy VCFv4.1/v4.2 PEDIGREE syntax without an ID is preserved but cannot
+    be interpreted as an explicit child-to-ancestor graph by this validator.
+    """
+    if not pedigree_metadata:
+        return {"relationship_count": 0, "validation_status": "NOT_PRESENT"}
+
+    graph: dict[str, set[str]] = {}
+    legacy_unresolved = 0
+    relationship_count = 0
+    for line_no, attributes in pedigree_metadata:
+        child = attributes.get("ID")
+        if child is None and fileformat in {"VCFv4.1", "VCFv4.2"}:
+            legacy_unresolved += 1
+            continue
+        if not child:
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry has no child/genome ID at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+
+        named_ancestors = sorted(
+            (
+                (int(match.group(1)), value)
+                for key, value in attributes.items()
+                if (match := re.fullmatch(r"Name_([1-9][0-9]*)", key))
+            ),
+            key=lambda item: item[0],
+        )
+        if named_ancestors and [index for index, _ in named_ancestors] != list(
+            range(1, len(named_ancestors) + 1)
+        ):
+            raise StrictVCFValidationError(
+                f"PEDIGREE Name_n ancestor fields must be consecutively numbered from Name_1 at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+
+        ancestors = [
+            value
+            for key, value in attributes.items()
+            if key in {"Mother", "Father", "Original"}
+        ] + [value for _, value in named_ancestors]
+        if not ancestors or any(not ancestor for ancestor in ancestors):
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry must identify at least one ancestor at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+        if child in ancestors or len(ancestors) != len(set(ancestors)):
+            raise StrictVCFValidationError(
+                f"PEDIGREE entry contains a self-reference or duplicate ancestor at line {line_no}",
+                code="VCF_PEDIGREE_INVALID",
+            )
+        if genome_mapping_complete:
+            unresolved = {child, *ancestors}.difference(genome_ids)
+            if unresolved:
+                raise StrictVCFValidationError(
+                    f"PEDIGREE references genome identifiers absent from complete SAMPLE Genomes mappings at line {line_no}: {sorted(unresolved)!r}",
+                    code="VCF_PEDIGREE_REFERENCE_UNRESOLVED",
+                )
+        graph.setdefault(child, set()).update(ancestors)
+        relationship_count += len(ancestors)
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(genome_id: str) -> None:
+        if genome_id in visiting:
+            raise StrictVCFValidationError(
+                f"PEDIGREE ancestry relationships contain a directed cycle involving {genome_id!r}",
+                code="VCF_PEDIGREE_CYCLE",
+            )
+        if genome_id in visited:
+            return
+        visiting.add(genome_id)
+        for ancestor in graph.get(genome_id, set()):
+            visit(ancestor)
+        visiting.remove(genome_id)
+        visited.add(genome_id)
+
+    for genome_id in graph:
+        visit(genome_id)
+
+    status = "PARTIAL_LEGACY" if legacy_unresolved else "VALIDATED"
+    return {
+        "relationship_count": relationship_count,
+        "node_count": len(visited),
+        "legacy_unresolved_record_count": legacy_unresolved,
+        "validation_status": status,
+    }
 
 
 def _expected_cardinality(
@@ -1752,6 +1946,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     vcf45_reference_block_sample_count = 0
     active_vcf45_reference_blocks: dict[int, tuple[str, int]] = {}
     structured_header_ids: dict[str, set[str]] = {}
+    structured_header_attributes: dict[str, list[tuple[int, dict[str, str]]]] = {}
     info_definitions: dict[str, dict[str, str]] = {}
     format_definitions: dict[str, dict[str, str]] = {}
     deletion_intervals: dict[str, list[tuple[int, int, set[int] | None]]] = {}
@@ -1838,6 +2033,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     require_structured_id = not (
                         header_key == "PEDIGREE" and fileformat in {"VCFv4.1", "VCFv4.2"}
                     )
+                    parsed_header_attributes: dict[str, str] = {}
                     identifier = _structured_header_id(
                         line,
                         header_key,
@@ -1846,7 +2042,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         required_attributes=required_attributes,
                         quoted_attributes=quoted_attributes,
                         fileformat=fileformat,
+                        parsed_attributes_out=parsed_header_attributes,
                     )
+                    if header_key in {"SAMPLE", "PEDIGREE"}:
+                        structured_header_attributes.setdefault(header_key, []).append(
+                            (line_no, parsed_header_attributes)
+                        )
                     if (
                         header_key == "contig"
                         and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
@@ -2385,6 +2586,15 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             f"SAMPLE metadata IDs do not match #CHROM sample columns: {sorted(undeclared_sample_metadata)!r}",
             code="VCF_SAMPLE_METADATA_MISMATCH",
         )
+    sample_mixture_profile = _validate_sample_mixture_metadata(
+        structured_header_attributes.get("SAMPLE", []), sample_columns
+    )
+    pedigree_profile = _validate_pedigree_relationships(
+        fileformat,
+        structured_header_attributes.get("PEDIGREE", []),
+        sample_mixture_profile["genome_ids"],
+        sample_mixture_profile["mapping_complete"],
+    )
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
     for source_id, chrom, pos, mate_links, remote_loci, line_no in breakend_links:
@@ -2481,6 +2691,12 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
         "sample_count": max(0, len(chrom_header) - 9),
+        "sample_genome_count": len(sample_mixture_profile["genome_ids"]),
+        "sample_mixture_count": sample_mixture_profile["mixture_count"],
+        "sample_genome_mapping_complete": sample_mixture_profile["mapping_complete"],
+        "pedigree_relationship_count": pedigree_profile["relationship_count"],
+        "pedigree_node_count": pedigree_profile.get("node_count", 0),
+        "pedigree_validation_status": pedigree_profile["validation_status"],
         "reference_contig_policy": "EXACT_OR_EXPLICIT_ALIAS" if reference_contigs is not None else "NOT_CHECKED",
         "declared_contig_md5s": contig_md5s,
         "compression": compression,
