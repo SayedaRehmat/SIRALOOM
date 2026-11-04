@@ -573,6 +573,7 @@ async def upload_artifact(
         # and never reaches this durable rejection disposition.
         ingestion_metadata = validation_metadata.setdefault("ingestion", {})
         if result.status == "INVALID":
+            ingestion_metadata["validation_outcome"] = "REJECT"
             ingestion_metadata["disposition"] = "QUARANTINED"
             ingestion_metadata["quarantine"] = {
                 "status": "ACTIVE",
@@ -586,6 +587,7 @@ async def upload_artifact(
                 "next_action": "RESOLVE_VALIDATION_ERRORS_AND_REUPLOAD_OR_CORRECT_MAPPING",
             }
         elif result.status == "BLOCKED":
+            ingestion_metadata["validation_outcome"] = "BLOCK"
             ingestion_metadata["disposition"] = "GOVERNANCE_BLOCKED"
             ingestion_metadata["governance_block"] = {
                 "status": "ACTIVE",
@@ -599,8 +601,10 @@ async def upload_artifact(
                 ),
             }
         elif validation_metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY":
+            ingestion_metadata["validation_outcome"] = "ACCEPT"
             ingestion_metadata["disposition"] = "ACCEPTED_SITE_ONLY"
         else:
+            ingestion_metadata["validation_outcome"] = "ACCEPT"
             ingestion_metadata["disposition"] = "ACCEPTED"
 
         upload_intent = None
