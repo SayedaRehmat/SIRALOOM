@@ -2758,3 +2758,21 @@ def test_vcf43_plus_enforces_info_and_format_tag_name_regex(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_rejects_nonconforming_format_tag_name(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"invalid-format-tag-{version}.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##FORMAT=<ID=F-tag,Number=1,Type=Integer,Description="Custom field">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:F-tag\t0/1:5\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

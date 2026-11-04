@@ -220,3 +220,8 @@ regular expression. The validator now applies the strict regex only to
 VCFv4.3–4.5 and preserves the older token grammar for VCFv4.0–4.2. Tests cover
 a legacy hyphenated INFO/FORMAT identifier and rejection of that identifier
 under VCFv4.3–4.5.
+
+
+The versioned INFO/FORMAT identifier regression includes both header
+declarations and record-level keys. VCFv4.3–4.5 reject nonconforming INFO and
+FORMAT tag names; VCFv4.1/v4.2 retain their earlier token grammar.
