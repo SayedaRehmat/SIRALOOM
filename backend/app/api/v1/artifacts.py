@@ -567,6 +567,42 @@ async def upload_artifact(
             }
             build_for_artifact = primary.genome_build
 
+        # Invalid source bytes remain immutable and inspectable, but are
+        # explicitly quarantined from every downstream analysis path. A
+        # transient validator/tool outage is handled earlier as retryable 503
+        # and never reaches this durable rejection disposition.
+        ingestion_metadata = validation_metadata.setdefault("ingestion", {})
+        if result.status == "INVALID":
+            ingestion_metadata["disposition"] = "QUARANTINED"
+            ingestion_metadata["quarantine"] = {
+                "status": "ACTIVE",
+                "reason_code": result.error_code or (
+                    "VCF_INDEX_VALIDATION_FAILED" if kind in {"TBI", "CSI"}
+                    else "VCF_VALIDATION_FAILED"
+                ),
+                "reason": "; ".join(result.errors) if result.errors else "Validation failed.",
+                "retryable": False,
+                "downstream_processing": "PROHIBITED",
+                "next_action": "RESOLVE_VALIDATION_ERRORS_AND_REUPLOAD_OR_CORRECT_MAPPING",
+            }
+        elif result.status == "BLOCKED":
+            ingestion_metadata["disposition"] = "GOVERNANCE_BLOCKED"
+            ingestion_metadata["governance_block"] = {
+                "status": "ACTIVE",
+                "reason_code": result.error_code or "VCF_GOVERNANCE_BLOCKED",
+                "retryable": False,
+                "downstream_processing": "PROHIBITED",
+                "next_action": (
+                    (validation_metadata.get("validation") or {})
+                    .get("vcf_specification_governance", {})
+                    .get("next_step", "LAB_APPROVAL_OR_PARSER_QUALIFICATION_REQUIRED")
+                ),
+            }
+        elif validation_metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY":
+            ingestion_metadata["disposition"] = "ACCEPTED_SITE_ONLY"
+        else:
+            ingestion_metadata["disposition"] = "ACCEPTED"
+
         upload_intent = None
         request_fingerprint = None
         if key_sha256 is not None:
