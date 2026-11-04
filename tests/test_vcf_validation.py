@@ -2586,10 +2586,10 @@ def test_filter_and_alt_structured_headers_require_quoted_description(
 ):
     path = tmp_path / f"missing-{kind.lower()}-description.vcf"
     path.write_text(
-        '##fileformat=VCFv4.5\\n'
-        f'##{kind}=<ID=custom>\\n'
-        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
-        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        '##fileformat=VCFv4.5\n'
+        f'##{kind}=<ID=custom>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -2603,10 +2603,10 @@ def test_unstructured_meta_information_must_have_nonempty_key_and_value(
 ):
     path = tmp_path / "malformed-meta.vcf"
     path.write_text(
-        '##fileformat=VCFv4.5\\n'
-        f'{metadata}\\n'
-        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
-        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\n',
+        '##fileformat=VCFv4.5\n'
+        f'{metadata}\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\t.\n',
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -2620,10 +2620,10 @@ def test_info_optional_source_and_version_attributes_must_be_quoted(
 ):
     path = tmp_path / "unquoted-info-optional-attribute.vcf"
     path.write_text(
-        '##fileformat=VCFv4.5\\n'
-        f'##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency",{attribute}>\\n'
-        '#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n'
-        '1\\t2\\t.\\tA\\tC\\t.\\tPASS\\tAF=0.5\\n',
+        '##fileformat=VCFv4.5\n'
+        f'##INFO=<ID=AF,Number=A,Type=Float,Description="Allele frequency",{attribute}>\n'
+        '#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n'
+        '1\t2\t.\tA\tC\t.\tPASS\tAF=0.5\n',
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
