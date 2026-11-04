@@ -91,8 +91,13 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
                 elif line.startswith("#CHROM"):
                     headers = line.split("\t")
                     break
-    except (OSError, UnicodeDecodeError) as exc:
-        raise VCFValidationError(f"Unable to read VCF text: {exc}") from exc
+    except (gzip.BadGzipFile, EOFError, UnicodeDecodeError) as exc:
+        raise VCFValidationError(f"VCF content is malformed or truncated: {exc}") from exc
+    except OSError as exc:
+        raise VCFValidationUnavailable(
+            "VCF staging/storage read failed during header validation. "
+            "The input was not classified; restore storage access and retry."
+        ) from exc
     if len(declared_builds) > 1:
         raise VCFValidationError(
             "VCF header contains conflicting reference assembly declarations: "
@@ -369,7 +374,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             strict_profile["fileformat"],
             validation_metadata,
         )
-    except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
+    except (VCFValidationError, StrictVCFValidationError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
         failure_metadata = None
         if bcftools_version is not None:
             failure_metadata = {
@@ -391,6 +396,11 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             failure_metadata,
             exc.code if isinstance(exc, StrictVCFValidationError) else None,
         )
+    except OSError as exc:
+        raise VCFValidationUnavailable(
+            "VCF staging/storage I/O failed during validation. "
+            "The input was not classified; restore storage access and retry."
+        ) from exc
 
 
 def validate_index(
@@ -468,8 +478,13 @@ def validate_index(
             "VALID", kind, 0, [], None, [], [],
             metadata={"index_concordance": concordance},
         )
-    except (OSError, ValueError, EOFError, gzip.BadGzipFile, StrictVCFValidationError) as exc:
+    except (ValueError, EOFError, gzip.BadGzipFile, StrictVCFValidationError) as exc:
         return ValidationResult("INVALID", kind, 0, [], None, [str(exc)], [])
+    except OSError as exc:
+        raise VCFValidationUnavailable(
+            "VCF index or paired primary-file storage I/O failed during validation. "
+            "The index was not classified; restore storage access and retry."
+        ) from exc
 
 
 def normalize_build(requested: str | None) -> str | None:
