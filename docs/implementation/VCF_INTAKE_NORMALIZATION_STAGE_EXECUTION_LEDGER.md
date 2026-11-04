@@ -274,3 +274,32 @@ Verification:
   status can be upgraded.
 - VCFv4.5 normative conformance remains PARTIAL; this closes only the named
   reserved-FORMAT definition gap.
+
+## CI failure analysis and correction state (2026-11-04)
+
+Observed run: GitHub Actions run 41803072861, tested commit
+`da2a133cf38d1f4601bd72b9f85bbe8862193e12`.
+
+Exact outcomes:
+- Backend: 2,452 passed, 46 skipped, 8 failed.
+- PostgreSQL/Celery integration: passed.
+- Frontend behavior, localization guard, production build and frontend container: passed.
+- Production backend image build, non-root execution, volume ownership and pinned BCFtools/HTSlib identity: passed.
+- Production-container GRCh37/GRCh38 normalization did not execute because a shell comment was embedded inside a backslash-continued `docker run` argument list. The shell treated the remaining command as a comment and Docker received no image argument.
+- The six-version public VCF corpus and six-release BCFtools qualification were skipped because the backend test step failed under the workflow's fail-fast step ordering. The existence of uploaded input artifacts is not a qualification result.
+
+Backend failure diagnosis:
+- Seven malformed-header tests used literal escaped newline/tab sequences in their fixture strings, so each generated a one-line file whose declared fileformat token included the subsequent literal text. The observed `VCF_FILEFORMAT_UNSUPPORTED` was therefore a fixture-construction defect, not evidence that VCFv4.5 was absent from the supported-version registry.
+- The multiallelic base-modification normalization fixture used a POS=1 insertion representation rejected by the then-current padding check. The current branch has changed the POS=1 rule and the fixture boundary cases; this must be demonstrated by a fresh CI execution, not assumed from the source diff.
+
+Correction state observed on the current feature branch after the failed run:
+- The malformed-header test fixture strings now contain actual LF and tab delimiters.
+- The POS=1 simple-indel handling differs from the failed run's implementation.
+- The production-container `docker run` command no longer has the intervening shell comment.
+- These source corrections are **not CI-verified** until a run on the exact current branch commit completes and its logs/artifacts are inspected.
+
+Qualification remains blocked:
+- The atomic normative clause inventory is still incomplete. The 510 extracted lines are candidates, not reviewed clauses; the section matrix remains partial.
+- The current public interoperability corpus has one independently pinned example per declared version. This is a useful smoke/interoperability layer, not broad producer/version coverage.
+- The GRCh37/GRCh38 full-container real-data qualification must run after backend tests pass.
+- No version-level normative conformance or laboratory-ready declaration is authorized by this run.
