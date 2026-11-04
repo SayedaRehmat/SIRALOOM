@@ -7,6 +7,7 @@ import pytest
 
 from backend.app.domain.ingestion import (
     ValidationResult,
+    VCFValidationUnavailable,
     classify_filename,
     validate_index,
     validate_specimen_sample_identity,
@@ -1039,3 +1040,36 @@ def test_unsupported_future_vcf_retains_declared_version_sample_and_assembly(tmp
     assert result.fileformat == "VCFv4.6"
     assert result.sample_names == ["PROBAND"]
     assert result.detected_build == "GRCh38"
+
+
+def test_vcf_validation_classifies_staging_read_errors_as_retryable_operational_failures(
+    tmp_path, monkeypatch
+):
+    path = tmp_path / "staging-read-error.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+
+    def fail_header_scan(_path):
+        raise PermissionError("simulated transient staging-volume read failure")
+
+    monkeypatch.setattr("backend.app.domain.ingestion._header_info", fail_header_scan)
+
+    with pytest.raises(VCFValidationUnavailable, match="staging/storage read failed"):
+        validate_vcf(path)
+
+
+def test_index_validation_classifies_storage_read_errors_as_retryable_operational_failures(
+    tmp_path, monkeypatch
+):
+    index_path = tmp_path / "sample.vcf.gz.csi"
+    index_path.write_bytes(b"\x1f\x8b\x08\x04")
+    original_open = Path.open
+
+    def fail_index_read(path, *args, **kwargs):
+        if path == index_path:
+            raise PermissionError("simulated transient index-volume read failure")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_index_read)
+
+    with pytest.raises(VCFValidationUnavailable, match="index or paired primary-file storage I/O failed"):
+        validate_index(index_path, "sample.vcf.gz")
