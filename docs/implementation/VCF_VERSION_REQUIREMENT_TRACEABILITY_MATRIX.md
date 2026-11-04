@@ -346,3 +346,15 @@ final conformance.
   established.
 - Informative examples are used as interoperability fixtures, not counted as
   normative requirements.
+
+
+### Version-specific Description quoting
+
+A further review of the VCFv4.2 SAMPLE field format shows that its Description
+attribute is a semicolon-delimited list and is not specified as a quoted
+string in the field-format definition. The generic parser no longer imposes
+a universal Description-quoting rule on every structured metadata type.
+Quoted Description remains required where the specification defines it,
+including INFO, FORMAT, FILTER and ALT. Unknown custom metadata is checked
+for the generic ID requirement only. This avoids applying INFO/FORMAT-style
+header rules to SAMPLE or custom metadata.

@@ -2940,3 +2940,30 @@ def test_vcf42_record_id_preserves_legacy_comma_behavior(tmp_path: Path):
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+def test_vcf42_sample_metadata_preserves_unquoted_description_list(tmp_path: Path):
+    path = tmp_path / "sample-description-list.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##SAMPLE=<ID=Blood,Genomes=Germline;Tumor,Mixture=.3;.7,Description=Germline;Tumor>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tBlood\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf43_custom_structured_metadata_does_not_assume_description_schema(
+    tmp_path: Path,
+):
+    path = tmp_path / "custom-unquoted-description.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##CUSTOM=<ID=Producer,Description=UnquotedExtensionValue>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1

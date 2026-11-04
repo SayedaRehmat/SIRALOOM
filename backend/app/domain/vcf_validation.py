@@ -935,13 +935,16 @@ def _structured_header_id(
             f"{kind} structured header lacks required attributes {sorted(missing)!r} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
-    for attribute_name in ("Description", "Source", "Version"):
-        if attribute_name in parsed_attributes and attribute_name not in quoted_keys:
-            if attribute_name == "Description" or fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
-                raise StrictVCFValidationError(
-                    f"{kind} {attribute_name} must be a quoted string at line {line_no}",
-                    code="VCF_HEADER_DEFINITION_INVALID",
-                )
+    for attribute_name in ("Source", "Version"):
+        if (
+            attribute_name in parsed_attributes
+            and attribute_name not in quoted_keys
+            and fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}
+        ):
+            raise StrictVCFValidationError(
+                f"{kind} {attribute_name} must be a quoted string at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     unquoted = set(quoted_attributes or ()).difference(quoted_keys)
     if unquoted:
         raise StrictVCFValidationError(
