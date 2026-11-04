@@ -150,3 +150,12 @@ escape sequences are rejected. Regression coverage includes INFO descriptions
 and custom structured metadata. This closes a parser-state defect where an
 escaped quote could previously be interpreted as the end of a quoted value.
 The tests are awaiting execution in the queued CI verification.
+
+
+## Evidence-runner robustness
+
+The public corpus runner now records BCFtools timeout and process-start failures
+per source instead of aborting before the remaining version inputs are tested.
+The evidence artifact upload is non-fatal when an earlier CI step prevents the
+runner from creating its output directory. The report also asserts exactly one
+source per declared version.

@@ -48,13 +48,19 @@ def acquire(source: dict[str, Any], destination: Path) -> bytes:
 
 
 def run_bcftools(executable: str, source_path: Path) -> dict[str, Any]:
-    completed = subprocess.run(
-        [
-            executable, "view", "--no-version", "--output-type", "v",
-            "--output", os.devnull, str(source_path),
-        ],
-        capture_output=True, text=True, timeout=180, check=False,
-    )
+    try:
+        completed = subprocess.run(
+            [
+                executable, "view", "--no-version", "--output-type", "v",
+                "--output", os.devnull, str(source_path),
+            ],
+            capture_output=True, text=True, timeout=180, check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        stderr = exc.stderr.decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+        return {"status": "TIMEOUT", "timeout_seconds": 180, "stderr_tail": stderr[-4000:]}
+    except OSError as exc:
+        return {"status": "EXECUTION_ERROR", "error_type": type(exc).__name__, "error_message": str(exc)}
     return {
         "status": "PASS" if completed.returncode == 0 else "FAIL",
         "exit_code": completed.returncode,
@@ -174,6 +180,7 @@ def main() -> int:
     ]
     expected = {"VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"}
     observed = {item["declared_version_expected"] for item in reports}
+    source_ids = [item["source_id"] for item in reports]
     failed = [item for item in reports if item["status"] != "PASS"]
     report = {
         "suite_id": manifest["suite_id"],
@@ -184,9 +191,11 @@ def main() -> int:
         "expected_versions": sorted(expected),
         "sources_cover_all_versions": observed == expected,
         "source_count": len(reports),
+        "unique_source_count": len(set(source_ids)),
+        "one_source_per_version": len(reports) == len(expected) and len(set(source_ids)) == len(expected) and observed == expected,
         "passed_source_count": len(reports) - len(failed),
         "failed_source_count": len(failed),
-        "execution_status": "PASSED" if not failed and observed == expected else "FAILED",
+        "execution_status": "PASSED" if not failed and observed == expected and len(reports) == len(expected) and len(set(source_ids)) == len(expected) else "FAILED",
         "clinical_validation_claim": False,
         "source_results": reports,
     }

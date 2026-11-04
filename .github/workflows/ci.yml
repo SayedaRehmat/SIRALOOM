@@ -170,7 +170,7 @@ jobs:
         with:
           name: siraloom-public-vcf-version-corpus-${{ github.sha }}
           path: ${{ runner.temp }}/siraloom-public-vcf-version-corpus/
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 14
       - name: Qualify supported BCFtools releases against the real GIAB HG002 VCF
         run: |
