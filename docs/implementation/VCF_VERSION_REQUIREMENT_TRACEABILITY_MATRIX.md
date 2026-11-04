@@ -101,8 +101,10 @@ N/A means not applicable, not tested support.
 The current synthetic corpus contains VCFv4.0=1 legacy smoke, v4.1=16,
 v4.2=15, v4.3=20, v4.4=19 and v4.5=38 cases. The conformance runner
 deliberately reports v4.1–v4.5 as PARTIAL with no fully covered normative
-sections. The 680 extracted source lines are candidate lines, not reviewed
-atomic clauses. This matrix does not promote them to complete conformance.
+sections. The pinned extractor currently yields 510 normative-language candidate lines
+across VCFv4.1–4.5 (38 + 44 + 82 + 161 + 185). These are source-line
+candidates, not reviewed atomic clauses; a line may contain multiple
+requirements, and a normative requirement may span multiple lines. This matrix does not promote them to complete conformance.
 
 ## Required closure work
 
