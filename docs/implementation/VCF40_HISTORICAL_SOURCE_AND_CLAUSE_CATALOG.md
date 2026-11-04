@@ -83,7 +83,7 @@ The 1000 Genomes SV extension is not part of SIRALOOM's supported trial variant 
 
 ## Added executable regression vectors (2026-11-04)
 
-The versioned runner manifest now contains nine VCFv4.0 cases: minimal fixed-field record, multiallelic genotype, indel representation, phased genotype, missing genotype, nonpositive POS rejection, invalid REF rejection, duplicate record-ID rejection, and out-of-range GT allele rejection. They are executed by the existing `execute_vcf_conformance_suite("VCFv4.0")` path and the parametrized pytest node:
+The versioned runner manifest now contains nineteen VCFv4.0 cases: minimal fixed-field record, multiallelic genotype, indel representation, phased and missing genotypes, malformed POS/REF/ID/GT, INFO Flag and Character semantics, custom FORMAT metadata, GT ordering, sample-column mismatch, symbolic ALT, and non-contiguous contig blocks. They are executed by the existing `execute_vcf_conformance_suite("VCFv4.0")` path and the parametrized pytest node:
 
 `tests/test_vcf_conformance.py::test_packaged_vcf_conformance_executes_for_each_builtin_version[VCFv4.0]`
 
@@ -138,3 +138,10 @@ The runner records each fixture ID and its `clause_ids` in the per-fixture JSON 
 | V40-CORE-033 | — | NON_NORMATIVE — example/descriptive material |
 
 Fixture-linked clauses: 31 / 33. Two catalog entries are explicitly non-normative examples/descriptive material and do not require independent conformance tests. The remaining applicable clauses require dedicated fixtures or a documented, independently reviewed NOT_APPLICABLE disposition. All fixture-linked cases remain execution-pending until the branch CI job produces a passing report.
+
+
+The separate end-to-end routing regression is:
+
+`tests/test_vcf_conformance.py::test_vcf40_supported_sequence_records_survive_unsupported_sv_cnv_routing`
+
+It validates a mixed VCFv4.0 file containing one SNV, one symbolic deletion, and one CNV; the SNV must remain in the sequence-normalization artifact, the unsupported classes must be routed to their separate artifacts, and the record-reconciliation ledger must balance. This test is committed but has not yet been executed successfully in CI.
