@@ -1596,7 +1596,7 @@ def _validate_record(
     if filt != ".":
         filter_ids = filt.split(";")
         if not filt or any(
-            not value or any(char.isspace() or char == "," for char in value)
+            not value or any(char.isspace() for char in value)
             for value in filter_ids
         ):
             raise StrictVCFValidationError(f"Malformed FILTER at line {line_no}: {filt!r}", code="VCF_FILTER_INVALID")

@@ -286,3 +286,10 @@ VCFv4.3 introduced the explicit restriction that record ID values cannot
 contain whitespace, commas or angle brackets. The parser now applies that
 restriction to v4.3–4.5 while preserving the earlier v4.1/v4.2 ID token
 semantics. Tests cover both sides of the version boundary.
+
+
+The FILTER record-value check intentionally does not reject commas: the fixed
+FILTER field definition prohibits whitespace and semicolons, while semicolon
+is the actual list delimiter. Comma restrictions apply to structured header
+IDs where comma separates attributes, not as an invented extra constraint on
+the record FILTER token.

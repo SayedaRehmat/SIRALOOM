@@ -2715,19 +2715,6 @@ def test_filter_and_alt_header_ids_obey_version_specific_grammar(
     assert exc.value.code == expected_code
 
 
-def test_filter_record_rejects_comma_in_filter_identifier(tmp_path: Path):
-    path = tmp_path / "comma-filter-id.vcf"
-    path.write_text(
-        "##fileformat=VCFv4.5\n"
-        '##FILTER=<ID=LowQual,Description="Low quality">\n'
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t2\t.\tA\tC\t.\tLow,Qual\t.\n",
-        encoding="utf-8",
-    )
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-    assert exc.value.code == "VCF_FILTER_INVALID"
-
 
 
 def test_vcf41_vcf42_preserve_legacy_info_and_format_identifier_grammar(tmp_path: Path):
