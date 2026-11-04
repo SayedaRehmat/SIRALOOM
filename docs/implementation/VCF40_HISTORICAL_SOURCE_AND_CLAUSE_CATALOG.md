@@ -137,3 +137,19 @@ The runner records each individual fixture ID and its `clause_ids` in the result
 | V40-CORE-033 | — | NOT YET MAPPED |
 
 Mapped clauses: 20 / 33. The remaining clauses require dedicated fixtures or a documented, independently reviewed NOT_APPLICABLE disposition. All mapped fixtures remain execution-pending until the branch CI job produces a passing report.
+
+
+## Independently produced historical VCFv4.0 cohort-file target
+
+A real historical 1000 Genomes pilot cohort file has been identified for independent interoperability testing:
+
+- Candidate file: `CEU.exon.2010_03.genotypes.vcf.gz`
+- Historical location: `https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_07/exon/snps/CEU.exon.2010_03.genotypes.vcf.gz`
+- Producer/source: 1000 Genomes pilot project call set
+- Assembly context: NCBI36 / GRCh36-era pilot data
+- Published secondary-methods record describes this exact file and reports 55 chromosome-22 SNVs.
+- The 1000 Genomes July 2010 release announcement states that pilot variant-call files were distributed as VCF 4.0.
+
+This is a genuine historical cohort dataset, unlike the smaller PyVCF test fixture already pinned in `vcf_public_version_corpus.json`. It is a small exon/SNV file, so it supplements rather than replaces a larger pilot VCF containing short indels. The URL has been identified but the file has not yet been downloaded in this execution environment; byte length, SHA-256, exact header version, and parser/BCFtools outcomes remain pending. It must not be marked as tested until CI acquires the bytes, calculates hashes, checks the declared `##fileformat`, validates the complete file, and preserves the report and downloaded input as artifacts.
+
+The download environment used for this session could not resolve external hosts, so no local copy or hash was fabricated. The branch CI runner has outbound acquisition steps for other public corpora; this historical file should be added there only with a captured and subsequently pinned byte size and digest.
