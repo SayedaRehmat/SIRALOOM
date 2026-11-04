@@ -73,9 +73,13 @@ source commit or immutable release artifact. Before VCFv4.0 can have a
 reproducible clause inventory, the acquisition workflow must preserve the exact
 retrieved bytes, retrieval timestamp, final URL, HTTP metadata where available,
 and SHA-256; a later content change must create a new source revision rather
-than silently replacing the old one. Until then, VCFv4.0 requirements must be
-labelled `HISTORICAL_SOURCE_UNPINNED`, and its acceptance ceiling remains
-legacy compatibility—not normative conformance.
+than silently replacing the old one. Until then, VCFv4.0 source traceability must be labelled
+`HISTORICAL_SOURCE_UNPINNED`. This is an evidence/qualification status only:
+VCFv4.0 remains a supported version target in the SIRALOOM registry, and the
+missing archive must not be used to reject otherwise valid VCFv4.0 SNV or
+small-INDEL files. Full conformance must not be claimed until source
+preservation, atomic review, implementation/test mapping, and independent
+interoperability evidence are complete.
 
 ## Atomic clause definition and review contract
 
