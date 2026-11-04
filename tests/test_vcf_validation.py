@@ -2835,3 +2835,50 @@ def test_vcf_integer_rejects_values_outside_signed_32_bit_boundary(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "pos,ref,alt",
+    [
+        (2, "A", "AT"),
+        (2, "AT", "A"),
+        (1, "AT", "T"),
+        (1, "T", "AT"),
+        (2, "ATC", "AC"),
+    ],
+)
+def test_simple_indels_obey_vcf_padding_rules(
+    tmp_path: Path, pos: int, ref: str, alt: str
+):
+    path = tmp_path / "valid-indel-padding.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\t{ref}\t{alt}\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    "pos,ref,alt",
+    [
+        (2, "AT", "T"),
+        (1, "A", "AT"),
+        (1, "AT", "A"),
+    ],
+)
+def test_simple_indels_reject_wrong_padding_side(
+    tmp_path: Path, pos: int, ref: str, alt: str
+):
+    path = tmp_path / "invalid-indel-padding.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{pos}\t.\t{ref}\t{alt}\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_INDEL_PADDING_INVALID"

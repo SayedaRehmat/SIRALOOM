@@ -241,3 +241,14 @@ the eight smallest valid signed values, apparently conflating textual VCF
 integers with reserved internal BCF sentinels. The validator now accepts the
 full interval [-2^31, 2^31-1] and rejects values outside it. Both boundaries
 and both adjacent out-of-range values have regression cases.
+
+
+## Simple insertion/deletion padding
+
+The VCF fixed-field rules require a padding base for simple insertions and
+deletions: the preceding base is used except at contig position 1, where the
+following base is used. The validator now detects simple prefix/suffix indel
+representations and rejects a right-padded representation away from position
+1 or a left-padded representation at position 1. Complex replacements that
+retain bases on both sides are not incorrectly treated as simple indels.
+Tests cover valid and invalid examples at both coordinate boundaries.

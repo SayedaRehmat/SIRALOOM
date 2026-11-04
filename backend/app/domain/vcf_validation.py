@@ -1198,6 +1198,34 @@ def _validate_declared_value(
             )
 
 
+
+
+def _validate_simple_indel_padding(
+    ref: str, alts: list[str], pos: int, line_no: int
+) -> None:
+    """Enforce the VCF padding base for simple insertion/deletion alleles."""
+    for alt in alts:
+        if not DNA_RE.fullmatch(alt) or len(ref) == len(alt):
+            continue
+        shorter, longer = (ref, alt) if len(ref) < len(alt) else (alt, ref)
+        is_simple_prefix_indel = longer.startswith(shorter)
+        is_simple_suffix_indel = longer.endswith(shorter)
+        if not (is_simple_prefix_indel or is_simple_suffix_indel):
+            # Complex replacements retain bases on both sides and do not
+            # require an additional padding base.
+            continue
+        if pos == 1:
+            padded = ref[-1] == alt[-1]
+            expected = "right"
+        else:
+            padded = ref[0] == alt[0]
+            expected = "left"
+        if not padded:
+            raise StrictVCFValidationError(
+                f"Simple insertion/deletion must use a {expected}-padding base at line {line_no}",
+                code="VCF_INDEL_PADDING_INVALID",
+            )
+
 def _validate_structural_alt(alt: str, *, alt_index: int, alts: list[str], info: dict[str, str | None], pos: int, line_no: int) -> None:
     if alt in {"<NON_REF>", "<*>"} or alt == "*" or "[" in alt or "]" in alt:
         return
@@ -1527,6 +1555,8 @@ def _validate_record(
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
 
     alt_identity_keys = [_alt_identity_key(allele) for allele in alts]
+    _validate_simple_indel_padding(ref, alts, pos, line_no)
+
     if fileformat == "VCFv4.5" and len(alt_identity_keys) != len(set(alt_identity_keys)):
         raise StrictVCFValidationError(
             f"ALT contains duplicate allele values at line {line_no}",
