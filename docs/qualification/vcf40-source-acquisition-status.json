@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "status": "SOURCE_IDENTIFIED_RAW_BYTES_NOT_CAPTURED",
+  "retrieved_at_utc_date": "2026-11-04",
+  "acquisition_boundary": "The source retrieval interface exposed rendered, line-addressable page content. It did not expose original HTTP response bytes, headers, or response status metadata. No source-document SHA-256 is asserted.",
+  "sources": [
+    {
+      "source_id": "VCF40-CORE-HISTORICAL",
+      "authority": "1000 Genomes / International Genome Sample Resource",
+      "original_url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+      "observed_final_url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+      "retrieved_representation": "Rendered HTML text via web retrieval",
+      "raw_response_bytes_archived": false,
+      "raw_response_sha256": null,
+      "http_status": null,
+      "content_type": null,
+      "etag": null,
+      "last_modified": null,
+      "rendered_line_count": 245,
+      "notes": "Historical core format page; exact response bytes must be acquired in a network-enabled controlled workflow before immutable source archival."
+    },
+    {
+      "source_id": "VCF40-SV-1000G-CONVENTIONS",
+      "authority": "1000 Genomes / International Genome Sample Resource",
+      "original_url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/",
+      "observed_final_url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20(Variant%20Call%20Format)%20version%204.0/encoding-structural-variants/",
+      "retrieved_representation": "Rendered HTML text via web retrieval",
+      "raw_response_bytes_archived": false,
+      "raw_response_sha256": null,
+      "http_status": null,
+      "content_type": null,
+      "etag": null,
+      "last_modified": null,
+      "rendered_line_count": 130,
+      "notes": "1000 Genomes SV conventions and extensions; separate from core VCFv4.0 requirements."
+    },
+    {
+      "source_id": "VCF40-REAL-COHORT-CANDIDATE",
+      "authority": "1000 Genomes pilot project data",
+      "original_url": "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/release/2010_07/exon/snps/CEU.exon.2010_03.genotypes.vcf.gz",
+      "raw_response_bytes_archived": false,
+      "raw_response_sha256": null,
+      "acquisition_status": "URL_IDENTIFIED_NOT_DOWNLOADED",
+      "notes": "Historical cohort-file target. Must verify actual ##fileformat declaration and byte integrity before treating it as VCFv4.0 test evidence."
+    }
+  ],
+  "next_required_actions": [
+    "Download each historical documentation page as exact response bytes from a controlled network-enabled CI runner.",
+    "Record status code, final URL, content type, ETag, Last-Modified, retrieval timestamp, and byte length.",
+    "Calculate SHA-256 over exact response bytes and commit immutable source artifacts or a controlled source bundle.",
+    "Download the historical CEU cohort VCF, verify its declared VCF version, compute SHA-256 and size, then pin both values in the public-corpus manifest.",
+    "Do not mark source acquisition complete while any raw_response_bytes_archived field is false."
+  ]
+}
