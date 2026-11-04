@@ -951,6 +951,13 @@ def _structured_header_id(
         )
     if identifiers:
         identifier = identifiers[0]
+        if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
+            char.isspace() or char in {",", "<", ">"} for char in identifier
+        ):
+            raise StrictVCFValidationError(
+                f"Invalid VCFv4.3+ structured ID at line {line_no}: {identifier!r}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
         if kind == "FILTER" and (
             identifier == "0"
             or any(char.isspace() or char in {",", ";", "<", ">"} for char in identifier)

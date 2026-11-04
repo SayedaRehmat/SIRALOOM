@@ -2776,3 +2776,29 @@ def test_vcf43_plus_rejects_nonconforming_format_tag_name(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+
+@pytest.mark.parametrize(
+    "kind, identifier",
+    [
+        ("CUSTOM", "bad id"),
+        ("SAMPLE", "bad id"),
+        ("PEDIGREE", "bad id"),
+        ("META", "bad id"),
+    ],
+)
+def test_vcf43_plus_all_structured_ids_reject_whitespace(
+    tmp_path: Path, kind: str, identifier: str
+):
+    path = tmp_path / f"invalid-{kind.lower()}-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        f'##{kind}=<ID={identifier}>\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"

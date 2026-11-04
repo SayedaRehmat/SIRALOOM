@@ -225,3 +225,10 @@ under VCFv4.3–4.5.
 The versioned INFO/FORMAT identifier regression includes both header
 declarations and record-level keys. VCFv4.3–4.5 reject nonconforming INFO and
 FORMAT tag names; VCFv4.1/v4.2 retain their earlier token grammar.
+
+
+The VCFv4.3+ generic structured ID rule is now applied to every structured
+header type, including custom metadata, SAMPLE, PEDIGREE and META identifiers:
+IDs are case-sensitive strings and cannot contain whitespace, commas or angle
+brackets. INFO/FORMAT, FILTER, ALT and contig types retain their stricter
+type-specific constraints.
