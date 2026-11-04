@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   backend:
@@ -159,6 +159,19 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: pytest -q
+      - name: Qualify public VCF version corpus (VCFv4.0–4.5)
+        run: |
+          set -euo pipefail
+          python scripts/validation/qualify_public_vcf_version_corpus.py \
+            --output-dir "${RUNNER_TEMP}/siraloom-public-vcf-version-corpus"
+      - name: Preserve public VCF version-corpus evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-public-vcf-version-corpus-${{ github.sha }}
+          path: ${{ runner.temp }}/siraloom-public-vcf-version-corpus/
+          if-no-files-found: error
+          retention-days: 14
       - name: Qualify supported BCFtools releases against the real GIAB HG002 VCF
         run: |
           set -euo pipefail

@@ -2464,3 +2464,41 @@ def test_unknown_future_vcf_specification_does_not_get_an_implicit_profile():
     with pytest.raises(ValueError, match="Unsupported VCF specification version"):
         get_vcf_specification_profile("VCFv4.6")
 
+
+
+
+def test_strict_validation_accepts_crlf_line_endings(tmp_path: Path):
+    path = tmp_path / "crlf.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\r\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\r\n"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\r\n"
+    )
+    result = validate_vcf_strict(path)
+    assert result["fileformat"] == "VCFv4.5"
+    assert result["records"] == 1
+
+
+def test_strict_validation_rejects_bare_carriage_return_line_endings(tmp_path: Path):
+    path = tmp_path / "bare-cr.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\r"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\r"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\r"
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_LINE_ENDING_INVALID"
+
+
+def test_strict_validation_rejects_embedded_carriage_return(tmp_path: Path):
+    path = tmp_path / "embedded-cr.vcf"
+    path.write_bytes(
+        b"##fileformat=VCFv4.5\n"
+        b"##source=producer\rname\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t2\t.\tA\tC\t.\tPASS\t.\n"
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_LINE_ENDING_INVALID"

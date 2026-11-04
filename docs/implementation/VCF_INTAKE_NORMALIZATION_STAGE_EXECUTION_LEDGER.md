@@ -177,3 +177,13 @@ Any agent continuing SIRALOOM VCF work must read the master contract and this le
 - Run #3202 / 41627304151 was cancelled; its backend qualification outcome was not established.
 - No completed CI result is claimed for the current documentation head. Recheck the branch's latest Actions run after this ledger commit.
 
+
+
+## VCF version-conformance implementation update (2026-11-04)
+
+- Re-audited the production validator, compatibility registry, versioned fixture corpus, normative section inventory and tests on PR #282.
+- Existing fixture counts: VCFv4.0=1 legacy smoke; VCFv4.1=16; VCFv4.2=15; VCFv4.3=20; VCFv4.4=19; VCFv4.5=38. The conformance runner explicitly reports VCFv4.1–4.5 as PARTIAL with no fully covered normative sections.
+- Added an immutable-source public VCF corpus for each declared version, with Git blob identity, local SHA-256, strict SIRALOOM validation, pinned BCFtools parser execution and record-routing reconciliation. v4.3/v4.4 inputs are official HTS examples; v4.5 is a public HPRC dataset; v4.0–v4.2 are upstream PyVCF examples. Provenance classes remain distinct; these are not six independent clinical validation datasets.
+- Tightened line-ending validation so universal-newline translation cannot silently convert bare-CR input into valid LF input. LF and CRLF are accepted; bare CR and embedded CR are rejected with a stable error code.
+- These changes do not close the normative clause inventory. Every version remains PARTIAL pending reviewed atomic clause-to-code-to-positive/negative-test traceability and execution evidence.
+- CI concurrency now queues the next verification instead of cancelling an active long-running qualification. Run #3212 predates these changes and is not evidence for them.

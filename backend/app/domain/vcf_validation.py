@@ -320,8 +320,11 @@ def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
 
 
 def _open(path: str | Path):
+    """Open a VCF without normalizing line endings before conformance checks."""
     p = Path(path)
-    return gzip.open(p, "rt", encoding="utf-8") if p.name.lower().endswith((".gz", ".bgz")) else open(p, "rt", encoding="utf-8")
+    if p.name.lower().endswith((".gz", ".bgz")):
+        return gzip.open(p, "rt", encoding="utf-8", newline="")
+    return open(p, "rt", encoding="utf-8", newline="")
 
 
 def read_vcf_fileformat(path: str | Path) -> str | None:
@@ -1616,7 +1619,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"VCF data line at line {line_no} is missing its required line separator",
                     code="VCF_RECORD_TERMINATOR_MISSING",
                 )
-            line = raw.rstrip("\n\r")
+            if raw.endswith("\r") and not raw.endswith("\r\n"):
+                raise StrictVCFValidationError(
+                    f"VCF uses a bare carriage-return line separator at line {line_no}",
+                    code="VCF_LINE_ENDING_INVALID",
+                )
+            if raw.endswith("\r\n"):
+                line = raw[:-2]
+            elif raw.endswith("\n"):
+                line = raw[:-1]
+            else:
+                line = raw
+            if "\r" in line:
+                raise StrictVCFValidationError(
+                    f"VCF contains a carriage return outside a CRLF line separator at line {line_no}",
+                    code="VCF_LINE_ENDING_INVALID",
+                )
             if line_no == 1 and line.startswith("\ufeff"):
                 raise StrictVCFValidationError(
                     "VCF files must not contain a UTF-8 byte-order mark",
