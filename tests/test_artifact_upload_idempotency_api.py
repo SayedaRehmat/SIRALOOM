@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import backend.app.api.v1.artifacts as artifacts_api
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.domain.ingestion import ValidationResult
+from backend.app.domain.ingestion import VCFValidationUnavailable, ValidationResult
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db import models as _models
 from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUploadIntent
@@ -553,3 +553,36 @@ def test_invalid_vcf_upload_is_retained_in_logical_quarantine_and_never_analysis
     download = upload_api["client"].get(f"/api/v1/artifacts/{artifact_id}/download")
     assert download.status_code == 200, download.text
     assert download.content == content
+
+
+def test_artifact_upload_returns_nonretryable_storage_access_failure_without_persisting_input(
+    upload_api, monkeypatch
+):
+    content = (
+        b"##fileformat=VCFv4.3\n"
+        b"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        b"1\t10\t.\tA\tG\t.\tPASS\t.\n"
+    )
+
+    def unavailable(_path):
+        raise VCFValidationUnavailable(
+            "Storage access is denied.",
+            code="VCF_STORAGE_ACCESS_BLOCKED",
+            retryable=False,
+        )
+
+    monkeypatch.setattr(artifacts_api, "_validate_vcf_for_upload", unavailable)
+    response = _post_vcf(
+        upload_api["client"],
+        upload_api["case_id"],
+        content,
+        "storage-access-blocked-vcf-upload-000001",
+    )
+
+    assert response.status_code == 503, response.text
+    assert response.json()["detail"]["code"] == "VCF_STORAGE_ACCESS_BLOCKED"
+    assert response.json()["detail"]["retryable"] is False
+    with upload_api["session_factory"]() as db:
+        assert db.scalar(
+            select(func.count(Artifact.id)).where(Artifact.case_id == upload_api["case_id"])
+        ) == 0
