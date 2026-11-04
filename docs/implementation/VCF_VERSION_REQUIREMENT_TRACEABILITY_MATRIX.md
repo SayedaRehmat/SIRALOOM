@@ -43,7 +43,7 @@ Status meanings:
 | VCF-HDR-006 | Eight fixed columns; FORMAT and sample columns in valid positions | 4.0–4.5 | validate_vcf_strict | header/sample column tests | IMPLEMENTED / TESTED |
 | VCF-HDR-007 | Sample IDs unique and record sample-column count consistent | 4.0–4.5 | validate_vcf_strict | duplicate sample and record column-count tests | PARTIAL |
 | VCF-ENC-001 | UTF-8, no BOM, forbidden control characters | Explicit in 4.3+; compatibility behavior earlier | _open, FORBIDDEN_CONTROL_RE | BOM/control-character tests | PARTIAL |
-| VCF-ENC-002 | LF and CRLF separators; reject bare CR and embedded CR | Maintained specification line-ending requirements | _open and strict parser line checks | new CRLF/bare-CR/embedded-CR tests | IMPLEMENTED / TESTED for line-ending behavior |
+| VCF-ENC-002 | LF and CRLF separators; reject bare CR and embedded CR | Maintained specification line-ending requirements | _open and strict parser line checks | new CRLF/bare-CR/embedded-CR tests | IMPLEMENTED / CI PENDING |
 | VCF-REC-001 | Record column count, tab delimitation and nonempty required fields | 4.0–4.5 | _validate_record, validate_vcf_strict | malformed-record and column-count tests | PARTIAL |
 | VCF-REC-002 | CHROM syntax and version-specific reference-name grammar | 4.0–4.5; SAM name grammar from 4.3 | _validate_record, VCF_CONTIG_NAME_RE | VCFv4.3+ CHROM/contig/breakend tests | PARTIAL |
 | VCF-REC-003 | POS integer, coordinate semantics, sort order and contig blocks | 4.0–4.5 | _validate_record and parser ordering state | position-order and noncontiguous-contig tests | PARTIAL |

@@ -187,3 +187,25 @@ Any agent continuing SIRALOOM VCF work must read the master contract and this le
 - Tightened line-ending validation so universal-newline translation cannot silently convert bare-CR input into valid LF input. LF and CRLF are accepted; bare CR and embedded CR are rejected with a stable error code.
 - These changes do not close the normative clause inventory. Every version remains PARTIAL pending reviewed atomic clause-to-code-to-positive/negative-test traceability and execution evidence.
 - CI concurrency now queues the next verification instead of cancelling an active long-running qualification. Run #3212 predates these changes and is not evidence for them.
+
+
+## VCF version-conformance implementation and CI queue status (2026-11-04)
+
+Latest implementation commit at this ledger update: 48ebe5ee0f9762ffec5eac2c3b797604d875d615.
+
+Changes committed on the existing PR branch after the 7a288709 baseline:
+- Immutable public version corpus and runner for VCFv4.0–4.5; each source pinned by immutable upstream Git commit/blob identity and local SHA-256; strict SIRALOOM validation, BCFtools parser execution and source-record routing reconciliation.
+- Explicit expected routing categories for the 4.4 structural-variant example and 4.5 HPRC repeat-expansion dataset.
+- LF/CRLF acceptance and bare-CR/embedded-CR rejection.
+- Structured metadata grammar, required IDs, FILTER/ALT Description, Source/Version quoting, escape handling, version-specific PEDIGREE behavior and version-specific INFO/FORMAT tag-name rules.
+- FILTER/ALT ID constraints and VCFv4.3+ record-ID restrictions.
+- Simple indel padding checks, VCFv4.3+ QUAL lexical grammar and POS token grammar.
+- Preserved the specification-reserved signed Integer lower range (-2^31 through -2^31+7 are disallowed); tests use the correct lower bound -2147483640.
+- Compatibility registry now reports PARTIAL_FEATURE_QUALIFICATION / VERSION_AWARE_PARTIAL for v4.1–4.5 rather than simply SUPPORTED.
+
+Verification status:
+- Run #3212 / 41795132311 remains IN_PROGRESS on its original baseline SHA 7a28870969f76e811f39a61b808a433ff1958217. Its backend job is still executing the six-release real GIAB qualification step. It does not include the commits listed above.
+- The latest code verification run #41799280169 is PENDING on SHA 48ebe5ee0f9762ffec5eac2c3b797604d875d615.
+- Intermediate queued runs on earlier implementation commits were cancelled by the concurrency group and are not evidence.
+- All changes listed above are therefore IMPLEMENTED IN REPOSITORY but NOT YET CI-VERIFIED. Do not mark their tests passed until the latest SHA's run completes and reports artifacts are inspected.
+- VCFv4.0–4.5 normative conformance remains PARTIAL. The current traceability matrix is a reviewed engineering baseline, not yet a complete atomic clause-by-clause inventory.
