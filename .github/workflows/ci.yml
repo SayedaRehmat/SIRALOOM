@@ -255,9 +255,14 @@ jobs:
 
             git init "${source_root}/htslib"
             git -C "${source_root}/htslib" remote add origin https://github.com/samtools/htslib.git
-            git -C "${source_root}/htslib" fetch --depth 1 origin "${expected_htslib_commit}"
-            git -C "${source_root}/htslib" checkout --detach FETCH_HEAD
+            # Fetch the signed upstream release tag as well as pinning its immutable target.
+            # HTSlib version.sh uses git describe when .git exists; fetching only the
+            # commit SHA hides the release tag and fabricates a -1-g<sha> version.
+            git -C "${source_root}/htslib" fetch --depth 1 origin "refs/tags/${version}:refs/tags/${version}"
+            test "$(git -C "${source_root}/htslib" rev-parse "refs/tags/${version}^{commit}")" = "${expected_htslib_commit}"
+            git -C "${source_root}/htslib" checkout --detach "refs/tags/${version}"
             test "$(git -C "${source_root}/htslib" rev-parse HEAD)" = "${expected_htslib_commit}"
+            test "$(git -C "${source_root}/htslib" describe --exact-match --match "${version}" HEAD)" = "${version}"
             git -C "${source_root}/htslib" submodule update --init --recursive --depth 1
             htscodecs_commit="$(git -C "${source_root}/htslib/htscodecs" rev-parse HEAD)"
             expected_htscodecs_commit="b9fc194f772e45bb0a1f44b08cbf8697a1384bae"
@@ -265,10 +270,13 @@ jobs:
 
             git init "${source_root}/bcftools"
             git -C "${source_root}/bcftools" remote add origin https://github.com/samtools/bcftools.git
-            git -C "${source_root}/bcftools" fetch --depth 1 origin "${expected_bcftools_commit}"
-            git -C "${source_root}/bcftools" checkout --detach FETCH_HEAD
+            # Preserve release-tag visibility for BCFtools' own version.sh as well.
+            git -C "${source_root}/bcftools" fetch --depth 1 origin "refs/tags/${version}:refs/tags/${version}"
+            test "$(git -C "${source_root}/bcftools" rev-parse "refs/tags/${version}^{commit}")" = "${expected_bcftools_commit}"
+            git -C "${source_root}/bcftools" checkout --detach "refs/tags/${version}"
             bcftools_commit="$(git -C "${source_root}/bcftools" rev-parse HEAD)"
             test "${bcftools_commit}" = "${expected_bcftools_commit}"
+            test "$(git -C "${source_root}/bcftools" describe --exact-match --match "${version}" HEAD)" = "${version}"
 
             pushd "${source_root}/bcftools"
             if [[ ! -x ./configure ]]; then
@@ -283,6 +291,36 @@ jobs:
             qualify_executable "${version}" "${version}" "${install_root}/bin/bcftools" \
               "Pinned upstream BCFtools commit ${bcftools_commit}; pinned HTSlib commit ${expected_htslib_commit}; pinned htscodecs commit ${htscodecs_commit}"
           done
+      - name: Preserve compact per-release qualification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-public-vcf-qualification-reports-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/qualification-report-grch38.json
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/qualification-report-grch37.json
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/version.txt
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/build-provenance.txt
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/bcftools-executable.sha256
+            ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/package-manifest.txt
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve inputs for independent production-container qualification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-production-container-inputs-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf/GRCh38.reference-for-chr1.fa
+            ${{ runner.temp }}/siraloom-public-vcf/GRCh38.reference-for-chr1.fa.fai
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.vcf.gz
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/giab-hg002-grch37-chr1.vcf.gz.csi
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/GRCh37.chr1.fa
+            ${{ runner.temp }}/siraloom-public-vcf-grch37/GRCh37.chr1.fa.fai
+          if-no-files-found: error
+          retention-days: 7
       - name: Preserve public VCF normalization qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -291,6 +329,7 @@ jobs:
           path: |
             ${{ runner.temp }}/siraloom-public-vcf/qualification-report*.json
             ${{ runner.temp }}/siraloom-public-vcf/bcftools-*/
+            !${{ runner.temp }}/siraloom-public-vcf/bcftools-*/qualification-report-*.json
             ${{ runner.temp }}/vcf-normative-candidate-inventory.json
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz
             ${{ runner.temp }}/siraloom-public-vcf/giab-hg002-grch38-chr1.normalized.vcf.gz.csi
@@ -322,190 +361,127 @@ jobs:
         run: sh -n scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python
         run: python -m compileall backend scripts
+
+  production-container-qualification:
+    needs: backend
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download immutable GIAB/reference inputs from this workflow run
+        uses: actions/download-artifact@v4
+        with:
+          name: siraloom-production-container-inputs-${{ github.sha }}
+          path: ${{ runner.temp }}/siraloom-container-inputs
+      - name: Resolve and verify production-container qualification inputs
+        run: |
+          set -euo pipefail
+          root="${RUNNER_TEMP}/siraloom-container-inputs"
+          grch38_dir="${root}/siraloom-public-vcf"
+          grch37_dir="${root}/siraloom-public-vcf-grch37"
+          grch38_reference="${grch38_dir}/GRCh38.reference-for-chr1.fa"
+          grch37_reference="${grch37_dir}/GRCh37.chr1.fa"
+          for file in \
+            "${grch38_dir}/giab-hg002-grch38-chr1.vcf.gz" \
+            "${grch38_dir}/giab-hg002-grch38-chr1.vcf.gz.csi" \
+            "${grch38_reference}" "${grch38_reference}.fai" \
+            "${grch37_dir}/giab-hg002-grch37-chr1.vcf.gz" \
+            "${grch37_dir}/giab-hg002-grch37-chr1.vcf.gz.csi" \
+            "${grch37_reference}" "${grch37_reference}.fai"; do
+            test -s "${file}" || { echo "Missing required production qualification input: ${file}" >&2; exit 1; }
+          done
+          gzip -t "${grch38_dir}/giab-hg002-grch38-chr1.vcf.gz"
+          gzip -t "${grch37_dir}/giab-hg002-grch37-chr1.vcf.gz"
+          echo "GRCH38_DIR=${grch38_dir}" >> "${GITHUB_ENV}"
+          echo "GRCH37_DIR=${grch37_dir}" >> "${GITHUB_ENV}"
+          echo "GRCH38_REFERENCE=${grch38_reference}" >> "${GITHUB_ENV}"
+          echo "GRCH37_REFERENCE=${grch37_reference}" >> "${GITHUB_ENV}"
+      - name: Compile backend validation code
+        run: python -m compileall backend scripts
       - name: Build laboratory backend image
         run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
       - name: Verify backend image runs without root privileges
         run: |
+          set -euo pipefail
           test "$(docker run --rm --entrypoint id siraloom-backend:ci -u)" = "10001"
           test "$(docker run --rm --entrypoint id siraloom-backend:ci -g)" = "10001"
           docker run --rm --entrypoint sh siraloom-backend:ci -c \
             'test -w /data/siraloom/artifacts && test -w /data/siraloom/resource-cache && test -w /data/siraloom/scratch && test -w /data/siraloom/beat'
       - name: Verify writable ownership of fresh backend named volumes
         run: |
-          set -eu
+          set -euo pipefail
           for directory in artifacts resource-cache scratch beat; do
             volume="siraloom-ci-${directory}"
-            docker volume create "$volume"
-            docker run --rm -v "$volume:/data/siraloom/$directory" \
-              --entrypoint sh siraloom-backend:ci -c "test -w /data/siraloom/$directory"
-            docker volume rm "$volume"
+            docker volume create "${volume}" >/dev/null
+            docker run --rm -v "${volume}:/data/siraloom/${directory}" \
+              --entrypoint sh siraloom-backend:ci -c "test -w /data/siraloom/${directory}"
+            docker volume rm "${volume}" >/dev/null
           done
-      - name: Verify container BCFtools version
-        run: |
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
-      - name: Execute real GRCh38 and GRCh37 GIAB normalization inside the production container
-        env:
-          BCFTOOLS_VERSION: "1.25"
-          HTSLIB_VERSION: "1.25"
+      - name: Verify exact production-container BCFtools and HTSlib identity
         run: |
           set -euo pipefail
-          grch38_reference="$(find "${SIRALOOM_PUBLIC_DATA_DIR}" -maxdepth 1 -name 'GRCh38.reference-for-*.fa' -print -quit)"
-          grch37_reference="${SIRALOOM_PUBLIC_GRCH37_REFERENCE_PATH}"
-          test -s "${SIRALOOM_PUBLIC_DATA_DIR}/giab-hg002-grch38-chr1.vcf.gz"
-          test -s "${SIRALOOM_PUBLIC_DATA_DIR}/giab-hg002-grch38-chr1.vcf.gz.csi"
-          test -s "${grch38_reference}"
-          test -s "${grch38_reference}.fai"
-          test -s "${SIRALOOM_PUBLIC_GRCH37_DATA_DIR}/giab-hg002-grch37-chr1.vcf.gz"
-          test -s "${SIRALOOM_PUBLIC_GRCH37_DATA_DIR}/giab-hg002-grch37-chr1.vcf.gz.csi"
-          test -s "${grch37_reference}"
-          test -s "${grch37_reference}.fai"
+          version_output="$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version)"
+          test "$(printf '%s\\n' "${version_output}" | sed -n '1p')" = "bcftools 1.25"
+          test "$(printf '%s\\n' "${version_output}" | sed -n '2p')" = "Using htslib 1.25"
+      - name: Execute real GRCh38 and GRCh37 GIAB normalization inside production container
+        run: |
+          set -euo pipefail
           output_dir="${RUNNER_TEMP}/siraloom-container-qualification"
           mkdir -p "${output_dir}"
           chmod 0777 "${output_dir}"
-          qualification_script="${RUNNER_TEMP}/siraloom-container-qualification.py"
-          cat > "${qualification_script}" <<'PY'
-          import hashlib
-          import json
-          import os
-          import shutil
-          from pathlib import Path
-
-          from backend.app.domain.ingestion import validate_vcf
-          from backend.app.domain.vcf_tools import (
-              normalize_vcf_with_bcftools,
-              route_vcf_records,
-              validate_vcf_index_concordance,
-          )
-          from backend.app.domain.vcf_validation import validate_vcf_strict
-
-          def sha256(path: Path) -> str:
-              digest = hashlib.sha256()
-              with path.open("rb") as handle:
-                  for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b""):
-                      digest.update(chunk)
-              return digest.hexdigest()
-
-          executable = shutil.which("bcftools")
-          if not executable:
-              raise SystemExit("Production container has no BCFtools executable")
-          executable_sha256 = sha256(Path(executable))
-          output_dir = Path("/qualification/output")
-          output_dir.mkdir(parents=True, exist_ok=True)
-          cases = [
-              (
-                  "GRCh38",
-                  Path("/qualification/grch38/giab-hg002-grch38-chr1.vcf.gz"),
-                  Path("/qualification/grch38") / os.environ["GRCH38_REFERENCE_FILENAME"],
-                  "chr1",
-              ),
-              (
-                  "GRCh37",
-                  Path("/qualification/grch37/giab-hg002-grch37-chr1.vcf.gz"),
-                  Path("/qualification/grch37") / os.environ["GRCH37_REFERENCE_FILENAME"],
-                  "1",
-              ),
-          ]
-          reports = []
-          for build, source, reference, contig in cases:
-              if not source.is_file() or not reference.is_file() or not Path(f"{reference}.fai").is_file():
-                  raise SystemExit(f"{build} input or reference/FAI is missing inside the container")
-              intake = validate_vcf(source)
-              if intake.status != "VALID":
-                  raise SystemExit(f"{build} production-container VCF intake failed: {intake.errors}")
-              source_index = validate_vcf_index_concordance(
-                  source,
-                  expected_bcftools_version="1.25",
-              )
-              routing = route_vcf_records(
-                  source,
-                  output_dir / f"{build.lower()}-routing",
-              )
-              if routing["record_reconciliation"]["balanced"] is not True:
-                  raise SystemExit(f"{build} source-record routing reconciliation failed")
-              sequence_input = Path(routing["sequence_path"])
-              output = output_dir / f"normalized-{build.lower()}.vcf.gz"
-              result = normalize_vcf_with_bcftools(
-                  sequence_input,
-                  output,
-                  reference_fasta=reference,
-                  expected_bcftools_version="1.25",
-                  expected_bcftools_sha256=executable_sha256,
-              )
-              normalized = validate_vcf_strict(output, reference_contigs={contig})
-              index = validate_vcf_index_concordance(
-                  output,
-                  expected_bcftools_version="1.25",
-              )
-              if result["source_child_reconciliation"]["balanced"] is not True:
-                  raise SystemExit(f"{build} source-to-child reconciliation failed")
-              if index["status"] != "VALIDATED":
-                  raise SystemExit(f"{build} normalized CSI validation failed")
-              reports.append({
-                  "genome_build": build,
-                  "input_vcf_sha256": sha256(source),
-                  "reference_fasta_sha256": sha256(reference),
-                  "reference_fai_sha256": sha256(Path(f"{reference}.fai")),
-                  "input_validation": {
-                      "status": intake.status,
-                      "record_count": intake.record_count,
-                      "fileformat": intake.fileformat,
-                      "bcftools_version": intake.metadata["bcftools_version"],
-                      "htslib_version": intake.metadata["htslib_version"],
-                  },
-                  "input_index_validation": source_index,
-                  "record_routing": {
-                      "record_reconciliation": routing["record_reconciliation"],
-                      "sequence_records": routing["sequence_records"],
-                      "structural_variant_records": routing["structural_variant_records"],
-                      "cnv_variant_records": routing["cnv_variant_records"],
-                      "repeat_expansion_records": routing["repeat_expansion_records"],
-                  },
-                  "normalization": {
-                      "tool_version": result["tool_version"],
-                      "executable_sha256": result["executable_sha256"],
-                      "normalized_record_count": normalized["records"],
-                      "normalized_vcf_sha256": sha256(output),
-                      "normalized_csi_sha256": sha256(Path(f"{output}.csi")),
-                      "source_child_reconciliation": result["source_child_reconciliation"],
-                      "index_validation": index,
-                  },
-              })
-          report = {
-              "qualification_status": "PASSED",
-              "execution_environment": "siraloom-backend:ci",
-              "container_user": os.getuid(),
-              "bcftools_executable": executable,
-              "bcftools_executable_sha256": executable_sha256,
-              "bcftools_version": "1.25",
-              "htslib_version": "1.25",
-              "assemblies": reports,
-          }
-          (output_dir / "container-qualification-report.json").write_text(
-              json.dumps(report, indent=2, sort_keys=True) + "\n",
-              encoding="utf-8",
-          )
-          print(json.dumps(report, indent=2, sort_keys=True))
-          PY
+          qualification_script="${GITHUB_WORKSPACE}/scripts/validation/qualify_public_vcf_in_container.py"
+          test -s "${qualification_script}"
           docker run --rm \
-            --mount "type=bind,src=${SIRALOOM_PUBLIC_DATA_DIR},dst=/qualification/grch38,readonly" \
-            --mount "type=bind,src=${SIRALOOM_PUBLIC_GRCH37_DATA_DIR},dst=/qualification/grch37,readonly" \
+            --mount "type=bind,src=${GRCH38_DIR},dst=/qualification/grch38,readonly" \
+            --mount "type=bind,src=${GRCH37_DIR},dst=/qualification/grch37,readonly" \
             --mount "type=bind,src=${output_dir},dst=/qualification/output" \
             --mount "type=bind,src=${qualification_script},dst=/qualification/qualify.py,readonly" \
             -e BCFTOOLS_VERSION=1.25 \
             -e HTSLIB_VERSION=1.25 \
-            -e GRCH38_REFERENCE_FILENAME="$(basename "${grch38_reference}")" \
-            -e GRCH37_REFERENCE_FILENAME="$(basename "${grch37_reference}")" \
+            -e GRCH38_REFERENCE_FILENAME="$(basename "${GRCH38_REFERENCE}")" \
+            -e GRCH37_REFERENCE_FILENAME="$(basename "${GRCH37_REFERENCE}")" \
             --entrypoint python \
             siraloom-backend:ci /qualification/qualify.py
-      - name: Preserve production-container GIAB qualification evidence
+      - name: Require complete production-container qualification report
+        run: |
+          set -euo pipefail
+          python - "${RUNNER_TEMP}/siraloom-container-qualification/container-qualification-report.json" <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          if not path.is_file():
+              raise SystemExit("Production-container qualification report was not produced")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          if report.get("qualification_status") != "PASSED":
+              raise SystemExit("Production-container qualification did not report PASSED")
+          if report.get("bcftools_version") != "1.25" or report.get("htslib_version") != "1.25":
+              raise SystemExit("Unexpected production-container BCFtools/HTSlib identity")
+          if not re.fullmatch(r"[0-9a-f]{64}", report.get("bcftools_executable_sha256", "")):
+              raise SystemExit("Missing production-container executable SHA-256")
+          assemblies = report.get("assemblies", [])
+          if {item.get("genome_build") for item in assemblies} != {"GRCh37", "GRCh38"}:
+              raise SystemExit("Production-container report does not contain both assemblies")
+          for item in assemblies:
+              normalization = item.get("normalization", {})
+              if normalization.get("normalized_record_count", 0) <= 0:
+                  raise SystemExit(f"No normalized records reported for {item.get('genome_build')}")
+              if not re.fullmatch(r"[0-9a-f]{64}", normalization.get("normalized_vcf_sha256", "")):
+                  raise SystemExit(f"Missing normalized VCF digest for {item.get('genome_build')}")
+              if not re.fullmatch(r"[0-9a-f]{64}", normalization.get("normalized_csi_sha256", "")):
+                  raise SystemExit(f"Missing normalized CSI digest for {item.get('genome_build')}")
+          print("Production-container qualification report validated for GRCh37 and GRCh38")
+          PY
+      - name: Preserve production-container qualification report and outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: siraloom-production-container-giab-qualification
+          name: siraloom-production-container-giab-qualification-${{ github.sha }}
           path: ${{ runner.temp }}/siraloom-container-qualification/*
-          if-no-files-found: warn
-          retention-days: 7
+          if-no-files-found: error
+          retention-days: 14
 
   postgres-integration:
     runs-on: ubuntu-latest
