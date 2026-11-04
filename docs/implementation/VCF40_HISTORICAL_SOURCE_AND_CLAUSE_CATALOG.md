@@ -90,3 +90,50 @@ The versioned runner manifest now contains nine VCFv4.0 cases: minimal fixed-fie
 Candidate implementation mapping is `validate_vcf_strict`, `_validate_record`, `_validate_info`, `_parse_field_definition`, and `_gt_allele_tokens`. These mappings are not yet clause-by-clause proof: the current pytest harness reports aggregate suite execution, not individual clause IDs. The vectors have been committed but this session has not obtained a successful CI execution for the latest commit. Therefore their status is `ADDED_NOT_YET_EXECUTION_VERIFIED`, not `IMPLEMENTED_TESTED`.
 
 The source capture gap remains: raw HTTP response bytes and source SHA-256 values have not been obtained. Do not treat the Git commit SHA of this catalog or its Markdown contents as a source-document hash.
+
+
+## Clause-to-fixture traceability ledger
+
+The executable pytest node is:
+
+`tests/test_vcf_conformance.py::test_packaged_vcf_conformance_executes_for_each_builtin_version[VCFv4.0]`
+
+The runner records each individual fixture ID and its `clause_ids` in the resulting JSON report. The focused integrity test additionally checks unique fixture IDs, non-empty clause links, and exact tab-delimited record/header column counts. The mappings below establish traceability links, not successful execution evidence.
+
+| Clause ID | Fixture ID(s) | Status |
+|---|---|---|
+| V40-CORE-001 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-002 | — | NOT YET MAPPED |
+| V40-CORE-003 | — | NOT YET MAPPED |
+| V40-CORE-004 | — | NOT YET MAPPED |
+| V40-CORE-005 | — | NOT YET MAPPED |
+| V40-CORE-006 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-007 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-008 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_indel_valid, legacy_missing_gt_valid, legacy_phased_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-009 | — | NOT YET MAPPED |
+| V40-CORE-010 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-011 | — | NOT YET MAPPED |
+| V40-CORE-012 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_invalid_pos_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-013 | legacy_duplicate_id_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-014 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_indel_valid, legacy_invalid_ref_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-015 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-016 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-017 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid, legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-018 | legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-019 | — | NOT YET MAPPED |
+| V40-CORE-020 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-021 | legacy_minimal_snp_parser_smoke, legacy_minimal_snp_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-022 | — | NOT YET MAPPED |
+| V40-CORE-023 | — | NOT YET MAPPED |
+| V40-CORE-024 | legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_out_of_range_gt_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-025 | legacy_multiallelic_genotype_valid, legacy_missing_gt_valid, legacy_phased_gt_valid, legacy_out_of_range_gt_rejected | FIXTURE_LINKED — execution pending |
+| V40-CORE-026 | legacy_missing_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-027 | — | NOT YET MAPPED |
+| V40-CORE-028 | legacy_missing_gt_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-029 | — | NOT YET MAPPED |
+| V40-CORE-030 | legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-031 | legacy_multiallelic_genotype_valid, legacy_indel_valid | FIXTURE_LINKED — execution pending |
+| V40-CORE-032 | — | NOT YET MAPPED |
+| V40-CORE-033 | — | NOT YET MAPPED |
+
+Mapped clauses: 20 / 33. The remaining clauses require dedicated fixtures or a documented, independently reviewed NOT_APPLICABLE disposition. All mapped fixtures remain execution-pending until the branch CI job produces a passing report.
