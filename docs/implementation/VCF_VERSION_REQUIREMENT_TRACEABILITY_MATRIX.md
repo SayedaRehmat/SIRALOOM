@@ -511,8 +511,8 @@ This is a qualification expansion, not completion. Source HTTP bytes and SHA-256
 
 ### VCFv4.0 execution traceability update
 
-The versioned fixture manifest now contains ten VCFv4.0 cases (including the historical parser smoke case), with unique fixture IDs and atomic clause references on all cases. The runner emits `clause_ids` in each fixture result. The focused pytest integrity test checks unique fixture IDs, clause-link presence, and record/header column consistency.
+The versioned fixture manifest now contains nineteen VCFv4.0 cases (including the historical parser smoke case), with unique fixture IDs and atomic clause references on all cases. The runner emits `clause_ids` in each fixture result. The focused pytest integrity test checks unique fixture IDs, clause-link presence, and record/header column consistency.
 
-Current fixture-to-clause links cover 20 of the 33 first-pass core catalog entries. The remaining catalog entries are not considered tested merely because a related validator function exists. Exact positive/negative/boundary test mapping remains pending for those clauses. The public corpus workflow includes one independently pinned PyVCF VCFv4.0 compatibility fixture; a real historical 1000 Genomes cohort VCFv4.0 file is still required for producer-level interoperability evidence.
+Current fixture-to-clause links cover 31 of the 33 first-pass core catalog entries; the other two entries are explicitly classified as non-normative example/descriptive material. Fixture links do not constitute successful execution evidence. Exact positive/negative/boundary test mapping remains pending for those clauses. The public corpus workflow includes one independently pinned PyVCF VCFv4.0 compatibility fixture; a real historical 1000 Genomes cohort VCFv4.0 file is still required for producer-level interoperability evidence.
 
 The validator now rejects POS=0 as invalid because VCFv4.0 explicitly defines POS as a one-based coordinate. This is a correction to an observed implementation gap, not a relaxation of VCFv4.0 acceptance. It must be covered by the branch CI run before acceptance.
