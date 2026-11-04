@@ -504,7 +504,7 @@ conformance from the existing family-level matrix.
 
 ### VCFv4.0 status correction (2026-11-04)
 
-VCFv4.0 is **not excluded**. Its profile has been changed from `LEGACY_PARSER_SMOKE_ONLY` to `VERSION_AWARE_PARTIAL` / `PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION`. A dedicated historical clause catalog is at `docs/implementation/VCF40_HISTORICAL_SOURCE_AND_CLAUSE_CATALOG.md`. The conformance manifest now contains nine version-specific VCFv4.0 core regression vectors, including valid SNP, multiallelic, indel, phased/missing genotype cases and malformed POS/REF/ID/GT cases.
+VCFv4.0 is **not excluded**. Its profile has been changed from `LEGACY_PARSER_SMOKE_ONLY` to `VERSION_AWARE_PARTIAL` / `PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION`. A dedicated historical clause catalog is at `docs/implementation/VCF40_HISTORICAL_SOURCE_AND_CLAUSE_CATALOG.md`. The conformance manifest now contains nineteen version-specific VCFv4.0 regression vectors covering core fixed fields, genotype semantics, metadata, INFO flags, custom FORMAT declarations, symbolic ALT, malformed values, and contig-block ordering.
 
 This is a qualification expansion, not completion. Source HTTP bytes and SHA-256 remain unarchived; atomic clause review and exact per-clause test mapping remain open; the new vector suite has not yet been verified by CI on the latest commit. VCFv4.0 must remain in the supported version registry, and unsupported SV/CNV feature handling must not reject otherwise valid SNV/small-INDEL records.
 
