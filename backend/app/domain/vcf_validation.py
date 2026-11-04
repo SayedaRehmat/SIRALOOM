@@ -1730,8 +1730,8 @@ def _validate_record(
         pos = int(pos_text)
     except ValueError as exc:
         raise StrictVCFValidationError(f"Invalid POS at line {line_no}: {pos_text!r}", code="VCF_POS_INVALID") from exc
-    if pos < 0:
-        raise StrictVCFValidationError(f"POS must be non-negative at line {line_no}", code="VCF_POS_INVALID")
+    if pos < 1:
+        raise StrictVCFValidationError(f"POS must be a positive 1-based coordinate at line {line_no}", code="VCF_POS_INVALID")
 
     if identifier == "":
         raise StrictVCFValidationError(f"ID is empty at line {line_no}", code="VCF_ID_INVALID")
