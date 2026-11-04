@@ -439,6 +439,8 @@ jobs:
       - name: Preflight production-container qualification runtime configuration
         run: |
           set -euo pipefail
+          # These URLs satisfy Settings construction only. This isolated
+          # qualification process performs no database or Redis operations.
           docker run --rm \
             -e APP_ENV=qualification \
             -e DATABASE_URL=sqlite:////tmp/siraloom-qualification.db \
@@ -460,8 +462,6 @@ jobs:
             --mount "type=bind,src=${GRCH37_DIR},dst=/qualification/grch37,readonly" \
             --mount "type=bind,src=${output_dir},dst=/qualification/output" \
             --mount "type=bind,src=${qualification_script},dst=/qualification/qualify.py,readonly" \
-            # These URLs satisfy Settings construction only. This isolated
-            # qualification process performs no database or Redis operations.
             -e APP_ENV=qualification \
             -e DATABASE_URL=sqlite:////tmp/siraloom-qualification.db \
             -e REDIS_URL=redis://127.0.0.1:6379/0 \
