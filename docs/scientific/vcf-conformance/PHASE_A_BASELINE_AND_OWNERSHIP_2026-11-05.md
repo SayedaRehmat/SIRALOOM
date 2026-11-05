@@ -301,3 +301,20 @@ the narrow marker scan. This is not evidence that grammar constraints are
 absent; manual syntax/grammar review remains open. Table-row semantics,
 enumerated values, definitions, footnotes, and cross-references have not yet
 been decomposed into requirements.
+
+
+### Initial version-delta comparison
+
+`version-delta-review.v1.json` records a limited comparison of the reviewed
+fileformat, encoding, and line-structure passages across VCFv4.1–4.5. It
+identifies the terminology shift from "fileformat field" (4.1–4.2) to
+"fileformat line" (4.3–4.5), explicit LF/CRLF reader support and character
+encoding constraints in 4.3–4.5, and the later explicit trailing-tab and
+final-data-line terminator constraints. Tab-delimited header/data fields and
+unique sample identifiers are present in the reviewed passages across 4.1–4.5.
+
+This is a scoped delta analysis only. "Not identified" in a reviewed passage
+does not prove absence from the entire earlier specification. VCFv4.0 remains
+excluded from the comparison until its exact historical source bytes are
+captured and pinned. No full version-by-version semantic delta analysis is
+claimed.
