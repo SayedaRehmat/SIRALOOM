@@ -15309,6 +15309,82 @@
           },
           "source_excerpt_sha256": "6a93def8988c545d4d513c3b63983113333768b062fe993b10b686bee8c1fe4f",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L867-L873",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 867-873",
+            "start_line": 867,
+            "end_line": 873,
+            "page": null
+          },
+          "source_excerpt_sha256": "1c4e69727c21fd74c461935b4fe26736f75b2a01d2aa684bbb18fa2c76c1c337",
+          "retrieved_at_utc": "2026-11-05T10:38:02.842Z"
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L884-L890",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 884-890",
+            "start_line": 884,
+            "end_line": 890,
+            "page": null
+          },
+          "source_excerpt_sha256": "1c4e69727c21fd74c461935b4fe26736f75b2a01d2aa684bbb18fa2c76c1c337",
+          "retrieved_at_utc": "2026-11-05T10:38:02.848Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1321-L1327",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1321-1327",
+            "start_line": 1321,
+            "end_line": 1327,
+            "page": null
+          },
+          "source_excerpt_sha256": "1c6bc75594b4400dd92ef50f9e00bb62d693e83b807dd65994ac7163c6cd03d8",
+          "retrieved_at_utc": "2026-11-05T10:38:02.852Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1630-L1636",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1630-1636",
+            "start_line": 1630,
+            "end_line": 1636,
+            "page": null
+          },
+          "source_excerpt_sha256": "1c6bc75594b4400dd92ef50f9e00bb62d693e83b807dd65994ac7163c6cd03d8",
+          "retrieved_at_utc": "2026-11-05T10:38:02.854Z"
         }
       ],
       "version_applicability": {
@@ -15319,27 +15395,35 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "CHANGED",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The clonal-derivation relationship is present, but VCFv4.1/4.2 use Derived=ID2 rather than the later ID=DerivedID syntax.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "CHANGED",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The clonal-derivation relationship is present, but VCFv4.1/4.2 use Derived=ID2 rather than the later ID=DerivedID syntax.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15407,6 +15491,82 @@
           },
           "source_excerpt_sha256": "937b875775445c4401b0683a017e7f6cb67bef7da17c0e3632b4b237db068b65",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L899-L905",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 899-905",
+            "start_line": 899,
+            "end_line": 905,
+            "page": null
+          },
+          "source_excerpt_sha256": "b01e9a1ef2674ef69ccefd39d8f22a21f62e7d424d3d93ee27e5da3c915caefd",
+          "retrieved_at_utc": "2026-11-05T10:38:02.843Z"
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L916-L922",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 916-922",
+            "start_line": 916,
+            "end_line": 922,
+            "page": null
+          },
+          "source_excerpt_sha256": "b01e9a1ef2674ef69ccefd39d8f22a21f62e7d424d3d93ee27e5da3c915caefd",
+          "retrieved_at_utc": "2026-11-05T10:38:02.849Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1357-L1364",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1357-1364",
+            "start_line": 1357,
+            "end_line": 1364,
+            "page": null
+          },
+          "source_excerpt_sha256": "3fe7609e8b60a635315696e99f72e9e3955ea2c5d40b41c5e33fe84ccde8cd83",
+          "retrieved_at_utc": "2026-11-05T10:38:02.852Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1666-L1673",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1666-1673",
+            "start_line": 1666,
+            "end_line": 1673,
+            "page": null
+          },
+          "source_excerpt_sha256": "3fe7609e8b60a635315696e99f72e9e3955ea2c5d40b41c5e33fe84ccde8cd83",
+          "retrieved_at_utc": "2026-11-05T10:38:02.855Z"
         }
       ],
       "version_applicability": {
@@ -15417,27 +15577,35 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "CHANGED",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The ancestor-derivation relationship is present, but VCFv4.1/4.2 use Name_0=G0-ID,... rather than the later ID=SampleID,Name_1=Ancestor syntax.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "CHANGED",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The ancestor-derivation relationship is present, but VCFv4.1/4.2 use Name_0=G0-ID,... rather than the later ID=SampleID,Name_1=Ancestor syntax.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15505,6 +15673,82 @@
           },
           "source_excerpt_sha256": "20cca9554038f001232c94e40aaede70575fbdab5cb24b2ed4c96e5d35eb752f",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L909-L910",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 909-910",
+            "start_line": 909,
+            "end_line": 910,
+            "page": null
+          },
+          "source_excerpt_sha256": "bf7f778713b4a2eebdaa235e27afb7a9c6800ec5a0f33b927dd91c45f2681a5c",
+          "retrieved_at_utc": "2026-11-05T10:38:02.846Z"
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L926-L926",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 926-926",
+            "start_line": 926,
+            "end_line": 926,
+            "page": null
+          },
+          "source_excerpt_sha256": "9e4574bc590fda6f2a2def864e05761ee393a7e795b427722fbaffeef3ca9567",
+          "retrieved_at_utc": "2026-11-05T10:38:02.850Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1372-L1372",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1372-1372",
+            "start_line": 1372,
+            "end_line": 1372,
+            "page": null
+          },
+          "source_excerpt_sha256": "58f15754444ea71e59461221624e0a1ec0b5beef3dac84c37cfdfbca099bc0c7",
+          "retrieved_at_utc": "2026-11-05T10:38:02.853Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1681-L1681",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1681-1681",
+            "start_line": 1681,
+            "end_line": 1681,
+            "page": null
+          },
+          "source_excerpt_sha256": "58f15754444ea71e59461221624e0a1ec0b5beef3dac84c37cfdfbca099bc0c7",
+          "retrieved_at_utc": "2026-11-05T10:38:02.855Z"
         }
       ],
       "version_applicability": {
@@ -15515,27 +15759,35 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15574,7 +15826,7 @@
     {
       "requirement_id": "VCF-REQ-000125",
       "title": "Duplicated haplotype copies receive novel identifiers except one retained copy",
-      "requirement_domain": "GVCF",
+      "requirement_domain": "SAMPLE_PEDIGREE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -15603,6 +15855,82 @@
           },
           "source_excerpt_sha256": "20cca9554038f001232c94e40aaede70575fbdab5cb24b2ed4c96e5d35eb752f",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L909-L910",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 909-910",
+            "start_line": 909,
+            "end_line": 910,
+            "page": null
+          },
+          "source_excerpt_sha256": "bf7f778713b4a2eebdaa235e27afb7a9c6800ec5a0f33b927dd91c45f2681a5c",
+          "retrieved_at_utc": "2026-11-05T10:38:02.847Z"
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L926-L927",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 926-927",
+            "start_line": 926,
+            "end_line": 927,
+            "page": null
+          },
+          "source_excerpt_sha256": "bf7f778713b4a2eebdaa235e27afb7a9c6800ec5a0f33b927dd91c45f2681a5c",
+          "retrieved_at_utc": "2026-11-05T10:38:02.851Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1373-L1373",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1373-1373",
+            "start_line": 1373,
+            "end_line": 1373,
+            "page": null
+          },
+          "source_excerpt_sha256": "877421d3a564714e8b2cdacd7daee9170fb562433a9898d9e27b60865c2994ef",
+          "retrieved_at_utc": "2026-11-05T10:38:02.853Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1682-L1682",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1682-1682",
+            "start_line": 1682,
+            "end_line": 1682,
+            "page": null
+          },
+          "source_excerpt_sha256": "877421d3a564714e8b2cdacd7daee9170fb562433a9898d9e27b60865c2994ef",
+          "retrieved_at_utc": "2026-11-05T10:38:02.856Z"
         }
       ],
       "version_applicability": {
@@ -15613,27 +15941,35 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The cited version contains the same semantic rule in its pedigree section.",
           "exceptions": []
         },
         "VCFv4.5": {
