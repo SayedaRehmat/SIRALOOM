@@ -115,7 +115,9 @@ def test_1_21_3_is_blocked_while_vcf45_len_regression_is_unresolved():
     assert (ROOT / profile["environment_file"]).is_file()
     assert (ROOT / profile["lock_file"]).is_file()
     assert len(profile["source_archives"]) == 2
-    assert all(len(item["sha256"]) == 64 for item in profile["source_archives"])
+    archive_hashes = {item["name"]: item["sha256"] for item in profile["source_archives"]}
+    assert archive_hashes["htslib-1.21.3.tar.bz2"] == "e97593ecf45b941e09b292941a7e1a7a17139ebed56c642874b88075491aa8e4"
+    assert archive_hashes["bcftools-1.21.3.tar.bz2"] == "6fb32e80ac05b35684ef95f8a5c3b33eaf265ebc78a2218a8c177f9fa94ed889"
     assert any(
         "test_vcf45_len_reference_block_csi_index_includes_last_covered_base" in gap
         for gap in profile.get("qualification_gaps", [])
@@ -145,14 +147,14 @@ def test_1_19_is_registered_but_quarantined_from_production():
 
 
 @pytest.mark.parametrize(
-    ("profile_id", "bcftools_version", "htslib_version", "queue"),
+    ("profile_id", "bcftools_version", "htslib_version", "queue", "htslib_sha256", "bcftools_sha256"),
     [
-        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3"),
-        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3", "c460ffc5b79ea64d4feacd84f7e98968a66c30fbe34e5602f1384f0892f83c23", "b2b6488b71a4086f138f13f26ae4a47cb277690d28d34bc5e4e61c34c4220694"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4", "f5e860a7dfb8cb4c4a06034956a39b6fa95b6d09757b872001ccc6f0c598537c", "361d39ea5afcaed2f633e64d572045f4e1a1cd895c7faf4d615102846d028a95"),
     ],
 )
 def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
-    profile_id, bcftools_version, htslib_version, queue
+    profile_id, bcftools_version, htslib_version, queue, htslib_sha256, bcftools_sha256
 ):
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
@@ -163,7 +165,9 @@ def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
     assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
     assert profile["installation_method"] == "verified_source_build"
     assert len(profile["source_archives"]) == 2
-    assert all(len(item["sha256"]) == 64 for item in profile["source_archives"])
+    archive_hashes = {item["name"]: item["sha256"] for item in profile["source_archives"]}
+    assert archive_hashes[f"htslib-{htslib_version}.tar.bz2"] == htslib_sha256
+    assert archive_hashes[f"bcftools-{bcftools_version}.tar.bz2"] == bcftools_sha256
     assert (ROOT / profile["environment_file"]).is_file()
     assert (ROOT / profile["lock_file"]).is_file()
     lock = (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
