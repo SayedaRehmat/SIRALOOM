@@ -72,6 +72,6 @@ def resolve_toolchain_profile(
                 f"Profile {profile_id!r} references a missing {artifact_key}: {artifact}."
             )
     lock_text = (REPOSITORY_ROOT / profile["lock_file"]).read_text(encoding="utf-8")
-    if "@EXPLICIT" not in lock_text or "linux-64" not in lock_text:
+    if "@EXPLICIT" not in lock_text or f"# platform: {profile.get('platform')}" not in lock_text:
         raise ToolchainProfileError(f"Profile {profile_id!r} has an invalid platform-specific explicit lock.")
     return dict(profile)
