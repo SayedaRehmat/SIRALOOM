@@ -32,6 +32,43 @@
         ]
       },
       "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification"
+    },
+    {
+      "id": "bcftools-1.24.1-htslib-1.24.1-linux-64-source",
+      "status": "SOFTWARE_QUALIFIED",
+      "platform": "linux-64",
+      "bcftools_version": "1.24.1",
+      "htslib_version": "1.24.1",
+      "environment_file": "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock",
+      "executable": "bcftools",
+      "installation_method": "verified_source_build",
+      "build_script": "scripts/build_bcftools_1_24_1.sh",
+      "source_archives": [
+        {
+          "name": "htslib-1.24.1.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/htslib-1.24.1.tar.bz2/download",
+          "sha256": "0fa28b8a5395b3ce489d24c79697d81ceb93534907e17b92bb8a5306bebcdeb5"
+        },
+        {
+          "name": "bcftools-1.24.1.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/bcftools-1.24.1.tar.bz2/download",
+          "sha256": "02ccf63e5f478a1374ae6dbcb7cfde9840a96ddf5167fd88f5d47b78f5906a5a"
+        }
+      ],
+      "security_review": {
+        "status": "PATCHED_UPSTREAM_RELEASE",
+        "advisories_reviewed": [
+          "GHSA-38qp-vpxq-r6xc",
+          "GHSA-6qq4-hj39-g6ph",
+          "GHSA-5cvj-m89h-h3cw",
+          "GHSA-644m-mq4p-c7c6",
+          "GHSA-x79c-vxf6-6j9c",
+          "GHSA-2r8w-wxh5-c7r8",
+          "GHSA-vhg8-qwm7-cv9m"
+        ]
+      },
+      "qualification_scope": "Source archive SHA-256 verification, isolated Linux x86-64 source build, exact BCFtools/HTSlib version attestation, and VCF normalization/multiallelic/BGZF/CSI smoke tests. Backend regression and production image qualification remain CI gates; not clinical or laboratory qualification."
     }
   ]
 }
