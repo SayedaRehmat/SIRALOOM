@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "SIRALOOM-VCF40-HISTORICAL-SOURCE-PROVENANCE-2026-11-05",
-  "status": "DISCOVERY_COMPLETE_CAPTURE_AND_NORMATIVE_PROVENANCE_PENDING",
+  "status": "HISTORICAL_SOURCE_CANDIDATE_CORROBORATED_RAW_CAPTURE_AND_SHA256_PENDING",
   "scope": {
     "version": "VCFv4.0",
     "purpose": "Identify and qualify a historical VCFv4.0 normative source without conflating the core format specification with 1000 Genomes Project producer conventions or structural-variation extensions."
   },
   "source_discovery": [
     {
-      "source_id": "VCF40-IGSR-CORE-PAGE",
+      "source_id": "VCF40-IGSR-CORE-HISTORICAL",
       "source_role": "HISTORICAL_SPECIFICATION_PAGE_CANDIDATE",
       "title": "VCF (Variant Call Format) version 4.0",
       "publisher": "International Genome Sample Resource (EMBL-EBI)",
@@ -16,31 +16,28 @@
       "observed_page_title": "VCF (Variant Call Format) version 4.0",
       "observed_scope": "Core VCF v4.0 text: metadata, header syntax, fixed fields, INFO, FORMAT, GT and haplotype representation.",
       "web_evidence": {
-        "source_ref": "turn924559view0",
-        "observed_lines": "0-245",
-        "relevant_lines": [
-          "0-2",
-          "36-58",
-          "59-73",
-          "74-122",
-          "123-181"
+        "source_refs": [
+          "turn319131search1",
+          "turn319131search0",
+          "turn319131search2"
         ],
-        "retrieval_date": "2026-11-05"
+        "retrieval_date": "2026-11-05",
+        "corroboration": "VCFtools historical specifications page states that older VCF 4.0 specification documents are hosted on the 1000 Genomes wiki; IGSR page identifies itself as VCF version 4.0; current HTS index identifies VCFv4.1-4.5 as successor specifications."
       },
-      "provenance_assessment": "The page explicitly presents itself as VCF version 4.0 and supplies core VCF rules. It is an archival custodian page, but the original authoring/release provenance and relationship to the first normative publication have not yet been independently established.",
+      "provenance_assessment": "The VCFtools historical specification index explicitly points to the 1000 Genomes wiki as host for the older VCF 4.0 document, and the IGSR page explicitly identifies itself as VCF version 4.0. This establishes a stronger historical-source chain, but the original authoring/release provenance, completeness against the original release, and immutable source-byte identity still require verification.",
       "raw_source_capture": {
         "status": "NOT_CAPTURED",
         "bytes": null,
         "sha256": null,
         "media_type": "text/html",
-        "reason": "A raw immutable response body could not be obtained in this work session. Rendered web text is not substituted for original source bytes."
+        "reason": "The rendered web page and search-indexed text are accessible, but exact original response bytes could not be downloaded in this work session; no rendered text or normalized reconstruction is substituted for raw source bytes."
       },
       "normative_status": "CANDIDATE_NOT_YET_ACCEPTED_AS_PINNED_NORMATIVE_SOURCE",
       "limitations": [
         "The page contains 1000 Genomes-oriented examples and fields such as H2; these must be classified individually rather than presumed universally normative.",
         "The page links to a separate 1000 Genomes structural-variation conventions page.",
-        "No SHA-256 of original HTML/PDF/source bytes is available.",
-        "Do not promote the current mutable URL to a pinned immutable source revision."
+        "Do not promote the current mutable URL to a pinned immutable source revision.",
+        "The source host relationship is corroborated by the historical VCFtools specifications index, but no immutable HTML/PDF/source-byte artifact or SHA-256 has been captured."
       ]
     },
     {
@@ -94,6 +91,7 @@
     "Do not mark VCFv4.0 applicability APPLICABLE until a source is accepted, pinned and reviewed; use SOURCE_NOT_PINNED meanwhile."
   ],
   "capture_plan": [
+    "Use the VCFtools historical specifications index as a provenance pointer to the 1000 Genomes VCFv4.0 core page; verify original author/release metadata and capture the exact page/artifact bytes.",
     "Identify the original VCFv4.0 specification artifact or an authoritative archival reproduction with provenance back to the original specification authors/release.",
     "Obtain the complete original PDF, TeX/source archive or equivalent source bytes, not only a rendered search result.",
     "Record retrieval URL, publisher/custodian, release/date/version metadata, media type, byte count and immutable archive/commit identity where available.",
@@ -103,8 +101,8 @@
     "Only then atomize VCFv4.0 requirements and reconcile applicability against VCFv4.1–4.5."
   ],
   "explicit_nonclaims": [
-    "The IGSR VCFv4.0 page has not been accepted as the final normative source.",
-    "No original VCFv4.0 source bytes or SHA-256 were captured in this pass.",
+    "The IGSR VCFv4.0 page is a corroborated historical source candidate, but has not yet been accepted as the final pinned normative source.",
+    "No original VCFv4.0 source bytes or SHA-256 were captured in this pass; rendered web text is not a substitute.",
     "The 1000 Genomes structural-variation conventions are not treated as core VCFv4.0 normative requirements.",
     "No VCFv4.0 conformance declaration is made."
   ]
