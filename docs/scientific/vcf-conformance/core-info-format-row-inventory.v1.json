@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-core-table-row-normalization",
   "status": "PRIMARY_SOURCE_EXTRACTION_COMPLETE_FOR_CORE_RESERVED_KEY_TABLES_SEMANTIC_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "scope": "Reserved INFO and reserved FORMAT/genotype key definitions in VCFv4.1–4.5; 4.1–4.2 are prose enumerations and 4.3–4.5 use tables. VCFv4.0 excluded pending historical source byte capture.",
   "method": "Extract key, Number, Type and Description cells from each pinned source row, or key/description from the earlier prose enumerations. Preserve original source line and raw TeX line. This extraction does not decide whether a reserved key is mandatory in a record; the surrounding specification calls reserved keys optional in the relevant sections. For VCFv4.3–4.5, the eight header names are centered TeX lines rather than enumerate items; they are captured as an ordered sequence from the exact source lines.",
   "versions": [
@@ -154,7 +154,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 171,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -190,7 +190,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 172,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -226,7 +226,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 173,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -262,7 +262,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 174,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -298,7 +298,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 175,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -334,7 +334,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 176,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -370,7 +370,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 177,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -406,7 +406,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 178,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -442,7 +442,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 179,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -478,7 +478,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 180,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -514,7 +514,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 181,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -550,7 +550,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 182,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -586,7 +586,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 183,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -622,7 +622,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 184,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -658,7 +658,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 185,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -694,7 +694,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 186,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -730,7 +730,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 187,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -766,7 +766,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 188,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -828,7 +828,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 200,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -864,7 +864,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 205,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -900,7 +900,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 206,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -936,7 +936,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 207,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -972,7 +972,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 208,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1008,7 +1008,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 209,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1044,7 +1044,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 210,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1080,7 +1080,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 211,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1116,7 +1116,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 212,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1152,7 +1152,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 213,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1188,7 +1188,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 214,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1224,7 +1224,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 215,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1260,7 +1260,7 @@
               "source_locator": {
                 "source_file": "VCFv4.1.tex",
                 "line": 216,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1420,7 +1420,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 188,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1456,7 +1456,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 189,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1492,7 +1492,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 190,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1528,7 +1528,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 191,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1564,7 +1564,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 192,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1600,7 +1600,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 193,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1636,7 +1636,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 194,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1672,7 +1672,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 195,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1708,7 +1708,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 196,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1744,7 +1744,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 197,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1780,7 +1780,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 198,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1816,7 +1816,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 199,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1852,7 +1852,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 200,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1888,7 +1888,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 201,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1924,7 +1924,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 202,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1960,7 +1960,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 203,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -1996,7 +1996,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 204,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2032,7 +2032,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 205,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2094,7 +2094,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 217,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2130,7 +2130,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 222,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2166,7 +2166,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 223,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2202,7 +2202,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 224,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2238,7 +2238,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 225,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2274,7 +2274,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 226,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2310,7 +2310,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 227,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2346,7 +2346,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 228,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2382,7 +2382,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 229,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2418,7 +2418,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 230,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2454,7 +2454,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 231,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2490,7 +2490,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 232,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2526,7 +2526,7 @@
               "source_locator": {
                 "source_file": "VCFv4.2.tex",
                 "line": 233,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2691,7 +2691,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 395,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2729,7 +2729,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 396,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2767,7 +2767,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 397,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2805,7 +2805,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 398,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2843,7 +2843,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 399,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2881,7 +2881,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 400,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2919,7 +2919,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 401,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2957,7 +2957,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 402,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -2995,7 +2995,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 403,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3033,7 +3033,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 404,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3071,7 +3071,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 405,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3109,7 +3109,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 406,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3147,7 +3147,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 407,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3185,7 +3185,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 408,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3223,7 +3223,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 409,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3261,7 +3261,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 410,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3299,7 +3299,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 411,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3337,7 +3337,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 412,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3375,7 +3375,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 413,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3413,7 +3413,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 414,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3451,7 +3451,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 415,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3512,7 +3512,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 462,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3550,7 +3550,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 463,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3588,7 +3588,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 464,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3626,7 +3626,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 465,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3664,7 +3664,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 466,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3702,7 +3702,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 467,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3740,7 +3740,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 468,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3778,7 +3778,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 469,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3816,7 +3816,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 470,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3854,7 +3854,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 471,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3892,7 +3892,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 472,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3930,7 +3930,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 473,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -3968,7 +3968,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 474,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4006,7 +4006,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 475,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4044,7 +4044,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 476,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4082,7 +4082,7 @@
               "source_locator": {
                 "source_file": "VCFv4.3.tex",
                 "line": 477,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4247,7 +4247,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 411,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4285,7 +4285,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 412,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4323,7 +4323,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 413,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4361,7 +4361,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 414,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4399,7 +4399,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 415,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4437,7 +4437,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 416,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4475,7 +4475,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 417,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4513,7 +4513,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 418,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4551,7 +4551,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 419,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4589,7 +4589,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 420,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4627,7 +4627,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 421,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4665,7 +4665,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 422,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4703,7 +4703,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 423,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4741,7 +4741,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 424,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4779,7 +4779,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 425,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4817,7 +4817,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 426,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4855,7 +4855,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 427,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4893,7 +4893,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 428,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4931,7 +4931,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 429,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -4969,7 +4969,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 430,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5007,7 +5007,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 431,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5072,7 +5072,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 480,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5110,7 +5110,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 481,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5148,7 +5148,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 482,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5186,7 +5186,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 483,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5224,7 +5224,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 484,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5262,7 +5262,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 485,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5300,7 +5300,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 486,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5338,7 +5338,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 487,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5376,7 +5376,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 488,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5414,7 +5414,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 489,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5452,7 +5452,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 490,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5490,7 +5490,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 491,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5528,7 +5528,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 492,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5566,7 +5566,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 493,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5604,7 +5604,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 494,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5642,7 +5642,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 495,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5680,7 +5680,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 496,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5718,7 +5718,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 497,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5756,7 +5756,7 @@
               "source_locator": {
                 "source_file": "VCFv4.4.tex",
                 "line": 498,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5921,7 +5921,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 460,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5959,7 +5959,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 461,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -5997,7 +5997,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 462,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6035,7 +6035,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 463,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6073,7 +6073,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 464,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6111,7 +6111,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 465,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6149,7 +6149,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 466,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6187,7 +6187,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 467,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6225,7 +6225,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 468,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6263,7 +6263,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 469,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6301,7 +6301,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 470,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6339,7 +6339,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 471,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6377,7 +6377,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 472,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6415,7 +6415,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 473,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6453,7 +6453,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 474,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6491,7 +6491,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 475,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6529,7 +6529,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 476,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6567,7 +6567,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 477,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6605,7 +6605,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 478,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6643,7 +6643,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 479,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6681,7 +6681,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 480,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6789,7 +6789,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 534,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6827,7 +6827,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 535,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6865,7 +6865,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 536,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6903,7 +6903,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 537,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6941,7 +6941,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 538,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -6979,7 +6979,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 539,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7017,7 +7017,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 540,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7055,7 +7055,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 541,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7093,7 +7093,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 542,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7131,7 +7131,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 543,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7169,7 +7169,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 544,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7207,7 +7207,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 545,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7245,7 +7245,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 546,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7283,7 +7283,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 547,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7321,7 +7321,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 548,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7359,7 +7359,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 549,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7397,7 +7397,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 550,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7435,7 +7435,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 551,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7473,7 +7473,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 552,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7511,7 +7511,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 553,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7549,7 +7549,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 554,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7587,7 +7587,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 555,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7625,7 +7625,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 556,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7663,7 +7663,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 557,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7701,7 +7701,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 558,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7739,7 +7739,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 559,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7777,7 +7777,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 560,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7815,7 +7815,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 561,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7853,7 +7853,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 562,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7891,7 +7891,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 563,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7929,7 +7929,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 564,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -7967,7 +7967,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 565,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8005,7 +8005,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 566,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8043,7 +8043,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 567,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8081,7 +8081,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 568,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8119,7 +8119,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 569,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8157,7 +8157,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 570,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8195,7 +8195,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 571,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8233,7 +8233,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 572,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8271,7 +8271,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 573,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8309,7 +8309,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 574,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8347,7 +8347,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 575,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8385,7 +8385,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 576,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8423,7 +8423,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 577,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8461,7 +8461,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 578,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8499,7 +8499,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 579,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8537,7 +8537,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 580,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8575,7 +8575,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 581,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8613,7 +8613,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 582,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8651,7 +8651,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 583,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8689,7 +8689,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 584,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8727,7 +8727,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 585,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8765,7 +8765,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 586,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8803,7 +8803,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 587,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8841,7 +8841,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 588,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8879,7 +8879,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 589,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8917,7 +8917,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 590,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8955,7 +8955,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 591,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -8993,7 +8993,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 592,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -9031,7 +9031,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 593,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -9069,7 +9069,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 594,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -9107,7 +9107,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 595,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
@@ -9145,7 +9145,7 @@
               "source_locator": {
                 "source_file": "VCFv4.5.tex",
                 "line": 596,
-                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+                "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
               },
               "implementation_rule": "Do not require this key to be present solely because it is listed as reserved. Validate a present declaration/value against the version-specific definition and surrounding clauses."
             }
