@@ -236,7 +236,13 @@ if Celery is not None:
                 dispatch.status = "PENDING"
                 dispatch.task_id = None
                 dispatch.last_error = None
-                # Keep the durable generation pointer on this dispatch while\n                # its broker publication is retried. Clearing it would make the\n                # current dispatch look stale to the generation fence below.\n                analysis.queue_task_id = str(dispatch.id)\n                db.add(dispatch)\n                db.add(analysis)\n                db.commit()
+                # Keep the durable generation pointer on this dispatch while
+                # its broker publication is retried. Clearing it would make the
+                # current dispatch look stale to the generation fence below.
+                analysis.queue_task_id = str(dispatch.id)
+                db.add(dispatch)
+                db.add(analysis)
+                db.commit()
 
             analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
             if analysis is None:
