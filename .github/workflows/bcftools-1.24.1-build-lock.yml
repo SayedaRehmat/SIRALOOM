@@ -82,7 +82,6 @@ jobs:
           # differences; installation from the committed lock is separately
           # verified in the source-profile matrix before any source build.
           sed -i 's#conda-forge/noarch/python-3.12.16#conda-forge/linux-64/python-3.12.16#' "$generated"
-          sed -i 's#2362c70e7e79827c32db35547d9c179d#2362c70e7e79827c32db35547d9c179b#' "$generated"
           grep -Fq '@EXPLICIT' "$generated"
           diff -u "$LOCK_FILE" "$generated"
           sha256sum "$LOCK_FILE" "$generated"
