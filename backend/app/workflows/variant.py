@@ -1327,6 +1327,13 @@ def _persist_terminal_provenance(
             "workflow_id": analysis.workflow_id,
             "workflow_version": analysis.workflow_version,
             "reference_build": analysis.reference_build,
+            "toolchain": {
+                "profile_id": analysis.toolchain_profile_id,
+                "bcftools_version": analysis.toolchain_bcftools_version,
+                "htslib_version": analysis.toolchain_htslib_version,
+                "worker_queue": analysis.toolchain_queue,
+                "snapshot": analysis.toolchain_snapshot or {},
+            },
             "steps": [
                 {
                     "step_id": s.step_id,
