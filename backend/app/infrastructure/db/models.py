@@ -22,6 +22,43 @@ from backend.app.infrastructure.db.base import Base
 def now() -> datetime:
     return datetime.now(timezone.utc)
 
+
+def _configured_toolchain_profile() -> dict:
+    from backend.app.config import settings
+    from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
+
+    return resolve_registered_toolchain_profile(settings.bcftools_profile_id)
+
+
+def _default_toolchain_profile_id() -> str:
+    return str(_configured_toolchain_profile()["id"])
+
+
+def _default_toolchain_bcftools_version() -> str:
+    return str(_configured_toolchain_profile()["bcftools_version"])
+
+
+def _default_toolchain_htslib_version() -> str:
+    return str(_configured_toolchain_profile()["htslib_version"])
+
+
+def _default_toolchain_queue() -> str:
+    return str(_configured_toolchain_profile()["worker_queue"])
+
+
+def _default_toolchain_snapshot() -> dict:
+    profile = _configured_toolchain_profile()
+    return {
+        "profile_id": profile["id"],
+        "bcftools_version": profile["bcftools_version"],
+        "htslib_version": profile["htslib_version"],
+        "platform": profile["platform"],
+        "worker_queue": profile["worker_queue"],
+        "lock_file": profile["lock_file"],
+        "lock_sha256": profile["lock_sha256"],
+        "qualification_scope": profile.get("qualification_scope"),
+    }
+
 class OrganizationStorageProfile(Base):
     """Organization-scoped artifact storage binding.
 
@@ -275,11 +312,11 @@ class Analysis(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     analysis_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    toolchain_profile_id: Mapped[str] = mapped_column(Text, nullable=False, default="bcftools-1.25-htslib-1.25-linux-64")
-    toolchain_bcftools_version: Mapped[str] = mapped_column(Text, nullable=False, default="1.25")
-    toolchain_htslib_version: Mapped[str] = mapped_column(Text, nullable=False, default="1.25")
-    toolchain_queue: Mapped[str] = mapped_column(Text, nullable=False, default="bioinformatics.bcftools.1_25")
-    toolchain_snapshot: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    toolchain_profile_id: Mapped[str] = mapped_column(Text, nullable=False, default=_default_toolchain_profile_id)
+    toolchain_bcftools_version: Mapped[str] = mapped_column(Text, nullable=False, default=_default_toolchain_bcftools_version)
+    toolchain_htslib_version: Mapped[str] = mapped_column(Text, nullable=False, default=_default_toolchain_htslib_version)
+    toolchain_queue: Mapped[str] = mapped_column(Text, nullable=False, default=_default_toolchain_queue)
+    toolchain_snapshot: Mapped[dict] = mapped_column(JSON, default=_default_toolchain_snapshot, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
         Index(
