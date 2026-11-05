@@ -90,7 +90,7 @@
     },
     {
       "artifact": "vcf4.0-historical-source-provenance.v1.json",
-      "scope": "Historical VCFv4.0 source discovery and provenance assessment. IGSR core page is a candidate reference only; raw immutable source bytes and SHA-256 are not captured, normative provenance remains unaccepted, and the 1000 Genomes SV conventions page is explicitly separated as producer-convention material."
+      "scope": "Historical VCFv4.0 core-source discovery: VCFtools historical index corroborates the IGSR page as the host for the older 4.0 specification; immutable source bytes and SHA-256 remain NOT_CAPTURED, and 1000 Genomes SV conventions remain a separate producer-convention source."
     },
     {
       "artifact": "INDEPENDENT_REVIEW_PACKAGE.v1.md",
