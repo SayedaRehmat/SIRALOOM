@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-core-info-format-version-delta",
   "status": "PRIMARY_REVIEW_COMPLETE_FOR_RESERVED_INFO_FORMAT_ROW_INVENTORY_AND_INITIAL_SEMANTIC_DELTAS_INDEPENDENT_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "scope": "Reserved INFO and FORMAT/genotype keys enumerated in the core VCF specification sections, VCFv4.1–4.5. This excludes structural-variant-specific INFO/FORMAT sections and VCFv4.0 pending source pinning.",
   "counts": [
     {
@@ -815,7 +815,7 @@
     "laboratory_qualification": "NOT_CLAIMED"
   },
   "row_level_review": {
-    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "source_inventory_file": "core-info-format-row-inventory.v1.json",
     "total_reserved_definition_entries": 223,
     "by_version": [
