@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+import pytest
+
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -29,7 +31,19 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "queue"),
+    [
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25"),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4"),
+        ("bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", "1.21.3", "bioinformatics.bcftools.1_21_3"),
+    ],
+)
+def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit(
+    profile_id, bcftools_version, htslib_version, queue
+):
     from backend.app.application.entitlements import TRIAL_MAX_ANALYSES
     from backend.app.domain.reanalysis import create_reanalysis
     from backend.app.infrastructure.db.models import AuditEvent, OrganizationEntitlement
@@ -60,6 +74,19 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
             reference_build="GRCh38", configuration={}, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
+            toolchain_profile_id=profile_id,
+            toolchain_bcftools_version=bcftools_version,
+            toolchain_htslib_version=htslib_version,
+            toolchain_queue=queue,
+            toolchain_snapshot={
+                "profile_id": profile_id,
+                "bcftools_version": bcftools_version,
+                "htslib_version": htslib_version,
+                "worker_queue": queue,
+                "platform": "linux-64",
+                "lock_file": f"configs/bioinformatics/profiles/{profile_id}.lock",
+                "lock_sha256": "a" * 64,
+            },
         ))
         db.commit()
 
