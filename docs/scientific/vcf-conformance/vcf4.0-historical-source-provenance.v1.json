@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "SIRALOOM-VCF40-HISTORICAL-SOURCE-PROVENANCE-2026-11-05",
-  "status": "HISTORICAL_SOURCE_CANDIDATE_CORROBORATED_RAW_CAPTURE_AND_SHA256_PENDING",
+  "status": "HISTORICAL_SOURCE_IDENTITY_CORROBORATED_EXACT_SOURCE_BYTES_AND_SHA256_BLOCKED",
   "scope": {
     "version": "VCFv4.0",
     "purpose": "Identify and qualify a historical VCFv4.0 normative source without conflating the core format specification with 1000 Genomes Project producer conventions or structural-variation extensions."
@@ -24,13 +24,14 @@
         "retrieval_date": "2026-11-05",
         "corroboration": "VCFtools historical specifications page states that older VCF 4.0 specification documents are hosted on the 1000 Genomes wiki; IGSR page identifies itself as VCF version 4.0; current HTS index identifies VCFv4.1-4.5 as successor specifications."
       },
-      "provenance_assessment": "The VCFtools historical specification index explicitly points to the 1000 Genomes wiki as host for the older VCF 4.0 document, and the IGSR page explicitly identifies itself as VCF version 4.0. This establishes a stronger historical-source chain, but the original authoring/release provenance, completeness against the original release, and immutable source-byte identity still require verification.",
+      "provenance_assessment": "The VCFtools historical index and IGSR page independently corroborate the historical location and VCFv4.0 identity of the core specification. The core page contains the version-specific format description, while the separate SV page explicitly labels its content as 1000 Genomes project conventions/extensions. However, exact immutable source-byte identity and complete original release provenance remain unverified.",
       "raw_source_capture": {
         "status": "NOT_CAPTURED",
         "bytes": null,
         "sha256": null,
         "media_type": "text/html",
-        "reason": "The rendered web page and search-indexed text are accessible, but exact original response bytes could not be downloaded in this work session; no rendered text or normalized reconstruction is substituted for raw source bytes."
+        "reason": "Only rendered/search-indexed HTML text was retrievable. The raw-export endpoint was inaccessible and no authoritative original PDF/TeX/source archive was located. Do not reconstruct HTML or hash rendered text as a substitute.",
+        "byte_length": null
       },
       "normative_status": "CANDIDATE_NOT_YET_ACCEPTED_AS_PINNED_NORMATIVE_SOURCE",
       "limitations": [
@@ -38,6 +39,55 @@
         "The page links to a separate 1000 Genomes structural-variation conventions page.",
         "Do not promote the current mutable URL to a pinned immutable source revision.",
         "The source host relationship is corroborated by the historical VCFtools specifications index, but no immutable HTML/PDF/source-byte artifact or SHA-256 has been captured."
+      ],
+      "alternate_canonical_uri": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+      "additional_web_evidence": [
+        {
+          "source_ref": "turn430266search0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "Current IGSR page identifies itself as VCF version 4.0 and explicitly separates the 1000 Genomes structural-variation conventions/extensions page."
+        },
+        {
+          "source_ref": "turn259309search1",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "IGSR historical page content exposes VCFv4.0 core sections: meta-information, header syntax, fixed fields, INFO and genotype fields."
+        },
+        {
+          "source_ref": "turn259309search2",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "The short historical page provides an example and links the separate structural-variation conventions."
+        },
+        {
+          "source_ref": "turn430266search3",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
+          "observation": "IGSR general VCF page states that specification maintenance moved to GA4GH and points to the maintained HTS specifications."
+        }
+      ],
+      "acquisition_attempts": [
+        {
+          "attempt": "Web retrieval of the canonical IGSR page",
+          "result": "Rendered historical page content retrieved; original HTTP entity bytes and byte length are not exposed by the retrieval interface.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "DokuWiki raw-export endpoint probe (?do=export_raw)",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40?do=export_raw",
+          "result": "Endpoint was inaccessible through the available retrieval interface; no bytes returned.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "Search for an authoritative VCFv4.0 PDF or source archive",
+          "result": "No authoritative original VCFv4.0 PDF/source archive located. Search results include secondary teaching materials and the rendered IGSR historical page; these are not accepted as original normative bytes.",
+          "accepted_as_raw_capture": false
+        }
+      ],
+      "capture_plan": [
+        "Obtain the historical page's original HTTP response entity or an authoritative archival snapshot with verifiable custody and capture date.",
+        "If the page was maintained in DokuWiki, obtain the original revision export or database-backed page revision and preserve the exact bytes; do not use a newly rendered page as an equivalent without provenance.",
+        "Record the exact retrieval URL, redirect chain, HTTP Last-Modified/ETag where available, retrieval timestamp, media type, byte count and archive/revision identifier.",
+        "Compute SHA-256 over the exact captured byte stream and commit the immutable artifact into the research source archive.",
+        "Compare the captured artifact against both current IGSR renderings and any independent contemporaneous copies, recording differences and omissions.",
+        "Keep the separate 1000 Genomes SV conventions and project-specific tags classified as producer/project material unless core normative provenance is independently established."
       ]
     },
     {
@@ -105,5 +155,6 @@
     "No original VCFv4.0 source bytes or SHA-256 were captured in this pass; rendered web text is not a substitute.",
     "The 1000 Genomes structural-variation conventions are not treated as core VCFv4.0 normative requirements.",
     "No VCFv4.0 conformance declaration is made."
-  ]
+  ],
+  "last_reviewed_utc": "2026-11-05T10:35:40.419Z"
 }
