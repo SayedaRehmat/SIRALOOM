@@ -1,4 +1,4 @@
-name: Python dependency lock bootstrap
+name: Python dependency lock verification
 
 on:
   pull_request:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  resolve-and-verify:
+  locked-install:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -24,28 +24,18 @@ jobs:
           python-version-file: .python-version
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
-      - name: Resolve updated lock
+      - name: Verify lock metadata and production-only dependency graph
         env:
           UV_NO_PROGRESS: "1"
           UV_PYTHON_DOWNLOADS: "never"
         run: |
           uv --version
-          uv lock --python 3.12
           uv lock --check
-      - name: Verify production-only dependency graph
-        env:
-          UV_NO_PROGRESS: "1"
-          UV_PYTHON_DOWNLOADS: "never"
-        run: |
           uv sync --locked --no-dev
           uv run --locked --no-dev python -c "import redis, kombu.transport.redis, backend.app; print('production imports OK')"
       - name: Verify development dependency graph
         run: |
           uv sync --locked --extra dev
           uv run --locked python -c "import pytest, redis, kombu.transport.redis; print('development imports OK')"
-      - name: Emit resolved lockfile
-        run: |
-          test -s uv.lock
-          echo "::group::BEGIN_UV_LOCKFILE"
-          cat uv.lock
-          echo "::endgroup::"
+      - name: Verify lock immutability
+        run: uv lock --check
