@@ -1396,7 +1396,7 @@
       "proposed_atomic_statement": "A record identifier is not reused in another data record.",
       "requirement_domain": "FIXED_FIELDS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST_NOT",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "An identifier does not occur in more than one data record.",
@@ -1491,14 +1491,21 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD_NOT",
+        "VCFv4.2": "SHOULD_NOT",
+        "VCFv4.3": "SHOULD_NOT",
+        "VCFv4.4": "SHOULD_NOT",
+        "VCFv4.5": "SHOULD_NOT"
+      }
     },
     {
       "candidate_id": "CORE-ID-003",
       "proposed_atomic_statement": "ID uses the missing-value token when no identifier is available.",
       "requirement_domain": "MISSINGNESS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "When no identifier is available, ID is the missing-value token.",
@@ -1593,7 +1600,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "CORE-REF-001",
@@ -3115,7 +3129,7 @@
       "proposed_atomic_statement": "The exact format of each INFO subfield is declared in the meta-information.",
       "requirement_domain": "INFO",
       "requirement_kind": "CROSS_REFERENCE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "SHOULD",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "The exact format of each INFO subfield is specified in the header meta-information.",
@@ -3171,12 +3185,12 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L390",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L388",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.4.tex lines 390-390",
-            "start_line": 390,
-            "end_line": 390
+            "locator_value": "VCFv4.4.tex line 388",
+            "start_line": 388,
+            "end_line": 388
           },
           "source_excerpt_sha256": null,
           "review_note": "Pinned source passage inspected with surrounding section context."
@@ -3210,7 +3224,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "SHOULD",
+        "VCFv4.4": "SHOULD",
+        "VCFv4.5": "SHOULD"
+      }
     },
     {
       "candidate_id": "CORE-FORMAT-001",
@@ -3363,8 +3384,8 @@
         "VCFv4.4",
         "VCFv4.5"
       ],
-      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
+      "review_status": "SUPERSEDED_BY_CHILD_CANDIDATES",
+      "atomicity_status": "SUPERSEDED_PARENT_NOT_COUNTED_AS_ATOMIC",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
@@ -4897,7 +4918,7 @@
       "proposed_atomic_statement": "INFO is '.' when no INFO keys are present.",
       "requirement_domain": "INFO",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
       "required_or_prohibited_behavior": "An INFO field with no entries is represented by '.'.",
@@ -4995,7 +5016,14 @@
       "tests": "NOT_STARTED",
       "open_questions": [
         "Confirm exact normative force and acceptance oracle in independent review."
-      ]
+      ],
+      "normative_force_by_version": {
+        "VCFv4.1": "MUST",
+        "VCFv4.2": "MUST",
+        "VCFv4.3": "NOT_STATED",
+        "VCFv4.4": "NOT_STATED",
+        "VCFv4.5": "NOT_STATED"
+      }
     },
     {
       "candidate_id": "CORE-FORMAT-002A",
@@ -5179,7 +5207,9 @@
     }
   ],
   "review_summary": {
-    "primary_reviewed": 40,
+    "primary_source_context_reviewed": 53,
+    "proposed_atomic_candidates": 46,
+    "compound_parent_records": 6,
     "independent_second_reviewed": 0,
     "implementation_mapped": 0,
     "clause_tests_executed": 0,
@@ -5189,6 +5219,7 @@
     "The core header meta-information declaration grammar is not yet fully decomposed; this tranche covers the header column line and the fixed record/INFO/FORMAT sections.",
     "The reserved INFO/FORMAT row inventory is separately captured; each row still needs semantic and normative-force review against adjacent prose and meta-information grammar.",
     "VCFv4.0 remains excluded until its historical raw source bytes and digest are captured.",
-    "Some proposed acceptance conditions need refinement against the exact per-version normative force and special cases; no implementation verdict is implied."
+    "Some proposed acceptance conditions need refinement against the exact per-version normative force and special cases; no implementation verdict is implied.",
+    "Normative force is version-sensitive for several clauses; force_by_version is retained in this research candidate register and must be split into version-scoped ledger records where the ledger schema cannot represent a force delta."
   ]
 }
