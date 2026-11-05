@@ -154,7 +154,7 @@ def test_pinned_snapshot_retry_loop_retries_transient_apt_failures():
     script = """set -eu
 apt_calls=0
 sleep_calls=0
-apt-get() {
+apt_get() {
     apt_calls=$((apt_calls + 1))
     [ "$apt_calls" -ge 3 ]
 }
@@ -162,7 +162,7 @@ sleep() {
     sleep_calls=$((sleep_calls + 1))
 }
 apt_update_succeeded=0 \\
-""" + loop
+""" + loop.replace("apt-get", "apt_get")
     script = script.replace(
         '&& test "$apt_update_succeeded" = 1',
         '&& test "$apt_update_succeeded" = 1 && test "$apt_calls" = 3 && test "$sleep_calls" = 2',
