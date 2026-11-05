@@ -915,7 +915,7 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
 
     assert result.status == "VALID"
     assert result.metadata["bcftools_version"] == f"bcftools {settings.bcftools_version}"
-    assert result.metadata["expected_bcftools_version"] == "1.25"
+    assert result.metadata["expected_bcftools_version"] == settings.bcftools_version
     assert result.metadata["htslib_version"] == settings.htslib_version
     assert result.metadata["expected_htslib_version"] == settings.htslib_version
     assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id
