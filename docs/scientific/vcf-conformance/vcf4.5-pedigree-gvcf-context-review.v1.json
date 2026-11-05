@@ -4,10 +4,11 @@
   "status": "AUTHOR_SOURCE_CONTEXT_REVIEW_COMPLETE_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
-    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "file": "VCFv4.5.tex",
     "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-    "source_sha256": null
+    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "Review of VCFv4.5 sample/genome mixture, clonal pedigree, haplotype lineage and gVCF reference-block sections with surrounding examples and cross-references.",
   "sections": [
