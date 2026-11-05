@@ -40,7 +40,7 @@ RUN groupadd --system --gid 10001 siraloom \
         /data/siraloom/beat \
         /data/references \
     && chown -R 10001:10001 /data/siraloom
-ENV HOME=/home/siraloom
+ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
 COPY --from=bcftools /opt/conda /opt/conda
 ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}"
