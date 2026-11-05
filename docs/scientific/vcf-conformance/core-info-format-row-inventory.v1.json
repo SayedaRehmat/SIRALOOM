@@ -127,109 +127,181 @@
             "source_line": 171,
             "key": "AA",
             "description": "ancestral allele",
-            "raw_source_text": "  \\item AA : ancestral allele"
+            "raw_source_text": "  \\item AA : ancestral allele",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 172,
             "key": "AC",
             "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
-            "raw_source_text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+            "raw_source_text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 173,
             "key": "AF",
             "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
-            "raw_source_text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+            "raw_source_text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 174,
             "key": "AN",
             "description": "total number of alleles in called genotypes",
-            "raw_source_text": "  \\item AN : total number of alleles in called genotypes"
+            "raw_source_text": "  \\item AN : total number of alleles in called genotypes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 175,
             "key": "BQ",
             "description": "RMS base quality at this position",
-            "raw_source_text": "  \\item BQ : RMS base quality at this position"
+            "raw_source_text": "  \\item BQ : RMS base quality at this position",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 176,
             "key": "CIGAR",
             "description": "cigar string describing how to align an alternate allele to the reference allele",
-            "raw_source_text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+            "raw_source_text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 177,
             "key": "DB",
             "description": "dbSNP membership",
-            "raw_source_text": "  \\item DB : dbSNP membership"
+            "raw_source_text": "  \\item DB : dbSNP membership",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 178,
             "key": "DP",
             "description": "combined depth across samples, e.g.\\ DP=154",
-            "raw_source_text": "  \\item DP : combined depth across samples, e.g.\\ DP=154"
+            "raw_source_text": "  \\item DP : combined depth across samples, e.g.\\ DP=154",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 179,
             "key": "END",
             "description": "end position of the variant described in this record (for use with symbolic alleles)",
-            "raw_source_text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)"
+            "raw_source_text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 180,
             "key": "H2",
             "description": "membership in hapmap2",
-            "raw_source_text": "  \\item H2 : membership in hapmap2"
+            "raw_source_text": "  \\item H2 : membership in hapmap2",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 181,
             "key": "H3",
             "description": "membership in hapmap3",
-            "raw_source_text": "  \\item H3 : membership in hapmap3"
+            "raw_source_text": "  \\item H3 : membership in hapmap3",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 182,
             "key": "MQ",
             "description": "RMS mapping quality, e.g.\\ MQ=52",
-            "raw_source_text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+            "raw_source_text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 183,
             "key": "MQ0",
             "description": "Number of MAPQ == 0 reads covering this record",
-            "raw_source_text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record"
+            "raw_source_text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 184,
             "key": "NS",
             "description": "Number of samples with data",
-            "raw_source_text": "  \\item NS : Number of samples with data"
+            "raw_source_text": "  \\item NS : Number of samples with data",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 185,
             "key": "SB",
             "description": "strand bias at this position",
-            "raw_source_text": "  \\item SB : strand bias at this position"
+            "raw_source_text": "  \\item SB : strand bias at this position",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 186,
             "key": "SOMATIC",
             "description": "indicates that the record is a somatic mutation, for cancer genomics",
-            "raw_source_text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+            "raw_source_text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 187,
             "key": "VALIDATED",
             "description": "validated by follow-up experiment",
-            "raw_source_text": "  \\item VALIDATED : validated by follow-up experiment"
+            "raw_source_text": "  \\item VALIDATED : validated by follow-up experiment",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 188,
             "key": "1000G",
             "description": "membership in 1000 Genomes",
-            "raw_source_text": "  \\item 1000G : membership in 1000 Genomes"
+            "raw_source_text": "  \\item 1000G : membership in 1000 Genomes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           }
         ]
       },
@@ -261,79 +333,131 @@
             "source_line": 200,
             "key": "GT",
             "description": "genotype, encoded as allele values separated by either of / or \\mid. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1, 1\\mid0, or 1/2, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like 0/0/1. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `./.' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
-            "raw_source_text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+            "raw_source_text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 205,
             "key": "DP",
             "description": "read depth at this position for this sample (Integer)",
-            "raw_source_text": "  \\item DP : read depth at this position for this sample (Integer)"
+            "raw_source_text": "  \\item DP : read depth at this position for this sample (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 206,
             "key": "FT",
             "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
-            "raw_source_text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+            "raw_source_text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 207,
             "key": "GL",
             "description": "genotype likelihoods comprised of comma separated floating point log_{10}-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
-            "raw_source_text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+            "raw_source_text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 208,
             "key": "GLE",
             "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
-            "raw_source_text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+            "raw_source_text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 209,
             "key": "PL",
             "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
-            "raw_source_text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+            "raw_source_text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 210,
             "key": "GP",
             "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
-            "raw_source_text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+            "raw_source_text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 211,
             "key": "GQ",
             "description": "conditional genotype quality, encoded as a phred quality -10log_{10} p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
-            "raw_source_text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+            "raw_source_text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 212,
             "key": "HQ",
             "description": "haplotype qualities, two comma separated phred qualities (Integers)",
-            "raw_source_text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+            "raw_source_text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 213,
             "key": "PS",
             "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
-            "raw_source_text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+            "raw_source_text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 214,
             "key": "PQ",
             "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
-            "raw_source_text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+            "raw_source_text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 215,
             "key": "EC",
             "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
-            "raw_source_text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+            "raw_source_text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 216,
             "key": "MQ",
             "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
-            "raw_source_text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+            "raw_source_text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           }
         ]
       },
@@ -463,109 +587,181 @@
             "source_line": 188,
             "key": "AA",
             "description": "ancestral allele",
-            "raw_source_text": "  \\item AA : ancestral allele"
+            "raw_source_text": "  \\item AA : ancestral allele",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 189,
             "key": "AC",
             "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
-            "raw_source_text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+            "raw_source_text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 190,
             "key": "AF",
             "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
-            "raw_source_text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+            "raw_source_text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 191,
             "key": "AN",
             "description": "total number of alleles in called genotypes",
-            "raw_source_text": "  \\item AN : total number of alleles in called genotypes"
+            "raw_source_text": "  \\item AN : total number of alleles in called genotypes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 192,
             "key": "BQ",
             "description": "RMS base quality at this position",
-            "raw_source_text": "  \\item BQ : RMS base quality at this position"
+            "raw_source_text": "  \\item BQ : RMS base quality at this position",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 193,
             "key": "CIGAR",
             "description": "cigar string describing how to align an alternate allele to the reference allele",
-            "raw_source_text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+            "raw_source_text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 194,
             "key": "DB",
             "description": "dbSNP membership",
-            "raw_source_text": "  \\item DB : dbSNP membership"
+            "raw_source_text": "  \\item DB : dbSNP membership",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 195,
             "key": "DP",
             "description": "combined depth across samples, e.g.\\ DP=154",
-            "raw_source_text": "  \\item DP : combined depth across samples, e.g.\\ DP=154"
+            "raw_source_text": "  \\item DP : combined depth across samples, e.g.\\ DP=154",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 196,
             "key": "END",
             "description": "end position of the variant described in this record (for use with symbolic alleles)",
-            "raw_source_text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)"
+            "raw_source_text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 197,
             "key": "H2",
             "description": "membership in hapmap2",
-            "raw_source_text": "  \\item H2 : membership in hapmap2"
+            "raw_source_text": "  \\item H2 : membership in hapmap2",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 198,
             "key": "H3",
             "description": "membership in hapmap3",
-            "raw_source_text": "  \\item H3 : membership in hapmap3"
+            "raw_source_text": "  \\item H3 : membership in hapmap3",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 199,
             "key": "MQ",
             "description": "RMS mapping quality, e.g.\\ MQ=52",
-            "raw_source_text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+            "raw_source_text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 200,
             "key": "MQ0",
             "description": "Number of MAPQ == 0 reads covering this record",
-            "raw_source_text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record"
+            "raw_source_text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 201,
             "key": "NS",
             "description": "Number of samples with data",
-            "raw_source_text": "  \\item NS : Number of samples with data"
+            "raw_source_text": "  \\item NS : Number of samples with data",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 202,
             "key": "SB",
             "description": "strand bias at this position",
-            "raw_source_text": "  \\item SB : strand bias at this position"
+            "raw_source_text": "  \\item SB : strand bias at this position",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 203,
             "key": "SOMATIC",
             "description": "indicates that the record is a somatic mutation, for cancer genomics",
-            "raw_source_text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+            "raw_source_text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 204,
             "key": "VALIDATED",
             "description": "validated by follow-up experiment",
-            "raw_source_text": "  \\item VALIDATED : validated by follow-up experiment"
+            "raw_source_text": "  \\item VALIDATED : validated by follow-up experiment",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 205,
             "key": "1000G",
             "description": "membership in 1000 Genomes",
-            "raw_source_text": "  \\item 1000G : membership in 1000 Genomes"
+            "raw_source_text": "  \\item 1000G : membership in 1000 Genomes",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           }
         ]
       },
@@ -597,79 +793,131 @@
             "source_line": 217,
             "key": "GT",
             "description": "genotype, encoded as allele values separated by either of / or \\mid. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be 0/1, 1\\mid0, or 1/2, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like 0/0/1. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `./.' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
-            "raw_source_text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+            "raw_source_text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 222,
             "key": "DP",
             "description": "read depth at this position for this sample (Integer)",
-            "raw_source_text": "  \\item DP : read depth at this position for this sample (Integer)"
+            "raw_source_text": "  \\item DP : read depth at this position for this sample (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 223,
             "key": "FT",
             "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
-            "raw_source_text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+            "raw_source_text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 224,
             "key": "GL",
             "description": "genotype likelihoods comprised of comma separated floating point log_{10}-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
-            "raw_source_text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+            "raw_source_text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 225,
             "key": "GLE",
             "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
-            "raw_source_text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+            "raw_source_text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 226,
             "key": "PL",
             "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
-            "raw_source_text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+            "raw_source_text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 227,
             "key": "GP",
             "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
-            "raw_source_text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+            "raw_source_text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 228,
             "key": "GQ",
             "description": "conditional genotype quality, encoded as a phred quality -10log_{10} p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
-            "raw_source_text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+            "raw_source_text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 229,
             "key": "HQ",
             "description": "haplotype qualities, two comma separated phred qualities (Integers)",
-            "raw_source_text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+            "raw_source_text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 230,
             "key": "PS",
             "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
-            "raw_source_text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+            "raw_source_text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 231,
             "key": "PQ",
             "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
-            "raw_source_text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+            "raw_source_text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 232,
             "key": "EC",
             "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
-            "raw_source_text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+            "raw_source_text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 233,
             "key": "MQ",
             "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
-            "raw_source_text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+            "raw_source_text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           }
         ]
       },
@@ -804,7 +1052,11 @@
             "number": "1",
             "type": "String",
             "description": "Ancestral allele",
-            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 396,
@@ -812,7 +1064,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
-            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 397,
@@ -820,7 +1076,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Total read depth for each allele",
-            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 398,
@@ -828,7 +1088,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 399,
@@ -836,7 +1100,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 400,
@@ -844,7 +1112,11 @@
             "number": "A",
             "type": "Float",
             "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
-            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 401,
@@ -852,7 +1124,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Total number of alleles in called genotypes",
-            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 402,
@@ -860,7 +1136,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS base quality",
-            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 403,
@@ -868,7 +1148,11 @@
             "number": "A",
             "type": "String",
             "description": "Cigar string describing how to align an alternate allele to the reference allele",
-            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 404,
@@ -876,7 +1160,11 @@
             "number": "0",
             "type": "Flag",
             "description": "dbSNP membership",
-            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 405,
@@ -884,7 +1172,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Combined depth across samples",
-            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 406,
@@ -892,7 +1184,11 @@
             "number": "1",
             "type": "Integer",
             "description": "End position on CHROM (used with symbolic alleles; see below)",
-            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 407,
@@ -900,7 +1196,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap2 membership",
-            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 408,
@@ -908,7 +1208,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap3 membership",
-            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 409,
@@ -916,7 +1220,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS mapping quality",
-            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 410,
@@ -924,7 +1232,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of MAPQ == 0 reads",
-            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 411,
@@ -932,7 +1244,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of samples with data",
-            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 412,
@@ -940,7 +1256,11 @@
             "number": "4",
             "type": "Integer",
             "description": "Strand bias",
-            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 413,
@@ -948,7 +1268,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Somatic mutation (for cancer genomics)",
-            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 414,
@@ -956,7 +1280,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Validated by follow-up experiment",
-            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 415,
@@ -964,7 +1292,11 @@
             "number": "0",
             "type": "Flag",
             "description": "1000 Genomes membership",
-            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           }
         ]
       },
@@ -995,7 +1327,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele",
-            "raw_source_text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+            "raw_source_text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 463,
@@ -1003,7 +1339,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 464,
@@ -1011,7 +1351,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 465,
@@ -1019,7 +1363,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Read depth",
-            "raw_source_text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+            "raw_source_text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 466,
@@ -1027,7 +1375,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Expected alternate allele counts",
-            "raw_source_text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+            "raw_source_text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 467,
@@ -1035,7 +1387,11 @@
             "number": "1",
             "type": "String",
             "description": "Filter indicating if this genotype was ``called''",
-            "raw_source_text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+            "raw_source_text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 468,
@@ -1043,7 +1399,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype likelihoods",
-            "raw_source_text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+            "raw_source_text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 469,
@@ -1051,7 +1411,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype posterior probabilities",
-            "raw_source_text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+            "raw_source_text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 470,
@@ -1059,7 +1423,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Conditional genotype quality",
-            "raw_source_text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+            "raw_source_text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 471,
@@ -1067,7 +1435,11 @@
             "number": "1",
             "type": "String",
             "description": "Genotype",
-            "raw_source_text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+            "raw_source_text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 472,
@@ -1075,7 +1447,11 @@
             "number": "2",
             "type": "Integer",
             "description": "Haplotype quality",
-            "raw_source_text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+            "raw_source_text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 473,
@@ -1083,7 +1459,11 @@
             "number": "1",
             "type": "Integer",
             "description": "RMS mapping quality",
-            "raw_source_text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+            "raw_source_text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 474,
@@ -1091,7 +1471,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
-            "raw_source_text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+            "raw_source_text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 475,
@@ -1099,7 +1483,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
-            "raw_source_text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+            "raw_source_text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 476,
@@ -1107,7 +1495,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phasing quality",
-            "raw_source_text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+            "raw_source_text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 477,
@@ -1115,7 +1507,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phase set",
-            "raw_source_text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+            "raw_source_text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           }
         ]
       },
@@ -1250,7 +1646,11 @@
             "number": "1",
             "type": "String",
             "description": "Ancestral allele",
-            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 412,
@@ -1258,7 +1658,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
-            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 413,
@@ -1266,7 +1670,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Total read depth for each allele",
-            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 414,
@@ -1274,7 +1682,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 415,
@@ -1282,7 +1694,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 416,
@@ -1290,7 +1706,11 @@
             "number": "A",
             "type": "Float",
             "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
-            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 417,
@@ -1298,7 +1718,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Total number of alleles in called genotypes",
-            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 418,
@@ -1306,7 +1730,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS base quality",
-            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 419,
@@ -1314,7 +1742,11 @@
             "number": "A",
             "type": "String",
             "description": "Cigar string describing how to align an alternate allele to the reference allele",
-            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 420,
@@ -1322,7 +1754,11 @@
             "number": "0",
             "type": "Flag",
             "description": "dbSNP membership",
-            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 421,
@@ -1330,7 +1766,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Combined depth across samples",
-            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 422,
@@ -1338,7 +1778,11 @@
             "number": "1",
             "type": "Integer",
             "description": "End position on CHROM (used with symbolic alleles; see below)",
-            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 423,
@@ -1346,7 +1790,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap2 membership",
-            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 424,
@@ -1354,7 +1802,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap3 membership",
-            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 425,
@@ -1362,7 +1814,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS mapping quality",
-            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 426,
@@ -1370,7 +1826,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of MAPQ == 0 reads",
-            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 427,
@@ -1378,7 +1838,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of samples with data",
-            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 428,
@@ -1386,7 +1850,11 @@
             "number": "4",
             "type": "Integer",
             "description": "Strand bias",
-            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 429,
@@ -1394,7 +1862,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Somatic mutation (for cancer genomics)",
-            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 430,
@@ -1402,7 +1874,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Validated by follow-up experiment",
-            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 431,
@@ -1410,7 +1886,11 @@
             "number": "0",
             "type": "Flag",
             "description": "1000 Genomes membership",
-            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           }
         ]
       },
@@ -1445,7 +1925,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele",
-            "raw_source_text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+            "raw_source_text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 481,
@@ -1453,7 +1937,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 482,
@@ -1461,7 +1949,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 483,
@@ -1469,7 +1961,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Read depth",
-            "raw_source_text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+            "raw_source_text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 484,
@@ -1477,7 +1973,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Expected alternate allele counts",
-            "raw_source_text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+            "raw_source_text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 485,
@@ -1485,7 +1985,11 @@
             "number": "1",
             "type": "String",
             "description": "Filter indicating if this genotype was ``called''",
-            "raw_source_text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+            "raw_source_text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 486,
@@ -1493,7 +1997,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype likelihoods",
-            "raw_source_text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+            "raw_source_text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 487,
@@ -1501,7 +2009,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype posterior probabilities",
-            "raw_source_text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+            "raw_source_text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 488,
@@ -1509,7 +2021,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Conditional genotype quality",
-            "raw_source_text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+            "raw_source_text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 489,
@@ -1517,7 +2033,11 @@
             "number": "1",
             "type": "String",
             "description": "Genotype",
-            "raw_source_text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+            "raw_source_text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 490,
@@ -1525,7 +2045,11 @@
             "number": "2",
             "type": "Integer",
             "description": "Haplotype quality",
-            "raw_source_text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+            "raw_source_text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 491,
@@ -1533,7 +2057,11 @@
             "number": "1",
             "type": "Integer",
             "description": "RMS mapping quality",
-            "raw_source_text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+            "raw_source_text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 492,
@@ -1541,7 +2069,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
-            "raw_source_text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+            "raw_source_text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 493,
@@ -1549,7 +2081,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
-            "raw_source_text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+            "raw_source_text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 494,
@@ -1557,7 +2093,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phasing quality",
-            "raw_source_text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+            "raw_source_text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 495,
@@ -1565,7 +2105,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phase set",
-            "raw_source_text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+            "raw_source_text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 496,
@@ -1573,7 +2117,11 @@
             "number": "P",
             "type": "String",
             "description": "Phase set list",
-            "raw_source_text": "      PSL\t\t& P\t\t& String\t& Phase set list \\\\"
+            "raw_source_text": "      PSL\t\t& P\t\t& String\t& Phase set list \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 497,
@@ -1581,7 +2129,11 @@
             "number": "P",
             "type": "Integer",
             "description": "Phase set list ordinal",
-            "raw_source_text": "      PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\"
+            "raw_source_text": "      PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 498,
@@ -1589,7 +2141,11 @@
             "number": "P",
             "type": "Integer",
             "description": "Phase set list quality",
-            "raw_source_text": "      PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\"
+            "raw_source_text": "      PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           }
         ]
       },
@@ -1724,7 +2280,11 @@
             "number": "1",
             "type": "String",
             "description": "Ancestral allele",
-            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+            "raw_source_text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 461,
@@ -1732,7 +2292,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
-            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+            "raw_source_text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 462,
@@ -1740,7 +2304,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Total read depth for each allele",
-            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+            "raw_source_text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 463,
@@ -1748,7 +2316,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 464,
@@ -1756,7 +2328,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 465,
@@ -1764,7 +2340,11 @@
             "number": "A",
             "type": "Float",
             "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
-            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+            "raw_source_text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 466,
@@ -1772,7 +2352,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Total number of alleles in called genotypes",
-            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+            "raw_source_text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 467,
@@ -1780,7 +2364,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS base quality",
-            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+            "raw_source_text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 468,
@@ -1788,7 +2376,11 @@
             "number": "A",
             "type": "String",
             "description": "Cigar string describing how to align an alternate allele to the reference allele",
-            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+            "raw_source_text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 469,
@@ -1796,7 +2388,11 @@
             "number": "0",
             "type": "Flag",
             "description": "dbSNP membership",
-            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+            "raw_source_text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 470,
@@ -1804,7 +2400,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Combined depth across samples",
-            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+            "raw_source_text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 471,
@@ -1812,7 +2412,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Deprecated. Present for backwards compatibility with earlier versions of VCF.",
-            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\"
+            "raw_source_text": "\tEND\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 472,
@@ -1820,7 +2424,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap2 membership",
-            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+            "raw_source_text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 473,
@@ -1828,7 +2436,11 @@
             "number": "0",
             "type": "Flag",
             "description": "HapMap3 membership",
-            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+            "raw_source_text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 474,
@@ -1836,7 +2448,11 @@
             "number": "1",
             "type": "Float",
             "description": "RMS mapping quality",
-            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+            "raw_source_text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 475,
@@ -1844,7 +2460,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of MAPQ == 0 reads",
-            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+            "raw_source_text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 476,
@@ -1852,7 +2472,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Number of samples with data",
-            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+            "raw_source_text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 477,
@@ -1860,7 +2484,11 @@
             "number": "4",
             "type": "Integer",
             "description": "Strand bias",
-            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+            "raw_source_text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 478,
@@ -1868,7 +2496,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Somatic mutation (for cancer genomics)",
-            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+            "raw_source_text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 479,
@@ -1876,7 +2508,11 @@
             "number": "0",
             "type": "Flag",
             "description": "Validated by follow-up experiment",
-            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+            "raw_source_text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           },
           {
             "source_line": 480,
@@ -1884,7 +2520,11 @@
             "number": "0",
             "type": "Flag",
             "description": "1000 Genomes membership",
-            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+            "raw_source_text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\",
+            "semantic_class": "RESERVED_INFO_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is optional; row defines metadata cardinality/type/meaning, not mandatory record presence."
           }
         ]
       },
@@ -1962,7 +2602,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele",
-            "raw_source_text": "      AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\"
+            "raw_source_text": "      AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 535,
@@ -1970,7 +2614,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the forward strand",
-            "raw_source_text": "      ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+            "raw_source_text": "      ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 536,
@@ -1978,7 +2626,11 @@
             "number": "R",
             "type": "Integer",
             "description": "Read depth for each allele on the reverse strand",
-            "raw_source_text": "      ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+            "raw_source_text": "      ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 537,
@@ -1986,7 +2638,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Read depth",
-            "raw_source_text": "      DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\"
+            "raw_source_text": "      DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 538,
@@ -1994,7 +2650,11 @@
             "number": "A",
             "type": "Integer",
             "description": "Expected alternate allele counts",
-            "raw_source_text": "      EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\"
+            "raw_source_text": "      EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 539,
@@ -2002,7 +2662,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Length of <*> reference block",
-            "raw_source_text": "      LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\"
+            "raw_source_text": "      LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 540,
@@ -2010,7 +2674,11 @@
             "number": "1",
             "type": "String",
             "description": "Filter indicating if this genotype was ``called''",
-            "raw_source_text": "      FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+            "raw_source_text": "      FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 541,
@@ -2018,7 +2686,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype likelihoods",
-            "raw_source_text": "      GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\"
+            "raw_source_text": "      GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 542,
@@ -2026,7 +2698,11 @@
             "number": "G",
             "type": "Float",
             "description": "Genotype posterior probabilities",
-            "raw_source_text": "      GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+            "raw_source_text": "      GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 543,
@@ -2034,7 +2710,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Conditional genotype quality",
-            "raw_source_text": "      GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\"
+            "raw_source_text": "      GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 544,
@@ -2042,7 +2722,11 @@
             "number": "1",
             "type": "String",
             "description": "Genotype",
-            "raw_source_text": "      GT\t\t& 1\t\t\t& String\t& Genotype \\\\"
+            "raw_source_text": "      GT\t\t& 1\t\t\t& String\t& Genotype \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 545,
@@ -2050,7 +2734,11 @@
             "number": "2",
             "type": "Integer",
             "description": "Haplotype quality",
-            "raw_source_text": "      HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\"
+            "raw_source_text": "      HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 546,
@@ -2058,7 +2746,11 @@
             "number": ".",
             "type": "Integer",
             "description": "Reserved",
-            "raw_source_text": "      LA\t\t& .\t\t\t& Integer\t& Reserved \\\\"
+            "raw_source_text": "      LA\t\t& .\t\t\t& Integer\t& Reserved \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 547,
@@ -2066,7 +2758,11 @@
             "number": ".",
             "type": "Integer",
             "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
-            "raw_source_text": "      LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\"
+            "raw_source_text": "      LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 548,
@@ -2074,7 +2770,11 @@
             "number": "LR",
             "type": "Integer",
             "description": "Local-allele representation of AD",
-            "raw_source_text": "      LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\"
+            "raw_source_text": "      LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 549,
@@ -2082,7 +2782,11 @@
             "number": "LR",
             "type": "Integer",
             "description": "Local-allele representation of ADF",
-            "raw_source_text": "      LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\"
+            "raw_source_text": "      LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 550,
@@ -2090,7 +2794,11 @@
             "number": "LR",
             "type": "Integer",
             "description": "Local-allele representation of ADR",
-            "raw_source_text": "      LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\"
+            "raw_source_text": "      LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 551,
@@ -2098,7 +2806,11 @@
             "number": "LA",
             "type": "Integer",
             "description": "Local-allele representation of EC",
-            "raw_source_text": "      LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\"
+            "raw_source_text": "      LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 552,
@@ -2106,7 +2818,11 @@
             "number": "LG",
             "type": "Float",
             "description": "Local-allele representation of GL",
-            "raw_source_text": "      LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\"
+            "raw_source_text": "      LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 553,
@@ -2114,7 +2830,11 @@
             "number": "LG",
             "type": "Float",
             "description": "Local-allele representation of GP",
-            "raw_source_text": "      LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\"
+            "raw_source_text": "      LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 554,
@@ -2122,7 +2842,11 @@
             "number": "LG",
             "type": "Integer",
             "description": "Local-allele representation of PL",
-            "raw_source_text": "      LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\"
+            "raw_source_text": "      LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 555,
@@ -2130,7 +2854,11 @@
             "number": "LG",
             "type": "Integer",
             "description": "Local-allele representation of PP",
-            "raw_source_text": "      LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\"
+            "raw_source_text": "      LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 556,
@@ -2138,7 +2866,11 @@
             "number": "M",
             "type": "Float",
             "description": "Fraction of bases modified with the given ChEBI ID.",
-            "raw_source_text": "      M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\"
+            "raw_source_text": "      M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 557,
@@ -2146,7 +2878,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
-            "raw_source_text": "      DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\"
+            "raw_source_text": "      DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 558,
@@ -2154,7 +2890,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Read depth for reads with the base modification with the given ChEBI ID.",
-            "raw_source_text": "      ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\"
+            "raw_source_text": "      ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 559,
@@ -2162,7 +2902,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M27551C 5-Methylcytosine",
-            "raw_source_text": "      M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\"
+            "raw_source_text": "      M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 560,
@@ -2170,7 +2914,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM27551C",
-            "raw_source_text": "      DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\"
+            "raw_source_text": "      DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 561,
@@ -2178,7 +2926,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM27551C",
-            "raw_source_text": "      ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\"
+            "raw_source_text": "      ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 562,
@@ -2186,7 +2938,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M76792C 5-Hydroxymethylcytosine",
-            "raw_source_text": "      M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\"
+            "raw_source_text": "      M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 563,
@@ -2194,7 +2950,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM76792C",
-            "raw_source_text": "      DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\"
+            "raw_source_text": "      DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 564,
@@ -2202,7 +2962,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM76792C",
-            "raw_source_text": "      ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\"
+            "raw_source_text": "      ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 565,
@@ -2210,7 +2974,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M76794C 5-Formylcytosine",
-            "raw_source_text": "      M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\"
+            "raw_source_text": "      M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 566,
@@ -2218,7 +2986,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM76794C",
-            "raw_source_text": "      DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\"
+            "raw_source_text": "      DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 567,
@@ -2226,7 +2998,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM76794C",
-            "raw_source_text": "      ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\"
+            "raw_source_text": "      ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 568,
@@ -2234,7 +3010,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M76793C 5-Carboxylcytosine",
-            "raw_source_text": "      M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\"
+            "raw_source_text": "      M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 569,
@@ -2242,7 +3022,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM76793C",
-            "raw_source_text": "      DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\"
+            "raw_source_text": "      DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 570,
@@ -2250,7 +3034,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM76793C",
-            "raw_source_text": "      ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\"
+            "raw_source_text": "      ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 571,
@@ -2258,7 +3046,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M16964T 5-Hydroxymethyluracil",
-            "raw_source_text": "      M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\"
+            "raw_source_text": "      M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 572,
@@ -2266,7 +3058,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM16964T",
-            "raw_source_text": "      DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\"
+            "raw_source_text": "      DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 573,
@@ -2274,7 +3070,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM16964T",
-            "raw_source_text": "      ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\"
+            "raw_source_text": "      ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 574,
@@ -2282,7 +3082,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M80961T 5-Formyluracil",
-            "raw_source_text": "      M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\"
+            "raw_source_text": "      M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 575,
@@ -2290,7 +3094,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM80961T",
-            "raw_source_text": "      DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\"
+            "raw_source_text": "      DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 576,
@@ -2298,7 +3106,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM80961T",
-            "raw_source_text": "      ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\"
+            "raw_source_text": "      ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 577,
@@ -2306,7 +3118,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M17477T 5-Carboxyluracil",
-            "raw_source_text": "      M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\"
+            "raw_source_text": "      M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 578,
@@ -2314,7 +3130,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM17477T",
-            "raw_source_text": "      DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\"
+            "raw_source_text": "      DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 579,
@@ -2322,7 +3142,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM17477T",
-            "raw_source_text": "      ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\"
+            "raw_source_text": "      ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 580,
@@ -2330,7 +3154,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M28871A 6-Methyladenine",
-            "raw_source_text": "      M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\"
+            "raw_source_text": "      M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 581,
@@ -2338,7 +3166,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM28871A",
-            "raw_source_text": "      DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\"
+            "raw_source_text": "      DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 582,
@@ -2346,7 +3178,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM28871A",
-            "raw_source_text": "      ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\"
+            "raw_source_text": "      ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 583,
@@ -2354,7 +3190,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M44605G 8-Oxoguanine",
-            "raw_source_text": "      M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\"
+            "raw_source_text": "      M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 584,
@@ -2362,7 +3202,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM44605G",
-            "raw_source_text": "      DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\"
+            "raw_source_text": "      DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 585,
@@ -2370,7 +3214,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM44605G",
-            "raw_source_text": "      ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\"
+            "raw_source_text": "      ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 586,
@@ -2378,7 +3226,11 @@
             "number": "M",
             "type": "Float",
             "description": "Alias for M18107N Xanthosine",
-            "raw_source_text": "      MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\"
+            "raw_source_text": "      MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 587,
@@ -2386,7 +3238,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for DPM18107N",
-            "raw_source_text": "      DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\"
+            "raw_source_text": "      DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 588,
@@ -2394,7 +3250,11 @@
             "number": "M",
             "type": "Integer",
             "description": "Alias for ADM18107N",
-            "raw_source_text": "      ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\"
+            "raw_source_text": "      ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 589,
@@ -2402,7 +3262,11 @@
             "number": "1",
             "type": "Integer",
             "description": "RMS mapping quality",
-            "raw_source_text": "      MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\"
+            "raw_source_text": "      MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 590,
@@ -2410,7 +3274,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
-            "raw_source_text": "      PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+            "raw_source_text": "      PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 591,
@@ -2418,7 +3286,11 @@
             "number": "G",
             "type": "Integer",
             "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
-            "raw_source_text": "      PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+            "raw_source_text": "      PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 592,
@@ -2426,7 +3298,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phasing quality",
-            "raw_source_text": "      PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\"
+            "raw_source_text": "      PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 593,
@@ -2434,7 +3310,11 @@
             "number": "1",
             "type": "Integer",
             "description": "Phase set",
-            "raw_source_text": "      PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\"
+            "raw_source_text": "      PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 594,
@@ -2442,7 +3322,11 @@
             "number": "P",
             "type": "String",
             "description": "Phase set list",
-            "raw_source_text": "      PSL\t\t& P\t\t\t& String\t& Phase set list \\\\"
+            "raw_source_text": "      PSL\t\t& P\t\t\t& String\t& Phase set list \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 595,
@@ -2450,7 +3334,11 @@
             "number": "P",
             "type": "Integer",
             "description": "Phase set list ordinal",
-            "raw_source_text": "      PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\"
+            "raw_source_text": "      PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           },
           {
             "source_line": 596,
@@ -2458,7 +3346,11 @@
             "number": "P",
             "type": "Integer",
             "description": "Phase set list quality",
-            "raw_source_text": "      PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\"
+            "raw_source_text": "      PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\",
+            "semantic_class": "RESERVED_FORMAT_KEY_DEFINITION",
+            "primary_source_context_review": "REVIEWED",
+            "independent_review": "PENDING",
+            "normative_interpretation": "Reserved key listing is not a universal mandatory-presence rule; consult surrounding FORMAT text for conditional requirements."
           }
         ]
       },
@@ -3128,11 +4020,11 @@
     "This inventory does not include structural-variant INFO/FORMAT key sets, which are separate sections and will be separately classified."
   ],
   "review": {
-    "primary_source_extraction": "COMPLETE_FOR_LISTED_CORE_RESERVED_KEY_SECTIONS",
-    "semantic_atomicity_review": "PENDING",
-    "independent_second_review": "NOT_STARTED",
+    "primary_source_extraction": "COMPLETE_FOR_CORE_RESERVED_KEY_LISTS",
+    "primary_semantic_classification": "REVIEWED",
+    "independent_review": "PENDING",
     "implementation_mapping": "NOT_STARTED",
-    "clause_specific_tests": "NOT_STARTED",
+    "clause_tests": "NOT_STARTED",
     "laboratory_qualification": "NOT_CLAIMED"
   }
 }
