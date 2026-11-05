@@ -2,6 +2,7 @@ channels:
   - conda-forge
 channel_priority: strict
 dependencies:
+  - python=3.12
   - c-compiler
   - binutils
   - sysroot_linux-64=2.28
