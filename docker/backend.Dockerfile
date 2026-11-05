@@ -49,7 +49,7 @@ COPY scripts ./scripts
 RUN uv sync --locked --no-dev --no-editable \
     && python -c "import redis; import kombu.transport.redis; import backend.app" \
     && test "$(bcftools --version | head -n1)" = "bcftools 1.25" \
-    && python -m pip uninstall -y uv
+    && /usr/local/bin/python -m pip uninstall -y uv
 
 RUN chmod +x scripts/start_api_with_worker.sh
 
