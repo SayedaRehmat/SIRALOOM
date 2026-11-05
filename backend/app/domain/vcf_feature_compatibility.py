@@ -71,37 +71,37 @@ VCF_FEATURE_DEFINITIONS = (
     ),
     VCFFeatureDefinition(
         "local_allele_encoding",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native VCFv4.5 local-allele field validation and equivalence checks.",
         "tests/test_vcf_validation.py: VCFv4.5 local-allele cardinality and projection tests",
     ),
     VCFFeatureDefinition(
         "base_modification_format_fields",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native validation of reserved base-modification FORMAT keys, types and value domains.",
         "tests/test_vcf_validation.py: VCFv4.5 base-modification FORMAT tests",
     ),
     VCFFeatureDefinition(
         "reserved_info_format_definitions",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native validation of reserved INFO/FORMAT Number and Type definitions.",
         "tests/test_vcf_validation.py: VCFv4.5 reserved INFO/FORMAT definition tests",
     ),
     VCFFeatureDefinition(
         "unspecified_allele_reference_block_len",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native validation of per-sample FORMAT/LEN spans for the VCFv4.5 <*> unspecified allele.",
         "tests/test_vcf_conformance_fixtures.py: unspecified_allele_len_reference_block_valid and unspecified_allele_len_end_mismatch_invalid",
     ),
     VCFFeatureDefinition(
         "structured_meta_headers",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native parsing and validation of structured metadata attributes and identifiers.",
         "tests/test_vcf_validation.py: VCFv4.5 structured-header tests",
     ),
     VCFFeatureDefinition(
         "symbolic_sv_confidence_intervals",
-        "VCFv4.5",
+        "VCFv4.5+",
         "Native validation of per-ALT CIPOS/CIEND cardinality and interval rules, CILEN confidence bounds, and missing-value placeholders for non-structural alleles, with the VCFv4.5 IMPRECISE exception for precise sequence alleles.",
         "tests/test_vcf_conformance_fixtures.py: symbolic_sv_confidence_intervals_with_nonstructural_alt_valid, symbolic_cipos_cardinality_invalid, symbolic_cipos_interval_invalid, nonstructural_cipos_values_invalid, nonstructural_ciend_values_invalid, symbolic_cilen_cardinality_invalid, symbolic_cilen_bounds_reversed_invalid, nonstructural_cilen_values_invalid",
     ),
@@ -133,7 +133,11 @@ def _scope_applies(scope: str | None, version: str) -> bool:
         raise ValueError(f"Invalid VCF feature specification scope: {scope!r}")
     declared = _version_tuple(version)
     boundary = (int(match.group("major")), int(match.group("minor")))
-    return declared >= boundary if match.group("plus") else declared == boundary
+    if match.group("plus"):
+        # A version scope is forward-compatible only within the same major
+        # specification family. A new major version requires explicit rules.
+        return declared[0] == boundary[0] and declared[1] >= boundary[1]
+    return declared == boundary
 
 
 def feature_compatibility_for_version(version: str) -> list[dict[str, str | None]]:
