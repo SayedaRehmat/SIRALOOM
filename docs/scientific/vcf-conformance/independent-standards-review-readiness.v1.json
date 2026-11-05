@@ -1,30 +1,30 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-independent-standards-review-readiness",
-  "assessed_at_utc": "2026-11-05T10:39:11.046Z",
+  "assessed_at_utc": "2026-11-05T15:42:00+05:00",
   "branch": "research/vcf-conformance-phase-a-20261105",
   "assessed_ledger": "atomic-requirements.v1.json",
   "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
   "permitted_use": "SCOPED_PILOT_REVIEW_ONLY_WITH_INCOMPLETENESS_DISCLOSED",
   "inventory": {
-    "atomic_ledger_records": 142,
+    "atomic_ledger_records": 226,
     "duplicate_requirement_ids": 0,
-    "records_with_source_references": 142,
-    "records_with_source_locator_values": 142,
-    "records_in_review": 142,
+    "records_with_source_references": 226,
+    "records_with_source_locator_values": 226,
+    "records_in_review": 226,
     "independently_second_person_approved": 0,
     "records_with_test_evidence_entries": 0,
     "test_evidence_entries": 0,
     "records_without_open_question_entries": 43,
-    "vcf40_source_not_pinned_records": 142,
+    "vcf40_source_not_pinned_records": 226,
     "unresolved_applicability_cells_by_version": {
-      "VCFv4.1": 43,
-      "VCFv4.2": 43,
-      "VCFv4.3": 34,
-      "VCFv4.4": 5,
+      "VCFv4.1": 127,
+      "VCFv4.2": 127,
+      "VCFv4.3": 118,
+      "VCFv4.4": 89,
       "VCFv4.5": 0
     },
-    "source_references_total": 353,
+    "source_references_total": 437,
     "source_references_with_source_and_excerpt_sha256": 352,
     "source_references_pending_vcf40_raw_source": 1,
     "source_references_without_hash_by_version": {
@@ -38,16 +38,23 @@
     "vcf45_indexed_tables": 44,
     "vcf45_tables_with_author_context_disposition": 44,
     "independent_table_reviews": 0,
-    "genotype_and_sv_crosswalks": "AUTHOR_CONTEXT_CROSSWALKS_EXIST; ATOMIC_RECONCILIATION_INCOMPLETE"
+    "genotype_and_sv_crosswalks": "AUTHOR_CONTEXT_CROSSWALKS_EXIST; ATOMIC_RECONCILIATION_INCOMPLETE",
+    "source_references_without_excerpt_hash_by_version": {
+      "VCFv4.0": 1,
+      "VCFv4.1": 0,
+      "VCFv4.2": 0,
+      "VCFv4.3": 0,
+      "VCFv4.4": 0,
+      "VCFv4.5": 84
+    }
   },
   "critical_blockers": [
+    "The ledger now contains 226 candidates, including 84 new VCFv4.5 reserved INFO/FORMAT row definitions. It remains a partial candidate set; other tables, grammar, definitions, examples, footnotes and cross-references still require atomic decomposition.",
     "Whole-specification coverage remains incomplete. VCFv4.5 has author-context dispositions for all 44 indexed VCF-specific tables, but not every row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incomplete.",
-    "VCFv4.0 historical core source identity is corroborated, but exact source bytes and SHA-256 remain uncaptured; one VCFv4.0 source reference is unhashed and all 142 records remain SOURCE_NOT_PINNED for VCFv4.0.",
     "VCFv4.1-4.4 candidate applicability remains unresolved in 43, 43, 34 and 5 cells respectively; these counts concern the current candidate ledger only.",
     "Independent second-person review has not started; zero requirements are independently approved.",
-    "The 142 records are still a partial author candidate set, not the complete whole-specification source-to-requirement ledger.",
     "No production implementation mappings or executed clause-specific tests are present.",
-    "A custom required-field/enum/locator audit passed 142/142 records; a full JSON Schema engine validation and whole-specification coverage audit have not been demonstrated."
+    "The 84 newly added VCFv4.5 reserved INFO/FORMAT row candidates have source-file SHA-256 and exact line locators but no source-excerpt SHA-256 yet; excerpt hashing must be specified and applied."
   ],
   "source_separation": {
     "core_vcf40": "IGSR/1000 Genomes historical core page corroborated as a VCFv4.0 source candidate; exact source bytes and SHA-256 not captured; not accepted as pinned normative source.",
@@ -66,9 +73,9 @@
   "source_hash_consistency_audit": {
     "status": "RECONCILED_TO_PINNED_SOURCE_MANIFEST",
     "audited_at_utc": "2026-11-05T15:42:00+05:00",
-    "ledger_source_references_with_archived_spec_file": 352,
+    "ledger_source_references_with_archived_spec_file": 436,
     "references_reconciled_to_canonical_source_sha256": 320,
-    "references_already_matching_canonical_source_sha256": 32,
+    "references_already_matching_canonical_source_sha256": 116,
     "references_remaining_with_mismatched_source_sha256": 0,
     "per_file_sha256": {
       "VCFv4.1.tex": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
@@ -78,7 +85,8 @@
       "VCFv4.5.tex": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2"
     },
     "archive_identity_check": "All five archived source-file Git blob SHA-1 values fetched from the SIRALOOM branch match the pinned upstream hts-specs source manifest blob SHA-1 values.",
-    "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED."
+    "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
+    "note": "The 84 newly added VCFv4.5 row candidates use the canonical source-file SHA-256 from the manifest; their excerpt hashes are intentionally null pending a documented excerpt-hashing convention."
   },
-  "audit_note": "Source hash consistency was separately audited and reconciled in commit 4c064a684615785e6675ecfe45747d2d00ac39a0. This does not close whole-specification coverage, VCFv4.0 provenance, independent review, implementation mapping, clause tests, or laboratory qualification."
+  "audit_note": "Readiness counters refreshed after adding 84 row-level VCFv4.5 reserved INFO/FORMAT candidates. The candidate ledger is still incomplete; no independent approval or conformance claim is made."
 }
