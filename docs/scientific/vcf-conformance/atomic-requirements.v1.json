@@ -9436,6 +9436,25 @@
           },
           "source_excerpt_sha256": "79a6fcf16e2419bdafd8a0057309fd228ae4a4f150e694ff350fbb0b4bb2c709",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L671-L680",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 671-680",
+            "start_line": 671,
+            "end_line": 680,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9464,9 +9483,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -9534,6 +9555,25 @@
           },
           "source_excerpt_sha256": "a7faaaac59ab873f66438ee1fb81e364386362b0ab64164cd69fa56c0a7b27cc",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L681-L684",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 681-684",
+            "start_line": 681,
+            "end_line": 684,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9562,9 +9602,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -9632,6 +9674,25 @@
           },
           "source_excerpt_sha256": "1689d9593f0db55b7613693bf9871fba010d75428146d25949ae07b45488bf7b",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L681-L684",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 681-684",
+            "start_line": 681,
+            "end_line": 684,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9660,9 +9721,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -9730,6 +9793,25 @@
           },
           "source_excerpt_sha256": "b7852cd0a8c5a9a981f718c9b1bf4e760f3e02dfaba1d7ea95294b19283d2b22",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L720-L729",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 720-729",
+            "start_line": 720,
+            "end_line": 729,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9758,9 +9840,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -9828,6 +9912,25 @@
           },
           "source_excerpt_sha256": "abf3fb440390f26fc7925e03b03d82e4138a792db48e5405ce148dc32918268b",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L731-L735",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 731-735",
+            "start_line": 731,
+            "end_line": 735,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9856,9 +9959,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -9926,6 +10031,25 @@
           },
           "source_excerpt_sha256": "c93ba9026f90bbed3b66dd56998213c01ab72a27ce6742448c8b5f8e4c991daf",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L739-L751",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 739-751",
+            "start_line": 739,
+            "end_line": 751,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -9954,9 +10078,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10024,6 +10150,25 @@
           },
           "source_excerpt_sha256": "51f4de46eac0a66e383894fcba7786b978fe916fbfc75774265e431619b2c3bb",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L747-L751",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 747-751",
+            "start_line": 747,
+            "end_line": 751,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10052,9 +10197,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10122,6 +10269,25 @@
           },
           "source_excerpt_sha256": "4d2ac0112f56e67b1263f126bcc1cf9513a2ac07bf386c015787bd6fed7b3f9a",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L755-L765",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 755-765",
+            "start_line": 755,
+            "end_line": 765,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10150,9 +10316,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10220,6 +10388,25 @@
           },
           "source_excerpt_sha256": "8f31868d09577ffd8409f8882f01d95c9f20ecb2fb30f9c229ef9a1aec78100b",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L787-L801",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 787-801",
+            "start_line": 787,
+            "end_line": 801,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10248,9 +10435,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10318,6 +10507,25 @@
           },
           "source_excerpt_sha256": "5067b8e232ce23d92a3d9ecbc1679d388d370e83beceb412e7483efe580f7c78",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L815-L818",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 815-818",
+            "start_line": 815,
+            "end_line": 818,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10346,9 +10554,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10416,6 +10626,25 @@
           },
           "source_excerpt_sha256": "5c763ba33bcd14bb32de1b53af18a04532bef428a1d820cb4b1f4db71a429db5",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L819-L838",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 819-838",
+            "start_line": 819,
+            "end_line": 838,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10444,9 +10673,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10514,6 +10745,25 @@
           },
           "source_excerpt_sha256": "5ebd62ac96dbbd9c3fcc91b93213704c36723a36a43533f2c0672ca27570f023",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L844-L850",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 844-850",
+            "start_line": 844,
+            "end_line": 850,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10542,9 +10792,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10612,6 +10864,25 @@
           },
           "source_excerpt_sha256": "082452411da76fee385a3d37c2387b059755cb179f4177e6d81c944b1cd872c3",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L853-L860",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 853-860",
+            "start_line": 853,
+            "end_line": 860,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10640,9 +10911,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10710,6 +10983,25 @@
           },
           "source_excerpt_sha256": "1af3ae22bd9c3bd9b7aca7e629efe99ee661942eca45083f983d7f913a7a146c",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L867-L889",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 867-889",
+            "start_line": 867,
+            "end_line": 889,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10738,9 +11030,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10808,6 +11102,25 @@
           },
           "source_excerpt_sha256": "9cc14b4548d883ad267b05bb3b10c2e4c524c1f33e9abca14ba114798b560b8b",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L890-L905",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 890-905",
+            "start_line": 890,
+            "end_line": 905,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10836,9 +11149,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -10906,6 +11221,25 @@
           },
           "source_excerpt_sha256": "416e4a1cd4ceefbe48f9446d93ee4bc4e5069efc13f344f0ab2f9d032d7df958",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L909-L919",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 909-919",
+            "start_line": 909,
+            "end_line": 919,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -10934,9 +11268,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11004,6 +11340,25 @@
           },
           "source_excerpt_sha256": "b08b7d879313170c14b5bfe1acf1377ae41b04794a9625ad769d8a40f86e5515",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L923-L937",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 923-937",
+            "start_line": 923,
+            "end_line": 937,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11032,9 +11387,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11102,6 +11459,25 @@
           },
           "source_excerpt_sha256": "6d7c54273e55f6f9ee017ffd839f0d1b52ddd00deae17f98f7332549c0581fc0",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L939-L944",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 939-944",
+            "start_line": 939,
+            "end_line": 944,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11130,9 +11506,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11200,6 +11578,25 @@
           },
           "source_excerpt_sha256": "f8639bb6b95c079f8584d43730cbdd51b34d825cf6c57072dcb1dc3bb02cdc06",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L948-L963",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 948-963",
+            "start_line": 948,
+            "end_line": 963,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11228,9 +11625,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11298,6 +11697,25 @@
           },
           "source_excerpt_sha256": "c98d516cc1d3e14822e560148774b8946b0e0aa22c772310312797648ff1f909",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L967-L979",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 967-979",
+            "start_line": 967,
+            "end_line": 979,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11326,9 +11744,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11396,6 +11816,25 @@
           },
           "source_excerpt_sha256": "d7ef97f5893ab6f5857925e24d06b1425f471d6f9cc7d9be5227289e48bbe3f4",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L985-L992",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 985-992",
+            "start_line": 985,
+            "end_line": 992,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11424,9 +11863,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11494,6 +11935,25 @@
           },
           "source_excerpt_sha256": "83158d1078a86bd90fc8d5e603933e1b0b6bc7586fba95e5fb86d2ff096e7161",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1237-L1242",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1237-1242",
+            "start_line": 1237,
+            "end_line": 1242,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11522,9 +11982,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11592,6 +12054,25 @@
           },
           "source_excerpt_sha256": "afff5826fd2022679b093cb601bd9b01629627ad53e1c461feb6dc0eebf3af2f",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1240-L1250",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1240-1250",
+            "start_line": 1240,
+            "end_line": 1250,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11620,9 +12101,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11690,6 +12173,25 @@
           },
           "source_excerpt_sha256": "35e146b5b76e263e1796c7462dcdc90fa39d2c9960e81754a0b274879361dbfa",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1253-L1264",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1253-1264",
+            "start_line": 1253,
+            "end_line": 1264,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11718,9 +12220,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11788,6 +12292,25 @@
           },
           "source_excerpt_sha256": "d664f441c46d1a7ade3955a8818d11082ff759836f61d0d8d1e9d9db17b078bc",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1361-L1375",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1361-1375",
+            "start_line": 1361,
+            "end_line": 1375,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11816,9 +12339,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11886,6 +12411,25 @@
           },
           "source_excerpt_sha256": "24d0f9e197f5b60920bdcec577ff714cb5e02af1b8f0f023916d9b950646063c",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1379-L1384",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1379-1384",
+            "start_line": 1379,
+            "end_line": 1384,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11914,9 +12458,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -11984,6 +12530,25 @@
           },
           "source_excerpt_sha256": "afd64505f0f4295117a50f1938a29861682f73b2e9565a4383c80c05cfbc72f6",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1403-L1406",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1403-1406",
+            "start_line": 1403,
+            "end_line": 1406,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12012,9 +12577,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12082,6 +12649,25 @@
           },
           "source_excerpt_sha256": "019f7b2d5426921c7f3c8a5fbc483fa2e961752b2e1036150748ec6f915652cf",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1488-L1491",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1488-1491",
+            "start_line": 1488,
+            "end_line": 1491,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12110,9 +12696,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12180,6 +12768,25 @@
           },
           "source_excerpt_sha256": "db23449b8d90201225ef434746c211a14fa56ed82c878810e24442fd38b0977a",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1514-L1517",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1514-1517",
+            "start_line": 1514,
+            "end_line": 1517,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12208,9 +12815,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12278,6 +12887,25 @@
           },
           "source_excerpt_sha256": "119ffa72039ef3b859920a5053185d5312586de928768dcd43cb4f862df30542",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L1522-L1527",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 1522-1527",
+            "start_line": 1522,
+            "end_line": 1527,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12306,9 +12934,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12376,6 +13006,25 @@
           },
           "source_excerpt_sha256": "6844303ca7241e133d78f23a61fa317976e2a53de0c5e5885e44d41bee4e3af2",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L436-L439",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 436-439",
+            "start_line": 436,
+            "end_line": 439,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12404,9 +13053,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "CHANGED",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "VCFv4.4 treats END as a computed field derived from REF/SVLEN/LEN; VCFv4.5 explicitly marks it deprecated while retaining it for compatibility.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12474,6 +13125,25 @@
           },
           "source_excerpt_sha256": "bd8b659bc3ecb1b7077f102c08e67328231ab3dfcf467379f9e507537244740e",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L715-L716",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 715-716",
+            "start_line": 715,
+            "end_line": 716,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12502,9 +13172,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12572,6 +13244,25 @@
           },
           "source_excerpt_sha256": "bf439e1654f6f771d26d8d58184a9f8dd272860f9c05f65c4a75f7e391b8c38a",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L779-L783",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 779-783",
+            "start_line": 779,
+            "end_line": 783,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12600,9 +13291,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12670,6 +13363,25 @@
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L987-L992",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 987-992",
+            "start_line": 987,
+            "end_line": 992,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12698,9 +13410,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12768,6 +13482,25 @@
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L988-L992",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 988-992",
+            "start_line": 988,
+            "end_line": 992,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12796,9 +13529,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12866,6 +13601,25 @@
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L989-L992",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 989-992",
+            "start_line": 989,
+            "end_line": 992,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12894,9 +13648,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -12964,6 +13720,25 @@
           },
           "source_excerpt_sha256": "d08fa598ea5c2b7b0828d8790692f46553e3365d81ac148e0c1a5674137a8c7b",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L989-L992",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 989-992",
+            "start_line": 989,
+            "end_line": 992,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12992,9 +13767,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -13062,6 +13839,25 @@
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
           "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L615-L620",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 615-620",
+            "start_line": 615,
+            "end_line": 620,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -13090,9 +13886,11 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The candidate semantic is present in the VCFv4.4 source context at the cited lines; author cross-version mapping, independent review and implementation tests remain pending.",
           "exceptions": []
         },
         "VCFv4.5": {
