@@ -73,6 +73,11 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
     assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build" in dockerfile
     assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
+    assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile
+    assert "snapshot.debian.org/archive/debian/%s/" in dockerfile
+    assert "snapshot.debian.org/archive/debian-security/%s/" in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
+    assert "uv archive SHA-256 mismatch" in dockerfile
 
 
 @pytest.mark.parametrize(
