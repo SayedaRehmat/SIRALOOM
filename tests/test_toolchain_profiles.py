@@ -145,6 +145,14 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
 
 
 
+def test_source_profile_matrix_runs_on_main_and_serializes_snapshot_image_builds():
+    workflow = (ROOT / ".github/workflows/bcftools-source-profile-matrix.yml").read_text(encoding="utf-8")
+    assert "      - main" in workflow
+    assert "      max-parallel: 1" in workflow
+    assert "APT::Update::Error-Mode=any update" in (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
+
+
+
 @pytest.mark.parametrize(
     ("service", "compose_profile", "profile_id", "bcftools_version", "htslib_version", "queue", "lock_file"),
     [
