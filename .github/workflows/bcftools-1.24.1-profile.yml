@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml
+          environment-file: configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock
           environment-name: bcftools-build
           cache-environment: false
           init-shell: bash
@@ -38,6 +38,7 @@ jobs:
           micromamba env export --explicit --name bcftools-build > "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           grep -Fq '@EXPLICIT' "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           test -s "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          diff -u configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           echo "::group::BEGIN_BCFTOOLS_1_24_1_BUILD_LOCK"
           cat "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           echo "::endgroup::"
