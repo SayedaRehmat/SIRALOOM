@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-independent-standards-review-readiness",
-  "assessed_at_utc": "2026-11-05T10:29:10.979Z",
+  "assessed_at_utc": "2026-11-05T10:36:38.032Z",
   "branch": "research/vcf-conformance-phase-a-20261105",
   "assessed_ledger": "atomic-requirements.v1.json",
   "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
@@ -18,38 +18,41 @@
     "records_without_open_question_entries": 43,
     "vcf40_source_not_pinned_records": 142,
     "unresolved_applicability_cells_by_version": {
-      "VCFv4.1": 64,
-      "VCFv4.2": 64,
-      "VCFv4.3": 55,
-      "VCFv4.4": 55,
+      "VCFv4.1": 55,
+      "VCFv4.2": 55,
+      "VCFv4.3": 46,
+      "VCFv4.4": 17,
       "VCFv4.5": 0
     },
-    "genotype_candidate_records": 73,
-    "genotype_split_parent_candidates": 1,
-    "genotype_candidates_reconciled_to_ledger": 72,
-    "vcf45_sv_breakend_candidate_records": 38,
-    "descriptive_records": 55,
-    "production_implementation_mappings": 0,
-    "source_references_total": 256,
-    "source_references_with_source_and_excerpt_sha256": 255,
+    "source_references_total": 321,
+    "source_references_with_source_and_excerpt_sha256": 320,
     "source_references_pending_vcf40_raw_source": 1,
-    "archived_pinned_specifications": 5,
-    "vcf45_indexed_tables_author_context_reviewed": "44/44",
-    "independent_reviewed_tables": 0
+    "source_references_without_hash_by_version": {
+      "VCFv4.0": 1,
+      "VCFv4.1": 0,
+      "VCFv4.2": 0,
+      "VCFv4.3": 0,
+      "VCFv4.4": 0,
+      "VCFv4.5": 0
+    },
+    "vcf45_indexed_tables": 44,
+    "vcf45_tables_with_author_context_disposition": 44,
+    "independent_table_reviews": 0,
+    "genotype_and_sv_crosswalks": "AUTHOR_CONTEXT_CROSSWALKS_EXIST; ATOMIC_RECONCILIATION_INCOMPLETE"
   },
   "critical_blockers": [
-    "Whole-specification source coverage remains incomplete. VCFv4.5 has author-context dispositions for all 44 indexed VCF-specific tables, but the grammar, definitions, enumerations, non-modal constraints, footnotes and cross-references across all versions are not yet fully decomposed.",
-    "VCFv4.0 core page provenance is corroborated by the historical VCFtools index and IGSR page, but original source bytes and SHA-256 remain uncaptured; the one VCFv4.0 source reference remains unhashed and all 142 records have VCFv4.0 applicability SOURCE_NOT_PINNED.",
-    "VCFv4.1-4.4 now have reserved-field, genotype and SV/breakend source crosswalks, but row-level contextual atomization and full version applicability reconciliation remain incomplete.",
-    "Independent second-person review has not started; no record is independently approved.",
-    "Version applicability remains unresolved in 64 VCFv4.1 cells, 64 VCFv4.2 cells, 55 VCFv4.3 cells and 55 VCFv4.4 cells; VCFv4.5 has no unresolved applicability cells among current candidates, but the whole-spec coverage is incomplete.",
-    "Source file and excerpt SHA-256 are recorded for 255/255 VCFv4.1-4.5 source references; the single VCFv4.0 source reference cannot be hashed until original source bytes are captured.",
-    "No production implementation mapping or executed clause-specific test evidence is present in the 142-record ledger.",
-    "The current ledger is an author working candidate set, not a complete whole-specification ledger and not ready to freeze for complete independent review."
+    "Whole-specification coverage remains incomplete across all versions. The 44 VCFv4.5 VCF-specific tables have author-context dispositions, but not every table row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incompletely covered.",
+    "VCFv4.0 historical core page identity is corroborated, but exact source bytes and SHA-256 remain uncaptured. One VCFv4.0 source reference is unhashed and all 142 records remain SOURCE_NOT_PINNED for VCFv4.0.",
+    "VCFv4.1-4.4 reserved-field, genotype and SV/breakend inventories exist, but 55, 55, 46 and 17 candidate applicability cells respectively remain unresolved.",
+    "Independent second-person review has not started; zero requirements are independently approved.",
+    "The current 142 records are a partial author candidate set, not the complete source-to-requirement ledger.",
+    "No production implementation mappings or executed clause-specific tests are present in the ledger.",
+    "A custom structural required-field/enum audit passed 142/142 records; a full JSON Schema engine validation and complete source-coverage audit have not been demonstrated.",
+    "The ledger is not ready to freeze as a complete whole-specification review snapshot."
   ],
   "source_separation": {
-    "core_vcf40": "VCFtools historical specifications index corroborates the IGSR VCFv4.0 core page as the location of the older specification. The exact original bytes and SHA-256 remain uncaptured; normative acceptance is pending.",
-    "thousand_genomes_sv": "Separate producer/project convention source; never merge into core VCFv4.0 normative requirements."
+    "core_vcf40": "IGSR/1000 Genomes historical core page corroborated as a VCFv4.0 source candidate; exact source bytes and SHA-256 not captured; not accepted as pinned normative source.",
+    "thousand_genomes_sv": "Separate producer/project convention source; do not merge into core VCFv4.0 normative requirements."
   },
   "reviewer_protocol": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
   "explicit_nonclaims": [
@@ -60,5 +63,5 @@
     "No laboratory qualification claim."
   ],
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
-  "ledger_blob_sha": "65f2694d1f3264847a6a30463a2642d39d16b9db"
+  "ledger_blob_sha": "e146cc61257bc16863a216f909f58d57ec5b1fc8"
 }
