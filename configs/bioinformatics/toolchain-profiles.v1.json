@@ -153,7 +153,7 @@
     },
     {
       "id": "bcftools-1.21.3-htslib-1.21.3-linux-64-source",
-      "status": "CANDIDATE",
+      "status": "BLOCKED_COMPATIBILITY",
       "platform": "linux-64",
       "bcftools_version": "1.21.3",
       "htslib_version": "1.21.3",
