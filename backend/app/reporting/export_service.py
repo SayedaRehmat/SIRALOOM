@@ -78,6 +78,13 @@ def build_manifest(db: Session, case: Case) -> dict:
                 "workflow_id": a.workflow_id,
                 "workflow_version": a.workflow_version,
                 "reference_build": a.reference_build,
+                "toolchain": {
+                    "profile_id": a.toolchain_profile_id,
+                    "bcftools_version": a.toolchain_bcftools_version,
+                    "htslib_version": a.toolchain_htslib_version,
+                    "worker_queue": a.toolchain_queue,
+                    "snapshot": a.toolchain_snapshot or {},
+                },
                 "status": a.status,
                 "created_at": _iso(a.created_at),
                 "started_at": _iso(a.started_at),
