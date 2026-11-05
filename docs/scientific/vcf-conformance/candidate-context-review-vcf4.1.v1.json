@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf41-modal-candidate-context-review",
   "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_ALL_38_CANDIDATES_ATOMIC_DECOMPOSITION_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
   "source_file": "VCFv4.1.tex",
-  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex",
+  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex",
   "candidate_count": 38,
   "candidates": [
     {
