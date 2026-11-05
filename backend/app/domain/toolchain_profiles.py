@@ -140,6 +140,9 @@ def assert_analysis_toolchain_matches_worker(
             or snapshot.get("bcftools_version") != expected[1]
             or snapshot.get("htslib_version") != expected[2]
             or snapshot.get("worker_queue") != queue
+            or snapshot.get("platform") != registered.get("platform")
+            or snapshot.get("lock_file") != registered.get("lock_file")
+            or snapshot.get("lock_sha256") != registered.get("lock_sha256")
         ):
             raise ToolchainProfileError(
                 "ANALYSIS_TOOLCHAIN_SNAPSHOT_MISMATCH: persisted profile columns "
