@@ -69,13 +69,19 @@ test "$("$INSTALL_PREFIX/bin/bgzip" --version | sed -n '1p')" = "bgzip (htslib) 
 if [ -n "${CONDA_PREFIX:-}" ] && [ "$INSTALL_PREFIX" != "$CONDA_PREFIX" ]; then
   mkdir -p "$INSTALL_PREFIX/lib"
   {
-    # The install directory also contains executable Perl/Python helper scripts.
-    # Run ldd only on ELF binaries; scripts are not dynamic-linker inputs.
-    while IFS= read -r -d '' binary; do
-      if readelf -h "$binary" >/dev/null 2>&1; then
+    # Only inspect the known native HTSlib/BCFtools executables. The install
+    # directory also contains executable Perl/Python helpers, which are not ELF.
+    for binary in \
+      "$INSTALL_PREFIX/bin/bcftools" \
+      "$INSTALL_PREFIX/bin/bgzip" \
+      "$INSTALL_PREFIX/bin/htsfile" \
+      "$INSTALL_PREFIX/bin/tabix" \
+      "$INSTALL_PREFIX/bin/annot-tsv" \
+      "$INSTALL_PREFIX/bin/ref-cache"; do
+      if [ -x "$binary" ]; then
         ldd "$binary" | awk '/=> \\// {print $3} /^\\// {print $1}'
       fi
-    done < <(find "$INSTALL_PREFIX/bin" -maxdepth 1 -type f -executable -print0)
+    done
   } | sort -u | while IFS= read -r library; do
     case "$library" in
       "$CONDA_PREFIX"/lib/*)
