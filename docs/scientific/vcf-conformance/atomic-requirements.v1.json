@@ -3,7 +3,7 @@
   "registry_id": "siraloom-vcf-atomic-requirements",
   "registry_status": "IN_PROGRESS",
   "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
-  "scope": "Initial seed plus 60 proposed FORMAT/GENOTYPE source-context candidates. Registry remains IN_PROGRESS; candidates are in review, not approved; VCFv4.0 applicability remains source-not-pinned pending historical capture.",
+  "scope": "Initial seed, 60 FORMAT/GENOTYPE source-context candidates, and 29 proposed VCFv4.5 structural-variant/breakend atomic candidates. Registry remains IN_PROGRESS; all candidates remain in review, VCFv4.0 applicability unresolved, cross-version SV applicability pending.",
   "requirements": [
     {
       "requirement_id": "VCF-REQ-000001",
@@ -9337,6 +9337,2946 @@
       "evidence": [],
       "related_requirement_ids": [],
       "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000076",
+      "title": "Per-allele SV INFO values cover every ALT allele",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Emit a value for every ALT allele, including non-structural ALT alleles; use missing placeholders where a value is not meaningful, except use an empty string for missing values in string lists.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a reserved SV INFO key with per-allele values is present.",
+      "required_or_prohibited_behavior": "Emit a value for every ALT allele, including non-structural ALT alleles; use missing placeholders where a value is not meaningful, except use an empty string for missing values in string lists.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Every ALT allele position has a value or the specified missing representation.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L846",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 846-848; section-specific normative prose",
+            "start_line": 846,
+            "end_line": 848,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000077",
+      "title": "IMPRECISE applies to structural ALT alleles with unspecified intervals",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Interpret an ALT allele lacking CIPOS as imprecise with an unspecified confidence interval.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When an ALT allele is marked imprecise by the record-level IMPRECISE flag.",
+      "required_or_prohibited_behavior": "Interpret an ALT allele lacking CIPOS as imprecise with an unspecified confidence interval.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A record with IMPRECISE and an ALT lacking CIPOS is interpreted as an imprecise allele with unspecified interval.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L852",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 852-858; section-specific normative prose",
+            "start_line": 852,
+            "end_line": 858,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000078",
+      "title": "Precise alleles in IMPRECISE records carry explicit CIPOS",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Set CIPOS explicitly for the precise allele, including the exact interval 0,0.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a record has IMPRECISE and also contains a precise ALT allele.",
+      "required_or_prohibited_behavior": "Set CIPOS explicitly for the precise allele, including the exact interval 0,0.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each precise ALT allele in such a record has an explicit CIPOS pair, including 0,0 where exact.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L858",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 858-858; section-specific normative prose",
+            "start_line": 858,
+            "end_line": 858,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000079",
+      "title": "SVLEN is specified for symbolic structural alleles",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Specify SVLEN; define length as inserted, duplicated, inverted or deleted bases for INS/DUP/INV/DEL, and segment length for CNV; use missing for other ALT forms including breakend notation.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "For symbolic structural variant ALT alleles.",
+      "required_or_prohibited_behavior": "Specify SVLEN; define length as inserted, duplicated, inverted or deleted bases for INS/DUP/INV/DEL, and segment length for CNV; use missing for other ALT forms including breakend notation.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Every symbolic SV ALT has a corresponding SVLEN value; non-applicable ALT values are missing.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L881",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 881-890; section-specific normative prose",
+            "start_line": 881,
+            "end_line": 890,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000080",
+      "title": "SVLEN backward-compatibility inference uses END and absolute value",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Infer missing SVLEN from END and interpret negative SVLEN by absolute value for backwards compatibility.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When reading legacy records where SVLEN is missing or negative.",
+      "required_or_prohibited_behavior": "Infer missing SVLEN from END and interpret negative SVLEN by absolute value for backwards compatibility.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A legacy missing SVLEN is derived from END; a negative SVLEN is interpreted as its positive magnitude.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L892",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 892-896; section-specific normative prose",
+            "start_line": 892,
+            "end_line": 896,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000081",
+      "title": "CIPOS entries are ALT-paired offsets spanning zero",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require two successive offsets per ALT allele; interpret each pair as start/end offsets relative to POS; require lower bound <=0 and upper bound >=0.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When CIPOS is present.",
+      "required_or_prohibited_behavior": "Require two successive offsets per ALT allele; interpret each pair as start/end offsets relative to POS; require lower bound <=0 and upper bound >=0.",
+      "exceptions": [],
+      "observable_acceptance_condition": "CIPOS has exactly 2×ALT-count entries and each pair spans zero.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L900",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 900-912; section-specific normative prose",
+            "start_line": 900,
+            "end_line": 912,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000082",
+      "title": "CIPOS default and homology interaction",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "RECOMMENDED",
+      "atomic_statement": "Interpret CIPOS as 0,0 for all alleles when both fields are omitted; use CIPOS with HOMSEQ when breakpoint sequence homology exists.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When neither IMPRECISE nor CIPOS is present; when breakpoint sequence homology exists.",
+      "required_or_prohibited_behavior": "Interpret CIPOS as 0,0 for all alleles when both fields are omitted; use CIPOS with HOMSEQ when breakpoint sequence homology exists.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Parser derives exact 0,0 defaults only under the stated joint-absence condition; homology representation retains CIPOS/HOMSEQ association.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L908",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 908-910; section-specific normative prose",
+            "start_line": 908,
+            "end_line": 910,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000083",
+      "title": "CIEND entries encode ALT-specific end confidence intervals",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require two entries per ALT; interpret each pair relative to END inferred from SVLEN; symbolic-SV bounds must span zero; non-symbolic alleles use missing values; if CIEND is missing, assume CIPOS.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When CIEND is present.",
+      "required_or_prohibited_behavior": "Require two entries per ALT; interpret each pair relative to END inferred from SVLEN; symbolic-SV bounds must span zero; non-symbolic alleles use missing values; if CIEND is missing, assume CIPOS.",
+      "exceptions": [],
+      "observable_acceptance_condition": "CIEND cardinality is 2×ALT-count; pair signs and non-SV missing values conform; absence resolves to CIPOS.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L916",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 916-926; section-specific normative prose",
+            "start_line": 916,
+            "end_line": 926,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000084",
+      "title": "MEINFO and METRANS use four values per ALT",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require four successive values per ALT allele, representing NAME/START/END/POLARITY or CHR/START/END/POLARITY respectively.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When MEINFO or METRANS is present.",
+      "required_or_prohibited_behavior": "Require four successive values per ALT allele, representing NAME/START/END/POLARITY or CHR/START/END/POLARITY respectively.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each field has exactly 4×ALT-count values with the specified tuple ordering.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L948",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 948-962; section-specific normative prose",
+            "start_line": 948,
+            "end_line": 962,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000085",
+      "title": "EVENT groups records and EVENTTYPE classifies event",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Treat records with the same EVENT value as belonging to the same event; interpret EVENTTYPE as the event classification.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When EVENT is used to associate records.",
+      "required_or_prohibited_behavior": "Treat records with the same EVENT value as belonging to the same event; interpret EVENTTYPE as the event classification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "All records sharing EVENT are grouped; EVENTTYPE remains a separate classification value.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L976",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 976-1001; section-specific normative prose",
+            "start_line": 976,
+            "end_line": 1001,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000086",
+      "title": "Reserved EVENTTYPE values are used when appropriate",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "RECOMMENDED",
+      "atomic_statement": "Use the reserved values DEL, DEL:ME, INS, INS:ME, DUP, DUP:TANDEM, DUP:DISPERSED, INV, TRA, TRA:BALANCED, TRA:UNBALANCED, CHROMOTHRIPSIS, CHROMOPLEXY, BFB or DOUBLEMINUTE when appropriate; other values are implementation-defined.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When assigning an EVENTTYPE for a listed event class.",
+      "required_or_prohibited_behavior": "Use the reserved values DEL, DEL:ME, INS, INS:ME, DUP, DUP:TANDEM, DUP:DISPERSED, INV, TRA, TRA:BALANCED, TRA:UNBALANCED, CHROMOTHRIPSIS, CHROMOPLEXY, BFB or DOUBLEMINUTE when appropriate; other values are implementation-defined.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Listed event classes use their reserved vocabulary where applicable; unlisted values are not rejected solely for being unlisted if implementation-defined semantics are supported.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L980",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 980-999; section-specific normative prose",
+            "start_line": 980,
+            "end_line": 999,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000087",
+      "title": "CILEN has two confidence-bound values per ALT",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require two successive values per ALT allele representing lower and upper SVLEN confidence bounds.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When CILEN is present.",
+      "required_or_prohibited_behavior": "Require two successive values per ALT allele representing lower and upper SVLEN confidence bounds.",
+      "exceptions": [],
+      "observable_acceptance_condition": "CILEN contains exactly 2×ALT-count entries in lower/upper order.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1003",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1003-1010; section-specific normative prose",
+            "start_line": 1003,
+            "end_line": 1010,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000088",
+      "title": "CICN has two copy-number bounds per ALT",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require two successive values per ALT allele representing lower and upper copy-number bounds.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When CICN is present.",
+      "required_or_prohibited_behavior": "Require two successive values per ALT allele representing lower and upper copy-number bounds.",
+      "exceptions": [],
+      "observable_acceptance_condition": "CICN contains exactly 2×ALT-count entries in lower/upper order.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1012",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1012-1020; section-specific normative prose",
+            "start_line": 1012,
+            "end_line": 1020,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000089",
+      "title": "SVCLAIM distinguishes abundance and adjacency assertions",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Interpret D as abundance evidence, J as non-reference adjacency evidence, and DJ as evidence for both consistent abundance and adjacency changes.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When interpreting DEL/DUP/CNV/INV/INS/breakend symbolic or breakend alleles.",
+      "required_or_prohibited_behavior": "Interpret D as abundance evidence, J as non-reference adjacency evidence, and DJ as evidence for both consistent abundance and adjacency changes.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The claim value and ALT allele class agree with the claim semantics.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1024",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1024-1049; section-specific normative prose",
+            "start_line": 1024,
+            "end_line": 1049,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000090",
+      "title": "SVCLAIM permitted values depend on ALT class",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "For DEL/DUP require D, J or DJ; CNV has implicit D and permits D or missing; INV/INS have implicit J and permit J, DJ or missing; breakends have implicit J and permit J or missing; non-SV alleles use missing; omit the field if every allele is missing.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When SVCLAIM is present or required for an ALT allele.",
+      "required_or_prohibited_behavior": "For DEL/DUP require D, J or DJ; CNV has implicit D and permits D or missing; INV/INS have implicit J and permit J, DJ or missing; breakends have implicit J and permit J or missing; non-SV alleles use missing; omit the field if every allele is missing.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each ALT-specific SVCLAIM value conforms to its allele-class rule; field may be omitted only when all values are missing.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1051",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1051-1066; section-specific normative prose",
+            "start_line": 1051,
+            "end_line": 1066,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000091",
+      "title": "RN determines tandem-repeat subfield cardinality",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Use RN as the number of repeat sequences and determine the per-allele lengths of RUS/RUL/RB/CIRB/RUC/CIRUC from RN; treat missing RN as zero for length sums; if RN is absent, assume 1 for <CNV:TR> and 0 otherwise.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "For <CNV:TR> tandem-repeat alleles.",
+      "required_or_prohibited_behavior": "Use RN as the number of repeat sequences and determine the per-allele lengths of RUS/RUL/RB/CIRB/RUC/CIRUC from RN; treat missing RN as zero for length sums; if RN is absent, assume 1 for <CNV:TR> and 0 otherwise.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Flattened repeat subfield cardinality equals the sum of effective RN values.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1070",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1070-1080; section-specific normative prose",
+            "start_line": 1070,
+            "end_line": 1080,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000092",
+      "title": "Tandem-repeat sequence lists preserve per-ALT flattened order",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Represent per-ALT inner lists flattened and concatenated in ALT order, with each allele's list length determined by RN.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When RUS/RUL/RUC/RB are used for <CNV:TR> alleles.",
+      "required_or_prohibited_behavior": "Represent per-ALT inner lists flattened and concatenated in ALT order, with each allele's list length determined by RN.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Decoded list slices align with ALT order and each allele's RN count.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1084",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1084-1105; section-specific normative prose",
+            "start_line": 1084,
+            "end_line": 1105,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000093",
+      "title": "Tandem-repeat sequence and length consistency rules",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Restrict RUS to IUPAC nucleotide codes or missing; require RUS and RUL entry lengths to agree; RB should approximately equal RUL×RUC but exact equality is not required; infer RUL from RUS length when RUS exists and RUL does not.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When corresponding RUS/RUL/RUC/RB fields are both present and non-missing.",
+      "required_or_prohibited_behavior": "Restrict RUS to IUPAC nucleotide codes or missing; require RUS and RUL entry lengths to agree; RB should approximately equal RUL×RUC but exact equality is not required; infer RUL from RUS length when RUS exists and RUL does not.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Sequence alphabet, paired lengths and stated inference/approximation semantics are preserved.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1096",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1096-1105; section-specific normative prose",
+            "start_line": 1096,
+            "end_line": 1105,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000094",
+      "title": "CIRUC and CIRB encode signed confidence offsets",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require each interval field to be twice the length of its corresponding RUC/RB field; prohibit non-missing intervals where the corresponding value is absent; interpret lower offsets <=0 and upper offsets >=0; missing lower means 0 and missing upper means unbounded.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When CIRUC or CIRB is present.",
+      "required_or_prohibited_behavior": "Require each interval field to be twice the length of its corresponding RUC/RB field; prohibit non-missing intervals where the corresponding value is absent; interpret lower offsets <=0 and upper offsets >=0; missing lower means 0 and missing upper means unbounded.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Interval lengths, per-value applicability and missing-bound semantics conform.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1107",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1107-1124; section-specific normative prose",
+            "start_line": 1107,
+            "end_line": 1124,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000095",
+      "title": "RUB depends on RUC and encodes variable repeat-unit lengths",
+      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require RUC and integer RUC values; use the same list-of-list layout with one RUB list per repeat sequence and list length given by RUC; if RUB is absent, use RUL for each repeat unit.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When RUB is present for tandem-repeat representation.",
+      "required_or_prohibited_behavior": "Require RUC and integer RUC values; use the same list-of-list layout with one RUB list per repeat sequence and list length given by RUC; if RUB is absent, use RUL for each repeat unit.",
+      "exceptions": [],
+      "observable_acceptance_condition": "RUB presence implies RUC; decoded RUB lengths match RUC; absent RUB resolves to RUL.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1126",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1126-1140; section-specific normative prose",
+            "start_line": 1126,
+            "end_line": 1140,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000096",
+      "title": "FORMAT CN requires consistent SVLEN across affected alleles",
+      "requirement_domain": "STRUCTURAL_VARIANT_FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Require all such alleles to have the same SVLEN.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When FORMAT CN is present on a record containing <CNV>, <DEL> or <DUP> alleles.",
+      "required_or_prohibited_behavior": "Require all such alleles to have the same SVLEN.",
+      "exceptions": [],
+      "observable_acceptance_condition": "All CN-bearing CNV/DEL/DUP ALT alleles on the record share identical SVLEN.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1142",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1142-1162; section-specific normative prose",
+            "start_line": 1142,
+            "end_line": 1162,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000097",
+      "title": "A novel adjacency comprises two mate breakends",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Represent each adjacency as two breakends called mates, with one VCF record for each breakend.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When representing an arbitrary rearrangement as novel adjacencies.",
+      "required_or_prohibited_behavior": "Represent each adjacency as two breakends called mates, with one VCF record for each breakend.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each represented adjacency resolves to two mate breakend records.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1394",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1394-1400; section-specific normative prose",
+            "start_line": 1394,
+            "end_line": 1400,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000098",
+      "title": "Breakend REF and ALT replacement semantics",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "REF identifies sequence s beginning at POS; ALT replaces s with t, a mate coordinate chr:pos identifying the first mapped base of the joined piece, and an orientation encoded by square brackets.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "For a breakend record.",
+      "required_or_prohibited_behavior": "REF identifies sequence s beginning at POS; ALT replaces s with t, a mate coordinate chr:pos identifying the first mapped base of the joined piece, and an orientation encoded by square brackets.",
+      "exceptions": [],
+      "observable_acceptance_condition": "ALT can be decomposed into replacement sequence, mate coordinate and orientation.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1400",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1400-1414; section-specific normative prose",
+            "start_line": 1400,
+            "end_line": 1414,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000099",
+      "title": "Breakend bracket placement determines joined-piece orientation",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Use one of the four specified forms: t[p[; t]p]; ]p]t; [p[t, with the specified right/left and forward/reverse-complement interpretation.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When encoding a breakend ALT replacement.",
+      "required_or_prohibited_behavior": "Use one of the four specified forms: t[p[; t]p]; ]p]t; [p[t, with the specified right/left and forward/reverse-complement interpretation.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each of the four bracket forms maps to the corresponding orientation and before/after placement.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1413",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1413-1424; section-specific normative prose",
+            "start_line": 1413,
+            "end_line": 1424,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000100",
+      "title": "Multiple mates are represented as alternate adjacencies",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Treat the alternate adjacencies as alternate alleles.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a breakend has multiple mates due to reuse or uncertainty.",
+      "required_or_prohibited_behavior": "Treat the alternate adjacencies as alternate alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Multiple mate relationships are represented as multiple ALT adjacency alternatives, not silently collapsed.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1521",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1521-1536; section-specific normative prose",
+            "start_line": 1521,
+            "end_line": 1536,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000101",
+      "title": "Partner breakends are distinct from adjacency mates",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Treat them as partners; each breakend has one partner; a partner may be explicitly named with PARID.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When describing two breakends connected in the reference but disconnected in the variant.",
+      "required_or_prohibited_behavior": "Treat them as partners; each breakend has one partner; a partner may be explicitly named with PARID.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Partner relationship and mate relationship remain distinct; explicit PARID links identify the partner pair.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1539",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1539-1560; section-specific normative prose",
+            "start_line": 1539,
+            "end_line": 1560,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000102",
+      "title": "Telomeric virtual breakends use boundary coordinates",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Represent a virtual telomeric breakend at position 0 or N+1 for a chromosome spanning positions 1..N, so every breakend has a partner.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "For rearrangements involving a chromosome telomere.",
+      "required_or_prohibited_behavior": "Represent a virtual telomeric breakend at position 0 or N+1 for a chromosome spanning positions 1..N, so every breakend has a partner.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Telomeric virtual coordinates are 0 and N+1 for the specified reference span.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1563",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1563-1584; section-specific normative prose",
+            "start_line": 1563,
+            "end_line": 1584,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000103",
+      "title": "Breakend uncertainty uses leftmost placement and CIPOS",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Place the breakend at the leftmost position, construct ALT using that chosen position, and represent uncertainty with CIPOS.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When exact break position is ambiguous due to sequence homology.",
+      "required_or_prohibited_behavior": "Place the breakend at the leftmost position, construct ALT using that chosen position, and represent uncertainty with CIPOS.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Record POS/ALT use the chosen leftmost representation and CIPOS captures the position interval.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1648",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1648-1677; section-specific normative prose",
+            "start_line": 1648,
+            "end_line": 1677,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000104",
+      "title": "Mate coordinates under uncertainty are conditional, not direct POS copies",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Interpret the coordinate in one breakend's ALT as the position its mate would take if the first breakend's position were fixed; do not require it to equal the mate record's selected POS.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When both breakends have uncertain positions.",
+      "required_or_prohibited_behavior": "Interpret the coordinate in one breakend's ALT as the position its mate would take if the first breakend's position were fixed; do not require it to equal the mate record's selected POS.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Mate ALT coordinates are interpreted conditionally under the reciprocal uncertainty rule.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1674",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1674-1680; section-specific normative prose",
+            "start_line": 1674,
+            "end_line": 1680,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000105",
+      "title": "Single breakends have no mate",
+      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "Represent it as a single breakend with no mate; unknown/unobserved partners may be represented as single breakends.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a breakend is not part of an observed novel adjacency.",
+      "required_or_prohibited_behavior": "Represent it as a single breakend with no mate; unknown/unobserved partners may be represented as single breakends.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A single-breakend representation does not require a MATEID.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L1682",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 1682-1706; section-specific normative prose",
+            "start_line": 1682,
+            "end_line": 1706,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical normative source not yet captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_REVIEWED",
+          "source_reference_ids": [],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Candidate atom derived from pinned VCFv4.5 source; cross-version applicability still pending.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
+        "Independently review normative force, atomicity, actor/condition and testability."
+      ]
     }
   ],
   "coverage_summary": {
@@ -9349,7 +12289,7 @@
       "VCFv4.5"
     ],
     "candidate_lines_reviewed": 0,
-    "atomic_requirements_created": 75,
+    "atomic_requirements_created": 105,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
