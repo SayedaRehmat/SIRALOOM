@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-fixed-record-fields-source-review",
   "status": "PRIMARY_SOURCE_REVIEW_COMPLETE_FOR_CAPTURED_FIXED_FIELD_PASSAGES_ATOMIC_SECOND_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "scope": "Version-specific source-context review of header/data record fixed fields CHROM, POS, ID, REF, ALT, QUAL, FILTER and INFO, plus conditional FORMAT/sample-column introduction, for VCFv4.1–4.5. This artifact does not exhaust genotype field grammar, reserved INFO/FORMAT tables, breakend syntax, symbolic allele definitions, or all cross-references.",
   "source_passages": [
     {
@@ -10,7 +10,7 @@
       "a": 157,
       "b": 194,
       "sha": "420cee83a66259600a70de36721763cc374df1e3",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L157",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L157",
       "lines": [
         {
           "line": 157,
@@ -171,7 +171,7 @@
       "a": 174,
       "b": 211,
       "sha": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L174",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L174",
       "lines": [
         {
           "line": 174,
@@ -332,7 +332,7 @@
       "a": 315,
       "b": 375,
       "sha": "01671b89e21fc1bca414b639a4ea483194f127a9",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L315",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L315",
       "lines": [
         {
           "line": 315,
@@ -585,7 +585,7 @@
       "a": 329,
       "b": 391,
       "sha": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L329",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L329",
       "lines": [
         {
           "line": 329,
@@ -846,7 +846,7 @@
       "a": 378,
       "b": 440,
       "sha": "307950e7eeafc33d524969ff906343f756adb7d7",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L378",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L378",
       "lines": [
         {
           "line": 378,
@@ -2139,7 +2139,7 @@
     "laboratory_qualification": "NOT_CLAIMED"
   },
   "limitations": [
-    "All excerpts are pinned to HTS specs commit 510c107ba89aa13113818c9e4fa3071283cb7f7bb; VCFv4.0 is excluded pending historical source byte capture.",
+    "All excerpts are pinned to HTS specs commit 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.0 is excluded pending historical source byte capture.",
     "Normative force labels for descriptive field definitions and cross-references require a separate clause-level interpretation review; candidate wording is not a legalistic force determination.",
     "The source says CHROM blocks are contiguous and POS is sorted within each CHROM; a production validator must define and test the precise relationship between these two order constraints without inventing stronger sort keys.",
     "REF reference-sequence normalization and handling of IUPAC ambiguity are distinct producer/reader responsibilities and need explicit actor assignment.",
