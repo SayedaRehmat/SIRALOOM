@@ -128,6 +128,12 @@ def assert_analysis_toolchain_matches_worker(
         )
     snapshot = getattr(analysis, "toolchain_snapshot", None)
     queue = str(getattr(analysis, "toolchain_queue", "") or "")
+    registered = resolve_registered_toolchain_profile(expected[0])
+    if queue != registered.get("worker_queue"):
+        raise ToolchainProfileError(
+            "ANALYSIS_TOOLCHAIN_QUEUE_MISMATCH: persisted worker queue does not match "
+            "the registered profile routing contract."
+        )
     if isinstance(snapshot, dict) and snapshot:
         if (
             snapshot.get("profile_id") != expected[0]
