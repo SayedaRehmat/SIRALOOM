@@ -3,7 +3,7 @@
   "artifact_id": "siraloom-vcf-core-header-record-info-format-source-review",
   "status": "SOURCE_CONTEXT_INDEXED_ATOMIC_REQUIREMENT_DECOMPOSITION_PENDING",
   "scope": "VCF core header syntax, eight fixed record fields, reserved INFO definitions, reserved FORMAT/genotype definitions and adjacent genotype semantics for VCFv4.1–4.5. VCFv4.0 is not included pending historical raw-source pinning.",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "method": [
     "Capture exact source line excerpts from the pinned TeX source and retain line numbers and blob identities.",
     "Represent VCFv4.1–4.2 reserved INFO and FORMAT definitions as prose enumeration entries because these versions do not use the later reserved-key tables in the reviewed passages.",
@@ -16,7 +16,7 @@
       "version": "VCFv4.1",
       "source": {
         "repository": "samtools/hts-specs",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bbb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.1.tex",
         "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
       },
@@ -431,7 +431,7 @@
       "version": "VCFv4.2",
       "source": {
         "repository": "samtools/hts-specs",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bbb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.2.tex",
         "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
       },
@@ -846,7 +846,7 @@
       "version": "VCFv4.3",
       "source": {
         "repository": "samtools/hts-specs",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bbb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.3.tex",
         "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
       },
@@ -1821,7 +1821,7 @@
       "version": "VCFv4.4",
       "source": {
         "repository": "samtools/hts-specs",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bbb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.4.tex",
         "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
       },
@@ -2872,7 +2872,7 @@
       "version": "VCFv4.5",
       "source": {
         "repository": "samtools/hts-specs",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bbb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.5.tex",
         "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
       },
