@@ -69,6 +69,12 @@ def test_profile_rejects_independent_bcftools_or_htslib_version_drift(
         )
 
 
+def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
+    dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
+    assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build" in dockerfile
+    assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
+
+
 @pytest.mark.parametrize(
     ("service", "compose_profile", "profile_id", "bcftools_version", "htslib_version", "queue", "lock_file"),
     [
