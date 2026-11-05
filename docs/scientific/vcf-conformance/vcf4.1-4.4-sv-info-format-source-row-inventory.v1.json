@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf4.1-4.4-sv-info-format-source-row-inventory.v1",
-  "status": "AUTHOR_SOURCE_ROW_INVENTORY_COMPLETE_SEMANTIC_DELTA_REVIEW_PENDING",
+  "status": "AUTHOR_SOURCE_ROW_INVENTORY_AND_KEY_FIELD_DELTA_REVIEW_COMPLETE_ATOMIC_REQUIREMENT_RECONCILIATION_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
-    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7"
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "Every ##INFO and ##FORMAT declaration in the dedicated structural-variant INFO and FORMAT definition sections of VCFv4.1, VCFv4.2, VCFv4.3 and VCFv4.4, with exact source line and declaration text. This inventory does not include general reserved INFO/FORMAT tables, and does not yet atomize all surrounding prose.",
   "versions": {
     "VCFv4.1": {
       "source": {
         "file": "VCFv4.1.tex",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
       },
       "section_ranges": {
@@ -187,7 +187,7 @@
     "VCFv4.2": {
       "source": {
         "file": "VCFv4.2.tex",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
       },
       "section_ranges": {
@@ -363,7 +363,7 @@
     "VCFv4.3": {
       "source": {
         "file": "VCFv4.3.tex",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
       },
       "section_ranges": {
@@ -544,7 +544,7 @@
     "VCFv4.4": {
       "source": {
         "file": "VCFv4.4.tex",
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
       },
       "section_ranges": {
@@ -972,7 +972,8 @@
     "A source declaration row is not necessarily a mandatory field occurrence in every record.",
     "Description strings are not a substitute for the surrounding semantic clauses; full-context review remains required.",
     "The VCFv4.4 change log is used only to discover candidate deltas; section definitions are the primary source.",
-    "No VCFv4.0 applicability is asserted."
+    "No VCFv4.0 applicability is asserted.",
+    "The row inventory captures every field declaration in the dedicated SV INFO/FORMAT sections; row-specific normative clauses still require atomization and cross-version applicability mapping."
   ],
   "independent_review": {
     "required": true,
@@ -980,5 +981,200 @@
   },
   "implementation_mapping": "NOT_STARTED",
   "test_execution": "NOT_STARTED",
-  "laboratory_qualification": "NOT_CLAIMED"
+  "laboratory_qualification": "NOT_CLAIMED",
+  "field_semantic_deltas": [
+    {
+      "field": "END",
+      "versions": [
+        "4.1",
+        "4.2"
+      ],
+      "finding": "END is described as the end position of the variant; for precise variants it is POS + length(REF) - 1, and for imprecise variants it is the corresponding best estimate.",
+      "sources": [
+        "VCFv4.1.tex:241-245",
+        "VCFv4.2.tex:258-262"
+      ]
+    },
+    {
+      "field": "SVLEN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "SVLEN is Number=. Integer and describes the difference in length between REF and ALT; negative deletion values appear in the version examples. It is not yet the VCFv4.4 positive class-specific Number=A definition.",
+      "sources": [
+        "VCFv4.1.tex:253-258",
+        "VCFv4.2.tex:270-275",
+        "VCFv4.3.tex:635-641"
+      ]
+    },
+    {
+      "field": "SVLEN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "SVLEN is Number=A Integer, one value per ALT; required for symbolic SV alleles and defined as positive inserted/duplicated/inverted/deleted length or CNV segment length. Legacy negative values are interpreted by absolute value.",
+      "sources": [
+        "VCFv4.4.tex:720-738"
+      ]
+    },
+    {
+      "field": "CIPOS/CIEND",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Both are Number=2 Integer confidence intervals for imprecise variants; they are not yet the VCFv4.4 per-ALT successive offset-pair arrays.",
+      "sources": [
+        "VCFv4.1.tex:259-260",
+        "VCFv4.2.tex:276-277",
+        "VCFv4.3.tex:642-643"
+      ]
+    },
+    {
+      "field": "CIPOS/CIEND",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "Both use Number=. Integer; when present they contain successive pairs per ALT. CIPOS offsets are relative to POS; CIEND offsets are relative to END inferred from SVLEN. CIEND missing defaults to CIPOS.",
+      "sources": [
+        "VCFv4.4.tex:739-765"
+      ]
+    },
+    {
+      "field": "SVTYPE",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "SVTYPE is an active Number=1 String structural-variant type key, with type values including BND in the earlier breakend model.",
+      "sources": [
+        "VCFv4.1.tex:247-252",
+        "VCFv4.2.tex:264-269",
+        "VCFv4.3.tex:618-634"
+      ]
+    },
+    {
+      "field": "SVTYPE",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "SVTYPE remains in the reserved declaration but is explicitly deprecated in the VCFv4.4 change log as redundant with ALT; do not treat its declaration as a requirement to emit it.",
+      "sources": [
+        "VCFv4.4.tex:710-719",
+        "VCFv4.4.tex:2583-2589"
+      ]
+    },
+    {
+      "field": "MATEID/PARID/EVENT",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "MATEID is Number=. and PARID/EVENT are Number=1 in the source declarations; they have record/event-level semantics rather than the VCFv4.4 per-ALT schema.",
+      "sources": [
+        "VCFv4.1.tex:274-276",
+        "VCFv4.2.tex:291-293",
+        "VCFv4.3.tex:659-661"
+      ]
+    },
+    {
+      "field": "MATEID/PARID/EVENT/EVENTTYPE",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "MATEID, PARID and EVENT become Number=A, and EVENTTYPE is introduced as Number=A; each ALT's relationships/classification are represented in ALT order.",
+      "sources": [
+        "VCFv4.4.tex:808-812"
+      ]
+    },
+    {
+      "field": "CILEN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "CILEN is Number=2 Integer and describes the confidence interval around inserted material between breakends.",
+      "sources": [
+        "VCFv4.1.tex:277",
+        "VCFv4.2.tex:294",
+        "VCFv4.3.tex:662"
+      ]
+    },
+    {
+      "field": "CILEN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "CILEN is Number=. Integer and describes the confidence interval for SVLEN, with successive pairs per ALT.",
+      "sources": [
+        "VCFv4.4.tex:844-852"
+      ]
+    },
+    {
+      "field": "CN and FORMAT CN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Earlier INFO CN is a scalar Integer copy number of the segment containing a breakend; FORMAT CN is an Integer copy-number genotype for imprecise events. CNADJ/DPADJ/CICNADJ are present in earlier INFO field sets.",
+      "sources": [
+        "VCFv4.1.tex:278-294",
+        "VCFv4.2.tex:295-311",
+        "VCFv4.3.tex:663-682"
+      ]
+    },
+    {
+      "field": "CN and FORMAT CN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "INFO CN becomes Number=A Float copy number of CNV/breakpoint; FORMAT CN becomes Number=1 Float total copy number. CNL and CNP are Number=G Float genotype-indexed vectors, with CNP introduced in 4.3. The earlier CNADJ/DPADJ/CICNADJ keys are absent from 4.4 SV field declarations.",
+      "sources": [
+        "VCFv4.4.tex:853-860",
+        "VCFv4.4.tex:985-992"
+      ]
+    },
+    {
+      "field": "Tandem repeats and SVCLAIM",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "4.4 adds SVCLAIM and tandem-repeat fields RN/RUS/RUL/RUC/RB/CIRUC/CIRB/RUB; no corresponding field family exists in 4.1-4.3.",
+      "sources": [
+        "VCFv4.4.tex:863-975"
+      ]
+    },
+    {
+      "field": "BND",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Earlier versions include BND in the symbolic SV type model and use SVTYPE=BND for single breakends in examples and prose.",
+      "sources": [
+        "VCFv4.1.tex:247-252; 777-794",
+        "VCFv4.2.tex:264-269; 794-811",
+        "VCFv4.3.tex:601-672; 1213-1233"
+      ]
+    },
+    {
+      "field": "BND",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "The VCFv4.4 change log disallows BND ALT records and directs use of breakpoint notation; this is a version-specific change.",
+      "sources": [
+        "VCFv4.4.tex:2583-2589"
+      ]
+    }
+  ],
+  "review_status": "AUTHOR_ROW_AND_DELTA_REVIEW_COMPLETE; INDEPENDENT_REVIEW_PENDING"
 }
