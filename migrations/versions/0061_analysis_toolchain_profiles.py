@@ -57,7 +57,12 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
     count = connection.execute(sa.text(
-        "SELECT COUNT(*) FROM analyses WHERE toolchain_profile_id != 'bcftools-1.25-htslib-1.25-linux-64'"
+        "SELECT COUNT(*) FROM analyses WHERE "
+        "toolchain_profile_id != 'bcftools-1.25-htslib-1.25-linux-64' "
+        "OR toolchain_bcftools_version != '1.25' "
+        "OR toolchain_htslib_version != '1.25' "
+        "OR toolchain_queue != 'bioinformatics.bcftools.1_25' "
+        "OR CAST(toolchain_snapshot AS TEXT) NOT IN ('{}', 'null')"
     )).scalar_one()
     if count:
         raise RuntimeError("Refusing to downgrade: non-default analysis toolchain assignments would lose provenance.")
