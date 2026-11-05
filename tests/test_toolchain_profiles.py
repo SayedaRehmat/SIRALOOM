@@ -69,6 +69,30 @@ def test_profile_rejects_independent_bcftools_or_htslib_version_drift(
         )
 
 
+@pytest.mark.parametrize(
+    ("profile_id", "release_folder", "expected_advisory_count"),
+    [
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", 11),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", 11),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", 11),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.4", 10),
+        ("bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", 10),
+    ],
+)
+def test_security_review_advisories_match_the_exact_upstream_release(
+    profile_id, release_folder, expected_advisory_count
+):
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
+    review = profile["security_review"]
+    assert review["status"] == "PATCHED_UPSTREAM_RELEASE"
+    assert len(review["advisories_reviewed"]) == expected_advisory_count
+    assert review["release_notes_url"] == (
+        f"https://sourceforge.net/projects/samtools/files/samtools/{release_folder}/"
+    )
+    assert review["reviewed_on"] == "2026-11-05"
+
+
 def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
     assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build" in dockerfile
