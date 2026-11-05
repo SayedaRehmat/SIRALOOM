@@ -40,6 +40,9 @@ jobs:
     env:
       PYTHONUNBUFFERED: "1"
       SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
+      # Detailed diagnostics are safe only for this public NIST HG001 input.
+      # Do not enable this setting for private laboratory VCF workflows.
+      SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS: "1"
     steps:
       - name: Checkout exact qualification commit
         uses: actions/checkout@v4

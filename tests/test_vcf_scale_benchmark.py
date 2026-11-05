@@ -271,3 +271,37 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
     assert sample_name not in serialized
     assert (output / module.REPORT_NAME).is_file()
     assert (output / "normalized.vcf.gz.csi").is_file()
+
+def test_benchmark_failure_preserves_opt_in_public_validation_diagnostics(tmp_path, monkeypatch):
+    module = _load_runner()
+    vcf, reference = _inputs(tmp_path)
+    validator_error = "Spanning-deletion ALT '*' has no overlapping deletion record on chr3 at line 42"
+    monkeypatch.setenv("SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS", "1")
+    monkeypatch.setattr(
+        module,
+        "validate_vcf",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            status="INVALID",
+            errors=[validator_error],
+            sample_names=[],
+            detected_build=None,
+            metadata=None,
+            record_count=0,
+            fileformat="VCFv4.2",
+        ),
+    )
+
+    with pytest.raises(module.ScaleBenchmarkError, match="Spanning-deletion ALT"):
+        module.run_benchmark(
+            vcf_path=vcf,
+            reference_fasta=reference,
+            reference_build="GRCh38",
+            sample_name="HG001",
+            output_dir=tmp_path / "diagnostic-output",
+        )
+
+    failure = json.loads(
+        (tmp_path / "diagnostic-output" / module.FAILURE_NAME).read_text(encoding="utf-8")
+    )
+    assert failure["failed_stage"] == "vcf_validation"
+    assert failure["validation_errors"] == [validator_error]

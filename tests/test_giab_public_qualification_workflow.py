@@ -12,3 +12,4 @@ def test_public_giab_workflow_uses_acquisition_provenance_schema():
     assert '["assets"]["truth_vcf"]["path"]' in workflow
     assert '["reference_pair"]["fasta"]["path"]' in workflow
     assert '["assets"]["reference_fasta"]["path"]' not in workflow
+    assert 'SIRALOOM_BENCHMARK_INCLUDE_VALIDATION_ERRORS: "1"' in workflow
