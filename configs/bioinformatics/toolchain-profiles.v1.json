@@ -52,7 +52,7 @@
     },
     {
       "id": "bcftools-1.24.1-htslib-1.24.1-linux-64-source",
-      "status": "CANDIDATE",
+      "status": "SOFTWARE_QUALIFIED",
       "platform": "linux-64",
       "bcftools_version": "1.24.1",
       "htslib_version": "1.24.1",
@@ -91,13 +91,13 @@
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/",
         "reviewed_on": "2026-11-05"
       },
-      "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks passed in CI; software qualification is distinct from clinical or laboratory qualification.",
+      "qualification_scope": "Linux AMD64 software qualification passed: source archive SHA-256 verification, explicit build-lock reproduction, exact HTSlib/BCFtools source build, VCF normalization/multiallelic/BGZF/CSI smoke tests, full backend regression suite, isolated non-root runtime image checks, and profile-specific queue/retry/reanalysis integration coverage. This is not clinical validation or qualification of every laboratory host.",
       "worker_queue": "bioinformatics.bcftools.1_24_1",
       "dockerfile": "docker/backend-bcftools-source.Dockerfile"
     },
     {
       "id": "bcftools-1.23.3-htslib-1.23.3-linux-64-source",
-      "status": "CANDIDATE",
+      "status": "SOFTWARE_QUALIFIED",
       "platform": "linux-64",
       "bcftools_version": "1.23.3",
       "htslib_version": "1.23.3",
@@ -136,13 +136,13 @@
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/",
         "reviewed_on": "2026-11-05"
       },
-      "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
+      "qualification_scope": "Linux AMD64 software qualification passed: source archive SHA-256 verification, explicit build-lock reproduction, exact HTSlib/BCFtools source build, VCF normalization/multiallelic/BGZF/CSI smoke tests, full backend regression suite, isolated non-root runtime image checks, and profile-specific queue/retry/reanalysis integration coverage. This is not clinical validation or qualification of every laboratory host.",
       "worker_queue": "bioinformatics.bcftools.1_23_3",
       "dockerfile": "docker/backend-bcftools-source.Dockerfile"
     },
     {
       "id": "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
-      "status": "CANDIDATE",
+      "status": "SOFTWARE_QUALIFIED",
       "platform": "linux-64",
       "bcftools_version": "1.22.3",
       "htslib_version": "1.22.4",
@@ -180,7 +180,7 @@
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.22.4/",
         "reviewed_on": "2026-11-05"
       },
-      "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
+      "qualification_scope": "Linux AMD64 software qualification passed: source archive SHA-256 verification, explicit build-lock reproduction, exact HTSlib/BCFtools source build, VCF normalization/multiallelic/BGZF/CSI smoke tests, full backend regression suite, isolated non-root runtime image checks, and profile-specific queue/retry/reanalysis integration coverage. This is not clinical validation or qualification of every laboratory host.",
       "worker_queue": "bioinformatics.bcftools.1_22_4",
       "dockerfile": "docker/backend-bcftools-source.Dockerfile"
     },
