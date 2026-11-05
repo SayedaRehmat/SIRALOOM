@@ -179,6 +179,20 @@ def test_source_profile_matrix_runs_on_main_and_serializes_snapshot_image_builds
 
 
 
+def test_legacy_1_24_1_builder_is_removed_in_favor_of_generic_profile_contract():
+    assert not (ROOT / "docker/backend-bcftools-1.24.1.Dockerfile").exists()
+    assert not (ROOT / "scripts/build_bcftools_1_24_1.sh").exists()
+    assert not (ROOT / ".github/workflows/bcftools-1.24.1-profile.yml").exists()
+    assert not (ROOT / ".github/workflows/bcftools-1.24.1-build-lock.yml").exists()
+    ci = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    matrix = (ROOT / ".github/workflows/bcftools-source-profile-matrix.yml").read_text(encoding="utf-8")
+    assert "Build isolated BCFtools 1.24.1 laboratory backend image" not in ci
+    assert "docker/backend-bcftools-source.Dockerfile" in matrix
+    assert "Discover immutable source-build profiles" in matrix
+    assert "      - main" in ci
+
+
+
 @pytest.mark.parametrize(
     ("service", "compose_profile", "profile_id", "bcftools_version", "htslib_version", "queue", "lock_file"),
     [
