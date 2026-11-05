@@ -114,10 +114,11 @@ def create_analysis(
     configured_toolchain_id = analysis_configuration.get("toolchain_profile_id")
     if toolchain_profile_id and configured_toolchain_id and str(toolchain_profile_id) != str(configured_toolchain_id):
         raise ValueError("toolchain_profile_id conflicts with configuration.toolchain_profile_id")
+    from backend.app.config import settings
     selected_toolchain_id = str(
         toolchain_profile_id
         or configured_toolchain_id
-        or __import__("backend.app.config", fromlist=["settings"]).settings.bcftools_profile_id
+        or settings.bcftools_profile_id
     )
     toolchain_profile = resolve_registered_toolchain_profile(selected_toolchain_id)
     toolchain_snapshot = {
