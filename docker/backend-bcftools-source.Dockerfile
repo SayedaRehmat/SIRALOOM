@@ -59,11 +59,11 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 COPY pyproject.toml uv.lock ./
 RUN set -eux \
-    && printf 'deb [check-valid-until=no] https://snapshot-cloudflare.debian.org/archive/debian/%s/ trixie main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" > /etc/apt/sources.list \
-    && printf 'deb [check-valid-until=no] https://snapshot-cloudflare.debian.org/archive/debian/%s/ trixie-updates main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
-    && printf 'deb [check-valid-until=no] https://snapshot-cloudflare.debian.org/archive/debian-security/%s/ trixie-security main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/%s/ trixie main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" > /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/%s/ trixie-updates main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/%s/ trixie-security main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 update \
+    && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && python -c 'import hashlib, os, urllib.request; version=os.environ["UV_VERSION"]; expected=os.environ["UV_ARCHIVE_SHA256"]; url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-x86_64-unknown-linux-gnu.tar.gz"; data=urllib.request.urlopen(url, timeout=60).read(); actual=hashlib.sha256(data).hexdigest(); print("uv archive SHA-256:", actual); assert actual == expected, f"uv archive SHA-256 mismatch: {actual}"; open("/tmp/uv.tar.gz","wb").write(data)' \
