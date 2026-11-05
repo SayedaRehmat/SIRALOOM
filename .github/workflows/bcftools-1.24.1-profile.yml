@@ -88,7 +88,6 @@ jobs:
           PY
       - name: Run backend regression suite against BCFtools 1.24.1
         env:
-          BCFTOOLS_EXECUTABLE: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build/bin/bcftools
           BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
           BCFTOOLS_VERSION: "1.24.1"
           HTSLIB_VERSION: "1.24.1"
@@ -99,6 +98,7 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: |
+          export BCFTOOLS_EXECUTABLE="$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools"
           python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
           uv lock --check
           uv sync --locked --extra dev
