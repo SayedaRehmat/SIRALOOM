@@ -14793,6 +14793,1476 @@
         "Confirm exact applicability and semantic deltas against VCFv4.1–4.4 and historical VCFv4.0.",
         "Independently review normative force, atomicity, actor/condition and testability."
       ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000131",
+      "title": "VCFv4.1-4.2 genotype data places GT first in FORMAT",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "When genotype information is present, the first FORMAT sub-field is GT.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When genotype information is present in a VCFv4.1 or VCFv4.2 record.",
+      "required_or_prohibited_behavior": "Place GT as the first FORMAT key.",
+      "exceptions": [],
+      "observable_acceptance_condition": "GT is the first FORMAT key whenever sample genotype fields are present.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L193-L207",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 193-207",
+            "start_line": 193,
+            "end_line": 207,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L210-L224",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 210-224",
+            "start_line": 210,
+            "end_line": 224,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000132",
+      "title": "VCFv4.1-4.3 genotype separators denote genotype phasing",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Interpret / as an unphased genotype separator and | as a phased genotype separator.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When parsing GT in VCFv4.1, VCFv4.2 or VCFv4.3.",
+      "required_or_prohibited_behavior": "Interpret the separator between allele values as genotype-level unphased or phased status.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The parser distinguishes unphased / from phased | calls.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L200-L207",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 200-207",
+            "start_line": 200,
+            "end_line": 207,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L217-L224",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 217-224",
+            "start_line": 217,
+            "end_line": 224,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L492-L504",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 492-504",
+            "start_line": 492,
+            "end_line": 504,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000133",
+      "title": "VCFv4.1-4.2 diploid GL ordering uses triangular index formula",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "For diploid genotypes with ordered allele indices j<=k, use F(j/k)=k*(k+1)/2+j, yielding the canonical order AA,AB,BB for biallelic sites and AA,AB,BB,AC,BC,CC for triallelic sites.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When GL is encoded under VCFv4.1 or VCFv4.2.",
+      "required_or_prohibited_behavior": "Order the likelihood vector using the specified diploid triangular formula.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A biallelic GL vector is AA,AB,BB and a triallelic vector is AA,AB,BB,AC,BC,CC.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L207-L210",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 207-210",
+            "start_line": 207,
+            "end_line": 210,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L224-L227",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 224-227",
+            "start_line": 224,
+            "end_line": 227,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000134",
+      "title": "VCFv4.1-4.2 GL assumes diploidy when GT is absent",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When GT is absent, assume diploidy for the GL genotype likelihood ordering.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a GL field is present without GT in VCFv4.1 or VCFv4.2.",
+      "required_or_prohibited_behavior": "Interpret the GL vector as diploid.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A GL vector without GT is decoded using diploid genotype ordering.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L207-L210",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 207-210",
+            "start_line": 207,
+            "end_line": 210,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L224-L227",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 224-227",
+            "start_line": 224,
+            "end_line": 227,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "Related semantics exist but differ in this version; see adjacent-version semantic crosswalk.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000135",
+      "title": "VCFv4.1-4.2 GLE represents heterogeneous-ploidy likelihoods",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Interpret GLE as genotype likelihoods of heterogeneous ploidy, used in the presence of uncertain copy number.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When GLE is present in VCFv4.1 or VCFv4.2.",
+      "required_or_prohibited_behavior": "Interpret GLE as a string representation of likelihoods across genotype states of heterogeneous ploidy.",
+      "exceptions": [],
+      "observable_acceptance_condition": "GLE values can represent both haploid and diploid genotype states in the same likelihood field.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L207-L211",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 207-211",
+            "start_line": 207,
+            "end_line": 211,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L224-L228",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 224-228",
+            "start_line": 224,
+            "end_line": 228,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000136",
+      "title": "VCFv4.3-4.5 Number=G ordering supports arbitrary ploidy",
+      "requirement_domain": "ORDERING",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Order Number=G genotypes for ploidy P and N alternate alleles by the nondecreasing allele-index tuples generated by the nested-loop or recursive ordering algorithm; use the specified combinatorial index formula.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a Number=G genotype-indexed field is interpreted in VCFv4.3, VCFv4.4 or VCFv4.5.",
+      "required_or_prohibited_behavior": "Generate genotype states in the specification's arbitrary-ploidy canonical order using inclusive loop boundaries.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Generated genotype tuples and their indices match the source pseudocode and combinatorial formula for tested ploidies and allele counts.",
+      "source_references": [
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L504-L558",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 504-558",
+            "start_line": 504,
+            "end_line": 558,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L530-L583",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 530-583",
+            "start_line": 530,
+            "end_line": 583,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L629-L683",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 629-683",
+            "start_line": 629,
+            "end_line": 683,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000137",
+      "title": "VCFv4.4-4.5 GT phasing indicators are allele-level prefixes",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Interpret each GT phasing indicator as a prefix on the following allele: / indicates that allele is unphased and | indicates that allele is phased according to PS or PSL.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When parsing GT in VCFv4.4 or VCFv4.5.",
+      "required_or_prohibited_behavior": "Associate each phasing indicator with the allele value it precedes.",
+      "exceptions": [],
+      "observable_acceptance_condition": "GT parsing preserves per-allele phasing state rather than reducing the genotype to one global separator state.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L514-L525",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 514-525",
+            "start_line": 514,
+            "end_line": 525,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L613-L624",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 613-624",
+            "start_line": 613,
+            "end_line": 624,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000138",
+      "title": "VCFv4.4-4.5 first GT phasing indicator may be inferred",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The first GT phasing indicator may be omitted; infer it as / if any phasing indicators are /, and as | otherwise.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When the first allele in a VCFv4.4 or VCFv4.5 GT value has no explicit prefix.",
+      "required_or_prohibited_behavior": "Infer the first indicator using the remaining indicators and the specified default rule.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The parsed GT has an explicit first-allele phase state consistent with the remaining indicators.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L514-L525",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 514-525",
+            "start_line": 514,
+            "end_line": 525,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L613-L624",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 613-624",
+            "start_line": 613,
+            "end_line": 624,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000139",
+      "title": "VCFv4.4-4.5 PSL aligns one phase-set value to each GT allele",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Interpret PSL as a list with one phase-set value for each allele value in GT; unphased alleles have a missing value at the corresponding PSL position.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When FORMAT PSL is present.",
+      "required_or_prohibited_behavior": "Align PSL list positions one-to-one with GT allele positions and use missing for unphased alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "PSL cardinality and position alignment match GT ploidy and allele order.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L598-L603",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 598-603",
+            "start_line": 598,
+            "end_line": 603,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L771-L776",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 771-776",
+            "start_line": 771,
+            "end_line": 776,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000140",
+      "title": "VCFv4.4-4.5 PS and PSL cannot co-occur in one sample genotype",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "A sample genotype must not have values for both PS and PSL.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a sample genotype uses phase-set metadata.",
+      "required_or_prohibited_behavior": "Do not encode both PS and PSL values for the same sample genotype.",
+      "exceptions": [],
+      "observable_acceptance_condition": "No sample genotype carries both PS and PSL values.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L598-L603",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 598-603",
+            "start_line": 598,
+            "end_line": 603,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L771-L776",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 771-776",
+            "start_line": 771,
+            "end_line": 776,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000141",
+      "title": "VCFv4.4-4.5 PSO defines derivative-chromosome traversal order",
+      "requirement_domain": "STRUCTURAL_VARIANT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "For each phase-set name, PSO should be defined if any allele with that phase-set name on any record is a symbolic structural variant or uses breakpoint notation.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a phase set contains a symbolic structural-variant or breakend allele.",
+      "required_or_prohibited_behavior": "Provide PSO values to define the order in which variants are encountered when traversing a derivative chromosome.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The derivative traversal order is represented by PSO for the affected phase set.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L615-L620",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 615-620",
+            "start_line": 615,
+            "end_line": 620,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L788-L792",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 788-792",
+            "start_line": 788,
+            "end_line": 792,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000142",
+      "title": "VCFv4.4-4.5 paired breakend records share PSL and PSO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Variants in breakpoint notation must have the same PSL and PSO on both records.",
+      "actor": "VCF producer or consumer, as applicable to the stated operation",
+      "condition": "When a breakpoint-notation adjacency is represented by two VCF records and phase-set information is used.",
+      "required_or_prohibited_behavior": "Keep PSL and PSO values identical across the two breakend records.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The paired breakend records carry matching PSL and PSO.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L615-L620",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 615-620",
+            "start_line": 615,
+            "end_line": 620,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L788-L792",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 788-792",
+            "start_line": 788,
+            "end_line": 792,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical VCFv4.0 source bytes and SHA-256 not captured; applicability unresolved.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "This version does not define this version-specific feature or rule.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": "Direct source support captured in this version's pinned specification.",
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Deferred until source ledger and independent review are complete."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author atomization from pinned version-specific genotype/SV context; independent review remains pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "Independently verify exact normative force, actor, condition, atomicity and testability.",
+        "Verify cross-version applicability and any exceptions against the complete source context."
+      ]
     }
   ],
   "coverage_summary": {
@@ -14805,7 +16275,7 @@
       "VCFv4.5"
     ],
     "candidate_lines_reviewed": 0,
-    "atomic_requirements_created": 130,
+    "atomic_requirements_created": 142,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
