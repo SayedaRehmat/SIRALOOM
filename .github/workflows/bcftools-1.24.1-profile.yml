@@ -38,6 +38,7 @@ jobs:
       - name: Generate explicit build dependency lock
         run: |
           micromamba env export --explicit --name bcftools-build > "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          sed -i 's#conda-forge/noarch/python-3.12.16#conda-forge/linux-64/python-3.12.16#'  "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           grep -Fq '@EXPLICIT' "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           test -s "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
           diff -u configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
