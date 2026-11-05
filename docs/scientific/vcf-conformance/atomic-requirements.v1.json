@@ -589,8 +589,8 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.3.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
-            "start_line": 38,
+            "locator_value": "VCFv4.3.tex; explicit LF and CRLF newline-support requirement; source line 40",
+            "start_line": 40,
             "end_line": 40,
             "page": null
           },
@@ -608,8 +608,8 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.4.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
-            "start_line": 38,
+            "locator_value": "VCFv4.4.tex; explicit LF and CRLF newline-support requirement; source line 40",
+            "start_line": 40,
             "end_line": 40,
             "page": null
           },
@@ -627,8 +627,8 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
-            "start_line": 36,
+            "locator_value": "VCFv4.5.tex; explicit LF and CRLF newline-support requirement; source line 38",
+            "start_line": 38,
             "end_line": 38,
             "page": null
           },
@@ -726,7 +726,7 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.3.tex; line-separator placement rule",
+            "locator_value": "VCFv4.3.tex; line-separator placement requirement; source line 82",
             "start_line": 82,
             "end_line": 82,
             "page": null
@@ -745,7 +745,7 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.4.tex; line-separator placement rule",
+            "locator_value": "VCFv4.4.tex; line-separator placement requirement; source line 82",
             "start_line": 82,
             "end_line": 82,
             "page": null
@@ -764,7 +764,7 @@
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex; line-separator placement rule",
+            "locator_value": "VCFv4.5.tex; line-separator placement requirement; source line 80",
             "start_line": 80,
             "end_line": 80,
             "page": null
@@ -795,7 +795,7 @@
         "VCFv4.3": {
           "status": "APPLICABLE",
           "source_reference_ids": [
-            "VCFv4.3-LINE-ENDINGS"
+            "VCFv4.3-LINE-SEPARATOR-PLACEMENT"
           ],
           "delta_summary": null,
           "exceptions": []
@@ -803,7 +803,7 @@
         "VCFv4.4": {
           "status": "APPLICABLE",
           "source_reference_ids": [
-            "VCFv4.4-LINE-ENDINGS"
+            "VCFv4.4-LINE-SEPARATOR-PLACEMENT"
           ],
           "delta_summary": null,
           "exceptions": []
@@ -811,7 +811,7 @@
         "VCFv4.5": {
           "status": "APPLICABLE",
           "source_reference_ids": [
-            "VCFv4.5-LINE-ENDINGS"
+            "VCFv4.5-LINE-SEPARATOR-PLACEMENT"
           ],
           "delta_summary": null,
           "exceptions": []
@@ -848,11 +848,11 @@
       "VCFv4.4",
       "VCFv4.5"
     ],
-    "candidate_lines_reviewed": 5,
+    "candidate_lines_reviewed": 0,
     "atomic_requirements_created": 5,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
-    "unresolved_source_questions": 7
+    "unresolved_source_questions": 6
   }
 }
