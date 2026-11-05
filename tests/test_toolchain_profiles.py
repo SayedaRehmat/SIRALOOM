@@ -49,6 +49,9 @@ def test_1_24_1_profile_remains_candidate_until_runtime_image_gate_passes():
     assert len(profile["source_archives"]) == 2
     assert all(len(item["sha256"]) == 64 for item in profile["source_archives"])
     assert (ROOT / profile["lock_file"]).is_file()
+    build_lock = (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
+    assert "conda-forge/linux-64/python-3.12.16-h5f976f7_0_cpython.conda" in build_lock
+    assert "conda-forge/noarch/python-3.12.16" not in build_lock
 
 
 @pytest.mark.parametrize(
