@@ -15,7 +15,8 @@ celery \
   --loglevel="${LOG_LEVEL:-INFO}" \
   --concurrency="${CELERY_CONCURRENCY:-1}" \
   --prefetch-multiplier="${CELERY_WORKER_PREFETCH_MULTIPLIER:-1}" \
-  --max-tasks-per-child="${CELERY_WORKER_MAX_TASKS_PER_CHILD:-20}" &
+  --max-tasks-per-child="${CELERY_WORKER_MAX_TASKS_PER_CHILD:-20}" \\
+  --queues="${CELERY_QUEUES:-bioinformatics.bcftools.1_25}" &
   
 WORKER_PID=$!
 
