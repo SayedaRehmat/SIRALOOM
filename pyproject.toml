@@ -17,6 +17,7 @@ dependencies = [
   "alembic>=1.13,<2",
   "celery>=5.4,<6",
   "redis>=6.1,<7",
+  "packaging>=24,<27",
   "httpx>=0.27,<1",
   "python-multipart>=0.0.9,<1",
   "orjson>=3.10,<4",
