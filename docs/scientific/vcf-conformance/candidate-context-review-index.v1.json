@@ -86,10 +86,6 @@
     },
     {
       "artifact": "genotype-format-atomic-candidates.v1.json",
-      "scope": "18 proposed atomic candidates decomposed from captured FORMAT/genotype prose and table-adjacent semantics across VCFv4.1–4.5; primary source-context review only, independent review and full semantic expansion pending."
-    },
-    {
-      "artifact": "genotype-format-atomic-candidates.v1.json",
       "scope": "61 proposed FORMAT/GENOTYPE candidates: 18 initial and 43 expanded candidates covering genotype ordering, phasing, PS/PSL/PSO/PSQ, VCFv4.5 local alleles and base modifications. FMT-GT-017 retained as a split parent; 60 child/independent candidates reconciled into the ledger. Independent review pending."
     },
     {
@@ -99,6 +95,14 @@
     {
       "artifact": "INDEPENDENT_REVIEW_PACKAGE.v1.md",
       "scope": "Review protocol and bounded independent-review package for the current 75 proposed ledger records; reviewer appointment and actual independent dispositions remain pending."
+    },
+    {
+      "artifact": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
+      "scope": "Reviewer protocol, ledger inventory findings, readiness disposition and blockers; current 75-record ledger is not ready for a complete-ledger independent review, but may be used for a scoped pilot review with incompleteness disclosed."
+    },
+    {
+      "artifact": "independent-standards-review-readiness.v1.json",
+      "scope": "Machine-readable audit of ledger counts, source provenance blockers, version applicability gaps and explicit non-claims."
     }
   ],
   "evidence_counters": {
@@ -108,20 +112,19 @@
     "production_code_mappings": 0,
     "clause_specific_tests_executed": 0,
     "laboratory_qualified_versions": 0,
-    "vcf40_historical_source_bytes_hashed": false
+    "vcf40_historical_source_bytes_hashed": false,
+    "complete_ledger_independent_review_ready": false,
+    "scoped_pilot_review_permitted": true
   },
   "next_review_gates": [
-    "Appoint an independent standards reviewer and capture record-by-record dispositions for the bounded 75-record tranche using INDEPENDENT_REVIEW_PACKAGE.v1.md; do not treat this tranche as complete specification coverage.",
-    "Complete VCFv4.0 source acquisition: locate an immutable original/authoritative archival artifact, capture exact bytes, compute SHA-256, establish provenance, and compare the core text separately from IGSR/1000 Genomes producer conventions.",
-    "Reconcile FORMAT/GENOTYPE candidates FMT-GT-001–061 with detailed per-version GT, genotype ordering, phase-set, local-allele and base-modification semantics; FMT-GT-017 is a split parent, not an independent ledger requirement.",
-    "Expand and reconcile the 18 FORMAT/genotype candidates against complete per-version GT, GL/GP/PL, PS/phasing, genotype ordering, local-allele and base-modification source context; retain unresolved version scope until exact passages are reviewed.",
-    "Expand immediate-neighbour candidate contexts to full clauses, definitions, tables, examples, footnotes and cross-references before declaring semantic review complete.",
-    "Decompose mixed candidate lines into stable version-scoped atomic obligations and separate recommendations, permissions, examples and producer conventions.",
-    "Complete all non-modal discovery across every version, including grammar and table rows outside reserved INFO/FORMAT lists.",
-    "Capture and hash historical VCFv4.0 source bytes.",
-    "Complete full semantic version delta analysis.",
-    "Obtain independent second-person review.",
-    "Map requirements to production implementation and execute positive, negative, boundary and semantic tests."
+    "Complete full semantic expansion and atomic decomposition across all specification sections, tables, grammar, definitions, examples, footnotes and cross-references.",
+    "Reconcile all 61 FORMAT/GENOTYPE candidates with complete source context; retain FMT-GT-017 as a split parent and verify all 60 reconciled children/independent records.",
+    "Resolve the 18 VCFv4.1–4.2 applicability cells using exact version-specific source passages; do not infer from later versions.",
+    "Capture immutable historical VCFv4.0 core source bytes, retrieval metadata and SHA-256; separately capture and classify 1000 Genomes SV conventions.",
+    "Complete source excerpt hashes, source locators, requirement-to-candidate links, cross-requirement dependencies and semantic version deltas.",
+    "Run schema and cross-reference integrity validation on the full ledger and review package.",
+    "Begin independent second-person standards review only when the whole-specification coverage gate is met; a pilot review of current 75 records must be labelled incomplete.",
+    "After independent review, map approved requirements to implementation and execute clause-specific positive, negative, boundary, semantic and differential tests."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
