@@ -67,7 +67,7 @@ The GA4GH Large Scale Genomics HTS specifications repository lists VCFv4.1 throu
 
 Pinned source revision:
 
-`samtools/hts-specs@510c107ba89aa13113818c9e4fa3071283cb7f7bb`
+`samtools/hts-specs@510c107ba89aa13113818c9e4fa3071283cb7f7b`
 
 The following Git blob SHAs were returned by GitHub for the exact commit and match the values already recorded in PR #282's normative extractor:
 
