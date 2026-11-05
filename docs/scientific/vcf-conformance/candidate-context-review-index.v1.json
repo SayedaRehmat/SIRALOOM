@@ -95,11 +95,15 @@
     {
       "artifact": "vcf4.0-historical-source-provenance.v1.json",
       "scope": "Historical VCFv4.0 source discovery and provenance assessment. IGSR core page is a candidate reference only; raw immutable source bytes and SHA-256 are not captured, normative provenance remains unaccepted, and the 1000 Genomes SV conventions page is explicitly separated as producer-convention material."
+    },
+    {
+      "artifact": "INDEPENDENT_REVIEW_PACKAGE.v1.md",
+      "scope": "Review protocol and bounded independent-review package for the current 75 proposed ledger records; reviewer appointment and actual independent dispositions remain pending."
     }
   ],
   "evidence_counters": {
     "atomic_requirement_ledger_records": 75,
-    "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidate records (60 reconciled into the ledger; one retained as split parent); other source-review artifacts also contain proposed candidates and split parents",
+    "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidates (60 reconciled as IN_REVIEW ledger records; one retained as a split parent); additional source-review artifacts contain other proposals and split parents",
     "independently_second_person_reviewed": 0,
     "production_code_mappings": 0,
     "clause_specific_tests_executed": 0,
@@ -107,6 +111,7 @@
     "vcf40_historical_source_bytes_hashed": false
   },
   "next_review_gates": [
+    "Appoint an independent standards reviewer and capture record-by-record dispositions for the bounded 75-record tranche using INDEPENDENT_REVIEW_PACKAGE.v1.md; do not treat this tranche as complete specification coverage.",
     "Complete VCFv4.0 source acquisition: locate an immutable original/authoritative archival artifact, capture exact bytes, compute SHA-256, establish provenance, and compare the core text separately from IGSR/1000 Genomes producer conventions.",
     "Reconcile FORMAT/GENOTYPE candidates FMT-GT-001–061 with detailed per-version GT, genotype ordering, phase-set, local-allele and base-modification semantics; FMT-GT-017 is a split parent, not an independent ledger requirement.",
     "Expand and reconcile the 18 FORMAT/genotype candidates against complete per-version GT, GL/GP/PL, PS/phasing, genotype ordering, local-allele and base-modification source context; retain unresolved version scope until exact passages are reviewed.",
