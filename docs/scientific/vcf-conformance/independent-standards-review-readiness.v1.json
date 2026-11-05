@@ -68,7 +68,7 @@
     "No laboratory qualification claim."
   ],
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
-  "ledger_blob_sha": "b9800fbaf5c201ef791cbe74a9043bf2646908e3",
+  "ledger_blob_sha": "ba7d1bb0544f5d1105a4bd62f757decae13caee8",
   "source_hash_consistency_audit": {
     "status": "INDEPENDENT_BYTE_LEVEL_RECOMPUTATION_AND_LEDGER_RECONCILIATION_COMPLETE",
     "audited_at_utc": "2026-11-05",
