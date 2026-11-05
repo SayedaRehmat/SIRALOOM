@@ -29,7 +29,7 @@ The standard 1.25 pool consumes the shared celery queue and bioinformatics.bcfto
 | Source candidate | 1.24.1 | 1.24.1 | `bioinformatics.bcftools.1_24_1` | CANDIDATE pending full runtime and routing qualification |
 | Source candidate | 1.23.3 | 1.23.3 | `bioinformatics.bcftools.1_23_3` | CANDIDATE |
 | Source candidate | 1.22.3 | 1.22.4 | `bioinformatics.bcftools.1_22_4` | CANDIDATE |
-| Source candidate | 1.21.3 | 1.21.3 | `bioinformatics.bcftools.1_21_3` | CANDIDATE; blocked by VCF 4.5 FORMAT/LEN regression |
+| Blocked candidate | 1.21.3 | 1.21.3 | `bioinformatics.bcftools.1_21_3` | BLOCKED_COMPATIBILITY; VCF 4.5 FORMAT/LEN regression |
 | Legacy | 1.19 | 1.19 | none | QUARANTINED_LEGACY; never production-selectable |
 
 A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
