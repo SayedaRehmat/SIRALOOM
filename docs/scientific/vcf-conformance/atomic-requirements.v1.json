@@ -8730,7 +8730,9 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": [],
+      "open_questions": [
+        "VCFv4.5 source spelling discrepancy: reserved table uses MXaoN/DPMXaoN/ADMXaoN (lines 586-588), while prose alias lists/examples use MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740, 218). Resolve exact case-sensitive canonical key names before implementation."
+      ],
       "title": "FORMAT keys matching the M-family key pattern are reserved even when the embedded ChEBI ID does not correspond…"
     },
     {
@@ -8825,7 +8827,9 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": [],
+      "open_questions": [
+        "VCFv4.5 source spelling discrepancy: reserved table uses MXaoN/DPMXaoN/ADMXaoN (lines 586-588), while prose alias lists/examples use MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740, 218). Resolve exact case-sensitive canonical key names before implementation."
+      ],
       "title": "FORMAT keys matching the DPM-family key pattern are reserved even when the embedded ChEBI ID does not…"
     },
     {
@@ -8920,7 +8924,9 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": [],
+      "open_questions": [
+        "VCFv4.5 source spelling discrepancy: reserved table uses MXaoN/DPMXaoN/ADMXaoN (lines 586-588), while prose alias lists/examples use MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740, 218). Resolve exact case-sensitive canonical key names before implementation."
+      ],
       "title": "FORMAT keys matching the ADM-family key pattern are reserved even when the embedded ChEBI ID does not…"
     },
     {
