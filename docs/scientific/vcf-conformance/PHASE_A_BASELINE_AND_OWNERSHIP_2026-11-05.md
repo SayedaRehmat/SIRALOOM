@@ -283,3 +283,21 @@ inventory. The current discovery register is initial, not exhaustive.
 6. Only after review, map requirements to implementation and clause-specific
    positive/negative tests. No code mapping, test execution, or conformance
    qualification is claimed by this phase.
+
+
+### Table-structure inventory
+
+A source-structure index now records **195 VCF-scoped LaTeX table environments**
+across VCFv4.1–4.5 (35, 35, 40, 41, and 44 respectively), with 939
+row-terminator lines as navigation aids. It also records 123 footnote-marker
+lines and 84 enumerated-list starts. These counts are structural discovery
+metrics, not counts of normative requirements or semantically reviewed rows.
+The existing 61 table-caption entries therefore cannot be treated as a complete
+inventory of all table environments. See
+`table-structure-inventory.v1.json`.
+
+No explicit grammar/BNF environment or `::=` production marker was found by
+the narrow marker scan. This is not evidence that grammar constraints are
+absent; manual syntax/grammar review remains open. Table-row semantics,
+enumerated values, definitions, footnotes, and cross-references have not yet
+been decomposed into requirements.
