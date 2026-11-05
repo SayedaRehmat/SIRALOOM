@@ -267,7 +267,8 @@
         "Local alleles (lines 686-718)",
         "base modification fields (lines 720-758)",
         "PS/PSL/PSO/PSQ phasing (lines 763-809)",
-        "SV FORMAT keys (Section sv-format-keys)"
+        "SV FORMAT keys (Section sv-format-keys)",
+        "Number=LA/LR/LG/P/M cardinality definitions (lines 188-218)"
       ],
       "rows": [
         {
@@ -992,12 +993,28 @@
         480
       ],
       "finding": "1000G is only a reserved INFO flag labelled 1000 Genomes membership in this VCF table. It is not evidence that any 1000 Genomes producer/project convention is normative VCF syntax."
+    },
+    {
+      "topic": "FORMAT Number=LA/LR/LG/P/M definitions",
+      "source_lines": [
+        193,
+        200
+      ],
+      "finding": "LA is A restricted to ALT alleles selected by LAA; LR is R restricted to REF plus selected local ALT alleles; LG is G over the local allele universe; P has one value per allele value in GT; M has one value per possible base modification for the corresponding ChEBI ID. These definitions control cardinality and cannot be inferred from the one-character code alone."
+    },
+    {
+      "topic": "Base-modification cardinality and genotype dependency",
+      "source_lines": [
+        202,
+        218
+      ],
+      "finding": "Number=M cardinality is determined by GT and possible modifications for the corresponding alleles. The key suffix identifies modifiable base(s); U is synonymous with T; any base-modification key requires GT. Values follow eligible base positions on either strand and GT allele order; N modifications encode positive then negative strand; unphased allele values aggregate at the first occurrence; missing and symbolic alleles contribute no relevant bases. Unstranded values use the lowest-POS base with other values missing, with N modifications on the positive strand."
     }
   ],
   "unresolved_questions": [
-    "The exact normative semantics and validation rules for Number=M and Number=P require a broader cross-version definition search; this review records their table usage without inventing a generalized cardinality rule.",
     "The reserved tables are not exhaustive of all legal custom fields; metadata-defined arbitrary fields remain allowed subject to VCF grammar and metadata declarations.",
-    "The row review does not establish implementation support, parser correctness, or laboratory qualification."
+    "The row review does not establish implementation support, parser correctness, or laboratory qualification.",
+    "The reserved FORMAT table spells the xanthosine aliases as MXaoN/DPMXaoN/ADMXaoN (lines 586-588), while the prose alias list and examples use MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740, 218). Resolve the exact case-sensitive canonical identifiers from source history/maintainer clarification before implementation."
   ],
   "independent_review": {
     "required": true,
