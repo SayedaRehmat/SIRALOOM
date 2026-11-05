@@ -1,0 +1,37 @@
+{
+  "schema_version": "1",
+  "policy": {
+    "production_requires_registered_software_qualified_profile": true,
+    "profile_isolation": "one immutable BCFtools/HTSlib profile per API/worker image",
+    "unregistered_or_candidate_profiles_are_not_production_eligible": true,
+    "security_review_required_for_each_profile": true,
+    "security_advisories": [
+      "GHSA-38qp-vpxq-r6xc",
+      "GHSA-6qq4-hj39-g6ph",
+      "GHSA-5cvj-m89h-h3cw",
+      "GHSA-644m-mq4p-c7c6"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "bcftools-1.25-htslib-1.25-linux-64",
+      "status": "SOFTWARE_QUALIFIED",
+      "platform": "linux-64",
+      "bcftools_version": "1.25",
+      "htslib_version": "1.25",
+      "environment_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock",
+      "executable": "bcftools",
+      "security_review": {
+        "status": "PATCHED_UPSTREAM_RELEASE",
+        "advisories_reviewed": [
+          "GHSA-38qp-vpxq-r6xc",
+          "GHSA-6qq4-hj39-g6ph",
+          "GHSA-5cvj-m89h-h3cw",
+          "GHSA-644m-mq4p-c7c6"
+        ]
+      },
+      "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ jobs:
           python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
@@ -48,7 +48,13 @@ jobs:
       - name: Compile Python
         run: uv run --locked python -m compileall backend scripts
       - name: Build laboratory backend image
-        run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
+        run: >-
+          docker build
+          --build-arg BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock --build-arg BCFTOOLS_PLATFORM=linux-64
+          --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
+          --build-arg BCFTOOLS_VERSION=1.25
+          --build-arg HTSLIB_VERSION=1.25
+          --file docker/backend.Dockerfile --tag siraloom-backend:ci .
       - name: Verify backend image runs without root privileges
         run: |
           test "$(docker run --rm --entrypoint id siraloom-backend:ci -u)" = "10001"
@@ -105,7 +111,7 @@ jobs:
           python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
           environment-name: bcftools
           cache-environment: true
           init-shell: bash

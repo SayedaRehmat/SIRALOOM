@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     analysis_artifact_output_multiplier: float = Field(default=1.0, gt=0)
     analysis_scratch_multiplier: float = Field(default=2.0, gt=0)
     analysis_storage_headroom_bytes: int = Field(default=1024 * 1024 * 1024, ge=0)
+    # One immutable scientific execution profile per process/container. Different
+    # profiles run in separate worker images; never rely on PATH selecting a random tool.
+    bcftools_profile_id: str = "bcftools-1.25-htslib-1.25-linux-64"
+    bcftools_executable: str = "bcftools"
     bcftools_version: str = "1.25"
     htslib_version: str = "1.25"
 
@@ -94,23 +98,37 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def require_authenticated_redis_in_production(self) -> "Settings":
-        if self.app_env.strip().lower() != "production":
-            return self
+    def validate_production_and_scientific_toolchain(self) -> "Settings":
+        if self.app_env.strip().lower() == "production":
+            try:
+                parsed = urlsplit(self.redis_url)
+                authenticated = (
+                    parsed.scheme in {"redis", "rediss"}
+                    and bool(parsed.hostname)
+                    and bool(parsed.password)
+                    and len(parsed.password) >= 32
+                )
+            except ValueError:
+                authenticated = False
+            if not authenticated:
+                raise ValueError(
+                    "Production REDIS_URL must use redis/rediss with an AUTH secret of at least 32 characters"
+                )
+
+        # Never allow an unregistered, mismatched, or security-unreviewed native
+        # toolchain to silently become the executable used for VCF parsing.
+        from backend.app.domain.toolchain_profiles import (
+            ToolchainProfileError,
+            resolve_toolchain_profile,
+        )
         try:
-            parsed = urlsplit(self.redis_url)
-            authenticated = (
-                parsed.scheme in {"redis", "rediss"}
-                and bool(parsed.hostname)
-                and bool(parsed.password)
-                and len(parsed.password) >= 32
+            resolve_toolchain_profile(
+                self.bcftools_profile_id,
+                bcftools_version=self.bcftools_version,
+                htslib_version=self.htslib_version,
             )
-        except ValueError:
-            authenticated = False
-        if not authenticated:
-            raise ValueError(
-                "Production REDIS_URL must use redis/rediss with an AUTH secret of at least 32 characters"
-            )
+        except ToolchainProfileError as exc:
+            raise ValueError(f"Invalid configured BCFtools/HTSlib profile: {exc}") from exc
         return self
 
 

@@ -98,7 +98,7 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
 
 
 def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
-    executable = shutil.which("bcftools")
+    executable = shutil.which(settings.bcftools_executable)
     if executable is None:
         raise VCFValidationUnavailable(
             "bcftools/htslib is required to validate VCF input, but the executable was not found. "
@@ -339,6 +339,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             "expected_bcftools_version": settings.bcftools_version,
             "htslib_version": htslib_version,
             "expected_htslib_version": settings.htslib_version,
+            "bcftools_profile_id": settings.bcftools_profile_id,
             "toolchain_validation_status": "PASS",
             "compression": compression,
             "warning_codes": strict_profile["warning_codes"],
@@ -362,6 +363,7 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "expected_bcftools_version": settings.bcftools_version,
                 "htslib_version": htslib_version,
                 "expected_htslib_version": settings.htslib_version,
+                "bcftools_profile_id": settings.bcftools_profile_id,
                 "toolchain_validation_status": "PASS",
             }
         return ValidationResult(
