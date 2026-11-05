@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.config import settings
+
 from backend.app.domain.vcf_tools import VCFToolError, validate_vcf_index_concordance
 
 
@@ -52,7 +54,7 @@ def test_csi_corruption_is_rejected_during_index_concordance(tmp_path: Path):
     csi.write_bytes(b"NOT-A-CSI" + original[9:])
 
     with pytest.raises(VCFToolError, match="index record-count validation failed"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
@@ -89,7 +91,7 @@ def test_stale_csi_offsets_are_rejected_when_bgzf_header_shifts_record_blocks(
     Path(str(bgzf) + ".csi").write_bytes(original_csi)
 
     with pytest.raises(VCFToolError):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
@@ -119,7 +121,7 @@ def test_csi_supports_coordinates_beyond_tbi_512_mbp_boundary(tmp_path: Path):
 
     result = validate_vcf_index_concordance(
         bgzf,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     assert result["status"] == "VALIDATED"
@@ -164,7 +166,7 @@ def test_valid_bgzf_without_index_is_distinguished_from_corrupt_bgzf(
     Path(str(bgzf) + ".csi").unlink()
 
     with pytest.raises(VCFToolError, match="passed block and EOF integrity checks but has no adjacent"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_bgzf_missing_terminal_eof_marker_is_rejected(tmp_path: Path):
@@ -186,7 +188,7 @@ def test_bgzf_missing_terminal_eof_marker_is_rejected(tmp_path: Path):
     bgzf.write_bytes(compressed[:-28])
 
     with pytest.raises(VCFToolError, match="BGZF EOF marker is missing"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_bgzf_truncated_block_size_is_rejected_before_index_queries(tmp_path: Path):
@@ -207,7 +209,7 @@ def test_bgzf_truncated_block_size_is_rejected_before_index_queries(tmp_path: Pa
     bgzf.write_bytes(damaged)
 
     with pytest.raises(VCFToolError, match="BGZF block is truncated"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_bgzf_crc_corruption_is_rejected_before_index_queries(tmp_path: Path):
@@ -227,4 +229,4 @@ def test_bgzf_crc_corruption_is_rejected_before_index_queries(tmp_path: Path):
     bgzf.write_bytes(damaged)
 
     with pytest.raises(VCFToolError, match="decompression or CRC validation failed"):
-        validate_vcf_index_concordance(bgzf, expected_bcftools_version="1.25")
+        validate_vcf_index_concordance(bgzf, expected_bcftools_version=settings.bcftools_version)
