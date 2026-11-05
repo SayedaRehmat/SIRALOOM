@@ -168,7 +168,7 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id), "toolchain_queue": "bioinformatics.bcftools.1_24_1"})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -214,7 +214,7 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
     assert published == [{
         "args": [str(analysis_id)],
         "task_id": str(dispatch_id),
-        "queue": "bioinformatics.bcftools.1_25",
+        "queue": "bioinformatics.bcftools.1_24_1",
     }]
     assert dispatch.status == "PUBLISHED"
     assert dispatch.task_id == "dispatch-task-1"
