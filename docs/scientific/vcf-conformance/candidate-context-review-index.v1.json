@@ -87,11 +87,15 @@
     {
       "artifact": "genotype-format-atomic-candidates.v1.json",
       "scope": "18 proposed atomic candidates decomposed from captured FORMAT/genotype prose and table-adjacent semantics across VCFv4.1–4.5; primary source-context review only, independent review and full semantic expansion pending."
+    },
+    {
+      "artifact": "genotype-format-atomic-candidates.v1.json",
+      "scope": "61 proposed FORMAT/GENOTYPE candidates: 18 initial and 43 expanded candidates covering genotype ordering, phasing, PS/PSL/PSO/PSQ, VCFv4.5 local alleles and base modifications. FMT-GT-017 retained as a split parent; 60 child/independent candidates reconciled into the ledger. Independent review pending."
     }
   ],
   "evidence_counters": {
-    "atomic_requirement_ledger_records": 15,
-    "additional_proposed_candidate_records": "not aggregated into approved ledger; multiple source-review artifacts contain proposed candidates and split parents",
+    "atomic_requirement_ledger_records": 75,
+    "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidate records (60 reconciled into the ledger; one retained as split parent); other source-review artifacts also contain proposed candidates and split parents",
     "independently_second_person_reviewed": 0,
     "production_code_mappings": 0,
     "clause_specific_tests_executed": 0,
@@ -99,6 +103,7 @@
     "vcf40_historical_source_bytes_hashed": false
   },
   "next_review_gates": [
+    "Reconcile FORMAT/GENOTYPE candidates FMT-GT-001–061 with detailed per-version GT, genotype ordering, phase-set, local-allele and base-modification semantics; FMT-GT-017 is a split parent, not an independent ledger requirement.",
     "Expand and reconcile the 18 FORMAT/genotype candidates against complete per-version GT, GL/GP/PL, PS/phasing, genotype ordering, local-allele and base-modification source context; retain unresolved version scope until exact passages are reviewed.",
     "Expand immediate-neighbour candidate contexts to full clauses, definitions, tables, examples, footnotes and cross-references before declaring semantic review complete.",
     "Decompose mixed candidate lines into stable version-scoped atomic obligations and separate recommendations, permissions, examples and producer conventions.",
@@ -112,6 +117,7 @@
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
     "223 reserved INFO/FORMAT entries are not 223 mandatory requirements.",
     "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed.",
-    "The 18 FORMAT/genotype candidates are proposals only; they are not approved ledger entries, implementation mappings, or executed tests."
+    "The 18 FORMAT/genotype candidates are proposals only; they are not approved ledger entries, implementation mappings, or executed tests.",
+    "The 60 newly reconciled FORMAT/GENOTYPE ledger records remain IN_REVIEW; none has independent second-person approval, implementation mapping or executed clause tests."
   ]
 }
