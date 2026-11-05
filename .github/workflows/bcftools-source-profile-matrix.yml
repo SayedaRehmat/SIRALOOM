@@ -1,6 +1,18 @@
 name: BCFtools source-profile qualification matrix
 
 on:
+  push:
+    branches:
+      - feat/bcftools-1.24.1-profile-and-analysis-routing
+    paths:
+      - "scripts/build_bcftools_from_profile.sh"
+      - "docker/backend-bcftools-source.Dockerfile"
+      - "configs/bioinformatics/toolchain-profiles.v1.json"
+      - "configs/bioinformatics/profiles/**"
+      - "tests/test_toolchain_profiles.py"
+      - "tests/test_vcf_tools.py"
+      - "tests/test_bcftools_normalization.py"
+      - ".github/workflows/bcftools-source-profile-matrix.yml"
   pull_request:
     paths:
       - "scripts/build_bcftools_from_profile.sh"
@@ -84,12 +96,14 @@ jobs:
           diff -u "${{ matrix.lock_file }}" "$RUNNER_TEMP/profile-build.lock"
       - name: Build exact BCFtools/HTSlib source pair with SHA-256 verification
         env:
-          BCFTOOLS_PREFIX: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build
           BCFTOOLS_PROFILE_ID: ${{ matrix.id }}
           BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
           HTSLIB_VERSION: ${{ matrix.htslib_version }}
           BCFTOOLS_PROFILE_REGISTRY: configs/bioinformatics/toolchain-profiles.v1.json
-        run: bash scripts/build_bcftools_from_profile.sh
+        run: |
+          set -euo pipefail
+          export BCFTOOLS_PREFIX="$MAMBA_ROOT_PREFIX/envs/bcftools-build"
+          bash scripts/build_bcftools_from_profile.sh
       - name: Qualify normalization, multiallelic handling, BGZF and CSI
         env:
           BCFTOOLS_BIN: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build/bin/bcftools
