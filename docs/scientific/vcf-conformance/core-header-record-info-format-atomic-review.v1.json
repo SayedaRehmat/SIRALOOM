@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-core-header-record-info-format-atomic-candidate-review",
   "status": "PRIMARY_REVIEW_COMPLETE_FOR_INITIAL_CORE_CANDIDATE_SET_INDEPENDENT_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "scope": "Initial atomic decomposition of header-line syntax, data-line structure, fixed record fields, INFO grammar and FORMAT/genotype structure for VCFv4.1–4.5. This is not the complete set of requirements in those sections and does not include VCFv4.0 pending source pinning.",
   "method": [
     "Read full field paragraphs and adjacent data-line/header/genotype context.",
@@ -26,10 +26,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L142",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L142",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 142-153",
@@ -41,10 +41,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L159",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L159",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 159-170",
@@ -56,10 +56,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L299",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L299",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 299-309",
@@ -71,10 +71,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L313",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L313",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 313-323",
@@ -86,10 +86,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L362",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L362",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 362-372",
@@ -128,10 +128,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L155",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L155",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 155-155",
@@ -143,10 +143,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L172",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L172",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 172-172",
@@ -158,10 +158,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L311",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L311",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 311-311",
@@ -173,10 +173,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L325",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L325",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 325-325",
@@ -188,10 +188,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L374",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L374",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 374-374",
@@ -230,10 +230,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L155",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L155",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 155-155",
@@ -245,10 +245,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L172",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L172",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 172-172",
@@ -260,10 +260,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L312",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L312",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 312-312",
@@ -275,10 +275,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L326",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L326",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 326-326",
@@ -290,10 +290,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L375",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L375",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 375-375",
@@ -332,10 +332,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L155",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L155",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 155-155",
@@ -347,10 +347,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L172",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L172",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 172-172",
@@ -362,10 +362,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L313",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L313",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 313-313",
@@ -377,10 +377,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L327",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L327",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 327-327",
@@ -392,10 +392,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L376",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L376",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 376-376",
@@ -434,10 +434,10 @@
       "source_references": [
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L313",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L313",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 313-313",
@@ -449,10 +449,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L327",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L327",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 327-327",
@@ -464,10 +464,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L376",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L376",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 376-376",
@@ -504,10 +504,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L159",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L159",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 159-159",
@@ -519,10 +519,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L176",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L176",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 176-176",
@@ -534,10 +534,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L322",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L322",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 322-322",
@@ -549,10 +549,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L337",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L337",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 337-337",
@@ -564,10 +564,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L386",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L386",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 386-386",
@@ -606,10 +606,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L159",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L159",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 159-159",
@@ -621,10 +621,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L176",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L176",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 176-176",
@@ -636,10 +636,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L317",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L317",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 317-317",
@@ -651,10 +651,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L331",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L331",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 331-331",
@@ -666,10 +666,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L380",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L380",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 380-380",
@@ -708,10 +708,10 @@
       "source_references": [
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L318",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L318",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 318-318",
@@ -723,10 +723,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L332",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L332",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 332-332",
@@ -738,10 +738,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L381",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L381",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 381-381",
@@ -778,10 +778,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L159",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L159",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 159-159",
@@ -793,10 +793,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L176",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L176",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 176-176",
@@ -808,10 +808,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L319",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L319",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 319-319",
@@ -823,10 +823,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L333",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L333",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 333-333",
@@ -838,10 +838,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L382",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L382",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 382-382",
@@ -880,10 +880,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L162",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L162",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 162-162",
@@ -895,10 +895,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L179",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L179",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 179-179",
@@ -910,10 +910,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L326",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L326",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 326-328",
@@ -925,10 +925,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L341",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L341",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 341-343",
@@ -940,10 +940,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L390",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L390",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 390-392",
@@ -982,10 +982,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L162",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L162",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 162-162",
@@ -997,10 +997,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L179",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L179",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 179-179",
@@ -1012,10 +1012,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L326",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L326",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 326-328",
@@ -1027,10 +1027,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L341",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L341",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 341-343",
@@ -1042,10 +1042,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L390",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L390",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 390-392",
@@ -1091,10 +1091,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L163",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L163",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 163-163",
@@ -1106,10 +1106,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L180",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L180",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 180-180",
@@ -1121,10 +1121,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L329",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L329",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 329-333",
@@ -1136,10 +1136,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L344",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L344",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 344-348",
@@ -1151,10 +1151,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L393",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L393",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 393-397",
@@ -1193,10 +1193,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L163",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L163",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 163-163",
@@ -1208,10 +1208,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L180",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L180",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 180-180",
@@ -1223,10 +1223,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L329",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L329",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 329-333",
@@ -1238,10 +1238,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L344",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L344",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 344-348",
@@ -1253,10 +1253,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L393",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L393",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 393-397",
@@ -1302,10 +1302,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L164",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L164",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 164-164",
@@ -1317,10 +1317,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L181",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L181",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 181-181",
@@ -1332,10 +1332,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L334",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L334",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 334-338",
@@ -1347,10 +1347,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L349",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L349",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 349-353",
@@ -1362,10 +1362,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L398",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L398",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 398-402",
@@ -1404,10 +1404,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L164",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L164",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 164-164",
@@ -1419,10 +1419,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L181",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L181",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 181-181",
@@ -1434,10 +1434,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L334",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L334",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 334-338",
@@ -1449,10 +1449,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L349",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L349",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 349-353",
@@ -1464,10 +1464,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L398",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L398",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 398-402",
@@ -1513,10 +1513,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L164",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L164",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 164-164",
@@ -1528,10 +1528,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L181",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L181",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 181-181",
@@ -1543,10 +1543,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L334",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L334",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 334-338",
@@ -1558,10 +1558,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L349",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L349",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 349-353",
@@ -1573,10 +1573,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L398",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L398",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 398-402",
@@ -1622,10 +1622,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L165",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 165-165",
@@ -1637,10 +1637,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L182",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 182-182",
@@ -1652,10 +1652,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L339",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L339",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 339-347",
@@ -1667,10 +1667,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L354",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L354",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 354-363",
@@ -1682,10 +1682,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L403",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L403",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 403-412",
@@ -1724,10 +1724,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L165",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 165-165",
@@ -1739,10 +1739,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L182",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 182-182",
@@ -1754,10 +1754,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L339",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L339",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 339-347",
@@ -1769,10 +1769,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L354",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L354",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 354-363",
@@ -1784,10 +1784,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L403",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L403",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 403-412",
@@ -1826,10 +1826,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L165",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 165-165",
@@ -1841,10 +1841,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L182",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 182-182",
@@ -1856,10 +1856,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L339",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L339",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 339-347",
@@ -1871,10 +1871,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L354",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L354",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 354-363",
@@ -1886,10 +1886,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L403",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L403",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 403-412",
@@ -1932,10 +1932,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L165",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 165-165",
@@ -1947,10 +1947,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L182",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 182-182",
@@ -1962,10 +1962,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L339",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L339",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 339-347",
@@ -1977,10 +1977,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L354",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L354",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 354-363",
@@ -1992,10 +1992,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L403",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L403",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 403-412",
@@ -2038,10 +2038,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L166",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L166",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 166-166",
@@ -2053,10 +2053,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L183",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L183",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 183-183",
@@ -2068,10 +2068,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L348",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L348",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 348-354",
@@ -2083,10 +2083,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L364",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L364",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 364-370",
@@ -2098,10 +2098,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L413",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L413",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 413-419",
@@ -2140,10 +2140,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L166",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L166",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 166-166",
@@ -2155,10 +2155,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L183",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L183",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 183-183",
@@ -2170,10 +2170,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L348",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L348",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 348-354",
@@ -2185,10 +2185,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L364",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L364",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 364-370",
@@ -2200,10 +2200,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L413",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L413",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 413-419",
@@ -2242,10 +2242,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L166",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L166",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 166-166",
@@ -2257,10 +2257,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L183",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L183",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 183-183",
@@ -2272,10 +2272,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L348",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L348",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 348-354",
@@ -2287,10 +2287,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L364",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L364",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 364-370",
@@ -2302,10 +2302,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L413",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L413",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 413-419",
@@ -2351,10 +2351,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L167",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 167-167",
@@ -2366,10 +2366,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L184",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 184-184",
@@ -2381,10 +2381,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L355",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L355",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 355-357",
@@ -2396,10 +2396,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L371",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L371",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 371-373",
@@ -2411,10 +2411,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L420",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L420",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 420-422",
@@ -2457,10 +2457,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L167",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 167-167",
@@ -2472,10 +2472,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L184",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 184-184",
@@ -2487,10 +2487,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L355",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L355",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 355-357",
@@ -2502,10 +2502,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L371",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L371",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 371-373",
@@ -2517,10 +2517,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L420",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L420",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 420-422",
@@ -2566,10 +2566,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L168",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 168-168",
@@ -2581,10 +2581,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L185",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 185-185",
@@ -2596,10 +2596,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L358",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L358",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 358-362",
@@ -2611,10 +2611,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L374",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L374",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 374-378",
@@ -2626,10 +2626,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L423",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L423",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 423-427",
@@ -2672,10 +2672,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L168",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 168-168",
@@ -2687,10 +2687,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L185",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 185-185",
@@ -2702,10 +2702,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L358",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L358",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 358-362",
@@ -2717,10 +2717,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L374",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L374",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 374-378",
@@ -2732,10 +2732,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L423",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L423",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 423-427",
@@ -2781,10 +2781,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L168",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 168-168",
@@ -2796,10 +2796,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L185",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 185-185",
@@ -2811,10 +2811,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L358",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L358",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 358-362",
@@ -2826,10 +2826,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L374",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L374",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 374-378",
@@ -2841,10 +2841,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L423",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L423",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 423-427",
@@ -2890,10 +2890,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L169",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 169-169",
@@ -2905,10 +2905,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L186",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 186-186",
@@ -2920,10 +2920,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L363",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L363",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 363-375",
@@ -2935,10 +2935,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L379",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L379",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 379-392",
@@ -2950,10 +2950,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L428",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L428",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 428-440",
@@ -2997,10 +2997,10 @@
       "source_references": [
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L368",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L368",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 368-368",
@@ -3012,10 +3012,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L384",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L384",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 384-384",
@@ -3027,10 +3027,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L433",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L433",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 433-433",
@@ -3067,10 +3067,10 @@
       "source_references": [
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L369",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L369",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 369-369",
@@ -3082,10 +3082,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L385",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L385",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 385-385",
@@ -3097,10 +3097,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L434",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L434",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 434-434",
@@ -3137,10 +3137,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L191",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L191",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 191-191",
@@ -3152,10 +3152,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L208",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L208",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 208-208",
@@ -3167,10 +3167,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L372",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L372",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 372-372",
@@ -3182,10 +3182,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L388",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L388",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 388",
@@ -3197,10 +3197,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L437",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L437",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 437-437",
@@ -3246,10 +3246,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L194",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 194-194",
@@ -3261,10 +3261,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L211",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 211-211",
@@ -3276,10 +3276,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L428",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L428",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 428-433",
@@ -3291,10 +3291,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L446",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L446",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 446-451",
@@ -3306,10 +3306,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L498",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L498",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 498-504",
@@ -3348,10 +3348,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L194",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 194-194",
@@ -3363,10 +3363,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L211",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 211-211",
@@ -3413,10 +3413,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L194",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 194-194",
@@ -3428,10 +3428,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L211",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 211-211",
@@ -3443,10 +3443,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L428",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L428",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 428-433",
@@ -3458,10 +3458,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L446",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L446",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 446-451",
@@ -3473,10 +3473,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L498",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L498",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 498-504",
@@ -3515,10 +3515,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L194",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 194-194",
@@ -3530,10 +3530,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L211",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 211-211",
@@ -3545,10 +3545,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L428",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L428",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 428-433",
@@ -3560,10 +3560,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L446",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L446",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 446-451",
@@ -3575,10 +3575,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L498",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L498",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 498-504",
@@ -3617,10 +3617,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L219",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L219",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 219-219",
@@ -3632,10 +3632,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L236",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L236",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 236-236",
@@ -3647,10 +3647,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L435",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L435",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 435-437",
@@ -3662,10 +3662,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L453",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L453",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 453-455",
@@ -3677,10 +3677,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L506",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L506",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 506-508",
@@ -3719,10 +3719,10 @@
       "source_references": [
         {
           "version": "VCFv4.1",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L219",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L219",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 219-219",
@@ -3734,10 +3734,10 @@
         },
         {
           "version": "VCFv4.2",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L236",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L236",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 236-236",
@@ -3749,10 +3749,10 @@
         },
         {
           "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L438",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L438",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 438-438",
@@ -3764,10 +3764,10 @@
         },
         {
           "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L456",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L456",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 456-456",
@@ -3779,10 +3779,10 @@
         },
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L509",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L509",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 509-509",
@@ -3821,10 +3821,10 @@
       "source_references": [
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L502",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L502",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 502-502",
@@ -3859,10 +3859,10 @@
       "source_references": [
         {
           "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L510",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L510",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 510-510",
@@ -3901,8 +3901,8 @@
           "source_id": "41-CORE-REF-003A-L165",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L165",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -3916,8 +3916,8 @@
           "source_id": "42-CORE-REF-003A-L182",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L182",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -3931,8 +3931,8 @@
           "source_id": "43-CORE-REF-003A-L342",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L342",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L342",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -3946,8 +3946,8 @@
           "source_id": "44-CORE-REF-003A-L357",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L357",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L357",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -3961,8 +3961,8 @@
           "source_id": "45-CORE-REF-003A-L406",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L406",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L406",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4007,8 +4007,8 @@
           "source_id": "41-CORE-REF-003B-L165",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L165",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4022,8 +4022,8 @@
           "source_id": "42-CORE-REF-003B-L182",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L182",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4037,8 +4037,8 @@
           "source_id": "43-CORE-REF-003B-L342",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L342",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L342",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4052,8 +4052,8 @@
           "source_id": "44-CORE-REF-003B-L357",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L357",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L357",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4067,8 +4067,8 @@
           "source_id": "45-CORE-REF-003B-L406",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L406",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L406",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4113,8 +4113,8 @@
           "source_id": "41-CORE-REF-004A-L165",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L165",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4128,8 +4128,8 @@
           "source_id": "42-CORE-REF-004A-L182",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L182",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4143,8 +4143,8 @@
           "source_id": "43-CORE-REF-004A-L343",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L343",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L343",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4158,8 +4158,8 @@
           "source_id": "44-CORE-REF-004A-L358",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L358",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L358",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4173,8 +4173,8 @@
           "source_id": "45-CORE-REF-004A-L407",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L407",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L407",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4219,8 +4219,8 @@
           "source_id": "43-CORE-REF-004B-L343",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L343",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L343",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4234,8 +4234,8 @@
           "source_id": "44-CORE-REF-004B-L359",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L359",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L359",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4249,8 +4249,8 @@
           "source_id": "45-CORE-REF-004B-L408",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L408",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L408",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4293,8 +4293,8 @@
           "source_id": "41-CORE-QUAL-001A-L167",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L167",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4308,8 +4308,8 @@
           "source_id": "42-CORE-QUAL-001A-L184",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L184",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4323,8 +4323,8 @@
           "source_id": "43-CORE-QUAL-001A-L356",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L356",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L356",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4338,8 +4338,8 @@
           "source_id": "44-CORE-QUAL-001A-L372",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L372",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L372",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4353,8 +4353,8 @@
           "source_id": "45-CORE-QUAL-001A-L421",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L421",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L421",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4399,8 +4399,8 @@
           "source_id": "41-CORE-QUAL-001B-L167",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L167",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4414,8 +4414,8 @@
           "source_id": "42-CORE-QUAL-001B-L184",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L184",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4429,8 +4429,8 @@
           "source_id": "43-CORE-QUAL-001B-L356",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L356",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L356",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4444,8 +4444,8 @@
           "source_id": "44-CORE-QUAL-001B-L372",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L372",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L372",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4459,8 +4459,8 @@
           "source_id": "45-CORE-QUAL-001B-L421",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L421",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L421",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4505,8 +4505,8 @@
           "source_id": "41-CORE-FILTER-001A-L168",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L168",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4520,8 +4520,8 @@
           "source_id": "42-CORE-FILTER-001A-L185",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L185",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4535,8 +4535,8 @@
           "source_id": "43-CORE-FILTER-001A-L358",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L358",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L358",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4550,8 +4550,8 @@
           "source_id": "44-CORE-FILTER-001A-L374",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L374",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L374",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4565,8 +4565,8 @@
           "source_id": "45-CORE-FILTER-001A-L423",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L423",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L423",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4611,8 +4611,8 @@
           "source_id": "41-CORE-FILTER-001B-L168",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L168",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4626,8 +4626,8 @@
           "source_id": "42-CORE-FILTER-001B-L185",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L185",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4641,8 +4641,8 @@
           "source_id": "43-CORE-FILTER-001B-L359",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L359",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L359",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4656,8 +4656,8 @@
           "source_id": "44-CORE-FILTER-001B-L375",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L375",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L375",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4671,8 +4671,8 @@
           "source_id": "45-CORE-FILTER-001B-L424",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L424",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L424",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4717,8 +4717,8 @@
           "source_id": "41-CORE-INFO-001A-L169",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L169",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4732,8 +4732,8 @@
           "source_id": "42-CORE-INFO-001A-L186",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L186",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4747,8 +4747,8 @@
           "source_id": "43-CORE-INFO-001A-L363",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L363",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L363",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4762,8 +4762,8 @@
           "source_id": "44-CORE-INFO-001A-L379",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L379",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L379",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4777,8 +4777,8 @@
           "source_id": "45-CORE-INFO-001A-L428",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L428",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L428",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4823,8 +4823,8 @@
           "source_id": "41-CORE-INFO-001B-L169",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L169",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4838,8 +4838,8 @@
           "source_id": "42-CORE-INFO-001B-L186",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L186",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4853,8 +4853,8 @@
           "source_id": "43-CORE-INFO-001B-L364",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L364",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L364",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4868,8 +4868,8 @@
           "source_id": "44-CORE-INFO-001B-L380",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L380",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L380",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4883,8 +4883,8 @@
           "source_id": "45-CORE-INFO-001B-L429",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L429",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -4929,8 +4929,8 @@
           "source_id": "41-CORE-INFO-001C-L169",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L169",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -4944,8 +4944,8 @@
           "source_id": "42-CORE-INFO-001C-L186",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L186",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -4959,8 +4959,8 @@
           "source_id": "43-CORE-INFO-001C-L363",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L363",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L363",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -4974,8 +4974,8 @@
           "source_id": "44-CORE-INFO-001C-L379",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L379",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L379",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -4989,8 +4989,8 @@
           "source_id": "45-CORE-INFO-001C-L428",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L428",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L428",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -5042,8 +5042,8 @@
           "source_id": "41-CORE-FORMAT-002A-L194",
           "version": "VCFv4.1",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.1.tex#L194",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
           "locator": {
@@ -5057,8 +5057,8 @@
           "source_id": "42-CORE-FORMAT-002A-L211",
           "version": "VCFv4.2",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.2.tex#L211",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
           "locator": {
@@ -5072,8 +5072,8 @@
           "source_id": "43-CORE-FORMAT-002A-L429",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L429",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -5087,8 +5087,8 @@
           "source_id": "44-CORE-FORMAT-002A-L447",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L447",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L447",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -5102,8 +5102,8 @@
           "source_id": "45-CORE-FORMAT-002A-L499",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L499",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L499",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
@@ -5148,8 +5148,8 @@
           "source_id": "43-CORE-FORMAT-002B-L429",
           "version": "VCFv4.3",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.3.tex#L429",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
           "locator": {
@@ -5163,8 +5163,8 @@
           "source_id": "44-CORE-FORMAT-002B-L447",
           "version": "VCFv4.4",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.4.tex#L447",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L447",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
           "locator": {
@@ -5178,8 +5178,8 @@
           "source_id": "45-CORE-FORMAT-002B-L499",
           "version": "VCFv4.5",
           "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bbb/VCFv4.5.tex#L499",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L499",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
           "locator": {
