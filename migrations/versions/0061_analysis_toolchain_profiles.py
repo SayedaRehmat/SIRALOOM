@@ -29,7 +29,7 @@ def upgrade():
                    OR OLD.toolchain_bcftools_version IS DISTINCT FROM NEW.toolchain_bcftools_version
                    OR OLD.toolchain_htslib_version IS DISTINCT FROM NEW.toolchain_htslib_version
                    OR OLD.toolchain_queue IS DISTINCT FROM NEW.toolchain_queue
-                   OR OLD.toolchain_snapshot IS DISTINCT FROM NEW.toolchain_snapshot THEN
+                   OR OLD.toolchain_snapshot::text IS DISTINCT FROM NEW.toolchain_snapshot::text THEN
                     RAISE EXCEPTION 'analysis toolchain provenance is immutable';
                 END IF;
                 RETURN NEW;
