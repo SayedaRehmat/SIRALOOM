@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -76,3 +77,29 @@ def resolve_toolchain_profile(
     if "@EXPLICIT" not in lock_text or f"# platform: {profile.get('platform')}" not in lock_text:
         raise ToolchainProfileError(f"Profile {profile_id!r} has an invalid platform-specific explicit lock.")
     return dict(profile)
+
+
+
+def resolve_registered_toolchain_profile(profile_id: str) -> dict[str, Any]:
+    """Resolve a selectable profile without requiring this API process to run its binaries.
+
+    The worker image performs the second, local executable attestation before it
+    consumes the profile's queue. API-side selection is limited to profiles
+    that have passed the complete software/image qualification gate.
+    """
+    registry = load_toolchain_registry()
+    matches = [item for item in registry["profiles"] if item.get("id") == profile_id]
+    if len(matches) != 1:
+        raise ToolchainProfileError(f"Unknown BCFtools/HTSlib profile: {profile_id!r}.")
+    candidate = matches[0]
+    profile = resolve_toolchain_profile(
+        profile_id,
+        bcftools_version=str(candidate.get("bcftools_version") or ""),
+        htslib_version=str(candidate.get("htslib_version") or ""),
+    )
+    queue = profile.get("worker_queue")
+    if not isinstance(queue, str) or not queue.startswith("bioinformatics.bcftools.") or len(queue) > 128:
+        raise ToolchainProfileError(f"Profile {profile_id!r} has no valid isolated worker queue.")
+    lock_path = CONFIG_ROOT / profile["lock_file"]
+    profile["lock_sha256"] = hashlib.sha256(lock_path.read_bytes()).hexdigest()
+    return profile
