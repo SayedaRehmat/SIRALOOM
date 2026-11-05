@@ -44,7 +44,7 @@
       "lock_file": "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock",
       "executable": "bcftools",
       "installation_method": "verified_source_build",
-      "build_script": "scripts/build_bcftools_1_24_1.sh",
+      "build_script": "scripts/build_bcftools_from_profile.sh",
       "source_archives": [
         {
           "name": "htslib-1.24.1.tar.bz2",
@@ -69,8 +69,9 @@
           "GHSA-vhg8-qwm7-cv9m"
         ]
       },
-      "qualification_scope": "Source archive integrity, source build, VCF smoke tests and backend regression suite passed; isolated runtime Docker image compatibility gate is pending. Not production eligible until all image checks pass.",
-      "worker_queue": "bioinformatics.bcftools.1_24_1"
+      "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks passed in CI; software qualification is distinct from clinical or laboratory qualification.",
+      "worker_queue": "bioinformatics.bcftools.1_24_1",
+      "dockerfile": "docker/backend-bcftools-source.Dockerfile"
     }
   ]
 }
