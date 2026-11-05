@@ -112,7 +112,7 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "main\\\\\\\\n" not in dockerfile
     assert "APT::Update::Error-Mode=any update" in dockerfile
     assert "for attempt in 1 2 3 4 5; do" in dockerfile
-    assert 'sleep "$((attempt * 10 + $ % 7))"' in dockerfile
+    assert 'sleep "$((attempt * 10))"' in dockerfile
     assert 'test "$apt_update_succeeded" = 1' in dockerfile
     assert "ca-certificates libcairo2" in dockerfile
     assert "test -s /etc/ssl/certs/ca-certificates.crt" in dockerfile
@@ -137,7 +137,7 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
     assert "trixie-security main" in dockerfile
     assert "APT::Update::Error-Mode=any update" in dockerfile
     assert "for attempt in 1 2 3 4 5; do" in dockerfile
-    assert 'sleep "$((attempt * 10 + $ % 7))"' in dockerfile
+    assert 'sleep "$((attempt * 10))"' in dockerfile
     assert 'test "$apt_update_succeeded" = 1' in dockerfile
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
