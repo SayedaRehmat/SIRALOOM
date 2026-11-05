@@ -28,13 +28,19 @@ def test_resolves_registered_software_qualified_patched_profile():
     assert profile["lock_file"] == "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"
 
 
-def test_1_24_1_profile_remains_candidate_until_runtime_image_gate_passes():
+def test_1_24_1_profile_is_software_qualified_after_runtime_image_gate_passes():
     profile_id = "bcftools-1.24.1-htslib-1.24.1-linux-64-source"
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
-    assert profile["status"] == "CANDIDATE"
-    with pytest.raises(ToolchainProfileError, match="not software-qualified"):
-        resolve_toolchain_profile(profile_id, bcftools_version="1.24.1", htslib_version="1.24.1", registry_path=REGISTRY)
+    assert profile["status"] == "SOFTWARE_QUALIFIED"
+    resolved = resolve_toolchain_profile(
+        profile_id,
+        bcftools_version="1.24.1",
+        htslib_version="1.24.1",
+        registry_path=REGISTRY,
+    )
+    assert resolved["id"] == profile_id
+    assert "isolated non-root runtime image checks" in resolved["qualification_scope"]
     assert profile["installation_method"] == "verified_source_build"
     assert profile["build_script"] == "scripts/build_bcftools_from_profile.sh"
     assert profile["dockerfile"] == "docker/backend-bcftools-source.Dockerfile"
@@ -194,7 +200,7 @@ def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
 ):
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
-    assert profile["status"] == "CANDIDATE"
+    assert profile["status"] == "SOFTWARE_QUALIFIED"
     assert profile["bcftools_version"] == bcftools_version
     assert profile["htslib_version"] == htslib_version
     assert profile["worker_queue"] == queue
