@@ -11465,7 +11465,7 @@
     {
       "requirement_id": "VCF-REQ-000097",
       "title": "A novel adjacency comprises two mate breakends",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11563,7 +11563,7 @@
     {
       "requirement_id": "VCF-REQ-000098",
       "title": "Breakend REF and ALT replacement semantics",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11661,7 +11661,7 @@
     {
       "requirement_id": "VCF-REQ-000099",
       "title": "Breakend bracket placement determines joined-piece orientation",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11759,7 +11759,7 @@
     {
       "requirement_id": "VCF-REQ-000100",
       "title": "Multiple mates are represented as alternate adjacencies",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11857,7 +11857,7 @@
     {
       "requirement_id": "VCF-REQ-000101",
       "title": "Partner breakends are distinct from adjacency mates",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11955,7 +11955,7 @@
     {
       "requirement_id": "VCF-REQ-000102",
       "title": "Telomeric virtual breakends use boundary coordinates",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -12053,7 +12053,7 @@
     {
       "requirement_id": "VCF-REQ-000103",
       "title": "Breakend uncertainty uses leftmost placement and CIPOS",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -12151,7 +12151,7 @@
     {
       "requirement_id": "VCF-REQ-000104",
       "title": "Mate coordinates under uncertainty are conditional, not direct POS copies",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -12249,7 +12249,7 @@
     {
       "requirement_id": "VCF-REQ-000105",
       "title": "Single breakends have no mate",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -12347,10 +12347,10 @@
     {
       "requirement_id": "VCF-REQ-000106",
       "title": "Deprecated END is retained for backwards compatibility",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "DEPRECATED",
+      "normative_force": "NOT_STATED",
       "atomic_statement": "The INFO END field is deprecated in VCFv4.5 and retained for backwards compatibility; use INFO SVLEN and FORMAT LEN as the replacement semantic sources.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When reading or writing VCFv4.5 structural-variant representations.",
@@ -12445,10 +12445,10 @@
     {
       "requirement_id": "VCF-REQ-000107",
       "title": "SVTYPE is deprecated because ALT identifies structural-variant class",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "DEPRECATED",
+      "normative_force": "NOT_STATED",
       "atomic_statement": "Treat INFO SVTYPE as deprecated because its structural-variant type information is redundant with the ALT allele class.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When interpreting structural-variant records.",
@@ -12543,7 +12543,7 @@
     {
       "requirement_id": "VCF-REQ-000108",
       "title": "BKPTID identifies an assembled alternate allele",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
@@ -12641,10 +12641,10 @@
     {
       "requirement_id": "VCF-REQ-000109",
       "title": "CNQ encodes copy-number genotype quality",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "DESCRIPTIVE",
       "atomic_statement": "Interpret CNQ as a phred-scaled quality equal to -10 log10 of the probability that the copy-number genotype call is wrong.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When FORMAT CNQ is present.",
@@ -12739,10 +12739,10 @@
     {
       "requirement_id": "VCF-REQ-000110",
       "title": "CNL is a copy-number likelihood vector beginning at zero",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "DESCRIPTIVE",
       "atomic_statement": "Interpret CNL as log10 likelihoods for each potential copy number, with the vector starting at copy number zero.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When FORMAT CNL is present.",
@@ -12837,10 +12837,10 @@
     {
       "requirement_id": "VCF-REQ-000111",
       "title": "CNP encodes linear copy-number posterior probabilities",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "DESCRIPTIVE",
       "atomic_statement": "Interpret CNP as posterior probabilities on a 0-to-1 scale for potential copy-number genotypes, with the same potential-copy-number ordering as CNL.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When FORMAT CNP is present.",
@@ -12935,7 +12935,7 @@
     {
       "requirement_id": "VCF-REQ-000112",
       "title": "Standard genotype fields are preferred when possible for copy-number calls",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "RECOMMENDED",
@@ -13033,7 +13033,7 @@
     {
       "requirement_id": "VCF-REQ-000113",
       "title": "Breakend records sharing a phase set carry matching PSL and PSO",
-      "requirement_domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13131,7 +13131,7 @@
     {
       "requirement_id": "VCF-REQ-000114",
       "title": "Encode literal colon with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13229,7 +13229,7 @@
     {
       "requirement_id": "VCF-REQ-000115",
       "title": "Encode literal semicolon with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13327,7 +13327,7 @@
     {
       "requirement_id": "VCF-REQ-000116",
       "title": "Encode literal equals sign with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13425,7 +13425,7 @@
     {
       "requirement_id": "VCF-REQ-000117",
       "title": "Encode literal percent sign with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13523,7 +13523,7 @@
     {
       "requirement_id": "VCF-REQ-000118",
       "title": "Encode literal comma with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13621,7 +13621,7 @@
     {
       "requirement_id": "VCF-REQ-000119",
       "title": "Encode carriage return with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13719,7 +13719,7 @@
     {
       "requirement_id": "VCF-REQ-000120",
       "title": "Encode line feed with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13817,7 +13817,7 @@
     {
       "requirement_id": "VCF-REQ-000121",
       "title": "Encode horizontal tab with uppercase percent escape",
-      "requirement_domain": "CHARACTER_ENCODING",
+      "requirement_domain": "ENCODING",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -13915,7 +13915,7 @@
     {
       "requirement_id": "VCF-REQ-000122",
       "title": "PEDIGREE Original records clonal derivation",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "SAMPLE_PEDIGREE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
@@ -14013,7 +14013,7 @@
     {
       "requirement_id": "VCF-REQ-000123",
       "title": "General PEDIGREE lines identify one or more ancestors",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "SAMPLE_PEDIGREE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
@@ -14111,7 +14111,7 @@
     {
       "requirement_id": "VCF-REQ-000124",
       "title": "Haplotype identifiers are unique across the germline genome",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "SAMPLE_PEDIGREE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -14209,7 +14209,7 @@
     {
       "requirement_id": "VCF-REQ-000125",
       "title": "Duplicated haplotype copies receive novel identifiers except one retained copy",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "GVCF",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -14307,7 +14307,7 @@
     {
       "requirement_id": "VCF-REQ-000126",
       "title": "Implicit reference-block positions have missing GT and no other FORMAT values",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "GVCF",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -14405,7 +14405,7 @@
     {
       "requirement_id": "VCF-REQ-000127",
       "title": "Reference-block start includes <*> in LAA when LAA is present",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "GVCF",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -14503,7 +14503,7 @@
     {
       "requirement_id": "VCF-REQ-000128",
       "title": "NON_REF is an alias of <*> for gVCF compatibility",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "SAMPLE_PEDIGREE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "RECOMMENDED",
@@ -14601,10 +14601,10 @@
     {
       "requirement_id": "VCF-REQ-000129",
       "title": "Infer missing reference-block LEN from INFO END",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "GVCF",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED_IF_MISSING",
+      "normative_force": "SHOULD",
       "atomic_statement": "For backwards compatibility with gVCF, infer a missing FORMAT LEN value from INFO END when END is present.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When FORMAT LEN is missing and INFO END is present in the reference-block representation.",
@@ -14699,10 +14699,10 @@
     {
       "requirement_id": "VCF-REQ-000130",
       "title": "Base-modification reference-block values apply to all covered applicable bases",
-      "requirement_domain": "HEADER_PEDIGREE_OR_GVCF",
+      "requirement_domain": "GVCF",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "DESCRIPTIVE",
       "atomic_statement": "Apply base-modification information in a reference-block FORMAT field to all applicable bases covered by that reference block.",
       "actor": "VCF producer or consumer, as applicable to the stated operation",
       "condition": "When base-modification information is present in the FORMAT field of a reference-block record.",
