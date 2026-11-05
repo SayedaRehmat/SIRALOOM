@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "queue_id": "siraloom-vcf-source-structure-review-queue",
-  "status": "INVENTORIED_REVIEW_PENDING",
+  "status": "TABLE_ENVIRONMENTS_INDEXED_ROW_SEMANTICS_REVIEW_PENDING",
   "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
   "source_structure_inventory": "Existing PR #282 docs/implementation/VCF_NORMATIVE_SECTION_INVENTORY.json",
   "purpose": "Track source structures that may encode requirements without normative modal language. These are review targets, not asserted normative clauses.",
@@ -1141,5 +1141,19 @@
     "recommendations_must_not_be_promoted_to_mandatory": true,
     "informative_examples_must_not_be_promoted_to_normative": true,
     "producer_extensions_must_be_separate_from_vcf_core": true
+  },
+  "table_structure_inventory": "table-structure-inventory.v1.json",
+  "structural_counts": {
+    "vcf_specific_table_environments_by_version": {
+      "VCFv4.1": 35,
+      "VCFv4.2": 35,
+      "VCFv4.3": 40,
+      "VCFv4.4": 41,
+      "VCFv4.5": 44
+    },
+    "total_table_environments": 195,
+    "row_terminator_lines_navigation_only": 939,
+    "footnote_marker_lines": 123,
+    "enumerated_list_starts": 84
   }
 }
