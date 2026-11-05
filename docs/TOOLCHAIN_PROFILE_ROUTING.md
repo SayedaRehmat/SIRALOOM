@@ -30,13 +30,13 @@ The generic source-build image pins both builder and runtime base images by immu
 | Profile | BCFtools | HTSlib | Queue | Current eligibility |
 |---|---:|---:|---|---|
 | Default | 1.25 | 1.25 | `bioinformatics.bcftools.1_25` | SOFTWARE_QUALIFIED |
-| Source candidate | 1.24.1 | 1.24.1 | `bioinformatics.bcftools.1_24_1` | CANDIDATE pending full runtime and routing qualification |
-| Source candidate | 1.23.3 | 1.23.3 | `bioinformatics.bcftools.1_23_3` | CANDIDATE |
-| Source candidate | 1.22.3 | 1.22.4 | `bioinformatics.bcftools.1_22_4` | CANDIDATE |
+| Source-qualified | 1.24.1 | 1.24.1 | `bioinformatics.bcftools.1_24_1` | SOFTWARE_QUALIFIED for Linux AMD64 |
+| Source-qualified | 1.23.3 | 1.23.3 | `bioinformatics.bcftools.1_23_3` | SOFTWARE_QUALIFIED for Linux AMD64 |
+| Source-qualified | 1.22.3 | 1.22.4 | `bioinformatics.bcftools.1_22_4` | SOFTWARE_QUALIFIED for Linux AMD64 |
 | Blocked candidate | 1.21.3 | 1.21.3 | `bioinformatics.bcftools.1_21_3` | BLOCKED_COMPATIBILITY; VCF 4.5 FORMAT/LEN regression |
 | Legacy | 1.19 | 1.19 | none | QUARANTINED_LEGACY; never production-selectable |
 
-A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
+A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The three source-built profiles above have passed source, lock, VCF smoke, full backend, non-root runtime-image and profile-routing/reanalysis software checks on Linux AMD64. This does not establish clinical validation or compatibility with ARM64 and every possible lab host. The 1.21.3 profile remains blocked by its unresolved VCF 4.5 FORMAT/LEN regression. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
 
 ## Optional production worker pools
 
