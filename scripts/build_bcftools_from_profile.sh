@@ -30,8 +30,8 @@ if p.get("installation_method") != "verified_source_build":
     raise SystemExit(f"profile is not a verified source build: {profile_id}")
 if p.get("bcftools_version") != expected_bcftools or p.get("htslib_version") != expected_htslib:
     raise SystemExit("requested versions do not match immutable profile record")
-if not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", expected_bcftools) or expected_bcftools != expected_htslib:
-    raise SystemExit("BCFtools and HTSlib must be explicit, matching numeric versions")
+if not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", expected_bcftools) or not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", expected_htslib):
+    raise SystemExit("BCFtools and HTSlib versions must be explicit numeric release versions")
 archives = {a.get("name"): a for a in p.get("source_archives", [])}
 required = (f"htslib-{expected_htslib}.tar.bz2", f"bcftools-{expected_bcftools}.tar.bz2")
 if set(archives) != set(required):
