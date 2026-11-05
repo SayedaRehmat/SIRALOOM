@@ -34,7 +34,7 @@ def test_1_24_1_profile_remains_candidate_until_runtime_image_gate_passes():
     profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
     assert profile["status"] == "CANDIDATE"
     with pytest.raises(ToolchainProfileError, match="not software-qualified"):
-        resolve_toolchain_profile(profile_id, bcftools_version="1.24.1", htslib_version="1.24.1")
+        resolve_toolchain_profile(profile_id, bcftools_version="1.24.1", htslib_version="1.24.1", registry_path=REGISTRY)
     assert profile["installation_method"] == "verified_source_build"
     assert profile["platform"] == "linux-64"
     assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
