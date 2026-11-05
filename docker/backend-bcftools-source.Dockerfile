@@ -1,0 +1,82 @@
+ARG BCFTOOLS_BUILD_LOCK_FILE
+ARG BCFTOOLS_PROFILE_ID
+ARG BCFTOOLS_VERSION
+ARG HTSLIB_VERSION
+ARG BCFTOOLS_WORKER_QUEUE
+ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie
+
+FROM mambaorg/micromamba:2.3.1 AS bcftools-source-build
+ARG BCFTOOLS_BUILD_LOCK_FILE
+ARG BCFTOOLS_PROFILE_ID
+ARG BCFTOOLS_VERSION
+ARG HTSLIB_VERSION
+ENV MAMBA_ROOT_PREFIX=/tmp/build-env
+COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_BUILD_LOCK_FILE} /tmp/bcftools-build-explicit.lock
+RUN micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
+    && micromamba clean --all --yes
+COPY configs/bioinformatics/toolchain-profiles.v1.json /tmp/toolchain-profiles.v1.json
+COPY scripts/build_bcftools_from_profile.sh /tmp/build_bcftools_from_profile.sh
+RUN micromamba run --name bcftools-build env \
+    BCFTOOLS_PROFILE_ID="${BCFTOOLS_PROFILE_ID}" \
+    BCFTOOLS_VERSION="${BCFTOOLS_VERSION}" \
+    HTSLIB_VERSION="${HTSLIB_VERSION}" \
+    BCFTOOLS_PROFILE_REGISTRY=/tmp/toolchain-profiles.v1.json \
+    BCFTOOLS_PREFIX=/opt/conda BCFTOOLS_DESTDIR=/tmp/bcftools-runtime \
+    bash /tmp/build_bcftools_from_profile.sh
+
+# Keep the runtime base explicit and stable. The selected compiler toolchain
+# and its headers never enter the runtime image.
+FROM ${BCFTOOLS_BASE_IMAGE}
+ARG BCFTOOLS_PROFILE_ID
+ARG BCFTOOLS_VERSION
+ARG HTSLIB_VERSION
+ARG BCFTOOLS_WORKER_QUEUE
+ENV BCFTOOLS_PROFILE_ID=${BCFTOOLS_PROFILE_ID} \
+    BCFTOOLS_VERSION=${BCFTOOLS_VERSION} \
+    HTSLIB_VERSION=${HTSLIB_VERSION} \
+    BCFTOOLS_EXECUTABLE=/opt/conda/bin/bcftools \
+    CELERY_QUEUES=${BCFTOOLS_WORKER_QUEUE}
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_NO_PROGRESS=1
+WORKDIR /app
+
+RUN groupadd --system --gid 10001 siraloom \
+    && useradd --system --uid 10001 --gid siraloom --create-home \
+        --home-dir /home/siraloom --shell /usr/sbin/nologin siraloom \
+    && mkdir -p /data/siraloom/artifacts /data/siraloom/resource-cache \
+        /data/siraloom/scratch /data/siraloom/beat /data/references \
+    && chown -R 10001:10001 /data/siraloom
+ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
+
+COPY --from=bcftools-source-build /tmp/bcftools-runtime/opt/conda /opt/conda
+ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
+
+COPY pyproject.toml uv.lock ./
+RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/local/bin/python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
+    && test "$(uv --version)" = "uv 0.10.0" \
+    && uv lock --check \
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project \
+    && test "$lock_sha_before" = "$(sha256sum uv.lock | cut -d ' ' -f1)"
+
+COPY backend ./backend
+COPY alembic.ini ./
+COPY migrations ./migrations
+COPY workflows ./workflows
+COPY configs ./configs
+COPY scripts ./scripts
+
+RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
+    && test "$lock_sha_before" = "$(sha256sum uv.lock | cut -d ' ' -f1)" \
+    && python -c "import redis; import kombu.transport.redis; import backend.app" \
+    && test "$(bcftools --version | head -n1)" = "bcftools ${BCFTOOLS_VERSION}" \
+    && test "$(bcftools --version | sed -n '2s/.*htslib //p')" = "${HTSLIB_VERSION}" \
+    && /usr/local/bin/python -m pip uninstall -y uv
+
+RUN chmod +x scripts/start_api_with_worker.sh
+USER 10001:10001
+CMD ["./scripts/start_api_with_worker.sh"]
