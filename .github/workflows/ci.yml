@@ -96,12 +96,12 @@ jobs:
           profile["status"] = "SOFTWARE_QUALIFIED"
           json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
           PY
-          docker build \\
-            --build-arg BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock \\
-            --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.24.1-htslib-1.24.1-linux-64-source \\
-            --build-arg BCFTOOLS_VERSION=1.24.1 \\
-            --build-arg HTSLIB_VERSION=1.24.1 \\
-            --build-arg BCFTOOLS_WORKER_QUEUE=bioinformatics.bcftools.1_24_1 \\
+          docker build \
+            --build-arg BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock \
+            --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.24.1-htslib-1.24.1-linux-64-source \
+            --build-arg BCFTOOLS_VERSION=1.24.1 \
+            --build-arg HTSLIB_VERSION=1.24.1 \
+            --build-arg BCFTOOLS_WORKER_QUEUE=bioinformatics.bcftools.1_24_1 \
             --file docker/backend-bcftools-source.Dockerfile --tag siraloom-backend:bcftools-1.24.1-ci .
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '1p')" = "bcftools 1.24.1"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '2p')" = "Using htslib 1.24.1"
