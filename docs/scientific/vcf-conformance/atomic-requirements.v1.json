@@ -4,7 +4,6 @@
   "registry_status": "IN_PROGRESS",
   "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
   "scope": "Initial five-record seed for fileformat and line-ending requirements only; this is not a complete VCFv4.0–4.5 normative ledger or conformance declaration.",
-  "generated_at_utc": "2026-11-05T08:55:00Z",
   "requirements": [
     {
       "requirement_id": "VCF-REQ-000001",
@@ -713,7 +712,7 @@
       "condition": "For VCFv4.3, VCFv4.4, and VCFv4.5 text files.",
       "required_or_prohibited_behavior": "Do not embed line-separator characters within a logical VCF line.",
       "exceptions": [],
-      "observable_acceptance_condition": "A file containing an embedded CR or LF inside a logical header or record line is rejected or unambiguously treated as a new line, never silently joined.",
+      "observable_acceptance_condition": "Each CR or LF sequence functions only as a logical line boundary; it is not accepted as an in-field character or silently removed from a field.",
       "source_references": [
         {
           "source_id": "VCFv4.3-LINE-SEPARATOR-PLACEMENT",
