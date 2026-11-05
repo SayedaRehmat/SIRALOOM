@@ -323,12 +323,19 @@ if Celery is not None:
             persisted_analysis = claim_db.get(Analysis, UUID(analysis_id))
             if persisted_analysis is None:
                 return {"analysis_id": analysis_id, "status": "NOT_FOUND"}
-            assert_analysis_toolchain_matches_worker(
-                persisted_analysis,
-                worker_profile_id=settings.bcftools_profile_id,
-                worker_bcftools_version=settings.bcftools_version,
-                worker_htslib_version=settings.htslib_version,
-            )
+            try:
+                assert_analysis_toolchain_matches_worker(
+                    persisted_analysis,
+                    worker_profile_id=settings.bcftools_profile_id,
+                    worker_bcftools_version=settings.bcftools_version,
+                    worker_htslib_version=settings.htslib_version,
+                )
+            except Exception as exc:
+                from celery.exceptions import Reject
+                # A wrong pool must not fail/ack a task assigned to another
+                # native toolchain. Requeue the same broker message so the
+                # correctly configured profile pool can claim it later.
+                raise Reject(str(exc), requeue=True) from exc
             claimed = _claim_analysis_execution(
                 claim_db,
                 UUID(analysis_id),
