@@ -2641,7 +2641,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Clarify whether 'same types' means identical FORMAT key sequence or identical declared data types; do not overinterpret."
-      ]
+      ],
+      "title": "When genotype information is present, the same types of genotype data are present for all samples at the record."
     },
     {
       "requirement_id": "VCF-REQ-000017",
@@ -2821,7 +2822,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "The 4.1–4.2 text describes a colon-separated alphanumeric String; 4.3–4.5 additionally specify key grammar and uniqueness."
-      ]
+      ],
+      "title": "The FORMAT field specifies the data types and order of genotype subfields, and each sample's colon-separated…"
     },
     {
       "requirement_id": "VCF-REQ-000018",
@@ -2959,7 +2961,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Not established by the reviewed 4.1–4.2 passages; applicability there remains unresolved."
-      ]
+      ],
+      "title": "A FORMAT declaration does not contain duplicate keys."
     },
     {
       "requirement_id": "VCF-REQ-000019",
@@ -3137,7 +3140,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "If GT is present in FORMAT, it is the first FORMAT key/subfield."
     },
     {
       "requirement_id": "VCF-REQ-000020",
@@ -3317,7 +3321,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "This does not override conditional requirements such as VCFv4.5 LAA when local-allele fields are used."
-      ]
+      ],
+      "title": "The specification does not require any FORMAT subfield/key to be present in every genotype-bearing record."
     },
     {
       "requirement_id": "VCF-REQ-000021",
@@ -3497,7 +3502,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Review exact MISSING token definition and field-specific missing-value exceptions."
-      ]
+      ],
+      "title": "A missing genotype subfield value is represented by the VCF missing value marker (dot)."
     },
     {
       "requirement_id": "VCF-REQ-000022",
@@ -3635,7 +3641,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Not explicitly present in the captured VCFv4.1–4.2 passages; do not backport without source evidence."
-      ]
+      ],
+      "title": "For a FORMAT field containing a list of missing values, the representation may be a single missing marker or an…"
     },
     {
       "requirement_id": "VCF-REQ-000023",
@@ -3813,7 +3820,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Trailing FORMAT subfields may be omitted, except that GT must remain present when GT is specified in FORMAT."
     },
     {
       "requirement_id": "VCF-REQ-000024",
@@ -3930,7 +3938,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "The captured source passages establish this wording for 4.1–4.2; inspect 4.3–4.5 GT definition and local-allele exceptions before assigning their scope."
-      ]
+      ],
+      "title": "GT allele value 0 denotes REF and positive allele indices denote ALT alleles by their one-based order in ALT."
     },
     {
       "requirement_id": "VCF-REQ-000025",
@@ -4047,7 +4056,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Examples establish supported representations but their exact normative force must be reviewed."
-      ]
+      ],
+      "title": "GT may encode haploid, diploid, and higher-ploidy genotypes; the allele count in the genotype reflects ploidy."
     },
     {
       "requirement_id": "VCF-REQ-000026",
@@ -4164,7 +4174,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Separate cardinality formula, genotype enumeration order, and ploidy assumptions into distinct child requirements after full formula context review."
-      ]
+      ],
+      "title": "GL values correspond to all possible genotypes for the REF/ALT allele set; when GT is present the same ploidy…"
     },
     {
       "requirement_id": "VCF-REQ-000027",
@@ -4281,7 +4292,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Reserved-key presence and later-version omission must not be interpreted as a prohibition."
-      ]
+      ],
+      "title": "GLE is a string representation for genotype likelihoods of heterogeneous ploidy, used where copy number is…"
     },
     {
       "requirement_id": "VCF-REQ-000028",
@@ -4398,7 +4410,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Review full PS definition and subsequent version-specific changes; this candidate captures one relation only."
-      ]
+      ],
+      "title": "For phased genotypes on the same chromosome and with the same PS value for an individual, the genotypes belong…"
     },
     {
       "requirement_id": "VCF-REQ-000029",
@@ -4513,7 +4526,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "If GT is unphased, the corresponding PS field is ignored."
     },
     {
       "requirement_id": "VCF-REQ-000030",
@@ -4630,7 +4644,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Do not implement as a rejection condition; exact normative force is recommendation."
-      ]
+      ],
+      "title": "Using the position of the first variant in a phase set as the PS identifier is a recommendation, not a…"
     },
     {
       "requirement_id": "VCF-REQ-000031",
@@ -4747,7 +4762,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Confirm cardinality and whether this description is normative or informative in the complete clause context."
-      ]
+      ],
+      "title": "The EC list contains one expected alternate allele count for each ALT allele, in the same order as ALT."
     },
     {
       "requirement_id": "VCF-REQ-000032",
@@ -4843,7 +4859,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Resolve the source's phrase 'one must ignored' against surrounding examples and errata; retain the original source wording in evidence."
-      ]
+      ],
+      "title": "If a FORMAT field and its local-allele equivalent are both defined, they must encode identical information, or…"
     },
     {
       "requirement_id": "VCF-REQ-000033",
@@ -4981,7 +4998,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Separate the enumeration algorithm, cardinality, inverse index and allele sorting precondition into child requirements."
-      ]
+      ],
+      "title": "For a genotype likelihood field, the ordering enumerates all possible genotypes for the record's allele set…"
     },
     {
       "requirement_id": "VCF-REQ-000034",
@@ -5117,7 +5135,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The genotype-ordering pseudocode's for-loop boundaries are inclusive."
     },
     {
       "requirement_id": "VCF-REQ-000035",
@@ -5253,7 +5272,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The genotype ordering enumerates allele indices in nondecreasing order within each genotype tuple."
     },
     {
       "requirement_id": "VCF-REQ-000036",
@@ -5389,7 +5409,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "For diploid genotype a/b with a <= b, the likelihood-array index is b(b+1)/2+a."
     },
     {
       "requirement_id": "VCF-REQ-000037",
@@ -5483,7 +5504,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "For sorted genotype allele indices k1 <= ... <= kP, the zero-based index is the sum over m=1..P of…"
     },
     {
       "requirement_id": "VCF-REQ-000038",
@@ -5600,7 +5622,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Compare against VCFv4.3 separator-between-alleles model and retain as a version delta."
-      ]
+      ],
+      "title": "In VCFv4.4 and VCFv4.5, each allele value is preceded by a phasing indicator that describes whether that allele…"
     },
     {
       "requirement_id": "VCF-REQ-000039",
@@ -5715,7 +5738,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The first phasing indicator may be omitted; its implicit value is unphased if any explicit indicator is '/',…"
     },
     {
       "requirement_id": "VCF-REQ-000040",
@@ -5830,7 +5854,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "A phased allele indicator denotes phasing according to the phase set indicated by PS or PSL."
     },
     {
       "requirement_id": "VCF-REQ-000041",
@@ -5945,7 +5970,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "A given sample-genotype must not have values for both PS and PSL."
     },
     {
       "requirement_id": "VCF-REQ-000042",
@@ -6060,7 +6086,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "A PS value from one variant cannot be referenced as a PSL phase-set name in another variant; the two…"
     },
     {
       "requirement_id": "VCF-REQ-000043",
@@ -6175,7 +6202,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The PSL list contains one phase-set value for each allele value specified in GT."
     },
     {
       "requirement_id": "VCF-REQ-000044",
@@ -6290,7 +6318,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "An allele without a preceding '|' phasing indicator has '.' in its corresponding PSL list position."
     },
     {
       "requirement_id": "VCF-REQ-000045",
@@ -6405,7 +6434,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Records on different CHROM values with the same PSL phase-set name are considered part of the same phase set."
     },
     {
       "requirement_id": "VCF-REQ-000046",
@@ -6520,7 +6550,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "For each phase-set name, PSO defines the order in which variants are encountered when traversing a derivative…"
     },
     {
       "requirement_id": "VCF-REQ-000047",
@@ -6635,7 +6666,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "PSO should be defined for a phase-set name if any allele with that name on any record is a symbolic structural…"
     },
     {
       "requirement_id": "VCF-REQ-000048",
@@ -6750,7 +6782,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Variants in breakpoint notation must have the same PSL and PSO on both records."
     },
     {
       "requirement_id": "VCF-REQ-000049",
@@ -6865,7 +6898,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "PSQ is the list of phasing-quality values, one for each phase set in PSL."
     },
     {
       "requirement_id": "VCF-REQ-000050",
@@ -6980,7 +7014,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The missing value should be used for a PSQ element when the corresponding PSL value is missing or phasing…"
     },
     {
       "requirement_id": "VCF-REQ-000051",
@@ -7074,7 +7109,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "LAA is a list of distinct integers giving one-based indices into ALT for the alleles observed in the sample."
     },
     {
       "requirement_id": "VCF-REQ-000052",
@@ -7168,7 +7204,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The order of indices in LAA defines the order in which local alleles are interpreted."
     },
     {
       "requirement_id": "VCF-REQ-000053",
@@ -7264,7 +7301,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "This source wording is more precise than the broad initial candidate FMT-GT-017; reconcile the latter rather than retaining contradictory scope."
-      ]
+      ],
+      "title": "LAA must be present when any local-allele field is neither omitted nor MISSING."
     },
     {
       "requirement_id": "VCF-REQ-000054",
@@ -7360,7 +7398,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Keep BCF serialization behavior distinct from VCF textual syntax and specify encoding context."
-      ]
+      ],
+      "title": "Because BCF encodes zero-length vectors as MISSING, a MISSING LAA is treated as an empty vector (REF-only site)…"
     },
     {
       "requirement_id": "VCF-REQ-000055",
@@ -7454,7 +7493,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "A specification-defined FORMAT field with Number A, R or G has a local-allele equivalent interpreted like its…"
     },
     {
       "requirement_id": "VCF-REQ-000056",
@@ -7550,7 +7590,8 @@
       "related_requirement_ids": [],
       "open_questions": [
         "Clarify n definition (number of local alleles including REF) and exact combinatorial convention."
-      ]
+      ],
+      "title": "LPL contains n-choose-ploidy integer values for all possible genotypes over the local allele set defined by LAA."
     },
     {
       "requirement_id": "VCF-REQ-000057",
@@ -7644,7 +7685,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Every M-field ID ends in one of A, C, G, T, U or N, defining the base(s) on which the modification can occur."
     },
     {
       "requirement_id": "VCF-REQ-000058",
@@ -7738,7 +7780,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "U is treated as synonymous with T for M-field base suffix interpretation."
     },
     {
       "requirement_id": "VCF-REQ-000059",
@@ -7832,7 +7875,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "If any base-modification FORMAT key is present for a sample, GT is defined for that sample."
     },
     {
       "requirement_id": "VCF-REQ-000060",
@@ -7926,7 +7970,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The cardinality of M fields is determined by genotype and the number of possible base modifications for the…"
     },
     {
       "requirement_id": "VCF-REQ-000061",
@@ -8020,7 +8065,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "For a given allele, the number of base-modification values equals the number of bases on either strand in the…"
     },
     {
       "requirement_id": "VCF-REQ-000062",
@@ -8114,7 +8160,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "For N base modifications, values for positive and negative strands are both represented, with the…"
     },
     {
       "requirement_id": "VCF-REQ-000063",
@@ -8208,7 +8255,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "The order and number of base-modification alleles are determined by GT allele order and phasing; values are…"
     },
     {
       "requirement_id": "VCF-REQ-000064",
@@ -8302,7 +8350,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Values for unphased allele values are aggregated and encoded at the position of the first occurrence of that…"
     },
     {
       "requirement_id": "VCF-REQ-000065",
@@ -8396,7 +8445,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "MISSING allele values and symbolic alleles are treated as containing no relevant bases and therefore encode no…"
     },
     {
       "requirement_id": "VCF-REQ-000066",
@@ -8490,7 +8540,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Unstranded base-modification information is stored at the base with the lowest POS, with other values MISSING."
     },
     {
       "requirement_id": "VCF-REQ-000067",
@@ -8584,7 +8635,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Unstranded N base modifications are stored in the positive-strand value and the negative-strand value is MISSING."
     },
     {
       "requirement_id": "VCF-REQ-000068",
@@ -8678,7 +8730,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "FORMAT keys matching the M-family key pattern are reserved even when the embedded ChEBI ID does not correspond…"
     },
     {
       "requirement_id": "VCF-REQ-000069",
@@ -8772,7 +8825,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "FORMAT keys matching the DPM-family key pattern are reserved even when the embedded ChEBI ID does not…"
     },
     {
       "requirement_id": "VCF-REQ-000070",
@@ -8866,7 +8920,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "FORMAT keys matching the ADM-family key pattern are reserved even when the embedded ChEBI ID does not…"
     },
     {
       "requirement_id": "VCF-REQ-000071",
@@ -8960,7 +9015,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Unstranded CpG methylation counts are placed at the C position and the subsequent G position carries MISSING…"
     },
     {
       "requirement_id": "VCF-REQ-000072",
@@ -9054,7 +9110,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Number LA has the semantics of A restricted to alternate alleles in LAA; Number LR has the semantics of R…"
     },
     {
       "requirement_id": "VCF-REQ-000073",
@@ -9148,7 +9205,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Number LG has the semantics of G restricted to the allele set selected by LAA."
     },
     {
       "requirement_id": "VCF-REQ-000074",
@@ -9242,7 +9300,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Number P has one value for each allele value defined in GT."
     },
     {
       "requirement_id": "VCF-REQ-000075",
@@ -9336,7 +9395,8 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [],
+      "title": "Number M has one value for each possible base modification for the corresponding ChEBI ID."
     },
     {
       "requirement_id": "VCF-REQ-000076",
