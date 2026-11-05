@@ -1,0 +1,858 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "siraloom-vcf-atomic-requirements",
+  "registry_status": "IN_PROGRESS",
+  "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+  "scope": "Initial five-record seed for fileformat and line-ending requirements only; this is not a complete VCFv4.0–4.5 normative ledger or conformance declaration.",
+  "generated_at_utc": "2026-11-05T08:55:00Z",
+  "requirements": [
+    {
+      "requirement_id": "VCF-REQ-000001",
+      "title": "A VCF file declares its format version",
+      "requirement_domain": "FILE_STRUCTURE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "A VCF file contains a fileformat meta-information field that identifies the VCF format version.",
+      "actor": "VCF file producer",
+      "condition": "For every VCF text file.",
+      "required_or_prohibited_behavior": "Emit a fileformat declaration identifying the file's VCF version.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The file contains a parseable ##fileformat declaration whose value identifies the claimed VCF version.",
+      "source_references": [
+        {
+          "source_id": "VCF40-IGSR-CORE-HISTORICAL",
+          "version": "VCFv4.0",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "revision": "HISTORICAL_MUTABLE_WEB_SOURCE_NOT_YET_PINNED",
+          "source_file": null,
+          "git_blob_sha1": null,
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "Rendered HTML lines 40–41; raw source-byte capture and SHA-256 pending",
+            "start_line": 40,
+            "end_line": 41,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L141-L145",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
+            "start_line": 141,
+            "end_line": 145,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L144-L148",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
+            "start_line": 144,
+            "end_line": 148,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L142-L146",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
+            "start_line": 142,
+            "end_line": 146,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF40-IGSR-CORE-HISTORICAL"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Implementation audit is deferred until the protected toolchain/validation workstream has a stable handoff baseline."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Initial source-based atomic decomposition. Independent standards review, implementation mapping, and executable test mapping are pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000002",
+      "title": "The fileformat field is unique",
+      "requirement_domain": "FILE_STRUCTURE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "A VCF file contains one and only one fileformat field.",
+      "actor": "VCF file producer",
+      "condition": "For VCFv4.1–VCFv4.5 files.",
+      "required_or_prohibited_behavior": "Do not emit duplicate fileformat fields.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A file containing two or more fileformat fields is rejected as violating this requirement.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L141-L145",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
+            "start_line": 141,
+            "end_line": 145,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L144-L148",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
+            "start_line": 144,
+            "end_line": 148,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L142-L146",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
+            "start_line": 142,
+            "end_line": 146,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "The historical VCFv4.0 core page identifies fileformat as required but does not state this additional constraint in the reviewed passage.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Implementation audit is deferred until the protected toolchain/validation workstream has a stable handoff baseline."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Initial source-based atomic decomposition. Independent standards review, implementation mapping, and executable test mapping are pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000003",
+      "title": "The fileformat field is the first line",
+      "requirement_domain": "FILE_STRUCTURE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "The fileformat field appears on the first line of the VCF file.",
+      "actor": "VCF file producer",
+      "condition": "For VCFv4.1–VCFv4.5 files.",
+      "required_or_prohibited_behavior": "Place the fileformat declaration before all other file content.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A VCFv4.1–VCFv4.5 file whose first line is not the fileformat declaration is rejected.",
+      "source_references": [
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L59-L62",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
+            "start_line": 59,
+            "end_line": 62,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L141-L145",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
+            "start_line": 141,
+            "end_line": 145,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L144-L148",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
+            "start_line": 144,
+            "end_line": 148,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L142-L146",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
+            "start_line": 142,
+            "end_line": 146,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "The historical VCFv4.0 core page identifies fileformat as required but does not state this additional constraint in the reviewed passage.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Implementation audit is deferred until the protected toolchain/validation workstream has a stable handoff baseline."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Initial source-based atomic decomposition. Independent standards review, implementation mapping, and executable test mapping are pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000004",
+      "title": "A compliant reader supports LF and CRLF line endings",
+      "requirement_domain": "ENCODING",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "A VCF-compliant reader supports both LF and CRLF newline conventions.",
+      "actor": "VCF-compliant reader implementation",
+      "condition": "When reading VCFv4.3, VCFv4.4, or VCFv4.5 text files.",
+      "required_or_prohibited_behavior": "Accept either LF or CRLF as the line-ending convention.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Equivalent valid VCF inputs encoded with LF and CRLF are both accepted without record-content changes.",
+      "source_references": [
+        {
+          "source_id": "VCFv4.3-LINE-ENDINGS",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L38-L40",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
+            "start_line": 38,
+            "end_line": 40,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCFv4.4-LINE-ENDINGS",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L38-L40",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
+            "start_line": 38,
+            "end_line": 40,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCFv4.5-LINE-ENDINGS",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L38-L40",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex; character encoding/newline subsection; explicit LF and CRLF requirement",
+            "start_line": 36,
+            "end_line": 38,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.3-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.4-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.5-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Implementation audit is deferred until the protected toolchain/validation workstream has a stable handoff baseline."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Initial source-based atomic decomposition. Independent standards review, implementation mapping, and executable test mapping are pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000005",
+      "title": "Line separators occur only at line boundaries",
+      "requirement_domain": "ENCODING",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Line separator characters are used only as line separators at the end of a VCF line.",
+      "actor": "VCF file producer and VCF-compliant reader",
+      "condition": "For VCFv4.3, VCFv4.4, and VCFv4.5 text files.",
+      "required_or_prohibited_behavior": "Do not embed line-separator characters within a logical VCF line.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A file containing an embedded CR or LF inside a logical header or record line is rejected or unambiguously treated as a new line, never silently joined.",
+      "source_references": [
+        {
+          "source_id": "VCFv4.3-LINE-SEPARATOR-PLACEMENT",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex; line-separator placement rule",
+            "start_line": 82,
+            "end_line": 82,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCFv4.4-LINE-SEPARATOR-PLACEMENT",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex; line-separator placement rule",
+            "start_line": 82,
+            "end_line": 82,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCFv4.5-LINE-SEPARATOR-PLACEMENT",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": null,
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex; line-separator placement rule",
+            "start_line": 80,
+            "end_line": 80,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.3-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.4-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCFv4.5-LINE-ENDINGS"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "Implementation audit is deferred until the protected toolchain/validation workstream has a stable handoff baseline."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Initial source-based atomic decomposition. Independent standards review, implementation mapping, and executable test mapping are pending.",
+        "reviewer_role": "Initial technical source review",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    }
+  ],
+  "coverage_summary": {
+    "source_documents_reviewed": [
+      "VCFv4.0 historical core page",
+      "VCFv4.1",
+      "VCFv4.2",
+      "VCFv4.3",
+      "VCFv4.4",
+      "VCFv4.5"
+    ],
+    "candidate_lines_reviewed": 5,
+    "atomic_requirements_created": 5,
+    "atomic_requirements_independently_reviewed": 0,
+    "requirements_with_code_mapping": 0,
+    "requirements_with_executed_tests": 0,
+    "unresolved_source_questions": 7
+  }
+}
