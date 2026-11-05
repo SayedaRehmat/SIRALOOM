@@ -26,23 +26,21 @@ The following counts were recomputed from the branch artifacts at the assessed b
 | Records marked `IN_REVIEW` | 75/75 |
 | Records with independent second review approved | 0/75 |
 | Records with implementation evidence | Not established by this inventory |
-| Records with one or more test-evidence entries | 10/75 |
-| Records with no open-question entries | 46/75 |
+| Records with one or more test-evidence entries | 0/75 |no open-question entries | 46/75 |
 | Records whose VCFv4.0 applicability is `SOURCE_NOT_PINNED` | 75/75 |
-| Unresolved applicability cells in VCFv4.1–4.2 | 18 |
-| VCFv4.3–4.5 unresolved applicability cells | 0 in the current ledger; this is not proof of complete coverage |
+| Unresolved applicability cells in VCFv4.1–4.2 | 18 (9 each) |nresolved applicability cells | 0 in the current ledger; this is not proof of complete coverage |
 
 The ledger contains 40 `DESCRIPTIVE` records. These are useful semantic definitions but must not automatically become rejection rules. The remaining normative-force vocabulary includes `MUST`, `MUST_NOT`, `SHOULD`, `RECOMMENDED`, `MAY`, `REQUIRED` and `NOT_STATED`; reviewers must check that each label reflects the source's actual modal language and not an editorial interpretation.
 
-The 61-record FORMAT/GENOTYPE candidate artifact is a proposal inventory. It records primary-source-context review, not independent approval. One candidate (`FMT-GT-017`) is explicitly a split parent and must not be counted as an independently atomic requirement. The ledger's 75 records include 60 reconciled FORMAT/GENOTYPE children/independent candidates plus the initial seed records; the 61st candidate remains a parent candidate.
+The 61-record FORMAT/GENOTYPE candidate artifact is a proposal inventory. Its expanded pass now includes general-ploidy genotype ordering, VCFv4.4 allele-level phasing and first-indicator inference, PSL/PSO/PSQ, VCFv4.5 local-allele semantics and base-modification semantics. Detailed per-key Number/Type and field-specific algorithms remain incompletely decomposed. It records primary-source-context review, not independent approval. One candidate (`FMT-GT-017`) is explicitly a split parent and must not be counted as an independently atomic requirement. The ledger's 75 records include 60 reconciled FORMAT/GENOTYPE children/independent candidates plus the initial seed records; the 61st candidate remains a parent candidate.
 
 ## 3. Source and traceability caveats
 
-1. VCFv4.1–4.5 source files are pinned to HTS-specs commit `510c107ba89aa13113818c9e4fa3071283cb7f7`. Recorded Git blob SHA-1 values identify repository objects; they are not archived-source SHA-256 digests.
+1. VCFv4.1–4.5 source files are pinned to the exact 40-character HTS-specs commit `510c107ba89aa13113818c9e4fa3071283cb7f7b`. Recorded Git blob SHA-1 values identify repository objects; they are not archived-source SHA-256 digests.
 2. VCFv4.0 is not yet supported by an accepted, provenance-qualified normative source capture. The IGSR historical core page is a discovery/reference candidate only.
 3. The separate 1000 Genomes structural-variation page is a producer/project convention source. It must remain separately classified and must not be merged into core VCFv4.0 requirements.
-4. The source references in the ledger do not all include source-excerpt SHA-256 values or retrieval timestamps. A stable line locator alone is not a complete evidence package.
-5. The genotype candidate artifact itself states that table Number/Type semantics and genotype-ordering algorithms are not fully atomized, and that additional exact source-context review remains necessary.
+4. The source references in the ledger do not all include source-excerpt SHA-256 values or retrieval timestamps. The current 75-record ledger contains 0 test-evidence entries and 0 production implementation mappings. A stable line locator alone is not a complete evidence package.
+5. The genotype candidate artifact now decomposes several major algorithms and conditional semantics, but detailed per-key Number/Type semantics, remaining reserved rows, and full cross-reference coverage still require review.
 6. A zero unresolved-cell count for VCFv4.3–4.5 in the current 75 records only describes the records that happen to exist. It does not establish whole-specification coverage.
 
 ## 4. Ledger issues to resolve before a complete review
