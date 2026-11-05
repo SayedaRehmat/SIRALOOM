@@ -188,7 +188,10 @@
       },
       "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
       "worker_queue": "bioinformatics.bcftools.1_21_3",
-      "dockerfile": "docker/backend-bcftools-source.Dockerfile"
+      "dockerfile": "docker/backend-bcftools-source.Dockerfile",
+      "qualification_gaps": [
+        "The full backend regression suite currently fails tests/test_vcf_tools.py::test_vcf45_len_reference_block_csi_index_includes_last_covered_base under this exact toolchain. Do not promote until the VCF workflow defines and tests an explicit compatibility gate for VCF 4.5 FORMAT/LEN reference blocks."
+      ]
     },
     {
       "id": "bcftools-1.19-htslib-1.19-linux-64-legacy",
