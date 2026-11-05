@@ -13,7 +13,8 @@ RUN micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-exp
 COPY scripts/build_bcftools_1_24_1.sh /tmp/build_bcftools_1_24_1.sh
 RUN micromamba run --name bcftools-build env BCFTOOLS_PREFIX=/tmp/bcftools-runtime bash /tmp/build_bcftools_1_24_1.sh
 
-FROM python:3.12-slim
+# The pinned conda-forge toolchain currently requires GLIBC_2.38; use Debian trixie (glibc >=2.41).
+FROM python:3.12-slim-trixie
 
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
