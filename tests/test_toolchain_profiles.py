@@ -89,16 +89,21 @@ def test_analysis_worker_profile_match_requires_exact_profile_and_versions():
         assert_analysis_toolchain_matches_worker,
     )
 
+    from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
+    profile = resolve_registered_toolchain_profile(PROFILE_ID)
     analysis = SimpleNamespace(
         toolchain_profile_id=PROFILE_ID,
         toolchain_bcftools_version="1.25",
         toolchain_htslib_version="1.25",
-        toolchain_queue="bioinformatics.bcftools.1_25",
+        toolchain_queue=profile["worker_queue"],
         toolchain_snapshot={
             "profile_id": PROFILE_ID,
             "bcftools_version": "1.25",
             "htslib_version": "1.25",
-            "worker_queue": "bioinformatics.bcftools.1_25",
+            "worker_queue": profile["worker_queue"],
+            "platform": profile["platform"],
+            "lock_file": profile["lock_file"],
+            "lock_sha256": profile["lock_sha256"],
         },
     )
     assert_analysis_toolchain_matches_worker(
