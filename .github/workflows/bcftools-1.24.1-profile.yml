@@ -70,29 +70,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-      - name: Create ephemeral qualification registry for candidate-profile regression
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/qualified-config-root"
-          cp -R configs "$RUNNER_TEMP/qualified-config-root/configs"
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-          registry = Path(os.environ["RUNNER_TEMP"]) / "qualified-config-root/configs/bioinformatics/toolchain-profiles.v1.json"
-          payload = json.loads(registry.read_text(encoding="utf-8"))
-          candidate_id = "bcftools-1.24.1-htslib-1.24.1-linux-64-source"
-          profile = next(item for item in payload["profiles"] if item["id"] == candidate_id)
-          assert profile["status"] == "CANDIDATE", profile["status"]
-          profile["status"] = "SOFTWARE_QUALIFIED"
-          registry.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-          PY
       - name: Run backend regression suite against BCFtools 1.24.1
         env:
           BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
           BCFTOOLS_VERSION: "1.24.1"
           HTSLIB_VERSION: "1.24.1"
-          SIRALOOM_CONFIG_ROOT: ${{ runner.temp }}/qualified-config-root
           DATABASE_URL: sqlite:///./ci-bcftools-1.24.1.db
           REDIS_URL: redis://localhost:6379/0
           GENEBE_ENABLED: "false"
