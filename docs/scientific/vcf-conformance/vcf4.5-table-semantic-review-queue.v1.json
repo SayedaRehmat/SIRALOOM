@@ -1,0 +1,872 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-table-semantic-review-queue",
+  "status": "STRUCTURAL_TRIAGE_ONLY_SEMANTIC_REVIEW_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "file": "VCFv4.5.tex",
+    "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+  },
+  "scope": "All 44 table environments indexed by the VCF-only table inventory for VCFv4.5. The raw TeX file has additional BCF tables outside this VCF-only scope; BCF remains a separate conformance domain.",
+  "method": "Each indexed VCF table is linked to exact source line ranges and nearest enclosing heading, assigned a review target class for navigation, and left NOT_REVIEWED until its rows are semantically reconciled with surrounding prose, definitions, footnotes, examples and cross-references. Row terminator counts are not treated as semantic row counts.",
+  "counts": {
+    "indexed_tables": 44,
+    "not_semantically_reviewed": 44,
+    "atomic_requirements_created": 0,
+    "bcf_tables_excluded_from_vcf_scope": "Raw TeX also contains BCF serialization tables; these are excluded from this VCF-only queue."
+  },
+  "tables": [
+    {
+      "table_id": "VCF5.1",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 7,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.2",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.3",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 26,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.4",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 68,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.5",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.6",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 9,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.7",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.8",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.9",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.10",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.11",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.12",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.13",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.14",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.15",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.16",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.17",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.18",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.19",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.20",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.21",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.22",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.23",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.24",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.25",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.26",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 7,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.27",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.28",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.29",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.30",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.31",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.32",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.33",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.34",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.35",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.36",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 2,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.37",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.38",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 3,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.39",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.40",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.41",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 4,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.42",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.43",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 5,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    },
+    {
+      "table_id": "VCF5.44",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "enclosing_section": null,
+      "preceding_context": "",
+      "row_terminator_lines": 8,
+      "classification": "ILLUSTRATIVE_EXAMPLE_OR_ENCODING_WALKTHROUGH",
+      "semantic_review_target": "Determine whether table rows define normative semantics or only illustrate a preceding rule; atomize any normative constraints and preserve example-only status.",
+      "review_status": "NOT_REVIEWED",
+      "atomic_requirement_ids": [],
+      "open_questions": [
+        "Does the complete surrounding prose define normative behavior, informative example behavior, or both?",
+        "Have all referenced field definitions, footnotes and cross-version deltas been reconciled?"
+      ]
+    }
+  ],
+  "review_controls": {
+    "examples_are_not_automatically_normative": true,
+    "descriptive_definitions_are_not_automatically_presence_requirements": true,
+    "should_may_strength_preserved": true,
+    "bcf_serialization_separate": true,
+    "gvcf_producer_conventions_separate": true,
+    "version_specificity_required": true
+  },
+  "next_steps": [
+    "Review the INFO and FORMAT definition tables row-by-row against the preceding field grammar and subsequent cross-references.",
+    "Review genotype ordering algorithm and local-allele examples against all genotype prose and footnotes.",
+    "Review SV/breakend tables against SV INFO/FORMAT definitions and the representation sections.",
+    "Review character-encoding table against special-character and quoting rules.",
+    "Record atomized requirements only where the source supports an independently testable statement; preserve examples as examples."
+  ]
+}
