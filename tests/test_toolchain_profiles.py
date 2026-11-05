@@ -174,6 +174,7 @@ apt_update_succeeded=0 \\
 def test_source_profile_matrix_runs_on_main_and_serializes_snapshot_image_builds():
     workflow = (ROOT / ".github/workflows/bcftools-source-profile-matrix.yml").read_text(encoding="utf-8")
     assert "      - main" in workflow
+    assert "feat/bcftools-toolchain-qualification-rebased" not in workflow
     assert "      max-parallel: 1" in workflow
     assert "APT::Update::Error-Mode=any update" in (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
 
