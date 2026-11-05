@@ -761,8 +761,12 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
         detail = (completed.stderr or completed.stdout or "unknown bcftools error").strip()
         raise VCFToolError(f"bcftools could not split the multiallelic VCF: {detail}")
 
+    from backend.app.config import settings
     return {
         "tool": "bcftools",
+        "tool_version": settings.bcftools_version,
+        "htslib_version": settings.htslib_version,
+        "bcftools_profile_id": settings.bcftools_profile_id,
         "operation": "split_multiallelic",
         "command": " ".join(command),
         "multiallelic_mode": MULTIALLELIC_POLICY,
