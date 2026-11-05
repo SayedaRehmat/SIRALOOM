@@ -404,6 +404,7 @@
             "SHOULD_NOT",
             "MAY",
             "MAY_NOT",
+            "REQUIRED",
             "RECOMMENDED",
             "OPTIONAL",
             "DESCRIPTIVE",
