@@ -413,3 +413,35 @@ Version-delta review now includes five additional genotype/FORMAT topics: genoty
 - No implementation mapping, executable clause tests, differential parser tests or laboratory qualification was performed.
 - The reserved INFO/FORMAT row inventory remains broader than the current atomic requirement set; detailed semantics for many individual reserved rows still require decomposition.
 - VCFv4.0 historical source bytes have not yet been authoritatively captured and SHA-256 pinned. The previously recorded International Genome Sample Resource (IGSR) VCF 4.0 page is a discovery/reference page, not accepted as the normative specification source. Producer conventions and examples from 1000 Genomes/IGSR must remain a separate source class and must not be substituted for the normative VCF 4.0 specification.
+
+
+## Current evidence snapshot after FORMAT expansion and VCFv4.0 provenance assessment
+
+| Evidence item | Current state |
+|---|---:|
+| Initial modal-language candidate lines, VCFv4.1–4.5 | 510; initial context dispositions 510/510 |
+| Reserved INFO/FORMAT entries inventoried | 223 |
+| FORMAT/GENOTYPE atomic candidate records | 61 |
+| FORMAT/GENOTYPE candidate records reconciled into ledger | 60 |
+| Split-parent candidates retained outside ledger | 1 (FMT-GT-017) |
+| Atomic ledger records | 75 |
+| Ledger records still IN_REVIEW | 75/75 |
+| Independently second-person reviewed records | 0 |
+| Production implementation mappings | 0 |
+| Executed clause-specific tests | 0 |
+| Laboratory-qualified VCF versions | 0 |
+| VCFv4.0 original source bytes captured and SHA-256 pinned | No |
+
+The full 40-character HTS specification commit is `510c107ba89aa13113818c9e4fa3071283cb7f7b`. All VCFv4.1–4.5 source references in the reviewed artifact set and atomic ledger have been reconciled to this exact revision and their per-file blob identities remain recorded.
+
+The VCFv4.0 source investigation has identified the IGSR historical core page and a separate IGSR/1000 Genomes structural-variation conventions page. The core page is currently a **discovery/reference candidate only**; it has not been accepted as the authoritative normative source and its raw immutable bytes have not been captured. The structural-variation page is classified separately as a producer-convention/extension source. VCFv4.0 applicability in the atomic ledger remains `SOURCE_NOT_PINNED`.
+
+A bounded independent-review package has been prepared at `INDEPENDENT_REVIEW_PACKAGE.v1.md`. It is ready for reviewer appointment and record-by-record dispositions for the current 75-record tranche. It does not claim that review has occurred or that the 75 records exhaust the VCF specification.
+
+### Immediate gates
+
+1. Acquire and provenance-qualify the original/authoritative VCFv4.0 historical artifact, preserve exact bytes, and compute SHA-256; compare it with the IGSR page.
+2. Continue semantic review and atomic decomposition for remaining INFO/FORMAT rows, SV/breakend, gVCF, grammar, definitions, footnotes, examples and cross-references.
+3. Reconcile additional version-specific requirements into the ledger without upgrading proposed records to approved status.
+4. Obtain independent review of the bounded 75-record tranche and continue source review beyond it.
+5. Only after requirement coverage and independent review, begin implementation mapping and clause-specific tests.
