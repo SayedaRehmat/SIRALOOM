@@ -71,6 +71,11 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
         assert first.analysis_version == 2
         assert first.parent_analysis_id == parent_id
+        assert first.toolchain_profile_id == parent.toolchain_profile_id
+        assert first.toolchain_bcftools_version == parent.toolchain_bcftools_version
+        assert first.toolchain_htslib_version == parent.toolchain_htslib_version
+        assert first.toolchain_queue == parent.toolchain_queue
+        assert first.toolchain_snapshot == parent.toolchain_snapshot
         assert first_candidate is None
         assert entitlement.analyses_used == 1
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1
