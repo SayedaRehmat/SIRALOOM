@@ -101,6 +101,8 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "http://snapshot-cloudflare.debian.org/archive/debian/%s/" in dockerfile
     assert "http://snapshot-cloudflare.debian.org/archive/debian-security/%s/" in dockerfile
     assert "APT::Update::Error-Mode=any update" in dockerfile
+    assert "ca-certificates libcairo2" in dockerfile
+    assert "test -s /etc/ssl/certs/ca-certificates.crt" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
 
