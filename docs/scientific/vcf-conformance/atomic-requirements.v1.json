@@ -9407,7 +9407,7 @@
     {
       "requirement_id": "VCF-REQ-000076",
       "title": "Per-allele SV INFO values cover every ALT allele",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9505,7 +9505,7 @@
     {
       "requirement_id": "VCF-REQ-000077",
       "title": "IMPRECISE applies to structural ALT alleles with unspecified intervals",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9603,7 +9603,7 @@
     {
       "requirement_id": "VCF-REQ-000078",
       "title": "Precise alleles in IMPRECISE records carry explicit CIPOS",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9701,7 +9701,7 @@
     {
       "requirement_id": "VCF-REQ-000079",
       "title": "SVLEN is specified for symbolic structural alleles",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9799,7 +9799,7 @@
     {
       "requirement_id": "VCF-REQ-000080",
       "title": "SVLEN backward-compatibility inference uses END and absolute value",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9897,7 +9897,7 @@
     {
       "requirement_id": "VCF-REQ-000081",
       "title": "CIPOS entries are ALT-paired offsets spanning zero",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -9995,7 +9995,7 @@
     {
       "requirement_id": "VCF-REQ-000082",
       "title": "CIPOS default and homology interaction",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "RECOMMENDED",
@@ -10093,7 +10093,7 @@
     {
       "requirement_id": "VCF-REQ-000083",
       "title": "CIEND entries encode ALT-specific end confidence intervals",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10191,7 +10191,7 @@
     {
       "requirement_id": "VCF-REQ-000084",
       "title": "MEINFO and METRANS use four values per ALT",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10289,7 +10289,7 @@
     {
       "requirement_id": "VCF-REQ-000085",
       "title": "EVENT groups records and EVENTTYPE classifies event",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10387,7 +10387,7 @@
     {
       "requirement_id": "VCF-REQ-000086",
       "title": "Reserved EVENTTYPE values are used when appropriate",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "RECOMMENDED",
@@ -10485,7 +10485,7 @@
     {
       "requirement_id": "VCF-REQ-000087",
       "title": "CILEN has two confidence-bound values per ALT",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10583,7 +10583,7 @@
     {
       "requirement_id": "VCF-REQ-000088",
       "title": "CICN has two copy-number bounds per ALT",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10681,7 +10681,7 @@
     {
       "requirement_id": "VCF-REQ-000089",
       "title": "SVCLAIM distinguishes abundance and adjacency assertions",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10779,7 +10779,7 @@
     {
       "requirement_id": "VCF-REQ-000090",
       "title": "SVCLAIM permitted values depend on ALT class",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10877,7 +10877,7 @@
     {
       "requirement_id": "VCF-REQ-000091",
       "title": "RN determines tandem-repeat subfield cardinality",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -10975,7 +10975,7 @@
     {
       "requirement_id": "VCF-REQ-000092",
       "title": "Tandem-repeat sequence lists preserve per-ALT flattened order",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11073,7 +11073,7 @@
     {
       "requirement_id": "VCF-REQ-000093",
       "title": "Tandem-repeat sequence and length consistency rules",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11171,7 +11171,7 @@
     {
       "requirement_id": "VCF-REQ-000094",
       "title": "CIRUC and CIRB encode signed confidence offsets",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11269,7 +11269,7 @@
     {
       "requirement_id": "VCF-REQ-000095",
       "title": "RUB depends on RUC and encodes variable repeat-unit lengths",
-      "requirement_domain": "STRUCTURAL_VARIANT_INFO",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
@@ -11367,7 +11367,7 @@
     {
       "requirement_id": "VCF-REQ-000096",
       "title": "FORMAT CN requires consistent SVLEN across affected alleles",
-      "requirement_domain": "STRUCTURAL_VARIANT_FORMAT",
+      "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "REQUIRED",
