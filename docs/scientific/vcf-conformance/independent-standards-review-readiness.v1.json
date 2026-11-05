@@ -7,35 +7,41 @@
   "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
   "permitted_use": "SCOPED_PILOT_REVIEW_ONLY_WITH_INCOMPLETENESS_DISCLOSED",
   "inventory": {
-    "atomic_ledger_records": 75,
+    "atomic_ledger_records": 105,
     "duplicate_requirement_ids": 0,
-    "records_with_source_references": 75,
-    "records_with_source_locator_values": 75,
-    "records_in_review": 75,
+    "records_with_source_references": 105,
+    "records_with_source_locator_values": 105,
+    "records_in_review": 105,
     "independently_second_person_approved": 0,
     "records_with_test_evidence_entries": 0,
     "test_evidence_entries": 0,
     "records_without_open_question_entries": 46,
-    "vcf40_source_not_pinned_records": 75,
-    "unresolved_applicability_cells_vcf41_vcf42": 18,
-    "unresolved_applicability_cells_vcf43_vcf45": 0,
+    "vcf40_source_not_pinned_records": 105,
+    "unresolved_applicability_cells_by_version": {
+      "VCFv4.1": 39,
+      "VCFv4.2": 39,
+      "VCFv4.3": 30,
+      "VCFv4.4": 30,
+      "VCFv4.5": 0
+    },
     "genotype_candidate_records": 61,
     "genotype_split_parent_candidates": 1,
     "genotype_candidates_reconciled_to_ledger": 60,
+    "vcf45_sv_breakend_candidate_records": 30,
     "descriptive_records": 40,
     "production_implementation_mappings": 0
   },
   "critical_blockers": [
-    "Whole-specification source coverage is incomplete; current ledger is a partial seed plus FORMAT/GENOTYPE expansion.",
-    "VCFv4.0 historical normative provenance and immutable source-byte capture are unresolved; the IGSR page remains a discovery/reference candidate only.",
-    "Independent second-person review has not started.",
-    "Reserved INFO/FORMAT rows, SV/breakend, gVCF, grammar, definitions, examples, footnotes and cross-references still require semantic decomposition.",
-    "Version applicability remains unresolved for 9 VCFv4.1 cells and 9 VCFv4.2 cells.",
-    "Source excerpt hashes and retrieval metadata are incomplete.",
-    "No implementation mapping or executed clause-specific test evidence is present in the current 75-record ledger."
+    "Whole-specification source coverage remains incomplete. The current 105-record ledger is a partial seed plus FORMAT/GENOTYPE and VCFv4.5 SV/breakend candidates; the 4.5 INFO/FORMAT row review and 4.1-4.4 reserved-field crosswalk do not complete the remaining tables or sections.",
+    "VCFv4.0 core source candidate is corroborated by the historical VCFtools index and IGSR page, but immutable source bytes and SHA-256 remain uncaptured; 1000 Genomes SV conventions remain separate producer-convention material.",
+    "Independent second-person review has not started; no record is independently approved.",
+    "Remaining VCF4.5 tables, VCF4.1-4.4 table/prose semantics, grammar, definitions, enumerations, non-modal constraints, examples, footnotes and cross-references still require semantic decomposition.",
+    "Version applicability remains unresolved in 39 VCF4.1 cells, 39 VCF4.2 cells, 30 VCF4.3 cells and 30 VCF4.4 cells; no VCF4.5 applicability cells are unresolved in the current 105 records, but whole-spec coverage is incomplete.",
+    "Source excerpt SHA-256 values and complete retrieval metadata are incomplete.",
+    "No production implementation mapping or executed clause-specific test evidence is present in the 105-record ledger."
   ],
   "source_separation": {
-    "core_vcf40": "IGSR historical core page remains a discovery/reference candidate; not yet accepted as normative.",
+    "core_vcf40": "VCFtools historical specifications index corroborates the IGSR VCFv4.0 core page as the location of the older specification; raw source bytes and SHA-256 remain uncaptured and normative acceptance is pending.",
     "thousand_genomes_sv": "Separate producer/project convention source; never merge into core VCFv4.0 normative requirements."
   },
   "reviewer_protocol": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
@@ -47,5 +53,5 @@
     "No laboratory qualification claim."
   ],
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
-  "ledger_blob_sha": "a4308d0766c7e96aa9d4308325bc3bdf941defb1"
+  "ledger_blob_sha": "b30f41ce6da82af1ec00af54d09a2291df895421"
 }
