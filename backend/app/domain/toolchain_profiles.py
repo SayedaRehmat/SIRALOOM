@@ -103,3 +103,39 @@ def resolve_registered_toolchain_profile(profile_id: str) -> dict[str, Any]:
     lock_path = CONFIG_ROOT / profile["lock_file"]
     profile["lock_sha256"] = hashlib.sha256(lock_path.read_bytes()).hexdigest()
     return profile
+
+
+
+def assert_analysis_toolchain_matches_worker(
+    analysis: Any,
+    *,
+    worker_profile_id: str,
+    worker_bcftools_version: str,
+    worker_htslib_version: str,
+) -> None:
+    """Fail closed if a task reaches a worker with a different native toolchain."""
+    expected = (
+        str(getattr(analysis, "toolchain_profile_id", "") or ""),
+        str(getattr(analysis, "toolchain_bcftools_version", "") or ""),
+        str(getattr(analysis, "toolchain_htslib_version", "") or ""),
+    )
+    actual = (worker_profile_id, worker_bcftools_version, worker_htslib_version)
+    if expected != actual:
+        raise ToolchainProfileError(
+            "ANALYSIS_TOOLCHAIN_WORKER_MISMATCH: analysis requires "
+            f"{expected[0]} (BCFtools {expected[1]}, HTSlib {expected[2]}), "
+            f"but this worker runs {actual[0]} (BCFtools {actual[1]}, HTSlib {actual[2]})."
+        )
+    snapshot = getattr(analysis, "toolchain_snapshot", None)
+    queue = str(getattr(analysis, "toolchain_queue", "") or "")
+    if isinstance(snapshot, dict) and snapshot:
+        if (
+            snapshot.get("profile_id") != expected[0]
+            or snapshot.get("bcftools_version") != expected[1]
+            or snapshot.get("htslib_version") != expected[2]
+            or snapshot.get("worker_queue") != queue
+        ):
+            raise ToolchainProfileError(
+                "ANALYSIS_TOOLCHAIN_SNAPSHOT_MISMATCH: persisted profile columns "
+                "do not match the immutable analysis toolchain snapshot."
+            )
