@@ -30,7 +30,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
-        BCFTOOLS_ENVIRONMENT_FILE: ${BCFTOOLS_ENVIRONMENT_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml}
+        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
         BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
         BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
         HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
@@ -50,7 +50,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
-        BCFTOOLS_ENVIRONMENT_FILE: ${BCFTOOLS_ENVIRONMENT_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml}
+        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
         BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
         BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
         HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
@@ -69,7 +69,7 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
       args:
-        BCFTOOLS_ENVIRONMENT_FILE: ${BCFTOOLS_ENVIRONMENT_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml}
+        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
         BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
         BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
         HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
