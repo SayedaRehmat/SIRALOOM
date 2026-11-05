@@ -1,3 +1,5 @@
+ARG BCFTOOLS_BUILD_STAGE=bcftools
+ARG BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock
 ARG BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
 ARG BCFTOOLS_PLATFORM=linux-64
 ARG BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
@@ -17,8 +19,20 @@ RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in \
     && micromamba install --yes --name base --file /tmp/bcftools-explicit.lock \
     && micromamba clean --all --yes
 
+FROM mambaorg/micromamba:2.3.1 AS bcftools-1.24.1-source
+
+ARG BCFTOOLS_BUILD_LOCK_FILE
+ENV MAMBA_ROOT_PREFIX=/tmp/build-env
+RUN mkdir -p /opt/conda && chown $MAMBA_USER:$MAMBA_USER /opt/conda
+COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_BUILD_LOCK_FILE} /tmp/bcftools-build-explicit.lock
+RUN micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
+    && micromamba clean --all --yes
+COPY scripts/build_bcftools_1_24_1.sh /tmp/build_bcftools_1_24_1.sh
+RUN micromamba run --name bcftools-build env BCFTOOLS_PREFIX=/opt/conda bash /tmp/build_bcftools_1_24_1.sh
+
 FROM python:3.12-slim
 
+ARG BCFTOOLS_BUILD_STAGE
 ARG BCFTOOLS_PROFILE_ID
 ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
