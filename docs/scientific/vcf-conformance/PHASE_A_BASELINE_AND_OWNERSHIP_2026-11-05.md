@@ -221,3 +221,65 @@ No count above is a conformance percentage or a claim of source completeness. In
 3. Add source-derived atomic requirements to the ledger with stable IDs and per-version applicability; record informative, producer-specific and non-normative material separately.
 4. Complete a per-version delta review before any requirement is marked reviewed.
 5. Independently review the ledger; only then audit implementation and test evidence against a stable baseline.
+
+
+## 9. Initial source-context review and non-modal discovery (2026-11-05)
+
+The first source-context review has been recorded in
+`source-context-review.v1.json`. It reads source passages with surrounding
+section context, distinguishes producer obligations from reader obligations,
+and decomposes compound statements into independently testable constraints.
+It is explicitly a primary review; independent second review has not started.
+
+The atomic ledger now contains **15 records**:
+- 5 initial fileformat and line-ending seed records;
+- 7 additional constraints for UTF-8 encoding, BOM exclusion, prohibited
+  control characters, zero-length fields, trailing tabs on the header and
+  data lines, and final data-line termination;
+- 3 additional constraints for tab-delimited header fields, tab-delimited data
+  fields, and unique sample identifiers.
+
+The newly added constraints are source-mapped to VCFv4.1–4.5 where the exact
+source statements were checked, or VCFv4.3–4.5 where the statements first
+appear in the reviewed source passages. VCFv4.0 applicability and earlier
+versions not yet checked remain explicitly unresolved; no inheritance from a
+later version is assumed.
+
+The review identified several requirements missed by the current modal-word
+extractor:
+- declarative format properties (UTF-8);
+- negative formulations outside its matcher (zero-length fields "not allowed",
+  sample identifiers "not allowed", and control characters "disallowed");
+- declarative structural constraints (tab-delimited header and data lines).
+
+See `nonmodal-requirement-discovery.v1.json`. These findings demonstrate why
+the 510 modal-language candidates cannot serve as a complete requirements
+inventory. The current discovery register is initial, not exhaustive.
+
+### Current evidence counters
+
+| Measure | Current value |
+|---|---:|
+| Modal-language candidate lines | 510 |
+| Atomic ledger records | 15 |
+| Independently reviewed requirements | 0 |
+| Requirements mapped to production code | 0 |
+| Requirements with executed clause-specific tests | 0 |
+| Laboratory-qualified versions | 0 |
+
+### Remaining work
+
+1. Review all 510 candidate lines in source context, not only the initial
+   fileformat/encoding/data-line passages.
+2. Enumerate and inspect actual table rows, grammar productions, field
+   definitions, enumerated values, footnotes, and cross-references; the existing
+   heading and table-caption inventory is not a row-level requirement ledger.
+3. Perform systematic per-version delta analysis, including changes in
+   wording, scope, field semantics, constraints, and applicability.
+4. Capture and hash immutable VCFv4.0 source bytes before claiming its source
+   provenance is pinned.
+5. Obtain independent second-person review of every proposed atomic
+   requirement before marking it independently reviewed.
+6. Only after review, map requirements to implementation and clause-specific
+   positive/negative tests. No code mapping, test execution, or conformance
+   qualification is claimed by this phase.
