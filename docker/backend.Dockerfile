@@ -42,8 +42,8 @@ RUN groupadd --system --gid 10001 siraloom \
     && chown -R 10001:10001 /data/siraloom
 ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
-COPY --from=bcftools /opt/conda /opt/conda
-ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}"
+COPY --from=${BCFTOOLS_BUILD_STAGE} /opt/conda /opt/conda
+ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 # Resolve the application dependency graph only from the committed uv lock.
 # The lock manager itself is pinned and removed from the final runtime image.
