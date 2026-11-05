@@ -41,7 +41,7 @@ jobs:
               }
               for profile in registry["profiles"]
               if profile.get("installation_method") == "verified_source_build"
-                  and profile.get("status") in {"CANDIDATE", "SOFTWARE_QUALIFIED"}
+                  and profile.get("status") in {"CANDIDATE", "SOFTWARE_QUALIFIED", "BLOCKED_COMPATIBILITY"}
           ]
           if not profiles:
               raise SystemExit("No source-build lock profiles were discovered")
