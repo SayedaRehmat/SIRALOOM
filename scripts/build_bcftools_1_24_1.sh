@@ -68,7 +68,7 @@ if [ -n "${CONDA_PREFIX:-}" ] && [ "$INSTALL_PREFIX" != "$CONDA_PREFIX" ]; then
     find "$INSTALL_PREFIX/bin" -maxdepth 1 -type f -executable -print
     find "$INSTALL_PREFIX/libexec/bcftools" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null || true
   } | while IFS= read -r binary; do
-    ldd "$binary" 2>/dev/null | awk '/=> \\// {print $3} /^\\// {print $1}'
+    ldd "$binary" 2>/dev/null | awk '/=> \// {print $3} /^\// {print $1}'
   done | sort -u | while IFS= read -r library; do
     case "$library" in
       "$CONDA_PREFIX"/lib/*)
