@@ -87,7 +87,7 @@
     "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
     "note": "The 84 newly added VCFv4.5 row candidates use the canonical source-file SHA-256 from the manifest; their excerpt hashes are intentionally null pending a documented excerpt-hashing convention."
   },
-  "audit_note": "The 84 new VCFv4.5 reserved INFO/FORMAT row candidates now have exact source-row SHA-256 values using the documented single-line UTF-8 method. The sole source reference without source/excerpt hashes remains the unpinned historical VCFv4.0 candidate.",
+  "audit_note": "The 84 VCFv4.5 reserved INFO/FORMAT candidates now have source-row excerpt hashes and an 84-row prose-context crosswalk. This remains author research, not independent approval or implementation conformance.",
   "excerpt_hashing_method": {
     "algorithm": "SHA-256",
     "encoding": "UTF-8",
@@ -95,5 +95,16 @@
     "byte_selection": "The line's UTF-8 bytes excluding the line terminator; original indentation, tabs, spaces and punctuation are preserved.",
     "status": "APPLIED_TO_ALL_84_NEW_VCF45_RESERVED_INFO_FORMAT_ROW_CANDIDATES",
     "limitation": "This is the declared method for the new row candidates. Earlier excerpt hashes retain their existing captured method; a future audit should document or normalize their extraction method separately."
+  },
+  "reserved_field_context_crosswalk": {
+    "artifact": "vcf4.5-reserved-info-format-semantic-context-crosswalk.v1.json",
+    "status": "AUTHOR_CONTEXT_RANGES_MAPPED_FIELD_SPECIFIC_ATOMIC_RECONCILIATION_PENDING",
+    "reserved_info_rows": 21,
+    "reserved_format_rows": 63,
+    "total_rows": 84,
+    "rows_with_prose_context": 83,
+    "rows_without_field_specific_prose": 1,
+    "independent_reviews": 0,
+    "note": "The single row without field-specific prose in the inspected definition span is FORMAT LA, described as Reserved. This is not proof that no relevant context exists elsewhere in the full specification."
   }
 }
