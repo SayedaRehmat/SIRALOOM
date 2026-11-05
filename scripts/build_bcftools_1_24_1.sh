@@ -43,4 +43,28 @@ export LDFLAGS="${LDFLAGS:-}"
 test "$("$PREFIX/bin/bcftools" --version | sed -n '1p')" = "bcftools 1.24.1"
 test "$("$PREFIX/bin/bcftools" --version | sed -n '2p')" = "Using htslib 1.24.1"
 test "$("$PREFIX/bin/bgzip" --version | sed -n '1p')" = "bgzip (htslib) 1.24.1"
+
+# The build environment is separate from the runtime prefix in Docker. Copy
+# only libraries required by installed tools/plugins; compilers and headers
+# must not leak into the final laboratory image.
+if [ -n "${CONDA_PREFIX:-}" ] && [ "$CONDA_PREFIX" != "$PREFIX" ]; then
+  export LD_LIBRARY_PATH="$PREFIX/lib:$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
+  mkdir -p "$PREFIX/lib"
+  {
+    find "$PREFIX/bin" -maxdepth 1 -type f -executable -print
+    find "$PREFIX/libexec/bcftools" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null || true
+  } | while IFS= read -r binary; do
+    ldd "$binary" 2>/dev/null | awk '/=> \\// {print $3} /^\\// {print $1}'
+  done | sort -u | while IFS= read -r library; do
+    case "$library" in
+      "$CONDA_PREFIX"/lib/*)
+        target="$PREFIX/lib/$(basename "$library")"
+        if [ "$(realpath "$library")" != "$(realpath -m "$target")" ]; then
+          cp -L "$library" "$target"
+        fi
+        ;;
+    esac
+  done
+fi
+
 "$PREFIX/bin/bcftools" --version
