@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-core-meta-information-source-review",
   "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_ATOMIC_DECOMPOSITION_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "scope": "Core VCF meta-information line syntax and INFO/FILTER/FORMAT metadata declaration semantics, including Number and Type domains, VCFv4.1–4.5. Structural-variant ALT metadata details are retained as adjacent context but not fully decomposed in this tranche.",
   "method": [
     "Capture the complete version-specific meta-information passages with source line numbers and pinned blob identity.",
@@ -15,12 +15,12 @@
     {
       "version": "VCFv4.1",
       "source": {
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.1.tex",
         "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
         "start_line": 56,
         "end_line": 112,
-        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L56"
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L56"
       },
       "source_excerpt_lines": [
         {
@@ -256,12 +256,12 @@
     {
       "version": "VCFv4.2",
       "source": {
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.2.tex",
         "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
         "start_line": 56,
         "end_line": 120,
-        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L56"
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L56"
       },
       "source_excerpt_lines": [
         {
@@ -529,12 +529,12 @@
     {
       "version": "VCFv4.3",
       "source": {
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.3.tex",
         "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
         "start_line": 105,
         "end_line": 191,
-        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L105"
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L105"
       },
       "source_excerpt_lines": [
         {
@@ -890,12 +890,12 @@
     {
       "version": "VCFv4.4",
       "source": {
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.4.tex",
         "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
         "start_line": 105,
         "end_line": 200,
-        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L105"
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L105"
       },
       "source_excerpt_lines": [
         {
@@ -1287,12 +1287,12 @@
     {
       "version": "VCFv4.5",
       "source": {
-        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "file": "VCFv4.5.tex",
         "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
         "start_line": 103,
         "end_line": 218,
-        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L103"
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L103"
       },
       "source_excerpt_lines": [
         {
