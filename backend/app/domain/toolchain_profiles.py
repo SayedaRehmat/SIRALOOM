@@ -62,4 +62,16 @@ def resolve_toolchain_profile(
             f"Profile {profile_id!r} requires HTSlib {profile.get('htslib_version')}; "
             f"configured {htslib_version}."
         )
+    for artifact_key in ("environment_file", "lock_file"):
+        artifact = profile.get(artifact_key)
+        if not isinstance(artifact, str) or not artifact.strip():
+            raise ToolchainProfileError(f"Profile {profile_id!r} is missing {artifact_key}.")
+        artifact_path = REPOSITORY_ROOT / artifact
+        if not artifact_path.is_file():
+            raise ToolchainProfileError(
+                f"Profile {profile_id!r} references a missing {artifact_key}: {artifact}."
+            )
+    lock_text = (REPOSITORY_ROOT / profile["lock_file"]).read_text(encoding="utf-8")
+    if "@EXPLICIT" not in lock_text or "linux-64" not in lock_text:
+        raise ToolchainProfileError(f"Profile {profile_id!r} has an invalid platform-specific explicit lock.")
     return dict(profile)
