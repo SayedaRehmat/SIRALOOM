@@ -1,0 +1,32 @@
+{
+  "schema_version": "1",
+  "dataset": "NIST_GIAB_HG001_NA12878_Illumina_HiSeq_30x",
+  "sample": "HG001",
+  "sample_alias": "NA12878",
+  "technology": "Illumina HiSeq paired-end WGS",
+  "nominal_coverage": "30x",
+  "alignment_reference": "GRCh37 hs37d5",
+  "alignment_source_index": "https://github.com/genome-in-a-bottle/giab_data_indexes/blob/fe5327b1deffe6ccdde8912fdf98ec26863594e3/NA12878/alignment.index.NA12878_HiSeq_downsampled30X_GRCh37_10262015",
+  "assets": {
+    "bam": {
+      "url": "https://ftp.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/NA12878/NIST_NA12878_HG001_HiSeq_300x/RMNISTHS_30xdownsample.bam",
+      "official_md5": "0be437ac376966c73605f791eb50515e"
+    },
+    "bai": {
+      "url": "https://ftp.ncbi.nlm.nih.gov/ReferenceSamples/giab/data/NA12878/NIST_NA12878_HG001_HiSeq_300x/RMNISTHS_30xdownsample.bam.bai",
+      "official_md5": "867383e9343eaef3983e335e923fd4fd"
+    }
+  },
+  "caller": {
+    "name": "Google DeepVariant",
+    "version": "1.10.0",
+    "docker_image": "google/deepvariant:1.10.0",
+    "model_type": "WGS"
+  },
+  "truth_set": {
+    "manifest": "benchmarks/giab/public_assets.v1.json",
+    "reference_build": "GRCh37",
+    "release": "NISTv4.2.1"
+  },
+  "scope": "Full-genome germline small-variant caller run from independently generated HG001 aligned sequencing reads; compare the resulting caller VCF to the unmodified GIAB truth VCF within the matching confident BED. This is not clinical validation."
+}
