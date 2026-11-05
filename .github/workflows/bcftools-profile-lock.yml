@@ -30,6 +30,7 @@ jobs:
           micromamba env export --explicit --name bcftools-profile > "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           grep -Fq '@EXPLICIT' "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           test -s "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          diff -u configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           echo "::group::BEGIN_BCFTOOLS_EXPLICIT_LOCK"
           cat "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           echo "::endgroup::"
