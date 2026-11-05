@@ -8,7 +8,7 @@
     "file": "VCFv4.5.tex",
     "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
     "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
-    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
     "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "Row-by-row review of the complete reserved INFO and reserved FORMAT tables, reconciled with the immediately governing prose, subsequent field definitions, examples, labels and cross-references. This is an author review record, not independent approval or implementation conformance.",

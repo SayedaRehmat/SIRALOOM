@@ -210,7 +210,7 @@
           ]
         }
       ],
-      "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003"
+      "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa"
     },
     "VCFv4.2": {
       "file": "VCFv4.2.tex",
@@ -413,7 +413,7 @@
           ]
         }
       ],
-      "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51"
+      "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc"
     },
     "VCFv4.3": {
       "file": "VCFv4.3.tex",
@@ -616,7 +616,7 @@
           ]
         }
       ],
-      "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48"
+      "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde"
     },
     "VCFv4.4": {
       "file": "VCFv4.4.tex",
@@ -879,7 +879,7 @@
           ]
         }
       ],
-      "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1"
+      "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a"
     }
   },
   "semantic_deltas": [

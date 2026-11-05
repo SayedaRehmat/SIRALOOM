@@ -7,7 +7,7 @@
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "file": "VCFv4.5.tex",
     "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
     "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "All 44 VCF-only table environments indexed by the VCFv4.5 source inventory. Additional raw TeX table environments belong to BCF serialization and are excluded from this VCF-text queue.",
@@ -32,7 +32,7 @@
         "end_line": 93,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Character encoding, non-printable characters and characters with special meaning",
@@ -74,7 +74,7 @@
         "end_line": 229,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Individual format field format",
@@ -107,7 +107,7 @@
         "end_line": 481,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Fixed fields",
@@ -162,7 +162,7 @@
         "end_line": 598,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -259,7 +259,7 @@
         "end_line": 681,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -292,7 +292,7 @@
         "end_line": 711,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -325,7 +325,7 @@
         "end_line": 755,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -358,7 +358,7 @@
         "end_line": 786,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -391,7 +391,7 @@
         "end_line": 803,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
@@ -424,7 +424,7 @@
         "end_line": 1177,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 1",
@@ -457,7 +457,7 @@
         "end_line": 1195,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 1",
@@ -490,7 +490,7 @@
         "end_line": 1207,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 2",
@@ -523,7 +523,7 @@
         "end_line": 1216,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 2",
@@ -556,7 +556,7 @@
         "end_line": 1228,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 3",
@@ -589,7 +589,7 @@
         "end_line": 1238,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 3",
@@ -622,7 +622,7 @@
         "end_line": 1252,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "SNP VCF record",
@@ -655,7 +655,7 @@
         "end_line": 1263,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "SNP VCF record",
@@ -688,7 +688,7 @@
         "end_line": 1272,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Insertion VCF record",
@@ -721,7 +721,7 @@
         "end_line": 1284,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Insertion VCF record",
@@ -754,7 +754,7 @@
         "end_line": 1293,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Deletion VCF record",
@@ -787,7 +787,7 @@
         "end_line": 1305,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Deletion VCF record",
@@ -820,7 +820,7 @@
         "end_line": 1314,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
@@ -853,7 +853,7 @@
         "end_line": 1327,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
@@ -886,7 +886,7 @@
         "end_line": 1340,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
@@ -919,7 +919,7 @@
         "end_line": 1424,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Specifying complex rearrangements with breakends",
@@ -952,7 +952,7 @@
         "end_line": 1446,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Specifying complex rearrangements with breakends",
@@ -985,7 +985,7 @@
         "end_line": 1464,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inserted Sequence",
@@ -1018,7 +1018,7 @@
         "end_line": 1483,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
@@ -1051,7 +1051,7 @@
         "end_line": 1493,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
@@ -1084,7 +1084,7 @@
         "end_line": 1504,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
@@ -1117,7 +1117,7 @@
         "end_line": 1518,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
@@ -1150,7 +1150,7 @@
         "end_line": 1536,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Multiple mates",
@@ -1183,7 +1183,7 @@
         "end_line": 1560,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Explicit partners",
@@ -1216,7 +1216,7 @@
         "end_line": 1584,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Telomeres",
@@ -1249,7 +1249,7 @@
         "end_line": 1608,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Event modifiers",
@@ -1282,7 +1282,7 @@
         "end_line": 1631,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inversions",
@@ -1315,7 +1315,7 @@
         "end_line": 1645,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inversions",
@@ -1348,7 +1348,7 @@
         "end_line": 1670,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Uncertainty around breakend location",
@@ -1381,7 +1381,7 @@
         "end_line": 1698,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
@@ -1414,7 +1414,7 @@
         "end_line": 1715,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
@@ -1447,7 +1447,7 @@
         "end_line": 1728,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
@@ -1480,7 +1480,7 @@
         "end_line": 1756,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Sample mixtures",
@@ -1513,7 +1513,7 @@
         "end_line": 1772,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Sample mixtures",
@@ -1546,7 +1546,7 @@
         "end_line": 1874,
         "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
         "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
         "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Representing unspecified alleles and REF-only blocks (gVCF)",

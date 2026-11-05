@@ -7,7 +7,7 @@
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "file": "VCFv4.5.tex",
     "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2"
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
   },
   "scope": "Map each VCFv4.5 reserved INFO and FORMAT table row to the surrounding source prose that defines or qualifies it. The crosswalk is a navigation and semantic-context artifact; it does not claim that every referenced passage has been atomized or independently reviewed.",
   "method": "Rows were extracted from exact source line ranges 460-480 and 534-596. Context ranges point to the source prose reviewed for each key. Row definitions remain DESCRIPTIVE candidates; additional normative prose is to be atomized separately. Missing context means no field-specific prose was located in the inspected definition span, not proof of absence from the whole specification.",
