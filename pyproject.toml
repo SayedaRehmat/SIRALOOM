@@ -51,3 +51,6 @@ markers = [
 
 [project.entry-points."siraloom.resource_providers"]
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
+
+[tool.uv]
+required-version = "==0.10.0"
