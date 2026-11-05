@@ -147,18 +147,6 @@
           "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
         },
         {
-          "source_line": 202,
-          "id": "$/$",
-          "description": "genotype unphased",
-          "raw_source_line": "\\item $/$ : genotype unphased"
-        },
-        {
-          "source_line": 203,
-          "id": "$\\mid$",
-          "description": "genotype phased",
-          "raw_source_line": "\\item $\\mid$ : genotype phased"
-        },
-        {
           "source_line": 205,
           "id": "DP",
           "description": "read depth at this position for this sample (Integer)",
@@ -231,7 +219,21 @@
           "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
         }
       ],
-      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables."
+      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables.",
+      "genotype_separator_definitions": [
+        {
+          "source_line": 202,
+          "id": "$/$",
+          "description": "genotype unphased",
+          "raw_source_line": "\\item $/$ : genotype unphased"
+        },
+        {
+          "source_line": 203,
+          "id": "$\\mid$",
+          "description": "genotype phased",
+          "raw_source_line": "\\item $\\mid$ : genotype phased"
+        }
+      ]
     },
     "VCFv4.2": {
       "source_file": "VCFv4.2.tex",
@@ -354,18 +356,6 @@
           "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
         },
         {
-          "source_line": 219,
-          "id": "$/$",
-          "description": "genotype unphased",
-          "raw_source_line": "\\item $/$ : genotype unphased"
-        },
-        {
-          "source_line": 220,
-          "id": "$\\mid$",
-          "description": "genotype phased",
-          "raw_source_line": "\\item $\\mid$ : genotype phased"
-        },
-        {
           "source_line": 222,
           "id": "DP",
           "description": "read depth at this position for this sample (Integer)",
@@ -438,7 +428,21 @@
           "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
         }
       ],
-      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables."
+      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables.",
+      "genotype_separator_definitions": [
+        {
+          "source_line": 219,
+          "id": "$/$",
+          "description": "genotype unphased",
+          "raw_source_line": "\\item $/$ : genotype unphased"
+        },
+        {
+          "source_line": 220,
+          "id": "$\\mid$",
+          "description": "genotype phased",
+          "raw_source_line": "\\item $\\mid$ : genotype phased"
+        }
+      ]
     },
     "VCFv4.3": {
       "source_file": "VCFv4.3.tex",
@@ -1151,9 +1155,9 @@
   },
   "counts": {
     "v41_info_reserved_rows": 18,
-    "v41_format_reserved_rows": 15,
+    "v41_format_reserved_rows": 13,
     "v42_info_reserved_rows": 18,
-    "v42_format_reserved_rows": 15,
+    "v42_format_reserved_rows": 13,
     "v43_info_reserved_rows": 21,
     "v43_format_reserved_rows": 16,
     "v44_info_reserved_rows": 21,
@@ -1163,7 +1167,8 @@
     "The source format itself is versioned: 4.1/4.2 enumerate reserved fields in prose and 4.3/4.4 introduce explicit Number/Type tables. The ledger must preserve which attributes were actually specified in each version.",
     "The 4.1 and 4.2 reserved INFO enumerations contain 18 entries; their FORMAT enumerations are prose lists, not Number/Type tables.",
     "The 4.3 and 4.4 reserved INFO tables each contain 21 rows; FORMAT tables differ by the three phase-set-list fields added in 4.4.",
-    "Do not assign 4.5 local-allele or base-modification definitions to 4.1–4.4 without source evidence."
+    "Do not assign 4.5 local-allele or base-modification definitions to 4.1–4.4 without source evidence.",
+    "GT separator subitems (slash and vertical bar) were separated from the FORMAT reserved-field inventory; they define GT semantics and are not independent FORMAT keys."
   ],
   "review_status": "SOURCE_ROW_CROSSWALKED; FULL_CONTEXT_REVIEW_PENDING",
   "independent_review": {
