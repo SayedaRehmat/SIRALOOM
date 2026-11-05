@@ -1130,9 +1130,10 @@ def test_wrong_toolchain_worker_requeues_before_claim_or_execution(monkeypatch):
         def close(self):
             pass
 
-    monkeypatch.setattr(module, "SessionLocal", FakeDB)
+    session_module = importlib.import_module("backend.app.infrastructure.db.session")
+    monkeypatch.setattr(session_module, "SessionLocal", FakeDB)
     monkeypatch.setattr(
-        module,
+        session_module,
         "engine",
         type("Engine", (), {"dialect": type("Dialect", (), {"name": "sqlite"})()})(),
     )
@@ -1155,8 +1156,13 @@ def test_wrong_toolchain_worker_requeues_before_claim_or_execution(monkeypatch):
         lambda *_args, **_kwargs: pytest.fail("wrong worker must not claim the analysis"),
     )
 
-    with pytest.raises(Reject) as rejected:
-        module.run_analysis_task.run(str(analysis.id))
+    task = module.run_analysis_task
+    task.push_request(id="wrong-worker-test-task", retries=0, delivery_info={})
+    try:
+        with pytest.raises(Reject) as rejected:
+            task.run(str(analysis.id))
+    finally:
+        task.pop_request()
 
     assert rejected.value.requeue is True
 
