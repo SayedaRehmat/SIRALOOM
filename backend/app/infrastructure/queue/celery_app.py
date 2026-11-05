@@ -271,7 +271,7 @@ if Celery is not None:
                 task = run_analysis_task.apply_async(
                     args=[str(analysis.id)],
                     task_id=str(dispatch.id),
-                    queue=str(analysis.toolchain_queue),
+                    queue=str(getattr(analysis, "toolchain_queue", "bioinformatics.bcftools.1_25")),
                 )
             except Exception as exc:
                 dispatch.last_error = str(exc)
