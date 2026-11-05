@@ -205,6 +205,7 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
             completed_at=None,
             created_by=user_id,
             analysis_version=1,
+            toolchain_queue="bioinformatics.bcftools.1_25",
         ))
         db.add(AnalysisDispatch(
             id=dispatch_id,
@@ -227,7 +228,8 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
     publish_calls = {"count": 0}
     publish_lock = threading.Lock()
 
-    def fake_apply_async(*, args, task_id):
+    def fake_apply_async(*, args, task_id, queue):
+        assert queue == "bioinformatics.bcftools.1_25"
         with publish_lock:
             publish_calls["count"] += 1
         import time
@@ -356,6 +358,7 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 completed_at=None,
                 created_by=user_id,
                 analysis_version=1,
+                toolchain_queue="bioinformatics.bcftools.1_25",
             ))
             db.add(AnalysisDispatch(
                 id=old_dispatch_id,
@@ -384,7 +387,10 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
             celery_module,
             "run_analysis_task",
             SimpleNamespace(
-                apply_async=lambda *, args, task_id: SimpleNamespace(id=task_id)
+                apply_async=lambda *, args, task_id, queue: (
+                    queue == "bioinformatics.bcftools.1_25"
+                    and SimpleNamespace(id=task_id)
+                )
             ),
         )
 
