@@ -143,7 +143,7 @@
   ],
   "evidence_counters": {
     "atomic_requirement_ledger_records": 142,
-    "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidates (60 reconciled as IN_REVIEW ledger records; one retained as a split parent); additional source-review artifacts contain other proposals and split parents",
+    "additional_proposed_candidate_records": "73 FORMAT/GENOTYPE candidates (72 reconciled as IN_REVIEW ledger records, one retained as a split parent); 38 VCFv4.5 SV/breakend candidates; 25 additional VCFv4.5 encoding/pedigree/gVCF candidates; 12 version-specific VCFv4.1-4.5 genotype/phasing candidates.",
     "independently_second_person_reviewed": 0,
     "production_code_mappings": 0,
     "clause_specific_tests_executed": 0,
@@ -151,9 +151,9 @@
     "vcf40_historical_source_bytes_hashed": false,
     "complete_ledger_independent_review_ready": false,
     "scoped_pilot_review_permitted": true,
-    "ledger_required_fields_and_enums_validation": "PASS_105_RECORDS_ZERO_ERRORS",
-    "source_locator_presence": "PASS_105_RECORDS",
-    "unique_requirement_ids": "PASS_105_UNIQUE",
+    "ledger_required_fields_and_enums_validation": "PASS_142_RECORDS_ZERO_ERRORS",
+    "source_locator_presence": "PASS_142_RECORDS",
+    "unique_requirement_ids": "PASS_142_UNIQUE",
     "scientific_ledger_integrity": {
       "unique_requirement_ids": "PASS_142_OF_142",
       "schema_required_fields_and_enums": "PASS_142_OF_142",
