@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.config import settings
+
 from backend.app.domain.ingestion import (
     ValidationResult,
     classify_filename,
@@ -552,7 +554,7 @@ def test_vcf_record_parser_does_not_silently_strip_a_bom(tmp_path: Path):
 def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
     import backend.app.domain.ingestion as ingestion
 
-    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version))
     path = tmp_path / "sample.vcf.gz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
@@ -563,7 +565,7 @@ def test_vcfgz_validation_reads_real_content(tmp_path: Path, monkeypatch):
 def test_vcfbgz_validation_parses_compressed_records(tmp_path: Path, monkeypatch):
     import backend.app.domain.ingestion as ingestion
 
-    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, "bcftools 1.25", "1.25"))
+    monkeypatch.setattr(ingestion, "_bcftools_validate", lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version))
     path = tmp_path / "sample.vcf.bgz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
     result = validate_vcf(path)
@@ -592,7 +594,7 @@ def test_bgzf_validator_checks_every_concatenated_block(tmp_path: Path, monkeypa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, "bcftools 1.25", "1.25"),
+        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
     )
     path = tmp_path / "multi-block.vcf.gz"
     content = VALID_VCF.encode("utf-8")
@@ -642,7 +644,7 @@ def test_bgzf_without_terminal_empty_block_is_accepted_with_warning(tmp_path: Pa
     monkeypatch.setattr(
         ingestion,
         "_bcftools_validate",
-        lambda _path: (None, "bcftools 1.25", "1.25"),
+        lambda _path: (None, f"bcftools {settings.bcftools_version}", settings.bcftools_version),
     )
     path = tmp_path / "bgzf-without-eof.vcf.gz"
     _write_bgzf(path, VALID_VCF.encode("utf-8"))
@@ -732,8 +734,8 @@ def test_index_validation_records_primary_vcf_concordance(tmp_path: Path, monkey
         "status": "VALIDATED",
         "index_type": "TBI",
         "tool": "bcftools",
-        "tool_version": "bcftools 1.25",
-        "expected_tool_version": "1.25",
+        "tool_version": f"bcftools {settings.bcftools_version}",
+        "expected_tool_version": settings.bcftools_version,
         "concordance": {
             "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
             "records": 2,
@@ -752,7 +754,7 @@ def test_index_validation_records_primary_vcf_concordance(tmp_path: Path, monkey
         tbi,
         primary.name,
         primary_path=primary,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     assert result.status == "VALID"
@@ -780,7 +782,7 @@ def test_index_validation_tool_outage_is_retryable(tmp_path: Path, monkeypatch):
             tbi,
             primary.name,
             primary_path=primary,
-            expected_bcftools_version="1.25",
+            expected_bcftools_version=settings.bcftools_version,
         )
 
 
@@ -912,11 +914,11 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
     result = ingestion.validate_vcf(path)
 
     assert result.status == "VALID"
-    assert result.metadata["bcftools_version"] == "bcftools 1.25"
+    assert result.metadata["bcftools_version"] == f"bcftools {settings.bcftools_version}"
     assert result.metadata["expected_bcftools_version"] == "1.25"
-    assert result.metadata["htslib_version"] == "1.25"
-    assert result.metadata["expected_htslib_version"] == "1.25"
-    assert result.metadata["bcftools_profile_id"] == "bcftools-1.25-htslib-1.25-linux-64"
+    assert result.metadata["htslib_version"] == settings.htslib_version
+    assert result.metadata["expected_htslib_version"] == settings.htslib_version
+    assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id
     assert result.metadata["toolchain_validation_status"] == "PASS"
 
 
@@ -1004,7 +1006,7 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
 
     path = tmp_path / "sample.vcf"
     path.write_text(VALID_VCF, encoding="utf-8")
-    selected = "/opt/siraloom/toolchains/bcftools-1.25/bin/bcftools"
+    selected = f"/opt/siraloom/toolchains/{settings.bcftools_profile_id}/bin/bcftools"
     resolved = []
     monkeypatch.setattr(ingestion.settings, "bcftools_executable", selected)
     monkeypatch.setattr(
@@ -1024,4 +1026,4 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
 
     assert result.status == "VALID"
     assert resolved == [selected]
-    assert result.metadata["bcftools_profile_id"] == "bcftools-1.25-htslib-1.25-linux-64"
+    assert result.metadata["bcftools_profile_id"] == settings.bcftools_profile_id
