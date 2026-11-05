@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# PREFIX is the final runtime path compiled into BCFtools (not the temporary
+# build path). DESTDIR stages installation without changing embedded paths.
 PREFIX="${BCFTOOLS_PREFIX:-/opt/conda}"
+DESTDIR="${BCFTOOLS_DESTDIR:-}"
+INSTALL_PREFIX="${DESTDIR}${PREFIX}"
 WORKDIR="${BCFTOOLS_BUILD_DIR:-/tmp/bcftools-1.24.1-build}"
-mkdir -p "$WORKDIR" "$PREFIX"
+mkdir -p "$WORKDIR" "$INSTALL_PREFIX"
 cd "$WORKDIR"
 
 fetch_verified() {
@@ -14,6 +18,14 @@ fetch_verified() {
     echo "SHA-256 mismatch for $name" >&2
     exit 1
   }
+}
+
+install_with_destdir() {
+  if [ -n "$DESTDIR" ]; then
+    make install DESTDIR="$DESTDIR"
+  else
+    make install
+  fi
 }
 
 fetch_verified htslib-1.24.1.tar.bz2 0fa28b8a5395b3ce489d24c79697d81ceb93534907e17b92bb8a5306bebcdeb5
@@ -30,43 +42,38 @@ export LDFLAGS="${LDFLAGS:-}"
   cd htslib-1.24.1
   ./configure --prefix="$PREFIX" --enable-libcurl --enable-plugins
   make -j"$(getconf _NPROCESSORS_ONLN)"
-  make install
+  install_with_destdir
 )
 
 (
   cd bcftools-1.24.1
-  ./configure --prefix="$PREFIX" --with-htslib="$PREFIX"
+  ./configure --prefix="$PREFIX" --with-htslib="$INSTALL_PREFIX"
   make -j"$(getconf _NPROCESSORS_ONLN)"
-  make install
+  install_with_destdir
 )
 
-# Resolve HTSlib from the installation prefix during version attestation.
-if [ -n "${CONDA_PREFIX:-}" ]; then
-  export LD_LIBRARY_PATH="$PREFIX/lib:$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
-else
-  export LD_LIBRARY_PATH="$PREFIX/lib:${LD_LIBRARY_PATH:-}"
-fi
+# The installed binaries are staged under DESTDIR, but their compiled-in
+# plugin path remains the final PREFIX path used in the runtime image.
+export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:${CONDA_PREFIX:-/nonexistent}/lib:${LD_LIBRARY_PATH:-}"
+test "$("$INSTALL_PREFIX/bin/bcftools" --version | sed -n '1p')" = "bcftools 1.24.1"
+test "$("$INSTALL_PREFIX/bin/bcftools" --version | sed -n '2p')" = "Using htslib 1.24.1"
+test "$("$INSTALL_PREFIX/bin/bgzip" --version | sed -n '1p')" = "bgzip (htslib) 1.24.1"
 
-test "$("$PREFIX/bin/bcftools" --version | sed -n '1p')" = "bcftools 1.24.1"
-test "$("$PREFIX/bin/bcftools" --version | sed -n '2p')" = "Using htslib 1.24.1"
-test "$("$PREFIX/bin/bgzip" --version | sed -n '1p')" = "bgzip (htslib) 1.24.1"
-
-# The build environment is separate from the runtime prefix in Docker. Copy
-# only libraries required by installed tools/plugins; compilers and headers
-# must not leak into the final laboratory image.
-if [ -n "${CONDA_PREFIX:-}" ] && [ "$CONDA_PREFIX" != "$PREFIX" ]; then
-  export LD_LIBRARY_PATH="$PREFIX/lib:$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
-  mkdir -p "$PREFIX/lib"
+# Copy only non-system shared libraries required by the installed tools and
+# plugins. Compiler binaries, headers and build metadata remain in the build
+# stage. When PREFIX is the Conda environment itself, no copy is needed.
+if [ -n "${CONDA_PREFIX:-}" ] && [ "$INSTALL_PREFIX" != "$CONDA_PREFIX" ]; then
+  mkdir -p "$INSTALL_PREFIX/lib"
   {
-    find "$PREFIX/bin" -maxdepth 1 -type f -executable -print
-    find "$PREFIX/libexec/bcftools" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null || true
+    find "$INSTALL_PREFIX/bin" -maxdepth 1 -type f -executable -print
+    find "$INSTALL_PREFIX/libexec/bcftools" -maxdepth 1 -type f -name '*.so' -print 2>/dev/null || true
   } | while IFS= read -r binary; do
     ldd "$binary" 2>/dev/null | awk '/=> \\// {print $3} /^\\// {print $1}'
   done | sort -u | while IFS= read -r library; do
     case "$library" in
       "$CONDA_PREFIX"/lib/*)
-        target="$PREFIX/lib/$(basename "$library")"
-        if [ "$(realpath "$library")" != "$(realpath -m "$target")" ]; then
+        target="$INSTALL_PREFIX/lib/$(basename "$library")"
+        if [ ! -e "$target" ]; then
           cp -L "$library" "$target"
         fi
         ;;
@@ -74,4 +81,4 @@ if [ -n "${CONDA_PREFIX:-}" ] && [ "$CONDA_PREFIX" != "$PREFIX" ]; then
   done
 fi
 
-"$PREFIX/bin/bcftools" --version
+"$INSTALL_PREFIX/bin/bcftools" --version
