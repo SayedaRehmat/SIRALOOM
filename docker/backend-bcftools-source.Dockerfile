@@ -68,7 +68,15 @@ RUN set -eux \
     && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
     && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
-    && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
+    && apt_update_succeeded=0 \
+    && for attempt in 1 2 3 4 5; do \
+        if apt-get -o Acquire::Check-Valid-Until=false -o Acquire::http::Timeout=60 -o Acquire::https::Timeout=60 -o Acquire::Retries=2 -o APT::Update::Error-Mode=any update; then \
+            apt_update_succeeded=1; \
+            break; \
+        fi; \
+        sleep "$((attempt * 10 + $ % 7))"; \
+    done \
+    && test "$apt_update_succeeded" = 1 \
     && apt-get install -y --no-install-recommends ca-certificates libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && test -s /etc/ssl/certs/ca-certificates.crt \
     && python -c 'import os, ssl; p=ssl.get_default_verify_paths(); expected=os.environ["SSL_CERT_FILE"]; assert p.cafile == expected, f"Python TLS CA file is {p.cafile}, expected {expected}"; assert os.path.isdir(os.environ["SSL_CERT_DIR"])' \
