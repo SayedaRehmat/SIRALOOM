@@ -1098,3 +1098,65 @@ def test_redelivered_analysis_recovers_after_claim_before_workflow_starts(monkey
     )
     assert claim_db.closed is True
     assert recovery_db.closed is True
+
+
+def test_wrong_toolchain_worker_requeues_before_claim_or_execution(monkeypatch):
+    from celery.exceptions import Reject
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": uuid4(),
+            "toolchain_profile_id": "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
+            "toolchain_bcftools_version": "1.22.3",
+            "toolchain_htslib_version": "1.22.4",
+            "toolchain_queue": "bioinformatics.bcftools.1_22_4",
+            "toolchain_snapshot": {
+                "profile_id": "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
+                "bcftools_version": "1.22.3",
+                "htslib_version": "1.22.4",
+                "worker_queue": "bioinformatics.bcftools.1_22_4",
+            },
+        },
+    )()
+
+    class FakeDB:
+        def get(self, _model, analysis_id):
+            assert analysis_id == analysis.id
+            return analysis
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(module, "SessionLocal", FakeDB)
+    monkeypatch.setattr(
+        module,
+        "engine",
+        type("Engine", (), {"dialect": type("Dialect", (), {"name": "sqlite"})()})(),
+    )
+    monkeypatch.setattr(
+        module,
+        "settings",
+        type(
+            "Settings",
+            (),
+            {
+                "bcftools_profile_id": "bcftools-1.25-htslib-1.25-linux-64",
+                "bcftools_version": "1.25",
+                "htslib_version": "1.25",
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        module,
+        "_claim_analysis_execution",
+        lambda *_args, **_kwargs: pytest.fail("wrong worker must not claim the analysis"),
+    )
+
+    with pytest.raises(Reject) as rejected:
+        module.run_analysis_task.run(str(analysis.id))
+
+    assert rejected.value.requeue is True
+
