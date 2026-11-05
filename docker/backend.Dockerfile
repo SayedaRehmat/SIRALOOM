@@ -58,9 +58,9 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 # The lock manager itself is pinned and removed from the final runtime image.
 COPY pyproject.toml uv.lock ./
 RUN set -eux \
-    && printf '%s\\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
-    && printf '%s\\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
-    && printf '%s\\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main" > /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-updates main" >> /etc/apt/sources.list \
+    && printf '%s\n' "deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian-security/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie-security main" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
     && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
     && apt-get install -y --no-install-recommends ca-certificates libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
