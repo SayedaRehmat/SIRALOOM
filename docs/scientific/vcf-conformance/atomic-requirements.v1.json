@@ -11954,6 +11954,63 @@
           },
           "source_excerpt_sha256": "46988e2ec4b88a5cb61c64ec65abf5483ac1f13db15017e019d813bc2cbaa0e6",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L526-L532",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 526-532",
+            "start_line": 526,
+            "end_line": 532,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L543-L549",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 543-549",
+            "start_line": 543,
+            "end_line": 549,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L925-L932",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 925-932",
+            "start_line": 925,
+            "end_line": 932,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -11964,21 +12021,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12073,6 +12136,63 @@
           },
           "source_excerpt_sha256": "78cd88485502ba1796f11faf59141af50565fcfc6158cef12a0e998209fdec63",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L528-L540",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 528-540",
+            "start_line": 528,
+            "end_line": 540,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L545-L557",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 545-557",
+            "start_line": 545,
+            "end_line": 557,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L931-L946",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 931-946",
+            "start_line": 931,
+            "end_line": 946,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12083,21 +12203,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12192,6 +12318,63 @@
           },
           "source_excerpt_sha256": "5e6dcb49041ea342eeda98438db601b71c2c40dba8af275f1ec6f19a26ded75a",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L542-L558",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 542-558",
+            "start_line": 542,
+            "end_line": 558,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L559-L575",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 559-575",
+            "start_line": 559,
+            "end_line": 575,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L947-L963",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 947-963",
+            "start_line": 947,
+            "end_line": 963,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12202,21 +12385,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12311,6 +12500,63 @@
           },
           "source_excerpt_sha256": "2f2a3b617737143ff3fec6bb86447bf10dbc913636da37b8f50d05ca7df4a6d4",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L639-L654",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 639-654",
+            "start_line": 639,
+            "end_line": 654,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L656-L671",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 656-671",
+            "start_line": 656,
+            "end_line": 671,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1053-L1069",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1053-1069",
+            "start_line": 1053,
+            "end_line": 1069,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12321,21 +12567,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12430,6 +12682,63 @@
           },
           "source_excerpt_sha256": "28bd4328862c22963d798d1b7d3bea96015938a9f4f334dfdd39e225930c3a3a",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L657-L676",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 657-676",
+            "start_line": 657,
+            "end_line": 676,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L674-L693",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 674-693",
+            "start_line": 674,
+            "end_line": 693,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1071-L1094",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1071-1094",
+            "start_line": 1071,
+            "end_line": 1094,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12440,21 +12749,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12549,6 +12864,63 @@
           },
           "source_excerpt_sha256": "d0cbaf7555649265af12f3ac85d0dd9da4485ecd0e9d3f1fcb238e5eb85ad6a5",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L677-L681",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 677-681",
+            "start_line": 677,
+            "end_line": 681,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L694-L698",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 694-698",
+            "start_line": 694,
+            "end_line": 698,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1095-L1100",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1095-1100",
+            "start_line": 1095,
+            "end_line": 1100,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12559,21 +12931,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12668,6 +13046,63 @@
           },
           "source_excerpt_sha256": "1c563fe01fb9ca04f16b9260bc6f9fff421ff0bd702ec39b7a1dccdc50bfe952",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L752-L771",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 752-771",
+            "start_line": 752,
+            "end_line": 771,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L769-L788",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 769-788",
+            "start_line": 769,
+            "end_line": 788,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1179-L1202",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1179-1202",
+            "start_line": 1179,
+            "end_line": 1202,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12678,21 +13113,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12787,6 +13228,63 @@
           },
           "source_excerpt_sha256": "66dc6ff423e4844e5d578d6a94e25465c5ff2899d152f067f70b82b2f626b677",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L773-L776",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 773-776",
+            "start_line": 773,
+            "end_line": 776,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L790-L793",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 790-793",
+            "start_line": 790,
+            "end_line": 793,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1205-L1211",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1205-1211",
+            "start_line": 1205,
+            "end_line": 1211,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12797,21 +13295,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
@@ -12906,6 +13410,63 @@
           },
           "source_excerpt_sha256": "0e883d1ed9795989d5d99db566e99b1a3f2e70682fe8dd83ba358bf8277effd9",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF41-HTS-510c107",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L777-L790",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 777-790",
+            "start_line": 777,
+            "end_line": 790,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF42-HTS-510c107",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L794-L807",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 794-807",
+            "start_line": 794,
+            "end_line": 807,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L1213-L1230",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 1213-1230",
+            "start_line": 1213,
+            "end_line": 1230,
+            "page": null
+          },
+          "source_excerpt_sha256": null,
+          "retrieved_at_utc": null
         }
       ],
       "version_applicability": {
@@ -12916,21 +13477,27 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF41-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF42-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The same core breakend syntax/relationship rule is present in this version's dedicated breakend section; exact versioned wording and exceptions are retained in the source locator.",
           "exceptions": []
         },
         "VCFv4.4": {
