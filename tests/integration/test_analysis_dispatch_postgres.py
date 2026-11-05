@@ -1,4 +1,6 @@
+import hashlib
 import os
+from pathlib import Path
 import threading
 from uuid import uuid4
 
@@ -294,17 +296,16 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
 
 @pytest.mark.integration
 @pytest.mark.parametrize(
-    ("profile_id", "bcftools_version", "htslib_version", "toolchain_queue"),
+    ("profile_id", "bcftools_version", "htslib_version", "toolchain_queue", "lock_file"),
     [
-        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25"),
-        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1"),
-        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3"),
-        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4"),
-        ("bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", "1.21.3", "bioinformatics.bcftools.1_21_3"),
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25", "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1", "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3", "configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-64-build.lock"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4", "configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-64-build.lock"),
     ],
 )
 def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(
-    monkeypatch, profile_id, bcftools_version, htslib_version, toolchain_queue
+    monkeypatch, profile_id, bcftools_version, htslib_version, toolchain_queue, lock_file
 ):
     """A retry generation must remain the sole queue owner when an old relay runs afterward."""
     database_url = os.environ.get("DATABASE_URL", "")
@@ -380,8 +381,8 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(
                     "htslib_version": htslib_version,
                     "worker_queue": toolchain_queue,
                     "platform": "linux-64",
-                    "lock_file": f"configs/bioinformatics/profiles/{profile_id}.lock",
-                    "lock_sha256": "b" * 64,
+                    "lock_file": lock_file,
+                    "lock_sha256": hashlib.sha256(Path(lock_file).read_bytes()).hexdigest(),
                 },
             ))
             db.add(AnalysisDispatch(
