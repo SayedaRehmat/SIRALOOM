@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-core-info-format-version-delta",
-  "status": "PRIMARY_REVIEW_COMPLETE_FOR_RESERVED_KEY_INVENTORY_SECOND_REVIEW_PENDING",
+  "status": "PRIMARY_REVIEW_COMPLETE_FOR_RESERVED_INFO_FORMAT_ROW_INVENTORY_AND_INITIAL_SEMANTIC_DELTAS_INDEPENDENT_REVIEW_PENDING",
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
   "scope": "Reserved INFO and FORMAT/genotype keys enumerated in the core VCF specification sections, VCFv4.1–4.5. This excludes structural-variant-specific INFO/FORMAT sections and VCFv4.0 pending source pinning.",
   "counts": [
@@ -97,6 +97,37 @@
         "VCFv4.5"
       ],
       "interpretation": "The three parameterized base-modification key patterns are patterns, not literal key names; aliases map to ChEBI identifiers. The local-allele family requires dependencies and cardinality semantics from the surrounding prose, not table-only interpretation."
+    },
+    {
+      "change": "VCFv4.3 reserved FORMAT table rows were source-reviewed individually; 16 rows define key, Number, Type and Description. VCFv4.1–4.2 have 13 prose-defined keys and do not provide table Number/Type columns in this core list.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3"
+      ],
+      "interpretation": "Do not manufacture explicit 4.1/4.2 Number/Type evidence by copying 4.3 table values. Prose definitions may still constrain the field and require independent extraction."
+    },
+    {
+      "change": "VCFv4.4 adds three P-cardinality rows PSL, PSO and PSQ.",
+      "versions": [
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "interpretation": "P is not a fixed scalar cardinality; its exact relation to genotype allele values and phase-set-list semantics must be implemented from detailed prose."
+    },
+    {
+      "change": "VCFv4.5 adds 48 FORMAT rows over the 4.4 inventory: LEN; local-allele key family; three parameterized base-modification key patterns; and 24 named base-modification aliases.",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "interpretation": "The row inventory includes pattern rows and alias rows. Treat the pattern strings as key-name grammars, preserve alias mappings, and apply detailed M/LAA rules from prose."
+    },
+    {
+      "change": "VCFv4.5 retains PS/PSL/PSO/PSQ and adds local-allele/genotype dependencies in the surrounding FORMAT prose.",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "interpretation": "The table rows alone are insufficient: LAA presence/order, local allele indexing, GT relationship and equivalence rules require separate atomic constraints."
     }
   ],
   "normalized_presence": {
@@ -759,14 +790,21 @@
     "Type values Flag, Integer, Float and String constrain the metadata declaration and/or encoded values; they are not interchangeable with implementation-language types without a mapping.",
     "Descriptions sometimes defer semantics to adjacent prose. Preserve cross-references and do not use table descriptions as a complete definition.",
     "Rows for parameterized keys such as M[0-9]+[ACGTUN], DPM[0-9]+[ACGTUN], and ADM[0-9]+[ACGTUN] define key-name patterns, not single literal identifiers.",
-    "Aliases such as M5mC and DPM5mC have explicit ChEBI-linked meanings and should not be collapsed into the generic pattern without retaining alias equivalence."
+    "Aliases such as M5mC and DPM5mC have explicit ChEBI-linked meanings and should not be collapsed into the generic pattern without retaining alias equivalence.",
+    "For each row, Number and Type are reviewed as separate declaration dimensions; a table row does not make a field mandatory.",
+    "For VCFv4.1–4.2 prose enumerations, Number and Type remain unspecified by the table because no table exists; do not retroactively populate values from later versions.",
+    "For VCFv4.5, LEN is a FORMAT field for the <*> reference block and is not interchangeable with INFO END; INFO END is separately deprecated in VCFv4.5.",
+    "Pattern rows such as M[0-9]+[ACGTUN], DPM[0-9]+[ACGTUN], and ADM[0-9]+[ACGTUN] define key families; aliases are separately listed and retain their ChEBI equivalence."
   ],
   "unresolved": [
     "Compare every reserved INFO/FORMAT row against the corresponding meta-information declaration grammar and field-specific prose for each version.",
     "Determine whether omissions from a reserved-key list mean unsupported, non-reserved, or merely not enumerated; do not infer invalidity from omission alone.",
     "Review all table footnotes, captions and cross-references for each row.",
     "Pin VCFv4.0 source bytes before adding 4.0 applicability.",
-    "Obtain independent review."
+    "Obtain independent review.",
+    "Decompose all 223 row descriptions into independently testable Number, Type, semantic and cross-reference requirements where applicable.",
+    "Review adjacent detailed prose for every reserved FORMAT row, including genotype ordering, PS/PSL, local-allele, base-modification and structural-variant fields.",
+    "Resolve whether a reserved key omitted from a version's core list is unsupported, non-reserved, or merely not enumerated; absence from a list is not proof of invalidity."
   ],
   "review": {
     "primary_reviewer_status": "REVIEWED",
@@ -774,5 +812,46 @@
     "implementation_mapping": "NOT_STARTED",
     "tests": "NOT_STARTED",
     "laboratory_qualification": "NOT_CLAIMED"
+  },
+  "row_level_review": {
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "source_inventory_file": "core-info-format-row-inventory.v1.json",
+    "total_reserved_definition_entries": 223,
+    "by_version": [
+      {
+        "version": "VCFv4.1",
+        "info": 18,
+        "format": 13,
+        "representation": "prose enumerations; Number/Type not supplied in these core lists"
+      },
+      {
+        "version": "VCFv4.2",
+        "info": 18,
+        "format": 13,
+        "representation": "prose enumerations; Number/Type not supplied in these core lists"
+      },
+      {
+        "version": "VCFv4.3",
+        "info": 21,
+        "format": 16,
+        "representation": "INFO and FORMAT tables with Number/Type/Description"
+      },
+      {
+        "version": "VCFv4.4",
+        "info": 21,
+        "format": 19,
+        "representation": "INFO and FORMAT tables with Number/Type/Description"
+      },
+      {
+        "version": "VCFv4.5",
+        "info": 21,
+        "format": 63,
+        "representation": "INFO and FORMAT tables with Number/Type/Description"
+      }
+    ],
+    "primary_review_status": "All 223 captured reserved INFO/FORMAT entries have source-row text retained and a primary semantic classification; independent review and field-specific semantic atomization remain outstanding.",
+    "independent_second_reviewed_entries": 0,
+    "implementation_mapped_entries": 0,
+    "clause_tests_executed": 0
   }
 }
