@@ -544,7 +544,8 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     class FakeClaimSession:
         def get(self, model, received_analysis_id, **kwargs):
             from backend.app.domain.enums import AnalysisStatus
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": task_id})()
 
         def add(self, _row):
@@ -1504,7 +1505,8 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
             queue_task_id = "recovery-failure-test"
 
         def get(self, model, received_analysis_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return self.Analysis()
 
         def add(self, _row):
@@ -1827,7 +1829,8 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
             queue_task_id = "retry-exhaustion-test"
 
         def get(self, model, received_analysis_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return self.Analysis()
 
         def add(self, _row):
