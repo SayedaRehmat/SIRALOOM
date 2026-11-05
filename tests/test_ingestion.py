@@ -906,7 +906,7 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -935,7 +935,7 @@ def test_vcf_intake_rejects_bcftools_version_drift_as_retryable_operational_fail
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.99\nUsing htslib 1.25\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools 1.99\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -962,7 +962,7 @@ def test_vcf_validation_separates_source_records_from_alternate_alleles(tmp_path
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -989,7 +989,7 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     def run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.23\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib 1.23\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
@@ -1018,7 +1018,7 @@ def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch
     def run(command, **kwargs):
         assert command[0] == selected
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
+            return subprocess.CompletedProcess(command, 0, f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
     monkeypatch.setattr(ingestion.subprocess, "run", run)
