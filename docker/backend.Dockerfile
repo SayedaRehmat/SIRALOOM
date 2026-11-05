@@ -1,4 +1,5 @@
 ARG BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
+ARG BCFTOOLS_PLATFORM=linux-64
 ARG BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
 ARG BCFTOOLS_VERSION=1.25
 ARG HTSLIB_VERSION=1.25
@@ -6,9 +7,14 @@ ARG HTSLIB_VERSION=1.25
 FROM mambaorg/micromamba:2.3.1 AS bcftools
 
 ARG BCFTOOLS_LOCK_FILE
+ARG BCFTOOLS_PLATFORM
 ENV MAMBA_ROOT_PREFIX=/opt/conda
 COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_LOCK_FILE} /tmp/bcftools-explicit.lock
-RUN micromamba install --yes --name base --file /tmp/bcftools-explicit.lock \
+RUN case "$(uname -m):${BCFTOOLS_PLATFORM}" in \
+        x86_64:linux-64|aarch64:linux-aarch64) ;; \
+        *) echo "No locked BCFtools profile for build architecture $(uname -m) and platform ${BCFTOOLS_PLATFORM}" >&2; exit 1 ;; \
+    esac \
+    && micromamba install --yes --name base --file /tmp/bcftools-explicit.lock \
     && micromamba clean --all --yes
 
 FROM python:3.12-slim
