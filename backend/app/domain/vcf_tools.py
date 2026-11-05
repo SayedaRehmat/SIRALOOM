@@ -985,10 +985,21 @@ def validate_vcf_index_concordance(
         else None
     )
     expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
+    expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
     if expected_bcftools_version and detected_version != expected_bcftools_version:
         raise VCFToolUnavailable(
             "bcftools version mismatch during VCF index validation: "
             f"expected {expected_bcftools_version}, found {detected_version or version_line}"
+        )
+    htslib_line = next(
+        (line.strip() for line in version_result.stdout.splitlines() if "htslib" in line.lower()),
+        None,
+    )
+    detected_htslib_version = htslib_line.split()[-1] if htslib_line else None
+    if not detected_htslib_version or detected_htslib_version != settings.htslib_version:
+        raise VCFToolUnavailable(
+            "HTSlib version mismatch during VCF index validation: "
+            f"expected {settings.htslib_version}, found {detected_htslib_version or 'unknown'}"
         )
 
     concordance = _validate_vcf_index_record_counts(
@@ -1003,6 +1014,9 @@ def validate_vcf_index_concordance(
         "tool": "bcftools",
         "tool_version": version_line,
         "expected_tool_version": expected_bcftools_version,
+        "htslib_version": detected_htslib_version,
+        "expected_htslib_version": settings.htslib_version,
+        "bcftools_profile_id": settings.bcftools_profile_id,
         "concordance": concordance,
     }
 
@@ -1472,6 +1486,7 @@ def normalize_vcf_with_bcftools(
     from backend.app.config import settings
     bcftools_executable = bcftools_executable or settings.bcftools_executable
     expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
+    expected_htslib_version = settings.htslib_version
     executable_available = Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
     if not executable_available:
         raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
@@ -1512,6 +1527,16 @@ def normalize_vcf_with_bcftools(
     detected_version = version_line.split()[1] if len(version_line.split()) > 1 and version_line.split()[0] == "bcftools" else None
     if expected_bcftools_version and detected_version != expected_bcftools_version:
         raise VCFToolError(f"bcftools version mismatch: expected {expected_bcftools_version}, found {detected_version or version_line}")
+    htslib_line = next(
+        (line.strip() for line in version_result.stdout.splitlines() if "htslib" in line.lower()),
+        None,
+    )
+    detected_htslib_version = htslib_line.split()[-1] if htslib_line else None
+    if not detected_htslib_version or detected_htslib_version != expected_htslib_version:
+        raise VCFToolError(
+            f"HTSlib version mismatch: expected {expected_htslib_version}, "
+            f"found {detected_htslib_version or 'unknown'}"
+        )
 
     timeout = max(1, int(timeout_seconds))
     with tempfile.TemporaryDirectory(
@@ -1731,6 +1756,9 @@ def normalize_vcf_with_bcftools(
             "tool": "bcftools",
             "tool_version": version_line,
             "expected_tool_version": expected_bcftools_version,
+            "htslib_version": detected_htslib_version,
+            "expected_htslib_version": expected_htslib_version,
+            "bcftools_profile_id": settings.bcftools_profile_id,
             "operation": "reference_aware_normalization_sort_index",
             "command": " && ".join([
                 " ".join(view_command),
