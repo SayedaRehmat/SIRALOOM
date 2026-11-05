@@ -23,6 +23,7 @@ def test_resolves_registered_software_qualified_patched_profile():
     )
     assert profile["status"] == "SOFTWARE_QUALIFIED"
     assert profile["platform"] == "linux-64"
+    assert "# platform: linux-64" in (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
     assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
     assert profile["lock_file"] == "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"
 
