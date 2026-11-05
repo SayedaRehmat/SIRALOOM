@@ -25,7 +25,7 @@
       "VCFv4.5": 0
     },
     "source_references_total": 437,
-    "source_references_with_source_and_excerpt_sha256": 352,
+    "source_references_with_source_and_excerpt_sha256": 436,
     "source_references_pending_vcf40_raw_source": 1,
     "source_references_without_hash_by_version": {
       "VCFv4.0": 1,
@@ -45,7 +45,7 @@
       "VCFv4.2": 0,
       "VCFv4.3": 0,
       "VCFv4.4": 0,
-      "VCFv4.5": 84
+      "VCFv4.5": 0
     }
   },
   "critical_blockers": [
@@ -53,8 +53,7 @@
     "Whole-specification coverage remains incomplete. VCFv4.5 has author-context dispositions for all 44 indexed VCF-specific tables, but not every row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incomplete.",
     "VCFv4.1-4.4 candidate applicability remains unresolved in 43, 43, 34 and 5 cells respectively; these counts concern the current candidate ledger only.",
     "Independent second-person review has not started; zero requirements are independently approved.",
-    "No production implementation mappings or executed clause-specific tests are present.",
-    "The 84 newly added VCFv4.5 reserved INFO/FORMAT row candidates have source-file SHA-256 and exact line locators but no source-excerpt SHA-256 yet; excerpt hashing must be specified and applied."
+    "No production implementation mappings or executed clause-specific tests are present."
   ],
   "source_separation": {
     "core_vcf40": "IGSR/1000 Genomes historical core page corroborated as a VCFv4.0 source candidate; exact source bytes and SHA-256 not captured; not accepted as pinned normative source.",
@@ -88,5 +87,13 @@
     "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
     "note": "The 84 newly added VCFv4.5 row candidates use the canonical source-file SHA-256 from the manifest; their excerpt hashes are intentionally null pending a documented excerpt-hashing convention."
   },
-  "audit_note": "Readiness counters refreshed after adding 84 row-level VCFv4.5 reserved INFO/FORMAT candidates. The candidate ledger is still incomplete; no independent approval or conformance claim is made."
+  "audit_note": "The 84 new VCFv4.5 reserved INFO/FORMAT row candidates now have exact source-row SHA-256 values using the documented single-line UTF-8 method. The sole source reference without source/excerpt hashes remains the unpinned historical VCFv4.0 candidate.",
+  "excerpt_hashing_method": {
+    "algorithm": "SHA-256",
+    "encoding": "UTF-8",
+    "scope": "Exact single source-row line identified by the TABLE_ROW locator",
+    "byte_selection": "The line's UTF-8 bytes excluding the line terminator; original indentation, tabs, spaces and punctuation are preserved.",
+    "status": "APPLIED_TO_ALL_84_NEW_VCF45_RESERVED_INFO_FORMAT_ROW_CANDIDATES",
+    "limitation": "This is the declared method for the new row candidates. Earlier excerpt hashes retain their existing captured method; a future audit should document or normalize their extraction method separately."
+  }
 }
