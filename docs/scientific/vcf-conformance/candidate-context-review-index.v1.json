@@ -115,6 +115,10 @@
     {
       "artifact": "vcf4.5-sv-breakend-atomic-source-review.v1.json",
       "scope": "Thirty VCFv4.5 structural-variant INFO/FORMAT, tandem-repeat and breakend atomic candidates with exact line locators; all remain IN_REVIEW pending cross-version reconciliation and independent review."
+    },
+    {
+      "artifact": "vcf4.1-4.4-reserved-row-version-crosswalk.v1.json",
+      "scope": "Source-row crosswalk for reserved INFO/FORMAT definitions across VCF4.1-4.4; captures 4.1/4.2 prose lists separately from 4.3/4.4 Number/Type tables and observed adjacent-version deltas. Full context review remains pending."
     }
   ],
   "evidence_counters": {
@@ -129,14 +133,14 @@
     "scoped_pilot_review_permitted": true
   },
   "next_review_gates": [
-    "Complete row-by-row semantic review of remaining VCFv4.5 tables: encoding, genotype ordering, local-allele and phasing examples, small-variant representation, SV/breakend examples; do not count the INFO/FORMAT row review as completion of all 44 tables.",
-    "Build and execute equivalent row-by-row table and semantic reviews for VCFv4.1, VCFv4.2, VCFv4.3 and VCFv4.4.",
-    "Complete full semantic expansion and atomic decomposition across all versions: grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references.",
-    "Reconcile the 30 new VCFv4.5 SV/breakend candidates against exact VCFv4.1–4.4 passages and the historical VCFv4.0 source; do not infer applicability from later versions.",
-    "Capture immutable historical VCFv4.0 normative source bytes, retrieval metadata and SHA-256; separately classify 1000 Genomes project conventions as producer/project conventions.",
-    "Complete source excerpt hashes, source locators, candidate-to-ledger links, dependencies and semantic version deltas.",
-    "Validate the complete ledger schema, unique IDs, source refs, source locators, version applicability, normative-force vocabulary, atomicity and cross-references.",
-    "Freeze a versioned review snapshot only after whole-specification coverage and traceability checks pass; then request independent second-person review. Do not mark any record approved without an actual reviewer disposition."
+    "Complete semantic review of remaining VCFv4.5 tables and their surrounding source context: encoding, genotype ordering, local alleles, phase-set lists, small-variant representation and SV/breakend examples.",
+    "Perform full source-context review and atomic decomposition of the VCFv4.1–4.4 reserved-field inventories and all remaining tables; retain prose enumerations for 4.1/4.2 rather than inventing table columns.",
+    "Reconcile GT phasing and genotype ordering differences across VCFv4.1–4.5, including the 4.4 phase-set-list additions and 4.5 allele-level phasing/local-allele/base-modification semantics.",
+    "Complete full semantic expansion and atomic decomposition across every version: grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references.",
+    "Capture immutable historical VCFv4.0 normative source bytes, retrieval metadata and SHA-256; keep 1000 Genomes project conventions separately classified.",
+    "Reconcile all version-specific applicability cells and semantic deltas in the atomic ledger; do not infer from later versions.",
+    "Complete source excerpt hashes, candidate-to-ledger links, dependency links, unique IDs, source locator and schema validation.",
+    "Freeze a versioned review snapshot only after whole-specification coverage and traceability checks pass; then request independent second-person review. No requirement may be marked approved without an actual reviewer disposition."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
