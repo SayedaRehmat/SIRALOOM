@@ -1265,13 +1265,14 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "PARENT_CANDIDATE_SPLIT_REQUIRED",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_CREATED",
       "open_questions": [
-        "Expand all referenced local-allele field families and the LAA definition before implementation."
+        "Expand all referenced local-allele field families and the LAA definition before implementation.",
+        "The detailed VCFv4.5 text narrows the condition to a local-allele field that is neither omitted nor MISSING; use FMT-GT-039 as the narrower child candidate pending independent review."
       ]
     },
     {
@@ -2286,13 +2287,13 @@
     },
     {
       "candidate_id": "FMT-GT-036",
-      "proposed_atomic_statement": "The missing value is used for a PSQ element when the corresponding PSL value is missing or phasing quality is unknown.",
+      "proposed_atomic_statement": "The missing value should be used for a PSQ element when the corresponding PSL value is missing or phasing quality is unknown.",
       "requirement_domain": "GENOTYPE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST",
+      "normative_force": "SHOULD",
       "actor": "VCF producer/reader or implementation as specified by source",
       "condition": "Applies only to VCFv4.4, VCFv4.5.",
-      "required_or_prohibited_behavior": "The missing value is used for a PSQ element when the corresponding PSL value is missing or phasing quality is unknown.",
+      "required_or_prohibited_behavior": "The missing value should be used for a PSQ element when the corresponding PSL value is missing or phasing quality is unknown.",
       "observable_acceptance_condition": "Construct version-specific positive and negative fixtures from the cited clause and verify exact allele/value ordering or conditional behavior.",
       "source_references": [
         {
