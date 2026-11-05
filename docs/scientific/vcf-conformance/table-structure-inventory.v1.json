@@ -1,0 +1,1844 @@
+{
+  "schema_version": "1.0.0",
+  "inventory_id": "siraloom-vcf-table-structure-inventory",
+  "status": "STRUCTURE_INDEXED_ROW_SEMANTICS_REVIEW_PENDING",
+  "source_repository": "samtools/hts-specs",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "scope": "VCF-specific section roots only; BCF specification and change-log roots excluded using the same root boundaries as the existing normative inventory.",
+  "method": "Enumerate LaTeX tabular and longtable environments within VCF section roots; record source line ranges and the number of lines containing LaTeX row terminators. Row-terminator-line counts are navigation aids, not a semantic row count or requirement count.",
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "source_file": "VCFv4.1.tex",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "vcf_section_table_count": 35,
+      "row_terminator_line_count": 134,
+      "footnote_marker_lines": 13,
+      "enumerated_list_starts": 13,
+      "explicit_grammar_marker_lines": 0,
+      "tables": [
+        {
+          "table_id": "VCF1.1",
+          "environment": "tabular",
+          "start_line": 305,
+          "end_line": 312,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.2",
+          "environment": "tabular",
+          "start_line": 322,
+          "end_line": 327,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.3",
+          "environment": "tabular",
+          "start_line": 333,
+          "end_line": 339,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.4",
+          "environment": "tabular",
+          "start_line": 345,
+          "end_line": 348,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.5",
+          "environment": "tabular",
+          "start_line": 353,
+          "end_line": 360,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.6",
+          "environment": "tabular",
+          "start_line": 366,
+          "end_line": 369,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.7",
+          "environment": "tabular",
+          "start_line": 379,
+          "end_line": 382,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.8",
+          "environment": "tabular",
+          "start_line": 388,
+          "end_line": 393,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.9",
+          "environment": "tabular",
+          "start_line": 399,
+          "end_line": 402,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.10",
+          "environment": "tabular",
+          "start_line": 408,
+          "end_line": 413,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.11",
+          "environment": "tabular",
+          "start_line": 419,
+          "end_line": 422,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.12",
+          "environment": "tabular",
+          "start_line": 428,
+          "end_line": 433,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.13",
+          "environment": "tabular",
+          "start_line": 439,
+          "end_line": 442,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.14",
+          "environment": "tabular",
+          "start_line": 448,
+          "end_line": 454,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.15",
+          "environment": "tabular",
+          "start_line": 460,
+          "end_line": 466,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.16",
+          "environment": "tabular",
+          "start_line": 538,
+          "end_line": 544,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.17",
+          "environment": "tabular",
+          "start_line": 556,
+          "end_line": 564,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\caption{All possible orientations of breakends}"
+        },
+        {
+          "table_id": "VCF1.18",
+          "environment": "tabular",
+          "start_line": 578,
+          "end_line": 582,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted sequence between breakends}"
+        },
+        {
+          "table_id": "VCF1.19",
+          "environment": "tabular",
+          "start_line": 597,
+          "end_line": 601,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted contig}"
+        },
+        {
+          "table_id": "VCF1.20",
+          "environment": "tabular",
+          "start_line": 608,
+          "end_line": 611,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.21",
+          "environment": "tabular",
+          "start_line": 618,
+          "end_line": 622,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.22",
+          "environment": "tabular",
+          "start_line": 630,
+          "end_line": 636,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.23",
+          "environment": "tabular",
+          "start_line": 649,
+          "end_line": 654,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": "\\caption{Breakend with multiple mates}"
+        },
+        {
+          "table_id": "VCF1.24",
+          "environment": "tabular",
+          "start_line": 667,
+          "end_line": 673,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Partner breakends}"
+        },
+        {
+          "table_id": "VCF1.25",
+          "environment": "tabular",
+          "start_line": 688,
+          "end_line": 694,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Telomeres}"
+        },
+        {
+          "table_id": "VCF1.26",
+          "environment": "tabular",
+          "start_line": 710,
+          "end_line": 716,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Rearrangements}"
+        },
+        {
+          "table_id": "VCF1.27",
+          "environment": "tabular",
+          "start_line": 732,
+          "end_line": 735,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": "\\caption{Inversion}"
+        },
+        {
+          "table_id": "VCF1.28",
+          "environment": "tabular",
+          "start_line": 743,
+          "end_line": 749,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.29",
+          "environment": "tabular",
+          "start_line": 765,
+          "end_line": 769,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Homology}"
+        },
+        {
+          "table_id": "VCF1.30",
+          "environment": "tabular",
+          "start_line": 782,
+          "end_line": 788,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.31",
+          "environment": "tabular",
+          "start_line": 798,
+          "end_line": 803,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.32",
+          "environment": "tabular",
+          "start_line": 811,
+          "end_line": 816,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.33",
+          "environment": "tabular",
+          "start_line": 834,
+          "end_line": 840,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.34",
+          "environment": "tabular",
+          "start_line": 850,
+          "end_line": 856,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF1.35",
+          "environment": "tabular",
+          "start_line": 944,
+          "end_line": 952,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": null
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.2",
+      "source_file": "VCFv4.2.tex",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "vcf_section_table_count": 35,
+      "row_terminator_line_count": 134,
+      "footnote_marker_lines": 13,
+      "enumerated_list_starts": 14,
+      "explicit_grammar_marker_lines": 0,
+      "tables": [
+        {
+          "table_id": "VCF2.1",
+          "environment": "tabular",
+          "start_line": 322,
+          "end_line": 329,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.2",
+          "environment": "tabular",
+          "start_line": 339,
+          "end_line": 344,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.3",
+          "environment": "tabular",
+          "start_line": 350,
+          "end_line": 356,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.4",
+          "environment": "tabular",
+          "start_line": 362,
+          "end_line": 365,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.5",
+          "environment": "tabular",
+          "start_line": 370,
+          "end_line": 377,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.6",
+          "environment": "tabular",
+          "start_line": 383,
+          "end_line": 386,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.7",
+          "environment": "tabular",
+          "start_line": 396,
+          "end_line": 399,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.8",
+          "environment": "tabular",
+          "start_line": 405,
+          "end_line": 410,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.9",
+          "environment": "tabular",
+          "start_line": 416,
+          "end_line": 419,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.10",
+          "environment": "tabular",
+          "start_line": 425,
+          "end_line": 430,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.11",
+          "environment": "tabular",
+          "start_line": 436,
+          "end_line": 439,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.12",
+          "environment": "tabular",
+          "start_line": 445,
+          "end_line": 450,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.13",
+          "environment": "tabular",
+          "start_line": 456,
+          "end_line": 459,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.14",
+          "environment": "tabular",
+          "start_line": 465,
+          "end_line": 471,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.15",
+          "environment": "tabular",
+          "start_line": 477,
+          "end_line": 483,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.16",
+          "environment": "tabular",
+          "start_line": 555,
+          "end_line": 561,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.17",
+          "environment": "tabular",
+          "start_line": 573,
+          "end_line": 581,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\caption{All possible orientations of breakends}"
+        },
+        {
+          "table_id": "VCF2.18",
+          "environment": "tabular",
+          "start_line": 595,
+          "end_line": 599,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted sequence between breakends}"
+        },
+        {
+          "table_id": "VCF2.19",
+          "environment": "tabular",
+          "start_line": 614,
+          "end_line": 618,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted contig}"
+        },
+        {
+          "table_id": "VCF2.20",
+          "environment": "tabular",
+          "start_line": 625,
+          "end_line": 628,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.21",
+          "environment": "tabular",
+          "start_line": 635,
+          "end_line": 639,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.22",
+          "environment": "tabular",
+          "start_line": 647,
+          "end_line": 653,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.23",
+          "environment": "tabular",
+          "start_line": 666,
+          "end_line": 671,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": "\\caption{Breakend with multiple mates}"
+        },
+        {
+          "table_id": "VCF2.24",
+          "environment": "tabular",
+          "start_line": 684,
+          "end_line": 690,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Partner breakends}"
+        },
+        {
+          "table_id": "VCF2.25",
+          "environment": "tabular",
+          "start_line": 705,
+          "end_line": 711,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Telomeres}"
+        },
+        {
+          "table_id": "VCF2.26",
+          "environment": "tabular",
+          "start_line": 727,
+          "end_line": 733,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Rearrangements}"
+        },
+        {
+          "table_id": "VCF2.27",
+          "environment": "tabular",
+          "start_line": 749,
+          "end_line": 752,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": "\\caption{Inversion}"
+        },
+        {
+          "table_id": "VCF2.28",
+          "environment": "tabular",
+          "start_line": 760,
+          "end_line": 766,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.29",
+          "environment": "tabular",
+          "start_line": 782,
+          "end_line": 786,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Homology}"
+        },
+        {
+          "table_id": "VCF2.30",
+          "environment": "tabular",
+          "start_line": 799,
+          "end_line": 805,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.31",
+          "environment": "tabular",
+          "start_line": 815,
+          "end_line": 820,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.32",
+          "environment": "tabular",
+          "start_line": 828,
+          "end_line": 833,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.33",
+          "environment": "tabular",
+          "start_line": 851,
+          "end_line": 857,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.34",
+          "environment": "tabular",
+          "start_line": 867,
+          "end_line": 873,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF2.35",
+          "environment": "tabular",
+          "start_line": 961,
+          "end_line": 969,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": null
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.3",
+      "source_file": "VCFv4.3.tex",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "vcf_section_table_count": 40,
+      "row_terminator_line_count": 200,
+      "footnote_marker_lines": 19,
+      "enumerated_list_starts": 17,
+      "explicit_grammar_marker_lines": 0,
+      "tables": [
+        {
+          "table_id": "VCF3.1",
+          "environment": "tabular",
+          "start_line": 86,
+          "end_line": 95,
+          "body_line_count": 8,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\label{character-encoding}"
+        },
+        {
+          "table_id": "VCF3.2",
+          "environment": "longtable",
+          "start_line": 378,
+          "end_line": 416,
+          "body_line_count": 37,
+          "row_terminator_line_count": 26,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.3",
+          "environment": "longtable",
+          "start_line": 445,
+          "end_line": 478,
+          "body_line_count": 32,
+          "row_terminator_line_count": 21,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.4",
+          "environment": "tabular",
+          "start_line": 550,
+          "end_line": 556,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.5",
+          "environment": "tabular",
+          "start_line": 698,
+          "end_line": 705,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.6",
+          "environment": "tabular",
+          "start_line": 718,
+          "end_line": 723,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.7",
+          "environment": "tabular",
+          "start_line": 729,
+          "end_line": 735,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.8",
+          "environment": "tabular",
+          "start_line": 741,
+          "end_line": 744,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.9",
+          "environment": "tabular",
+          "start_line": 749,
+          "end_line": 756,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.10",
+          "environment": "tabular",
+          "start_line": 763,
+          "end_line": 766,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.11",
+          "environment": "tabular",
+          "start_line": 777,
+          "end_line": 780,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.12",
+          "environment": "tabular",
+          "start_line": 786,
+          "end_line": 791,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.13",
+          "environment": "tabular",
+          "start_line": 797,
+          "end_line": 800,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.14",
+          "environment": "tabular",
+          "start_line": 807,
+          "end_line": 812,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.15",
+          "environment": "tabular",
+          "start_line": 818,
+          "end_line": 821,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.16",
+          "environment": "tabular",
+          "start_line": 828,
+          "end_line": 833,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.17",
+          "environment": "tabular",
+          "start_line": 839,
+          "end_line": 842,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.18",
+          "environment": "tabular",
+          "start_line": 849,
+          "end_line": 855,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.19",
+          "environment": "tabular",
+          "start_line": 862,
+          "end_line": 868,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.20",
+          "environment": "tabular",
+          "start_line": 950,
+          "end_line": 956,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.21",
+          "environment": "tabular",
+          "start_line": 970,
+          "end_line": 978,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\caption{All possible orientations of breakends}"
+        },
+        {
+          "table_id": "VCF3.22",
+          "environment": "tabular",
+          "start_line": 992,
+          "end_line": 996,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted sequence between breakends}"
+        },
+        {
+          "table_id": "VCF3.23",
+          "environment": "tabular",
+          "start_line": 1011,
+          "end_line": 1015,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted contig}"
+        },
+        {
+          "table_id": "VCF3.24",
+          "environment": "tabular",
+          "start_line": 1022,
+          "end_line": 1025,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.25",
+          "environment": "tabular",
+          "start_line": 1032,
+          "end_line": 1036,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.26",
+          "environment": "tabular",
+          "start_line": 1044,
+          "end_line": 1050,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.27",
+          "environment": "tabular",
+          "start_line": 1063,
+          "end_line": 1068,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": "\\caption{Breakend with multiple mates}"
+        },
+        {
+          "table_id": "VCF3.28",
+          "environment": "tabular",
+          "start_line": 1085,
+          "end_line": 1091,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Partner breakends}"
+        },
+        {
+          "table_id": "VCF3.29",
+          "environment": "tabular",
+          "start_line": 1109,
+          "end_line": 1115,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Telomeres}"
+        },
+        {
+          "table_id": "VCF3.30",
+          "environment": "tabular",
+          "start_line": 1133,
+          "end_line": 1139,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Rearrangements}"
+        },
+        {
+          "table_id": "VCF3.31",
+          "environment": "tabular",
+          "start_line": 1159,
+          "end_line": 1162,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": "\\caption{Inversion}"
+        },
+        {
+          "table_id": "VCF3.32",
+          "environment": "tabular",
+          "start_line": 1170,
+          "end_line": 1176,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.33",
+          "environment": "tabular",
+          "start_line": 1197,
+          "end_line": 1201,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Homology}"
+        },
+        {
+          "table_id": "VCF3.34",
+          "environment": "tabular",
+          "start_line": 1223,
+          "end_line": 1229,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.35",
+          "environment": "tabular",
+          "start_line": 1241,
+          "end_line": 1246,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.36",
+          "environment": "tabular",
+          "start_line": 1254,
+          "end_line": 1259,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.37",
+          "environment": "tabular",
+          "start_line": 1281,
+          "end_line": 1287,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.38",
+          "environment": "tabular",
+          "start_line": 1297,
+          "end_line": 1303,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.39",
+          "environment": "tabular",
+          "start_line": 1417,
+          "end_line": 1425,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF3.40",
+          "environment": "tabular",
+          "start_line": 1438,
+          "end_line": 1447,
+          "body_line_count": 8,
+          "row_terminator_line_count": 8,
+          "caption_or_label_context": null
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.4",
+      "source_file": "VCFv4.4.tex",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "vcf_section_table_count": 41,
+      "row_terminator_line_count": 204,
+      "footnote_marker_lines": 39,
+      "enumerated_list_starts": 20,
+      "explicit_grammar_marker_lines": 0,
+      "tables": [
+        {
+          "table_id": "VCF4.1",
+          "environment": "tabular",
+          "start_line": 86,
+          "end_line": 95,
+          "body_line_count": 8,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\label{character-encoding}"
+        },
+        {
+          "table_id": "VCF4.2",
+          "environment": "longtable",
+          "start_line": 394,
+          "end_line": 432,
+          "body_line_count": 37,
+          "row_terminator_line_count": 26,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.3",
+          "environment": "longtable",
+          "start_line": 463,
+          "end_line": 500,
+          "body_line_count": 36,
+          "row_terminator_line_count": 24,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.4",
+          "environment": "tabular",
+          "start_line": 576,
+          "end_line": 582,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.5",
+          "environment": "tabular",
+          "start_line": 608,
+          "end_line": 613,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.6",
+          "environment": "tabular",
+          "start_line": 625,
+          "end_line": 630,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.7",
+          "environment": "tabular",
+          "start_line": 1009,
+          "end_line": 1016,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.8",
+          "environment": "tabular",
+          "start_line": 1029,
+          "end_line": 1034,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.9",
+          "environment": "tabular",
+          "start_line": 1040,
+          "end_line": 1046,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.10",
+          "environment": "tabular",
+          "start_line": 1052,
+          "end_line": 1055,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.11",
+          "environment": "tabular",
+          "start_line": 1060,
+          "end_line": 1067,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.12",
+          "environment": "tabular",
+          "start_line": 1074,
+          "end_line": 1077,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.13",
+          "environment": "tabular",
+          "start_line": 1088,
+          "end_line": 1091,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.14",
+          "environment": "tabular",
+          "start_line": 1097,
+          "end_line": 1102,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.15",
+          "environment": "tabular",
+          "start_line": 1108,
+          "end_line": 1111,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.16",
+          "environment": "tabular",
+          "start_line": 1118,
+          "end_line": 1123,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.17",
+          "environment": "tabular",
+          "start_line": 1129,
+          "end_line": 1132,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.18",
+          "environment": "tabular",
+          "start_line": 1139,
+          "end_line": 1144,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.19",
+          "environment": "tabular",
+          "start_line": 1150,
+          "end_line": 1153,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.20",
+          "environment": "tabular",
+          "start_line": 1160,
+          "end_line": 1166,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.21",
+          "environment": "tabular",
+          "start_line": 1173,
+          "end_line": 1179,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.22",
+          "environment": "tabular",
+          "start_line": 1258,
+          "end_line": 1264,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.23",
+          "environment": "tabular",
+          "start_line": 1278,
+          "end_line": 1286,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\caption{All possible orientations of breakends}"
+        },
+        {
+          "table_id": "VCF4.24",
+          "environment": "tabular",
+          "start_line": 1300,
+          "end_line": 1304,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted sequence between breakends}"
+        },
+        {
+          "table_id": "VCF4.25",
+          "environment": "tabular",
+          "start_line": 1319,
+          "end_line": 1323,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted contig}"
+        },
+        {
+          "table_id": "VCF4.26",
+          "environment": "tabular",
+          "start_line": 1330,
+          "end_line": 1333,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.27",
+          "environment": "tabular",
+          "start_line": 1340,
+          "end_line": 1344,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.28",
+          "environment": "tabular",
+          "start_line": 1352,
+          "end_line": 1358,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.29",
+          "environment": "tabular",
+          "start_line": 1371,
+          "end_line": 1376,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": "\\caption{Breakend with multiple mates}"
+        },
+        {
+          "table_id": "VCF4.30",
+          "environment": "tabular",
+          "start_line": 1394,
+          "end_line": 1400,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Partner breakends}"
+        },
+        {
+          "table_id": "VCF4.31",
+          "environment": "tabular",
+          "start_line": 1418,
+          "end_line": 1424,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Telomeres}"
+        },
+        {
+          "table_id": "VCF4.32",
+          "environment": "tabular",
+          "start_line": 1442,
+          "end_line": 1448,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Rearrangements}"
+        },
+        {
+          "table_id": "VCF4.33",
+          "environment": "tabular",
+          "start_line": 1468,
+          "end_line": 1471,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": "\\caption{Inversion}"
+        },
+        {
+          "table_id": "VCF4.34",
+          "environment": "tabular",
+          "start_line": 1479,
+          "end_line": 1485,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.35",
+          "environment": "tabular",
+          "start_line": 1506,
+          "end_line": 1510,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Homology}"
+        },
+        {
+          "table_id": "VCF4.36",
+          "environment": "tabular",
+          "start_line": 1532,
+          "end_line": 1538,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.37",
+          "environment": "tabular",
+          "start_line": 1550,
+          "end_line": 1555,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.38",
+          "environment": "tabular",
+          "start_line": 1563,
+          "end_line": 1568,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.39",
+          "environment": "tabular",
+          "start_line": 1590,
+          "end_line": 1596,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.40",
+          "environment": "tabular",
+          "start_line": 1606,
+          "end_line": 1612,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF4.41",
+          "environment": "tabular",
+          "start_line": 1697,
+          "end_line": 1706,
+          "body_line_count": 8,
+          "row_terminator_line_count": 8,
+          "caption_or_label_context": "\\label{unspecified-allele}"
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.5",
+      "source_file": "VCFv4.5.tex",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+      "vcf_section_table_count": 44,
+      "row_terminator_line_count": 267,
+      "footnote_marker_lines": 39,
+      "enumerated_list_starts": 20,
+      "explicit_grammar_marker_lines": 0,
+      "tables": [
+        {
+          "table_id": "VCF5.1",
+          "environment": "tabular",
+          "start_line": 84,
+          "end_line": 93,
+          "body_line_count": 8,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\label{character-encoding}"
+        },
+        {
+          "table_id": "VCF5.2",
+          "environment": "tabular",
+          "start_line": 223,
+          "end_line": 229,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.3",
+          "environment": "longtable",
+          "start_line": 443,
+          "end_line": 481,
+          "body_line_count": 37,
+          "row_terminator_line_count": 26,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.4",
+          "environment": "longtable",
+          "start_line": 517,
+          "end_line": 598,
+          "body_line_count": 80,
+          "row_terminator_line_count": 68,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.5",
+          "environment": "tabular",
+          "start_line": 675,
+          "end_line": 681,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.6",
+          "environment": "tabular",
+          "start_line": 701,
+          "end_line": 711,
+          "body_line_count": 9,
+          "row_terminator_line_count": 9,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.7",
+          "environment": "tabular",
+          "start_line": 749,
+          "end_line": 755,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.8",
+          "environment": "tabular",
+          "start_line": 781,
+          "end_line": 786,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.9",
+          "environment": "tabular",
+          "start_line": 798,
+          "end_line": 803,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.10",
+          "environment": "tabular",
+          "start_line": 1170,
+          "end_line": 1177,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.11",
+          "environment": "tabular",
+          "start_line": 1190,
+          "end_line": 1195,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.12",
+          "environment": "tabular",
+          "start_line": 1201,
+          "end_line": 1207,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.13",
+          "environment": "tabular",
+          "start_line": 1213,
+          "end_line": 1216,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.14",
+          "environment": "tabular",
+          "start_line": 1221,
+          "end_line": 1228,
+          "body_line_count": 6,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.15",
+          "environment": "tabular",
+          "start_line": 1235,
+          "end_line": 1238,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.16",
+          "environment": "tabular",
+          "start_line": 1249,
+          "end_line": 1252,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.17",
+          "environment": "tabular",
+          "start_line": 1258,
+          "end_line": 1263,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.18",
+          "environment": "tabular",
+          "start_line": 1269,
+          "end_line": 1272,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.19",
+          "environment": "tabular",
+          "start_line": 1279,
+          "end_line": 1284,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.20",
+          "environment": "tabular",
+          "start_line": 1290,
+          "end_line": 1293,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.21",
+          "environment": "tabular",
+          "start_line": 1300,
+          "end_line": 1305,
+          "body_line_count": 4,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.22",
+          "environment": "tabular",
+          "start_line": 1311,
+          "end_line": 1314,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.23",
+          "environment": "tabular",
+          "start_line": 1321,
+          "end_line": 1327,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.24",
+          "environment": "tabular",
+          "start_line": 1334,
+          "end_line": 1340,
+          "body_line_count": 5,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.25",
+          "environment": "tabular",
+          "start_line": 1418,
+          "end_line": 1424,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.26",
+          "environment": "tabular",
+          "start_line": 1438,
+          "end_line": 1446,
+          "body_line_count": 7,
+          "row_terminator_line_count": 7,
+          "caption_or_label_context": "\\caption{All possible orientations of breakends}"
+        },
+        {
+          "table_id": "VCF5.27",
+          "environment": "tabular",
+          "start_line": 1460,
+          "end_line": 1464,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted sequence between breakends}"
+        },
+        {
+          "table_id": "VCF5.28",
+          "environment": "tabular",
+          "start_line": 1479,
+          "end_line": 1483,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Inserted contig}"
+        },
+        {
+          "table_id": "VCF5.29",
+          "environment": "tabular",
+          "start_line": 1490,
+          "end_line": 1493,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.30",
+          "environment": "tabular",
+          "start_line": 1500,
+          "end_line": 1504,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.31",
+          "environment": "tabular",
+          "start_line": 1512,
+          "end_line": 1518,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.32",
+          "environment": "tabular",
+          "start_line": 1531,
+          "end_line": 1536,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": "\\caption{Breakend with multiple mates}"
+        },
+        {
+          "table_id": "VCF5.33",
+          "environment": "tabular",
+          "start_line": 1554,
+          "end_line": 1560,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Partner breakends}"
+        },
+        {
+          "table_id": "VCF5.34",
+          "environment": "tabular",
+          "start_line": 1578,
+          "end_line": 1584,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Telomeres}"
+        },
+        {
+          "table_id": "VCF5.35",
+          "environment": "tabular",
+          "start_line": 1602,
+          "end_line": 1608,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": "\\caption{Rearrangements}"
+        },
+        {
+          "table_id": "VCF5.36",
+          "environment": "tabular",
+          "start_line": 1628,
+          "end_line": 1631,
+          "body_line_count": 2,
+          "row_terminator_line_count": 2,
+          "caption_or_label_context": "\\caption{Inversion}"
+        },
+        {
+          "table_id": "VCF5.37",
+          "environment": "tabular",
+          "start_line": 1639,
+          "end_line": 1645,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.38",
+          "environment": "tabular",
+          "start_line": 1666,
+          "end_line": 1670,
+          "body_line_count": 3,
+          "row_terminator_line_count": 3,
+          "caption_or_label_context": "\\caption{Homology}"
+        },
+        {
+          "table_id": "VCF5.39",
+          "environment": "tabular",
+          "start_line": 1692,
+          "end_line": 1698,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.40",
+          "environment": "tabular",
+          "start_line": 1710,
+          "end_line": 1715,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.41",
+          "environment": "tabular",
+          "start_line": 1723,
+          "end_line": 1728,
+          "body_line_count": 4,
+          "row_terminator_line_count": 4,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.42",
+          "environment": "tabular",
+          "start_line": 1750,
+          "end_line": 1756,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.43",
+          "environment": "tabular",
+          "start_line": 1766,
+          "end_line": 1772,
+          "body_line_count": 5,
+          "row_terminator_line_count": 5,
+          "caption_or_label_context": null
+        },
+        {
+          "table_id": "VCF5.44",
+          "environment": "tabular",
+          "start_line": 1865,
+          "end_line": 1874,
+          "body_line_count": 8,
+          "row_terminator_line_count": 8,
+          "caption_or_label_context": null
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "The existing heading/caption inventory is not a complete table inventory: the VCF-specific roots contain substantially more table environments than caption records.",
+    "A table environment or row is not automatically normative. Each row must be classified by its semantics, source context, and relationship to prose.",
+    "The index does not yet atomize any table row; row-level review and requirement creation remain pending.",
+    "No explicit grammar/bnf/syntax environment or ::= production marker was detected by the narrow marker scan. This does not establish absence of grammar constraints; grammar and syntax prose must still be manually reviewed."
+  ],
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED"
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}
