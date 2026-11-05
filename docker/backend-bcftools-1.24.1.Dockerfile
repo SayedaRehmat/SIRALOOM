@@ -11,7 +11,7 @@ COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_BUILD_LOCK_FILE} /tmp/bcftools-b
 RUN micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
     && micromamba clean --all --yes
 COPY scripts/build_bcftools_1_24_1.sh /tmp/build_bcftools_1_24_1.sh
-RUN micromamba run --name bcftools-build env BCFTOOLS_PREFIX=/tmp/bcftools-runtime bash /tmp/build_bcftools_1_24_1.sh
+RUN micromamba run --name bcftools-build env BCFTOOLS_PREFIX=/opt/conda BCFTOOLS_DESTDIR=/tmp/bcftools-runtime bash /tmp/build_bcftools_1_24_1.sh
 
 # The pinned conda-forge toolchain currently requires GLIBC_2.38; use Debian trixie (glibc >=2.41).
 FROM python:3.12-slim-trixie
@@ -39,7 +39,7 @@ RUN groupadd --system --gid 10001 siraloom \
     && chown -R 10001:10001 /data/siraloom
 ENV HOME=/home/siraloom SIRALOOM_CONFIG_ROOT=/app
 
-COPY --from=bcftools-1.24.1-source /tmp/bcftools-runtime /opt/conda
+COPY --from=bcftools-1.24.1-source /tmp/bcftools-runtime/opt/conda /opt/conda
 ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 # Resolve the application dependency graph only from the committed uv lock.
