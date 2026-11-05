@@ -31,11 +31,12 @@
           "GHSA-644m-mq4p-c7c6"
         ]
       },
-      "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification"
+      "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification",
+      "worker_queue": "bioinformatics.bcftools.1_25"
     },
     {
       "id": "bcftools-1.24.1-htslib-1.24.1-linux-64-source",
-      "status": "SOFTWARE_QUALIFIED",
+      "status": "CANDIDATE",
       "platform": "linux-64",
       "bcftools_version": "1.24.1",
       "htslib_version": "1.24.1",
@@ -68,7 +69,8 @@
           "GHSA-vhg8-qwm7-cv9m"
         ]
       },
-      "qualification_scope": "SHA-256 verified official source archives; reproducible Linux-64 source build from the committed explicit Conda build lock (including binutils); exact BCFtools/HTSlib version attestation; normalization, multiallelic splitting, BGZF and CSI smoke tests; full backend regression suite (2212 passed, 46 skipped). Production image qualification remains a separate CI gate; not clinical or laboratory qualification."
+      "qualification_scope": "Source archive integrity, source build, VCF smoke tests and backend regression suite passed; isolated runtime Docker image compatibility gate is pending. Not production eligible until all image checks pass.",
+      "worker_queue": "bioinformatics.bcftools.1_24_1"
     }
   ]
 }
