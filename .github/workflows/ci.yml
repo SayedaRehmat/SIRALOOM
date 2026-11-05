@@ -18,7 +18,7 @@ jobs:
           python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
@@ -49,7 +49,7 @@ jobs:
         run: uv run --locked python -m compileall backend scripts
       - name: Build laboratory backend image
         run: docker build \
-            --build-arg BCFTOOLS_ENVIRONMENT_FILE=configs/bioinformatics/bcftools-environment.yml \
+            --build-arg BCFTOOLS_ENVIRONMENT_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml \
             --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64 \
             --build-arg BCFTOOLS_VERSION=1.25 \
             --build-arg HTSLIB_VERSION=1.25 \
@@ -110,7 +110,7 @@ jobs:
           python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
-          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
