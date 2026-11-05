@@ -161,14 +161,24 @@ def test_analysis_execution_claim_allows_continuation_of_running_work():
     assert db.commits == 1
 
 
-def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch):
+@pytest.mark.parametrize(
+    "toolchain_queue",
+    [
+        "bioinformatics.bcftools.1_25",
+        "bioinformatics.bcftools.1_24_1",
+        "bioinformatics.bcftools.1_23_3",
+        "bioinformatics.bcftools.1_22_4",
+        "bioinformatics.bcftools.1_21_3",
+    ],
+)
+def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch, toolchain_queue):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     db_session = importlib.import_module("backend.app.infrastructure.db.session")
     from backend.app.domain.enums import AnalysisStatus
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id), "toolchain_queue": "bioinformatics.bcftools.1_24_1"})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id), "toolchain_queue": toolchain_queue})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -214,7 +224,7 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
     assert published == [{
         "args": [str(analysis_id)],
         "task_id": str(dispatch_id),
-        "queue": "bioinformatics.bcftools.1_24_1",
+        "queue": toolchain_queue,
     }]
     assert dispatch.status == "PUBLISHED"
     assert dispatch.task_id == "dispatch-task-1"
