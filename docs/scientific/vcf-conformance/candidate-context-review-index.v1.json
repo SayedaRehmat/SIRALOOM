@@ -103,6 +103,10 @@
     {
       "artifact": "independent-standards-review-readiness.v1.json",
       "scope": "Machine-readable audit of ledger counts, source provenance blockers, version applicability gaps and explicit non-claims."
+    },
+    {
+      "artifact": "vcf4.5-table-semantic-review-queue.v1.json",
+      "scope": "Structural triage of all 44 VCF-only table environments in pinned VCFv4.5 source, with exact line locators, enclosing sections, semantic review targets and explicit NOT_REVIEWED status; no atomic requirements claimed from this queue."
     }
   ],
   "evidence_counters": {
@@ -117,6 +121,7 @@
     "scoped_pilot_review_permitted": true
   },
   "next_review_gates": [
+    "Perform row-by-row semantic review of all 44 VCFv4.5 tables, including reserved INFO/FORMAT definitions, genotype-ordering algorithm, local-allele and phasing examples, encoding mappings, small-variant representation and SV/breakend examples.",
     "Complete full semantic expansion and atomic decomposition across all specification sections, tables, grammar, definitions, examples, footnotes and cross-references.",
     "Reconcile all 61 FORMAT/GENOTYPE candidates with complete source context; retain FMT-GT-017 as a split parent and verify all 60 reconciled children/independent records.",
     "Resolve the 18 VCFv4.1–4.2 applicability cells using exact version-specific source passages; do not infer from later versions.",
