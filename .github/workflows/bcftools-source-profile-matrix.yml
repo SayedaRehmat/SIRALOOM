@@ -3,7 +3,8 @@ name: BCFtools source-profile qualification matrix
 on:
   push:
     branches:
-      - feat/bcftools-1.24.1-profile-and-analysis-routing
+      - main
+      - feat/bcftools-toolchain-qualification-rebased
     paths:
       - "scripts/build_bcftools_from_profile.sh"
       - "docker/backend-bcftools-source.Dockerfile"
@@ -115,6 +116,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     defaults:
       run:
