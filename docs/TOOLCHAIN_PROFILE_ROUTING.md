@@ -23,7 +23,7 @@ The standard 1.25 pool consumes the shared celery queue and bioinformatics.bcfto
 
 ## Reproducible container inputs
 
-The generic source-build image pins both builder and runtime base images by immutable OCI digest. Runtime OS packages are resolved only from the fixed Debian Trixie snapshot `20261105T000000Z`; the `uv` bootstrap binary is downloaded from the official Astral release and verified against its SHA-256 before installation. The application dependency set remains governed by the committed `uv.lock`. Do not replace these inputs with floating tags, current Debian mirrors, or unverified installer scripts.
+Both the default 1.25 image and source-built profile images pin builder and runtime base images by immutable OCI digest. Runtime OS packages are resolved only from the fixed Debian Trixie snapshot `20261105T000000Z`; the `uv` bootstrap binary is downloaded from the official Astral release and verified against its SHA-256 before installation, with Python/OpenSSL explicitly pointed at Debian's CA trust store. The application dependency set remains governed by the committed `uv.lock`. Do not replace these inputs with floating tags, current Debian mirrors, or unverified installer scripts.
 
 ## Registered profile set
 
@@ -37,6 +37,11 @@ The generic source-build image pins both builder and runtime base images by immu
 | Legacy | 1.19 | 1.19 | none | QUARANTINED_LEGACY; never production-selectable |
 
 A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The three source-built profiles above have passed source, lock, VCF smoke, full backend, non-root runtime-image and profile-routing/reanalysis software checks on Linux AMD64. This does not establish clinical validation or compatibility with ARM64 and every possible lab host. The 1.21.3 profile remains blocked by its unresolved VCF 4.5 FORMAT/LEN regression. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
+
+## Supported build platform
+
+The current locked build contract is Linux AMD64 (`linux-64`, CPU architecture `x86_64`). Both the default and source-built Dockerfiles fail closed on other architectures. ARM64 (`linux-aarch64`) is not currently qualified: it requires its own explicit package lock, source/runtime image build, VCF regression suite and worker-routing qualification before it can be enabled. Container images are not a substitute for checking host kernel, container runtime, storage permissions, memory/CPU limits, network policy and reference-resource availability during lab preflight.
+
 
 ## Optional production worker pools
 
