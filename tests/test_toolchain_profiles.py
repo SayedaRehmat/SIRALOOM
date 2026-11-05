@@ -69,13 +69,48 @@ def test_profile_rejects_independent_bcftools_or_htslib_version_drift(
         )
 
 
-def test_profile_registry_rejects_unregistered_historical_toolchain(tmp_path):
-    with pytest.raises(ToolchainProfileError, match="Unknown BCFtools/HTSlib profile"):
+def test_1_19_is_registered_but_quarantined_from_production():
+    profile_id = "bcftools-1.19-htslib-1.19-linux-64-legacy"
+    profile = next(
+        item for item in json.loads(REGISTRY.read_text(encoding="utf-8"))["profiles"]
+        if item["id"] == profile_id
+    )
+    assert profile["status"] == "QUARANTINED_LEGACY"
+    assert profile["security_review"]["status"] == "UNPATCHED_LEGACY_BLOCKED"
+    with pytest.raises(ToolchainProfileError, match="not software-qualified"):
         resolve_toolchain_profile(
-            "bcftools-1.19-htslib-1.19-linux-64",
+            profile_id,
             bcftools_version="1.19",
             htslib_version="1.19",
         )
+
+
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "queue"),
+    [
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4"),
+        ("bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", "1.21.3", "bioinformatics.bcftools.1_21_3"),
+    ],
+)
+def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
+    profile_id, bcftools_version, htslib_version, queue
+):
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
+    assert profile["status"] == "CANDIDATE"
+    assert profile["bcftools_version"] == bcftools_version
+    assert profile["htslib_version"] == htslib_version
+    assert profile["worker_queue"] == queue
+    assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
+    assert profile["installation_method"] == "verified_source_build"
+    assert len(profile["source_archives"]) == 2
+    assert all(len(item["sha256"]) == 64 for item in profile["source_archives"])
+    assert (ROOT / profile["environment_file"]).is_file()
+    assert (ROOT / profile["lock_file"]).is_file()
+    lock = (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
+    assert "@EXPLICIT" in lock
+    assert "# platform: linux-64" in lock
 
 
 def test_profile_registry_does_not_allow_candidate_profiles(tmp_path):
