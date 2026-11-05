@@ -23,7 +23,7 @@ The standard 1.25 pool consumes the shared celery queue and bioinformatics.bcfto
 
 ## Reproducible container inputs
 
-Both the default 1.25 image and source-built profile images pin builder and runtime base images by immutable OCI digest. Runtime OS packages are resolved only from the fixed Debian Trixie snapshot `20261105T000000Z`; the `uv` bootstrap binary is downloaded from the official Astral release and verified against its SHA-256 before installation, with Python/OpenSSL explicitly pointed at Debian's CA trust store. The application dependency set remains governed by the committed `uv.lock`. Do not replace these inputs with floating tags, current Debian mirrors, or unverified installer scripts.
+Both the default 1.25 image and source-built profile images pin builder and runtime base images by immutable OCI digest. Runtime OS packages are resolved only from the fixed Debian Trixie snapshot `20261105T000000Z`. Snapshot CDN throttling is handled with five bounded retries and increasing, per-build-staggered backoff; failure after the retry budget fails the build closed. APT package signature verification remains enabled. The `uv` bootstrap binary is downloaded from the official Astral release and verified against its SHA-256 before installation, with Python/OpenSSL explicitly pointed at Debian's CA trust store. The application dependency set remains governed by the committed `uv.lock`. Do not replace these inputs with floating tags, current Debian mirrors, or unverified installer scripts.
 
 ## Registered profile set
 
