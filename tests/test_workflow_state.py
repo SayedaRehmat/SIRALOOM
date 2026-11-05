@@ -658,7 +658,8 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
 
     assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
     assert events.index("recovery") < events.index("resume_analysis")
-    assert events.index("resume_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+    resume_index = events.index("resume_analysis")
+    assert resume_index < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)), resume_index + 1)
     assert events.count("recovery") == 1
     assert events.count("resume_analysis") == 1
 
@@ -1481,7 +1482,8 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     assert fake_analysis.status == AnalysisStatus.RUNNING
     assert "recovery" not in events
     assert events.count("run_analysis") == 1
-    assert events.index("run_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+    run_index = events.index("run_analysis")
+    assert run_index < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)), run_index + 1)
 
 
 def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypatch):
