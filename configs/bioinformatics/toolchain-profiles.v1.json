@@ -35,14 +35,14 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
           "GHSA-vhg8-qwm7-cv9m",
           "GHSA-xj7m-w8mc-xvf2",
           "GHSA-vh3p-9c59-j3hv",
           "GHSA-3j6q-r48h-wvm3",
-          "GHSA-f423-v554-fwqr"
+          "GHSA-f423-v554-fwqr",
+          "GHSA-644m-mq4p-c7c6"
         ],
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.25/",
         "reviewed_on": "2026-11-05"
@@ -79,14 +79,14 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
           "GHSA-vhg8-qwm7-cv9m",
           "GHSA-xj7m-w8mc-xvf2",
           "GHSA-vh3p-9c59-j3hv",
           "GHSA-3j6q-r48h-wvm3",
-          "GHSA-f423-v554-fwqr"
+          "GHSA-f423-v554-fwqr",
+          "GHSA-644m-mq4p-c7c6"
         ],
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/",
         "reviewed_on": "2026-11-05"
@@ -124,14 +124,14 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
           "GHSA-vhg8-qwm7-cv9m",
           "GHSA-xj7m-w8mc-xvf2",
           "GHSA-vh3p-9c59-j3hv",
           "GHSA-3j6q-r48h-wvm3",
-          "GHSA-f423-v554-fwqr"
+          "GHSA-f423-v554-fwqr",
+          "GHSA-644m-mq4p-c7c6"
         ],
         "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/",
         "reviewed_on": "2026-11-05"
@@ -169,7 +169,6 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
           "GHSA-vhg8-qwm7-cv9m",
@@ -214,7 +213,6 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
           "GHSA-vhg8-qwm7-cv9m",
