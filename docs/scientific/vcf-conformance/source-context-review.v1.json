@@ -57,16 +57,22 @@
     {
       "context_id": "CTX-HEADER-DATA-43-45",
       "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
         "VCFv4.3",
         "VCFv4.4",
         "VCFv4.5"
       ],
       "source_ranges": [
+        "VCFv4.1.tex:155-159",
+        "VCFv4.2.tex:172-176",
         "VCFv4.3.tex:311-319",
         "VCFv4.4.tex:325-333",
         "VCFv4.5.tex:374-382"
       ],
       "findings": [
+        "Header and data field tab-delimitation are declarative serialization constraints across the reviewed VCFv4.1–4.5 passages; they are not discovered by a modal-word-only matcher.",
+        "Duplicate sample identifiers are prohibited in the reviewed VCFv4.1–4.5 passages using 'not allowed' wording, which the existing modal matcher does not recognize.",
         "The header and data-line trailing-tab prohibitions are separately observable and separately testable.",
         "The requirement for the last data line to end with a line separator is a producer/file conformance constraint distinct from the reader's LF/CRLF support requirement.",
         "These constraints occur in prose without being represented by the candidate intake as separate atomic records; discovery must inspect source structure and context, not only candidate counts."
@@ -97,6 +103,10 @@
     {
       "candidate": "VCFv4.3:L0313-L0318 and equivalent lines in 4.4-4.5",
       "result": "Create separate trailing-tab constraints for header and data lines and a final-data-line terminator constraint."
+    },
+    {
+      "candidate": "VCFv4.1:L0155/L0159 and corresponding header/data passages in 4.2–4.5",
+      "result": "Create separate requirements for tab-delimited header fields, tab-delimited data fields, and unique sample identifiers; they are independently testable."
     }
   ],
   "independent_review": {
