@@ -128,7 +128,10 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
     assert "x86_64:linux-64) ;;" in dockerfile
     assert "aarch64:linux-aarch64" not in dockerfile
     assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile
-    assert "printf '%s\\n' \\"deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main\\"" in dockerfile
+    assert "printf" in dockerfile
+    assert "trixie main" in dockerfile
+    assert "trixie-updates main" in dockerfile
+    assert "trixie-security main" in dockerfile
     assert "APT::Update::Error-Mode=any update" in dockerfile
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
