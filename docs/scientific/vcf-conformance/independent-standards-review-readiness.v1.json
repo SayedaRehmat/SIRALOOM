@@ -13,22 +13,26 @@
     "records_with_source_locator_values": 75,
     "records_in_review": 75,
     "independently_second_person_approved": 0,
-    "records_with_test_evidence_entries": 10,
+    "records_with_test_evidence_entries": 0,
+    "test_evidence_entries": 0,
     "records_without_open_question_entries": 46,
     "vcf40_source_not_pinned_records": 75,
     "unresolved_applicability_cells_vcf41_vcf42": 18,
     "unresolved_applicability_cells_vcf43_vcf45": 0,
     "genotype_candidate_records": 61,
     "genotype_split_parent_candidates": 1,
-    "genotype_candidates_reconciled_to_ledger": 60
+    "genotype_candidates_reconciled_to_ledger": 60,
+    "descriptive_records": 40,
+    "production_implementation_mappings": 0
   },
   "critical_blockers": [
     "Whole-specification source coverage is incomplete; current ledger is a partial seed plus FORMAT/GENOTYPE expansion.",
-    "VCFv4.0 historical normative provenance and immutable source-byte capture are unresolved.",
+    "VCFv4.0 historical normative provenance and immutable source-byte capture are unresolved; the IGSR page remains a discovery/reference candidate only.",
     "Independent second-person review has not started.",
-    "Genotype candidate table Number/Type semantics and ordering algorithms are not fully atomized.",
-    "Version applicability remains unresolved for 18 VCFv4.1–4.2 ledger cells.",
-    "Source excerpt hashes and retrieval metadata are incomplete."
+    "Reserved INFO/FORMAT rows, SV/breakend, gVCF, grammar, definitions, examples, footnotes and cross-references still require semantic decomposition.",
+    "Version applicability remains unresolved for 9 VCFv4.1 cells and 9 VCFv4.2 cells.",
+    "Source excerpt hashes and retrieval metadata are incomplete.",
+    "No implementation mapping or executed clause-specific test evidence is present in the current 75-record ledger."
   ],
   "source_separation": {
     "core_vcf40": "IGSR historical core page remains a discovery/reference candidate; not yet accepted as normative.",
@@ -41,5 +45,7 @@
     "No implementation conformance claim.",
     "No executed clause-specific test claim.",
     "No laboratory qualification claim."
-  ]
+  ],
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "ledger_blob_sha": "a4308d0766c7e96aa9d4308325bc3bdf941defb1"
 }
