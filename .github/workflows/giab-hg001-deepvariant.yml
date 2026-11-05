@@ -60,6 +60,9 @@ jobs:
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned samtools for BAM verification and reference indexing
+        shell: bash -l {0}
+        run: micromamba install --yes --name bcftools samtools=1.23.1
       - name: Install SIRALOOM backend
         shell: bash -l {0}
         run: pip install -e .
@@ -253,7 +256,7 @@ jobs:
                   for block in iter(lambda: f.read(1024*1024), b""): h.update(block)
               return h.hexdigest()
           files = {}
-          for path in sorted([*root.glob("input/HG001.bam"), *root.glob("input/HG001.bam.bai"), *root.glob("output/HG001.deepvariant.vcf.gz"), *root.glob("output/HG001.deepvariant.vcf.gz.tbi"), *evidence.glob("concordance/giab-concordance.json"), *evidence.glob("asset-provenance.json")]):
+          for path in sorted([*root.glob("input/HG001.bam"), *root.glob("input/HG001.bam.bai"), *root.glob("output/HG001.deepvariant.vcf.gz"), *root.glob("output/HG001.deepvariant.vcf.gz.tbi"), *root.glob("output/HG001.deepvariant.g.vcf.gz"), *root.glob("output/HG001.deepvariant.g.vcf.gz.tbi"), *root.glob("input/hs37d5.fa"), *root.glob("input/hs37d5.fa.fai"), *evidence.glob("concordance/giab-concordance.json"), *evidence.glob("asset-provenance.json")]):
               files[str(path.relative_to(root))] = {"size_bytes": path.stat().st_size, "sha256": digest(path)}
           payload = {
               "schema_version": "1",
