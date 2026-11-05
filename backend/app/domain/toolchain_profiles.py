@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -9,8 +10,8 @@ class ToolchainProfileError(ValueError):
     """The configured scientific toolchain is not a registered safe profile."""
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_REGISTRY = REPOSITORY_ROOT / "configs" / "bioinformatics" / "toolchain-profiles.v1.json"
+CONFIG_ROOT = Path(os.environ.get("SIRALOOM_CONFIG_ROOT", Path.cwd())).resolve()
+DEFAULT_REGISTRY = CONFIG_ROOT / "configs" / "bioinformatics" / "toolchain-profiles.v1.json"
 
 
 def load_toolchain_registry(path: str | Path = DEFAULT_REGISTRY) -> dict[str, Any]:
@@ -66,12 +67,12 @@ def resolve_toolchain_profile(
         artifact = profile.get(artifact_key)
         if not isinstance(artifact, str) or not artifact.strip():
             raise ToolchainProfileError(f"Profile {profile_id!r} is missing {artifact_key}.")
-        artifact_path = REPOSITORY_ROOT / artifact
+        artifact_path = CONFIG_ROOT / artifact
         if not artifact_path.is_file():
             raise ToolchainProfileError(
                 f"Profile {profile_id!r} references a missing {artifact_key}: {artifact}."
             )
-    lock_text = (REPOSITORY_ROOT / profile["lock_file"]).read_text(encoding="utf-8")
+    lock_text = (CONFIG_ROOT / profile["lock_file"]).read_text(encoding="utf-8")
     if "@EXPLICIT" not in lock_text or f"# platform: {profile.get('platform')}" not in lock_text:
         raise ToolchainProfileError(f"Profile {profile_id!r} has an invalid platform-specific explicit lock.")
     return dict(profile)
