@@ -127,7 +127,6 @@ jobs:
         run: |
           set -euo pipefail
           micromamba env export --explicit --name bcftools-build > "$RUNNER_TEMP/profile-build.lock"
-          sed -i 's#conda-forge/noarch/python-3.12.16#conda-forge/linux-64/python-3.12.16#' "$RUNNER_TEMP/profile-build.lock"
           diff -u "${{ matrix.lock_file }}" "$RUNNER_TEMP/profile-build.lock"
       - name: Build exact BCFtools/HTSlib source pair with SHA-256 verification
         env:
