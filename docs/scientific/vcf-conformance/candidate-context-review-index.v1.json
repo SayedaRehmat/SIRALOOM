@@ -91,6 +91,10 @@
     {
       "artifact": "genotype-format-atomic-candidates.v1.json",
       "scope": "61 proposed FORMAT/GENOTYPE candidates: 18 initial and 43 expanded candidates covering genotype ordering, phasing, PS/PSL/PSO/PSQ, VCFv4.5 local alleles and base modifications. FMT-GT-017 retained as a split parent; 60 child/independent candidates reconciled into the ledger. Independent review pending."
+    },
+    {
+      "artifact": "vcf4.0-historical-source-provenance.v1.json",
+      "scope": "Historical VCFv4.0 source discovery and provenance assessment. IGSR core page is a candidate reference only; raw immutable source bytes and SHA-256 are not captured, normative provenance remains unaccepted, and the 1000 Genomes SV conventions page is explicitly separated as producer-convention material."
     }
   ],
   "evidence_counters": {
@@ -103,6 +107,7 @@
     "vcf40_historical_source_bytes_hashed": false
   },
   "next_review_gates": [
+    "Complete VCFv4.0 source acquisition: locate an immutable original/authoritative archival artifact, capture exact bytes, compute SHA-256, establish provenance, and compare the core text separately from IGSR/1000 Genomes producer conventions.",
     "Reconcile FORMAT/GENOTYPE candidates FMT-GT-001–061 with detailed per-version GT, genotype ordering, phase-set, local-allele and base-modification semantics; FMT-GT-017 is a split parent, not an independent ledger requirement.",
     "Expand and reconcile the 18 FORMAT/genotype candidates against complete per-version GT, GL/GP/PL, PS/phasing, genotype ordering, local-allele and base-modification source context; retain unresolved version scope until exact passages are reviewed.",
     "Expand immediate-neighbour candidate contexts to full clauses, definitions, tables, examples, footnotes and cross-references before declaring semantic review complete.",
@@ -118,6 +123,7 @@
     "223 reserved INFO/FORMAT entries are not 223 mandatory requirements.",
     "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed.",
     "The 18 FORMAT/genotype candidates are proposals only; they are not approved ledger entries, implementation mappings, or executed tests.",
-    "The 60 newly reconciled FORMAT/GENOTYPE ledger records remain IN_REVIEW; none has independent second-person approval, implementation mapping or executed clause tests."
+    "The 60 newly reconciled FORMAT/GENOTYPE ledger records remain IN_REVIEW; none has independent second-person approval, implementation mapping or executed clause tests.",
+    "VCFv4.0 historical-source discovery is not source capture: no original bytes or SHA-256 are available and the IGSR page is not yet accepted as the normative VCFv4.0 source."
   ]
 }
