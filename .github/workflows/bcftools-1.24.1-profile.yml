@@ -5,6 +5,8 @@ on:
     paths:
       - "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml"
       - "scripts/build_bcftools_1_24_1.sh"
+      - "tests/test_vcf_tools.py"
+      - "tests/test_toolchain_profiles.py"
       - ".github/workflows/bcftools-1.24.1-profile.yml"
   workflow_dispatch:
 
