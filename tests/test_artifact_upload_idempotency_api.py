@@ -20,6 +20,7 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     Organization,
+    OrganizationMembership,
     Resource,
     ResourceApproval,
     ResourceQualification,
@@ -54,6 +55,13 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             role="organization_admin",
             status="ACTIVE",
         )
+        membership = OrganizationMembership(
+            id=uuid4(),
+            organization_id=organization_id,
+            user_id=user_id,
+            role="organization_admin",
+            status="ACTIVE",
+        )
         case = Case(
             id=case_id,
             organization_id=organization_id,
@@ -63,7 +71,7 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             language="en",
             created_by=user_id,
         )
-        db.add_all([organization, user, case])
+        db.add_all([organization, user, membership, case])
         db.commit()
 
     principal = Principal(
@@ -100,7 +108,7 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(
         artifacts_api,
-        "_validate_vcf_for_upload",
+        "validate_vcf",
         lambda path: ValidationResult(
             status="VALID",
             file_kind="VCF",
@@ -571,7 +579,7 @@ def test_artifact_upload_returns_nonretryable_storage_access_failure_without_per
             retryable=False,
         )
 
-    monkeypatch.setattr(artifacts_api, "_validate_vcf_for_upload", unavailable)
+    monkeypatch.setattr(artifacts_api, "validate_vcf", unavailable)
     response = _post_vcf(
         upload_api["client"],
         upload_api["case_id"],
