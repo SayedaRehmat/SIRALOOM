@@ -130,7 +130,10 @@
     "laboratory_qualified_versions": 0,
     "vcf40_historical_source_bytes_hashed": false,
     "complete_ledger_independent_review_ready": false,
-    "scoped_pilot_review_permitted": true
+    "scoped_pilot_review_permitted": true,
+    "ledger_required_fields_and_enums_validation": "PASS_105_RECORDS_ZERO_ERRORS",
+    "source_locator_presence": "PASS_105_RECORDS",
+    "unique_requirement_ids": "PASS_105_UNIQUE"
   },
   "next_review_gates": [
     "Complete semantic review of remaining VCFv4.5 tables and their surrounding source context: encoding, genotype ordering, local alleles, phase-set lists, small-variant representation and SV/breakend examples.",
