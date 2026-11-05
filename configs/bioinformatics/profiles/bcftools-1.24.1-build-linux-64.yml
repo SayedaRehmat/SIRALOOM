@@ -4,6 +4,7 @@ channel_priority: strict
 dependencies:
   - c-compiler
   - binutils
+  - sysroot_linux-64=2.28
   - make
   - pkg-config
   - autoconf
