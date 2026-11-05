@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -142,6 +143,31 @@ def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
+
+
+
+def test_pinned_snapshot_retry_loop_retries_transient_apt_failures():
+    dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
+    loop = dockerfile.split("    && apt_update_succeeded=0 \\\n", 1)[1].split(
+        "    && apt-get install", 1
+    )[0]
+    script = """set -eu
+apt_calls=0
+sleep_calls=0
+apt-get() {
+    apt_calls=$((apt_calls + 1))
+    [ "$apt_calls" -ge 3 ]
+}
+sleep() {
+    sleep_calls=$((sleep_calls + 1))
+}
+apt_update_succeeded=0 \\
+""" + loop
+    script = script.replace(
+        '&& test "$apt_update_succeeded" = 1',
+        '&& test "$apt_update_succeeded" = 1 && test "$apt_calls" = 3 && test "$sleep_calls" = 2',
+    )
+    subprocess.run(["/bin/sh", "-c", script], check=True, capture_output=True, text=True)
 
 
 
