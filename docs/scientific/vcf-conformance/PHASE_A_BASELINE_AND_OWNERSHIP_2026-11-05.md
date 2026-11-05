@@ -389,3 +389,27 @@ See `core-info-format-row-inventory.v1.json`, `format-reserved-row-source-review
 4. Complete semantic delta analysis for all VCFv4.1–4.5 clauses and add VCFv4.0 only after immutable historical source capture.
 5. Obtain independent second-person review before any requirement is marked independently reviewed.
 6. Only then map to production code and execute version-specific conformance tests.
+
+
+## FORMAT/GENOTYPE semantic expansion — 2026-11-05
+
+A direct source-context pass was performed against the pinned HTS-specs TeX files for VCFv4.1–4.5. This expanded the initial FORMAT candidate set from 18 to 61 proposed candidates.
+
+Coverage added:
+- General genotype likelihood ordering for arbitrary ploidy and alternate-allele count, including inclusive loop boundaries, recursive enumeration, diploid triangular indexing, and the VCFv4.5 inverse-index expression.
+- The VCFv4.3 to VCFv4.4 change from genotype-level separators to allele-level phasing indicators, including the implicit first-indicator rule and partial phasing.
+- PSL, PSO and PSQ definitions and constraints: list cardinality, unphased allele placeholders, cross-chromosome phase-set identity, PS/PSL mutual exclusion and non-interoperability, derivative-chromosome traversal ordinals, paired-breakend consistency and quality missingness.
+- VCFv4.5 local-allele Number LA/LR/LG/P/M semantics, LAA index/order behavior, conditional LAA requirement, local/global field equivalence, and the BCF empty-vector/MISSING caveat.
+- VCFv4.5 base-modification FORMAT semantics: M/DPM/ADM key families, aliases, ChEBI-related key pattern reservation, U/T synonymy, GT dependency, genotype/phasing-dependent value order, strand handling, missing/symbolic allele handling and unstranded conventions.
+
+The 61 candidate records are proposals, not 61 approved requirements. One broad LAA candidate (FMT-GT-017) is explicitly retained as a split parent after the more precise source condition was captured in FMT-GT-039. Sixty candidate records were reconciled into the atomic ledger as VCF-REQ-000016 through VCF-REQ-000075. All 75 ledger records remain IN_REVIEW. VCFv4.0 applicability is marked SOURCE_NOT_PINNED for these new records; no VCFv4.0 claim is inferred.
+
+Version-delta review now includes five additional genotype/FORMAT topics: genotype ordering, GT phasing representation, phase-set-list model, local-allele semantics, and base-modification semantics. The delta registry contains 11 row-level semantic delta topics in total.
+
+### Explicit evidence limits after this pass
+
+- Primary source context review is not independent second-person review.
+- Candidate-to-ledger reconciliation does not mean approval; the 60 new ledger records remain IN_REVIEW.
+- No implementation mapping, executable clause tests, differential parser tests or laboratory qualification was performed.
+- The reserved INFO/FORMAT row inventory remains broader than the current atomic requirement set; detailed semantics for many individual reserved rows still require decomposition.
+- VCFv4.0 historical source bytes have not yet been authoritatively captured and SHA-256 pinned. The previously recorded International Genome Sample Resource (IGSR) VCF 4.0 page is a discovery/reference page, not accepted as the normative specification source. Producer conventions and examples from 1000 Genomes/IGSR must remain a separate source class and must not be substituted for the normative VCF 4.0 specification.
