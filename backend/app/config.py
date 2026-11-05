@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     analysis_artifact_output_multiplier: float = Field(default=1.0, gt=0)
     analysis_scratch_multiplier: float = Field(default=2.0, gt=0)
     analysis_storage_headroom_bytes: int = Field(default=1024 * 1024 * 1024, ge=0)
+    # One immutable scientific execution profile per process/container. Different
+    # profiles run in separate worker images; never rely on PATH selecting a random tool.
+    bcftools_profile_id: str = "bcftools-1.25-htslib-1.25-linux-64"
+    bcftools_executable: str = "bcftools"
     bcftools_version: str = "1.25"
     htslib_version: str = "1.25"
 
