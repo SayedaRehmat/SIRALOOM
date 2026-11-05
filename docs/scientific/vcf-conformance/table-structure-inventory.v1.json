@@ -3,14 +3,14 @@
   "inventory_id": "siraloom-vcf-table-structure-inventory",
   "status": "STRUCTURE_INDEXED_ROW_SEMANTICS_REVIEW_PENDING",
   "source_repository": "samtools/hts-specs",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
   "scope": "VCF-specific section roots only; BCF specification and change-log roots excluded using the same root boundaries as the existing normative inventory.",
   "method": "Enumerate LaTeX tabular and longtable environments within VCF section roots; record source line ranges and the number of lines containing LaTeX row terminators. Row-terminator-line counts are navigation aids, not a semantic row count or requirement count.",
   "versions": [
     {
       "version": "VCFv4.1",
       "source_file": "VCFv4.1.tex",
-      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
       "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
       "vcf_section_table_count": 35,
       "row_terminator_line_count": 134,
@@ -338,7 +338,7 @@
     {
       "version": "VCFv4.2",
       "source_file": "VCFv4.2.tex",
-      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
       "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
       "vcf_section_table_count": 35,
       "row_terminator_line_count": 134,
@@ -666,7 +666,7 @@
     {
       "version": "VCFv4.3",
       "source_file": "VCFv4.3.tex",
-      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
       "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
       "vcf_section_table_count": 40,
       "row_terminator_line_count": 200,
@@ -1039,7 +1039,7 @@
     {
       "version": "VCFv4.4",
       "source_file": "VCFv4.4.tex",
-      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
       "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
       "vcf_section_table_count": 41,
       "row_terminator_line_count": 204,
@@ -1421,7 +1421,7 @@
     {
       "version": "VCFv4.5",
       "source_file": "VCFv4.5.tex",
-      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
       "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
       "vcf_section_table_count": 44,
       "row_terminator_line_count": 267,
