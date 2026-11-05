@@ -59,6 +59,25 @@ jobs:
           "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" view -H "$work/normalized.vcf.gz" | grep -q $'chr1\t11'
           test -s "$work/normalized.vcf.gz.csi"
           "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Run backend regression suite against BCFtools 1.24.1
+        env:
+          BCFTOOLS_EXECUTABLE: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build/bin/bcftools
+          BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
+          BCFTOOLS_VERSION: "1.24.1"
+          HTSLIB_VERSION: "1.24.1"
+          DATABASE_URL: sqlite:///./ci-bcftools-1.24.1.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: |
+          python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
+          uv lock --check
+          uv sync --locked --extra dev
+          uv run --locked pytest -q
       - uses: actions/upload-artifact@v4
         with:
           name: bcftools-1.24.1-build-linux-64-lock
