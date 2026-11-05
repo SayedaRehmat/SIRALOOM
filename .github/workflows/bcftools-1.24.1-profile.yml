@@ -71,6 +71,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
+      - name: Create ephemeral software-qualification registry for candidate regression
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/qualified-config-root"
+          mkdir -p "$root/configs"
+          cp -R configs/bioinformatics "$root/configs/"
+          python - "$root/configs/bioinformatics/toolchain-profiles.v1.json" <<'PY'
+          import json, sys
+          path = sys.argv[1]
+          payload = json.load(open(path, encoding="utf-8"))
+          profile = next(
+              item for item in payload["profiles"]
+              if item["id"] == "bcftools-1.24.1-htslib-1.24.1-linux-64-source"
+          )
+          # This temporary copy allows the candidate binary to run the full
+          # suite; the committed registry remains CANDIDATE until the image
+          # build/runtime gates have passed.
+          profile["status"] = "SOFTWARE_QUALIFIED"
+          json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
+          PY
       - name: Run backend regression suite against BCFtools 1.24.1
         env:
           BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
@@ -81,6 +101,7 @@ jobs:
           GENEBE_ENABLED: "false"
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
+          SIRALOOM_CONFIG_ROOT: ${{ runner.temp }}/qualified-config-root
         run: |
           export BCFTOOLS_EXECUTABLE="$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools"
           python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
