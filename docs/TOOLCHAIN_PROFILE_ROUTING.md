@@ -21,6 +21,10 @@ The assignment is created with the analysis and cannot be edited afterward. Rean
 
 The standard 1.25 pool consumes the shared celery queue and bioinformatics.bcftools.1_25. A secondary native-toolchain pool consumes only its own profile queue; it does not steal general background tasks.
 
+## Reproducible container inputs
+
+The generic source-build image pins both builder and runtime base images by immutable OCI digest. Runtime OS packages are resolved only from the fixed Debian Trixie snapshot `20261105T000000Z`; the `uv` bootstrap binary is downloaded from the official Astral release and verified against its SHA-256 before installation. The application dependency set remains governed by the committed `uv.lock`. Do not replace these inputs with floating tags, current Debian mirrors, or unverified installer scripts.
+
 ## Registered profile set
 
 | Profile | BCFtools | HTSlib | Queue | Current eligibility |
