@@ -4,7 +4,7 @@
   "status": "PRIMARY_SOURCE_EXTRACTION_COMPLETE_FOR_CORE_RESERVED_KEY_TABLES_SEMANTIC_REVIEW_PENDING",
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
   "scope": "Reserved INFO and reserved FORMAT/genotype key definitions in VCFv4.1–4.5; 4.1–4.2 are prose enumerations and 4.3–4.5 use tables. VCFv4.0 excluded pending historical source byte capture.",
-  "method": "Extract key, Number, Type and Description cells from each pinned source row, or key/description from the earlier prose enumerations. Preserve original source line and raw TeX line. This extraction does not decide whether a reserved key is mandatory in a record; the surrounding specification calls reserved keys optional in the relevant sections.",
+  "method": "Extract key, Number, Type and Description cells from each pinned source row, or key/description from the earlier prose enumerations. Preserve original source line and raw TeX line. This extraction does not decide whether a reserved key is mandatory in a record; the surrounding specification calls reserved keys optional in the relevant sections. For VCFv4.3–4.5, the eight header names are centered TeX lines rather than enumerate items; they are captured as an ordered sequence from the exact source lines.",
   "versions": [
     {
       "version": "VCFv4.1",
@@ -680,7 +680,48 @@
     },
     {
       "version": "VCFv4.3",
-      "header_columns": [],
+      "header_columns": [
+        {
+          "field": "#CHROM",
+          "source_line": 301,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "POS",
+          "source_line": 302,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ID",
+          "source_line": 303,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "REF",
+          "source_line": 304,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ALT",
+          "source_line": 305,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "QUAL",
+          "source_line": 306,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "FILTER",
+          "source_line": 307,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "INFO",
+          "source_line": 308,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        }
+      ],
       "fixed_fields": [
         {
           "field": "CHROM",
@@ -1085,7 +1126,48 @@
     },
     {
       "version": "VCFv4.4",
-      "header_columns": [],
+      "header_columns": [
+        {
+          "field": "#CHROM",
+          "source_line": 315,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "POS",
+          "source_line": 316,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ID",
+          "source_line": 317,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "REF",
+          "source_line": 318,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ALT",
+          "source_line": 319,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "QUAL",
+          "source_line": 320,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "FILTER",
+          "source_line": 321,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "INFO",
+          "source_line": 322,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        }
+      ],
       "fixed_fields": [
         {
           "field": "CHROM",
@@ -1518,7 +1600,48 @@
     },
     {
       "version": "VCFv4.5",
-      "header_columns": [],
+      "header_columns": [
+        {
+          "field": "#CHROM",
+          "source_line": 364,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "POS",
+          "source_line": 365,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ID",
+          "source_line": 366,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "REF",
+          "source_line": 367,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "ALT",
+          "source_line": 368,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "QUAL",
+          "source_line": 369,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "FILTER",
+          "source_line": 370,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        },
+        {
+          "field": "INFO",
+          "source_line": 371,
+          "raw_source_text": "Header-line ordered column name; source TeX uses centered column syntax rather than enumerate items."
+        }
+      ],
       "fixed_fields": [
         {
           "field": "CHROM",
