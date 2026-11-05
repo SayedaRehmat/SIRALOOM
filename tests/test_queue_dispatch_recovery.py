@@ -1,6 +1,8 @@
 import importlib
 from uuid import uuid4
 
+import pytest
+
 
 def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
