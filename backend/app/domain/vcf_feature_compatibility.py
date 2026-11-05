@@ -180,7 +180,7 @@ def feature_compatibility_for_version(version: str) -> list[dict[str, str | None
 
         qualifications.append(VCFFeatureQualification(
             feature_id=feature.feature_id,
-            specification_scope=feature.specification_scope or "Producer interoperability; not a normative VCF feature",
+            specification_scope=feature.specification_scope or "GATK producer interoperability; not a normative VCF feature",
             status=status,
             implementation=implementation,
             evidence=evidence,
