@@ -2205,13 +2205,18 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
       "open_questions": [
         "Check exact normative force and version-specific exceptions during independent review."
+      ],
+      "child_candidate_ids": [
+        "META-025A",
+        "META-025B",
+        "META-025C"
       ]
     },
     {
@@ -2807,7 +2812,14 @@
       "tests": "NOT_STARTED",
       "open_questions": [
         "Independent review must confirm force, exceptions and precise parser oracle."
-      ]
+      ],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "META-021A",
@@ -3017,7 +3029,14 @@
       "tests": "NOT_STARTED",
       "open_questions": [
         "Independent review must confirm force, exceptions and precise parser oracle."
-      ]
+      ],
+      "normative_force_by_version": {
+        "VCFv4.1": "MAY",
+        "VCFv4.2": "MAY",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "META-022A",
@@ -3767,20 +3786,270 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
       "open_questions": [
         "Independent review must confirm force, exceptions and precise parser oracle."
+      ],
+      "child_candidate_ids": [
+        "META-037A",
+        "META-037B"
+      ]
+    },
+    {
+      "candidate_id": "META-025A",
+      "parent_candidate_id": "META-025",
+      "proposed_atomic_statement": "Number=LA in VCFv4.5 has A cardinality restricted to alternate alleles identified by LAA.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "LA: calculate one value per local alternate allele listed by LAA.",
+      "observable_acceptance_condition": "LA: calculate one value per local alternate allele listed by LAA.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-025A-L195",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L195",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 195",
+            "start_line": 195,
+            "end_line": 195
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
+      ]
+    },
+    {
+      "candidate_id": "META-025B",
+      "parent_candidate_id": "META-025",
+      "proposed_atomic_statement": "Number=LR in VCFv4.5 has R cardinality restricted to the reference allele and alternate alleles identified by LAA.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "LR: calculate one value for the reference allele and each local alternate allele listed by LAA.",
+      "observable_acceptance_condition": "LR: calculate one value for the reference allele and each local alternate allele listed by LAA.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-025B-L196",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L196",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 196",
+            "start_line": 196,
+            "end_line": 196
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
+      ]
+    },
+    {
+      "candidate_id": "META-025C",
+      "parent_candidate_id": "META-025",
+      "proposed_atomic_statement": "Number=LG in VCFv4.5 has G cardinality restricted to genotypes formed from the local alleles identified by LAA.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "LG: calculate one value per possible genotype formed from the local allele subset.",
+      "observable_acceptance_condition": "LG: calculate one value per possible genotype formed from the local allele subset.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-025C-L197",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L197",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 197",
+            "start_line": 197,
+            "end_line": 197
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
+      ]
+    },
+    {
+      "candidate_id": "META-037A",
+      "parent_candidate_id": "META-037",
+      "proposed_atomic_statement": "Unstranded base-modification information in VCFv4.5 should be stored at the lowest POS, with other values missing.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "SHOULD",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "Store the unstranded base-modification value at the record with the lowest POS and mark other corresponding values missing.",
+      "observable_acceptance_condition": "Store the unstranded base-modification value at the record with the lowest POS and mark other corresponding values missing.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-037A-L216",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L216",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 216",
+            "start_line": 216,
+            "end_line": 216
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
+      ]
+    },
+    {
+      "candidate_id": "META-037B",
+      "parent_candidate_id": "META-037",
+      "proposed_atomic_statement": "Unstranded N base-modification information in VCFv4.5 should be stored in the positive-strand value with the other value missing.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "SHOULD",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "Use the positive-strand value for unstranded N modifications and mark the other strand value missing.",
+      "observable_acceptance_condition": "Use the positive-strand value for unstranded N modifications and mark the other strand value missing.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-037B-L217",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L217",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 217",
+            "start_line": 217,
+            "end_line": 217
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
+      ]
+    },
+    {
+      "candidate_id": "META-038",
+      "parent_candidate_id": null,
+      "proposed_atomic_statement": "In VCFv4.5, U is treated as synonymous with T in base-modification key suffix semantics.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by VCFv4.5",
+      "condition": "VCFv4.5 only.",
+      "required_or_prohibited_behavior": "Treat U as synonymous with T for base-modification key suffix interpretation.",
+      "observable_acceptance_condition": "Treat U as synonymous with T for base-modification key suffix interpretation.",
+      "source_references": [
+        {
+          "source_id": "VCF45-META-038-L204",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L204",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 204",
+            "start_line": 204,
+            "end_line": 204
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Independent review must confirm precise Number semantics and test oracle."
       ]
     }
   ],
   "review_summary": {
-    "primary_source_context_reviewed": 48,
-    "proposed_atomic_candidates": 42,
-    "compound_parent_records": 5,
+    "primary_source_context_reviewed": 54,
+    "proposed_atomic_candidates": 46,
+    "compound_parent_records": 7,
     "superseded_parent_records": 1,
     "independent_second_reviewed": 0,
     "implementation_mapped": 0,
