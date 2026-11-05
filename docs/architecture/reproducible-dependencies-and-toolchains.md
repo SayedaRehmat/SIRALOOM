@@ -52,7 +52,7 @@ This change locks the Python package graph and makes CI and the backend image co
 The application does not infer a toolchain from whichever `bcftools` appears first on `PATH`. Each API/worker image is built for one declared profile using Docker build arguments:
 
 - `BCFTOOLS_PROFILE_ID`: immutable profile identifier written into validation and normalization provenance.
-- `BCFTOOLS_ENVIRONMENT_FILE`: the profile's Conda environment specification.
+- `BCFTOOLS_LOCK_FILE`: the profile's platform-specific explicit Conda lock.
 - `BCFTOOLS_VERSION` and `HTSLIB_VERSION`: exact runtime attestations.
 - `BCFTOOLS_EXECUTABLE`: executable path selected by deployment configuration (defaults to `bcftools`).
 
