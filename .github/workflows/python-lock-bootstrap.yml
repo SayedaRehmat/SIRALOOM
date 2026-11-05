@@ -1,4 +1,4 @@
-name: Python dependency lock verification
+name: Python dependency lock bootstrap
 
 on:
   pull_request:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  locked-install:
+  resolve-and-verify:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -24,25 +24,28 @@ jobs:
           python-version-file: .python-version
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
-      - name: Verify lock metadata and install exact development environment
+      - name: Resolve updated lock
         env:
           UV_NO_PROGRESS: "1"
           UV_PYTHON_DOWNLOADS: "never"
         run: |
           uv --version
+          uv lock --python 3.12
           uv lock --check
+      - name: Verify production-only dependency graph
+        env:
+          UV_NO_PROGRESS: "1"
+          UV_PYTHON_DOWNLOADS: "never"
+        run: |
+          uv sync --locked --no-dev
+          uv run --locked --no-dev python -c "import redis, kombu.transport.redis, backend.app; print('production imports OK')"
+      - name: Verify development dependency graph
+        run: |
           uv sync --locked --extra dev
-      - name: Verify runtime Redis client and Kombu transport compatibility
+          uv run --locked python -c "import pytest, redis, kombu.transport.redis; print('development imports OK')"
+      - name: Emit resolved lockfile
         run: |
-          uv run --locked python - <<'PY'
-          import redis
-          import kombu
-          import kombu.transport.redis
-
-          print(f"redis-py={redis.__version__}")
-          print(f"kombu={kombu.__version__}")
-          PY
-      - name: Verify backend import and lock immutability
-        run: |
-          uv run --locked python -c "import backend.app; print('backend import OK')"
-          uv lock --check
+          test -s uv.lock
+          echo "::group::BEGIN_UV_LOCKFILE"
+          cat uv.lock
+          echo "::endgroup::"
