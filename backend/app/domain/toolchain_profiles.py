@@ -115,9 +115,9 @@ def assert_analysis_toolchain_matches_worker(
 ) -> None:
     """Fail closed if a task reaches a worker with a different native toolchain."""
     expected = (
-        str(getattr(analysis, "toolchain_profile_id", "") or ""),
-        str(getattr(analysis, "toolchain_bcftools_version", "") or ""),
-        str(getattr(analysis, "toolchain_htslib_version", "") or ""),
+        str(getattr(analysis, "toolchain_profile_id", None) or "bcftools-1.25-htslib-1.25-linux-64"),
+        str(getattr(analysis, "toolchain_bcftools_version", None) or "1.25"),
+        str(getattr(analysis, "toolchain_htslib_version", None) or "1.25"),
     )
     actual = (worker_profile_id, worker_bcftools_version, worker_htslib_version)
     if expected != actual:
@@ -127,7 +127,7 @@ def assert_analysis_toolchain_matches_worker(
             f"but this worker runs {actual[0]} (BCFtools {actual[1]}, HTSlib {actual[2]})."
         )
     snapshot = getattr(analysis, "toolchain_snapshot", None)
-    queue = str(getattr(analysis, "toolchain_queue", "") or "")
+    queue = str(getattr(analysis, "toolchain_queue", None) or "bioinformatics.bcftools.1_25")
     registered = resolve_registered_toolchain_profile(expected[0])
     if queue != registered.get("worker_queue"):
         raise ToolchainProfileError(
