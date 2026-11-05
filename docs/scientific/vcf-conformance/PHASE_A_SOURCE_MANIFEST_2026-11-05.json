@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-specification-source-manifest",
+  "audit_date": "2026-11-05",
+  "repository": "SayedaRehmat/SIRALOOM",
+  "repository_main_sha": "f3f5ea122aa81fe43d5c8b8981f5d57decddacc9",
+  "source_scope": "VCF textual specification versions 4.0 through 4.5. BCF binary conformance is a separate scope and is not inferred from VCF-text conformance.",
+  "sources": [
+    {
+      "version": "VCFv4.0",
+      "source_authority": "1000 Genomes Project / International Genome Sample Resource historical documentation",
+      "source_class": "historical_compatibility_source_not_currently_maintained_GA4GH_specification",
+      "core_url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+      "sv_conventions_url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/",
+      "source_status": "SOURCE_IDENTIFIED_RAW_BYTES_NOT_YET_PINNED",
+      "raw_response_bytes_archived": false,
+      "sha256": null,
+      "retrieval_metadata_archived": false,
+      "qualification_note": "The core VCF 4.0 description and the 1000 Genomes structural-variation conventions must remain separate source records. The latter are project-specific conventions/extensions, not universal VCF 4.0 core requirements. The source page itself states that VCF 4.0 is no longer current."
+    },
+    {
+      "version": "VCFv4.1",
+      "source_authority": "GA4GH Large Scale Genomics work stream; samtools/hts-specs",
+      "source_class": "versioned_maintained_specification_source",
+      "repository": "https://github.com/samtools/hts-specs",
+      "pinned_commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "commit_date": "2026-08-11",
+      "canonical_source_url": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex",
+      "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.1.pdf",
+      "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
+      "raw_specification_bytes_committed_to_siraloom": false,
+      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+    },
+    {
+      "version": "VCFv4.2",
+      "source_authority": "GA4GH Large Scale Genomics work stream; samtools/hts-specs",
+      "source_class": "versioned_maintained_specification_source",
+      "repository": "https://github.com/samtools/hts-specs",
+      "pinned_commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "commit_date": "2026-08-11",
+      "canonical_source_url": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex",
+      "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.2.pdf",
+      "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
+      "raw_specification_bytes_committed_to_siraloom": false,
+      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+    },
+    {
+      "version": "VCFv4.3",
+      "source_authority": "GA4GH Large Scale Genomics work stream; samtools/hts-specs",
+      "source_class": "versioned_maintained_specification_source",
+      "repository": "https://github.com/samtools/hts-specs",
+      "pinned_commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "commit_date": "2026-08-11",
+      "canonical_source_url": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex",
+      "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.3.pdf",
+      "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
+      "raw_specification_bytes_committed_to_siraloom": false,
+      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+    },
+    {
+      "version": "VCFv4.4",
+      "source_authority": "GA4GH Large Scale Genomics work stream; samtools/hts-specs",
+      "source_class": "versioned_maintained_specification_source",
+      "repository": "https://github.com/samtools/hts-specs",
+      "pinned_commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "commit_date": "2026-08-11",
+      "canonical_source_url": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex",
+      "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.4.pdf",
+      "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
+      "raw_specification_bytes_committed_to_siraloom": false,
+      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+    },
+    {
+      "version": "VCFv4.5",
+      "source_authority": "GA4GH Large Scale Genomics work stream; samtools/hts-specs",
+      "source_class": "versioned_maintained_specification_source",
+      "repository": "https://github.com/samtools/hts-specs",
+      "pinned_commit": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "commit_date": "2026-08-11",
+      "canonical_source_url": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex",
+      "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.5.pdf",
+      "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+      "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
+      "raw_specification_bytes_committed_to_siraloom": false,
+      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+    }
+  ],
+  "source_stewardship": {
+    "current_canonical_vcf_specification": "VCFv4.5",
+    "predecessor_versions": [
+      "VCFv4.1",
+      "VCFv4.2",
+      "VCFv4.3",
+      "VCFv4.4"
+    ],
+    "vcf4_0_note": "VCFv4.0 is not listed among the maintained versioned specifications in the current HTS specifications index."
+  },
+  "existing_repository_assets_to_reuse": [
+    "PR #282: backend/app/domain/vcf_normative_inventory.py",
+    "PR #282: docs/implementation/VCF_NORMATIVE_SECTION_INVENTORY.json",
+    "PR #282: docs/implementation/VCF_NORMATIVE_CANDIDATE_EXTRACTION.md",
+    "PR #282: docs/implementation/VCF_VERSION_REQUIREMENT_TRACEABILITY_MATRIX.md",
+    "PR #282: docs/implementation/VCF40_HISTORICAL_SOURCE_AND_CLAUSE_CATALOG.md",
+    "PR #282: docs/qualification/vcf40-source-acquisition-status.json",
+    "PR #282: tests/test_vcf_normative_inventory.py"
+  ],
+  "status_vocabulary": {
+    "source_pinned": "Exact source revision and source-byte identity are fixed and independently verifiable.",
+    "candidate_extracted": "Potential normative source locations were machine-extracted; they are not reviewed clauses.",
+    "reviewed_atomic_requirement": "A human reviewer has decomposed and confirmed one independently verifiable obligation, permission, recommendation, or prohibition.",
+    "implemented": "A production implementation symbol is mapped to the atomic requirement.",
+    "tested": "Executable positive, negative, and applicable boundary tests are mapped and executed.",
+    "qualified": "All applicable evidence gates are satisfied and independently reviewed; this is not equivalent to clinical assay validation."
+  },
+  "next_gate": "Complete immutable VCFv4.0 source capture and review; then construct the atomic requirement ledger from the existing candidate inventory and full source structure without duplicating the existing extractor or feature registry."
+}
