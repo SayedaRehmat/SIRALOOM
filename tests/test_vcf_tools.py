@@ -1303,3 +1303,45 @@ def test_bgzf_gzi_index_rejects_truncated_or_invalid_offsets(tmp_path: Path, pay
     gzi.write_bytes(payload)
     with pytest.raises(VCFToolError):
         _validate_gzi_index(gzi, bgzf)
+
+
+
+def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_path, monkeypatch):
+    import subprocess
+
+    import backend.app.domain.vcf_tools as vcf_tools
+
+    reference = make_reference(tmp_path)
+    source = tmp_path / "input.vcf"
+    source.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=1,length=7>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t4\t.\tAA\tA\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    selected = tmp_path / "toolchains" / "bcftools-1.25" / "bin" / "bcftools"
+    selected.parent.mkdir(parents=True)
+    selected.write_text("#!/bin/sh\n", encoding="utf-8")
+    commands = []
+
+    def run(command, **kwargs):
+        commands.append(command)
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            "bcftools 1.25\nUsing htslib 1.24\n",
+            "",
+        )
+
+    monkeypatch.setattr(vcf_tools.subprocess, "run", run)
+    with pytest.raises(vcf_tools.VCFToolError, match="HTSlib version mismatch"):
+        vcf_tools.normalize_vcf_with_bcftools(
+            source,
+            tmp_path / "normalized.vcf.gz",
+            reference_fasta=reference,
+            expected_bcftools_version="1.25",
+            bcftools_executable=str(selected),
+        )
+
+    assert commands == [[str(selected), "--version"]]
