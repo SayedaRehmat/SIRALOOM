@@ -293,19 +293,19 @@
         "lines": [
           {
             "line": 157,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsection{Data lines}"
           },
           {
             "line": 158,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsubsection{Fixed fields}"
           },
           {
             "line": 159,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "There are 8 fixed fields per record. All data lines are tab-delimited. In all cases, missing values are specified with a dot (`.'). Fixed fields are:"
           },
           {
             "line": 160,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": ""
           }
         ]
       }
@@ -591,19 +591,19 @@
         "lines": [
           {
             "line": 174,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsection{Data lines}"
           },
           {
             "line": 175,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsubsection{Fixed fields}"
           },
           {
             "line": 176,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "There are 8 fixed fields per record. All data lines are tab-delimited. In all cases, missing values are specified with a dot (`.'). Fixed fields are:"
           },
           {
             "line": 177,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": ""
           }
         ]
       }
@@ -1562,23 +1562,23 @@
         "lines": [
           {
             "line": 315,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsection{Data lines}"
           },
           {
             "line": 316,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\label{data-lines}"
           },
           {
             "line": 317,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
           },
           {
             "line": 318,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "The last data line must end with a line separator."
           },
           {
             "line": 319,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "In all cases, missing values are specified with a dot (`.')."
           }
         ]
       }
@@ -2613,23 +2613,23 @@
         "lines": [
           {
             "line": 329,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsection{Data lines}"
           },
           {
             "line": 330,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\label{data-lines}"
           },
           {
             "line": 331,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
           },
           {
             "line": 332,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "The last data line must end with a line separator."
           },
           {
             "line": 333,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "In all cases, missing values are specified with a dot (`.')."
           }
         ]
       }
@@ -3992,23 +3992,23 @@
         "lines": [
           {
             "line": 378,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\subsection{Data lines}"
           },
           {
             "line": 379,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "\\label{data-lines}"
           },
           {
             "line": 380,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
           },
           {
             "line": 381,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "The last data line must end with a line separator."
           },
           {
             "line": 382,
-            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+            "text": "In all cases, missing values are specified with a dot (`.')."
           }
         ]
       }
