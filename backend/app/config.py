@@ -98,23 +98,37 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def require_authenticated_redis_in_production(self) -> "Settings":
-        if self.app_env.strip().lower() != "production":
-            return self
+    def validate_production_and_scientific_toolchain(self) -> "Settings":
+        if self.app_env.strip().lower() == "production":
+            try:
+                parsed = urlsplit(self.redis_url)
+                authenticated = (
+                    parsed.scheme in {"redis", "rediss"}
+                    and bool(parsed.hostname)
+                    and bool(parsed.password)
+                    and len(parsed.password) >= 32
+                )
+            except ValueError:
+                authenticated = False
+            if not authenticated:
+                raise ValueError(
+                    "Production REDIS_URL must use redis/rediss with an AUTH secret of at least 32 characters"
+                )
+
+        # Never allow an unregistered, mismatched, or security-unreviewed native
+        # toolchain to silently become the executable used for VCF parsing.
+        from backend.app.domain.toolchain_profiles import (
+            ToolchainProfileError,
+            resolve_toolchain_profile,
+        )
         try:
-            parsed = urlsplit(self.redis_url)
-            authenticated = (
-                parsed.scheme in {"redis", "rediss"}
-                and bool(parsed.hostname)
-                and bool(parsed.password)
-                and len(parsed.password) >= 32
+            resolve_toolchain_profile(
+                self.bcftools_profile_id,
+                bcftools_version=self.bcftools_version,
+                htslib_version=self.htslib_version,
             )
-        except ValueError:
-            authenticated = False
-        if not authenticated:
-            raise ValueError(
-                "Production REDIS_URL must use redis/rediss with an AUTH secret of at least 32 characters"
-            )
+        except ToolchainProfileError as exc:
+            raise ValueError(f"Invalid configured BCFtools/HTSlib profile: {exc}") from exc
         return self
 
 
