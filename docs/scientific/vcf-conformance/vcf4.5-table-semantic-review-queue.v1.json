@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "STRUCTURAL_TRIAGE_ONLY_SEMANTIC_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_REVIEW_COMPLETE_FOR_ALL_44_INDEXED_TABLES_INDEPENDENT_REVIEW_AND_CROSS_VERSION_RECONCILIATION_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
@@ -12,9 +12,11 @@
   "method": "Each table is linked to source lines and enclosing section, assigned a semantic review target, and left NOT_REVIEWED pending full row-level reconciliation. Row terminator counts are navigation metadata, not semantic row or requirement counts.",
   "counts": {
     "indexed_vcf_tables": 44,
-    "not_semantically_reviewed": 44,
-    "atomic_requirements_created": 0,
-    "excluded_bcf_tables": "Separate BCF conformance scope."
+    "not_semantically_reviewed": 0,
+    "atomic_requirements_created": 25,
+    "excluded_bcf_tables": "Separate BCF conformance scope.",
+    "author_context_reviewed": 44,
+    "independently_reviewed": 0
   },
   "tables": [
     {
@@ -32,12 +34,29 @@
       "row_terminator_lines": 7,
       "classification": "CHARACTER_ENCODING_ENUMERATION",
       "semantic_review_target": "Enumerate escaped character mappings and reconcile with encoding, special-character and quoting rules.",
-      "review_status": "NOT_REVIEWED",
-      "atomic_requirement_ids": [],
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000114",
+        "VCF-REQ-000115",
+        "VCF-REQ-000116",
+        "VCF-REQ-000117",
+        "VCF-REQ-000118",
+        "VCF-REQ-000119",
+        "VCF-REQ-000120",
+        "VCF-REQ-000121"
+      ],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
+      "review_notes": "Eight escape mappings reconciled to preceding UTF-8, BOM, control-character, delimiter and uppercase percent-encoding prose; each mapping atomized separately.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -55,12 +74,20 @@
       "row_terminator_lines": 5,
       "classification": "BASE_MODIFICATION_EXAMPLE",
       "semantic_review_target": "Validate example value placement against M/DPM/ADM rules; examples do not create independent normative obligations.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
+      "review_notes": "Checked against M/DPM/ADM suffix, allele-order, strand and missing-value prose; illustrative, not an independent normative rule.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -78,12 +105,20 @@
       "row_terminator_lines": 26,
       "classification": "RESERVED_INFO_DEFINITION_TABLE",
       "semantic_review_target": "Atomize reserved INFO key ID, Number, Type, descriptions, conditions, aliases, missing-value behavior and cross-references.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_ROW_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
+      "review_notes": "All 21 rows reviewed against INFO grammar, Number/Type, optionality, allele cardinality and SV INFO cross-reference; reserved rows are not universally required.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -101,12 +136,20 @@
       "row_terminator_lines": 68,
       "classification": "RESERVED_FORMAT_DEFINITION_TABLE",
       "semantic_review_target": "Atomize reserved FORMAT key ID, Number, Type, genotype/ploidy/order constraints, dependencies and missing-value behavior.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_ROW_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
+      "review_notes": "All 63 rows reviewed against FORMAT prose, GT/ploidy/order, local allele, base-modification, phase-set and SV FORMAT cross-references; no FORMAT key is universally required.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -124,12 +167,20 @@
       "row_terminator_lines": 4,
       "classification": "GENOTYPE_ORDERING_ALGORITHM_TABLE",
       "semantic_review_target": "Reconcile combinatorial ordering with pseudocode, loop boundaries, ploidy, allele count and worked indices; verify mathematical equivalence.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_ALGORITHM_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
+      "review_notes": "Checked diploid triangular special case against general-ploidy nested loops, recursive algorithm, inclusive loop footnote, combinatorial index formula and worked examples.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -147,12 +198,20 @@
       "row_terminator_lines": 9,
       "classification": "LOCAL_ALLELE_EQUIVALENCE_EXAMPLE",
       "semantic_review_target": "Review local/global allele vector mapping, LAA order, LA/LR/LG cardinalities and REF handling against prose.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
+      "review_notes": "Checked local/global equivalence, LAA 1-based ALT ordering, implicit REF, local A/R/G mapping and BCF empty-vector caveat against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -170,12 +229,20 @@
       "row_terminator_lines": 5,
       "classification": "BASE_MODIFICATION_EXAMPLE",
       "semantic_review_target": "Trace M/DPM/ADM cardinality, strand order, allele sequence order and missing values to prose and definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked unstranded/stranded CpG examples against intrinsic strand semantics and missing-value placement; no new rule inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -193,12 +260,20 @@
       "row_terminator_lines": 4,
       "classification": "PHASE_SET_LIST_EXAMPLE",
       "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -216,12 +291,20 @@
       "row_terminator_lines": 4,
       "classification": "PHASE_SET_LIST_EXAMPLE",
       "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -239,12 +322,20 @@
       "row_terminator_lines": 5,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -262,12 +353,20 @@
       "row_terminator_lines": 4,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -285,12 +384,20 @@
       "row_terminator_lines": 4,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -308,12 +415,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -331,12 +446,20 @@
       "row_terminator_lines": 5,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -354,12 +477,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -377,12 +508,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -400,12 +539,20 @@
       "row_terminator_lines": 3,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -423,12 +570,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -446,12 +601,20 @@
       "row_terminator_lines": 3,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -469,12 +632,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -492,12 +663,20 @@
       "row_terminator_lines": 3,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -515,12 +694,20 @@
       "row_terminator_lines": 2,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -538,12 +725,20 @@
       "row_terminator_lines": 4,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -561,12 +756,20 @@
       "row_terminator_lines": 4,
       "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -584,12 +787,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -607,12 +818,20 @@
       "row_terminator_lines": 7,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -630,12 +849,20 @@
       "row_terminator_lines": 3,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -653,12 +880,20 @@
       "row_terminator_lines": 3,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -676,12 +911,20 @@
       "row_terminator_lines": 2,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -699,12 +942,20 @@
       "row_terminator_lines": 3,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -722,12 +973,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -745,12 +1004,20 @@
       "row_terminator_lines": 4,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -768,12 +1035,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -791,12 +1066,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -814,12 +1097,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -837,12 +1128,20 @@
       "row_terminator_lines": 2,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -860,12 +1159,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -883,12 +1190,20 @@
       "row_terminator_lines": 3,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -906,12 +1221,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -929,12 +1252,20 @@
       "row_terminator_lines": 4,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -952,12 +1283,20 @@
       "row_terminator_lines": 4,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -975,12 +1314,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -998,12 +1345,20 @@
       "row_terminator_lines": 5,
       "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
-      "review_status": "NOT_REVIEWED",
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     },
     {
@@ -1021,12 +1376,25 @@
       "row_terminator_lines": 8,
       "classification": "GVCF_OR_VARIANT_REPRESENTATION_EXAMPLE",
       "semantic_review_target": "Trace unspecified allele, REF-only block, END/LEN, copy-number and tandem-repeat conventions; separate core requirements from gVCF conventions.",
-      "review_status": "NOT_REVIEWED",
-      "atomic_requirement_ids": [],
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000125",
+        "VCF-REQ-000126",
+        "VCF-REQ-000127",
+        "VCF-REQ-000129"
+      ],
       "open_questions": [
         "Which rows are normative definitions versus informative examples?",
         "Which surrounding definitions, footnotes and cross-references alter interpretation?",
         "Is the behavior version-specific or shared with earlier VCF releases?"
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
+      "review_notes": "Reviewed against <*> reference-block, LAA, LEN/END compatibility and base-modification coverage prose. gVCF convention is distinguished from core VCF grammar.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
       ]
     }
   ],
@@ -1036,6 +1404,7 @@
     "normative_force_preserved": true,
     "bcf_serialization_separate": true,
     "gvcf_conventions_separate": true,
-    "version_specificity_required": true
+    "version_specificity_required": true,
+    "author_review_disclaimer": "Author review status means source-context inspection and classification only; it is not independent approval, implementation mapping, test execution, or laboratory qualification."
   }
 }
