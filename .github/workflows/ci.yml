@@ -48,7 +48,12 @@ jobs:
       - name: Compile Python
         run: uv run --locked python -m compileall backend scripts
       - name: Build laboratory backend image
-        run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
+        run: docker build \
+            --build-arg BCFTOOLS_ENVIRONMENT_FILE=configs/bioinformatics/bcftools-environment.yml \
+            --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64 \
+            --build-arg BCFTOOLS_VERSION=1.25 \
+            --build-arg HTSLIB_VERSION=1.25 \
+            --file docker/backend.Dockerfile --tag siraloom-backend:ci .
       - name: Verify backend image runs without root privileges
         run: |
           test "$(docker run --rm --entrypoint id siraloom-backend:ci -u)" = "10001"
