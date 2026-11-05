@@ -1,4 +1,4 @@
-ARG BCFTOOLS_ENVIRONMENT_FILE=configs/bioinformatics/bcftools-environment.yml
+ARG BCFTOOLS_ENVIRONMENT_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml
 ARG BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
 ARG BCFTOOLS_VERSION=1.25
 ARG HTSLIB_VERSION=1.25
