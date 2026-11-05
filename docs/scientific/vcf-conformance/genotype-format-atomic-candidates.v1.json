@@ -1,0 +1,1333 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "SIRALOOM-VCF-GENOTYPE-FORMAT-ATOMIC-CANDIDATES-2026-11-05",
+  "status": "PRIMARY_SOURCE_CONTEXT_REVIEWED_ATOMIC_CANDIDATES_PROPOSED",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": {
+    "versions": [
+      "VCFv4.1",
+      "VCFv4.2",
+      "VCFv4.3",
+      "VCFv4.4",
+      "VCFv4.5"
+    ],
+    "domain": "FORMAT/GENOTYPE",
+    "source_file": "format-reserved-row-source-review.v1.json",
+    "purpose": "Decompose captured genotype-field prose and table-adjacent constraints into reviewable atomic candidates; not an approved conformance ledger."
+  },
+  "method": [
+    "Use exact pinned source passages and preserve version scope.",
+    "Split independent behaviors (presence, ordering, missingness, ploidy, semantics) into separate candidates.",
+    "Do not infer requirements for a version when its source passage was not captured.",
+    "Keep descriptive definitions distinct from normative MUST/SHOULD/MAY force.",
+    "Record unresolved cross-reference, table, grammar and exception work explicitly."
+  ],
+  "candidate_count": 18,
+  "candidates": [
+    {
+      "candidate_id": "FMT-GT-001",
+      "proposed_atomic_statement": "When genotype information is present, the same types of genotype data are present for all samples at the record.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "When genotype information is present, the same types of genotype data are present for all samples at the record.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L194",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 194; Genotype fields subsection",
+            "start_line": 194,
+            "end_line": 194
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L211",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 211; Genotype fields subsection",
+            "start_line": 211,
+            "end_line": 211
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L428",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 428; Genotype fields subsection",
+            "start_line": 428,
+            "end_line": 428
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L446",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 446; Genotype fields subsection",
+            "start_line": 446,
+            "end_line": 446
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L498",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 498; Genotype fields subsection",
+            "start_line": 498,
+            "end_line": 498
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Clarify whether 'same types' means identical FORMAT key sequence or identical declared data types; do not overinterpret."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-002",
+      "proposed_atomic_statement": "The FORMAT field specifies the data types and order of genotype subfields, and each sample's colon-separated values correspond positionally to that FORMAT order.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "The FORMAT field specifies the data types and order of genotype subfields, and each sample's colon-separated values correspond positionally to that FORMAT order.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L194",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 194; Genotype fields introductory paragraph",
+            "start_line": 194,
+            "end_line": 194
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L211",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 211; Genotype fields introductory paragraph",
+            "start_line": 211,
+            "end_line": 211
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L429",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 429; FORMAT key syntax and ordering",
+            "start_line": 429,
+            "end_line": 429
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L447",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 447; FORMAT key syntax and ordering",
+            "start_line": 447,
+            "end_line": 447
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L499",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 499; FORMAT key syntax and ordering",
+            "start_line": 499,
+            "end_line": 499
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "The 4.1–4.2 text describes a colon-separated alphanumeric String; 4.3–4.5 additionally specify key grammar and uniqueness."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-003",
+      "proposed_atomic_statement": "A FORMAT declaration does not contain duplicate keys.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "A FORMAT declaration does not contain duplicate keys.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L429",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 429; FORMAT key grammar and duplicate-key prohibition",
+            "start_line": 429,
+            "end_line": 429
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L447",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 447; FORMAT key grammar and duplicate-key prohibition",
+            "start_line": 447,
+            "end_line": 447
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L499",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 499; FORMAT key grammar and duplicate-key prohibition",
+            "start_line": 499,
+            "end_line": 499
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Not established by the reviewed 4.1–4.2 passages; applicability there remains unresolved."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-004",
+      "proposed_atomic_statement": "If GT is present in FORMAT, it is the first FORMAT key/subfield.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "If GT is present in FORMAT, it is the first FORMAT key/subfield.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L194",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 194; Genotype fields introductory paragraph",
+            "start_line": 194,
+            "end_line": 194
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L211",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 211; Genotype fields introductory paragraph",
+            "start_line": 211,
+            "end_line": 211
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L431",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 431; GT ordering rule",
+            "start_line": 431,
+            "end_line": 431
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L449",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 449; GT ordering rule",
+            "start_line": 449,
+            "end_line": 449
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L501",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 501; GT ordering rule",
+            "start_line": 501,
+            "end_line": 501
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": []
+    },
+    {
+      "candidate_id": "FMT-GT-005",
+      "proposed_atomic_statement": "The specification does not require any FORMAT subfield/key to be present in every genotype-bearing record.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "The specification does not require any FORMAT subfield/key to be present in every genotype-bearing record.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L194",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 194; Genotype fields introductory paragraph",
+            "start_line": 194,
+            "end_line": 194
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L211",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 211; Genotype fields introductory paragraph",
+            "start_line": 211,
+            "end_line": 211
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L432",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 432; No required FORMAT keys",
+            "start_line": 432,
+            "end_line": 432
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L450",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 450; No required FORMAT keys",
+            "start_line": 450,
+            "end_line": 450
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L503",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 503; No required FORMAT keys",
+            "start_line": 503,
+            "end_line": 503
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "This does not override conditional requirements such as VCFv4.5 LAA when local-allele fields are used."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-006",
+      "proposed_atomic_statement": "A missing genotype subfield value is represented by the VCF missing value marker (dot).",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "A missing genotype subfield value is represented by the VCF missing value marker (dot).",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L219",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 219; Missing genotype fields paragraph",
+            "start_line": 219,
+            "end_line": 219
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L236",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 236; Missing genotype fields paragraph",
+            "start_line": 236,
+            "end_line": 236
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L435",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 435; Missing genotype fields paragraph",
+            "start_line": 435,
+            "end_line": 435
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L453",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 453; Missing genotype fields paragraph",
+            "start_line": 453,
+            "end_line": 453
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L506",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 506; Missing genotype fields paragraph",
+            "start_line": 506,
+            "end_line": 506
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Review exact MISSING token definition and field-specific missing-value exceptions."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-007",
+      "proposed_atomic_statement": "For a FORMAT field containing a list of missing values, the representation may be a single missing marker or an explicit list of missing markers.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MAY",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "For a FORMAT field containing a list of missing values, the representation may be a single missing marker or an explicit list of missing markers.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L437",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 437; List-valued missing fields",
+            "start_line": 437,
+            "end_line": 437
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L455",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 455; List-valued missing fields",
+            "start_line": 455,
+            "end_line": 455
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L508",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 508; List-valued missing fields",
+            "start_line": 508,
+            "end_line": 508
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Not explicitly present in the captured VCFv4.1–4.2 passages; do not backport without source evidence."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-008",
+      "proposed_atomic_statement": "Trailing FORMAT subfields may be omitted, except that GT must remain present when GT is specified in FORMAT.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MAY",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2, VCFv4.3, VCFv4.4, VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "Trailing FORMAT subfields may be omitted, except that GT must remain present when GT is specified in FORMAT.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L219",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 219; Trailing fields omission sentence",
+            "start_line": 219,
+            "end_line": 219
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L236",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 236; Trailing fields omission sentence",
+            "start_line": 236,
+            "end_line": 236
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.3",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L438",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex line 438; Trailing fields omission sentence",
+            "start_line": 438,
+            "end_line": 438
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.4",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L456",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex line 456; Trailing fields omission sentence",
+            "start_line": 456,
+            "end_line": 456
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L509",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 509; Trailing fields omission sentence",
+            "start_line": 509,
+            "end_line": 509
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": []
+    },
+    {
+      "candidate_id": "FMT-GT-009",
+      "proposed_atomic_statement": "GT allele value 0 denotes REF and positive allele indices denote ALT alleles by their one-based order in ALT.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "GT allele value 0 denotes REF and positive allele indices denote ALT alleles by their one-based order in ALT.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L200",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 200; GT allele encoding definition",
+            "start_line": 200,
+            "end_line": 200
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L217",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 217; GT allele encoding definition",
+            "start_line": 217,
+            "end_line": 217
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "The captured source passages establish this wording for 4.1–4.2; inspect 4.3–4.5 GT definition and local-allele exceptions before assigning their scope."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-010",
+      "proposed_atomic_statement": "GT may encode haploid, diploid, and higher-ploidy genotypes; the allele count in the genotype reflects ploidy.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "GT may encode haploid, diploid, and higher-ploidy genotypes; the allele count in the genotype reflects ploidy.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L200",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 200; GT haploid/diploid/triploid examples",
+            "start_line": 200,
+            "end_line": 200
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L217",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 217; GT haploid/diploid/triploid examples",
+            "start_line": 217,
+            "end_line": 217
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Examples establish supported representations but their exact normative force must be reviewed."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-011",
+      "proposed_atomic_statement": "GL values correspond to all possible genotypes for the REF/ALT allele set; when GT is present the same ploidy is expected, and when GT is absent diploidy is assumed.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "GL values correspond to all possible genotypes for the REF/ALT allele set; when GT is present the same ploidy is expected, and when GT is absent diploidy is assumed.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L207",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 207; GL likelihood definition and ordering",
+            "start_line": 207,
+            "end_line": 207
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L224",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 224; GL likelihood definition and ordering",
+            "start_line": 224,
+            "end_line": 224
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Separate cardinality formula, genotype enumeration order, and ploidy assumptions into distinct child requirements after full formula context review."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-012",
+      "proposed_atomic_statement": "GLE is a string representation for genotype likelihoods of heterogeneous ploidy, used where copy number is uncertain.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "GLE is a string representation for genotype likelihoods of heterogeneous ploidy, used where copy number is uncertain.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L207",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 207; GLE reserved FORMAT definition",
+            "start_line": 207,
+            "end_line": 207
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L224",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 224; GLE reserved FORMAT definition",
+            "start_line": 224,
+            "end_line": 224
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Reserved-key presence and later-version omission must not be interpreted as a prohibition."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-013",
+      "proposed_atomic_statement": "For phased genotypes on the same chromosome and with the same PS value for an individual, the genotypes belong to the same phase set.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "For phased genotypes on the same chromosome and with the same PS value for an individual, the genotypes belong to the same phase set.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L213",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 213; PS phase-set definition",
+            "start_line": 213,
+            "end_line": 213
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L230",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 230; PS phase-set definition",
+            "start_line": 230,
+            "end_line": 230
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Review full PS definition and subsequent version-specific changes; this candidate captures one relation only."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-014",
+      "proposed_atomic_statement": "If GT is unphased, the corresponding PS field is ignored.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "If GT is unphased, the corresponding PS field is ignored.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L213",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 213; PS unphased-genotype behavior",
+            "start_line": 213,
+            "end_line": 213
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L230",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 230; PS unphased-genotype behavior",
+            "start_line": 230,
+            "end_line": 230
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": []
+    },
+    {
+      "candidate_id": "FMT-GT-015",
+      "proposed_atomic_statement": "Using the position of the first variant in a phase set as the PS identifier is a recommendation, not a mandatory requirement.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "RECOMMENDED",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "Using the position of the first variant in a phase set as the PS identifier is a recommendation, not a mandatory requirement.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L213",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 213; PS recommended convention",
+            "start_line": 213,
+            "end_line": 213
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L230",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 230; PS recommended convention",
+            "start_line": 230,
+            "end_line": 230
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Do not implement as a rejection condition; exact normative force is recommendation."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-016",
+      "proposed_atomic_statement": "The EC list contains one expected alternate allele count for each ALT allele, in the same order as ALT.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.1, VCFv4.2; no inference to other versions.",
+      "required_or_prohibited_behavior": "The EC list contains one expected alternate allele count for each ALT allele, in the same order as ALT.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.1",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex#L215",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex line 215; EC reserved FORMAT definition",
+            "start_line": 215,
+            "end_line": 215
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        },
+        {
+          "version": "VCFv4.2",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex#L232",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex line 232; EC reserved FORMAT definition",
+            "start_line": 232,
+            "end_line": 232
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Confirm cardinality and whether this description is normative or informative in the complete clause context."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-017",
+      "proposed_atomic_statement": "If any local-allele FORMAT field is present, LAA must also be present and must precede all fields other than GT.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "If any local-allele FORMAT field is present, LAA must also be present and must precede all fields other than GT.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L502",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 502; Conditional LAA presence and ordering",
+            "start_line": 502,
+            "end_line": 502
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Expand all referenced local-allele field families and the LAA definition before implementation."
+      ]
+    },
+    {
+      "candidate_id": "FMT-GT-018",
+      "proposed_atomic_statement": "If a FORMAT field and its local-allele equivalent are both defined, they must encode identical information, or one representation must be ignored by being missing or omitted.",
+      "requirement_domain": "GENOTYPE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer and/or reader as constrained by the cited specification text",
+      "condition": "Applies only to VCFv4.5; no inference to other versions.",
+      "required_or_prohibited_behavior": "If a FORMAT field and its local-allele equivalent are both defined, they must encode identical information, or one representation must be ignored by being missing or omitted.",
+      "observable_acceptance_condition": "A version-specific fixture can be constructed that demonstrates the stated behavior and a counterexample where applicable.",
+      "source_references": [
+        {
+          "version": "VCFv4.5",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L510",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 510; Global/local field equivalence rule",
+            "start_line": 510,
+            "end_line": 510
+          },
+          "source_excerpt_sha256": null,
+          "review_note": "Primary-source line captured in format-reserved-row-source-review.v1.json; adjacent paragraph/table context must be checked before promotion."
+        }
+      ],
+      "version_scope": [
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED",
+      "open_questions": [
+        "Resolve the source's phrase 'one must ignored' against surrounding examples and errata; retain the original source wording in evidence."
+      ]
+    }
+  ],
+  "review_summary": {
+    "primary_source_context_reviewed": 18,
+    "proposed_atomic_candidates": 18,
+    "independently_second_reviewed": 0,
+    "implementation_mapped": 0,
+    "clause_tests_executed": 0,
+    "lab_qualified": 0
+  },
+  "limitations": [
+    "These candidates are not approved atomic requirements and have not been independently reviewed.",
+    "Some 4.1–4.2 reserved-key descriptions are descriptive definitions; they must not be converted into mandatory field-presence rules.",
+    "GT semantics for VCFv4.3–4.5, including the VCFv4.4 allele-level phasing model and VCFv4.5 local-allele interaction, require additional exact source-context review before broader version scope can be assigned.",
+    "Table Number/Type semantics and genotype-ordering algorithms are not fully atomized here.",
+    "No implementation, test, interoperability or laboratory qualification evidence is claimed."
+  ]
+}
