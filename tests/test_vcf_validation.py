@@ -2476,8 +2476,8 @@ def test_vcf_feature_qualification_rejects_unknown_specification_versions():
 
 def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scope():
     legacy = get_vcf_specification_profile("VCFv4.0")
-    assert legacy.support_status == "LEGACY_COMPATIBILITY_ONLY"
-    assert legacy.validation_mode == "LEGACY_PARSER_SMOKE_ONLY"
+    assert legacy.support_status == "PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION"
+    assert legacy.validation_mode == "VERSION_AWARE_PARTIAL"
     assert legacy.specification_document == (
         "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/"
     )
