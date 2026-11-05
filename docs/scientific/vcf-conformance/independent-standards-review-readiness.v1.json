@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-independent-standards-review-readiness",
+  "assessed_at_utc": "2026-11-05T10:00:00Z",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "assessed_ledger": "atomic-requirements.v1.json",
+  "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
+  "permitted_use": "SCOPED_PILOT_REVIEW_ONLY_WITH_INCOMPLETENESS_DISCLOSED",
+  "inventory": {
+    "atomic_ledger_records": 75,
+    "duplicate_requirement_ids": 0,
+    "records_with_source_references": 75,
+    "records_with_source_locator_values": 75,
+    "records_in_review": 75,
+    "independently_second_person_approved": 0,
+    "records_with_test_evidence_entries": 10,
+    "records_without_open_question_entries": 46,
+    "vcf40_source_not_pinned_records": 75,
+    "unresolved_applicability_cells_vcf41_vcf42": 18,
+    "unresolved_applicability_cells_vcf43_vcf45": 0,
+    "genotype_candidate_records": 61,
+    "genotype_split_parent_candidates": 1,
+    "genotype_candidates_reconciled_to_ledger": 60
+  },
+  "critical_blockers": [
+    "Whole-specification source coverage is incomplete; current ledger is a partial seed plus FORMAT/GENOTYPE expansion.",
+    "VCFv4.0 historical normative provenance and immutable source-byte capture are unresolved.",
+    "Independent second-person review has not started.",
+    "Genotype candidate table Number/Type semantics and ordering algorithms are not fully atomized.",
+    "Version applicability remains unresolved for 18 VCFv4.1–4.2 ledger cells.",
+    "Source excerpt hashes and retrieval metadata are incomplete."
+  ],
+  "source_separation": {
+    "core_vcf40": "IGSR historical core page remains a discovery/reference candidate; not yet accepted as normative.",
+    "thousand_genomes_sv": "Separate producer/project convention source; never merge into core VCFv4.0 normative requirements."
+  },
+  "reviewer_protocol": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
+  "explicit_nonclaims": [
+    "No whole-specification completeness claim.",
+    "No independent approval.",
+    "No implementation conformance claim.",
+    "No executed clause-specific test claim.",
+    "No laboratory qualification claim."
+  ]
+}
