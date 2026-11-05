@@ -79,7 +79,7 @@ if [ -n "${CONDA_PREFIX:-}" ] && [ "$INSTALL_PREFIX" != "$CONDA_PREFIX" ]; then
       "$INSTALL_PREFIX/bin/annot-tsv" \
       "$INSTALL_PREFIX/bin/ref-cache"; do
       if [ -x "$binary" ]; then
-        ldd "$binary" | awk '/=> \\// {print $3} /^\\// {print $1}'
+        ldd "$binary" | awk '{ for (i = 1; i <= NF; i++) if (substr($i, 1, 1) == "/") { print $i; break } }'
       fi
     done
   } | sort -u | while IFS= read -r library; do
