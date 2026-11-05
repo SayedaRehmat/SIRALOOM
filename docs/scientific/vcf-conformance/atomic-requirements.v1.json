@@ -11963,7 +11963,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 526-532",
@@ -11971,8 +11971,8 @@
             "end_line": 532,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "2fe1047b046c71b5f108e6d0bc30271f509a4ec5c819a23729755241b3289ea2",
+          "retrieved_at_utc": "2026-11-05T10:36:07.916Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -11982,7 +11982,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 543-549",
@@ -11990,8 +11990,8 @@
             "end_line": 549,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "2fe1047b046c71b5f108e6d0bc30271f509a4ec5c819a23729755241b3289ea2",
+          "retrieved_at_utc": "2026-11-05T10:36:08.054Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12001,7 +12001,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 925-932",
@@ -12009,8 +12009,8 @@
             "end_line": 932,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "c3bcf0d5ccf29ca4c3affcb083aa47a5df46c3b80ee11441f65c82e6f7f32cb0",
+          "retrieved_at_utc": "2026-11-05T10:36:08.215Z"
         }
       ],
       "version_applicability": {
@@ -12145,7 +12145,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 528-540",
@@ -12153,8 +12153,8 @@
             "end_line": 540,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "0dc2ef89674fbd0c9d7b358c4befd45e2ee9fcf7e343f79f7187bc09de019cbc",
+          "retrieved_at_utc": "2026-11-05T10:36:08.325Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -12164,7 +12164,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 545-557",
@@ -12172,8 +12172,8 @@
             "end_line": 557,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "0dc2ef89674fbd0c9d7b358c4befd45e2ee9fcf7e343f79f7187bc09de019cbc",
+          "retrieved_at_utc": "2026-11-05T10:36:08.455Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12183,7 +12183,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 931-946",
@@ -12191,8 +12191,8 @@
             "end_line": 946,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "87d3f52286c6352f9480a2dc855bff3ea212413537938d0b1325cc0f87f2253f",
+          "retrieved_at_utc": "2026-11-05T10:36:08.581Z"
         }
       ],
       "version_applicability": {
@@ -12327,7 +12327,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 542-558",
@@ -12335,8 +12335,8 @@
             "end_line": 558,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "bedb7bd6f853b097b080aa1f9ded885ef524e2d582709b99bda493dae839264b",
+          "retrieved_at_utc": "2026-11-05T10:36:08.682Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -12346,7 +12346,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 559-575",
@@ -12354,8 +12354,8 @@
             "end_line": 575,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "bedb7bd6f853b097b080aa1f9ded885ef524e2d582709b99bda493dae839264b",
+          "retrieved_at_utc": "2026-11-05T10:36:08.780Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12365,7 +12365,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 947-963",
@@ -12373,8 +12373,8 @@
             "end_line": 963,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "9e829ec378463feaf67f2c4aea3d73a8e6017c84d252d8b0144492a3e0255946",
+          "retrieved_at_utc": "2026-11-05T10:36:08.906Z"
         }
       ],
       "version_applicability": {
@@ -12509,7 +12509,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 639-654",
@@ -12517,8 +12517,8 @@
             "end_line": 654,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "a70aaec462f008cf61433a8ddd47dd6dc75ad8b5e7f5fbc410751317b064258c",
+          "retrieved_at_utc": "2026-11-05T10:36:09.005Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -12528,7 +12528,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 656-671",
@@ -12536,8 +12536,8 @@
             "end_line": 671,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "a70aaec462f008cf61433a8ddd47dd6dc75ad8b5e7f5fbc410751317b064258c",
+          "retrieved_at_utc": "2026-11-05T10:36:09.103Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12547,7 +12547,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1053-1069",
@@ -12555,8 +12555,8 @@
             "end_line": 1069,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "897e6c5c9d74733b7fa776b79bc05e02164115f859760a14b983677604117198",
+          "retrieved_at_utc": "2026-11-05T10:36:09.241Z"
         }
       ],
       "version_applicability": {
@@ -12691,7 +12691,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 657-676",
@@ -12699,8 +12699,8 @@
             "end_line": 676,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "d99dc787c7d575f05da1383fce543bfef83f047e37d66cf015d7df2b3602bf0a",
+          "retrieved_at_utc": "2026-11-05T10:36:09.387Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -12710,7 +12710,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 674-693",
@@ -12718,8 +12718,8 @@
             "end_line": 693,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "d99dc787c7d575f05da1383fce543bfef83f047e37d66cf015d7df2b3602bf0a",
+          "retrieved_at_utc": "2026-11-05T10:36:09.505Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12729,7 +12729,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1071-1094",
@@ -12737,8 +12737,8 @@
             "end_line": 1094,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "3b2e23d050dd012c0557e3fbcb17a36383c9682f263f0460ecc052cbc75d5862",
+          "retrieved_at_utc": "2026-11-05T10:36:09.631Z"
         }
       ],
       "version_applicability": {
@@ -12873,7 +12873,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 677-681",
@@ -12881,8 +12881,8 @@
             "end_line": 681,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "48d23b6fe38cf7128340ff6d5c5cc1807ab584995fceeed19901a2d347111c40",
+          "retrieved_at_utc": "2026-11-05T10:36:09.731Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -12892,7 +12892,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 694-698",
@@ -12900,8 +12900,8 @@
             "end_line": 698,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "48d23b6fe38cf7128340ff6d5c5cc1807ab584995fceeed19901a2d347111c40",
+          "retrieved_at_utc": "2026-11-05T10:36:09.834Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -12911,7 +12911,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1095-1100",
@@ -12919,8 +12919,8 @@
             "end_line": 1100,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "d3c22db8b3f008b80967187999d324c7740117e389d368943063606c62995976",
+          "retrieved_at_utc": "2026-11-05T10:36:09.959Z"
         }
       ],
       "version_applicability": {
@@ -13055,7 +13055,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 752-771",
@@ -13063,8 +13063,8 @@
             "end_line": 771,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "f6cd3271e5f1667ff1e3d3d531c0d5a6f35eda8e9f0e0913f2cdeef4600135cc",
+          "retrieved_at_utc": "2026-11-05T10:36:10.057Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -13074,7 +13074,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 769-788",
@@ -13082,8 +13082,8 @@
             "end_line": 788,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "f6cd3271e5f1667ff1e3d3d531c0d5a6f35eda8e9f0e0913f2cdeef4600135cc",
+          "retrieved_at_utc": "2026-11-05T10:36:10.163Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -13093,7 +13093,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1179-1202",
@@ -13101,8 +13101,8 @@
             "end_line": 1202,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "ecb0e115c4c842f9454de286f1173baedb93695c8cf5cea82aee59d2283cbed7",
+          "retrieved_at_utc": "2026-11-05T10:36:10.296Z"
         }
       ],
       "version_applicability": {
@@ -13237,7 +13237,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 773-776",
@@ -13245,8 +13245,8 @@
             "end_line": 776,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "1862f24fc51b0ab155aa33bf8dac6cca112e7565593b959858e4903cbc6f01ab",
+          "retrieved_at_utc": "2026-11-05T10:36:10.405Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -13256,7 +13256,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 790-793",
@@ -13264,8 +13264,8 @@
             "end_line": 793,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "1862f24fc51b0ab155aa33bf8dac6cca112e7565593b959858e4903cbc6f01ab",
+          "retrieved_at_utc": "2026-11-05T10:36:10.520Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -13275,7 +13275,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1205-1211",
@@ -13283,8 +13283,8 @@
             "end_line": 1211,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "db23449b8d90201225ef434746c211a14fa56ed82c878810e24442fd38b0977a",
+          "retrieved_at_utc": "2026-11-05T10:36:10.649Z"
         }
       ],
       "version_applicability": {
@@ -13419,7 +13419,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 777-790",
@@ -13427,8 +13427,8 @@
             "end_line": 790,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "0ab68dd4cec37d918c130aaa31ba4934b83085f5bf14a2b74228c7a619a9d7ff",
+          "retrieved_at_utc": "2026-11-05T10:36:10.755Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -13438,7 +13438,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 794-807",
@@ -13446,8 +13446,8 @@
             "end_line": 807,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "0ab68dd4cec37d918c130aaa31ba4934b83085f5bf14a2b74228c7a619a9d7ff",
+          "retrieved_at_utc": "2026-11-05T10:36:10.864Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -13457,7 +13457,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1213-1230",
@@ -13465,8 +13465,8 @@
             "end_line": 1230,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "545568962478dcf5ee6d79cab91657eee319f65539678b5d6f78b44b63a0f925",
+          "retrieved_at_utc": "2026-11-05T10:36:10.991Z"
         }
       ],
       "version_applicability": {
