@@ -275,6 +275,11 @@ class Analysis(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     analysis_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    toolchain_profile_id: Mapped[str] = mapped_column(Text, nullable=False, default="bcftools-1.25-htslib-1.25-linux-64")
+    toolchain_bcftools_version: Mapped[str] = mapped_column(Text, nullable=False, default="1.25")
+    toolchain_htslib_version: Mapped[str] = mapped_column(Text, nullable=False, default="1.25")
+    toolchain_queue: Mapped[str] = mapped_column(Text, nullable=False, default="bioinformatics.bcftools.1_25")
+    toolchain_snapshot: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
         Index(
