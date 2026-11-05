@@ -8,6 +8,7 @@ RUN micromamba install --yes --name base --file /tmp/bcftools-environment.yml \
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_NO_PROGRESS=1
 WORKDIR /app
 
 # The API, Celery worker, Beat scheduler, migrations, and scientific tools all
@@ -26,20 +27,29 @@ RUN groupadd --system --gid 10001 siraloom \
 ENV HOME=/home/siraloom
 
 COPY --from=bcftools /opt/conda /opt/conda
-ENV PATH="/opt/conda/bin:${PATH}"
+ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}"
 
-COPY pyproject.toml ./
+# Resolve the application dependency graph only from the committed uv lock.
+# The lock manager itself is pinned and removed from the final runtime image.
+COPY pyproject.toml uv.lock ./
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/local/bin/python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
+    && test "$(uv --version)" = "uv 0.10.0" \
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project
+
 COPY backend ./backend
 COPY alembic.ini ./
 COPY migrations ./migrations
 COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir -e . \
-    && test "$(bcftools --version | head -n1)" = "bcftools 1.25"
+
+RUN uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
+    && python -c "import redis; import kombu.transport.redis; import backend.app" \
+    && test "$(bcftools --version | head -n1)" = "bcftools 1.25" \
+    && /usr/local/bin/python -m pip uninstall -y uv
 
 RUN chmod +x scripts/start_api_with_worker.sh
 
