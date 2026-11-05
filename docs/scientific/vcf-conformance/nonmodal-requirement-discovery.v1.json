@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "register_id": "siraloom-vcf-nonmodal-requirement-discovery",
   "status": "INITIAL_DISCOVERY_REVIEWED_NOT_EXHAUSTIVE",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
   "purpose": "Record source constraints that a modal-word-only extractor can miss. Entries are source-derived discovery items, not an assertion that the entire specification has been exhaustively reviewed.",
   "detection_classes": [
     {
