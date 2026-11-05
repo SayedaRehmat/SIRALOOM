@@ -28,7 +28,12 @@ jobs:
           test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
           test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
           micromamba env export --explicit --name bcftools-profile > "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
-          test "$(sed -n '1p' "$RUNNER_TEMP/bcftools-1.25-linux-64.lock")" = "@EXPLICIT"
+          grep -q '^@EXPLICIT
+          test -s "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          echo "::group::BEGIN_BCFTOOLS_EXPLICIT_LOCK"
+          cat "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          echo "::endgroup::"
+ "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           test -s "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
           echo "::group::BEGIN_BCFTOOLS_EXPLICIT_LOCK"
           cat "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
