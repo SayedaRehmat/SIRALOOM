@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-independent-standards-review-readiness",
-  "assessed_at_utc": "2026-11-05T10:36:38.032Z",
+  "assessed_at_utc": "2026-11-05T10:39:11.046Z",
   "branch": "research/vcf-conformance-phase-a-20261105",
   "assessed_ledger": "atomic-requirements.v1.json",
   "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
@@ -18,14 +18,14 @@
     "records_without_open_question_entries": 43,
     "vcf40_source_not_pinned_records": 142,
     "unresolved_applicability_cells_by_version": {
-      "VCFv4.1": 55,
-      "VCFv4.2": 55,
-      "VCFv4.3": 46,
-      "VCFv4.4": 17,
+      "VCFv4.1": 43,
+      "VCFv4.2": 43,
+      "VCFv4.3": 34,
+      "VCFv4.4": 5,
       "VCFv4.5": 0
     },
-    "source_references_total": 321,
-    "source_references_with_source_and_excerpt_sha256": 320,
+    "source_references_total": 353,
+    "source_references_with_source_and_excerpt_sha256": 352,
     "source_references_pending_vcf40_raw_source": 1,
     "source_references_without_hash_by_version": {
       "VCFv4.0": 1,
@@ -41,14 +41,13 @@
     "genotype_and_sv_crosswalks": "AUTHOR_CONTEXT_CROSSWALKS_EXIST; ATOMIC_RECONCILIATION_INCOMPLETE"
   },
   "critical_blockers": [
-    "Whole-specification coverage remains incomplete across all versions. The 44 VCFv4.5 VCF-specific tables have author-context dispositions, but not every table row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incompletely covered.",
-    "VCFv4.0 historical core page identity is corroborated, but exact source bytes and SHA-256 remain uncaptured. One VCFv4.0 source reference is unhashed and all 142 records remain SOURCE_NOT_PINNED for VCFv4.0.",
-    "VCFv4.1-4.4 reserved-field, genotype and SV/breakend inventories exist, but 55, 55, 46 and 17 candidate applicability cells respectively remain unresolved.",
+    "Whole-specification coverage remains incomplete. VCFv4.5 has author-context dispositions for all 44 indexed VCF-specific tables, but not every row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incomplete.",
+    "VCFv4.0 historical core source identity is corroborated, but exact source bytes and SHA-256 remain uncaptured; one VCFv4.0 source reference is unhashed and all 142 records remain SOURCE_NOT_PINNED for VCFv4.0.",
+    "VCFv4.1-4.4 candidate applicability remains unresolved in 43, 43, 34 and 5 cells respectively; these counts concern the current candidate ledger only.",
     "Independent second-person review has not started; zero requirements are independently approved.",
-    "The current 142 records are a partial author candidate set, not the complete source-to-requirement ledger.",
-    "No production implementation mappings or executed clause-specific tests are present in the ledger.",
-    "A custom structural required-field/enum audit passed 142/142 records; a full JSON Schema engine validation and complete source-coverage audit have not been demonstrated.",
-    "The ledger is not ready to freeze as a complete whole-specification review snapshot."
+    "The 142 records are still a partial author candidate set, not the complete whole-specification source-to-requirement ledger.",
+    "No production implementation mappings or executed clause-specific tests are present.",
+    "A custom required-field/enum/locator audit passed 142/142 records; a full JSON Schema engine validation and whole-specification coverage audit have not been demonstrated."
   ],
   "source_separation": {
     "core_vcf40": "IGSR/1000 Genomes historical core page corroborated as a VCFv4.0 source candidate; exact source bytes and SHA-256 not captured; not accepted as pinned normative source.",
@@ -63,5 +62,5 @@
     "No laboratory qualification claim."
   ],
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
-  "ledger_blob_sha": "e146cc61257bc16863a216f909f58d57ec5b1fc8"
+  "ledger_blob_sha": "b9800fbaf5c201ef791cbe74a9043bf2646908e3"
 }
