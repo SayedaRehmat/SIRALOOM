@@ -9,7 +9,14 @@
       "GHSA-38qp-vpxq-r6xc",
       "GHSA-6qq4-hj39-g6ph",
       "GHSA-5cvj-m89h-h3cw",
-      "GHSA-644m-mq4p-c7c6"
+      "GHSA-644m-mq4p-c7c6",
+      "GHSA-x79c-vxf6-6j9c",
+      "GHSA-2r8w-wxh5-c7r8",
+      "GHSA-vhg8-qwm7-cv9m",
+      "GHSA-xj7m-w8mc-xvf2",
+      "GHSA-vh3p-9c59-j3hv",
+      "GHSA-3j6q-r48h-wvm3",
+      "GHSA-f423-v554-fwqr"
     ]
   },
   "profiles": [
@@ -28,8 +35,17 @@
           "GHSA-38qp-vpxq-r6xc",
           "GHSA-6qq4-hj39-g6ph",
           "GHSA-5cvj-m89h-h3cw",
-          "GHSA-644m-mq4p-c7c6"
-        ]
+          "GHSA-644m-mq4p-c7c6",
+          "GHSA-x79c-vxf6-6j9c",
+          "GHSA-2r8w-wxh5-c7r8",
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.25/",
+        "reviewed_on": "2026-11-05"
       },
       "qualification_scope": "SIRALOOM software regression suite and production backend image checks only; not clinical or laboratory qualification",
       "worker_queue": "bioinformatics.bcftools.1_25"
@@ -66,8 +82,14 @@
           "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
-          "GHSA-vhg8-qwm7-cv9m"
-        ]
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/",
+        "reviewed_on": "2026-11-05"
       },
       "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks passed in CI; software qualification is distinct from clinical or laboratory qualification.",
       "worker_queue": "bioinformatics.bcftools.1_24_1",
@@ -105,8 +127,14 @@
           "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
-          "GHSA-vhg8-qwm7-cv9m"
-        ]
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/",
+        "reviewed_on": "2026-11-05"
       },
       "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
       "worker_queue": "bioinformatics.bcftools.1_23_3",
@@ -144,8 +172,14 @@
           "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
-          "GHSA-vhg8-qwm7-cv9m"
-        ]
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.22.4/",
+        "reviewed_on": "2026-11-05"
       },
       "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
       "worker_queue": "bioinformatics.bcftools.1_22_4",
@@ -183,8 +217,14 @@
           "GHSA-644m-mq4p-c7c6",
           "GHSA-x79c-vxf6-6j9c",
           "GHSA-2r8w-wxh5-c7r8",
-          "GHSA-vhg8-qwm7-cv9m"
-        ]
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.21.3/",
+        "reviewed_on": "2026-11-05"
       },
       "qualification_scope": "Source archive integrity, source build, VCF smoke tests, backend regression suite and isolated runtime image checks; software qualification is distinct from clinical or laboratory qualification.",
       "worker_queue": "bioinformatics.bcftools.1_21_3",
