@@ -704,8 +704,8 @@ def inspect_vcf_compression(path: str | Path) -> dict:
 
 
 
-def bcftools_available() -> bool:
-    return shutil.which("bcftools") is not None
+def bcftools_available(executable: str = "bcftools") -> bool:
+    return shutil.which(executable) is not None
 
 
 def has_multiallelic_records(path: str | Path) -> bool:
@@ -733,7 +733,9 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
     This deliberately does not use -f: bcftools requires a local FASTA for
     reference-aware normalization, while SIRALOOM currently uses Ensembl REST.
     """
-    if not bcftools_available():
+    from backend.app.config import settings
+    executable = settings.bcftools_executable
+    if not bcftools_available(executable):
         raise VCFToolError(
             "bcftools is required to split multiallelic VCF records in the deployed "
             "normalization pipeline."
@@ -744,7 +746,7 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     command = [
-        "bcftools", "norm", "--no-version", "-m", "-any", "-N", "-Ov",
+        executable, "norm", "--no-version", "-m", "-any", "-N", "-Ov",
         "--multi-overlaps", ".",
         "-o", str(output_path), str(input_path),
     ]
@@ -919,6 +921,7 @@ def validate_vcf_index_concordance(
     *,
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 120,
+    bcftools_executable: str | None = None,
 ) -> dict:
     """Validate an uploaded TBI/CSI index against the exact adjacent BGZF VCF.
 
@@ -950,7 +953,9 @@ def validate_vcf_index_concordance(
         )
     index_type = "CSI" if candidates[0] == csi_path else "TBI"
 
-    executable = shutil.which("bcftools")
+    from backend.app.config import settings
+    configured_executable = bcftools_executable or settings.bcftools_executable
+    executable = shutil.which(configured_executable)
     if executable is None:
         raise VCFToolUnavailable("bcftools is required to verify an uploaded VCF index.")
     try:
@@ -979,6 +984,7 @@ def validate_vcf_index_concordance(
         if len(version_line.split()) > 1 and version_line.split()[0] == "bcftools"
         else None
     )
+    expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
     if expected_bcftools_version and detected_version != expected_bcftools_version:
         raise VCFToolUnavailable(
             "bcftools version mismatch during VCF index validation: "
@@ -1455,7 +1461,7 @@ def normalize_vcf_with_bcftools(
     source_only_format_fields: list[str] | None = None,
     timeout_seconds: int = 1800,
     preserve_existing_source_mapping: bool = False,
-    bcftools_executable: str = "bcftools",
+    bcftools_executable: str | None = None,
 ) -> dict:
     """Normalize, sort, and VCF-index a VCF before publishing either output.
 
@@ -1463,11 +1469,10 @@ def normalize_vcf_with_bcftools(
     filesystem. Existing output and index files remain untouched until
     normalization, sorting, and indexing have all succeeded.
     """
-    executable_available = (
-        bcftools_available()
-        if bcftools_executable == "bcftools"
-        else Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
-    )
+    from backend.app.config import settings
+    bcftools_executable = bcftools_executable or settings.bcftools_executable
+    expected_bcftools_version = expected_bcftools_version or settings.bcftools_version
+    executable_available = Path(bcftools_executable).is_file() or shutil.which(bcftools_executable) is not None
     if not executable_available:
         raise VCFToolError("bcftools is required for SIRALOOM reference-aware VCF normalization.")
     input_path = Path(input_path)
