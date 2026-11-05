@@ -46,7 +46,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
@@ -65,7 +65,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
@@ -84,7 +84,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
@@ -103,7 +103,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
@@ -122,7 +122,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
@@ -227,7 +227,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
@@ -246,7 +246,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
@@ -265,7 +265,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
@@ -284,7 +284,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
@@ -303,7 +303,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
@@ -406,7 +406,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; File format subsection; lines 59–62",
@@ -425,7 +425,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; File format subsection; lines 59–62",
@@ -444,7 +444,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; File format subsection; lines 141–145",
@@ -463,7 +463,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; File format subsection; lines 144–148",
@@ -482,7 +482,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; File format subsection; lines 142–146",
@@ -585,7 +585,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; explicit LF and CRLF newline-support requirement; source line 40",
@@ -604,7 +604,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; explicit LF and CRLF newline-support requirement; source line 40",
@@ -623,7 +623,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; explicit LF and CRLF newline-support requirement; source line 38",
@@ -722,7 +722,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; line-separator placement requirement; source line 82",
@@ -741,7 +741,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; line-separator placement requirement; source line 82",
@@ -760,7 +760,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; line-separator placement requirement; source line 80",
@@ -859,7 +859,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 77",
@@ -878,7 +878,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 77",
@@ -897,7 +897,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 75",
@@ -1009,7 +1009,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 80",
@@ -1028,7 +1028,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 80",
@@ -1047,7 +1047,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 78",
@@ -1159,7 +1159,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 81",
@@ -1178,7 +1178,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 81",
@@ -1197,7 +1197,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 79",
@@ -1309,7 +1309,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 39",
@@ -1328,7 +1328,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 39",
@@ -1347,7 +1347,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 37",
@@ -1459,7 +1459,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 313",
@@ -1478,7 +1478,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 327",
@@ -1497,7 +1497,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 376",
@@ -1609,7 +1609,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 317",
@@ -1628,7 +1628,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 331",
@@ -1647,7 +1647,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 380",
@@ -1759,7 +1759,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 318",
@@ -1778,7 +1778,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 332",
@@ -1797,7 +1797,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 381",
@@ -1909,7 +1909,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; source-context reviewed line 155",
@@ -1928,7 +1928,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; source-context reviewed line 172",
@@ -1947,7 +1947,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 313",
@@ -1966,7 +1966,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 327",
@@ -1985,7 +1985,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 376",
@@ -2101,7 +2101,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; source-context reviewed line 159",
@@ -2120,7 +2120,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; source-context reviewed line 176",
@@ -2139,7 +2139,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 317",
@@ -2158,7 +2158,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 331",
@@ -2177,7 +2177,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 380",
@@ -2293,7 +2293,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex; source-context reviewed line 155",
@@ -2312,7 +2312,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex; source-context reviewed line 172",
@@ -2331,7 +2331,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex; source-context reviewed line 312",
@@ -2350,7 +2350,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex; source-context reviewed line 326",
@@ -2369,7 +2369,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex; source-context reviewed line 375",
@@ -2484,7 +2484,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 194; Genotype fields subsection",
@@ -2503,7 +2503,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 211; Genotype fields subsection",
@@ -2522,7 +2522,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 428; Genotype fields subsection",
@@ -2541,7 +2541,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 446; Genotype fields subsection",
@@ -2560,7 +2560,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 498; Genotype fields subsection",
@@ -2665,7 +2665,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 194; Genotype fields subsection",
@@ -2684,7 +2684,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 211; Genotype fields subsection",
@@ -2703,7 +2703,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 429; FORMAT key syntax and ordering",
@@ -2722,7 +2722,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 447; FORMAT key syntax and ordering",
@@ -2741,7 +2741,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 499; FORMAT key syntax and ordering",
@@ -2846,7 +2846,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 429; FORMAT key syntax and ordering",
@@ -2865,7 +2865,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 447; FORMAT key syntax and ordering",
@@ -2884,7 +2884,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 499; FORMAT key syntax and ordering",
@@ -2985,7 +2985,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 194; Genotype fields subsection",
@@ -3004,7 +3004,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 211; Genotype fields subsection",
@@ -3023,7 +3023,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 431; GT ordering rule",
@@ -3042,7 +3042,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 449; GT ordering rule",
@@ -3061,7 +3061,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 501; GT ordering rule",
@@ -3164,7 +3164,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 194; Genotype fields subsection",
@@ -3183,7 +3183,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 211; Genotype fields subsection",
@@ -3202,7 +3202,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 432; No required FORMAT keys",
@@ -3221,7 +3221,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 450; No required FORMAT keys",
@@ -3240,7 +3240,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 503; No required FORMAT keys",
@@ -3345,7 +3345,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 219; Missing genotype fields paragraph",
@@ -3364,7 +3364,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 236; Missing genotype fields paragraph",
@@ -3383,7 +3383,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 435; Missing genotype fields paragraph",
@@ -3402,7 +3402,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 453; Missing genotype fields paragraph",
@@ -3421,7 +3421,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 506; Missing genotype fields paragraph",
@@ -3526,7 +3526,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 437; List-valued missing fields",
@@ -3545,7 +3545,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 455; List-valued missing fields",
@@ -3564,7 +3564,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 508; List-valued missing fields",
@@ -3665,7 +3665,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 219; Missing genotype fields paragraph",
@@ -3684,7 +3684,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 236; Missing genotype fields paragraph",
@@ -3703,7 +3703,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex line 438; Trailing fields omission sentence",
@@ -3722,7 +3722,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex line 456; Trailing fields omission sentence",
@@ -3741,7 +3741,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 509; Trailing fields omission sentence",
@@ -3844,7 +3844,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 200; GT allele encoding definition",
@@ -3863,7 +3863,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 217; GT allele encoding definition",
@@ -3962,7 +3962,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 200; GT allele encoding definition",
@@ -3981,7 +3981,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 217; GT allele encoding definition",
@@ -4080,7 +4080,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 207; GL likelihood definition and ordering",
@@ -4099,7 +4099,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 224; GL likelihood definition and ordering",
@@ -4198,7 +4198,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 207; GL likelihood definition and ordering",
@@ -4217,7 +4217,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 224; GL likelihood definition and ordering",
@@ -4316,7 +4316,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 213; PS phase-set definition",
@@ -4335,7 +4335,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 230; PS phase-set definition",
@@ -4434,7 +4434,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 213; PS phase-set definition",
@@ -4453,7 +4453,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 230; PS phase-set definition",
@@ -4550,7 +4550,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 213; PS phase-set definition",
@@ -4569,7 +4569,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 230; PS phase-set definition",
@@ -4668,7 +4668,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex line 215; EC reserved FORMAT definition",
@@ -4687,7 +4687,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex line 232; EC reserved FORMAT definition",
@@ -4786,7 +4786,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 510; Global/local field equivalence rule",
@@ -4883,7 +4883,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 504-558; GL definition, genotype ordering pseudocode, examples and footnote",
@@ -4902,7 +4902,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 530-583; GL definition, genotype ordering pseudocode, examples and footnote",
@@ -4921,7 +4921,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 629-683; GL definition, genotype ordering pseudocode, inverse index and examples",
@@ -5022,7 +5022,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 507-515; Genotype Ordering heading and inclusive-loop footnote",
@@ -5041,7 +5041,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 533-541; Genotype Ordering heading and inclusive-loop footnote",
@@ -5060,7 +5060,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 632-643; Genotype Ordering heading and inclusive-loop footnote",
@@ -5159,7 +5159,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 512-520; Nested genotype ordering loops",
@@ -5178,7 +5178,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 538-546; Nested genotype ordering loops",
@@ -5197,7 +5197,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 638-643; Nested genotype ordering loops",
@@ -5296,7 +5296,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 528-558; Diploid ordering examples and triangular table",
@@ -5315,7 +5315,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 554-583; Diploid ordering examples and triangular table",
@@ -5334,7 +5334,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 657-681; Inverse index formula and diploid triangular table",
@@ -5433,7 +5433,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 657-663; Inverse genotype-order index pseudocode",
@@ -5528,7 +5528,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-525; GT allele-level phasing indicators",
@@ -5547,7 +5547,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-624; GT allele-level phasing indicators",
@@ -5646,7 +5646,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-517; Implicit first phasing indicator",
@@ -5665,7 +5665,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-616; Implicit first phasing indicator",
@@ -5762,7 +5762,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 521-525; GT phasing indicator meanings",
@@ -5781,7 +5781,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 620-624; GT phasing indicator meanings",
@@ -5878,7 +5878,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-603; PSL definition and mutual exclusion",
@@ -5897,7 +5897,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-776; PSL definition and mutual exclusion",
@@ -5994,7 +5994,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 602-603; PS/PSL non-interoperability",
@@ -6013,7 +6013,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 775-776; PS/PSL non-interoperability",
@@ -6110,7 +6110,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-601; PSL list cardinality and cross-chromosome identity",
@@ -6129,7 +6129,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-774; PSL list cardinality and cross-chromosome identity",
@@ -6226,7 +6226,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-600; PSL unphased allele rule",
@@ -6245,7 +6245,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-773; PSL unphased allele rule",
@@ -6342,7 +6342,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 599-601; PSL phase-set identity across chromosomes",
@@ -6361,7 +6361,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 772-774; PSL phase-set identity across chromosomes",
@@ -6458,7 +6458,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-619; PSO definition and conditional use",
@@ -6477,7 +6477,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792; PSO definition and conditional use",
@@ -6574,7 +6574,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-619; PSO definition and conditional use",
@@ -6593,7 +6593,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792; PSO definition and conditional use",
@@ -6690,7 +6690,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 618-620; PSO and paired breakend consistency",
@@ -6709,7 +6709,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 791-793; PSO and paired breakend consistency",
@@ -6806,7 +6806,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 635-637; PSQ list cardinality and missingness",
@@ -6825,7 +6825,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 808-810; PSQ list cardinality and missingness",
@@ -6922,7 +6922,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 635-637; PSQ list cardinality and missingness",
@@ -6941,7 +6941,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 808-810; PSQ list cardinality and missingness",
@@ -7038,7 +7038,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 686-694; LAA definition, local allele semantics and BCF empty-vector caveat",
@@ -7133,7 +7133,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 691-696; LAA order and local allele interpretation",
@@ -7228,7 +7228,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 692-696; Conditional LAA requirement and BCF caveat",
@@ -7325,7 +7325,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 693-696; BCF empty-vector and LAA interpretation",
@@ -7422,7 +7422,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 694-697; Local equivalents of A/R/G fields",
@@ -7517,7 +7517,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 717-719; LPL local genotype likelihood cardinality and ordering",
@@ -7614,7 +7614,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 202-209; M-field ID suffix and base scope",
@@ -7709,7 +7709,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 202-205; M-field U/T synonymy",
@@ -7804,7 +7804,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 202-206; Base modification GT dependency",
@@ -7899,7 +7899,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 198-212; M Number definition and genotype-dependent cardinality",
@@ -7994,7 +7994,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 205-212; M-field per-allele cardinality and ordering",
@@ -8089,7 +8089,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 207-210; N base modification strand ordering",
@@ -8184,7 +8184,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 211-218; M-field genotype order and phasing semantics",
@@ -8279,7 +8279,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 211-215; Unphased M-field aggregation",
@@ -8374,7 +8374,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 212-215; M-field missing/symbolic allele behavior",
@@ -8469,7 +8469,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 216-218; Unstranded base-modification convention",
@@ -8564,7 +8564,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 216-218; Unstranded base-modification convention",
@@ -8659,7 +8659,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 720-724; M-family reserved-key pattern and aliases",
@@ -8756,7 +8756,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 730-735; DPM-family reserved-key pattern and aliases",
@@ -8853,7 +8853,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 736-742; ADM-family reserved-key pattern and strandedness note",
@@ -8950,7 +8950,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 742-755; Stranded and unstranded CpG examples and interpretation",
@@ -9045,7 +9045,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 192-200; Local Number LA and LR definitions",
@@ -9140,7 +9140,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 192-200; Local Number LA and LR definitions",
@@ -9235,7 +9235,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 198-200; FORMAT Number P definition",
@@ -9330,7 +9330,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 198-203; FORMAT Number M definition",
@@ -9426,7 +9426,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 846-848; section-specific normative prose",
@@ -9445,7 +9445,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 671-680",
@@ -9545,7 +9545,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 852-858; section-specific normative prose",
@@ -9564,7 +9564,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 681-684",
@@ -9664,7 +9664,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 858-858; section-specific normative prose",
@@ -9683,7 +9683,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 681-684",
@@ -9783,7 +9783,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 881-890; section-specific normative prose",
@@ -9802,7 +9802,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 720-729",
@@ -9902,7 +9902,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 892-896; section-specific normative prose",
@@ -9921,7 +9921,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 731-735",
@@ -10021,7 +10021,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 900-912; section-specific normative prose",
@@ -10040,7 +10040,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 739-751",
@@ -10140,7 +10140,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 908-910; section-specific normative prose",
@@ -10159,7 +10159,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 747-751",
@@ -10259,7 +10259,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 916-926; section-specific normative prose",
@@ -10278,7 +10278,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 755-765",
@@ -10378,7 +10378,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 948-962; section-specific normative prose",
@@ -10397,7 +10397,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 787-801",
@@ -10497,7 +10497,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 976-1001; section-specific normative prose",
@@ -10516,7 +10516,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 815-818",
@@ -10616,7 +10616,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 980-999; section-specific normative prose",
@@ -10635,7 +10635,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 819-838",
@@ -10735,7 +10735,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1003-1010; section-specific normative prose",
@@ -10754,7 +10754,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 844-850",
@@ -10854,7 +10854,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1012-1020; section-specific normative prose",
@@ -10873,7 +10873,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 853-860",
@@ -10973,7 +10973,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1024-1049; section-specific normative prose",
@@ -10992,7 +10992,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 867-889",
@@ -11092,7 +11092,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1051-1066; section-specific normative prose",
@@ -11111,7 +11111,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 890-905",
@@ -11211,7 +11211,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1070-1080; section-specific normative prose",
@@ -11230,7 +11230,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 909-919",
@@ -11330,7 +11330,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1084-1105; section-specific normative prose",
@@ -11349,7 +11349,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 923-937",
@@ -11449,7 +11449,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1096-1105; section-specific normative prose",
@@ -11468,7 +11468,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 939-944",
@@ -11568,7 +11568,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1107-1124; section-specific normative prose",
@@ -11587,7 +11587,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 948-963",
@@ -11687,7 +11687,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1126-1140; section-specific normative prose",
@@ -11706,7 +11706,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 967-979",
@@ -11806,7 +11806,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1142-1162; section-specific normative prose",
@@ -11825,7 +11825,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 985-992",
@@ -11925,7 +11925,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1394-1400; section-specific normative prose",
@@ -11944,7 +11944,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1237-1242",
@@ -11963,7 +11963,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 526-532",
@@ -11982,7 +11982,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 543-549",
@@ -12001,7 +12001,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 925-932",
@@ -12107,7 +12107,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1400-1414; section-specific normative prose",
@@ -12126,7 +12126,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1240-1250",
@@ -12145,7 +12145,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 528-540",
@@ -12164,7 +12164,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 545-557",
@@ -12183,7 +12183,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 931-946",
@@ -12289,7 +12289,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1413-1424; section-specific normative prose",
@@ -12308,7 +12308,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1253-1264",
@@ -12327,7 +12327,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 542-558",
@@ -12346,7 +12346,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 559-575",
@@ -12365,7 +12365,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 947-963",
@@ -12471,7 +12471,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1521-1536; section-specific normative prose",
@@ -12490,7 +12490,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1361-1375",
@@ -12509,7 +12509,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 639-654",
@@ -12528,7 +12528,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 656-671",
@@ -12547,7 +12547,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1053-1069",
@@ -12653,7 +12653,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1539-1560; section-specific normative prose",
@@ -12672,7 +12672,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1379-1384",
@@ -12691,7 +12691,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 657-676",
@@ -12710,7 +12710,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 674-693",
@@ -12729,7 +12729,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1071-1094",
@@ -12835,7 +12835,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1563-1584; section-specific normative prose",
@@ -12854,7 +12854,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1403-1406",
@@ -12873,7 +12873,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 677-681",
@@ -12892,7 +12892,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 694-698",
@@ -12911,7 +12911,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1095-1100",
@@ -13017,7 +13017,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1648-1677; section-specific normative prose",
@@ -13036,7 +13036,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1488-1491",
@@ -13055,7 +13055,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 752-771",
@@ -13074,7 +13074,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 769-788",
@@ -13093,7 +13093,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1179-1202",
@@ -13199,7 +13199,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1674-1680; section-specific normative prose",
@@ -13218,7 +13218,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1514-1517",
@@ -13237,7 +13237,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 773-776",
@@ -13256,7 +13256,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 790-793",
@@ -13275,7 +13275,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1205-1211",
@@ -13381,7 +13381,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1682-1706; section-specific normative prose",
@@ -13400,7 +13400,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 1522-1527",
@@ -13419,7 +13419,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 777-790",
@@ -13438,7 +13438,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 794-807",
@@ -13457,7 +13457,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 1213-1230",
@@ -13563,7 +13563,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 867-868; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -13582,7 +13582,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 436-439",
@@ -13682,7 +13682,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 871-878; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -13701,7 +13701,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 715-716",
@@ -13801,7 +13801,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 930-944; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -13820,7 +13820,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 779-783",
@@ -13920,7 +13920,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1146-1162; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -13939,7 +13939,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 987-992",
@@ -14039,7 +14039,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1146-1162; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -14058,7 +14058,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 988-992",
@@ -14158,7 +14158,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1146-1162; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -14177,7 +14177,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 989-992",
@@ -14277,7 +14277,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1158-1162; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -14296,7 +14296,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 989-992",
@@ -14396,7 +14396,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792; full contextual review artifact vcf4.5-sv-breakend-full-context-review.v1.json",
@@ -14415,7 +14415,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-620",
@@ -14515,7 +14515,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -14655,7 +14655,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -14795,7 +14795,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -14935,7 +14935,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -15075,7 +15075,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -15215,7 +15215,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -15355,7 +15355,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -15495,7 +15495,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 84-93",
@@ -15635,7 +15635,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1790-1797",
@@ -15817,7 +15817,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1825-1833",
@@ -15999,7 +15999,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1840-1843",
@@ -16181,7 +16181,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1840-1843",
@@ -16363,7 +16363,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1846-1853",
@@ -16461,7 +16461,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1852-1854",
@@ -16559,7 +16559,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1858-1860",
@@ -16657,7 +16657,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1858-1860",
@@ -16755,7 +16755,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 1878-1878",
@@ -16853,7 +16853,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 193-207",
@@ -16872,7 +16872,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 210-224",
@@ -16972,7 +16972,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 200-207",
@@ -16991,7 +16991,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 217-224",
@@ -17010,7 +17010,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 492-504",
@@ -17112,7 +17112,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-210",
@@ -17131,7 +17131,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-227",
@@ -17231,7 +17231,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-210",
@@ -17250,7 +17250,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-227",
@@ -17350,7 +17350,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "9f9ab048c6b0f3518e8bd30957088561555a874e8d4e04fbc22c59774c4278b5",
+          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-211",
@@ -17369,7 +17369,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "3a4907e5b7f6148035826cf4e70a1b258f78656b16401c64a5e95cef92a5e9fb",
+          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-228",
@@ -17469,7 +17469,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "940b490b04278a3421598ad4a5ae2381abeca4f0bf4d857bd09b7ebecee79c9b",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 504-558",
@@ -17488,7 +17488,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 530-583",
@@ -17507,7 +17507,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 629-683",
@@ -17609,7 +17609,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-525",
@@ -17628,7 +17628,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-624",
@@ -17728,7 +17728,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-525",
@@ -17747,7 +17747,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-624",
@@ -17847,7 +17847,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-603",
@@ -17866,7 +17866,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-776",
@@ -17966,7 +17966,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-603",
@@ -17985,7 +17985,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-776",
@@ -18085,7 +18085,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-620",
@@ -18104,7 +18104,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792",
@@ -18204,7 +18204,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "e1f5017a46b56f4fb533421522d4359bb1d785dc997f82a74a6cb83ad210760c",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-620",
@@ -18223,7 +18223,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "6a418b57e59eb37676c434aa9bc5d1e0c632b44ab3b6d650db76162a4b87be73",
+          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792",
