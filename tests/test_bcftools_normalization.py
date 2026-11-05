@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.config import settings
+
 from backend.app.domain.normalization import iter_normalized_vcf
 from backend.app.domain.vcf import parse_vcf
 from backend.app.domain.vcf_tools import (
@@ -180,7 +182,7 @@ def test_golden_ref_mismatch_fails_closed(tmp_path: Path):
     output = tmp_path / "normalized.vcf.gz"
     write_vcf(source, "1\t2\t.\tC\tG\t.\tPASS\t.\n")
     with pytest.raises(VCFToolError, match="reference-aware normalization failed"):
-        normalize_vcf_with_bcftools(source, output, reference_fasta=reference, expected_bcftools_version="1.25")
+        normalize_vcf_with_bcftools(source, output, reference_fasta=reference, expected_bcftools_version=settings.bcftools_version)
 
 
 def test_golden_unknown_contig_fails_bcftools(tmp_path: Path):
@@ -233,10 +235,10 @@ def test_pinned_bcftools_trims_unseen_gvcf_wildcard_without_changing_called_geno
     output = tmp_path / "called-variants.normalized.vcf.gz"
     stats = normalize_vcf_with_bcftools(
         routed["sequence_path"], output, reference_fasta=reference,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
-    assert stats["tool_version"].split()[1] == "1.25"
+    assert stats["tool_version"].split()[1] == settings.bcftools_version
     assert stats["gvcf_wildcard_command"] == "bcftools view -A"
     assert records(output) == [("1", 2, "A", "G")]
     with gzip.open(output, "rt", encoding="utf-8") as handle:
