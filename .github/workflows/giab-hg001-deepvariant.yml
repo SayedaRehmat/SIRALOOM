@@ -163,7 +163,8 @@ jobs:
             --num_shards=32 \
             --vcf_stats_report=true \
             --logging_dir=/output/logs
-          bcftools index --tbi "$RUN_DIR/output/HG001.deepvariant.vcf.gz"
+          bcftools index --tbi -f "$RUN_DIR/output/HG001.deepvariant.vcf.gz"
+          bcftools index --tbi -f "$RUN_DIR/output/HG001.deepvariant.g.vcf.gz"
           bcftools query -l "$RUN_DIR/output/HG001.deepvariant.vcf.gz" > "$RUN_DIR/evidence/query-samples.txt"
           test "$(wc -l < "$RUN_DIR/evidence/query-samples.txt")" -eq 1
       - name: Build private sample-column mapping without exposing identifiers in command arguments
@@ -281,5 +282,6 @@ jobs:
             ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.g.vcf.gz
             ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.g.vcf.gz.tbi
             ${{ runner.temp }}/giab-hg001-deepvariant/evidence/
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/logs/
           if-no-files-found: warn
           retention-days: 90
