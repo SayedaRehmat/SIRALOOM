@@ -22,15 +22,15 @@
         {
           "source_id": "VCF40-IGSR-CORE-HISTORICAL",
           "version": "VCFv4.0",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
-          "revision": "HISTORICAL_MUTABLE_WEB_SOURCE_NOT_YET_PINNED",
+          "revision": "UNPINNED_ARCHIVAL_WEB_PAGE",
           "source_file": null,
           "git_blob_sha1": null,
           "source_sha256": null,
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "Rendered HTML lines 40–41; raw source-byte capture and SHA-256 pending",
+            "locator_value": "IGSR historical VCFv4.0 page rendered lines; candidate historical source only; original normative provenance and immutable bytes not yet established",
             "start_line": 40,
             "end_line": 41,
             "page": null
@@ -136,11 +136,11 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "APPLICABLE",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [
             "VCF40-IGSR-CORE-HISTORICAL"
           ],
-          "delta_summary": null,
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -317,9 +317,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "The historical VCFv4.0 core page identifies fileformat as required but does not state this additional constraint in the reviewed passage.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -496,9 +496,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "The historical VCFv4.0 core page identifies fileformat as required but does not state this additional constraint in the reviewed passage.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -637,9 +637,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -774,9 +774,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "No equivalent explicit line-ending requirement has yet been confirmed in this version's pinned source review.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -911,9 +911,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1061,9 +1061,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1211,9 +1211,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1361,9 +1361,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1511,9 +1511,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1661,9 +1661,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1811,9 +1811,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Not yet source-reviewed for this specific constraint; do not infer applicability from later versions.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -1999,9 +1999,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical source not reviewed for this exact constraint.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -2191,9 +2191,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical source not reviewed for this exact constraint.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -2383,9 +2383,9 @@
       ],
       "version_applicability": {
         "VCFv4.0": {
-          "status": "UNRESOLVED",
+          "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical source not reviewed for this exact constraint.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -2576,7 +2576,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -2756,7 +2756,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -2898,7 +2898,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3074,7 +3074,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3252,7 +3252,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3432,7 +3432,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3574,7 +3574,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3750,7 +3750,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3871,7 +3871,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -3988,7 +3988,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4105,7 +4105,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4222,7 +4222,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4339,7 +4339,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4456,7 +4456,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4571,7 +4571,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4688,7 +4688,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4786,7 +4786,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -4920,7 +4920,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5058,7 +5058,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5194,7 +5194,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5330,7 +5330,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5428,7 +5428,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5541,7 +5541,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5658,7 +5658,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5773,7 +5773,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -5888,7 +5888,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6003,7 +6003,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6118,7 +6118,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6233,7 +6233,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6348,7 +6348,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6463,7 +6463,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6578,7 +6578,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6693,7 +6693,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6808,7 +6808,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -6923,7 +6923,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7019,7 +7019,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7113,7 +7113,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7207,7 +7207,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7303,7 +7303,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7399,7 +7399,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7493,7 +7493,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7589,7 +7589,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7683,7 +7683,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7777,7 +7777,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7871,7 +7871,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -7965,7 +7965,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8059,7 +8059,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8153,7 +8153,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8247,7 +8247,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8341,7 +8341,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8435,7 +8435,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8529,7 +8529,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8623,7 +8623,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8717,7 +8717,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8811,7 +8811,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8905,7 +8905,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -8999,7 +8999,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -9093,7 +9093,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -9187,7 +9187,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
@@ -9281,7 +9281,7 @@
         "VCFv4.0": {
           "status": "SOURCE_NOT_PINNED",
           "source_reference_ids": [],
-          "delta_summary": "Historical VCF 4.0 normative source capture and semantic review pending.",
+          "delta_summary": "IGSR historical VCFv4.0 page is retained as a discovery/reference copy only; authoritative normative provenance and immutable source-byte capture are pending.",
           "exceptions": []
         },
         "VCFv4.1": {
