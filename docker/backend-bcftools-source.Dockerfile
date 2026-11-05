@@ -59,9 +59,9 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 
 COPY pyproject.toml uv.lock ./
 RUN set -eux \
-    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/%s/ trixie main\\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" > /etc/apt/sources.list \
-    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/%s/ trixie-updates main\\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
-    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/%s/ trixie-security main\\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/%s/ trixie main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" > /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/%s/ trixie-updates main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/%s/ trixie-security main\n' "$DEBIAN_SNAPSHOT_TIMESTAMP" >> /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
     && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
