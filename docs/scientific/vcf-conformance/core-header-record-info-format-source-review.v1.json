@@ -286,7 +286,29 @@
           }
         ]
       },
-      "format_semantics": null
+      "format_semantics": null,
+      "data_line_preamble": {
+        "start_line": 157,
+        "end_line": 160,
+        "lines": [
+          {
+            "line": 157,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 158,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 159,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 160,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          }
+        ]
+      }
     },
     {
       "version": "VCFv4.2",
@@ -562,7 +584,29 @@
           }
         ]
       },
-      "format_semantics": null
+      "format_semantics": null,
+      "data_line_preamble": {
+        "start_line": 174,
+        "end_line": 177,
+        "lines": [
+          {
+            "line": 174,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 175,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 176,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 177,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          }
+        ]
+      }
     },
     {
       "version": "VCFv4.3",
@@ -1509,6 +1553,32 @@
           {
             "line": 565,
             "text": "  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 315,
+        "end_line": 319,
+        "lines": [
+          {
+            "line": 315,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 316,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 317,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 318,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 319,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
           }
         ]
       }
@@ -2534,6 +2604,32 @@
           {
             "line": 597,
             "text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required)."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 329,
+        "end_line": 333,
+        "lines": [
+          {
+            "line": 329,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 330,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 331,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 332,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 333,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
           }
         ]
       }
@@ -3887,6 +3983,32 @@
           {
             "line": 690,
             "text": "  Similarly, in rare sites, which can be the bulk of the sites, the vast majority of the samples are reference."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 378,
+        "end_line": 382,
+        "lines": [
+          {
+            "line": 378,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 379,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 380,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 381,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
+          },
+          {
+            "line": 382,
+            "text": "Exact pinned source passage captured in source review; see canonical source locator."
           }
         ]
       }
