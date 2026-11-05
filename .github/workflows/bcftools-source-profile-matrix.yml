@@ -41,6 +41,7 @@ jobs:
           set -euo pipefail
           export POSTGRES_DB=ci POSTGRES_USER=ci POSTGRES_PASSWORD=ci-postgres-password
           export REDIS_PASSWORD=ci-redis-password
+          export SIRALOOM_RUNTIME_ENV_FILE=.env.example
           export NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1
           export NEXT_PUBLIC_FIREBASE_API_KEY=ci-firebase-api-key
           export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=example.invalid
