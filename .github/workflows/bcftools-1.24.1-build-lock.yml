@@ -15,6 +15,10 @@ on:
       - ".github/workflows/bcftools-1.24.1-build-lock.yml"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
