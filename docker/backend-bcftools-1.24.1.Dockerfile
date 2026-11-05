@@ -45,12 +45,15 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 # Resolve the application dependency graph only from the committed uv lock.
 # The lock manager itself is pinned and removed from the final runtime image.
 COPY pyproject.toml uv.lock ./
-RUN apt-get update \
+RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
+    && uv lock --check \
+    && apt-get update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/local/bin/python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
     && test "$(uv --version)" = "uv 0.10.0" \
-    && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project \
+    && test "$lock_sha_before" = "$(sha256sum uv.lock | cut -d ' ' -f1)"
 
 COPY backend ./backend
 COPY alembic.ini ./
@@ -59,7 +62,9 @@ COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
 
-RUN uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
+RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
+    && test "$lock_sha_before" = "$(sha256sum uv.lock | cut -d ' ' -f1)" \
     && python -c "import redis; import kombu.transport.redis; import backend.app" \
     && test "$(bcftools --version | head -n1)" = "bcftools ${BCFTOOLS_VERSION}" \
     && test "$(bcftools --version | sed -n '2s/.*htslib //p')" = "${HTSLIB_VERSION}" \
