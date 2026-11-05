@@ -62,5 +62,23 @@
     "No laboratory qualification claim."
   ],
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
-  "ledger_blob_sha": "b9800fbaf5c201ef791cbe74a9043bf2646908e3"
+  "ledger_blob_sha": "b9800fbaf5c201ef791cbe74a9043bf2646908e3",
+  "source_hash_consistency_audit": {
+    "status": "RECONCILED_TO_PINNED_SOURCE_MANIFEST",
+    "audited_at_utc": "2026-11-05T15:42:00+05:00",
+    "ledger_source_references_with_archived_spec_file": 352,
+    "references_reconciled_to_canonical_source_sha256": 320,
+    "references_already_matching_canonical_source_sha256": 32,
+    "references_remaining_with_mismatched_source_sha256": 0,
+    "per_file_sha256": {
+      "VCFv4.1.tex": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+      "VCFv4.2.tex": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+      "VCFv4.3.tex": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+      "VCFv4.4.tex": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+      "VCFv4.5.tex": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2"
+    },
+    "archive_identity_check": "All five archived source-file Git blob SHA-1 values fetched from the SIRALOOM branch match the pinned upstream hts-specs source manifest blob SHA-1 values.",
+    "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED."
+  },
+  "audit_note": "Source hash consistency was separately audited and reconciled in commit 4c064a684615785e6675ecfe45747d2d00ac39a0. This does not close whole-specification coverage, VCFv4.0 provenance, independent review, implementation mapping, clause tests, or laboratory qualification."
 }
