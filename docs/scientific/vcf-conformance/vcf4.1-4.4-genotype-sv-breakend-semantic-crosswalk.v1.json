@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf4.1-4.4-genotype-sv-breakend-semantic-crosswalk.v1",
-  "status": "AUTHOR_SOURCE_CONTEXT_CROSSWALK_COMPLETE_ATOMIC_REQUIREMENT_RECONCILIATION_PENDING",
+  "status": "AUTHOR_SOURCE_CONTEXT_CROSSWALK_EXPANDED_PEDIGREE_AND_ENCODING_DELTAS_ATOMIC_RECONCILIATION_STILL_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -971,6 +971,56 @@
       "source_locators": [
         "VCFv4.3.tex:665-679",
         "VCFv4.4.tex:853-860; 985-989"
+      ]
+    },
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "topic": "PEDIGREE and clonal derivation",
+      "finding": "Both versions describe clonal derivation with PEDIGREE=<Derived=ID2,Original=ID1>, family trio relationships using Child/Mother/Father, and a general Name_0=G0-ID,...,Name_N=GN-ID form. The general form defines Name_0 as derived from N>=1 ancestor genomes.",
+      "source_locators": [
+        "VCFv4.1.tex:867-905",
+        "VCFv4.2.tex:884-922"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "PEDIGREE header syntax",
+      "finding": "VCFv4.3 changes the PEDIGREE syntax to ID=DerivedID,Original=OriginalID and ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN. The clonal and multiple-ancestor semantics persist, but header key layout changes.",
+      "source_locators": [
+        "VCFv4.2.tex:884-922",
+        "VCFv4.3.tex:1321-1364"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "PEDIGREE and haplotype semantics",
+      "finding": "VCFv4.4 retains the VCFv4.3 ID=SampleID PEDIGREE syntax and the haplotype uniqueness/conservation and duplication semantics; source text is moved to the corresponding 4.4 section.",
+      "source_locators": [
+        "VCFv4.3.tex:1321-1373",
+        "VCFv4.4.tex:1630-1682"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "Character percent-encoding",
+      "finding": "VCFv4.3 explicitly defines uppercase percent-escape codes for reserved delimiters and control characters. The corresponding specific escape-code rules are absent from VCFv4.1 and VCFv4.2 and must not be back-projected.",
+      "source_locators": [
+        "VCFv4.2.tex: full source scan",
+        "VCFv4.3.tex:84-94"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "Character percent-encoding",
+      "finding": "VCFv4.4 retains the VCFv4.3 uppercase percent-escape code set for colon, semicolon, equals, percent, comma, CR, LF and horizontal tab.",
+      "source_locators": [
+        "VCFv4.3.tex:84-94",
+        "VCFv4.4.tex:84-94"
       ]
     }
   ],
