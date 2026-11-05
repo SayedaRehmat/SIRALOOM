@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-modal-candidate-context-review-index",
   "status": "INITIAL_PRIMARY_CONTEXT_DISPOSITION_RECORDED_FOR_ALL_510_CANDIDATE_LINES_EXTENDED_SEMANTIC_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "total_candidates": 510,
   "reviewed_candidate_lines": 510,
   "candidate_line_review_scope": "Each extracted modal-language candidate was re-read with its immediate source neighbours and assigned a primary disposition distinguishing normative, recommendation, permission, informative, mixed, or unresolved-scope content. This is an initial line-context disposition, not a completed expanded semantic review.",
