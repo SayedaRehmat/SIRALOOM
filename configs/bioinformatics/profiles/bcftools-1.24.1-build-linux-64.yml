@@ -1,0 +1,19 @@
+channels:
+  - conda-forge
+channel_priority: strict
+dependencies:
+  - c-compiler
+  - make
+  - pkg-config
+  - autoconf
+  - automake
+  - libtool
+  - zlib
+  - bzip2
+  - xz
+  - curl
+  - openssl
+  - libcurl
+  - libdeflate
+  - gsl
+  - perl
