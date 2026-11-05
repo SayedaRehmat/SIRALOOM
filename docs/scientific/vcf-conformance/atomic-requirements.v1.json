@@ -14525,6 +14525,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.964Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.965Z"
         }
       ],
       "version_applicability": {
@@ -14535,27 +14573,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -14623,6 +14665,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.966Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.968Z"
         }
       ],
       "version_applicability": {
@@ -14633,27 +14713,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -14721,6 +14805,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.969Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.970Z"
         }
       ],
       "version_applicability": {
@@ -14731,27 +14853,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -14819,6 +14945,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.971Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.972Z"
         }
       ],
       "version_applicability": {
@@ -14829,27 +14993,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -14917,6 +15085,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.973Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.974Z"
         }
       ],
       "version_applicability": {
@@ -14927,27 +15133,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15015,6 +15225,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.975Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.976Z"
         }
       ],
       "version_applicability": {
@@ -15025,27 +15273,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15113,6 +15365,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.977Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.978Z"
         }
       ],
       "version_applicability": {
@@ -15123,27 +15413,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
@@ -15211,6 +15505,44 @@
           },
           "source_excerpt_sha256": "403bd43bd790d5b823f78d634de03ad55c639d6300099c1554c052436db1fdad",
           "retrieved_at_utc": "2026-11-05T10:31:24.538Z"
+        },
+        {
+          "source_id": "VCF43-HTS-510c107",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.978Z"
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L84-L94",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 84-94",
+            "start_line": 84,
+            "end_line": 94,
+            "page": null
+          },
+          "source_excerpt_sha256": "172e07d570452231a74a9d590d3d5329a31bb10c54dbbac1ae270aa923bd1951",
+          "retrieved_at_utc": "2026-11-05T10:38:43.979Z"
         }
       ],
       "version_applicability": {
@@ -15221,27 +15553,31 @@
           "exceptions": []
         },
         "VCFv4.1": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.2": {
-          "status": "UNRESOLVED",
+          "status": "NOT_APPLICABLE",
           "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "delta_summary": "The pinned VCFv4.1/4.2 source does not define this specific percent-escape rule; do not project the later rule backwards.",
           "exceptions": []
         },
         "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF43-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific applicability has not yet been reviewed against the pinned source.",
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": "The specified uppercase percent-escape rule is present in the VCFv4.3/4.4 character-encoding section.",
           "exceptions": []
         },
         "VCFv4.5": {
