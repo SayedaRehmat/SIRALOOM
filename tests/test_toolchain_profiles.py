@@ -114,7 +114,24 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ssl.get_default_verify_paths()" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
+    assert 'test "$(uname -m)" = "x86_64"' in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
+
+
+def test_default_runtime_dockerfile_pins_all_inputs_and_fails_closed_outside_amd64():
+    dockerfile = (ROOT / "docker/backend.Dockerfile").read_text(encoding="utf-8")
+    assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools" in dockerfile
+    assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
+    assert "FROM ${BCFTOOLS_BASE_IMAGE}" in dockerfile
+    assert "x86_64:linux-64) ::" in dockerfile
+    assert "aarch64:linux-aarch64" not in dockerfile
+    assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile
+    assert "printf '%s\\n' \\"deb [check-valid-until=no] http://snapshot-cloudflare.debian.org/archive/debian/${DEBIAN_SNAPSHOT_TIMESTAMP}/ trixie main\\"" in dockerfile
+    assert "APT::Update::Error-Mode=any update" in dockerfile
+    assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
+    assert "uv archive SHA-256 mismatch" in dockerfile
+
 
 
 @pytest.mark.parametrize(
