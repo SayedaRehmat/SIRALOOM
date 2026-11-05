@@ -80,3 +80,78 @@ def test_profile_registry_does_not_allow_candidate_profiles(tmp_path):
             htslib_version="1.25",
             registry_path=candidate_registry,
         )
+
+
+def test_analysis_worker_profile_match_requires_exact_profile_and_versions():
+    from types import SimpleNamespace
+
+    from backend.app.domain.toolchain_profiles import (
+        assert_analysis_toolchain_matches_worker,
+    )
+
+    analysis = SimpleNamespace(
+        toolchain_profile_id=PROFILE_ID,
+        toolchain_bcftools_version="1.25",
+        toolchain_htslib_version="1.25",
+        toolchain_queue="bioinformatics.bcftools.1_25",
+        toolchain_snapshot={
+            "profile_id": PROFILE_ID,
+            "bcftools_version": "1.25",
+            "htslib_version": "1.25",
+            "worker_queue": "bioinformatics.bcftools.1_25",
+        },
+    )
+    assert_analysis_toolchain_matches_worker(
+        analysis,
+        worker_profile_id=PROFILE_ID,
+        worker_bcftools_version="1.25",
+        worker_htslib_version="1.25",
+    )
+
+
+def test_analysis_worker_rejects_a_different_toolchain_profile():
+    from types import SimpleNamespace
+
+    from backend.app.domain.toolchain_profiles import (
+        ToolchainProfileError,
+        assert_analysis_toolchain_matches_worker,
+    )
+
+    analysis = SimpleNamespace(
+        toolchain_profile_id=PROFILE_ID,
+        toolchain_bcftools_version="1.25",
+        toolchain_htslib_version="1.25",
+        toolchain_queue="bioinformatics.bcftools.1_25",
+        toolchain_snapshot={},
+    )
+    with pytest.raises(ToolchainProfileError, match="ANALYSIS_TOOLCHAIN_WORKER_MISMATCH"):
+        assert_analysis_toolchain_matches_worker(
+            analysis,
+            worker_profile_id="bcftools-1.24.1-htslib-1.24.1-linux-64-source",
+            worker_bcftools_version="1.24.1",
+            worker_htslib_version="1.24.1",
+        )
+
+
+def test_analysis_worker_rejects_snapshot_or_queue_drift():
+    from types import SimpleNamespace
+
+    from backend.app.domain.toolchain_profiles import (
+        ToolchainProfileError,
+        assert_analysis_toolchain_matches_worker,
+    )
+
+    analysis = SimpleNamespace(
+        toolchain_profile_id=PROFILE_ID,
+        toolchain_bcftools_version="1.25",
+        toolchain_htslib_version="1.25",
+        toolchain_queue="bioinformatics.bcftools.1_24_1",
+        toolchain_snapshot={},
+    )
+    with pytest.raises(ToolchainProfileError, match="ANALYSIS_TOOLCHAIN_QUEUE_MISMATCH"):
+        assert_analysis_toolchain_matches_worker(
+            analysis,
+            worker_profile_id=PROFILE_ID,
+            worker_bcftools_version="1.25",
+            worker_htslib_version="1.25",
+        )
