@@ -135,6 +135,7 @@ def create(
             configuration=payload.configuration,
             created_by=principal.user_id,
             resource_profile_id=payload.resource_profile_id,
+            toolchain_profile_id=payload.toolchain_profile_id,
             commit=False,
         )
     except ValueError as exc:
@@ -161,6 +162,9 @@ def create(
         "workflow_id": analysis.workflow_id,
         "workflow_version": analysis.workflow_version,
         "reference_build": analysis.reference_build,
+        "toolchain_profile_id": analysis.toolchain_profile_id,
+        "toolchain_bcftools_version": analysis.toolchain_bcftools_version,
+        "toolchain_htslib_version": analysis.toolchain_htslib_version,
         "assay_id": (
             str(analysis.assay_id)
             if analysis.assay_id
