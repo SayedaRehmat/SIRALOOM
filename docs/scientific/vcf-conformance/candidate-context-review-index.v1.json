@@ -102,7 +102,7 @@
     },
     {
       "artifact": "independent-standards-review-readiness.v1.json",
-      "scope": "Machine-readable audit of ledger counts, source provenance blockers, version applicability gaps and explicit non-claims."
+      "scope": "Readiness audit refreshed for 105 ledger records: 105 source-linked with locators, zero duplicate IDs, zero independent approvals, zero test evidence, and unresolved version applicability 39/39/30/30 for VCF4.1/4.2/4.3/4.4; complete review remains blocked."
     },
     {
       "artifact": "vcf4.5-table-semantic-review-queue.v1.json",
