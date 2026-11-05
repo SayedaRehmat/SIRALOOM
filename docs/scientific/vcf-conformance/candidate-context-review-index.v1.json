@@ -107,10 +107,18 @@
     {
       "artifact": "vcf4.5-table-semantic-review-queue.v1.json",
       "scope": "Structural triage of all 44 VCF-only table environments in pinned VCFv4.5 source, with exact line locators, enclosing sections, semantic review targets and explicit NOT_REVIEWED status; no atomic requirements claimed from this queue."
+    },
+    {
+      "artifact": "vcf4.5-info-format-row-semantic-review.v1.json",
+      "scope": "Row-by-row source-context review of all 21 reserved INFO and 63 reserved FORMAT rows in pinned VCFv4.5; independent review, implementation mapping and tests pending."
+    },
+    {
+      "artifact": "vcf4.5-sv-breakend-atomic-source-review.v1.json",
+      "scope": "Thirty VCFv4.5 structural-variant INFO/FORMAT, tandem-repeat and breakend atomic candidates with exact line locators; all remain IN_REVIEW pending cross-version reconciliation and independent review."
     }
   ],
   "evidence_counters": {
-    "atomic_requirement_ledger_records": 75,
+    "atomic_requirement_ledger_records": 105,
     "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidates (60 reconciled as IN_REVIEW ledger records; one retained as a split parent); additional source-review artifacts contain other proposals and split parents",
     "independently_second_person_reviewed": 0,
     "production_code_mappings": 0,
@@ -121,15 +129,14 @@
     "scoped_pilot_review_permitted": true
   },
   "next_review_gates": [
-    "Perform row-by-row semantic review of all 44 VCFv4.5 tables, including reserved INFO/FORMAT definitions, genotype-ordering algorithm, local-allele and phasing examples, encoding mappings, small-variant representation and SV/breakend examples.",
-    "Complete full semantic expansion and atomic decomposition across all specification sections, tables, grammar, definitions, examples, footnotes and cross-references.",
-    "Reconcile all 61 FORMAT/GENOTYPE candidates with complete source context; retain FMT-GT-017 as a split parent and verify all 60 reconciled children/independent records.",
-    "Resolve the 18 VCFv4.1–4.2 applicability cells using exact version-specific source passages; do not infer from later versions.",
-    "Capture immutable historical VCFv4.0 core source bytes, retrieval metadata and SHA-256; separately capture and classify 1000 Genomes SV conventions.",
-    "Complete source excerpt hashes, source locators, requirement-to-candidate links, cross-requirement dependencies and semantic version deltas.",
-    "Run schema and cross-reference integrity validation on the full ledger and review package.",
-    "Begin independent second-person standards review only when the whole-specification coverage gate is met; a pilot review of current 75 records must be labelled incomplete.",
-    "After independent review, map approved requirements to implementation and execute clause-specific positive, negative, boundary, semantic and differential tests."
+    "Complete row-by-row semantic review of remaining VCFv4.5 tables: encoding, genotype ordering, local-allele and phasing examples, small-variant representation, SV/breakend examples; do not count the INFO/FORMAT row review as completion of all 44 tables.",
+    "Build and execute equivalent row-by-row table and semantic reviews for VCFv4.1, VCFv4.2, VCFv4.3 and VCFv4.4.",
+    "Complete full semantic expansion and atomic decomposition across all versions: grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references.",
+    "Reconcile the 30 new VCFv4.5 SV/breakend candidates against exact VCFv4.1–4.4 passages and the historical VCFv4.0 source; do not infer applicability from later versions.",
+    "Capture immutable historical VCFv4.0 normative source bytes, retrieval metadata and SHA-256; separately classify 1000 Genomes project conventions as producer/project conventions.",
+    "Complete source excerpt hashes, source locators, candidate-to-ledger links, dependencies and semantic version deltas.",
+    "Validate the complete ledger schema, unique IDs, source refs, source locators, version applicability, normative-force vocabulary, atomicity and cross-references.",
+    "Freeze a versioned review snapshot only after whole-specification coverage and traceability checks pass; then request independent second-person review. Do not mark any record approved without an actual reviewer disposition."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
