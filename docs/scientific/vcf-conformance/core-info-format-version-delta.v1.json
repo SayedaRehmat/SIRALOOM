@@ -853,5 +853,68 @@
     "independent_second_reviewed_entries": 0,
     "implementation_mapped_entries": 0,
     "clause_tests_executed": 0
-  }
+  },
+  "row_level_semantic_deltas": [
+    {
+      "topic": "INFO END",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.3–4.4 describe END as end reference position used with symbolic alleles. VCFv4.5 marks INFO END deprecated and retains it for backwards compatibility; its computed value includes REF end, symbolic SVLEN end, and <*> FORMAT LEN-derived end positions.",
+      "implementation_consequence": "Do not model INFO END as a single invariant semantic across versions. Keep version-specific END derivation and FORMAT LEN distinct."
+    },
+    {
+      "topic": "FORMAT GT phasing",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.3 describes genotype separators as genotype-level unphased/phased separators. VCFv4.4 changes to allele-level phasing indicators and allows omission of the first indicator with an inference rule. VCFv4.5 retains this model.",
+      "implementation_consequence": "A parser that tokenizes GT only as a sequence separated by one uniform delimiter is insufficient for VCFv4.4–4.5 partial phasing."
+    },
+    {
+      "topic": "FORMAT local alleles",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.5 defines LAA as one-based indices into ALT and introduces LA/LR/LG cardinalities and local equivalents of standard A/R/G FORMAT fields. LAA is conditionally required and ordered immediately after GT when local-allele fields are present.",
+      "implementation_consequence": "Validate local-allele indices, dependency/order constraints, local Number cardinalities, and equivalence with global fields. BCF empty-vector encoding creates an explicit missing-versus-empty compatibility caveat."
+    },
+    {
+      "topic": "FORMAT base modifications",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.5 defines M, DPM and ADM base-modification key families, base suffix domains, U/T synonymy, GT dependency, value range and strand/sequence ordering, plus named ChEBI-linked aliases.",
+      "implementation_consequence": "Key-pattern recognition alone is not conformance; field cardinality and value order depend on genotype allele sequence, strand, modification identity and alias equivalence."
+    },
+    {
+      "topic": "FORMAT GLE",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "GLE appears in the VCFv4.1–4.2 prose list of reserved genotype keys but is absent from the VCFv4.3–4.5 core reserved FORMAT tables.",
+      "implementation_consequence": "Absence from later reserved-key tables is not proof that a GLE key is syntactically invalid. Determine later-version status from the full field grammar, metadata rules and any external producer convention before deciding accept/reject behavior."
+    },
+    {
+      "topic": "INFO/FORMAT table representation",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.1–4.2 use prose enumerations without explicit Number/Type columns for reserved INFO/FORMAT keys; VCFv4.3–4.5 use tables with Number/Type/Description.",
+      "implementation_consequence": "Do not backfill 4.1–4.2 table fields from later tables as if they were present in the earlier source. Store source representation and explicitness."
+    }
+  ],
+  "row_level_semantic_review_status": "PRIMARY_REVIEWED_FOR_RESERVED_KEY_INVENTORY; FIELD_SPECIFIC_PROSE_ATOMIZATION_PENDING"
 }
