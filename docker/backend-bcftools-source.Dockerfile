@@ -74,7 +74,7 @@ RUN set -eux \
             apt_update_succeeded=1; \
             break; \
         fi; \
-        sleep "$((attempt * 10 + $ % 7))"; \
+        sleep "$((attempt * 10))"; \
     done \
     && test "$apt_update_succeeded" = 1 \
     && apt-get install -y --no-install-recommends ca-certificates libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
