@@ -109,6 +109,7 @@ jobs:
           docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci +fill-tags -h >/dev/null
           docker run --rm -e DATABASE_URL=sqlite:///./ci.db -e REDIS_URL=redis://localhost:6379/0 --entrypoint python siraloom-backend:bcftools-1.24.1-ci -c "from backend.app.config import settings; assert settings.bcftools_profile_id == 'bcftools-1.24.1-htslib-1.24.1-linux-64-source'"
           docker run --rm --entrypoint sh siraloom-backend:bcftools-1.24.1-ci -c 'test "$(id -u)" = "10001" && ! command -v gcc'
+          docker run --rm --entrypoint sh siraloom-backend:bcftools-1.24.1-ci -c 'for b in /opt/conda/bin/bcftools /opt/conda/bin/bgzip /opt/conda/bin/tabix; do ldd "$b" | tee /tmp/ldd.out; ! grep -q "not found" /tmp/ldd.out; done'
           python -c "import json; p=json.load(open(\"configs/bioinformatics/toolchain-profiles.v1.json\")); assert next(x for x in p[\"profiles\"] if x[\"id\"] == \"bcftools-1.24.1-htslib-1.24.1-linux-64-source\")[\"status\"] == \"SOFTWARE_QUALIFIED\""
 
   postgres-integration:
