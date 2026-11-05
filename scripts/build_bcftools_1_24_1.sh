@@ -40,6 +40,13 @@ export LDFLAGS="${LDFLAGS:-}"
   make install
 )
 
+# Resolve HTSlib from the installation prefix during version attestation.
+if [ -n "${CONDA_PREFIX:-}" ]; then
+  export LD_LIBRARY_PATH="$PREFIX/lib:$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
+else
+  export LD_LIBRARY_PATH="$PREFIX/lib:${LD_LIBRARY_PATH:-}"
+fi
+
 test "$("$PREFIX/bin/bcftools" --version | sed -n '1p')" = "bcftools 1.24.1"
 test "$("$PREFIX/bin/bcftools" --version | sed -n '2p')" = "Using htslib 1.24.1"
 test "$("$PREFIX/bin/bgzip" --version | sed -n '1p')" = "bgzip (htslib) 1.24.1"
