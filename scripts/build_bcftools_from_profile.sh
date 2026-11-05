@@ -20,6 +20,7 @@ trap 'status=$?; echo "BCFTOOLS_BUILD_FAILED profile=${BCFTOOLS_PROFILE_ID} line
 # for release versions, archive URLs and SHA-256 digests.
 mapfile -t profile_fields < <(python - "$BCFTOOLS_PROFILE_REGISTRY" "$BCFTOOLS_PROFILE_ID" "$BCFTOOLS_VERSION" "$HTSLIB_VERSION" <<'PY'
 import json, re, sys
+from urllib.parse import urlparse
 path, profile_id, expected_bcftools, expected_htslib = sys.argv[1:]
 payload = json.load(open(path, encoding="utf-8"))
 matches = [p for p in payload.get("profiles", []) if p.get("id") == profile_id]
@@ -39,8 +40,12 @@ if set(archives) != set(required):
 for name in required:
     a = archives[name]
     url, digest = a.get("url"), a.get("sha256")
-    if not isinstance(url, str) or not url.startswith("https://") or not re.fullmatch(r"[0-9a-f]{64}", str(digest)):
-        raise SystemExit(f"invalid pinned URL or SHA-256 for {name}")
+    parsed = urlparse(url) if isinstance(url, str) else None
+    if (parsed is None or parsed.scheme != "https" or parsed.hostname not in {"sourceforge.net", "downloads.sourceforge.net"}
+            or not parsed.path.endswith(f"/{name}/download")
+            or f"/samtools/{expected_htslib}/" not in parsed.path
+            or not re.fullmatch(r"[0-9a-f]{64}", str(digest))):
+        raise SystemExit(f"invalid official SourceForge URL or SHA-256 for {name}")
     print(f"{name}\t{url}\t{digest}")
 PY
 )
