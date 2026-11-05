@@ -44,6 +44,9 @@ ENV BCFTOOLS_PROFILE_ID=${BCFTOOLS_PROFILE_ID} \
     CELERY_QUEUES=${BCFTOOLS_WORKER_QUEUE}
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_NO_PROGRESS=1
+# The official Python image may use /usr/local/ssl/cert.pem by default;
+# explicitly point Python/OpenSSL at Debian's managed trust store.
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs
 WORKDIR /app
 
 RUN groupadd --system --gid 10001 siraloom \
@@ -66,6 +69,7 @@ RUN set -eux \
     && apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 -o APT::Update::Error-Mode=any update \
     && apt-get install -y --no-install-recommends ca-certificates libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && test -s /etc/ssl/certs/ca-certificates.crt \
+    && python -c 'import os, ssl; p=ssl.get_default_verify_paths(); expected=os.environ["SSL_CERT_FILE"]; assert p.cafile == expected, f"Python TLS CA file is {p.cafile}, expected {expected}"; assert os.path.isdir(os.environ["SSL_CERT_DIR"])' \
     && rm -rf /var/lib/apt/lists/* \
     && python -c 'import hashlib, os, urllib.request; version=os.environ["UV_VERSION"]; expected=os.environ["UV_ARCHIVE_SHA256"]; url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-x86_64-unknown-linux-gnu.tar.gz"; data=urllib.request.urlopen(url, timeout=60).read(); actual=hashlib.sha256(data).hexdigest(); print("uv archive SHA-256:", actual); assert actual == expected, f"uv archive SHA-256 mismatch: {actual}"; open("/tmp/uv.tar.gz","wb").write(data)' \
     && tar -xzf /tmp/uv.tar.gz -C /tmp \
