@@ -176,3 +176,48 @@ Every candidate must be classified as normative, informative, producer conventio
 - **Laboratory qualified:** the laboratory's intended-use, assay/caller/build matrix and quality-system approval are separately complete.
 
 A source pin, parser pass, candidate count, green CI run, or format conformance report alone cannot establish clinical assay validation or laboratory qualification.
+
+
+## 8. Candidate intake and source-structure inventory (2026-11-05)
+
+The existing PR #282 extractor was reused without copying or changing its implementation. The pinned VCFv4.1–4.5 TeX sources were fetched at the exact recorded commit and candidate extraction was reproduced using the same VCF section roots and modal-language matching boundaries.
+
+The reproduced counts match the extractor's expected counts exactly:
+
+| Version | Candidate lines |
+|---|---:|
+| VCFv4.1 | 38 |
+| VCFv4.2 | 44 |
+| VCFv4.3 | 82 |
+| VCFv4.4 | 161 |
+| VCFv4.5 | 185 |
+| **Total** | **510** |
+
+All 510 candidate IDs are unique. The full source-line text, line number, source version, section path, and matched modal terms are retained in `normative-candidate-intake.v1.json`. Each candidate remains `UNREVIEWED` and `NOT_ASSESSED` for atomicity. A source line may contain zero, one, or multiple obligations; it is not itself an atomic requirement.
+
+The existing section inventory was also reused to create `source-structure-review-queue.v1.json`. It indexes **229 headings and 61 table captions** across VCFv4.1–4.5. These are discovery targets, not normative clause counts. The queue explicitly includes grammar productions, field-definition tables, reserved-key definitions, enumerated values, footnotes, cross-references and example constraints because modal-word extraction cannot discover all requirements.
+
+The existing VCFv4.0 historical catalog contains **33 unique core catalog IDs**. Its 1000 Genomes SV conventions remain a separate source class. The 33 first-pass entries are not represented as a complete historical requirement inventory; the source-byte capture and SHA-256 remain outstanding.
+
+### Current accounting after intake
+
+| Evidence class | Count | Status |
+|---|---:|---|
+| VCFv4.1–4.5 modal-language candidate lines | 510 | Reproduced and indexed; unreviewed |
+| VCFv4.1–4.5 source headings | 229 | Indexed for structural review |
+| VCFv4.1–4.5 table captions | 61 | Indexed for structural review |
+| VCFv4.0 first-pass unique core catalog entries | 33 | Existing partial catalog; source snapshot pending |
+| Atomic requirement records in seed ledger | 5 | Initial records; in review |
+| Independently reviewed atomic requirements | 0 | Not yet started |
+| Requirements mapped to production code | 0 | Not audited |
+| Requirements with executed clause-specific tests | 0 | Not executed |
+
+No count above is a conformance percentage or a claim of source completeness. In particular, 510 candidate lines plus 229 headings and 61 table captions are not additive requirement counts.
+
+### Next concrete work
+
+1. Review each candidate line in source context and split compound statements into atomic obligations while preserving qualifiers and exceptions.
+2. Review all 229 heading scopes and 61 table-caption scopes, then enumerate their actual rows, grammar productions, footnotes, definitions and cross-references from the pinned source.
+3. Add source-derived atomic requirements to the ledger with stable IDs and per-version applicability; record informative, producer-specific and non-normative material separately.
+4. Complete a per-version delta review before any requirement is marked reviewed.
+5. Independently review the ledger; only then audit implementation and test evidence against a stable baseline.
