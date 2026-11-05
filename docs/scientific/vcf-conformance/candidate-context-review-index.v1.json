@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-modal-candidate-context-review-index",
+  "status": "INITIAL_PRIMARY_CONTEXT_DISPOSITION_RECORDED_FOR_ALL_510_CANDIDATE_LINES_EXTENDED_SEMANTIC_REVIEW_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "total_candidates": 510,
+  "reviewed_candidate_lines": 510,
+  "candidate_line_review_scope": "Each extracted modal-language candidate was re-read with its immediate source neighbours and assigned a primary disposition distinguishing normative, recommendation, permission, informative, mixed, or unresolved-scope content. This is an initial line-context disposition, not a completed expanded semantic review.",
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "total": 38,
+      "reviewed": 38,
+      "artifacts": [
+        "candidate-context-review-vcf4.1.v1.json"
+      ],
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
+    },
+    {
+      "version": "VCFv4.2",
+      "total": 44,
+      "reviewed": 44,
+      "artifacts": [
+        "candidate-context-review-vcf4.2.v1.json"
+      ],
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
+    },
+    {
+      "version": "VCFv4.3",
+      "total": 82,
+      "reviewed": 82,
+      "artifacts": [
+        "candidate-context-review-vcf4.3.v1.json"
+      ],
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
+    },
+    {
+      "version": "VCFv4.4",
+      "total": 161,
+      "reviewed": 161,
+      "artifacts": [
+        "candidate-context-review-vcf4.4-core.v1.json",
+        "candidate-context-review-vcf4.4-sv.v1.json"
+      ],
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
+    },
+    {
+      "version": "VCFv4.5",
+      "total": 185,
+      "reviewed": 185,
+      "artifacts": [
+        "candidate-context-review-vcf4.5-core.v1.json",
+        "candidate-context-review-vcf4.5-sv.v1.json"
+      ],
+      "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+    }
+  ],
+  "additional_source_reviews": [
+    {
+      "artifact": "fixed-record-fields-source-review.v1.json",
+      "scope": "28 source-derived candidate obligations for fixed record fields and conditional genotype columns, across VCFv4.1–4.5; distinct from the modal candidate line count."
+    },
+    {
+      "artifact": "core-header-record-info-format-atomic-review.v1.json",
+      "scope": "Core fixed-field and header compound clauses; split-parent and child candidates; independent review pending."
+    },
+    {
+      "artifact": "core-meta-information-source-review.v1.json",
+      "scope": "Version-specific meta-information source passages and seven initial semantic delta topics."
+    },
+    {
+      "artifact": "core-meta-information-atomic-review.v1.json",
+      "scope": "Meta-information grammar, Number/Type, local allele and base modification candidate decomposition; independent review pending."
+    },
+    {
+      "artifact": "format-reserved-row-source-review.v1.json",
+      "scope": "Reserved genotype/FORMAT rows and adjacent semantic prose, VCFv4.1–4.5."
+    },
+    {
+      "artifact": "core-info-format-row-inventory.v1.json",
+      "scope": "223 reserved INFO/FORMAT entries source-indexed and individually classified; 62 prose enumerations in 4.1–4.2 and 161 longtable rows in 4.3–4.5."
+    },
+    {
+      "artifact": "core-info-format-version-delta.v1.json",
+      "scope": "Reserved INFO/FORMAT inventory and version deltas."
+    }
+  ],
+  "evidence_counters": {
+    "atomic_requirement_ledger_records": 15,
+    "additional_proposed_candidate_records": "not aggregated into approved ledger; multiple source-review artifacts contain proposed candidates and split parents",
+    "independently_second_person_reviewed": 0,
+    "production_code_mappings": 0,
+    "clause_specific_tests_executed": 0,
+    "laboratory_qualified_versions": 0,
+    "vcf40_historical_source_bytes_hashed": false
+  },
+  "next_review_gates": [
+    "Expand immediate-neighbour candidate contexts to full clauses, definitions, tables, examples, footnotes and cross-references before declaring semantic review complete.",
+    "Decompose mixed candidate lines into stable version-scoped atomic obligations and separate recommendations, permissions, examples and producer conventions.",
+    "Complete all non-modal discovery across every version, including grammar and table rows outside reserved INFO/FORMAT lists.",
+    "Capture and hash historical VCFv4.0 source bytes.",
+    "Complete full semantic version delta analysis.",
+    "Obtain independent second-person review.",
+    "Map requirements to production implementation and execute positive, negative, boundary and semantic tests."
+  ],
+  "explicit_nonclaims": [
+    "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
+    "223 reserved INFO/FORMAT entries are not 223 mandatory requirements.",
+    "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed."
+  ]
+}
