@@ -319,7 +319,7 @@ if Celery is not None:
                 else {}
             )
             from backend.app.infrastructure.db.models import Analysis
-            from backend.app.domain.toolchain_profiles import assert_analysis_toolchain_matches_worker
+            from backend.app.domain.toolchain_profiles import ToolchainProfileError, assert_analysis_toolchain_matches_worker
             persisted_analysis = claim_db.get(Analysis, UUID(analysis_id))
             if persisted_analysis is None:
                 return {"analysis_id": analysis_id, "status": "NOT_FOUND"}
@@ -330,7 +330,7 @@ if Celery is not None:
                     worker_bcftools_version=settings.bcftools_version,
                     worker_htslib_version=settings.htslib_version,
                 )
-            except Exception as exc:
+            except ToolchainProfileError as exc:
                 from celery.exceptions import Reject
                 # A wrong pool must not fail/ack a task assigned to another
                 # native toolchain. Requeue the same broker message so the
