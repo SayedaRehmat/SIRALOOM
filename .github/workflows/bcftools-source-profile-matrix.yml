@@ -35,6 +35,10 @@ jobs:
           for profile in registry["profiles"]:
               if profile.get("installation_method") != "verified_source_build":
                   continue
+              if profile.get("status") not in {"CANDIDATE", "SOFTWARE_QUALIFIED"}:
+                  continue
+              if profile.get("security_review", {}).get("status") != "PATCHED_UPSTREAM_RELEASE":
+                  continue
               if profile.get("platform") != "linux-64":
                   continue
               lock_file = profile.get("lock_file")
