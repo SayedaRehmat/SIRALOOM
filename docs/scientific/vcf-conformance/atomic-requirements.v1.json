@@ -55,7 +55,7 @@
             "page": null
           },
           "source_excerpt_sha256": "ac7259ad5b41d6f7eb48c2a7283869ea70820de125234b422d1bbcfa0723dcd9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -74,7 +74,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7cbaa0b8913799b8c79bd294a623602d0b839da0a3ee3b6bb8c1b7064490e441",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -93,7 +93,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b72bb3f4e912b3766db543bf70f0e43b076c2c20a82e7ca0a047a5c3920774a7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-510c107",
@@ -112,7 +112,7 @@
             "page": null
           },
           "source_excerpt_sha256": "0f2b76ef75bbb4a6b17c1fa2596562e8995a042286e8a122a1ee41986572405b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -131,7 +131,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5546192e9c65638b255390d507c3efda8950e94be3f2bd7e875509c886cc80b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -236,7 +236,7 @@
             "page": null
           },
           "source_excerpt_sha256": "ac7259ad5b41d6f7eb48c2a7283869ea70820de125234b422d1bbcfa0723dcd9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -255,7 +255,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7cbaa0b8913799b8c79bd294a623602d0b839da0a3ee3b6bb8c1b7064490e441",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -274,7 +274,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b72bb3f4e912b3766db543bf70f0e43b076c2c20a82e7ca0a047a5c3920774a7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-510c107",
@@ -293,7 +293,7 @@
             "page": null
           },
           "source_excerpt_sha256": "0f2b76ef75bbb4a6b17c1fa2596562e8995a042286e8a122a1ee41986572405b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -312,7 +312,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5546192e9c65638b255390d507c3efda8950e94be3f2bd7e875509c886cc80b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -415,7 +415,7 @@
             "page": null
           },
           "source_excerpt_sha256": "ac7259ad5b41d6f7eb48c2a7283869ea70820de125234b422d1bbcfa0723dcd9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -434,7 +434,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7cbaa0b8913799b8c79bd294a623602d0b839da0a3ee3b6bb8c1b7064490e441",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -453,7 +453,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b72bb3f4e912b3766db543bf70f0e43b076c2c20a82e7ca0a047a5c3920774a7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-510c107",
@@ -472,7 +472,7 @@
             "page": null
           },
           "source_excerpt_sha256": "0f2b76ef75bbb4a6b17c1fa2596562e8995a042286e8a122a1ee41986572405b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -491,7 +491,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5546192e9c65638b255390d507c3efda8950e94be3f2bd7e875509c886cc80b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -594,7 +594,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7bd67102496d4d4e86d959397f1083fd3228ccd7a18bb14f2480d6c1490a6a50",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv4.4-LINE-ENDINGS",
@@ -613,7 +613,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7bd67102496d4d4e86d959397f1083fd3228ccd7a18bb14f2480d6c1490a6a50",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv4.5-LINE-ENDINGS",
@@ -632,7 +632,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7bd67102496d4d4e86d959397f1083fd3228ccd7a18bb14f2480d6c1490a6a50",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -731,7 +731,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f916ac2392a9378e8f6c0f7df7438669bae40b9bf251bc05f74233012270e5a9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv4.4-LINE-SEPARATOR-PLACEMENT",
@@ -750,7 +750,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f916ac2392a9378e8f6c0f7df7438669bae40b9bf251bc05f74233012270e5a9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv4.5-LINE-SEPARATOR-PLACEMENT",
@@ -769,7 +769,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f916ac2392a9378e8f6c0f7df7438669bae40b9bf251bc05f74233012270e5a9",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -868,7 +868,7 @@
             "page": null
           },
           "source_excerpt_sha256": "797add65bae27d43545c73a292aed28cc9ee48671f7555ea71f3ac34b6052709",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0077",
@@ -887,7 +887,7 @@
             "page": null
           },
           "source_excerpt_sha256": "797add65bae27d43545c73a292aed28cc9ee48671f7555ea71f3ac34b6052709",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0075",
@@ -906,7 +906,7 @@
             "page": null
           },
           "source_excerpt_sha256": "797add65bae27d43545c73a292aed28cc9ee48671f7555ea71f3ac34b6052709",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1018,7 +1018,7 @@
             "page": null
           },
           "source_excerpt_sha256": "93966a80ed30a4be327e36ab1d858f98fb789cb060f01aa26eedfc74747a4cd1",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0080",
@@ -1037,7 +1037,7 @@
             "page": null
           },
           "source_excerpt_sha256": "93966a80ed30a4be327e36ab1d858f98fb789cb060f01aa26eedfc74747a4cd1",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0078",
@@ -1056,7 +1056,7 @@
             "page": null
           },
           "source_excerpt_sha256": "93966a80ed30a4be327e36ab1d858f98fb789cb060f01aa26eedfc74747a4cd1",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1168,7 +1168,7 @@
             "page": null
           },
           "source_excerpt_sha256": "59c712bfe0e6e956106fb5ac1af10b8f1757e76adfd696323c4513efd788fcfb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0081",
@@ -1187,7 +1187,7 @@
             "page": null
           },
           "source_excerpt_sha256": "59c712bfe0e6e956106fb5ac1af10b8f1757e76adfd696323c4513efd788fcfb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0079",
@@ -1206,7 +1206,7 @@
             "page": null
           },
           "source_excerpt_sha256": "59c712bfe0e6e956106fb5ac1af10b8f1757e76adfd696323c4513efd788fcfb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1318,7 +1318,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b61cd151f05996b270d57e44c004d313690b8f994b2073329ba5c0cd42343016",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0039",
@@ -1337,7 +1337,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b61cd151f05996b270d57e44c004d313690b8f994b2073329ba5c0cd42343016",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0037",
@@ -1356,7 +1356,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b61cd151f05996b270d57e44c004d313690b8f994b2073329ba5c0cd42343016",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1468,7 +1468,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0327",
@@ -1487,7 +1487,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0376",
@@ -1506,7 +1506,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1618,7 +1618,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0331",
@@ -1637,7 +1637,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0380",
@@ -1656,7 +1656,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1768,7 +1768,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2bcfb6f05a4fa5288080aa522e57e5ca3fcb2a96a322990a6b7fe2ad34979528",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0332",
@@ -1787,7 +1787,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2bcfb6f05a4fa5288080aa522e57e5ca3fcb2a96a322990a6b7fe2ad34979528",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0381",
@@ -1806,7 +1806,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2bcfb6f05a4fa5288080aa522e57e5ca3fcb2a96a322990a6b7fe2ad34979528",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -1918,7 +1918,7 @@
             "page": null
           },
           "source_excerpt_sha256": "24f158879639825462b9d209e8ecb2bd51c0ccd488137656dd82e9d7401fd84d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv42-HTS-510c107-L0172",
@@ -1937,7 +1937,7 @@
             "page": null
           },
           "source_excerpt_sha256": "24f158879639825462b9d209e8ecb2bd51c0ccd488137656dd82e9d7401fd84d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv43-HTS-510c107-L0313",
@@ -1956,7 +1956,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0327",
@@ -1975,7 +1975,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0376",
@@ -1994,7 +1994,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9d902df471cf3a12e97f5a7bd269ccddfef84bbf8bea69a73c4a25fde7f8807d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2110,7 +2110,7 @@
             "page": null
           },
           "source_excerpt_sha256": "16f69af3aa5710923de7c55ecfe356cdaa9fe382415993a58aecef672ae09e40",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv42-HTS-510c107-L0176",
@@ -2129,7 +2129,7 @@
             "page": null
           },
           "source_excerpt_sha256": "16f69af3aa5710923de7c55ecfe356cdaa9fe382415993a58aecef672ae09e40",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv43-HTS-510c107-L0317",
@@ -2148,7 +2148,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0331",
@@ -2167,7 +2167,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0380",
@@ -2186,7 +2186,7 @@
             "page": null
           },
           "source_excerpt_sha256": "58529a8a4f43f406e1ef81c6a50f19d83ffd79cca4fc9578a0233ef4005c1fb7",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2302,7 +2302,7 @@
             "page": null
           },
           "source_excerpt_sha256": "24f158879639825462b9d209e8ecb2bd51c0ccd488137656dd82e9d7401fd84d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv42-HTS-510c107-L0172",
@@ -2321,7 +2321,7 @@
             "page": null
           },
           "source_excerpt_sha256": "24f158879639825462b9d209e8ecb2bd51c0ccd488137656dd82e9d7401fd84d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv43-HTS-510c107-L0312",
@@ -2340,7 +2340,7 @@
             "page": null
           },
           "source_excerpt_sha256": "42ae78d67bc2d479d61e7b534d5f5ab0b588e581f0d9931a6a7aa709bbda2f1f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv44-HTS-510c107-L0326",
@@ -2359,7 +2359,7 @@
             "page": null
           },
           "source_excerpt_sha256": "42ae78d67bc2d479d61e7b534d5f5ab0b588e581f0d9931a6a7aa709bbda2f1f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCFv45-HTS-510c107-L0375",
@@ -2378,7 +2378,7 @@
             "page": null
           },
           "source_excerpt_sha256": "42ae78d67bc2d479d61e7b534d5f5ab0b588e581f0d9931a6a7aa709bbda2f1f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2493,7 +2493,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-211-211",
@@ -2512,7 +2512,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-428-428",
@@ -2531,7 +2531,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c1a01b287666fd640677fb775fa39dc9a1839636d30cdea365ee6b50f09e1ca3",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-446-446",
@@ -2550,7 +2550,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c1a01b287666fd640677fb775fa39dc9a1839636d30cdea365ee6b50f09e1ca3",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-498-498",
@@ -2569,7 +2569,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c1a01b287666fd640677fb775fa39dc9a1839636d30cdea365ee6b50f09e1ca3",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2674,7 +2674,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-211-211",
@@ -2693,7 +2693,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-429-429",
@@ -2712,7 +2712,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-447-447",
@@ -2731,7 +2731,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-499-499",
@@ -2750,7 +2750,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2855,7 +2855,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-447-447",
@@ -2874,7 +2874,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-499-499",
@@ -2893,7 +2893,7 @@
             "page": null
           },
           "source_excerpt_sha256": "da4186e8ac7002e170f819fc1f6908bc27061cb2f55d2882e4bf5a52f5a03862",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -2994,7 +2994,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-211-211",
@@ -3013,7 +3013,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-431-431",
@@ -3032,7 +3032,7 @@
             "page": null
           },
           "source_excerpt_sha256": "e87b04202cc2ddd085177eed46ef50692b796a7dd006dcacb533f7d50965cdc2",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-449-449",
@@ -3051,7 +3051,7 @@
             "page": null
           },
           "source_excerpt_sha256": "e87b04202cc2ddd085177eed46ef50692b796a7dd006dcacb533f7d50965cdc2",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-501-501",
@@ -3070,7 +3070,7 @@
             "page": null
           },
           "source_excerpt_sha256": "e87b04202cc2ddd085177eed46ef50692b796a7dd006dcacb533f7d50965cdc2",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3173,7 +3173,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-211-211",
@@ -3192,7 +3192,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f5f84a9bd48c6abecfdc1f907bea7646f9ace37095f9aa7f5fd04bd2636ff65f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-432-432",
@@ -3211,7 +3211,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d9a3e2b912b9f2b71a323a5cc4b8a7369f046a10dc501f359df5a656db8b8d8b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-450-450",
@@ -3230,7 +3230,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d9a3e2b912b9f2b71a323a5cc4b8a7369f046a10dc501f359df5a656db8b8d8b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-503-503",
@@ -3249,7 +3249,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d9a3e2b912b9f2b71a323a5cc4b8a7369f046a10dc501f359df5a656db8b8d8b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3354,7 +3354,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f586a2c5819999c93f91cb651fc32a38821f8d07235ad3035f13e63f4ed873bc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-236-236",
@@ -3373,7 +3373,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f586a2c5819999c93f91cb651fc32a38821f8d07235ad3035f13e63f4ed873bc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-435-435",
@@ -3392,7 +3392,7 @@
             "page": null
           },
           "source_excerpt_sha256": "50caf073ee2432c4fe4303f4c7ec3438dc28007833f1ffe19dab6914f09fa650",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-453-453",
@@ -3411,7 +3411,7 @@
             "page": null
           },
           "source_excerpt_sha256": "50caf073ee2432c4fe4303f4c7ec3438dc28007833f1ffe19dab6914f09fa650",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-506-506",
@@ -3430,7 +3430,7 @@
             "page": null
           },
           "source_excerpt_sha256": "50caf073ee2432c4fe4303f4c7ec3438dc28007833f1ffe19dab6914f09fa650",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3535,7 +3535,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7b9f060ead42d17a9d787e978b0b12424fd85bb2fe53d68b49495973364daf3d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-455-455",
@@ -3554,7 +3554,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7b9f060ead42d17a9d787e978b0b12424fd85bb2fe53d68b49495973364daf3d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-508-508",
@@ -3573,7 +3573,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7b9f060ead42d17a9d787e978b0b12424fd85bb2fe53d68b49495973364daf3d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3674,7 +3674,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f586a2c5819999c93f91cb651fc32a38821f8d07235ad3035f13e63f4ed873bc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-236-236",
@@ -3693,7 +3693,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f586a2c5819999c93f91cb651fc32a38821f8d07235ad3035f13e63f4ed873bc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-438-438",
@@ -3712,7 +3712,7 @@
             "page": null
           },
           "source_excerpt_sha256": "70aeb68247f57051b842c2012071db017d272ce1acf2dfbc91b964b09759a098",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-456-456",
@@ -3731,7 +3731,7 @@
             "page": null
           },
           "source_excerpt_sha256": "70aeb68247f57051b842c2012071db017d272ce1acf2dfbc91b964b09759a098",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-509-509",
@@ -3750,7 +3750,7 @@
             "page": null
           },
           "source_excerpt_sha256": "70aeb68247f57051b842c2012071db017d272ce1acf2dfbc91b964b09759a098",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3853,7 +3853,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4582ec7dcbc39a3d7527b613d35ee8b0196b7c5f9e74eb6b3252f3e7c737e458",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-217-217",
@@ -3872,7 +3872,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4582ec7dcbc39a3d7527b613d35ee8b0196b7c5f9e74eb6b3252f3e7c737e458",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -3971,7 +3971,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4582ec7dcbc39a3d7527b613d35ee8b0196b7c5f9e74eb6b3252f3e7c737e458",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-217-217",
@@ -3990,7 +3990,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4582ec7dcbc39a3d7527b613d35ee8b0196b7c5f9e74eb6b3252f3e7c737e458",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4089,7 +4089,7 @@
             "page": null
           },
           "source_excerpt_sha256": "364b2bd47ac80aaf4d267b967560ffcbef1ef938a1e10a7d5ae1268e8682c338",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-224-224",
@@ -4108,7 +4108,7 @@
             "page": null
           },
           "source_excerpt_sha256": "364b2bd47ac80aaf4d267b967560ffcbef1ef938a1e10a7d5ae1268e8682c338",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4207,7 +4207,7 @@
             "page": null
           },
           "source_excerpt_sha256": "364b2bd47ac80aaf4d267b967560ffcbef1ef938a1e10a7d5ae1268e8682c338",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-224-224",
@@ -4226,7 +4226,7 @@
             "page": null
           },
           "source_excerpt_sha256": "364b2bd47ac80aaf4d267b967560ffcbef1ef938a1e10a7d5ae1268e8682c338",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4325,7 +4325,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-230-230",
@@ -4344,7 +4344,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4443,7 +4443,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-230-230",
@@ -4462,7 +4462,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4559,7 +4559,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-230-230",
@@ -4578,7 +4578,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f421a25e21abced47eade31c79ec5f4e2264184c0c077faffcaa4057df891213",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4677,7 +4677,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9ad98f08d1e64fde610d9aacdb00d3bb889918b7f027a74c07a53e2152c4e6ec",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-232-232",
@@ -4696,7 +4696,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9ad98f08d1e64fde610d9aacdb00d3bb889918b7f027a74c07a53e2152c4e6ec",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4795,7 +4795,7 @@
             "page": null
           },
           "source_excerpt_sha256": "222a5460f39acf2f5d6690eb54a5d7278a804bfde3297c6a27e4f89ecca8c166",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -4892,7 +4892,7 @@
             "page": null
           },
           "source_excerpt_sha256": "63c708cba1bc99cf72d61342e165205f4fb5fec3c643315974e753a8905e1666",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-530-583",
@@ -4911,7 +4911,7 @@
             "page": null
           },
           "source_excerpt_sha256": "0c0a569b2e6c97a3163f105d87882f0b4959b442766c628d14d00d6ebb8c6273",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-629-683",
@@ -4930,7 +4930,7 @@
             "page": null
           },
           "source_excerpt_sha256": "63c708cba1bc99cf72d61342e165205f4fb5fec3c643315974e753a8905e1666",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5031,7 +5031,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5b622a2e5fc4c328ba61e52096cbfd3b00dcb45208585b7febafac9818e7a503",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-533-541",
@@ -5050,7 +5050,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5b622a2e5fc4c328ba61e52096cbfd3b00dcb45208585b7febafac9818e7a503",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-632-643",
@@ -5069,7 +5069,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2a729a377a49c31cdc87b9395ff1b6f28a70e4f3f02db2ddbab3e55c63c2a33f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5168,7 +5168,7 @@
             "page": null
           },
           "source_excerpt_sha256": "12dbe2635b945481caba99e438f6ad1e80b7c74e34e08bfb165415696bc0e982",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-538-546",
@@ -5187,7 +5187,7 @@
             "page": null
           },
           "source_excerpt_sha256": "12dbe2635b945481caba99e438f6ad1e80b7c74e34e08bfb165415696bc0e982",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-638-643",
@@ -5206,7 +5206,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9f3e6322f1989a8f0bfb8ef68f5c5df74462f5a3bf3f276fa3d6a1d62d2ccdb5",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5305,7 +5305,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1f3e9b22bf669c06af659990b09b9598128af8bf45579966861845ad39cfa8ed",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-554-583",
@@ -5324,7 +5324,7 @@
             "page": null
           },
           "source_excerpt_sha256": "ef8b82cce6a7117df469004a885e13e23c236179e6731e55a4e15ae12923b669",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-657-681",
@@ -5343,7 +5343,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c75f4221c899bac0054b1611c7c9fcdda89bded568df1aa0390dd38b9d9354ab",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5442,7 +5442,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4ac90e5e57e8257c029bb3629078b1b5b9c2dfd0f695a32968f03a2e96fc5b58",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5537,7 +5537,7 @@
             "page": null
           },
           "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-613-624",
@@ -5556,7 +5556,7 @@
             "page": null
           },
           "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5655,7 +5655,7 @@
             "page": null
           },
           "source_excerpt_sha256": "3cdd2d9b5be80b04a49d794d0d3522d180acd6f8b465f8b3a0b714d978fa091b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-613-616",
@@ -5674,7 +5674,7 @@
             "page": null
           },
           "source_excerpt_sha256": "3cdd2d9b5be80b04a49d794d0d3522d180acd6f8b465f8b3a0b714d978fa091b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5771,7 +5771,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1ada55f35b140860f721cfa281837b0ab1e7db99767c84a268f0383a7b65b17c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-620-624",
@@ -5790,7 +5790,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1ada55f35b140860f721cfa281837b0ab1e7db99767c84a268f0383a7b65b17c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -5887,7 +5887,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f0002039444c73e5b11377ae044f95c43f0f66e3fb0afd21c45ec5f4b2c755f3",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-771-776",
@@ -5906,7 +5906,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1858ef30f44cf7594f5680ead9914c6042872315427fec95fe6d7e1f19a4c0eb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6003,7 +6003,7 @@
             "page": null
           },
           "source_excerpt_sha256": "cacfb11dae80299998f33689302de1eae5e61865b47c7b0d10b2662096212866",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-775-776",
@@ -6022,7 +6022,7 @@
             "page": null
           },
           "source_excerpt_sha256": "cacfb11dae80299998f33689302de1eae5e61865b47c7b0d10b2662096212866",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6119,7 +6119,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c173a7cd80f3931630ce04be969a5fdabac80ee9aab816caf929bd52e9e24b74",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-771-774",
@@ -6138,7 +6138,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1ebe81c5f5ce3db58ccdd1d29b190b10fe1c766daccb1c2377c1e39e25c98cbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6235,7 +6235,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f4c5eacfa7cff14bc642dc4c790bc3a07c3a5109d72962574bc8dc6b4c6d1cdb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-771-773",
@@ -6254,7 +6254,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b3f5739d8967287ab6560f6f1e553a893e43ab1cc24eae809ccf24162cb7852a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6351,7 +6351,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c0a10b5a46acf87c39c3dfb016a4ee9fd95ceda81420790f62b5d42153652af0",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-772-774",
@@ -6370,7 +6370,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c0a10b5a46acf87c39c3dfb016a4ee9fd95ceda81420790f62b5d42153652af0",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6467,7 +6467,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-788-792",
@@ -6486,7 +6486,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6583,7 +6583,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-788-792",
@@ -6602,7 +6602,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6699,7 +6699,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4bd584a38bc2dd5a24730856bd5749ae235f0f9224f26c78e7217308940e7581",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-791-793",
@@ -6718,7 +6718,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4bd584a38bc2dd5a24730856bd5749ae235f0f9224f26c78e7217308940e7581",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6815,7 +6815,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d2e134e0f98636f400491844f705d3d77d3b00f906a49e7b6a62300b2f22b014",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-808-810",
@@ -6834,7 +6834,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d2e134e0f98636f400491844f705d3d77d3b00f906a49e7b6a62300b2f22b014",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -6931,7 +6931,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d2e134e0f98636f400491844f705d3d77d3b00f906a49e7b6a62300b2f22b014",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-808-810",
@@ -6950,7 +6950,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d2e134e0f98636f400491844f705d3d77d3b00f906a49e7b6a62300b2f22b014",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7047,7 +7047,7 @@
             "page": null
           },
           "source_excerpt_sha256": "a34ab078b7b42855ac1a01659f27967e1cf98e39fcffa8b7135d85e394d56420",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7142,7 +7142,7 @@
             "page": null
           },
           "source_excerpt_sha256": "982d64fb14556213dd51790c4fd2af75ca45a3cab1cab91e9aee77eea188c922",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7237,7 +7237,7 @@
             "page": null
           },
           "source_excerpt_sha256": "e55e882279aed10ca7651272bbcb8423986c56691f34f07f96e46be3889466fc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7334,7 +7334,7 @@
             "page": null
           },
           "source_excerpt_sha256": "0a8c5328fa20b28749693905f93e400983130c0f54195bccda078a3c7352965c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7431,7 +7431,7 @@
             "page": null
           },
           "source_excerpt_sha256": "614bc7e6f01c9c72eb2df86f3368e007f3ed877b7dfda47a37b41c3ec15e292e",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7526,7 +7526,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b763cb461697b2289ed66d13f3aaa2dd116cf930eb84b36a9cf306376a5bb8a4",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7623,7 +7623,7 @@
             "page": null
           },
           "source_excerpt_sha256": "32d153d20ff199ea1d344e5caf2728805bb9b7018c7796d1ca3fe872d6d871bd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7718,7 +7718,7 @@
             "page": null
           },
           "source_excerpt_sha256": "eac346643691e081eaf86918edf5b531cb7e9160b20ec6ec2cb78dfc17a9956d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7813,7 +7813,7 @@
             "page": null
           },
           "source_excerpt_sha256": "66073af5e66820140da088a887ac3f520b0de56d0f32edf048998c9beb8dc741",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -7908,7 +7908,7 @@
             "page": null
           },
           "source_excerpt_sha256": "6f4176f5830d7be3f3361547ec875565f53691176586b1cef7f76538083e9ab8",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8003,7 +8003,7 @@
             "page": null
           },
           "source_excerpt_sha256": "431748c489406af3eae14321c01877af0ab0459ad1c1faeccbe9932f248bb030",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8098,7 +8098,7 @@
             "page": null
           },
           "source_excerpt_sha256": "e523b8a018161da68476a3136b418c222db8da978ca0e8d6b0fde2b92fdfe080",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8193,7 +8193,7 @@
             "page": null
           },
           "source_excerpt_sha256": "211ec79f6b53e9d5f606859d85f51fe1207965f48e38060178dca7026f24f2b1",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8288,7 +8288,7 @@
             "page": null
           },
           "source_excerpt_sha256": "72a9541d67449508d6c5839e125392e701f09151a4181abef85a0f63bc6fb654",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8383,7 +8383,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5290a54c7bdd8cdd32b1c15bbd02effdf1415007ac0b95829e3164231af4db8d",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8478,7 +8478,7 @@
             "page": null
           },
           "source_excerpt_sha256": "42a8e4d882f6ac78c73cd998d5ff38093d134826b1d67a479c8bc787a43faeef",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8573,7 +8573,7 @@
             "page": null
           },
           "source_excerpt_sha256": "42a8e4d882f6ac78c73cd998d5ff38093d134826b1d67a479c8bc787a43faeef",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8668,7 +8668,7 @@
             "page": null
           },
           "source_excerpt_sha256": "efc1906a1911991e617d1774a26533713b786e2f5e29a63b51ee257f293f601a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8765,7 +8765,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b737ac357590e10900bb719dbdcb2722d7f2df4776b4dfa17a4fab707357cb1f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8862,7 +8862,7 @@
             "page": null
           },
           "source_excerpt_sha256": "164f72e0442cbf3a1d0e5446bcf6260789f05093c45c6539024d4b747e0e9357",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -8959,7 +8959,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b634623556e5ac332564fbc30957541c0c7ded5cf14d146fd33003cb4ca80c5c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9054,7 +9054,7 @@
             "page": null
           },
           "source_excerpt_sha256": "eef27c2dcc150a4e590b2d229a237775cf6075f07ee40e72bfbccd9773c7a2fa",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9149,7 +9149,7 @@
             "page": null
           },
           "source_excerpt_sha256": "eef27c2dcc150a4e590b2d229a237775cf6075f07ee40e72bfbccd9773c7a2fa",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9244,7 +9244,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7b7805b6f86dc6d7a24bf350264e9dc01af4662361d55759ac2b469cbf90c0c8",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9339,7 +9339,7 @@
             "page": null
           },
           "source_excerpt_sha256": "55c9e9b301c89326ffc266a26f05bd20693614a92cb4a2d35afe592143694d3c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9435,7 +9435,7 @@
             "page": null
           },
           "source_excerpt_sha256": "79a6fcf16e2419bdafd8a0057309fd228ae4a4f150e694ff350fbb0b4bb2c709",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9533,7 +9533,7 @@
             "page": null
           },
           "source_excerpt_sha256": "a7faaaac59ab873f66438ee1fb81e364386362b0ab64164cd69fa56c0a7b27cc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9631,7 +9631,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1689d9593f0db55b7613693bf9871fba010d75428146d25949ae07b45488bf7b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9729,7 +9729,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b7852cd0a8c5a9a981f718c9b1bf4e760f3e02dfaba1d7ea95294b19283d2b22",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9827,7 +9827,7 @@
             "page": null
           },
           "source_excerpt_sha256": "abf3fb440390f26fc7925e03b03d82e4138a792db48e5405ce148dc32918268b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -9925,7 +9925,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c93ba9026f90bbed3b66dd56998213c01ab72a27ce6742448c8b5f8e4c991daf",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10023,7 +10023,7 @@
             "page": null
           },
           "source_excerpt_sha256": "51f4de46eac0a66e383894fcba7786b978fe916fbfc75774265e431619b2c3bb",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10121,7 +10121,7 @@
             "page": null
           },
           "source_excerpt_sha256": "4d2ac0112f56e67b1263f126bcc1cf9513a2ac07bf386c015787bd6fed7b3f9a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10219,7 +10219,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8f31868d09577ffd8409f8882f01d95c9f20ecb2fb30f9c229ef9a1aec78100b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10317,7 +10317,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5067b8e232ce23d92a3d9ecbc1679d388d370e83beceb412e7483efe580f7c78",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10415,7 +10415,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5c763ba33bcd14bb32de1b53af18a04532bef428a1d820cb4b1f4db71a429db5",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10513,7 +10513,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5ebd62ac96dbbd9c3fcc91b93213704c36723a36a43533f2c0672ca27570f023",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10611,7 +10611,7 @@
             "page": null
           },
           "source_excerpt_sha256": "082452411da76fee385a3d37c2387b059755cb179f4177e6d81c944b1cd872c3",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10709,7 +10709,7 @@
             "page": null
           },
           "source_excerpt_sha256": "1af3ae22bd9c3bd9b7aca7e629efe99ee661942eca45083f983d7f913a7a146c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10807,7 +10807,7 @@
             "page": null
           },
           "source_excerpt_sha256": "9cc14b4548d883ad267b05bb3b10c2e4c524c1f33e9abca14ba114798b560b8b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -10905,7 +10905,7 @@
             "page": null
           },
           "source_excerpt_sha256": "416e4a1cd4ceefbe48f9446d93ee4bc4e5069efc13f344f0ab2f9d032d7df958",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11003,7 +11003,7 @@
             "page": null
           },
           "source_excerpt_sha256": "b08b7d879313170c14b5bfe1acf1377ae41b04794a9625ad769d8a40f86e5515",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11101,7 +11101,7 @@
             "page": null
           },
           "source_excerpt_sha256": "6d7c54273e55f6f9ee017ffd839f0d1b52ddd00deae17f98f7332549c0581fc0",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11199,7 +11199,7 @@
             "page": null
           },
           "source_excerpt_sha256": "f8639bb6b95c079f8584d43730cbdd51b34d825cf6c57072dcb1dc3bb02cdc06",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11297,7 +11297,7 @@
             "page": null
           },
           "source_excerpt_sha256": "c98d516cc1d3e14822e560148774b8946b0e0aa22c772310312797648ff1f909",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11395,7 +11395,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d7ef97f5893ab6f5857925e24d06b1425f471d6f9cc7d9be5227289e48bbe3f4",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11493,7 +11493,7 @@
             "page": null
           },
           "source_excerpt_sha256": "83158d1078a86bd90fc8d5e603933e1b0b6bc7586fba95e5fb86d2ff096e7161",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11591,7 +11591,7 @@
             "page": null
           },
           "source_excerpt_sha256": "afff5826fd2022679b093cb601bd9b01629627ad53e1c461feb6dc0eebf3af2f",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11689,7 +11689,7 @@
             "page": null
           },
           "source_excerpt_sha256": "35e146b5b76e263e1796c7462dcdc90fa39d2c9960e81754a0b274879361dbfa",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11787,7 +11787,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d664f441c46d1a7ade3955a8818d11082ff759836f61d0d8d1e9d9db17b078bc",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11885,7 +11885,7 @@
             "page": null
           },
           "source_excerpt_sha256": "24d0f9e197f5b60920bdcec577ff714cb5e02af1b8f0f023916d9b950646063c",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -11983,7 +11983,7 @@
             "page": null
           },
           "source_excerpt_sha256": "afd64505f0f4295117a50f1938a29861682f73b2e9565a4383c80c05cfbc72f6",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12081,7 +12081,7 @@
             "page": null
           },
           "source_excerpt_sha256": "019f7b2d5426921c7f3c8a5fbc483fa2e961752b2e1036150748ec6f915652cf",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12179,7 +12179,7 @@
             "page": null
           },
           "source_excerpt_sha256": "db23449b8d90201225ef434746c211a14fa56ed82c878810e24442fd38b0977a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12277,7 +12277,7 @@
             "page": null
           },
           "source_excerpt_sha256": "119ffa72039ef3b859920a5053185d5312586de928768dcd43cb4f862df30542",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12375,7 +12375,7 @@
             "page": null
           },
           "source_excerpt_sha256": "6844303ca7241e133d78f23a61fa317976e2a53de0c5e5885e44d41bee4e3af2",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12473,7 +12473,7 @@
             "page": null
           },
           "source_excerpt_sha256": "bd8b659bc3ecb1b7077f102c08e67328231ab3dfcf467379f9e507537244740e",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12571,7 +12571,7 @@
             "page": null
           },
           "source_excerpt_sha256": "bf439e1654f6f771d26d8d58184a9f8dd272860f9c05f65c4a75f7e391b8c38a",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12669,7 +12669,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12767,7 +12767,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12865,7 +12865,7 @@
             "page": null
           },
           "source_excerpt_sha256": "5611676dc7c805dbc3afa050557085e8f2be77ee510b71445e13aadec56cdd41",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -12963,7 +12963,7 @@
             "page": null
           },
           "source_excerpt_sha256": "d08fa598ea5c2b7b0828d8790692f46553e3365d81ac148e0c1a5674137a8c7b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13061,7 +13061,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13159,7 +13159,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13257,7 +13257,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13355,7 +13355,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13453,7 +13453,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13551,7 +13551,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13649,7 +13649,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13747,7 +13747,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13845,7 +13845,7 @@
             "page": null
           },
           "source_excerpt_sha256": "8ba118325aa86d481b9b7a4d89428a9e15e8f1d6222dc7366b3050fd5883dfbe",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -13943,7 +13943,7 @@
             "page": null
           },
           "source_excerpt_sha256": "fc342f452cd204796e19ac5b3fb894d4bb2629b7148835f256e290425e5c786b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14041,7 +14041,7 @@
             "page": null
           },
           "source_excerpt_sha256": "ddf9eb343f6225a8d35403549825dbbc1116ab99649cbcf5a8e1af11c0ff4827",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14139,7 +14139,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2b498b91138b26a0bd9e257d88c1940a5c12e37981070c90ce8af78f4102c7dd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14237,7 +14237,7 @@
             "page": null
           },
           "source_excerpt_sha256": "2b498b91138b26a0bd9e257d88c1940a5c12e37981070c90ce8af78f4102c7dd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14335,7 +14335,7 @@
             "page": null
           },
           "source_excerpt_sha256": "6225e57af213652775cfd741144edd9012e30c95bd1bb5a802588c8a112ea4bd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14433,7 +14433,7 @@
             "page": null
           },
           "source_excerpt_sha256": "28b72616abb9255320ffb109cc867614fb1787e8760e9cdae47ced4eb1f9f986",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14531,7 +14531,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7363d5b920a1be26034305244d515e31ce116d48495b07317ff38bf15c1570bd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14629,7 +14629,7 @@
             "page": null
           },
           "source_excerpt_sha256": "7363d5b920a1be26034305244d515e31ce116d48495b07317ff38bf15c1570bd",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14727,7 +14727,7 @@
             "page": null
           },
           "source_excerpt_sha256": "548e5de70a2d25ad77cad32bb86f29260c52dccb7920b2267e985a004466b26b",
-          "retrieved_at_utc": "2026-11-05T10:25:06.247Z"
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14816,7 +14816,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 193-207",
@@ -14824,8 +14824,8 @@
             "end_line": 207,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "10d30e15e5fc0e66e9e43d8d9de3df71c8e0e288257aad950ebe8112a2bff750",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -14835,7 +14835,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 210-224",
@@ -14843,8 +14843,8 @@
             "end_line": 224,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "10d30e15e5fc0e66e9e43d8d9de3df71c8e0e288257aad950ebe8112a2bff750",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -14935,7 +14935,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 200-207",
@@ -14943,8 +14943,8 @@
             "end_line": 207,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "dcae24083ad4acbaaffba4f82e40cf6866c55bd2eedba8614705b2366717aad1",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -14954,7 +14954,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 217-224",
@@ -14962,8 +14962,8 @@
             "end_line": 224,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "dcae24083ad4acbaaffba4f82e40cf6866c55bd2eedba8614705b2366717aad1",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF43-HTS-510c107",
@@ -14973,7 +14973,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 492-504",
@@ -14981,8 +14981,8 @@
             "end_line": 504,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "9dea8594d70c8d0692432a86d63f83e4f5a50965e4857c04005fc47802acafec",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15075,7 +15075,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-210",
@@ -15083,8 +15083,8 @@
             "end_line": 210,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "797cbd4fbccebe469186a0e3afef2f804bb054da2ae8f9a0a7a6858daca40860",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -15094,7 +15094,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-227",
@@ -15102,8 +15102,8 @@
             "end_line": 227,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "797cbd4fbccebe469186a0e3afef2f804bb054da2ae8f9a0a7a6858daca40860",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15194,7 +15194,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-210",
@@ -15202,8 +15202,8 @@
             "end_line": 210,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "797cbd4fbccebe469186a0e3afef2f804bb054da2ae8f9a0a7a6858daca40860",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -15213,7 +15213,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-227",
@@ -15221,8 +15221,8 @@
             "end_line": 227,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "797cbd4fbccebe469186a0e3afef2f804bb054da2ae8f9a0a7a6858daca40860",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15313,7 +15313,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.1.tex",
           "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
-          "source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+          "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.1.tex lines 207-211",
@@ -15321,8 +15321,8 @@
             "end_line": 211,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "ba12d046fd7f8cce0dfe173ebe0ebdb64b2b1d19256a060ae248166622336403",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF42-HTS-510c107",
@@ -15332,7 +15332,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.2.tex",
           "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
-          "source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+          "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.2.tex lines 224-228",
@@ -15340,8 +15340,8 @@
             "end_line": 228,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "ba12d046fd7f8cce0dfe173ebe0ebdb64b2b1d19256a060ae248166622336403",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15432,7 +15432,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.3.tex",
           "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+          "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.3.tex lines 504-558",
@@ -15440,8 +15440,8 @@
             "end_line": 558,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "63c708cba1bc99cf72d61342e165205f4fb5fec3c643315974e753a8905e1666",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF44-HTS-510c107",
@@ -15451,7 +15451,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 530-583",
@@ -15459,8 +15459,8 @@
             "end_line": 583,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "0c0a569b2e6c97a3163f105d87882f0b4959b442766c628d14d00d6ebb8c6273",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -15470,7 +15470,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 629-683",
@@ -15478,8 +15478,8 @@
             "end_line": 683,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "63c708cba1bc99cf72d61342e165205f4fb5fec3c643315974e753a8905e1666",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15572,7 +15572,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-525",
@@ -15580,8 +15580,8 @@
             "end_line": 525,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -15591,7 +15591,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-624",
@@ -15599,8 +15599,8 @@
             "end_line": 624,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15691,7 +15691,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 514-525",
@@ -15699,8 +15699,8 @@
             "end_line": 525,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -15710,7 +15710,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 613-624",
@@ -15718,8 +15718,8 @@
             "end_line": 624,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "51d294ce4eb2618d51cc95866783ee781d8aeb1b656d21a89344375f47119a3a",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15810,7 +15810,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-603",
@@ -15818,8 +15818,8 @@
             "end_line": 603,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "f0002039444c73e5b11377ae044f95c43f0f66e3fb0afd21c45ec5f4b2c755f3",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -15829,7 +15829,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-776",
@@ -15837,8 +15837,8 @@
             "end_line": 776,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "1858ef30f44cf7594f5680ead9914c6042872315427fec95fe6d7e1f19a4c0eb",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -15929,7 +15929,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 598-603",
@@ -15937,8 +15937,8 @@
             "end_line": 603,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "f0002039444c73e5b11377ae044f95c43f0f66e3fb0afd21c45ec5f4b2c755f3",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -15948,7 +15948,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 771-776",
@@ -15956,8 +15956,8 @@
             "end_line": 776,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "1858ef30f44cf7594f5680ead9914c6042872315427fec95fe6d7e1f19a4c0eb",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -16048,7 +16048,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-620",
@@ -16056,8 +16056,8 @@
             "end_line": 620,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "5139c55e3f2a7003066636db2db748a001b02e410d8d49b1131ea18b2f9a9d26",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -16067,7 +16067,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792",
@@ -16075,8 +16075,8 @@
             "end_line": 792,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
@@ -16167,7 +16167,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.4.tex",
           "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.4.tex lines 615-620",
@@ -16175,8 +16175,8 @@
             "end_line": 620,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "5139c55e3f2a7003066636db2db748a001b02e410d8d49b1131ea18b2f9a9d26",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         },
         {
           "source_id": "VCF45-HTS-510c107",
@@ -16186,7 +16186,7 @@
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_file": "VCFv4.5.tex",
           "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex lines 788-792",
@@ -16194,8 +16194,8 @@
             "end_line": 792,
             "page": null
           },
-          "source_excerpt_sha256": null,
-          "retrieved_at_utc": null
+          "source_excerpt_sha256": "7404613b6280dbc8016c807bc31873a4bc31298a1735d237e361a0adf9b73227",
+          "retrieved_at_utc": "2026-11-05T10:27:08.504Z"
         }
       ],
       "version_applicability": {
