@@ -37,7 +37,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate production Compose profile wiring
-        run: docker compose -f docker-compose.production.yml config --no-interpolate >/dev/null
+        run: |
+          set -euo pipefail
+          export POSTGRES_DB=ci POSTGRES_USER=ci POSTGRES_PASSWORD=ci-postgres-password
+          export REDIS_PASSWORD=ci-redis-password
+          export NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1
+          export NEXT_PUBLIC_FIREBASE_API_KEY=ci-firebase-api-key
+          export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=example.invalid
+          export NEXT_PUBLIC_FIREBASE_PROJECT_ID=ci-project
+          export NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ci-bucket
+          export NEXT_PUBLIC_FIREBASE_APP_ID=ci-app
+          export FIREBASE_ADMIN_CREDENTIALS_HOST_PATH=/tmp/firebase-admin.json
+          docker compose -f docker-compose.production.yml config >/dev/null
       - name: Discover immutable source-build profiles
         id: profiles
         run: |
