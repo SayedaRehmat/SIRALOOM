@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf44-sv-modal-candidate-context-review",
   "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_85_SV_AND_REPRESENTATION_CANDIDATES_ATOMIC_DECOMPOSITION_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
   "source_file": "VCFv4.4.tex",
-  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex",
   "scope": "VCFv4.4 modal candidates after core genotype-field section, including phase-set lists, structural-variant INFO/FORMAT, breakends, copy-number variation and tandem-repeat representation.",
   "candidate_count": 85,
   "candidates": [
