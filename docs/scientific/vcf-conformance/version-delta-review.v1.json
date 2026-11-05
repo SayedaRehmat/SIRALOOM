@@ -1,0 +1,134 @@
+{
+  "schema_version": "1.0.0",
+  "review_id": "siraloom-vcf-initial-version-delta-review",
+  "status": "PARTIAL_DELTA_REVIEW_SOURCE_CONTEXT_SCOPED",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "compared_versions": [
+    "VCFv4.1",
+    "VCFv4.2",
+    "VCFv4.3",
+    "VCFv4.4",
+    "VCFv4.5"
+  ],
+  "excluded_version": {
+    "version": "VCFv4.0",
+    "reason": "Historical source bytes and immutable digest are not yet pinned; no inferred delta/applicability is assigned."
+  },
+  "comparisons": [
+    {
+      "topic": "fileformat declaration",
+      "versions": {
+        "VCFv4.1": "A single fileformat field is always required and must be the first line (L59).",
+        "VCFv4.2": "Same field-based wording; example identifies VCFv4.2 (L59-L62).",
+        "VCFv4.3": "A single fileformat line is always required and must be first (L141-L145).",
+        "VCFv4.4": "Same line-based wording; example identifies VCFv4.4 (L144-L148).",
+        "VCFv4.5": "Same line-based wording; example identifies VCFv4.5 (L142-L146)."
+      },
+      "delta": "Core obligations remain present; terminology changes from 'field' in 4.1–4.2 to 'line' in 4.3–4.5. Version literal changes in the example.",
+      "requirement_ids": [
+        "VCF-REQ-000001",
+        "VCF-REQ-000002",
+        "VCF-REQ-000003"
+      ]
+    },
+    {
+      "topic": "LF and CRLF reader support",
+      "versions": {
+        "VCFv4.1": "No equivalent statement identified in the reviewed source locations.",
+        "VCFv4.2": "No equivalent statement identified in the reviewed source locations.",
+        "VCFv4.3": "Compliant implementations must support LF and CR+LF (L40).",
+        "VCFv4.4": "Same requirement (L40).",
+        "VCFv4.5": "Same requirement (L38)."
+      },
+      "delta": "Explicit reader interoperability requirement is present in 4.3–4.5; 4.1–4.2 remain unresolved pending full source review.",
+      "requirement_ids": [
+        "VCF-REQ-000004"
+      ]
+    },
+    {
+      "topic": "Line separator encoding and placement",
+      "versions": {
+        "VCFv4.1": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.2": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.3": "Line separators must be CR+LF or LF and only at end of line (L82).",
+        "VCFv4.4": "Same statement (L82).",
+        "VCFv4.5": "Same statement (L80)."
+      },
+      "delta": "Explicit allowed newline forms and placement constraint occur in 4.3–4.5; keep reader support and separator-placement obligations separate.",
+      "requirement_ids": [
+        "VCF-REQ-000004",
+        "VCF-REQ-000005"
+      ]
+    },
+    {
+      "topic": "Character encoding and prohibited bytes/code points",
+      "versions": {
+        "VCFv4.1": "No dedicated character-encoding subsection identified in reviewed source locations.",
+        "VCFv4.2": "No dedicated character-encoding subsection identified in reviewed source locations.",
+        "VCFv4.3": "UTF-8 (L77); no BOM (L80); specified control ranges disallowed (L81).",
+        "VCFv4.4": "Same rules (L77-L81).",
+        "VCFv4.5": "Same rules (L75-L79)."
+      },
+      "delta": "Explicit encoding and byte/character restrictions are source-confirmed in 4.3–4.5; do not back-propagate to 4.1–4.2 without further evidence.",
+      "requirement_ids": [
+        "VCF-REQ-000006",
+        "VCF-REQ-000007",
+        "VCF-REQ-000008"
+      ]
+    },
+    {
+      "topic": "Zero-length fields",
+      "versions": {
+        "VCFv4.1": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.2": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.3": "Zero-length fields are not allowed; dot must be used (L39).",
+        "VCFv4.4": "Same statement (L39).",
+        "VCFv4.5": "Same statement (L37)."
+      },
+      "delta": "Explicit prohibition appears in 4.3–4.5; wording is not captured by current modal matcher.",
+      "requirement_ids": [
+        "VCF-REQ-000009"
+      ]
+    },
+    {
+      "topic": "Tab-delimited header/data fields and sample identifier uniqueness",
+      "versions": {
+        "VCFv4.1": "Header tab-delimited and duplicate sample IDs not allowed (L155); data lines tab-delimited (L159).",
+        "VCFv4.2": "Same rules at L172 and L176.",
+        "VCFv4.3": "Header tab-delimited (L313), duplicate IDs prohibited (L312), data lines tab-delimited (L317).",
+        "VCFv4.4": "Same rules at L326-L331.",
+        "VCFv4.5": "Same rules at L375-L380."
+      },
+      "delta": "These constraints are present across 4.1–4.5 in reviewed locations; their declarative or 'not allowed' wording evades the current candidate regex.",
+      "requirement_ids": [
+        "VCF-REQ-000013",
+        "VCF-REQ-000014",
+        "VCF-REQ-000015"
+      ]
+    },
+    {
+      "topic": "Trailing tabs and final data-line terminator",
+      "versions": {
+        "VCFv4.1": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.2": "No equivalent statement identified in reviewed source locations.",
+        "VCFv4.3": "Header/data lines have no trailing tab (L313, L317); last data line ends with separator (L318).",
+        "VCFv4.4": "Same constraints (L327, L331-L332).",
+        "VCFv4.5": "Same constraints (L376, L380-L381)."
+      },
+      "delta": "Explicit constraints are present in 4.3–4.5. Header and data trailing-tab prohibitions and final-line termination are separate acceptance conditions.",
+      "requirement_ids": [
+        "VCF-REQ-000010",
+        "VCF-REQ-000011",
+        "VCF-REQ-000012"
+      ]
+    }
+  ],
+  "caution": "This is a scoped comparison of the initially reviewed fileformat, encoding, and line-structure passages only. It is not a complete VCFv4.1–4.5 change analysis. 'Not identified' means not found in the reviewed passages, not proven absent from the complete specification.",
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED"
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}
