@@ -186,7 +186,7 @@ def test_tool_version_pin_requires_version_command_output_match():
     module = _load_runner()
 
     module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "Hap.py v0.3.15\n"})
-    module.verify_version_pin("bcftools", "1.25", {"exit_code": 0, "output": "bcftools 1.25\nUsing htslib 1.25\n"})
+    module.verify_version_pin("bcftools", settings.bcftools_version, {"exit_code": 0, "output": f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
         module.verify_version_pin("hap.py", "0.3.15", {"exit_code": 0, "output": "usage: hap.py"})
     with pytest.raises(module.BenchmarkConfigurationError, match="could not be confirmed"):
