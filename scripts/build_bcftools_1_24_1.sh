@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Keep native-toolchain image failures diagnosable in CI. The failing command
+# and dynamic-loader state are emitted before the shell exits.
+trap 'status=$?; echo "BCFTOOLS_BUILD_FAILED line=${LINENO} status=${status} command=${BASH_COMMAND}" >&2; if [ -x "${INSTALL_PREFIX:-}/bin/bcftools" ]; then echo "--- bcftools ldd ---" >&2; ldd "${INSTALL_PREFIX}/bin/bcftools" >&2 || true; fi; if [ -x "${INSTALL_PREFIX:-}/bin/bgzip" ]; then echo "--- bgzip ldd ---" >&2; ldd "${INSTALL_PREFIX}/bin/bgzip" >&2 || true; fi; exit "${status}"' ERR
+
 # PREFIX is the final runtime path compiled into BCFtools (not the temporary
 # build path). DESTDIR stages installation without changing embedded paths.
 PREFIX="${BCFTOOLS_PREFIX:-/opt/conda}"
