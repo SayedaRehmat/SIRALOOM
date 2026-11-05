@@ -3,8 +3,9 @@ name: BCFtools 1.24.1 source profile qualification
 on:
   pull_request:
     paths:
-      - "scripts/build_bcftools_1_24_1.sh"
-      - "docker/backend-bcftools-1.24.1.Dockerfile"
+      - "scripts/build_bcftools_from_profile.sh"
+      - "docker/backend-bcftools-source.Dockerfile"
+      - "configs/bioinformatics/toolchain-profiles.v1.json"
       - "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml"
       - "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock"
       - "tests/test_vcf_tools.py"
@@ -46,7 +47,11 @@ jobs:
       - name: Build source archives with SHA-256 verification
         env:
           BCFTOOLS_PREFIX: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build
-        run: bash scripts/build_bcftools_1_24_1.sh
+          BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
+          BCFTOOLS_VERSION: "1.24.1"
+          HTSLIB_VERSION: "1.24.1"
+          BCFTOOLS_PROFILE_REGISTRY: configs/bioinformatics/toolchain-profiles.v1.json
+        run: bash scripts/build_bcftools_from_profile.sh
       - name: Run normalization, multiallelic, BGZF and CSI regression smoke tests
         run: |
           set -euo pipefail
