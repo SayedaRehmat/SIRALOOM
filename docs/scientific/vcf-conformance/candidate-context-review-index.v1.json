@@ -119,10 +119,30 @@
     {
       "artifact": "vcf4.1-4.4-reserved-row-version-crosswalk.v1.json",
       "scope": "Source-row crosswalk for reserved INFO/FORMAT definitions across VCF4.1-4.4; captures 4.1/4.2 prose lists separately from 4.3/4.4 Number/Type tables and observed adjacent-version deltas. Full context review remains pending."
+    },
+    {
+      "artifact": "vcf4.5-sv-breakend-full-context-review.v1.json",
+      "scope": "Complete VCFv4.5 SV INFO, tandem-repeat, SV FORMAT and breakend sections; 16 contextual findings and 8 cross-reference relationships; independent review pending."
+    },
+    {
+      "artifact": "vcf4.5-pedigree-gvcf-context-review.v1.json",
+      "scope": "VCFv4.5 sample/genome mixture, clonal PEDIGREE/haplotype lineage and gVCF reference-block semantics; independent review pending."
+    },
+    {
+      "artifact": "vcf4.1-4.4-genotype-sv-breakend-semantic-crosswalk.v1.json",
+      "scope": "Version-specific GT/GL ordering, genotype phasing, SV and breakend semantic deltas for VCFv4.1-4.4; source-context crosswalk only, remaining atomization pending."
+    },
+    {
+      "artifact": "vcf4.1-4.4-sv-info-format-source-row-inventory.v1.json",
+      "scope": "Every SV INFO/FORMAT declaration inventoried for VCFv4.1-4.4 with source lines and key semantic deltas; atomization and independent review pending."
+    },
+    {
+      "artifact": "sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/",
+      "scope": "Archived exact VCFv4.1-4.5 .tex source files; committed file Git blob SHA-1 values match authoritative hts-specs blobs and source SHA-256 values are recorded in source manifest."
     }
   ],
   "evidence_counters": {
-    "atomic_requirement_ledger_records": 105,
+    "atomic_requirement_ledger_records": 142,
     "additional_proposed_candidate_records": "61 FORMAT/GENOTYPE candidates (60 reconciled as IN_REVIEW ledger records; one retained as a split parent); additional source-review artifacts contain other proposals and split parents",
     "independently_second_person_reviewed": 0,
     "production_code_mappings": 0,
@@ -133,18 +153,41 @@
     "scoped_pilot_review_permitted": true,
     "ledger_required_fields_and_enums_validation": "PASS_105_RECORDS_ZERO_ERRORS",
     "source_locator_presence": "PASS_105_RECORDS",
-    "unique_requirement_ids": "PASS_105_UNIQUE"
+    "unique_requirement_ids": "PASS_105_UNIQUE",
+    "scientific_ledger_integrity": {
+      "unique_requirement_ids": "PASS_142_OF_142",
+      "schema_required_fields_and_enums": "PASS_142_OF_142",
+      "source_locator_presence": "PASS_142_OF_142",
+      "non_vcf40_source_and_excerpt_hashes": "PASS_255_OF_255_REFERENCES",
+      "vcf40_source_reference": "1_UNHASHED_PENDING_RAW_SOURCE_CAPTURE",
+      "independently_second_person_approved": 0
+    },
+    "vcf45_table_author_context_review": {
+      "indexed": 44,
+      "author_context_reviewed": 44,
+      "independently_reviewed": 0
+    },
+    "archived_pinned_specifications": {
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "archived_and_blob_verified": 5,
+      "sha256_recorded": 5
+    }
   },
   "next_review_gates": [
-    "Resolve VCFv4.5 xanthosine alias case discrepancy: reserved table MXaoN/DPMXaoN/ADMXaoN versus prose/example MxaoN/DPMxaoN/ADMxaoN; obtain source-history or maintainer clarification before implementation.",
-    "Complete semantic review of remaining VCFv4.5 tables and their surrounding source context: encoding, genotype ordering, local alleles, phase-set lists, small-variant representation and SV/breakend examples.",
-    "Perform full source-context review and atomic decomposition of the VCFv4.1–4.4 reserved-field inventories and all remaining tables; retain prose enumerations for 4.1/4.2 rather than inventing table columns.",
-    "Reconcile GT phasing and genotype ordering differences across VCFv4.1–4.5, including the 4.4 phase-set-list additions and 4.5 allele-level phasing/local-allele/base-modification semantics.",
-    "Complete full semantic expansion and atomic decomposition across every version: grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references.",
-    "Capture immutable historical VCFv4.0 normative source bytes, retrieval metadata and SHA-256; keep 1000 Genomes project conventions separately classified.",
-    "Reconcile all version-specific applicability cells and semantic deltas in the atomic ledger; do not infer from later versions.",
-    "Complete source excerpt hashes, candidate-to-ledger links, dependency links, unique IDs, source locator and schema validation.",
-    "Freeze a versioned review snapshot only after whole-specification coverage and traceability checks pass; then request independent second-person review. No requirement may be marked approved without an actual reviewer disposition."
+    "Complete VCFv4.1-4.4 row-by-row semantic review of all SV INFO/FORMAT declarations and reserved INFO/FORMAT fields, then split compound version-specific rules into atomic ledger entries.",
+    "Complete version-specific genotype and phasing reconciliation for VCFv4.1-4.4, including GLE, diploid Number=G formula, general-ploidy ordering, allele-level GT phasing, PSL/PSO/PSQ and cross-breakend consistency.",
+    "Complete all remaining VCFv4.1-4.5 grammar productions, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references; do not equate source table inventory with whole-spec coverage.",
+    "Capture the exact historical VCFv4.0 core source bytes from the authoritative historical archive and compute SHA-256. The IGSR page is corroborated but rendered page text is not accepted as raw-source capture.",
+    "Keep 1000 Genomes VCF4.0 structural-variation conventions separately classified as producer/project convention; do not merge them into core VCF4.0 normative requirements.",
+    "Reconcile the full version applicability matrix for all 142 candidates, including the 64 unresolved cells each for VCFv4.1 and VCFv4.2, 55 each for VCFv4.3 and VCFv4.4, and any unresolved questions discovered in remaining source coverage.",
+    "Complete source-hash and retrieval metadata for all newly added requirements; VCFv4.0 source hash remains blocked by raw capture.",
+    "Freeze a versioned review snapshot only after full source coverage and all traceability/schema/ID/applicability audits pass; only then request independent second-person review."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
