@@ -271,6 +271,7 @@ if Celery is not None:
                 task = run_analysis_task.apply_async(
                     args=[str(analysis.id)],
                     task_id=str(dispatch.id),
+                    queue=str(analysis.toolchain_queue),
                 )
             except Exception as exc:
                 dispatch.last_error = str(exc)
@@ -316,6 +317,17 @@ if Celery is not None:
                 {"lock_connection": claim_lock_connection}
                 if claim_lock_connection is not None
                 else {}
+            )
+            from backend.app.infrastructure.db.models import Analysis
+            from backend.app.domain.toolchain_profiles import assert_analysis_toolchain_matches_worker
+            persisted_analysis = claim_db.get(Analysis, UUID(analysis_id))
+            if persisted_analysis is None:
+                return {"analysis_id": analysis_id, "status": "NOT_FOUND"}
+            assert_analysis_toolchain_matches_worker(
+                persisted_analysis,
+                worker_profile_id=settings.bcftools_profile_id,
+                worker_bcftools_version=settings.bcftools_version,
+                worker_htslib_version=settings.htslib_version,
             )
             claimed = _claim_analysis_execution(
                 claim_db,
