@@ -46,12 +46,12 @@ ENV PATH="/opt/venv/bin:/opt/conda/bin:${PATH}" LD_LIBRARY_PATH="/opt/conda/lib"
 # The lock manager itself is pinned and removed from the final runtime image.
 COPY pyproject.toml uv.lock ./
 RUN lock_sha_before="$(sha256sum uv.lock | cut -d ' ' -f1)" \
-    && uv lock --check \
     && apt-get update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/local/bin/python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
     && test "$(uv --version)" = "uv 0.10.0" \
+    && uv lock --check \
     && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project \
     && test "$lock_sha_before" = "$(sha256sum uv.lock | cut -d ' ' -f1)"
 
