@@ -35,7 +35,7 @@
     },
     {
       "id": "bcftools-1.24.1-htslib-1.24.1-linux-64-source",
-      "status": "SOFTWARE_QUALIFIED",
+      "status": "CANDIDATE",
       "platform": "linux-64",
       "bcftools_version": "1.24.1",
       "htslib_version": "1.24.1",
@@ -68,7 +68,7 @@
           "GHSA-vhg8-qwm7-cv9m"
         ]
       },
-      "qualification_scope": "Source archive SHA-256 verification, isolated Linux x86-64 source build, exact BCFtools/HTSlib version attestation, and VCF normalization/multiallelic/BGZF/CSI smoke tests. Backend regression and production image qualification remain CI gates; not clinical or laboratory qualification."
+      "qualification_scope": "Candidate only: source archive SHA-256 verification, isolated Linux x86-64 source build, exact BCFtools/HTSlib version attestation, and VCF normalization/multiallelic/BGZF/CSI smoke tests. Not production eligible until backend regression and production image qualification pass; not clinical or laboratory qualification."
     }
   ]
 }
