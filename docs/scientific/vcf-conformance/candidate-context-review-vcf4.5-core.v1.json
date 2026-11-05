@@ -2,10 +2,10 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf45-core-modal-candidate-context-review",
   "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_83_CORE_CANDIDATES_ATOMIC_DECOMPOSITION_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
   "source_file": "VCFv4.5.tex",
-  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex",
   "scope": "Core file structure, metadata, base-modification metadata, header, fixed record fields and genotype clauses through line 620. Later SV INFO/FORMAT and variant-representation sections remain outside this batch.",
   "candidate_count": 83,
   "candidates": [
