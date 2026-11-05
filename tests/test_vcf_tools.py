@@ -244,7 +244,7 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\nUsing htslib 1.25\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "sort":
@@ -359,7 +359,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\nUsing htslib 1.25\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "view":
