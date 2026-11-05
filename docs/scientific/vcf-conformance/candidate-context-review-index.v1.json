@@ -136,6 +136,7 @@
     "unique_requirement_ids": "PASS_105_UNIQUE"
   },
   "next_review_gates": [
+    "Resolve VCFv4.5 xanthosine alias case discrepancy: reserved table MXaoN/DPMXaoN/ADMXaoN versus prose/example MxaoN/DPMxaoN/ADMxaoN; obtain source-history or maintainer clarification before implementation.",
     "Complete semantic review of remaining VCFv4.5 tables and their surrounding source context: encoding, genotype ordering, local alleles, phase-set lists, small-variant representation and SV/breakend examples.",
     "Perform full source-context review and atomic decomposition of the VCFv4.1–4.4 reserved-field inventories and all remaining tables; retain prose enumerations for 4.1/4.2 rather than inventing table columns.",
     "Reconcile GT phasing and genotype ordering differences across VCFv4.1–4.5, including the 4.4 phase-set-list additions and 4.5 allele-level phasing/local-allele/base-modification semantics.",
