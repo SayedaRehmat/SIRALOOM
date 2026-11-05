@@ -974,7 +974,7 @@
       "proposed_atomic_statement": "Records for a given CHROM form a contiguous block.",
       "requirement_domain": "ORDERING",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "SHOULD",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "All records for one CHROM occur in a contiguous block.",
@@ -1069,7 +1069,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "CORE-POS-001",
@@ -1178,7 +1185,7 @@
       "proposed_atomic_statement": "POS values increase numerically within each CHROM sequence.",
       "requirement_domain": "ORDERING",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "Within each CHROM, POS values are sorted in increasing numeric order.",
@@ -1273,7 +1280,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "NOT_STATED",
+        "VCFv4.2": "NOT_STATED",
+        "VCFv4.3": "NOT_STATED",
+        "VCFv4.4": "NOT_STATED",
+        "VCFv4.5": "NOT_STATED"
+      }
     },
     {
       "candidate_id": "CORE-ID-001",
@@ -2198,7 +2212,7 @@
       "proposed_atomic_statement": "ALT is the missing-value token when no alternate alleles are present.",
       "requirement_domain": "MISSINGNESS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "If there are no alternate alleles, ALT uses the missing-value token.",
@@ -2293,7 +2307,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "CORE-QUAL-001",
@@ -2402,7 +2423,7 @@
       "proposed_atomic_statement": "QUAL uses the missing-value token when its value is unknown.",
       "requirement_domain": "MISSINGNESS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "If QUAL is unknown, it is encoded as the missing-value token.",
@@ -2497,7 +2518,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "CORE-FILTER-001",
@@ -2606,7 +2634,7 @@
       "proposed_atomic_statement": "The filter code '0' is reserved and must not be used.",
       "requirement_domain": "FIXED_FIELDS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST_NOT",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "The string '0' is not used as a FILTER code.",
@@ -2701,14 +2729,21 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD_NOT",
+        "VCFv4.2": "SHOULD_NOT",
+        "VCFv4.3": "MUST_NOT",
+        "VCFv4.4": "MUST_NOT",
+        "VCFv4.5": "MUST_NOT"
+      }
     },
     {
       "candidate_id": "CORE-FILTER-003",
       "proposed_atomic_statement": "FILTER is the missing-value token when filters have not been applied.",
       "requirement_domain": "MISSINGNESS",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "When filters have not been applied, FILTER is the missing-value token.",
@@ -2803,7 +2838,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "SHOULD",
+        "VCFv4.2": "SHOULD",
+        "VCFv4.3": "MUST",
+        "VCFv4.4": "MUST",
+        "VCFv4.5": "MUST"
+      }
     },
     {
       "candidate_id": "CORE-INFO-001",
@@ -3256,7 +3298,7 @@
       "proposed_atomic_statement": "FORMAT keys are colon-separated and unique within the FORMAT declaration.",
       "requirement_domain": "FORMAT",
       "requirement_kind": "GRAMMAR_RULE",
-      "normative_force": "MUST_NOT",
+      "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "FORMAT keys are colon-separated and duplicate FORMAT keys are prohibited in VCFv4.3–4.5.",
@@ -3351,7 +3393,14 @@
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "normative_force_by_version": {
+        "VCFv4.1": "NOT_STATED",
+        "VCFv4.2": "NOT_STATED",
+        "VCFv4.3": "MUST_NOT",
+        "VCFv4.4": "MUST_NOT",
+        "VCFv4.5": "MUST_NOT"
+      }
     },
     {
       "candidate_id": "CORE-FORMAT-003",
