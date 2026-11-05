@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "siraloom-vcf-format-reserved-row-source-review",
   "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_FORMAT_RESERVED_FIELDS_AND_ADJACENT_PROSE_INDEPENDENT_REVIEW_PENDING",
-  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7bb",
   "scope": "Reserved FORMAT/genotype field definitions and adjacent genotype serialization/ordering prose for VCFv4.1–4.5. VCFv4.1–4.2 use prose enumerations rather than a reserved-genotype table; VCFv4.3–4.5 contain longtable row definitions.",
   "sources": [
     {
@@ -11,7 +11,7 @@
       "b": 221,
       "sha": "420cee83a66259600a70de36721763cc374df1e3",
       "kind": "BULLET_DEFINITIONS",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L193",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.1.tex#L193",
       "lines": [
         {
           "line": 193,
@@ -137,7 +137,7 @@
       "b": 238,
       "sha": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
       "kind": "BULLET_DEFINITIONS",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L210",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.2.tex#L210",
       "lines": [
         {
           "line": 210,
@@ -263,7 +263,7 @@
       "b": 478,
       "sha": "01671b89e21fc1bca414b639a4ea483194f127a9",
       "kind": "TABLE_AND_SEMANTIC_PROSE",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L427",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.3.tex#L427",
       "lines": [
         {
           "line": 427,
@@ -481,7 +481,7 @@
       "b": 500,
       "sha": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
       "kind": "TABLE_AND_SEMANTIC_PROSE",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L445",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.4.tex#L445",
       "lines": [
         {
           "line": 445,
@@ -715,7 +715,7 @@
       "b": 598,
       "sha": "307950e7eeafc33d524969ff906343f756adb7d7",
       "kind": "TABLE_AND_SEMANTIC_PROSE",
-      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L497",
+      "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7bb/VCFv4.5.tex#L497",
       "lines": [
         {
           "line": 497,
