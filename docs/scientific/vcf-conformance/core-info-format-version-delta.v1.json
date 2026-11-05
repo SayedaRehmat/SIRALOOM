@@ -803,8 +803,9 @@
     "Pin VCFv4.0 source bytes before adding 4.0 applicability.",
     "Obtain independent review.",
     "Decompose all 223 row descriptions into independently testable Number, Type, semantic and cross-reference requirements where applicable.",
-    "Review adjacent detailed prose for every reserved FORMAT row, including genotype ordering, PS/PSL, local-allele, base-modification and structural-variant fields.",
-    "Resolve whether a reserved key omitted from a version's core list is unsupported, non-reserved, or merely not enumerated; absence from a list is not proof of invalidity."
+    "Resolve whether a reserved key omitted from a version's core list is unsupported, non-reserved, or merely not enumerated; absence from a list is not proof of invalidity.",
+    "Reconcile the newly decomposed 61 FORMAT/GENOTYPE candidates with all 4.1–4.5 table rows and their complete definitions; some rows remain inventory-only.",
+    "Obtain independent review of genotype-ordering algorithm, VCFv4.4 allele-level phasing, PSL/PSO/PSQ and VCFv4.5 local-allele/base-modification semantics."
   ],
   "review": {
     "primary_reviewer_status": "REVIEWED",
@@ -914,6 +915,56 @@
       ],
       "delta": "VCFv4.1–4.2 use prose enumerations without explicit Number/Type columns for reserved INFO/FORMAT keys; VCFv4.3–4.5 use tables with Number/Type/Description.",
       "implementation_consequence": "Do not backfill 4.1–4.2 table fields from later tables as if they were present in the earlier source. Store source representation and explicitness."
+    },
+    {
+      "topic": "Genotype likelihood ordering",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.1–4.2 give the diploid triangular-index expression and examples; VCFv4.3–4.5 provide general ploidy/alternate-allele nested-loop ordering, inclusive loop-boundary footnote, recursive equivalent, and (in VCFv4.5) an explicit inverse-index formula and additional triploid examples.",
+      "implementation_consequence": "Number=G cardinality alone is insufficient. Implement and test the versioned genotype enumeration/indexing semantics, including ploidy >2 and multiallelic sites; preserve the explicit inclusive-boundary note."
+    },
+    {
+      "topic": "GT phasing representation",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.1–4.3 describe '/' and '|' as genotype separators. VCFv4.4–4.5 describe an indicator preceding each allele, permit omission of the first indicator, and define its implicit value based on remaining indicators; partial phasing is therefore expressible.",
+      "implementation_consequence": "Version-aware GT parsing is required. Do not interpret VCFv4.4–4.5 as a uniform separator-only diploid grammar."
+    },
+    {
+      "topic": "Phase-set-list model",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.3 core FORMAT keys include PS but not PSL/PSO/PSQ. VCFv4.4 adds PSL, PSO and PSQ with Number=P and detailed semantics for cross-chromosome phase-set names, unphased allele placeholders, derivative-chromosome traversal ordinals and corresponding qualities; VCFv4.5 retains these semantics.",
+      "implementation_consequence": "Treat PSL/PSO/PSQ as a distinct version-introduced representation, not aliases for PS. Enforce PS/PSL mutual exclusion and paired-breakend PSL/PSO consistency where the clauses apply."
+    },
+    {
+      "topic": "Local-allele semantics",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.5 defines Number LA/LR/LG and P/M; LAA identifies distinct one-based ALT indices and their local order. Detailed prose narrows LAA presence to when local-allele fields are neither omitted nor MISSING, and documents BCF zero-length-vector/MISSING equivalence.",
+      "implementation_consequence": "Do not require LAA merely because a local-allele FORMAT key appears in a FORMAT declaration; evaluate per-sample field presence/value state and preserve BCF-specific empty-vector behavior."
+    },
+    {
+      "topic": "Base-modification FORMAT semantics",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "delta": "VCFv4.5 introduces Number=M and M/DPM/ADM key families with ChEBI identifiers and aliases. Cardinality/order depends on genotype alleles, phasing, eligible sequence bases and strand; U is synonymous with T; GT is required for a sample with a base-modification key; missing/symbolic alleles contribute no values; unstranded storage conventions are specified.",
+      "implementation_consequence": "The M-family cannot be validated from key regex and Number=M alone. It requires sequence-aware, allele-aware and phase-aware cardinality/order logic, while SHOULD conventions remain non-rejection recommendations."
     }
   ],
   "row_level_semantic_review_status": "PRIMARY_REVIEWED_FOR_RESERVED_KEY_INVENTORY; FIELD_SPECIFIC_PROSE_ATOMIZATION_PENDING"
