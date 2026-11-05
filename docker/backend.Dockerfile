@@ -35,9 +35,9 @@ COPY pyproject.toml uv.lock ./
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libcairo2 libpango-1.0-0 libpangoft2-1.0-0 shared-mime-info fonts-noto-core postgresql-client \
     && rm -rf /var/lib/apt/lists/* \
-    && python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
+    && /usr/local/bin/python -m pip install --no-cache-dir --disable-pip-version-check --no-deps "uv==0.10.0" \
     && test "$(uv --version)" = "uv 0.10.0" \
-    && uv sync --locked --no-dev --no-install-project
+    && uv sync --python /usr/local/bin/python --locked --no-dev --no-install-project
 
 COPY backend ./backend
 COPY alembic.ini ./
@@ -46,7 +46,7 @@ COPY workflows ./workflows
 COPY configs ./configs
 COPY scripts ./scripts
 
-RUN uv sync --locked --no-dev --no-editable \
+RUN uv sync --python /usr/local/bin/python --locked --no-dev --no-editable \
     && python -c "import redis; import kombu.transport.redis; import backend.app" \
     && test "$(bcftools --version | head -n1)" = "bcftools 1.25" \
     && /usr/local/bin/python -m pip uninstall -y uv
