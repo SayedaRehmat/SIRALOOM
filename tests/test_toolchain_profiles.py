@@ -36,6 +36,13 @@ def test_1_24_1_profile_remains_candidate_until_runtime_image_gate_passes():
     with pytest.raises(ToolchainProfileError, match="not software-qualified"):
         resolve_toolchain_profile(profile_id, bcftools_version="1.24.1", htslib_version="1.24.1", registry_path=REGISTRY)
     assert profile["installation_method"] == "verified_source_build"
+    assert profile["build_script"] == "scripts/build_bcftools_from_profile.sh"
+    assert profile["dockerfile"] == "docker/backend-bcftools-source.Dockerfile"
+    assert [item["name"] for item in profile["source_archives"]] == [
+        "htslib-1.24.1.tar.bz2",
+        "bcftools-1.24.1.tar.bz2",
+    ]
+    assert all(item["url"].startswith("https://") for item in profile["source_archives"])
     assert profile["platform"] == "linux-64"
     assert profile["security_review"]["status"] == "PATCHED_UPSTREAM_RELEASE"
     assert profile["worker_queue"] == "bioinformatics.bcftools.1_24_1"
