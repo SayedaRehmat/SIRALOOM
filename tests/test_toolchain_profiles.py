@@ -69,6 +69,36 @@ def test_profile_rejects_independent_bcftools_or_htslib_version_drift(
         )
 
 
+@pytest.mark.parametrize(
+    ("service", "compose_profile", "profile_id", "bcftools_version", "htslib_version", "queue", "lock_file"),
+    [
+        ("worker-bcftools-1-24-1", "bcftools-1.24.1", "bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1", "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock"),
+        ("worker-bcftools-1-23-3", "bcftools-1.23.3", "bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3", "configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-64-build.lock"),
+        ("worker-bcftools-1-22-3", "bcftools-1.22.3", "bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4", "configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-64-build.lock"),
+        ("worker-bcftools-1-21-3", "bcftools-1.21.3", "bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", "1.21.3", "bioinformatics.bcftools.1_21_3", "configs/bioinformatics/profiles/bcftools-1.21.3-htslib-1.21.3-linux-64-build.lock"),
+    ],
+)
+def test_production_compose_workers_match_registered_profile_contract(
+    service, compose_profile, profile_id, bcftools_version, htslib_version, queue, lock_file
+):
+    import yaml
+
+    compose = yaml.safe_load((ROOT / "docker-compose.production.yml").read_text(encoding="utf-8"))
+    worker = compose["services"][service]
+    assert compose_profile in worker["profiles"]
+    assert worker["build"]["dockerfile"] == "docker/backend-bcftools-source.Dockerfile"
+    args = worker["build"]["args"]
+    assert args["BCFTOOLS_PROFILE_ID"] == profile_id
+    assert args["BCFTOOLS_VERSION"] == bcftools_version
+    assert args["HTSLIB_VERSION"] == htslib_version
+    assert args["BCFTOOLS_BUILD_LOCK_FILE"] == lock_file
+    assert args["BCFTOOLS_WORKER_QUEUE"] == queue
+    assert worker["environment"]["BCFTOOLS_PROFILE_ID"] == profile_id
+    assert worker["environment"]["BCFTOOLS_VERSION"] == bcftools_version
+    assert worker["environment"]["HTSLIB_VERSION"] == htslib_version
+    assert worker["environment"]["CELERY_QUEUES"] == queue
+
+
 def test_1_21_3_remains_candidate_while_vcf45_len_regression_is_unresolved():
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     profile = next(
