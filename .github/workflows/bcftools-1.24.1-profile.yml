@@ -1,0 +1,65 @@
+name: BCFtools 1.24.1 source profile qualification
+
+on:
+  pull_request:
+    paths:
+      - "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml"
+      - "scripts/build_bcftools_1_24_1.sh"
+      - ".github/workflows/bcftools-1.24.1-profile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-build-linux-64:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.yml
+          environment-name: bcftools-build
+          cache-environment: false
+          init-shell: bash
+      - name: Generate explicit build dependency lock
+        run: |
+          micromamba env export --explicit --name bcftools-build > "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          grep -Fq '@EXPLICIT' "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          test -s "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          echo "::group::BEGIN_BCFTOOLS_1_24_1_BUILD_LOCK"
+          cat "$RUNNER_TEMP/bcftools-1.24.1-build-linux-64.lock"
+          echo "::endgroup::"
+      - name: Build source archives with SHA-256 verification
+        env:
+          BCFTOOLS_PREFIX: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build
+        run: scripts/build_bcftools_1_24_1.sh
+      - name: Run normalization, multiallelic, BGZF and CSI regression smoke tests
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/bcftools-profile-smoke"
+          mkdir -p "$work"
+          cat > "$work/ref.fa" <<'EOF'
+          >chr1
+          AAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT
+          EOF
+          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/samtools" faidx "$work/ref.fa"
+          cat > "$work/input.vcf" <<'EOF'
+          ##fileformat=VCFv4.2
+          ##contig=<ID=chr1,length=40>
+          #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+          chr1	11	.	C	CA,CAA	50	PASS	.
+          EOF
+          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" norm -f "$work/ref.fa" -m -any -Oz -o "$work/normalized.vcf.gz" "$work/input.vcf"
+          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" index --csi "$work/normalized.vcf.gz"
+          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" view -H "$work/normalized.vcf.gz" | grep -q $'chr1\t11'
+          test -s "$work/normalized.vcf.gz.csi"
+          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools" --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bcftools-1.24.1-build-linux-64-lock
+          path: ${{ runner.temp }}/bcftools-1.24.1-build-linux-64.lock
+          if-no-files-found: error
