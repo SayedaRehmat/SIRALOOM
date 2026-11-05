@@ -61,6 +61,21 @@
           "source_ref": "turn430266search3",
           "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
           "observation": "IGSR general VCF page states that specification maintenance moved to GA4GH and points to the maintained HTS specifications."
+        },
+        {
+          "source_ref": "turn160906search0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "Current rendered historical core page identifies itself as VCF 4.0, presents metadata/header/fixed-field/INFO/FORMAT/genotype/haplotype sections, and explicitly points structural-variation conventions to a separate page. This is rendered-page corroboration only, not raw-source capture."
+        },
+        {
+          "source_ref": "turn160906search3",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "Alternate current IGSR route exposes detailed VCFv4.0 core text including metadata typing, Number/Type semantics, fixed fields, reserved INFO keys, GT/GL examples and haplotype representation. The route remains mutable rendered HTML."
+        },
+        {
+          "source_ref": "turn160906search2",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
+          "observation": "Current IGSR general VCF page states that maintenance moved to the GA4GH Data Working Group and points to HTS specifications; used only for historical governance/provenance context."
         }
       ],
       "acquisition_attempts": [
@@ -111,6 +126,13 @@
       "limitations": [
         "Keep separate from core VCFv4.0 requirements.",
         "Do not generalize producer conventions to all VCFv4.0 producers or readers without independent normative evidence."
+      ],
+      "additional_web_evidence": [
+        {
+          "source_ref": "turn160906search1",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/",
+          "observation": "The separate page explicitly states that it describes conventions and extensions adopted by the 1000 Genomes Project for structural-variation encoding in VCF 4.0. This supports source separation, not universal core normative status."
+        }
       ]
     },
     {
@@ -156,5 +178,5 @@
     "The 1000 Genomes structural-variation conventions are not treated as core VCFv4.0 normative requirements.",
     "No VCFv4.0 conformance declaration is made."
   ],
-  "last_reviewed_utc": "2026-11-05T10:35:40.419Z"
+  "last_reviewed_utc": "2026-11-05T15:42:00+05:00"
 }
