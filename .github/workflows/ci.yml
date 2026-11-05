@@ -50,7 +50,7 @@ jobs:
       - name: Build laboratory backend image
         run: >-
           docker build
-          --build-arg BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock
+          --build-arg BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock --build-arg BCFTOOLS_PLATFORM=linux-64
           --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
           --build-arg BCFTOOLS_VERSION=1.25
           --build-arg HTSLIB_VERSION=1.25
