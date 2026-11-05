@@ -20,7 +20,7 @@
       "bcftools_version": "1.25",
       "htslib_version": "1.25",
       "environment_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml",
-      "lock_file": null,
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock",
       "executable": "bcftools",
       "security_review": {
         "status": "PATCHED_UPSTREAM_RELEASE",
