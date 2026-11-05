@@ -1,0 +1,778 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-core-info-format-version-delta",
+  "status": "PRIMARY_REVIEW_COMPLETE_FOR_RESERVED_KEY_INVENTORY_SECOND_REVIEW_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "Reserved INFO and FORMAT/genotype keys enumerated in the core VCF specification sections, VCFv4.1–4.5. This excludes structural-variant-specific INFO/FORMAT sections and VCFv4.0 pending source pinning.",
+  "counts": [
+    {
+      "version": "VCFv4.1",
+      "info_entries": 18,
+      "format_entries": 13,
+      "info_representation": "enumerated prose list",
+      "format_representation": "enumerated prose list"
+    },
+    {
+      "version": "VCFv4.2",
+      "info_entries": 18,
+      "format_entries": 13,
+      "info_representation": "enumerated prose list",
+      "format_representation": "enumerated prose list"
+    },
+    {
+      "version": "VCFv4.3",
+      "info_entries": 21,
+      "format_entries": 16,
+      "info_representation": "reserved INFO table",
+      "format_representation": "reserved FORMAT table"
+    },
+    {
+      "version": "VCFv4.4",
+      "info_entries": 21,
+      "format_entries": 19,
+      "info_representation": "reserved INFO table",
+      "format_representation": "reserved FORMAT table"
+    },
+    {
+      "version": "VCFv4.5",
+      "info_entries": 21,
+      "format_entries": 63,
+      "info_representation": "reserved INFO table",
+      "format_representation": "reserved FORMAT table"
+    }
+  ],
+  "info_changes": [
+    {
+      "change": "VCFv4.1–4.2 list reserved INFO names and meanings in prose; VCFv4.3–4.5 use a Number/Type/Description table.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "interpretation": "The earlier prose list does not provide Number and Type columns; do not backfill those columns from later versions as if they were explicitly specified in 4.1/4.2."
+    },
+    {
+      "change": "AD, ADF and ADR appear as additional reserved INFO keys in the VCFv4.3–4.5 tables and are not in the reviewed 4.1–4.2 core INFO lists.",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "interpretation": "Version-specific reserved-key availability; verify the exact meta-information declaration rules and do not silently apply later reserved-key semantics to earlier versions."
+    },
+    {
+      "change": "The END row changes its description in VCFv4.5 to 'Deprecated. Present for backwards compatibility with earlier versions of VCF.'",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "interpretation": "VCFv4.5 also supplies a dedicated END explanation immediately after the table, including computed span semantics and indexing/BCF rlen rationale. This is a substantive semantic delta requiring a dedicated atomic requirement and regression tests."
+    }
+  ],
+  "format_changes": [
+    {
+      "change": "VCFv4.1–4.2 enumerate 13 reserved FORMAT/genotype keys in prose, including GLE; VCFv4.3 table contains 16 rows and omits GLE while adding AD, ADF, ADR and PP.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3"
+      ],
+      "interpretation": "The 4.3 table is not a pure formatting conversion. GLE's absence and the new rows require explicit compatibility/delta decisions; do not infer GLE is invalid solely from omission without checking full normative scope."
+    },
+    {
+      "change": "VCFv4.4 expands the core reserved FORMAT table from 16 to 19 rows with PSL, PSO and PSQ phase-set-list keys.",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4"
+      ],
+      "interpretation": "These fields have Number P and distinct phase-set-list semantics; they require dedicated parsing/cardinality and interoperability tests."
+    },
+    {
+      "change": "VCFv4.5 expands the table to 63 rows, adding LEN, local-allele fields (LA/LAA/LAD/LADF/LADR/LEC/LGL/LGP/LPL/LPP), base-modification patterns and aliases.",
+      "versions": [
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "interpretation": "The three parameterized base-modification key patterns are patterns, not literal key names; aliases map to ChEBI identifiers. The local-allele family requires dependencies and cardinality semantics from the surrounding prose, not table-only interpretation."
+    }
+  ],
+  "normalized_presence": {
+    "info": [
+      {
+        "key": "1000G",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "AA",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "AC",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "AD",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADF",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADR",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "AF",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "AN",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "BQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "CIGAR",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DB",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DP",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "END",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "H2",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "H3",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "MQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "MQ0",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "NS",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "SB",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "SOMATIC",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "VALIDATED",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      }
+    ],
+    "format": [
+      {
+        "key": "AD",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADF",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5caC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5caU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5fC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5fU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5hmC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5hmU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM5mC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM6mA",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM8oxoG",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADMXaoN",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADM[0-9]+[ACGTUN]",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "ADR",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DP",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5caC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5caU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5fC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5fU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5hmC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5hmU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM5mC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM6mA",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM8oxoG",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPMXaoN",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "DPM[0-9]+[ACGTUN]",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "EC",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "FT",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "GL",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "GLE",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2"
+        ]
+      },
+      {
+        "key": "GP",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "GQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "GT",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "HQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LA",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LAA",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LAD",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LADF",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LADR",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LEC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LEN",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LGL",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LGP",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LPL",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "LPP",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5caC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5caU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5fC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5fU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5hmC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5hmU",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M5mC",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M6mA",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M8oxoG",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "MQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "MXaoN",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "M[0-9]+[ACGTUN]",
+        "versions": [
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PL",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PP",
+        "versions": [
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PQ",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PS",
+        "versions": [
+          "VCFv4.1",
+          "VCFv4.2",
+          "VCFv4.3",
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PSL",
+        "versions": [
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PSO",
+        "versions": [
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      },
+      {
+        "key": "PSQ",
+        "versions": [
+          "VCFv4.4",
+          "VCFv4.5"
+        ]
+      }
+    ]
+  },
+  "semantic_review_rules": [
+    "The table heading 'reserved' does not imply mandatory presence. The surrounding text explicitly says the reserved INFO keys are optional; FORMAT text states there are no required keys.",
+    "Number values 1, 0, A, R, G, P, M, LR, LA and LG are not generic integers; each is a symbolic cardinality domain whose meaning must be separately specified and tested.",
+    "Type values Flag, Integer, Float and String constrain the metadata declaration and/or encoded values; they are not interchangeable with implementation-language types without a mapping.",
+    "Descriptions sometimes defer semantics to adjacent prose. Preserve cross-references and do not use table descriptions as a complete definition.",
+    "Rows for parameterized keys such as M[0-9]+[ACGTUN], DPM[0-9]+[ACGTUN], and ADM[0-9]+[ACGTUN] define key-name patterns, not single literal identifiers.",
+    "Aliases such as M5mC and DPM5mC have explicit ChEBI-linked meanings and should not be collapsed into the generic pattern without retaining alias equivalence."
+  ],
+  "unresolved": [
+    "Compare every reserved INFO/FORMAT row against the corresponding meta-information declaration grammar and field-specific prose for each version.",
+    "Determine whether omissions from a reserved-key list mean unsupported, non-reserved, or merely not enumerated; do not infer invalidity from omission alone.",
+    "Review all table footnotes, captions and cross-references for each row.",
+    "Pin VCFv4.0 source bytes before adding 4.0 applicability.",
+    "Obtain independent review."
+  ],
+  "review": {
+    "primary_reviewer_status": "REVIEWED",
+    "independent_second_review_status": "NOT_STARTED",
+    "implementation_mapping": "NOT_STARTED",
+    "tests": "NOT_STARTED",
+    "laboratory_qualification": "NOT_CLAIMED"
+  }
+}
