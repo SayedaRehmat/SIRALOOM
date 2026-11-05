@@ -4,6 +4,8 @@ from pathlib import Path
 from uuid import uuid4, uuid5
 
 import pytest
+
+from backend.app.config import settings
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
@@ -520,8 +522,8 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 )
             index.write_bytes(b"fixture-csi")
             return {
-                "tool": "bcftools", "tool_version": "bcftools 1.25",
-                "expected_tool_version": "1.25", "operation": "fixture-normalization",
+                "tool": "bcftools", "tool_version": f"bcftools {settings.bcftools_version}",
+                "expected_tool_version": settings.bcftools_version, "operation": "fixture-normalization",
                 "command": "bcftools view -A && bcftools norm -f ref.fa -c e -m -any",
                 "source_record_mapping_tag": "SIRALOOM_ORIG",
                 "source_record_mapping_policy": "BCFTOOLS_OLD_REC_TAG_SOURCE_ALT_INDEX",
@@ -755,7 +757,7 @@ def test_production_worker_normalizes_called_variant_from_gvcf_and_preserves_blo
                 assert sha256(store.read_bytes(normalized.storage_uri)).hexdigest() == normalized.sha256
                 assert normalized.metadata_json["source_artifact_id"] == str(input_artifact.id)
                 assert normalized.metadata_json["source_record_count"] == 7
-                assert normalized.metadata_json["normalization_tool_version"] == "bcftools 1.25"
+                assert normalized.metadata_json["normalization_tool_version"] == f"bcftools {settings.bcftools_version}"
                 assert str(exclusion_manifest.id) in step.output_artifacts
                 assert str(exclusion_manifest.id) in step.metadata_json["exclusion_manifest_artifact_ids"]
                 if worker_loss:
