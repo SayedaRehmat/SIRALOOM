@@ -151,15 +151,15 @@
     "vcf40_historical_source_bytes_hashed": false,
     "complete_ledger_independent_review_ready": false,
     "scoped_pilot_review_permitted": true,
-    "ledger_required_fields_and_enums_validation": "PASS_142_RECORDS_ZERO_ERRORS",
+    "ledger_required_fields_and_enums_validation": "PASS_142_RECORDS_ZERO_ERRORS_CUSTOM_STRUCTURAL_AUDIT",
     "source_locator_presence": "PASS_142_RECORDS",
-    "unique_requirement_ids": "PASS_142_UNIQUE",
+    "unique_requirement_ids": "PASS_142_OF_142",
     "scientific_ledger_integrity": {
       "unique_requirement_ids": "PASS_142_OF_142",
-      "schema_required_fields_and_enums": "PASS_142_OF_142",
+      "schema_required_fields_and_enums": "PASS_142_OF_142_CUSTOM_STRUCTURAL_AUDIT_NOT_FULL_JSON_SCHEMA_ENGINE",
       "source_locator_presence": "PASS_142_OF_142",
-      "non_vcf40_source_and_excerpt_hashes": "PASS_255_OF_255_REFERENCES",
-      "vcf40_source_reference": "1_UNHASHED_PENDING_RAW_SOURCE_CAPTURE",
+      "source_and_excerpt_sha256": "PASS_320_OF_321_REFERENCES",
+      "vcf40_source_reference": "1_UNHASHED_PENDING_EXACT_RAW_CAPTURE",
       "independently_second_person_approved": 0
     },
     "vcf45_table_author_context_review": {
@@ -177,17 +177,24 @@
       ],
       "archived_and_blob_verified": 5,
       "sha256_recorded": 5
+    },
+    "version_applicability_unresolved": {
+      "VCFv4.1": 55,
+      "VCFv4.2": 55,
+      "VCFv4.3": 46,
+      "VCFv4.4": 17,
+      "VCFv4.5": 0
     }
   },
   "next_review_gates": [
-    "Complete VCFv4.1-4.4 row-by-row semantic review of all SV INFO/FORMAT declarations and reserved INFO/FORMAT fields, then split compound version-specific rules into atomic ledger entries.",
-    "Complete version-specific genotype and phasing reconciliation for VCFv4.1-4.4, including GLE, diploid Number=G formula, general-ploidy ordering, allele-level GT phasing, PSL/PSO/PSQ and cross-breakend consistency.",
-    "Complete all remaining VCFv4.1-4.5 grammar productions, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references; do not equate source table inventory with whole-spec coverage.",
-    "Capture the exact historical VCFv4.0 core source bytes from the authoritative historical archive and compute SHA-256. The IGSR page is corroborated but rendered page text is not accepted as raw-source capture.",
-    "Keep 1000 Genomes VCF4.0 structural-variation conventions separately classified as producer/project convention; do not merge them into core VCF4.0 normative requirements.",
-    "Reconcile the full version applicability matrix for all 142 candidates, including the 64 unresolved cells each for VCFv4.1 and VCFv4.2, 55 each for VCFv4.3 and VCFv4.4, and any unresolved questions discovered in remaining source coverage.",
-    "Complete source-hash and retrieval metadata for all newly added requirements; VCFv4.0 source hash remains blocked by raw capture.",
-    "Freeze a versioned review snapshot only after full source coverage and all traceability/schema/ID/applicability audits pass; only then request independent second-person review."
+    "Finish every VCFv4.5 table row's semantic context, not only its example/context disposition; resolve base-modification alias casing and remaining local-allele, BCF and gVCF cross-references.",
+    "Complete VCFv4.1-4.4 row-by-row INFO/FORMAT and reserved-field semantic review, then atomize version-specific genotype/phasing and SV/breakend deltas.",
+    "Capture exact historical VCFv4.0 core source bytes from an authoritative archival revision and compute SHA-256; current rendered IGSR page and failed raw-export attempt do not satisfy this gate.",
+    "Expand the candidate ledger to all source-backed atomic requirements across grammar, definitions, tables, footnotes, examples, non-modal constraints and cross-references.",
+    "Resolve all 173 currently unresolved version applicability cells for VCFv4.1-4.4 and establish VCFv4.0 applicability only after source pinning.",
+    "Complete SHA-256 for every source file and source excerpt; currently 320/321 source references are hash-complete.",
+    "Run a full JSON Schema validator plus independent coverage/ID/locator/cross-reference/version-matrix audits.",
+    "Freeze a versioned snapshot only after whole-spec coverage and traceability gates pass; submit for independent review only after snapshot integrity is verified."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
