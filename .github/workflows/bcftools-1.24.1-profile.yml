@@ -46,7 +46,7 @@ jobs:
           >chr1
           AAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT
           EOF
-          "$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/samtools" faidx "$work/ref.fa"
+          printf "chr1\\t40\\t6\\t40\\t41\\n" > "$work/ref.fa.fai"
           cat > "$work/input.vcf" <<'EOF'
           ##fileformat=VCFv4.2
           ##contig=<ID=chr1,length=40>
