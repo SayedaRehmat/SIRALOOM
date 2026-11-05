@@ -2,50 +2,46 @@
 
 **Audit date:** 2026-11-05  
 **Branch:** `research/vcf-conformance-phase-a-20261105`  
-**Scope:** Source-file SHA-256 consistency for the 142-record candidate ledger  
-**Status:** RECONCILED FOR VCFv4.1–4.5; VCFv4.0 REMAINS BLOCKED
+**Scope:** Exact-byte SHA-256 verification for archived VCFv4.1–4.5 source files and dependent ledger references  
+**Status:** BYTE-LEVEL VERIFIED AND RECONCILED FOR VCFv4.1–4.5; VCFv4.0 REMAINS BLOCKED
 
 ## Finding
 
-The ledger contained multiple values in the `source_sha256` field for the same pinned source file and the same upstream Git blob/revision. A source-file digest must identify one exact byte stream. Different SHA-256 values cannot all identify the same pinned source bytes.
+The source manifest and dependent ledger references previously used SHA-256 values that did not match the exact committed source-file bytes. The earlier audit reconciled ledger references to the then-current manifest values but explicitly had not recomputed SHA-256 from downloaded byte streams. That reconciliation was insufficient to establish byte-level digest correctness.
 
-The source manifest records one SHA-256 per archived source file. The five source files fetched from the SIRALOOM branch were checked against the manifest's upstream Git blob SHA-1 values; all five archived blob IDs matched. The ledger's `source_sha256` references were then reconciled to the corresponding manifest SHA-256 values.
+## Verification method
 
-## Reconciliation
+- Retrieved each committed VCFv4.1–4.5 source file through GitHub's Base64 file-content response.
+- Decoded Base64 directly to bytes; did not decode to text, normalize line endings, trim whitespace, or reserialize.
+- Independently computed SHA-256 over each exact byte array.
+- Checked the SHA-256 implementation against the standard `abc` known-answer vector.
+- Confirmed the archived Git blob SHA-1 values match the pinned upstream hts-specs source blob IDs at commit `510c107ba89aa13113818c9e4fa3071283cb7f7b`.
 
-| Source | Canonical SHA-256 from source manifest | Ledger references reconciled |
-|---|---|---:|
-| VCFv4.1.tex | `3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003` | 34 |
-| VCFv4.2.tex | `a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51` | 34 |
-| VCFv4.3.tex | `09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48` | 38 |
-| VCFv4.4.tex | `0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1` | 85 |
-| VCFv4.5.tex | `2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2` | 129 |
+## Verified source digests
 
-- Ledger source references with archived VCF source files: 352.
-- References already using the canonical source-file SHA-256: 32.
-- References corrected: 320.
-- Remaining source-file SHA-256 mismatches: 0.
-- References without source SHA-256: 1 (the VCFv4.0 historical candidate).
-- Unique requirement IDs: 142/142.
+| Source | Exact byte length | Git blob SHA-1 | Independently recomputed SHA-256 |
+|---|---:|---|---|
+| VCFv4.1.tex | 95857 | 420cee83a66259600a70de36721763cc374df1e3 | `7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa` |
+| VCFv4.2.tex | 96701 | 70e595cdad351b3fb12e121850d7e6c8c5f67c88 | `66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc` |
+| VCFv4.3.tex | 119335 | 01671b89e21fc1bca414b639a4ea483194f127a9 | `332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde` |
+| VCFv4.4.tex | 149282 | 31cb66283ea40c3df51e488c5fffe826fd8dedaf | `4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a` |
+| VCFv4.5.tex | 164356 | 307950e7eeafc33d524969ff906343f756adb7d7 | `37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5` |
 
-The 320 corrected references are source-file digest metadata corrections only. Their source locators, excerpt hashes, requirement statements, applicability decisions and review statuses were not changed.
+## Ledger reconciliation
 
-## Verification boundary
+- Total source references: 437.
+- References to archived VCFv4.1–4.5 files: 436.
+- Source-file SHA-256 values changed to exact-byte verified values: 436.
+- Remaining mismatched source-file SHA-256 values among archived VCF sources: 0.
+- VCFv4.0 historical candidate references without a pinned source-file digest: 1.
+- Excerpt hashes, source locators, requirement statements, applicability decisions and review statuses were not changed.
 
-For each VCFv4.1–4.5 archived source file, the Git blob SHA-1 returned by GitHub for the SIRALOOM archive matched the upstream source blob SHA-1 recorded in the source manifest at hts-specs commit `510c107ba89aa13113818c9e4fa3071283cb7f7b`.
-
-The canonical SHA-256 values above were taken from the existing source manifest capture record. This audit did **not** independently recompute SHA-256 over downloaded raw byte streams. A future byte-level verification should recompute the digests from the exact archived bytes in a controlled environment and compare them with this manifest.
+The manifest's five `raw_source_sha256` values and every dependent VCFv4.1–4.5 ledger `source_sha256` reference now use the exact-byte verified values above.
 
 ## VCFv4.0 remains unresolved
 
-No VCFv4.0 source bytes or SHA-256 were introduced by this correction. The historical IGSR core page remains a corroborated discovery candidate, not an accepted immutable normative source. The separate 1000 Genomes structural-variation page remains a producer/project convention source and must not be merged into the core VCFv4.0 requirement set.
+No original VCFv4.0 core source bytes or SHA-256 were captured. The historical IGSR page remains a discovery candidate, not an accepted immutable normative source. The separate 1000 Genomes structural-variation page remains a project/producer convention source and must not be merged into core VCFv4.0 requirements.
 
-## What this audit does not establish
+## Verification boundary
 
-This correction does not complete whole-specification coverage, VCFv4.0 provenance, per-version applicability, independent standards review, implementation mappings, clause-specific test execution, parser/normalizer conformance or laboratory qualification. All 142 candidate requirements remain in review.
-
-## Changed artifacts
-
-- `atomic-requirements.v1.json`: 320 `source_sha256` values reconciled.
-- `independent-standards-review-readiness.v1.json`: audit outcome and remaining limitation recorded.
-
+This audit verifies exact bytes of the archived source blobs and their Git blob identity against the pinned upstream source blob IDs. It does not establish full specification coverage, independent standards approval, implementation conformance, clause-specific test execution or laboratory qualification. Upstream commit signature verification was not repeated in this capture.

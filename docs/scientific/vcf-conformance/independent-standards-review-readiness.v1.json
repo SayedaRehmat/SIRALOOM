@@ -70,22 +70,29 @@
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
   "ledger_blob_sha": "b9800fbaf5c201ef791cbe74a9043bf2646908e3",
   "source_hash_consistency_audit": {
-    "status": "RECONCILED_TO_PINNED_SOURCE_MANIFEST",
-    "audited_at_utc": "2026-11-05T15:42:00+05:00",
+    "status": "INDEPENDENT_BYTE_LEVEL_RECOMPUTATION_AND_LEDGER_RECONCILIATION_COMPLETE",
+    "audited_at_utc": "2026-11-05",
     "ledger_source_references_with_archived_spec_file": 436,
-    "references_reconciled_to_canonical_source_sha256": 320,
-    "references_already_matching_canonical_source_sha256": 116,
+    "references_reconciled_to_byte_verified_sha256": 436,
     "references_remaining_with_mismatched_source_sha256": 0,
     "per_file_sha256": {
-      "VCFv4.1.tex": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
-      "VCFv4.2.tex": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
-      "VCFv4.3.tex": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
-      "VCFv4.4.tex": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
-      "VCFv4.5.tex": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2"
+      "VCFv4.1": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+      "VCFv4.2": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+      "VCFv4.3": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+      "VCFv4.4": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+      "VCFv4.5": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
     },
-    "archive_identity_check": "All five archived source-file Git blob SHA-1 values fetched from the SIRALOOM branch match the pinned upstream hts-specs source manifest blob SHA-1 values.",
-    "limitation": "The SHA-256 values are taken from the existing source manifest capture record. This audit did not independently recompute SHA-256 from downloaded byte streams. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
-    "note": "The 84 newly added VCFv4.5 row candidates use the canonical source-file SHA-256 from the manifest; their excerpt hashes are intentionally null pending a documented excerpt-hashing convention."
+    "per_file_utf8_byte_length": {
+      "VCFv4.1": 95857,
+      "VCFv4.2": 96701,
+      "VCFv4.3": 119335,
+      "VCFv4.4": 149282,
+      "VCFv4.5": 164356
+    },
+    "archive_identity_check": "The five archived source Git blob SHA-1 values reported by GitHub match the pinned upstream hts-specs source blob IDs. Exact file bytes were retrieved using Base64 encoding and decoded to byte arrays before SHA-256 calculation.",
+    "calculation_method": "SHA-256 over exact decoded source-file bytes; no Unicode decoding, newline conversion, trimming, or text reserialization. Implementation checked against the standard abc known-answer vector.",
+    "limitation": "This verifies the exact committed SIRALOOM source blobs and their Git blob identity against the pinned upstream hts-specs source blob IDs. It does not independently verify the upstream repository commit signature in this run. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
+    "note": "Source-file hashes corrected in all ledger references with VCFv4.1–4.5 source_file values. Excerpt hashes and locators were not changed."
   },
   "audit_note": "The 84 VCFv4.5 reserved INFO/FORMAT candidates now have source-row excerpt hashes and an 84-row prose-context crosswalk. This remains author research, not independent approval or implementation conformance.",
   "excerpt_hashing_method": {
