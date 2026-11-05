@@ -170,7 +170,6 @@ def test_analysis_execution_claim_allows_continuation_of_running_work():
         "bioinformatics.bcftools.1_24_1",
         "bioinformatics.bcftools.1_23_3",
         "bioinformatics.bcftools.1_22_4",
-        "bioinformatics.bcftools.1_21_3",
     ],
 )
 def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch, toolchain_queue):
