@@ -916,6 +916,7 @@ def test_vcf_intake_attests_exact_configured_bcftools_version(tmp_path: Path, mo
     assert result.metadata["expected_bcftools_version"] == "1.25"
     assert result.metadata["htslib_version"] == "1.25"
     assert result.metadata["expected_htslib_version"] == "1.25"
+    assert result.metadata["bcftools_profile_id"] == "bcftools-1.25-htslib-1.25-linux-64"
     assert result.metadata["toolchain_validation_status"] == "PASS"
 
 
@@ -993,3 +994,34 @@ def test_vcf_intake_rejects_htslib_version_drift_as_retryable_operational_failur
 
     with pytest.raises(ingestion.VCFValidationUnavailable, match="HTSlib version mismatch"):
         ingestion.validate_vcf(path)
+
+
+
+def test_vcf_intake_uses_explicit_profile_executable(tmp_path: Path, monkeypatch):
+    import subprocess
+
+    import backend.app.domain.ingestion as ingestion
+
+    path = tmp_path / "sample.vcf"
+    path.write_text(VALID_VCF, encoding="utf-8")
+    selected = "/opt/siraloom/toolchains/bcftools-1.25/bin/bcftools"
+    resolved = []
+    monkeypatch.setattr(ingestion.settings, "bcftools_executable", selected)
+    monkeypatch.setattr(
+        ingestion.shutil,
+        "which",
+        lambda name: resolved.append(name) or selected,
+    )
+
+    def run(command, **kwargs):
+        assert command[0] == selected
+        if command[1] == "--version":
+            return subprocess.CompletedProcess(command, 0, "bcftools 1.25\nUsing htslib 1.25\n", "")
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(ingestion.subprocess, "run", run)
+    result = ingestion.validate_vcf(path)
+
+    assert result.status == "VALID"
+    assert resolved == [selected]
+    assert result.metadata["bcftools_profile_id"] == "bcftools-1.25-htslib-1.25-linux-64"
