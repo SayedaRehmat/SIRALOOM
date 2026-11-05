@@ -83,7 +83,7 @@ jobs:
             --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.24.1-htslib-1.24.1-linux-64-source \
             --build-arg BCFTOOLS_VERSION=1.24.1 \
             --build-arg HTSLIB_VERSION=1.24.1 \
-            --file docker/backend.Dockerfile --tag siraloom-backend:bcftools-1.24.1-ci .
+            --file docker/backend-bcftools-1.24.1.Dockerfile --tag siraloom-backend:bcftools-1.24.1-ci .
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '1p')" = "bcftools 1.24.1"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '2p')" = "Using htslib 1.24.1"
           docker run --rm --entrypoint python siraloom-backend:bcftools-1.24.1-ci -c "from backend.app.config import settings; assert settings.bcftools_profile_id == 'bcftools-1.24.1-htslib-1.24.1-linux-64-source'"
