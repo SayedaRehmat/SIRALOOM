@@ -318,3 +318,74 @@ does not prove absence from the entire earlier specification. VCFv4.0 remains
 excluded from the comparison until its exact historical source bytes are
 captured and pinned. No full version-by-version semantic delta analysis is
 claimed.
+
+
+## 10. Modal-candidate line-context disposition and core field-row review
+
+A first-pass primary disposition has now been recorded for **all 510 modal-language candidate lines** from the pinned VCFv4.1–4.5 sources:
+
+| Version | Candidate lines | Immediate source-context dispositions |
+|---|---:|---:|
+| VCFv4.1 | 38 | 38 |
+| VCFv4.2 | 44 | 44 |
+| VCFv4.3 | 82 | 82 |
+| VCFv4.4 | 161 | 161 |
+| VCFv4.5 | 185 | 185 |
+| **Total** | **510** | **510** |
+
+The per-version review artifacts retain the exact candidate line, adjacent source lines, source locator, primary disposition, and reviewer note. Dispositions distinguish mandatory constraints, recommendations, permissions, informative examples, mixed clauses, backward-compatibility rules, and unresolved scope. VCFv4.4 and VCFv4.5 are split into core/header/genotype and later SV/representation batches.
+
+**This is not a claim that all 510 candidates have received complete expanded semantic review or have become atomic requirements.** Immediate-neighbour review identifies what kind of statement a candidate contains. Compound clauses still require decomposition; references to tables, footnotes, grammar, and other sections must be expanded and adjudicated before a requirement can enter the approved ledger.
+
+See `candidate-context-review-index.v1.json` for the per-version artifact index and explicit limitations.
+
+### Core fixed-record and reserved-key review
+
+The fixed-record source review captures VCFv4.1–4.5 passages for CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO and conditional FORMAT/sample columns. It records 28 proposed source-derived obligations and the version deltas, including:
+- VCFv4.1–4.2 QUAL labelled Numeric versus Float in VCFv4.3–4.5;
+- the VCFv4.2 introduction of the spanning-deletion `*` ALT allele;
+- explicit ALT grammar and INFO key regular-expression constraints in VCFv4.3–4.5;
+- VCFv4.4–4.5 unspecified allele `<*>` and its padding exception;
+- VCFv4.3–4.5 explicit IUPAC reference ambiguity reduction rule.
+
+### Reserved INFO/FORMAT entries
+
+The core reserved-key inventory now contains **223 source entries** across the five pinned versions:
+- VCFv4.1: 18 INFO + 13 FORMAT prose entries;
+- VCFv4.2: 18 INFO + 13 FORMAT prose entries;
+- VCFv4.3: 21 INFO + 16 FORMAT table rows;
+- VCFv4.4: 21 INFO + 19 FORMAT table rows;
+- VCFv4.5: 21 INFO + 63 FORMAT table rows.
+
+The 4.1–4.2 lists are prose enumerations and do not explicitly provide Number/Type columns; those values have not been backfilled from later tables. The 4.3–4.5 rows preserve their exact Number, Type and Description. All 223 entries have an initial primary semantic classification, but detailed field-specific prose, cross-references, genotype ordering, local-allele and base-modification semantics still need atomization and independent review.
+
+Important version deltas retained:
+- VCFv4.4 adds PSL, PSO and PSQ phase-set-list FORMAT fields.
+- VCFv4.5 adds LEN, local-allele FORMAT fields, and base-modification key patterns and aliases.
+- VCFv4.5 changes INFO END to a deprecated backward-compatibility field; it is not interchangeable with FORMAT LEN.
+- Reserved-key presence is not universally mandatory. A row's existence defines a reserved field, not an unconditional requirement that every record or sample carry it.
+
+See `core-info-format-row-inventory.v1.json`, `format-reserved-row-source-review.v1.json`, and `core-info-format-version-delta.v1.json`.
+
+### Updated evidence counters
+
+| Evidence class | Current value | Interpretation |
+|---|---:|---|
+| Modal candidate lines with initial immediate-context disposition | 510/510 | Primary review only; expanded semantic review remains |
+| Reserved INFO/FORMAT entries indexed and initially classified | 223 | Not mandatory requirements and not fully atomized |
+| Fixed-record source-derived candidate obligations | 28 | Proposed, not independently approved |
+| Seed atomic ledger records | 15 | In review |
+| Independently second-person reviewed requirements | 0 | Not started |
+| Production-code mappings | 0 | Not started |
+| Executed clause-specific tests | 0 | Not started |
+| Laboratory-qualified versions | 0 | Not qualified |
+| VCFv4.0 historical source bytes with SHA-256 | 0 | Capture and source adjudication outstanding |
+
+### Remaining source-review work
+
+1. Expand every candidate line to the full clause and all relevant definitions, grammar, tables, examples, footnotes and cross-references; do not treat immediate-neighbour disposition as semantic completion.
+2. Atomize all compound clauses and table definitions, preserving normative force and per-version applicability.
+3. Review all non-modal constraints and the remaining table environments; the 223 reserved INFO/FORMAT entries are only one subset of the 195 indexed table environments.
+4. Complete semantic delta analysis for all VCFv4.1–4.5 clauses and add VCFv4.0 only after immutable historical source capture.
+5. Obtain independent second-person review before any requirement is marked independently reviewed.
+6. Only then map to production code and execute version-specific conformance tests.
