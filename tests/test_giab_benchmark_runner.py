@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.config import settings
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "validation" / "run_giab_benchmark.py"
 
@@ -47,7 +49,7 @@ def _configured_manifest(tmp_path: Path) -> Path:
         },
         "assets": assets,
         "toolchain": {
-            "bcftools_version": "1.25",
+            "bcftools_version": settings.bcftools_version,
             "hap_py_version": "0.3.15",
         },
         "acceptance_policy": {
@@ -97,7 +99,7 @@ def test_giab_runner_rejects_asset_hash_drift(tmp_path):
             name: {"path": str(asset), "sha256": "0" * 64}
             for name in module.REQUIRED_ASSETS
         },
-        "toolchain": {"bcftools_version": "1.25", "hap_py_version": "0.3.15"},
+        "toolchain": {"bcftools_version": settings.bcftools_version, "hap_py_version": "0.3.15"},
         "acceptance_policy": {
             "id": "LAB-POLICY-001",
             "approved_by": "test-reviewer",
@@ -393,7 +395,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
     normalized = tmp_path / "normalized.vcf.gz"
     normalize_vcf_with_bcftools(
         production_routing["sequence_path"], normalized, reference_fasta=reference,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     lineage = module.verify_normalization_derivation(
@@ -401,7 +403,7 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
         normalized_vcf=normalized,
         reference_fasta=reference,
         bcftools=shutil.which("bcftools"),
-        expected_version="1.25",
+        expected_version=settings.bcftools_version,
     )
 
     assert lineage["status"] == "REPRODUCED_RECORDS_MATCH"
@@ -473,5 +475,5 @@ def test_benchmark_lineage_reproduces_production_normalized_records(tmp_path):
             normalized_vcf=tampered,
             reference_fasta=reference,
             bcftools=shutil.which("bcftools"),
-            expected_version="1.25",
+            expected_version=settings.bcftools_version,
         )
