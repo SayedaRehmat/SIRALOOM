@@ -36,7 +36,7 @@ jobs:
       - name: Build source archives with SHA-256 verification
         env:
           BCFTOOLS_PREFIX: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build
-        run: scripts/build_bcftools_1_24_1.sh
+        run: bash scripts/build_bcftools_1_24_1.sh
       - name: Run normalization, multiallelic, BGZF and CSI regression smoke tests
         run: |
           set -euo pipefail
