@@ -21,18 +21,38 @@ The assignment is created with the analysis and cannot be edited afterward. Rean
 
 The standard 1.25 pool consumes the shared celery queue and bioinformatics.bcftools.1_25. A secondary native-toolchain pool consumes only its own profile queue; it does not steal general background tasks.
 
-## 1.24.1 candidate deployment
+## Registered profile set
 
-The 1.24.1 profile remains CANDIDATE until its isolated runtime image passes CI. Do not enable it in a production deployment before that status is changed by the completed qualification process.
+| Profile | BCFtools | HTSlib | Queue | Current eligibility |
+|---|---:|---:|---|---|
+| Default | 1.25 | 1.25 | `bioinformatics.bcftools.1_25` | SOFTWARE_QUALIFIED |
+| Source candidate | 1.24.1 | 1.24.1 | `bioinformatics.bcftools.1_24_1` | CANDIDATE pending full runtime and routing qualification |
+| Source candidate | 1.23.3 | 1.23.3 | `bioinformatics.bcftools.1_23_3` | CANDIDATE |
+| Source candidate | 1.22.3 | 1.22.4 | `bioinformatics.bcftools.1_22_4` | CANDIDATE |
+| Source candidate | 1.21.3 | 1.21.3 | `bioinformatics.bcftools.1_21_3` | CANDIDATE |
+| Legacy | 1.19 | 1.19 | none | QUARANTINED_LEGACY; never production-selectable |
 
-After qualification, build and start the optional worker pool:
+A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
+
+## Optional production worker pools
+
+The default API and 1.25 worker remain active for the default profile. After a candidate has passed source, lock, runtime-image, regression and cross-version routing qualification, the registry may be promoted to SOFTWARE_QUALIFIED and its dedicated worker pool can be enabled. Do not start a candidate pool against a production registry: the worker's settings validator correctly rejects candidate profiles.
+
+Example for a qualified 1.24.1 profile:
 
 ```bash
 docker compose -f docker-compose.production.yml --profile bcftools-1.24.1 up -d --build worker-bcftools-1-24-1
 ```
 
-The service pins the 1.24.1 profile ID and version pair in its environment and consumes only bioinformatics.bcftools.1_24_1. Keep the default 1.25 worker running for the shared queue and analyses assigned to 1.25.
+The corresponding optional profile names and services are:
+
+- `bcftools-1.24.1` → `worker-bcftools-1-24-1`
+- `bcftools-1.23.3` → `worker-bcftools-1-23-3`
+- `bcftools-1.22.3` → `worker-bcftools-1-22-3`
+- `bcftools-1.21.3` → `worker-bcftools-1-21-3`
+
+Each service builds from `docker/backend-bcftools-source.Dockerfile`, uses its own explicit build lock, pins the exact BCFtools/HTSlib pair and consumes only its registered queue. Keep the default 1.25 pool running for default assignments.
 
 ## Adding another version
 
-A new version is not enabled merely by adding a version string. Add a security-reviewed profile with a reproducible platform-specific lock, verify the actual runtime image and plugins, run the VCF normalization/indexing regression suite and the full backend suite, and only then mark it SOFTWARE_QUALIFIED. Add a separate worker image and queue. Never change an existing profile's lock or meaning after analyses have recorded its fingerprint.
+A new version is not enabled merely by adding a version string. Add a security-reviewed profile with a reproducible platform-specific lock, verify source archives against independently published SHA-256 values, build and inspect the runtime image, run the VCF normalization/indexing regression suite and the full backend suite, and then exercise analysis persistence, exact queue routing, wrong-worker rejection, retries, redelivery and reanalysis inheritance. Only after all required evidence is green may it be marked SOFTWARE_QUALIFIED. Never change an existing profile's lock or meaning after analyses have recorded its fingerprint.
