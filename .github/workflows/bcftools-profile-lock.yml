@@ -1,0 +1,35 @@
+name: BCFtools profile lock generation
+
+on:
+  pull_request:
+    paths:
+      - "configs/bioinformatics/profiles/**"
+      - ".github/workflows/bcftools-profile-lock.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-linux-64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/profiles/bcftools-1.25-linux-64.yml
+          environment-name: bcftools-profile
+          cache-environment: false
+          init-shell: bash
+      - name: Verify the resolved BCFtools/HTSlib pair
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
+          micromamba env export --explicit --name bcftools-profile > "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          test "$(sed -n '1p' "$RUNNER_TEMP/bcftools-1.25-linux-64.lock")" = "@EXPLICIT"
+          test -s "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          echo "::group::BEGIN_BCFTOOLS_EXPLICIT_LOCK"
+          cat "$RUNNER_TEMP/bcftools-1.25-linux-64.lock"
+          echo "::endgroup::"
