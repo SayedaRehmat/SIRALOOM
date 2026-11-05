@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: .python-version
-          cache: false
       - name: Install pinned uv lock manager
         run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Resolve complete cross-platform dependency lock
@@ -41,13 +40,13 @@ jobs:
         run: |
           uv run --locked python - <<'PY'
           import redis
-          from kombu.transport.redis import Channel
+          import kombu
 
           assert redis.VERSION >= (6, 1, 0), (
               f"redis-py {redis.__version__} is below Kombu's required 6.1.0"
           )
           print(f"redis-py={redis.__version__}")
-          print(f"kombu={__import__('kombu').__version__}")
+          print(f"kombu={kombu.__version__}")
           PY
       - name: Verify project imports and lock consistency
         run: |
