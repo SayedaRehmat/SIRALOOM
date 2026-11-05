@@ -111,11 +111,17 @@ def test_1_21_3_remains_candidate_while_vcf45_len_regression_is_unresolved():
         item for item in payload["profiles"]
         if item["id"] == "bcftools-1.21.3-htslib-1.21.3-linux-64-source"
     )
-    assert profile["status"] == "CANDIDATE"
+    assert profile["status"] == "BLOCKED_COMPATIBILITY"
     assert any(
         "test_vcf45_len_reference_block_csi_index_includes_last_covered_base" in gap
         for gap in profile.get("qualification_gaps", [])
     )
+    with pytest.raises(ToolchainProfileError, match="not software-qualified"):
+        resolve_toolchain_profile(
+            profile["id"],
+            bcftools_version="1.21.3",
+            htslib_version="1.21.3",
+        )
 
 
 def test_1_19_is_registered_but_quarantined_from_production():
