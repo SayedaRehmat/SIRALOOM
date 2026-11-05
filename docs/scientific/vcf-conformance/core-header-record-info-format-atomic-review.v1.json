@@ -1189,7 +1189,7 @@
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
       "required_or_prohibited_behavior": "Within each CHROM, POS values are sorted in increasing numeric order.",
-      "observable_acceptance_condition": "For each CHROM block, successive POS values are nondecreasing or increasing as specifically stated by the version source; same-position records remain permitted.",
+      "observable_acceptance_condition": "Within each CHROM block, POS values are numerically non-decreasing; equal POS values are allowed because the source explicitly permits multiple records at the same position.",
       "source_references": [
         {
           "version": "VCFv4.1",
@@ -1894,12 +1894,16 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "child_candidate_ids": [
+        "CORE-REF-003A",
+        "CORE-REF-003B"
+      ]
     },
     {
       "candidate_id": "CORE-REF-004",
@@ -1996,12 +2000,16 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "child_candidate_ids": [
+        "CORE-REF-004A",
+        "CORE-REF-004B"
+      ]
     },
     {
       "candidate_id": "CORE-ALT-001",
@@ -2411,12 +2419,16 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "CONDITIONAL_SEMANTICS_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "child_candidate_ids": [
+        "CORE-QUAL-001A",
+        "CORE-QUAL-001B"
+      ]
     },
     {
       "candidate_id": "CORE-QUAL-002",
@@ -2622,12 +2634,16 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "child_candidate_ids": [
+        "CORE-FILTER-001A",
+        "CORE-FILTER-001B"
+      ]
     },
     {
       "candidate_id": "CORE-FILTER-002",
@@ -2942,12 +2958,17 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
-      "open_questions": []
+      "open_questions": [],
+      "child_candidate_ids": [
+        "CORE-INFO-001A",
+        "CORE-INFO-001B",
+        "CORE-INFO-001C"
+      ]
     },
     {
       "candidate_id": "CORE-INFO-002",
@@ -3295,13 +3316,13 @@
     },
     {
       "candidate_id": "CORE-FORMAT-002",
-      "proposed_atomic_statement": "FORMAT keys are colon-separated and unique within the FORMAT declaration.",
+      "proposed_atomic_statement": "FORMAT is a colon-separated sequence of keys; duplicate-key prohibition is handled by the separate version-scoped child candidate.",
       "requirement_domain": "FORMAT",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "NOT_STATED",
       "actor": "VCF producer/reader as specified by the cited clause",
       "condition": "Within the VCF version(s) cited; check version-specific qualifications and exceptions.",
-      "required_or_prohibited_behavior": "FORMAT keys are colon-separated and duplicate FORMAT keys are prohibited in VCFv4.3–4.5.",
+      "required_or_prohibited_behavior": "Encode FORMAT keys as a colon-separated sequence.",
       "observable_acceptance_condition": "No FORMAT key occurs twice in a FORMAT declaration.",
       "source_references": [
         {
@@ -3333,51 +3354,6 @@
           },
           "source_excerpt_sha256": null,
           "review_note": "Pinned source passage inspected with surrounding section context."
-        },
-        {
-          "version": "VCFv4.3",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-          "source_file": "VCFv4.3.tex",
-          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex#L428",
-          "locator": {
-            "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.3.tex lines 428-433",
-            "start_line": 428,
-            "end_line": 433
-          },
-          "source_excerpt_sha256": null,
-          "review_note": "Pinned source passage inspected with surrounding section context."
-        },
-        {
-          "version": "VCFv4.4",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-          "source_file": "VCFv4.4.tex",
-          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex#L446",
-          "locator": {
-            "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.4.tex lines 446-451",
-            "start_line": 446,
-            "end_line": 451
-          },
-          "source_excerpt_sha256": null,
-          "review_note": "Pinned source passage inspected with surrounding section context."
-        },
-        {
-          "version": "VCFv4.5",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-          "source_file": "VCFv4.5.tex",
-          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L498",
-          "locator": {
-            "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex lines 498-504",
-            "start_line": 498,
-            "end_line": 504
-          },
-          "source_excerpt_sha256": null,
-          "review_note": "Pinned source passage inspected with surrounding section context."
         }
       ],
       "version_scope": [
@@ -3388,7 +3364,7 @@
         "VCFv4.5"
       ],
       "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
-      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "atomicity_status": "COMPOUND_SPLIT_INTO_CHILD_CANDIDATES",
       "traceability_status": "NOT_MAPPED",
       "independent_second_review": "PENDING",
       "implementation_mapping": "NOT_STARTED",
@@ -3396,11 +3372,12 @@
       "open_questions": [],
       "normative_force_by_version": {
         "VCFv4.1": "NOT_STATED",
-        "VCFv4.2": "NOT_STATED",
-        "VCFv4.3": "MUST_NOT",
-        "VCFv4.4": "MUST_NOT",
-        "VCFv4.5": "MUST_NOT"
-      }
+        "VCFv4.2": "NOT_STATED"
+      },
+      "child_candidate_ids": [
+        "CORE-FORMAT-002A",
+        "CORE-FORMAT-002B"
+      ]
     },
     {
       "candidate_id": "CORE-FORMAT-003",
@@ -3885,6 +3862,1320 @@
       "implementation_mapping": "NOT_STARTED",
       "tests": "NOT_STARTED",
       "open_questions": []
+    },
+    {
+      "candidate_id": "CORE-REF-003A",
+      "parent_candidate_id": "CORE-REF-003",
+      "proposed_atomic_statement": "For a simple insertion or deletion not at contig position 1, the allele strings include the base preceding the event and POS reflects that padding base.",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "For simple indels requiring padding away from position 1, include the preceding reference base in REF and ALT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "For simple indels requiring padding away from position 1, include the preceding reference base in REF and ALT.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-REF-003A-L165",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 165-165",
+            "start_line": 165,
+            "end_line": 165
+          }
+        },
+        {
+          "source_id": "42-CORE-REF-003A-L182",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 182-182",
+            "start_line": 182,
+            "end_line": 182
+          }
+        },
+        {
+          "source_id": "43-CORE-REF-003A-L342",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L342",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 342-342",
+            "start_line": 342,
+            "end_line": 342
+          }
+        },
+        {
+          "source_id": "44-CORE-REF-003A-L357",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L357",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 357-357",
+            "start_line": 357,
+            "end_line": 357
+          }
+        },
+        {
+          "source_id": "45-CORE-REF-003A-L406",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L406",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 406-406",
+            "start_line": 406,
+            "end_line": 406
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-REF-003B",
+      "parent_candidate_id": "CORE-REF-003",
+      "proposed_atomic_statement": "For a simple insertion or deletion at contig position 1, the allele strings include the base following the event when the preceding base is unavailable.",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "At contig position 1, use the following base as the padding base.",
+      "exceptions": [],
+      "observable_acceptance_condition": "At contig position 1, use the following base as the padding base.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-REF-003B-L165",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 165-165",
+            "start_line": 165,
+            "end_line": 165
+          }
+        },
+        {
+          "source_id": "42-CORE-REF-003B-L182",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 182-182",
+            "start_line": 182,
+            "end_line": 182
+          }
+        },
+        {
+          "source_id": "43-CORE-REF-003B-L342",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L342",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 342-342",
+            "start_line": 342,
+            "end_line": 342
+          }
+        },
+        {
+          "source_id": "44-CORE-REF-003B-L357",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L357",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 357-357",
+            "start_line": 357,
+            "end_line": 357
+          }
+        },
+        {
+          "source_id": "45-CORE-REF-003B-L406",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L406",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 406-406",
+            "start_line": 406,
+            "end_line": 406
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-REF-004A",
+      "parent_candidate_id": "CORE-REF-004",
+      "proposed_atomic_statement": "A symbolic ALT allele requires the specified padding base in the REF/ALT representation.",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "When any ALT is a symbolic allele, include the required padding base.",
+      "exceptions": [],
+      "observable_acceptance_condition": "When any ALT is a symbolic allele, include the required padding base.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-REF-004A-L165",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L165",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 165-165",
+            "start_line": 165,
+            "end_line": 165
+          }
+        },
+        {
+          "source_id": "42-CORE-REF-004A-L182",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L182",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 182-182",
+            "start_line": 182,
+            "end_line": 182
+          }
+        },
+        {
+          "source_id": "43-CORE-REF-004A-L343",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L343",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 343-343",
+            "start_line": 343,
+            "end_line": 343
+          }
+        },
+        {
+          "source_id": "44-CORE-REF-004A-L358",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L358",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 358-358",
+            "start_line": 358,
+            "end_line": 358
+          }
+        },
+        {
+          "source_id": "45-CORE-REF-004A-L407",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L407",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 407-407",
+            "start_line": 407,
+            "end_line": 407
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-REF-004B",
+      "parent_candidate_id": "CORE-REF-004",
+      "proposed_atomic_statement": "The VCFv4.3–4.5 unspecified allele <*> is exempt from the ordinary symbolic-allele padding rule as specified by those versions.",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "Apply the explicit <*> reference-call-interval exception in versions that define it.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Apply the explicit <*> reference-call-interval exception in versions that define it.",
+      "source_references": [
+        {
+          "source_id": "43-CORE-REF-004B-L343",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L343",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 343-343",
+            "start_line": 343,
+            "end_line": 343
+          }
+        },
+        {
+          "source_id": "44-CORE-REF-004B-L359",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L359",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 359-359",
+            "start_line": 359,
+            "end_line": 359
+          }
+        },
+        {
+          "source_id": "45-CORE-REF-004B-L408",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L408",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 408-408",
+            "start_line": 408,
+            "end_line": 408
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-QUAL-001A",
+      "parent_candidate_id": "CORE-QUAL-001",
+      "proposed_atomic_statement": "When ALT is '.', QUAL represents the Phred-scaled probability that a variant exists.",
+      "requirement_domain": "FIXED_FIELDS",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "Interpret QUAL as -10log10 probability(variant) when ALT is the missing/no-variant allele.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Interpret QUAL as -10log10 probability(variant) when ALT is the missing/no-variant allele.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-QUAL-001A-L167",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 167-167",
+            "start_line": 167,
+            "end_line": 167
+          }
+        },
+        {
+          "source_id": "42-CORE-QUAL-001A-L184",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 184-184",
+            "start_line": 184,
+            "end_line": 184
+          }
+        },
+        {
+          "source_id": "43-CORE-QUAL-001A-L356",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L356",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 356-356",
+            "start_line": 356,
+            "end_line": 356
+          }
+        },
+        {
+          "source_id": "44-CORE-QUAL-001A-L372",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L372",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 372-372",
+            "start_line": 372,
+            "end_line": 372
+          }
+        },
+        {
+          "source_id": "45-CORE-QUAL-001A-L421",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L421",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 421-421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-QUAL-001B",
+      "parent_candidate_id": "CORE-QUAL-001",
+      "proposed_atomic_statement": "When ALT is not '.', QUAL represents the Phred-scaled probability that the ALT call is incorrect.",
+      "requirement_domain": "FIXED_FIELDS",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "Interpret QUAL as -10log10 probability(no variant) when ALT is non-missing.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Interpret QUAL as -10log10 probability(no variant) when ALT is non-missing.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-QUAL-001B-L167",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L167",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 167-167",
+            "start_line": 167,
+            "end_line": 167
+          }
+        },
+        {
+          "source_id": "42-CORE-QUAL-001B-L184",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L184",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 184-184",
+            "start_line": 184,
+            "end_line": 184
+          }
+        },
+        {
+          "source_id": "43-CORE-QUAL-001B-L356",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L356",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 356-356",
+            "start_line": 356,
+            "end_line": 356
+          }
+        },
+        {
+          "source_id": "44-CORE-QUAL-001B-L372",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L372",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 372-372",
+            "start_line": 372,
+            "end_line": 372
+          }
+        },
+        {
+          "source_id": "45-CORE-QUAL-001B-L421",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L421",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 421-421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-FILTER-001A",
+      "parent_candidate_id": "CORE-FILTER-001",
+      "proposed_atomic_statement": "FILTER is PASS when the site has passed all filters.",
+      "requirement_domain": "FIXED_FIELDS",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "A site passing all applied filters is encoded with FILTER=PASS.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A site passing all applied filters is encoded with FILTER=PASS.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-FILTER-001A-L168",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 168-168",
+            "start_line": 168,
+            "end_line": 168
+          }
+        },
+        {
+          "source_id": "42-CORE-FILTER-001A-L185",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 185-185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        },
+        {
+          "source_id": "43-CORE-FILTER-001A-L358",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L358",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 358-358",
+            "start_line": 358,
+            "end_line": 358
+          }
+        },
+        {
+          "source_id": "44-CORE-FILTER-001A-L374",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L374",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 374-374",
+            "start_line": 374,
+            "end_line": 374
+          }
+        },
+        {
+          "source_id": "45-CORE-FILTER-001A-L423",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L423",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 423-423",
+            "start_line": 423,
+            "end_line": 423
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-FILTER-001B",
+      "parent_candidate_id": "CORE-FILTER-001",
+      "proposed_atomic_statement": "A site failing filters represents the failing filter codes as a semicolon-separated list.",
+      "requirement_domain": "FIXED_FIELDS",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "A filtered site contains a semicolon-separated list of failing filter identifiers.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A filtered site contains a semicolon-separated list of failing filter identifiers.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-FILTER-001B-L168",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L168",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 168-168",
+            "start_line": 168,
+            "end_line": 168
+          }
+        },
+        {
+          "source_id": "42-CORE-FILTER-001B-L185",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L185",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 185-185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        },
+        {
+          "source_id": "43-CORE-FILTER-001B-L359",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L359",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 359-359",
+            "start_line": 359,
+            "end_line": 359
+          }
+        },
+        {
+          "source_id": "44-CORE-FILTER-001B-L375",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L375",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 375-375",
+            "start_line": 375,
+            "end_line": 375
+          }
+        },
+        {
+          "source_id": "45-CORE-FILTER-001B-L424",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L424",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 424-424",
+            "start_line": 424,
+            "end_line": 424
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-INFO-001A",
+      "parent_candidate_id": "CORE-INFO-001",
+      "proposed_atomic_statement": "Multiple INFO entries are separated by semicolons.",
+      "requirement_domain": "INFO",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "INFO entries are delimited by semicolon characters.",
+      "exceptions": [],
+      "observable_acceptance_condition": "INFO entries are delimited by semicolon characters.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-INFO-001A-L169",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 169-169",
+            "start_line": 169,
+            "end_line": 169
+          }
+        },
+        {
+          "source_id": "42-CORE-INFO-001A-L186",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 186-186",
+            "start_line": 186,
+            "end_line": 186
+          }
+        },
+        {
+          "source_id": "43-CORE-INFO-001A-L363",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L363",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 363-363",
+            "start_line": 363,
+            "end_line": 363
+          }
+        },
+        {
+          "source_id": "44-CORE-INFO-001A-L379",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L379",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 379-379",
+            "start_line": 379,
+            "end_line": 379
+          }
+        },
+        {
+          "source_id": "45-CORE-INFO-001A-L428",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L428",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 428-428",
+            "start_line": 428,
+            "end_line": 428
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-INFO-001B",
+      "parent_candidate_id": "CORE-INFO-001",
+      "proposed_atomic_statement": "An INFO entry consists of a key with an optional value or comma-delimited value list.",
+      "requirement_domain": "INFO",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "An INFO entry parses as key or key=value[,value...].",
+      "exceptions": [],
+      "observable_acceptance_condition": "An INFO entry parses as key or key=value[,value...].",
+      "source_references": [
+        {
+          "source_id": "41-CORE-INFO-001B-L169",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 169-169",
+            "start_line": 169,
+            "end_line": 169
+          }
+        },
+        {
+          "source_id": "42-CORE-INFO-001B-L186",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 186-186",
+            "start_line": 186,
+            "end_line": 186
+          }
+        },
+        {
+          "source_id": "43-CORE-INFO-001B-L364",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L364",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 364-365",
+            "start_line": 364,
+            "end_line": 365
+          }
+        },
+        {
+          "source_id": "44-CORE-INFO-001B-L380",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L380",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 380-381",
+            "start_line": 380,
+            "end_line": 381
+          }
+        },
+        {
+          "source_id": "45-CORE-INFO-001B-L429",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 429-430",
+            "start_line": 429,
+            "end_line": 430
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-INFO-001C",
+      "parent_candidate_id": "CORE-INFO-001",
+      "proposed_atomic_statement": "INFO is '.' when no INFO keys are present.",
+      "requirement_domain": "INFO",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "An INFO field with no entries is represented by '.'.",
+      "exceptions": [],
+      "observable_acceptance_condition": "An INFO field with no entries is represented by '.'.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-INFO-001C-L169",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L169",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 169-169",
+            "start_line": 169,
+            "end_line": 169
+          }
+        },
+        {
+          "source_id": "42-CORE-INFO-001C-L186",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L186",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 186-186",
+            "start_line": 186,
+            "end_line": 186
+          }
+        },
+        {
+          "source_id": "43-CORE-INFO-001C-L363",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L363",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 363-363",
+            "start_line": 363,
+            "end_line": 363
+          }
+        },
+        {
+          "source_id": "44-CORE-INFO-001C-L379",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L379",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 379-379",
+            "start_line": 379,
+            "end_line": 379
+          }
+        },
+        {
+          "source_id": "45-CORE-INFO-001C-L428",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L428",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 428-428",
+            "start_line": 428,
+            "end_line": 428
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-FORMAT-002A",
+      "parent_candidate_id": "CORE-FORMAT-002",
+      "proposed_atomic_statement": "FORMAT keys are separated by colons.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "Multiple FORMAT keys are delimited by colon characters.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Multiple FORMAT keys are delimited by colon characters.",
+      "source_references": [
+        {
+          "source_id": "41-CORE-FORMAT-002A-L194",
+          "version": "VCFv4.1",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L194",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.1.tex",
+          "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.1.tex lines 194-194",
+            "start_line": 194,
+            "end_line": 194
+          }
+        },
+        {
+          "source_id": "42-CORE-FORMAT-002A-L211",
+          "version": "VCFv4.2",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L211",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.2.tex",
+          "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.2.tex lines 211-211",
+            "start_line": 211,
+            "end_line": 211
+          }
+        },
+        {
+          "source_id": "43-CORE-FORMAT-002A-L429",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 429-429",
+            "start_line": 429,
+            "end_line": 429
+          }
+        },
+        {
+          "source_id": "44-CORE-FORMAT-002A-L447",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L447",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 447-447",
+            "start_line": 447,
+            "end_line": 447
+          }
+        },
+        {
+          "source_id": "45-CORE-FORMAT-002A-L499",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L499",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 499-499",
+            "start_line": 499,
+            "end_line": 499
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
+    },
+    {
+      "candidate_id": "CORE-FORMAT-002B",
+      "parent_candidate_id": "CORE-FORMAT-002",
+      "proposed_atomic_statement": "Duplicate FORMAT keys are prohibited in VCFv4.3–4.5.",
+      "requirement_domain": "FORMAT",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "actor": "VCF producer/reader as specified by the cited clause",
+      "condition": "Within the cited VCF version(s); preserve the explicit conditional context.",
+      "required_or_prohibited_behavior": "A FORMAT declaration with a repeated key is rejected.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A FORMAT declaration with a repeated key is rejected.",
+      "source_references": [
+        {
+          "source_id": "43-CORE-FORMAT-002B-L429",
+          "version": "VCFv4.3",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L429",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.3.tex",
+          "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.3.tex lines 429-429",
+            "start_line": 429,
+            "end_line": 429
+          }
+        },
+        {
+          "source_id": "44-CORE-FORMAT-002B-L447",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L447",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex lines 447-447",
+            "start_line": 447,
+            "end_line": 447
+          }
+        },
+        {
+          "source_id": "45-CORE-FORMAT-002B-L499",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L499",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex lines 499-499",
+            "start_line": 499,
+            "end_line": 499
+          }
+        }
+      ],
+      "version_scope": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "review_status": "PRIMARY_SOURCE_CONTEXT_REVIEWED",
+      "atomicity_status": "PROPOSED_ATOMIC_REVIEWED",
+      "traceability_status": "NOT_MAPPED",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED",
+      "open_questions": [
+        "Confirm exact normative force and acceptance oracle in independent review."
+      ]
     }
   ],
   "review_summary": {
