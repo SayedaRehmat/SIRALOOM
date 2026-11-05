@@ -6,4 +6,4 @@ set -eu
 exec celery -A backend.app.infrastructure.queue.celery_app.celery_app worker \
   --loglevel="${CELERY_LOG_LEVEL:-INFO}" \
   --concurrency="${CELERY_CONCURRENCY:-2}" \
-  --queues="${CELERY_QUEUES:-bioinformatics.bcftools.1_25}"
+  --queues="${CELERY_QUEUES:-celery,bioinformatics.bcftools.1_25}"
