@@ -3,6 +3,7 @@ channels:
 channel_priority: strict
 dependencies:
   - c-compiler
+  - binutils
   - make
   - pkg-config
   - autoconf
