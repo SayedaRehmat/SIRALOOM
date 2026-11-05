@@ -83,6 +83,10 @@
     {
       "artifact": "core-info-format-version-delta.v1.json",
       "scope": "Reserved INFO/FORMAT inventory and version deltas."
+    },
+    {
+      "artifact": "genotype-format-atomic-candidates.v1.json",
+      "scope": "18 proposed atomic candidates decomposed from captured FORMAT/genotype prose and table-adjacent semantics across VCFv4.1–4.5; primary source-context review only, independent review and full semantic expansion pending."
     }
   ],
   "evidence_counters": {
@@ -95,6 +99,7 @@
     "vcf40_historical_source_bytes_hashed": false
   },
   "next_review_gates": [
+    "Expand and reconcile the 18 FORMAT/genotype candidates against complete per-version GT, GL/GP/PL, PS/phasing, genotype ordering, local-allele and base-modification source context; retain unresolved version scope until exact passages are reviewed.",
     "Expand immediate-neighbour candidate contexts to full clauses, definitions, tables, examples, footnotes and cross-references before declaring semantic review complete.",
     "Decompose mixed candidate lines into stable version-scoped atomic obligations and separate recommendations, permissions, examples and producer conventions.",
     "Complete all non-modal discovery across every version, including grammar and table rows outside reserved INFO/FORMAT lists.",
@@ -106,6 +111,7 @@
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
     "223 reserved INFO/FORMAT entries are not 223 mandatory requirements.",
-    "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed."
+    "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed.",
+    "The 18 FORMAT/genotype candidates are proposals only; they are not approved ledger entries, implementation mappings, or executed tests."
   ]
 }
