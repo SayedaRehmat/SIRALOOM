@@ -69,6 +69,19 @@ def test_profile_rejects_independent_bcftools_or_htslib_version_drift(
         )
 
 
+def test_1_21_3_remains_candidate_while_vcf45_len_regression_is_unresolved():
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    profile = next(
+        item for item in payload["profiles"]
+        if item["id"] == "bcftools-1.21.3-htslib-1.21.3-linux-64-source"
+    )
+    assert profile["status"] == "CANDIDATE"
+    assert any(
+        "test_vcf45_len_reference_block_csi_index_includes_last_covered_base" in gap
+        for gap in profile.get("qualification_gaps", [])
+    )
+
+
 def test_1_19_is_registered_but_quarantined_from_production():
     profile_id = "bcftools-1.19-htslib-1.19-linux-64-legacy"
     profile = next(
