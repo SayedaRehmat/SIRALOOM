@@ -4,12 +4,13 @@
   "status": "AUTHOR_SOURCE_CONTEXT_REVIEW_COMPLETE_ATOMIC_REFINEMENT_PENDING_INDEPENDENT_REVIEW",
   "source": {
     "repository": "samtools/hts-specs",
-    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "file": "VCFv4.5.tex",
     "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-    "source_sha256": null,
+    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
     "retrieved_at_utc": null,
-    "raw_source_uri": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex"
+    "raw_source_uri": "https://raw.githubusercontent.com/samtools/hts-specs/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "Full contextual source review of VCFv4.5 structural-variant INFO definitions, tandem-repeat INFO semantics, SV FORMAT semantics and the complete complex-rearrangement/breakend section. The verbatim line excerpts are retained for review traceability; normative force is not inferred from examples or change-log prose.",
   "method": [
