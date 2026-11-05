@@ -15,7 +15,8 @@ ARG BCFTOOLS_VERSION
 ARG HTSLIB_VERSION
 ENV MAMBA_ROOT_PREFIX=/tmp/build-env
 COPY --chown=$MAMBA_USER:$MAMBA_USER ${BCFTOOLS_BUILD_LOCK_FILE} /tmp/bcftools-build-explicit.lock
-RUN micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
+RUN test "$(uname -m)" = "x86_64" || { echo "This source-build lock is qualified only for Linux AMD64 (x86_64)." >&2; exit 1; } \
+    && micromamba create --yes --name bcftools-build --file /tmp/bcftools-build-explicit.lock \
     && micromamba clean --all --yes
 COPY configs/bioinformatics/toolchain-profiles.v1.json /tmp/toolchain-profiles.v1.json
 COPY scripts/build_bcftools_from_profile.sh /tmp/build_bcftools_from_profile.sh
@@ -49,7 +50,8 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/venv UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs
 WORKDIR /app
 
-RUN groupadd --system --gid 10001 siraloom \
+RUN test "$(uname -m)" = "x86_64" || { echo "This source-built runtime is qualified only for Linux AMD64 (x86_64)." >&2; exit 1; } \
+    && groupadd --system --gid 10001 siraloom \
     && useradd --system --uid 10001 --gid siraloom --create-home \
         --home-dir /home/siraloom --shell /usr/sbin/nologin siraloom \
     && mkdir -p /data/siraloom/artifacts /data/siraloom/resource-cache \
