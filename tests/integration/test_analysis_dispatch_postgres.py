@@ -293,7 +293,19 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
 
 
 @pytest.mark.integration
-def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeypatch):
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "toolchain_queue"),
+    [
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25"),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4"),
+        ("bcftools-1.21.3-htslib-1.21.3-linux-64-source", "1.21.3", "1.21.3", "bioinformatics.bcftools.1_21_3"),
+    ],
+)
+def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(
+    monkeypatch, profile_id, bcftools_version, htslib_version, toolchain_queue
+):
     """A retry generation must remain the sole queue owner when an old relay runs afterward."""
     database_url = os.environ.get("DATABASE_URL", "")
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
@@ -358,7 +370,19 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 completed_at=None,
                 created_by=user_id,
                 analysis_version=1,
-                toolchain_queue="bioinformatics.bcftools.1_25",
+                toolchain_profile_id=profile_id,
+                toolchain_bcftools_version=bcftools_version,
+                toolchain_htslib_version=htslib_version,
+                toolchain_queue=toolchain_queue,
+                toolchain_snapshot={
+                    "profile_id": profile_id,
+                    "bcftools_version": bcftools_version,
+                    "htslib_version": htslib_version,
+                    "worker_queue": toolchain_queue,
+                    "platform": "linux-64",
+                    "lock_file": f"configs/bioinformatics/profiles/{profile_id}.lock",
+                    "lock_sha256": "b" * 64,
+                },
             ))
             db.add(AnalysisDispatch(
                 id=old_dispatch_id,
@@ -388,7 +412,7 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
             "run_analysis_task",
             SimpleNamespace(
                 apply_async=lambda *, args, task_id, queue: (
-                    queue == "bioinformatics.bcftools.1_25"
+                    queue == toolchain_queue
                     and SimpleNamespace(id=task_id)
                 )
             ),
@@ -406,6 +430,11 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 .order_by(AnalysisDispatch.dispatch_generation)
             ).all()
             assert analysis.status == AnalysisStatus.QUEUED
+            assert analysis.toolchain_profile_id == profile_id
+            assert analysis.toolchain_bcftools_version == bcftools_version
+            assert analysis.toolchain_htslib_version == htslib_version
+            assert analysis.toolchain_queue == toolchain_queue
+            assert analysis.toolchain_snapshot["profile_id"] == profile_id
             assert len(dispatches) == 2
             assert analysis.queue_task_id == str(dispatches[1].id)
 
