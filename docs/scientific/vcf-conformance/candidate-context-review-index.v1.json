@@ -158,7 +158,7 @@
       "unique_requirement_ids": "PASS_142_OF_142",
       "schema_required_fields_and_enums": "PASS_142_OF_142_CUSTOM_STRUCTURAL_AUDIT_NOT_FULL_JSON_SCHEMA_ENGINE",
       "source_locator_presence": "PASS_142_OF_142",
-      "source_and_excerpt_sha256": "PASS_320_OF_321_REFERENCES",
+      "source_and_excerpt_sha256": "PASS_352_OF_353",
       "vcf40_source_reference": "1_UNHASHED_PENDING_EXACT_RAW_CAPTURE",
       "independently_second_person_approved": 0
     },
@@ -179,22 +179,22 @@
       "sha256_recorded": 5
     },
     "version_applicability_unresolved": {
-      "VCFv4.1": 55,
-      "VCFv4.2": 55,
-      "VCFv4.3": 46,
-      "VCFv4.4": 17,
+      "VCFv4.1": 43,
+      "VCFv4.2": 43,
+      "VCFv4.3": 34,
+      "VCFv4.4": 5,
       "VCFv4.5": 0
     }
   },
   "next_review_gates": [
-    "Finish every VCFv4.5 table row's semantic context, not only its example/context disposition; resolve base-modification alias casing and remaining local-allele, BCF and gVCF cross-references.",
-    "Complete VCFv4.1-4.4 row-by-row INFO/FORMAT and reserved-field semantic review, then atomize version-specific genotype/phasing and SV/breakend deltas.",
-    "Capture exact historical VCFv4.0 core source bytes from an authoritative archival revision and compute SHA-256; current rendered IGSR page and failed raw-export attempt do not satisfy this gate.",
-    "Expand the candidate ledger to all source-backed atomic requirements across grammar, definitions, tables, footnotes, examples, non-modal constraints and cross-references.",
-    "Resolve all 173 currently unresolved version applicability cells for VCFv4.1-4.4 and establish VCFv4.0 applicability only after source pinning.",
-    "Complete SHA-256 for every source file and source excerpt; currently 320/321 source references are hash-complete.",
-    "Run a full JSON Schema validator plus independent coverage/ID/locator/cross-reference/version-matrix audits.",
-    "Freeze a versioned snapshot only after whole-spec coverage and traceability gates pass; submit for independent review only after snapshot integrity is verified."
+    "Complete VCFv4.5 table-row semantic review and atomization, including remaining definitions, grammar, examples, footnotes, cross-references and unresolved local-allele/base-modification questions.",
+    "Complete row-by-row VCFv4.1-4.4 reserved INFO/FORMAT and SV INFO/FORMAT semantic review; atomize GT/GL/GLE, phase, SVLEN/END, confidence-interval, breakend and copy-number deltas.",
+    "Capture exact historical VCFv4.0 core source bytes from an authoritative archival revision and compute SHA-256; rendered IGSR page content and failed raw-export retrieval do not satisfy this gate.",
+    "Expand the ledger beyond the current 142 candidates to every source-backed atomic requirement across all six target versions.",
+    "Resolve remaining applicability cells for current candidates: VCFv4.1 43; VCFv4.2 43; VCFv4.3 34; VCFv4.4 5. VCFv4.0 remains source-not-pinned for all 142.",
+    "Complete source-file and excerpt hashes for all source references; currently 352/353 are expected after adding the 32 pedigree/encoding source references, with one VCFv4.0 historical source reference blocked.",
+    "Run full JSON Schema validation and complete coverage, ID, locator, cross-reference, hash and version-applicability audits.",
+    "Freeze a versioned snapshot only after all whole-specification and traceability gates pass; submit it for independent review only after snapshot integrity is verified."
   ],
   "explicit_nonclaims": [
     "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
