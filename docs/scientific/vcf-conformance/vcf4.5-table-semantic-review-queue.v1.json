@@ -4,9 +4,11 @@
   "status": "AUTHOR_CONTEXT_REVIEW_COMPLETE_FOR_ALL_44_INDEXED_TABLES_INDEPENDENT_REVIEW_AND_CROSS_VERSION_RECONCILIATION_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
-    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
     "file": "VCFv4.5.tex",
-    "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+    "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "All 44 VCF-only table environments indexed by the VCFv4.5 source inventory. Additional raw TeX table environments belong to BCF serialization and are excluded from this VCF-text queue.",
   "method": "Each table is linked to source lines and enclosing section, assigned a semantic review target, and left NOT_REVIEWED pending full row-level reconciliation. Row terminator counts are navigation metadata, not semantic row or requirement counts.",
@@ -26,8 +28,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 84,
         "end_line": 93,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Character encoding, non-printable characters and characters with special meaning",
       "preceding_context": "Note that non-printable characters U+0000--U+0008, U+000B--U+000C, U+000E--U+001F are disallowed. Line separators must be CR+LF or LF and they are allowed only as line separators at end of line. Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:  \\begingroup\\footnotesize",
@@ -66,8 +70,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 223,
         "end_line": 229,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Individual format field format",
       "preceding_context": "For example, unstranded 5mC CpG methylation should be stored on the VCF recording containing the C with the M5mC value of the subsequent G set to MISSING or omitted entirely. Similarly, unstranded MxaoN values should be stored in the positive strand value with the negative strand value MISSING.  Examples:   \\vspace{0.5em}",
@@ -97,8 +103,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 443,
         "end_line": 481,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Fixed fields",
       "preceding_context": "Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}.   Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).   See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants. \\end{enumerate}",
@@ -128,8 +136,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 517,
         "end_line": 598,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "As with the INFO field, there are several common, reserved keywords that are standards across the community. See their detailed definitions below, as well as Table~\\ref{table:reserved-genotypes} for their reference Number, Type and Description. See also Section~\\ref{sv-format-keys} for a list of genotype keys reserved for structural variants.",
@@ -159,8 +169,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 675,
         "end_line": 681,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "\\item for $P$=1, the index of the genotype $a$ is $a$     \\item for $P$=2, the index of the genotype ``$a/b$'', where $a\\le b$, is $b (b+1)/2 + a$     \\item for $P$=2 and arbitrary $N$, the ordering can be easily derived from a triangular matrix             \\newline             \\hbox{\\hskip5em\\footnotesize",
@@ -190,8 +202,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 701,
         "end_line": 711,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "For example, if REF is G, ALT is A,C,T,\\verb!<*>! and a genotype only has information about G, C, and \\verb!<*>!, one can have LAA=[2,4] and thus LPL will be interpreted as pertaining to the alleles [G, C, \\verb!<*>!] and not contain likelihood values for genotypes that involve A or T.   GQ is still the genotype quality, even when the genotype is given against the local alleles.   In the following example, the records with the same POS encode the same information (some columns removed for clarity):    \\vspace{0.5em}",
@@ -221,8 +235,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 749,
         "end_line": 755,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "Stranded CpG methylation counts should be placed in both values with the C position effectively encoding ADF, and the G effectively encoding ADR due to the strand the C in the CpG occurs on.    The follow example contains unphased, unstranded CpG methylation information for the CpG at chr:10-11 and phased, stranded CpG methylation information for the CpG at chr:20-21.  \\vspace{0.5em}",
@@ -252,8 +268,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 781,
         "end_line": 786,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "In addition, PS and PSL are not interoperable, in that a PS mentioned in one variant cannot be referenced in a PSL in another,  since when used in PS it isn't connected to any specific haplotype (i.e. first or second), but PSL is.      Example:      \\vspace{0.5em}",
@@ -283,8 +301,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 798,
         "end_line": 803,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Genotype fields",
       "preceding_context": "Without explicitly specifying the derivative chromosome traversal order, multiple derivative chromosome reconstructions are possible.   Take for example this tandem duplication in a triploid organism with SNVs (ID/QUAL/FILTER columns removed for clarity):      \\vspace{0.5em}",
@@ -314,8 +334,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1170,
         "end_line": 1177,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 1",
       "preceding_context": "\\subsection{Creating VCF entries for SNPs and small indels} \\subsubsection{Example 1} For example, suppose we are looking at a locus in the genome:  \\vspace{0.3cm}",
@@ -345,8 +367,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1190,
         "end_line": 1195,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 1",
       "preceding_context": "\\end{enumerate}  Note that the positions must be sorted in increasing order:  \\vspace{0.5em}",
@@ -376,8 +400,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1201,
         "end_line": 1207,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 2",
       "preceding_context": "\\subsubsection{Example 2} Suppose I see a the following in a population of individuals and want to represent these three segregating alleles:  \\vspace{0.3cm}",
@@ -407,8 +433,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1213,
         "end_line": 1216,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 2",
       "preceding_context": "\\vspace{0.3cm}  In this case there are three segregating alleles: $\\{tC,tG,t\\}$ with a corresponding VCF record:  \\vspace{0.3cm}",
@@ -438,8 +466,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1221,
         "end_line": 1228,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 3",
       "preceding_context": "\\end{tabular} \\subsubsection{Example 3} Now suppose I have this more complex example:  \\vspace{0.3cm}",
@@ -469,8 +499,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1235,
         "end_line": 1238,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Example 3",
       "preceding_context": "\\vspace{0.3cm} There are actually four segregating alleles: $\\{tCg,tg,t,tCAg\\}$ over bases 2--4. This complex set of allele is represented in VCF as:  \\vspace{0.3cm}",
@@ -500,8 +532,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1249,
         "end_line": 1252,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "SNP VCF record",
       "preceding_context": "\\subsection{Decoding VCF entries for SNPs and small indels} \\subsubsection{SNP VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
@@ -531,8 +565,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1258,
         "end_line": 1263,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "SNP VCF record",
       "preceding_context": "\\vspace{0.3cm}  This is a SNP since its only single base substitution and there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
@@ -562,8 +598,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1269,
         "end_line": 1272,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Insertion VCF record",
       "preceding_context": "\\subsubsection{Insertion VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
@@ -593,8 +631,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1279,
         "end_line": 1284,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Insertion VCF record",
       "preceding_context": "This is a insertion since the reference base C is being replaced by C [the reference base] plus three insertion bases TAG. Again there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
@@ -624,8 +664,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1290,
         "end_line": 1293,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Deletion VCF record",
       "preceding_context": "\\subsubsection{Deletion VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
@@ -655,8 +697,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1300,
         "end_line": 1305,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Deletion VCF record",
       "preceding_context": "This is a deletion of two reference bases since the reference allele TCG is being replaced by just the T [the reference base]. Again there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
@@ -686,8 +730,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1311,
         "end_line": 1314,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
       "preceding_context": "\\subsubsection{Mixed VCF record for a microsatellite} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
@@ -717,8 +763,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1321,
         "end_line": 1327,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
       "preceding_context": "This is a mixed type record containing a 2 base insertion and a 2 base deletion. There are are three segregating alleles so I have the three following haplotypes:  \\vspace{0.3cm}",
@@ -748,8 +796,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1334,
         "end_line": 1340,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Mixed VCF record for a microsatellite",
       "preceding_context": "Note that in all of these examples dashes have been added to make the haplotypes clearer but of course the equivalence among bases isn't provided by the VCF. Technically the following is an equivalent alignment:  \\vspace{0.3cm}",
@@ -779,8 +829,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1418,
         "end_line": 1424,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Specifying complex rearrangements with breakends",
       "preceding_context": "These 3 elements are combined in 4 possible ways to create the ALT. In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t. The cases are:  \\vspace{0.3cm}",
@@ -810,8 +862,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1438,
         "end_line": 1446,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Specifying complex rearrangements with breakends",
       "preceding_context": "\\includegraphics[width=4in,height=2.96in]{img/all_orientations-400x296.png} \\caption{All possible orientations of breakends} \\end{figure}  \\vspace{0.3cm}",
@@ -841,8 +895,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1460,
         "end_line": 1464,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inserted Sequence",
       "preceding_context": "\\caption{Inserted sequence between breakends} \\end{figure}  \\vspace{0.3cm} \\footnotesize",
@@ -872,8 +928,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1479,
         "end_line": 1483,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
       "preceding_context": "\\caption{Inserted contig} \\end{figure}  \\vspace{0.3cm} \\small",
@@ -903,8 +961,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1490,
         "end_line": 1493,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
       "preceding_context": "\\vspace{0.3cm}  \\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:  \\vspace{0.3cm}",
@@ -934,8 +994,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1500,
         "end_line": 1504,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
       "preceding_context": "If only a portion of $<$ctg$1>$, say from position $7$ to position $214$, is inserted, the VCF would be: \\par\\nobreak \\vspace{0.3cm} \\small",
@@ -965,8 +1027,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1512,
         "end_line": 1518,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Large Insertions",
       "preceding_context": "If $<$ctg$1>$ is circular and a segment from position 229 to position 45 is inserted, i.e., continuing from position 329 on to position 1, this is represented by adding a circular adjacency:  \\vspace{0.3cm} \\small",
@@ -996,8 +1060,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1531,
         "end_line": 1536,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Multiple mates",
       "preceding_context": "\\includegraphics[width=4in,height=2.80in]{img/multiple_mates-400x280.png} \\caption{Breakend with multiple mates} \\end{figure}  \\footnotesize",
@@ -1027,8 +1093,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1554,
         "end_line": 1560,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Explicit partners",
       "preceding_context": "\\caption{Partner breakends} \\end{figure}  \\vspace{0.3cm} \\small",
@@ -1058,8 +1126,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1578,
         "end_line": 1584,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Telomeres",
       "preceding_context": "\\end{figure}  the records would look like:  \\small",
@@ -1089,8 +1159,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1602,
         "end_line": 1608,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Event modifiers",
       "preceding_context": "\\noindent would be described as:  \\vspace{0.3cm} \\footnotesize",
@@ -1120,8 +1192,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1628,
         "end_line": 1631,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inversions",
       "preceding_context": "Either one uses the short hand notation described previously (recommended for simple cases): \\end{samepage}  \\vspace{0.3cm} \\small",
@@ -1151,8 +1225,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1639,
         "end_line": 1645,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Inversions",
       "preceding_context": "or one describes the breakends:  \\vspace{0.3cm} \\footnotesize",
@@ -1182,8 +1258,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1666,
         "end_line": 1670,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Uncertainty around breakend location",
       "preceding_context": "The red and green dashed lines represent the most extreme possible recombination events which are allowed by the sequence evidence available. We therefore place both U and V arbitrarily within the interval of possibility:  \\vspace{0.3cm} \\footnotesize",
@@ -1213,8 +1291,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1692,
         "end_line": 1698,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
       "preceding_context": "Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates. The 4 lines of VCF representing this situation would be:  \\vspace{0.3cm} \\small",
@@ -1244,8 +1324,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1710,
         "end_line": 1715,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
       "preceding_context": "Another possible reason for calling single breakends is an observed but unexplained change in copy number along a chromosome.  \\vspace{0.3cm} \\scriptsize",
@@ -1275,8 +1357,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1723,
         "end_line": 1728,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Single breakends",
       "preceding_context": "Finally, if an insertion is detected but only the first few base-pairs provided by overhanging reads could be assembled, then this inserted sequence can be provided on that line, in analogy to paired breakends:  \\vspace{0.3cm} \\scriptsize",
@@ -1306,8 +1390,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1750,
         "end_line": 1756,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Sample mixtures",
       "preceding_context": "Using the example of the inversion just above, the VCF code could become:  \\vspace{0.3cm} \\tiny \\begin{flushleft}",
@@ -1337,8 +1423,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1766,
         "end_line": 1772,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Sample mixtures",
       "preceding_context": "However, a more evolved algorithm could attempt actually deconvolving the two genomes and generating copy number estimates based on the raw data:  \\vspace{0.3cm} \\tiny \\begin{flushleft}",
@@ -1368,8 +1456,10 @@
         "file": "VCFv4.5.tex",
         "start_line": 1865,
         "end_line": 1874,
-        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
       },
       "enclosing_section": "Representing unspecified alleles and REF-only blocks (gVCF)",
       "preceding_context": "and a missing FORMAT LEN field should be inferred from the INFO END tag if present.  An example with both FORMAT LEN and a redundant INFO END is given below: \\scriptsize \\begin{flushleft}",
