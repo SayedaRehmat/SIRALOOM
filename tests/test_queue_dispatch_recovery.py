@@ -203,9 +203,19 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
         id = "dispatch-task-1"
 
     monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
-    monkeypatch.setattr(module.run_analysis_task, "apply_async", lambda **kwargs: FakeTask())
+    published = []
+    monkeypatch.setattr(
+        module.run_analysis_task,
+        "apply_async",
+        lambda **kwargs: published.append(kwargs) or FakeTask(),
+    )
 
     assert module.publish_analysis_dispatch(dispatch_id) == "dispatch-task-1"
+    assert published == [{
+        "args": [str(analysis_id)],
+        "task_id": str(dispatch_id),
+        "queue": "bioinformatics.bcftools.1_25",
+    }]
     assert dispatch.status == "PUBLISHED"
     assert dispatch.task_id == "dispatch-task-1"
     assert analysis.queue_task_id == "dispatch-task-1"
