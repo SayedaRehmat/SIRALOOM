@@ -29,9 +29,14 @@
       "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.1.pdf",
       "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
       "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
-      "raw_specification_bytes_committed_to_siraloom": false,
-      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
-      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+      "raw_specification_bytes_committed_to_siraloom": true,
+      "signature_status": "SOURCE_COMMIT_PINNED; SIGNATURE_VERIFICATION_NOT_REPEATED_IN_THIS_CAPTURE",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL",
+      "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex",
+      "raw_source_utf8_byte_length": 95857,
+      "raw_source_sha256": "3b6ed80608c11b9d14bb6bcc10273a62d09509e89daf7ca8261c675b2a509003",
+      "raw_source_capture_method": "Fetched the pinned raw.githubusercontent.com VCFvX.tex file, stored the unmodified UTF-8 text as a repository source artifact, then fetched the committed file and verified its Git blob SHA-1 equals the authoritative hts-specs source blob SHA-1.",
+      "raw_source_capture_status": "ARCHIVED_AND_GIT_BLOB_IDENTITY_VERIFIED"
     },
     {
       "version": "VCFv4.2",
@@ -44,9 +49,14 @@
       "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.2.pdf",
       "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
       "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
-      "raw_specification_bytes_committed_to_siraloom": false,
-      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
-      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+      "raw_specification_bytes_committed_to_siraloom": true,
+      "signature_status": "SOURCE_COMMIT_PINNED; SIGNATURE_VERIFICATION_NOT_REPEATED_IN_THIS_CAPTURE",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL",
+      "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex",
+      "raw_source_utf8_byte_length": 96701,
+      "raw_source_sha256": "a39124783365a22f66ce3c124779ffe2fe4655aea5a0efb5d17e75fb1d2c6f51",
+      "raw_source_capture_method": "Fetched the pinned raw.githubusercontent.com VCFvX.tex file, stored the unmodified UTF-8 text as a repository source artifact, then fetched the committed file and verified its Git blob SHA-1 equals the authoritative hts-specs source blob SHA-1.",
+      "raw_source_capture_status": "ARCHIVED_AND_GIT_BLOB_IDENTITY_VERIFIED"
     },
     {
       "version": "VCFv4.3",
@@ -59,9 +69,14 @@
       "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.3.pdf",
       "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
       "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
-      "raw_specification_bytes_committed_to_siraloom": false,
-      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
-      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+      "raw_specification_bytes_committed_to_siraloom": true,
+      "signature_status": "SOURCE_COMMIT_PINNED; SIGNATURE_VERIFICATION_NOT_REPEATED_IN_THIS_CAPTURE",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL",
+      "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex",
+      "raw_source_utf8_byte_length": 119335,
+      "raw_source_sha256": "09dd557b11916c8b93f025b1f756bddda0fbab0fc199bea751a8110189ab8d48",
+      "raw_source_capture_method": "Fetched the pinned raw.githubusercontent.com VCFvX.tex file, stored the unmodified UTF-8 text as a repository source artifact, then fetched the committed file and verified its Git blob SHA-1 equals the authoritative hts-specs source blob SHA-1.",
+      "raw_source_capture_status": "ARCHIVED_AND_GIT_BLOB_IDENTITY_VERIFIED"
     },
     {
       "version": "VCFv4.4",
@@ -74,9 +89,14 @@
       "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.4.pdf",
       "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
       "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
-      "raw_specification_bytes_committed_to_siraloom": false,
-      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
-      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+      "raw_specification_bytes_committed_to_siraloom": true,
+      "signature_status": "SOURCE_COMMIT_PINNED; SIGNATURE_VERIFICATION_NOT_REPEATED_IN_THIS_CAPTURE",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL",
+      "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+      "raw_source_utf8_byte_length": 149282,
+      "raw_source_sha256": "0d6014ae1ffc6ab7929c00eba724c9dacf8d0064df27f987e30f7be3a3442eb1",
+      "raw_source_capture_method": "Fetched the pinned raw.githubusercontent.com VCFvX.tex file, stored the unmodified UTF-8 text as a repository source artifact, then fetched the committed file and verified its Git blob SHA-1 equals the authoritative hts-specs source blob SHA-1.",
+      "raw_source_capture_status": "ARCHIVED_AND_GIT_BLOB_IDENTITY_VERIFIED"
     },
     {
       "version": "VCFv4.5",
@@ -89,9 +109,14 @@
       "rendered_pdf_url": "https://samtools.github.io/hts-specs/VCFv4.5.pdf",
       "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
       "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE",
-      "raw_specification_bytes_committed_to_siraloom": false,
-      "signature_status": "EXISTING_PR_282_INVENTORY_RECORDS_GITHUB_SIGNATURE_VERIFICATION; THIS_AUDIT_DID_NOT_RETRIEVE_A_SIGNATURE_VERIFICATION_FIELD",
-      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL"
+      "raw_specification_bytes_committed_to_siraloom": true,
+      "signature_status": "SOURCE_COMMIT_PINNED; SIGNATURE_VERIFICATION_NOT_REPEATED_IN_THIS_CAPTURE",
+      "qualification_status": "SOURCE_REVISION_PINNED; REQUIREMENT_REVIEW_AND_CONFORMANCE_REMAIN_PARTIAL",
+      "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+      "raw_source_utf8_byte_length": 164356,
+      "raw_source_sha256": "2c2f9e77a318112fde21ad8823fdcb8e12a6cf56069a7dfbe21aed891a04d1b2",
+      "raw_source_capture_method": "Fetched the pinned raw.githubusercontent.com VCFvX.tex file, stored the unmodified UTF-8 text as a repository source artifact, then fetched the committed file and verified its Git blob SHA-1 equals the authoritative hts-specs source blob SHA-1.",
+      "raw_source_capture_status": "ARCHIVED_AND_GIT_BLOB_IDENTITY_VERIFIED"
     }
   ],
   "source_stewardship": {
