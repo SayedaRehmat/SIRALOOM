@@ -15,22 +15,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: configs/bioinformatics/bcftools-environment.yml
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned uv lock manager
+        run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib
         run: |
           test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
           test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
           test "$(bgzip --version | sed -n '1p')" = "bgzip (htslib) 1.25"
-      - name: Install backend
-        run: pip install -e . pytest
-      - name: Verify Redis client satisfies Kombu transport minimum
-        run: python -c "import redis; from packaging.version import Version; assert Version(redis.__version__) >= Version('6.1.0'), redis.__version__"
+      - name: Install backend from committed lock
+        run: |
+          uv lock --check
+          uv sync --locked --extra dev
+      - name: Verify installed Redis client is accepted by the selected Kombu transport
+        run: uv run --locked python -c "import redis, kombu; import kombu.transport.redis; print(f'redis-py={redis.__version__}, kombu={kombu.__version__}')"
       - name: Backend tests
         env:
           DATABASE_URL: sqlite:///./ci.db
@@ -38,11 +42,11 @@ jobs:
           GENEBE_ENABLED: "false"
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
-        run: pytest -q
+        run: uv run --locked pytest -q
       - name: Validate process startup scripts
         run: sh -n scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python
-        run: python -m compileall backend scripts
+        run: uv run --locked python -m compileall backend scripts
       - name: Build laboratory backend image
         run: docker build --file docker/backend.Dockerfile --tag siraloom-backend:ci .
       - name: Verify backend image runs without root privileges
@@ -98,25 +102,29 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
       - uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: configs/bioinformatics/bcftools-environment.yml
           environment-name: bcftools
           cache-environment: true
           init-shell: bash
+      - name: Install pinned uv lock manager
+        run: python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
       - name: Verify pinned BCFtools/HTSlib for PostgreSQL workflow integration
         run: |
           test "$(bcftools --version | sed -n '1p')" = "bcftools 1.25"
           test "$(bcftools --version | sed -n '2p')" = "Using htslib 1.25"
-      - name: Install backend
-        run: pip install -e . pytest
-      - name: Verify Redis client satisfies Kombu transport minimum
-        run: python -c "import redis; from packaging.version import Version; assert Version(redis.__version__) >= Version('6.1.0'), redis.__version__"
+      - name: Install backend from committed lock
+        run: |
+          uv lock --check
+          uv sync --locked --extra dev
+      - name: Verify installed Redis client is accepted by the selected Kombu transport
+        run: uv run --locked python -c "import redis, kombu; import kombu.transport.redis; print(f'redis-py={redis.__version__}, kombu={kombu.__version__}')"
       - name: Apply database migrations
         env:
           DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
-        run: alembic upgrade head
+        run: uv run --locked alembic upgrade head
       - name: PostgreSQL and real Celery worker-loss integration tests
         env:
           DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom
@@ -124,7 +132,7 @@ jobs:
           GENEBE_ENABLED: "false"
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
-        run: pytest -q tests/integration
+        run: uv run --locked pytest -q tests/integration
 
   frontend:
     runs-on: ubuntu-latest
