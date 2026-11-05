@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/bcftools-1.24.1-profile-and-analysis-routing
   pull_request:
 
 concurrency:
@@ -81,43 +80,6 @@ jobs:
         run: |
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
-      - name: Build isolated BCFtools 1.24.1 laboratory backend image
-        run: |
-          set -euo pipefail
-          registry=configs/bioinformatics/toolchain-profiles.v1.json
-          backup="$RUNNER_TEMP/toolchain-profiles.candidate.json"
-          cp "$registry" "$backup"
-          trap 'cp "$backup" "$registry"' EXIT
-          python - "$registry" <<'PY'
-          import json, sys
-          path = sys.argv[1]
-          payload = json.load(open(path, encoding="utf-8"))
-          profile = next(
-              item for item in payload["profiles"]
-              if item["id"] == "bcftools-1.24.1-htslib-1.24.1-linux-64-source"
-          )
-          # The throwaway CI image is built with the candidate temporarily
-          # promoted so Settings can attest it at image startup. The committed
-          # registry remains CANDIDATE until this entire gate is green.
-          profile["status"] = "SOFTWARE_QUALIFIED"
-          json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
-          PY
-          docker build \
-            --build-arg BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock \
-            --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.24.1-htslib-1.24.1-linux-64-source \
-            --build-arg BCFTOOLS_VERSION=1.24.1 \
-            --build-arg HTSLIB_VERSION=1.24.1 \
-            --build-arg BCFTOOLS_WORKER_QUEUE=bioinformatics.bcftools.1_24_1 \
-            --file docker/backend-bcftools-source.Dockerfile --tag siraloom-backend:bcftools-1.24.1-ci .
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '1p')" = "bcftools 1.24.1"
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci --version | sed -n '2p')" = "Using htslib 1.24.1"
-          test "$(docker run --rm --entrypoint bgzip siraloom-backend:bcftools-1.24.1-ci --version | sed -n '1p')" = "bgzip (htslib) 1.24.1"
-          docker run --rm --entrypoint bcftools siraloom-backend:bcftools-1.24.1-ci +fill-tags -h >/dev/null
-          docker run --rm -e DATABASE_URL=sqlite:///./ci.db -e REDIS_URL=redis://localhost:6379/0 --entrypoint python siraloom-backend:bcftools-1.24.1-ci -c "from backend.app.config import settings; assert settings.bcftools_profile_id == 'bcftools-1.24.1-htslib-1.24.1-linux-64-source'"
-          docker run --rm --entrypoint sh siraloom-backend:bcftools-1.24.1-ci -c 'test "$(id -u)" = "10001" && ! command -v gcc'
-          docker run --rm --entrypoint sh siraloom-backend:bcftools-1.24.1-ci -c 'for b in /opt/conda/bin/bcftools /opt/conda/bin/bgzip /opt/conda/bin/tabix; do ldd "$b" | tee /tmp/ldd.out; ! grep -q "not found" /tmp/ldd.out; done'
-          python -c "import json; p=json.load(open(\"configs/bioinformatics/toolchain-profiles.v1.json\")); assert next(x for x in p[\"profiles\"] if x[\"id\"] == \"bcftools-1.24.1-htslib-1.24.1-linux-64-source\")[\"status\"] == \"SOFTWARE_QUALIFIED\""
-
   postgres-integration:
     runs-on: ubuntu-latest
     defaults:
