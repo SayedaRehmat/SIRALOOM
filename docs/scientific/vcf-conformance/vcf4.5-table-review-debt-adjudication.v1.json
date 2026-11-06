@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_SEVEN_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_EIGHT_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,12 +25,13 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 37,
+    "full_clause_level_version_reconciliations_pending": 36,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
     "gvcf_reference_block_version_deltas_reconciled": 1,
-    "character_encoding_version_delta_reconciled": 1
+    "character_encoding_version_delta_reconciled": 1,
+    "local_allele_version_deltas_reconciled": 1
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -740,9 +741,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Confirm the local-allele family is introduced in 4.5; atomize LAA presence/order, local A/R/G equivalents, BCF empty-vector semantics, and the conditions under which local/global representations are equivalent.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_LOCAL_ALLELE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify all MUST/SHOULD and BCF-specific interactions; map to atomic IDs and executable tests.",
+          "finding": "Local-allele Number=LA/LR/LG and LAA/LAD/LADF/LADR/LEC/LGL/LGP/LPL/LPP fields are introduced in VCFv4.5; no corresponding family was found in VCFv4.1-4.4. Presence/order, local/global equivalence and BCF empty-vector behavior are recorded in vcf4.1-4.5-local-allele-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -776,7 +777,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:188-202; 686-718"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-local-allele-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.7",
