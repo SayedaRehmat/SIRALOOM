@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf4.1-4.5-version-delta-register",
-  "status": "AUTHOR_DELTA_REGISTER_PARTIAL_WHOLE_SPEC_ATOMIC_RECONCILIATION_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_COMPLETE_FOR_ALL_44_TABLES_INDEPENDENT_REVIEW_AND_UPSTREAM_ALIAS_RESOLUTION_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
   "purpose": "Record observed version transitions and structural table inventory changes across pinned VCF 4.1-4.5 sources. This is an author research index, not a complete semantic crosswalk or conformance claim.",
@@ -614,12 +614,14 @@
   "reserved_field_clause_mapping": {
     "info": {
       "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "6cbf4a84681f7dd109249834ad5527dca60bea61",
       "field_ids": 21,
       "author_reviewed": 21,
       "independent_reviewed": 0
     },
     "format": {
       "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "a8a7af8b9674548d1085f2c3e488c5168226c194",
       "union_field_ids": 64,
       "vcf45_rows": 63,
       "author_reviewed": 63,
