@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_ORDERING_DELTA_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_AND_PHASE_SET_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,8 +25,9 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 43,
-    "genotype_ordering_version_delta_reconciled": 1
+    "full_clause_level_version_reconciliations_pending": 41,
+    "genotype_ordering_version_delta_reconciled": 1,
+    "phase_set_list_version_deltas_reconciled": 2
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -896,9 +897,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to validate PSL/PSO/PSQ semantics, modal force and cross-record constraints; map to atomic IDs and executable tests.",
+          "finding": "PSL/PSO/PSQ are absent from VCFv4.1-4.3 and introduced in VCFv4.4. VCFv4.5 retains them; the PSQ clause adds an explicit SHOULD-level missing-value rule. See vcf4.1-4.5-phase-set-list-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -933,7 +934,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:594; 771-786"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.9",
@@ -978,9 +980,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to validate PSL/PSO/PSQ semantics, modal force and cross-record constraints; map to atomic IDs and executable tests.",
+          "finding": "PSL/PSO/PSQ are absent from VCFv4.1-4.3 and introduced in VCFv4.4. VCFv4.5 retains them; the PSQ clause adds an explicit SHOULD-level missing-value rule. See vcf4.1-4.5-phase-set-list-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -1015,7 +1017,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:595-596; 788-809"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.10",
