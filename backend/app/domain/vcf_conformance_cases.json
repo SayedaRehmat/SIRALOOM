@@ -1367,6 +1367,72 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "xanthosine_fraction_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 724",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:MXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_fraction_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:724 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:MxaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_detectable_depth_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 734",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:DPMXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_detectable_depth_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:734 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:DPMxaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_modified_depth_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 740",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:ADMXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_modified_depth_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:740 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:ADMxaoN\t0/1:1"
+        ]
       }
     ],
     "VCFv4.0": [
