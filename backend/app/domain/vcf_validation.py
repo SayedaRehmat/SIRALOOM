@@ -837,6 +837,13 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+    if kind == "FORMAT" and identifier == "GT" and (
+        number != "1" or parsed["Type"] != "String"
+    ):
+        raise StrictVCFValidationError(
+            f"FORMAT/GT must declare Number=1 and Type=String at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     reserved_vcf45_definition = None
     if fileformat == "VCFv4.5":
         if kind == "FORMAT":
