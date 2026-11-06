@@ -251,6 +251,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
         ]
+      },
+      {
+        "id": "gt_header_wrong_type_rejected",
+        "category": "genotype_header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Reserved FORMAT/GT is Number=1,Type=String",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -1754,6 +1766,17 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:FLA\t1/2:2,1:10"
         ]
+      },
+      {
+        "id": "gt_noncanonical_allele_index_rejected",
+        "category": "genotype_lexical",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "GT allele indexes are non-negative decimal allele indexes; signed and leading-zero forms are invalid",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t01/0"
+        ]
       }
     ],
     "VCFv4.0": [
@@ -2298,6 +2321,7 @@
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "gt_header_wrong_type_rejected",
             "mixed_gt_phase_separators_invalid_v41",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
@@ -2647,6 +2671,7 @@
           "fixture_ids": [
             "base_modification_fraction_out_of_range",
             "base_modification_fraction_valid",
+            "gt_noncanonical_allele_index_rejected",
             "local_allele_encoding_valid",
             "local_global_projection_missing_side_is_ignored",
             "local_laa_duplicate_alt_index_invalid",
