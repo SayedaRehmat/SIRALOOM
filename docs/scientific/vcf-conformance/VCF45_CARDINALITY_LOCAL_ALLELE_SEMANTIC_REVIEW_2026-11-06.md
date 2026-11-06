@@ -74,31 +74,35 @@ The cardinality mapping is:
 
 The LG count follows the source's genotype-ordering definition at lines 632–669 (combinations with repetition, ordered by the specified nested-loop procedure). The source's LPL paragraph at lines 717–718 directs local likelihood ordering back to the GL paragraph.
 
-### 3.3 Global GT indices versus local likelihood domain
+### 3.3 GT allele-index interpretation: unresolved source/example inconsistency
 
-The source's worked example at lines 703–710 retains GT values such as `2/4` while LAA is `2,4`; the corresponding LPL vector is reduced to the six genotypes over REF, ALT[2], ALT[4]. This demonstrates that the GT allele identifiers in the example remain record-level ALT indices, while the local likelihood vector is indexed over the local-allele domain.
+The local-allele prose at lines 691–697 says genotype, allele depth and genotype likelihood can be specified against a subset of local alleles, and line 697 explicitly says GQ remains genotype quality when GT is given against local alleles. The worked example at lines 703–710, however, contains a material inconsistency that prevents this review from declaring the exact GT index mapping settled:
 
-Do not rewrite GT allele numbers to local ordinals as a side effect of decoding LPL/LGL/LGP/LPP. The implementation must maintain separate, explicit mappings for:
-- global VCF allele index;
-- local allele ordinal in the LAA-derived domain;
-- genotype tuple/index in the local genotype-ordering domain.
+- The first local-allele row has ALT `A,C,T,<*>`, LAA `2,4`, and GT `2/4`.
+- The paired global AD/PL row at the same POS has the same ALT but GT `2/2`.
+- The remaining paired examples at POS 2, 3 and 4 show matching GT values between local and global rows.
 
-### 3.4 Worked projection example from the source
+The first pair therefore does not establish a consistent global-index-to-local-index conversion. It may be an upstream example error, but that cannot be assumed without authoritative clarification. The prose's statement that GT can be given against local alleles must be reconciled with the example and with the general GT definition.
 
-Source lines 703–704:
+**Disposition:** do not assert either that GT always remains globally indexed or that GT is always locally reindexed based solely on the current example. Preserve the raw GT token, LAA vector, and source allele domain independently in the parser design; block semantic GT remapping until the source ambiguity is resolved. Do not use the first worked example as a passing equivalence oracle.
+
+### 3.4 Local-allele likelihood projection example
+
+Source lines 703–710 show the local/global AD and PL encodings. For the first paired record:
 
 - Global ALT: `A,C,T,<*>`
 - LAA: `2,4`
-- Local allele domain: `REF, C, <*> `
-- GT: `2/4`
-- LAD: three values (REF, local ALT 1, local ALT 2)
-- LPL: six diploid genotype values in local ordering
+- Local allele domain for LPL: `REF, ALT[2], ALT[4]`
+- Local row GT: `2/4`
+- Local LAD: three values (REF, local ALT 1, local ALT 2)
+- Local LPL: six diploid genotype values in local ordering
+- Paired global row GT: `2/2`, which conflicts with the local-row GT token under a straightforward identity mapping
 
 For diploidy and three local alleles, the genotype order is:
 
 `00, 01, 11, 02, 12, 22`
 
-The equivalent global AD/PL representation uses full record allele space and missing entries for excluded alleles. The source gives both encodings as equivalent records. Conformance tests must compare the decoded semantic values, not merely compare raw vectors.
+The local LPL cardinality and allele-domain reduction are clear from the prose and vector lengths. The GT correspondence in the first example is not clear. Conformance tests must separately test local likelihood projection and GT semantics; they must not assert full-record equivalence for the first pair until the source inconsistency is adjudicated.
 
 ## 4. Local-allele missing-value and equivalence rules
 
@@ -209,7 +213,7 @@ The Number=M cardinality algorithm must be sequence- and genotype-aware. It is n
 1. The change-history text says “Reserved all FORMAT keys of the form M[0-9]+”, whereas the reserved table and detailed definitions use `M[0-9]+[ACGTUN]`. The narrower full pattern must be reconciled with the abbreviated history statement.
 2. The table spells the xanthosine alias `MXaoN`; the detailed prose lists `MxaoN`. Do not silently normalize case or accept both spellings without authoritative clarification.
 3. The detailed prose at line 742 says “Type=M fields” even though the reserved table places M in the Number column and uses Float/Integer in the Type column. Preserve this wording as a source inconsistency; do not invent a Type=M declaration.
-4. The VCFv4.4 errata note says “Type=P added to FORMAT field type list” while VCFv4.5's reserved table uses P in the Number column for PSL/PSO/PSQ. Preserve the source wording and require review of the intended distinction between Number=P and Type=P.
+4. The VCFv4.4 errata note says “Type=P added to FORMAT field type list” while VCFv4.5's reserved table uses P in the Number column for PSL/PSO/PSQ. Preserve the source wording and require review of the intended distinction between Number=P and Type=P.\n5. The first local/global example pair at VCFv4.5.tex:703-704 has GT `2/4` in the local row and `2/2` in the paired global row. This prevents a definitive GT index-mapping interpretation from being inferred from that example.
 
 ## 8. Conformance corpus requirements derived from this review
 
@@ -225,7 +229,7 @@ The following are test requirements to add to the VCFv4.5 corpus. They are not c
 - LAA MISSING with local payload at REF-only site;
 - BCF empty-vector/MISSING round trip;
 - local fields present before LAA in FORMAT order (invalid);
-- GT remains global allele-indexed while local payloads use the LAA-derived domain.
+- GT token/index interpretation remains unresolved until the prose and first paired example discrepancy is adjudicated.
 
 ### LA/LR/LG cardinality and payloads
 - LA count equals local ALT count;
