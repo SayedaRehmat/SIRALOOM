@@ -1016,7 +1016,7 @@
   "unresolved_questions": [
     "The reserved tables are not exhaustive of all legal custom fields; metadata-defined arbitrary fields remain allowed subject to VCF grammar and metadata declarations.",
     "The row review does not establish implementation support, parser correctness, or laboratory qualification.",
-    "The reserved FORMAT table spells the xanthosine aliases as MXaoN/DPMXaoN/ADMXaoN (lines 586-588), while the prose alias list and examples use MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740, 218). Resolve the exact case-sensitive canonical identifiers from source history/maintainer clarification before implementation."
+    "BLOCKING UPSTREAM SOURCE INCONSISTENCY (VCF45-FORMAT-XAON-ALIAS-CASE-001): The reserved FORMAT table spells MXaoN/DPMXaoN/ADMXaoN (VCFv4.5.tex:586-588), while prose alias lists spell MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740; unstranded example line 218). Upstream commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced both spellings in the same change; no later correction was found in retrieved file history and scoped issue/PR searches returned zero results. The source history does not establish canonical case. Obtain authoritative maintainer clarification or source correction before implementation; do not normalize or silently accept both."
   ],
   "independent_review": {
     "required": true,
@@ -1026,5 +1026,15 @@
   },
   "implementation_mapping": "NOT_STARTED",
   "test_execution": "NOT_STARTED",
-  "laboratory_qualification": "NOT_CLAIMED"
+  "laboratory_qualification": "NOT_CLAIMED",
+  "source_internal_ambiguities": [
+    {
+      "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+      "severity": "BLOCKING_SPECIFICATION_AMBIGUITY",
+      "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
+      "introduced_by_commit": "44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "evidence_url": "https://github.com/samtools/hts-specs/commit/44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "canonical_spelling": "UNRESOLVED"
+    }
+  ]
 }
