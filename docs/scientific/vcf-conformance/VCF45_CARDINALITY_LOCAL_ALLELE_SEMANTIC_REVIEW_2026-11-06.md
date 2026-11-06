@@ -9,7 +9,7 @@
 
 ## 1. Scope and evidence boundary
 
-This review extracts the VCFv4.5 source semantics relevant to FORMAT cardinalities `P`, `M`, `LA`, `LR`, and `LG), and to local-allele projection/equivalence. Source line numbers below refer to the exact pinned `VCFv4.5.tex` bytes identified above. This is a focused semantic review, not a whole-specification review or an independent second-person approval.
+This review extracts the VCFv4.5 source semantics relevant to FORMAT cardinalities `P`, `M`, `LA`, `LR`, and `LG`, and to local-allele projection/equivalence. Source line numbers below refer to the exact pinned `VCFv4.5.tex` bytes identified above. This is a focused semantic review, not a whole-specification review or an independent second-person approval.
 
 ## 2. Normative reserved FORMAT inventory
 
@@ -163,6 +163,31 @@ The source's examples show per-allele list alignment for PSL/PSO and matching PS
 
 ## 7. Number=M and base-modification fields
 
+### 7.1 General Number=M cardinality
+
+The previous draft of this review incorrectly stated that no standalone definition of Number=M had been located. That statement is withdrawn. The general FORMAT Number definitions at source lines 195–197 explicitly define M as one value for each possible base modification for the corresponding ChEBI ID. The following prose at lines 198–218 defines how that cardinality is determined and how values are ordered.
+
+This is a material correction to the earlier review; the prior “unresolved general definition” claim must not be used.
+
+The source-grounded semantics are:
+
+1. Number=M cardinality is determined by the genotype and the number of possible base modifications for the corresponding alleles.
+2. The key suffix must be one of A, C, G, T, U or N, identifying the base(s) on which the modification can occur.
+3. U is treated as synonymous with T.
+4. If any base-modification key is present for a sample, GT must be defined for that sample.
+5. For each allele, the number of values equals the number of bases on either strand in that allele sequence that could contain the modification.
+6. Values for an allele follow the order in which eligible bases occur in that allele sequence.
+7. For N modifications, both positive- and negative-strand values are represented, with the negative-strand value immediately after the positive-strand value.
+8. The number and order of alleles are determined by genotype order and phasing. Values follow GT allele order.
+9. Values for unphased alleles are aggregated and encoded at the position of the first occurrence of the unphased allele value.
+10. MISSING allele values and symbolic alleles contain no relevant bases and contribute no base-modification values.
+11. Unstranded base-modification information is stored at the base with the lowest POS; other values are MISSING.
+12. For unstranded N modifications, the value is stored on the positive strand and the negative-strand value is MISSING.
+
+Source locators: general Number definitions and governing prose, lines 195–218; reserved key table, lines 556–588; field-specific definitions and alias prose, lines 720–744; examples, lines 223–229 and 749–758.
+
+### 7.2 Reserved FORMAT key families and aliases
+
 The reserved table at lines 556–588 assigns Number=M to:
 - `M[0-9]+[ACGTUN]` (Float);
 - `DPM[0-9]+[ACGTUN]` (Integer);
@@ -170,21 +195,21 @@ The reserved table at lines 556–588 assigns Number=M to:
 - named modification aliases and their DPM/ADM counterparts.
 
 The detailed text at lines 720–744 specifies:
-- M fields are fractions of DNA or RNA bases modified with the given ChEBI ID;
-- the key regex families are reserved even when a ChEBI ID does not correspond to a valid base modification;
-- values are in [0,1];
+- M fields are fractions of DNA or RNA bases modified with the given ChEBI ID and their values must be between 0 and 1;
+- the key regex families are reserved even when the ChEBI ID does not correspond to a valid base modification;
 - the named aliases should be used instead of corresponding ChEBI-keyed names;
 - base-modification annotations on reference-block records apply to all applicable bases covered by that reference block;
-- DPM is depth able to detect the modification; ADM is depth with the modification;
-- the unstranded ADFM/ADRM forms are explicitly not reserved; the text states that Number=M fields are intrinsically stranded.
+- DPM is depth for reads able to detect the modification; ADM is depth for reads with the modification;
+- ADFM/ADRM key families are explicitly not reserved.
 
-**Unresolved source-semantic question:** this focused source review has not found a standalone general definition of the cardinality symbol `M` comparable to the explicit LAA/LA/LR/LG prose. The field-specific descriptions and reference-block semantics must be decomposed further before writing a generic cardinality validator for `M`. Do not reinterpret `M` as a fixed integer, allele count, ploidy, or arbitrary variable length without source-backed evidence.
+The Number=M cardinality algorithm must be sequence- and genotype-aware. It is not a fixed count, allele count, ploidy count, or unconstrained variable-length list. A validator must derive expected positions from the allele sequence, eligible base identity, strand rules, GT allele order/phasing, and missing/symbolic-allele handling.
 
-**Source consistency flags for independent review:**
+### 7.3 Source consistency flags requiring independent adjudication
+
 1. The change-history text says “Reserved all FORMAT keys of the form M[0-9]+”, whereas the reserved table and detailed definitions use `M[0-9]+[ACGTUN]`. The narrower full pattern must be reconciled with the abbreviated history statement.
-2. The table spells the xanthosine alias `MXaoN`; the detailed prose lists `MxaoN`. Do not silently normalize this case discrepancy.
-3. The detailed prose at line 742 says “Type=M fields” even though the reserved table places M in the Number column and uses Float/Integer in the Type column. Treat this as a source wording inconsistency for second-person review, not as permission to invent a Type=M declaration.
-4. The VCFv4.4 errata note says “Type=P added to FORMAT field type list” while the VCFv4.5 reserved table uses P in the Number column for PSL/PSO/PSQ. Preserve the source wording and require review of the intended distinction between Number=P and Type=P.
+2. The table spells the xanthosine alias `MXaoN`; the detailed prose lists `MxaoN`. Do not silently normalize case or accept both spellings without authoritative clarification.
+3. The detailed prose at line 742 says “Type=M fields” even though the reserved table places M in the Number column and uses Float/Integer in the Type column. Preserve this wording as a source inconsistency; do not invent a Type=M declaration.
+4. The VCFv4.4 errata note says “Type=P added to FORMAT field type list” while VCFv4.5's reserved table uses P in the Number column for PSL/PSO/PSQ. Preserve the source wording and require review of the intended distinction between Number=P and Type=P.
 
 ## 8. Conformance corpus requirements derived from this review
 
