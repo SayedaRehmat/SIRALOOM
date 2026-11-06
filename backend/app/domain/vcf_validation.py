@@ -1986,8 +1986,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         ]
         context_exists = any(
             deletion_carriers is None
-            or star_carriers is None
-            or bool(star_carriers & deletion_carriers)
+            or (
+                star_carriers is not None
+                and bool(star_carriers & deletion_carriers)
+            )
             for deletion_carriers in overlaps
         )
         if context_exists:

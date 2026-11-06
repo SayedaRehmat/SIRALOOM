@@ -824,6 +824,22 @@ def test_strict_validation_preserves_spanning_deletion_with_unmatched_local_carr
     assert profile["spanning_deletion_context_verified_records"] == 0
     assert profile["spanning_deletion_context_unverified_records"] == 1
 
+def test_strict_validation_does_not_claim_context_when_star_genotype_is_unavailable(tmp_path):
+    path = tmp_path / "missing-star-gt.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">'],
+        "1\t10\tdel1\tAT\tA\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t11\tstar1\tT\t*\t.\tPASS\t.\tDP\t12\n",
+        sample=True,
+    )
+
+    profile = validate_vcf_strict(path)
+
+    assert profile["spanning_deletion_context_verified_records"] == 0
+    assert profile["spanning_deletion_context_unverified_records"] == 1
+
+
 def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span(tmp_path):
     path = tmp_path / "symbolic-context-star.vcf"
     columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
