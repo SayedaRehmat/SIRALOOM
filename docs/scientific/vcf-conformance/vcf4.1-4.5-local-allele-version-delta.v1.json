@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-local-allele-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "VCFv4.5 local-allele Number=LA/LR/LG and FORMAT fields LAA/LAD/LADF/LADR/LEC/LGL/LGP/LPL/LPP; includes table VCF5.6.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "NO_LOCAL_ALLELE_FIELDS_FOUND_IN_PINNED_SOURCE_SCAN"
+    },
+    "VCFv4_2": {
+      "status": "NO_LOCAL_ALLELE_FIELDS_FOUND_IN_PINNED_SOURCE_SCAN"
+    },
+    "VCFv4_3": {
+      "status": "NO_LOCAL_ALLELE_FIELDS_FOUND_IN_PINNED_SOURCE_SCAN"
+    },
+    "VCFv4_4": {
+      "status": "NO_LOCAL_ALLELE_FIELDS_FOUND_IN_PINNED_SOURCE_SCAN"
+    },
+    "VCFv4_5": {
+      "status": "INTRODUCED",
+      "locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:501-502",
+        "VCFv4.5.tex:535-556",
+        "VCFv4.5.tex:686-718"
+      ]
+    }
+  },
+  "fields": {
+    "LAA": {
+      "number": ".",
+      "type": "Integer",
+      "meaning": "Distinct 1-based indices into ALT identifying the alleles relevant to the current sample.",
+      "locator": "VCFv4.5.tex:547; 686-694"
+    },
+    "LAD": {
+      "number": "LR",
+      "type": "Integer",
+      "meaning": "Local-allele representation of AD.",
+      "locator": "VCFv4.5.tex:548"
+    },
+    "LADF": {
+      "number": "LR",
+      "type": "Integer",
+      "meaning": "Local-allele representation of ADF.",
+      "locator": "VCFv4.5.tex:549"
+    },
+    "LADR": {
+      "number": "LR",
+      "type": "Integer",
+      "meaning": "Local-allele representation of ADR.",
+      "locator": "VCFv4.5.tex:550"
+    },
+    "LEC": {
+      "number": "LA",
+      "type": "Integer",
+      "meaning": "Local-allele representation of EC.",
+      "locator": "VCFv4.5.tex:551"
+    },
+    "LGL": {
+      "number": "LG",
+      "type": "Float",
+      "meaning": "Local-allele representation of GL.",
+      "locator": "VCFv4.5.tex:552"
+    },
+    "LGP": {
+      "number": "LG",
+      "type": "Float",
+      "meaning": "Local-allele representation of GP.",
+      "locator": "VCFv4.5.tex:553"
+    },
+    "LPL": {
+      "number": "LG",
+      "type": "Integer",
+      "meaning": "Local-allele representation of PL.",
+      "locator": "VCFv4.5.tex:554"
+    },
+    "LPP": {
+      "number": "LG",
+      "type": "Integer",
+      "meaning": "Local-allele representation of PP.",
+      "locator": "VCFv4.5.tex:555"
+    }
+  },
+  "number_definitions": {
+    "locator": "VCFv4.5.tex:195-197",
+    "LA": "Identical to Number=A except only ALT alleles defined in LAA are considered present.",
+    "LR": "Identical to Number=R except only ALT alleles defined in LAA are considered present.",
+    "LG": "Identical to Number=G except only ALT alleles defined in LAA are considered present."
+  },
+  "normative_and_recommended_rules": [
+    {
+      "force": "MUST",
+      "locator": "VCFv4.5.tex:501-502",
+      "rule": "If any local-allele field is present, LAA must also be present and precede all fields other than GT."
+    },
+    {
+      "force": "MUST",
+      "locator": "VCFv4.5.tex:686-693",
+      "rule": "LAA is a list of distinct integers giving 1-based ALT indices; it defines which alleles are in play and their interpretation order; LAA is required when interpreting local-allele fields and must be present if any local-allele fields are neither omitted nor MISSING."
+    },
+    {
+      "force": "MUST",
+      "locator": "VCFv4.5.tex:694",
+      "rule": "Because BCF encodes zero-length vectors as MISSING, a MISSING LAA is treated as an empty vector (REF-only site) if any local-allele fields are neither omitted nor MISSING."
+    },
+    {
+      "force": "SEMANTIC_EQUIVALENCE",
+      "locator": "VCFv4.5.tex:695-698",
+      "rule": "Specification-defined A/R/G FORMAT fields have local equivalents interpreted like their matching global field, except for the ALT alleles considered present and the order in which they are interpreted."
+    },
+    {
+      "force": "MUST",
+      "locator": "VCFv4.5.tex:699",
+      "rule": "GQ remains genotype quality even when GT is given against local alleles."
+    },
+    {
+      "force": "SHOULD_NOT",
+      "locator": "VCFv4.5.tex:713",
+      "rule": "Implementation-defined Number=LA local-allele fields should not be used when distinguishing zero-length data from missing data is required at REF-only sites, because BCF encodes empty vectors as missing."
+    },
+    {
+      "force": "RECOMMENDED",
+      "locator": "VCFv4.5.tex:715-717",
+      "rule": "VCF libraries are recommended to expose an API that abstracts local-allele encoding from consumers and accesses values through corresponding non-local keys."
+    }
+  ],
+  "example": {
+    "table": "VCF5.6",
+    "locator": "VCFv4.5.tex:701-711",
+    "finding": "Shows local and global field representations encoding the same information across multiallelic records; it is an informative example, not a standalone obligation."
+  },
+  "remaining": [
+    "Independent reviewer must verify Number=LA/LR/LG mapping, LAA presence/order, REF-only empty-vector semantics and local/global equivalence.",
+    "Map all local-allele clauses and fields to atomic requirement IDs.",
+    "Add positive/negative tests for sparse multiallelic samples, duplicate/out-of-order LAA, missing LAA, zero-length versus MISSING BCF vectors, REF-only sites and global/local equivalence.",
+    "No implementation or test execution is claimed."
+  ]
+}
