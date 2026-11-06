@@ -12,7 +12,7 @@ from backend.app.domain.enums import ArtifactType
 from backend.app.domain.ingestion import ValidationResult
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Artifact, AuditEvent, Case, Organization
+from backend.app.infrastructure.db.models import Artifact, AuditEvent, Case, Organization, User
 
 
 @pytest.fixture
@@ -23,12 +23,21 @@ def validation_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     )
     Base.metadata.create_all(engine)
     factory = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
-    organization_id, case_id = uuid4(), uuid4()
+    organization_id, case_id, user_id = uuid4(), uuid4(), uuid4()
     with factory() as db:
         organization = Organization(
             id=organization_id,
             name="Validation Lab",
             external_identifier=str(organization_id),
+        )
+        user = User(
+            id=user_id,
+            organization_id=organization_id,
+            external_subject=str(user_id),
+            email=f"{user_id}@test.local",
+            display_name="Validation Worker Test",
+            role="organization_admin",
+            status="ACTIVE",
         )
         case = Case(
             id=case_id,
@@ -37,9 +46,9 @@ def validation_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             status="VALIDATING",
             clinical_context={},
             language="en",
-            created_by=None,
+            created_by=user_id,
         )
-        db.add_all([organization, case])
+        db.add_all([organization, user, case])
         db.commit()
 
     storage_root = tmp_path / "artifacts"
