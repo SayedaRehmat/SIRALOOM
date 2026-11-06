@@ -1647,6 +1647,14 @@ def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str
             f"Invalid GT separator/allele structure at line {line_no}: {gt!r}",
             code="VCF_GENOTYPE_INVALID",
         )
+    if any(
+        token != "." and re.fullmatch(r"(?:0|[1-9][0-9]*)", token) is None
+        for token in tokens
+    ):
+        raise StrictVCFValidationError(
+            f"GT allele indexes must be non-negative decimal integers without leading zeros at line {line_no}: {gt!r}",
+            code="VCF_GENOTYPE_INVALID",
+        )
     # VCFv4.4 introduced per-allele partial phasing. In VCFv4.1-4.3,
     # the genotype is either fully phased or fully unphased, so mixing
     # '/' and '|' separators is not a valid GT representation.
