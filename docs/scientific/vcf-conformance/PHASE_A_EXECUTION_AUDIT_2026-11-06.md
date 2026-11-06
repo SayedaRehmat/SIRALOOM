@@ -382,3 +382,61 @@ The table adjudication queue now records:
 The xanthosine alias case discrepancy remains unresolved upstream. It is not safe to choose one spelling or silently accept both. The project must obtain authoritative maintainer clarification or a specification correction before implementing those aliases.
 
 The GitHub content connector still did not permit a full independent re-read of the large atomic requirement ledger blob in this session. Row and version artifacts were validated structurally from their retrievable contents; complete ledger-to-source hash re-computation remains an explicit independent verification task.
+
+
+## 14. VCFv4.5 atomic semantic addendum — 2026-11-06 continuation
+
+### 14.1 New source review corrections
+
+The focused VCFv4.5 cardinality review was expanded against the pinned source at HTS-specs commit `510c107ba89aa13113818c9e4fa3071283cb7f7b`.
+
+Two material corrections were made to the first draft of the semantic review:
+
+1. **Number=M was explicitly defined and must not be left unresolved.** VCFv4.5.tex:195–202 defines Number=M as one value per possible base modification for the corresponding ChEBI ID and states that cardinality is determined by genotype and possible modifications for the corresponding alleles. The detailed rules at 201–218 define eligible-base counting, sequence order, N-strand adjacency, GT/phasing order, unphased aggregation, missing/symbolic allele behavior and unstranded encoding. The reserved table and field-specific prose at 556–588 and 720–744 define key families, aliases, ranges and reference-block behavior. The earlier claim that no general Number=M definition was found is withdrawn.
+2. **The local-allele worked example has a GT inconsistency.** At VCFv4.5.tex:703–704, the local row has GT `2/4` while its paired global AD/PL row has GT `2/2`. The remaining paired examples do not show the same discrepancy. The prose says genotype may be given against local alleles, but the first pair does not establish an unambiguous global/local GT index mapping. The semantic review now marks this unresolved and prohibits using that first pair as a full-record equivalence oracle until the source is clarified.
+
+The Number=P section was also corrected to quote the actual general definition at VCFv4.5.tex:195–197: one value for each allele value defined in GT. It separately records the PSQ field-specific “one per phase set in PSL” wording as an open cardinality reconciliation item. The explicit PSQ missing-value clarification is scoped to VCFv4.5; VCFv4.4 is marked CHANGED, not treated as having the same clause.
+
+### 14.2 Supplemental atomic requirements
+
+Created `vcf4.5-cardinality-local-allele-atomic-addendum.v1.json` with **34 supplemental atomic requirement records**, IDs `VCF-REQ-000227` through `VCF-REQ-000260`.
+
+Coverage of this supplemental batch:
+- Number=LA, LR and LG cardinality;
+- LAA distinct 1-based ALT indices, order, presence and BCF missing/empty-vector semantics;
+- local/global field semantic equivalence and GQ behavior;
+- Number=M cardinality and GT dependency;
+- eligible-base counting and ordering, U/T synonymy, N-strand adjacency, GT/phasing order and unphased aggregation;
+- missing/symbolic allele behavior, unstranded storage, fraction bounds, reserved key patterns, aliases and reference-block propagation;
+- Number=P cardinality and PSL/PSO/PSQ field-specific rules, including the VCFv4.5 PSQ missing-value clarification.
+
+The batch uses the existing atomic ledger schema shape. A structural check against the schema's required requirement fields and enumerated domains found:
+- 34 records;
+- 34 unique requirement IDs;
+- no missing required fields;
+- no invalid domain, normative-force, requirement-kind or version-applicability enum values;
+- source references present for every record.
+
+This was a schema-directed structural check, **not** a formal JSON Schema engine run. All records remain `IN_REVIEW`; none is independently approved, implementation-mapped or test-executed.
+
+### 14.3 Integration boundary
+
+The canonical `atomic-requirements.v1.json` was not overwritten because the GitHub file-content connector returned zero content for that large blob despite returning its non-empty SHA. The supplemental batch is therefore a separate addendum and is not yet merged into the canonical 226-record ledger. Before integration, retrieve the full ledger bytes through a verified route, check for ID collisions and duplicates, merge the 34 records, recompute dependent hashes, and validate the entire resulting ledger against `atomic-requirement-ledger.schema.json`. Do not claim the canonical ledger contains 260 records until that merge and verification are complete.
+
+### 14.4 Remaining VCFv4.5 semantic work
+
+1. Resolve the local GT mapping contradiction through authoritative source clarification or a documented maintainer issue; until then, retain the raw GT and LAA independently and do not infer a remapping rule.
+2. Resolve Number=P versus PSQ per-phase-set cardinality for repeated phase-set identifiers.
+3. Resolve xanthosine alias capitalization (table `MXaoN`/DPMXaoN/ADMXaoN versus prose `MxaoN`/DPMxaoN/ADMxaoN) without silently accepting or normalizing either form.
+4. Continue full source-to-atomic decomposition beyond the reserved-field subset: grammar, all tables, prose, footnotes, definitions, non-modal constraints, examples and cross-references.
+5. Complete independent review before promoting any author candidate to reviewed status.
+
+### 14.5 VCFv4.1–4.4 and VCFv4.0 work remains active
+
+The local-allele and base-modification families are identified as VCFv4.5 introductions in the existing version-delta artifacts. Number=P and PSL/PSO/PSQ are introduced in VCFv4.4 and retained in VCFv4.5; the explicit PSQ missing-value clarification is VCFv4.5-specific. The broader VCFv4.1–4.4 reconciliation remains incomplete and must cover all reserved fields, GT/GL semantics, SV/breakend behavior, grammar, tables, footnotes and cross-references rather than only these newly reviewed topics.
+
+VCFv4.0 source discovery continues separately. The IGSR historical page remains a candidate only; original immutable source bytes and a defensible SHA-256 remain uncaptured. No VCFv4.0 source status is promoted.
+
+### 14.6 Latest commit and qualification state
+
+Latest commit recorded for this continuation: `c4828d8746aaa06031a7d6813895f331af82d1f0` (PSQ VCFv4.4/4.5 applicability correction). The semantic review, source-discovery audit and supplemental atomic addendum are committed on the research branch. No parser/validator/normalizer code was changed; no conformance tests were run; no CI pass or laboratory qualification is claimed.
