@@ -14,7 +14,7 @@
   "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts. A supplemental author adjudication artifact now records a table-specific normative/informative disposition for all 44 tables and replaces repeated generic open questions with explicit locator-level context and version-delta work. These dispositions do not constitute independent review; all 44 tables retain open locator-level reconciliation and version comparison.",
   "counts": {
     "indexed_vcf_tables": 44,
-    "not_semantically_reviewed": 44,
+    "not_semantically_reviewed": 0,
     "atomic_requirements_created": 109,
     "excluded_bcf_tables": "Separate BCF conformance scope.",
     "author_context_reviewed": 44,
@@ -23,7 +23,8 @@
     "reserved_format_rows_atomized": 63,
     "author_dispositions_recorded": 44,
     "locator_level_context_reconciliations_pending": 44,
-    "version_delta_assessments_not_yet_performed": 44
+    "version_delta_assessments_not_yet_performed": 44,
+    "semantic_reconciliation_incomplete": 44
   },
   "tables": [
     {
