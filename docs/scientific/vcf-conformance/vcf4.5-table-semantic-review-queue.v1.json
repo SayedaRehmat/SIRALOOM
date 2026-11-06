@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_LOCATORS_RECONCILED_FOR_ALL_44_TABLES_VERSION_DELTA_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_VERSION_APPLICABILITY_RECORDED_FOR_ALL_44_TABLES_FULL_CLAUSE_DELTA_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -11,7 +11,7 @@
     "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "All 44 VCF-only table environments indexed by the VCFv4.5 source inventory. Additional raw TeX table environments belong to BCF serialization and are excluded from this VCF-text queue.",
-  "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts. A supplemental author adjudication artifact now records a table-specific normative/informative disposition for all 44 tables and replaces repeated generic open questions with explicit locator-level context and version-delta work. These dispositions do not constitute independent review; all 44 tables retain open locator-level reconciliation and version comparison. Exact source-context line ranges and contextual findings are now recorded per table using the row-semantic, SV/breakend and pedigree/gVCF context reviews. This closes the author locator-capture subtask only; all 44 version-delta assessments and all independent reviews remain open.",
+  "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts. A supplemental author adjudication artifact now records a table-specific normative/informative disposition for all 44 tables and replaces repeated generic open questions with explicit locator-level context and version-delta work. These dispositions do not constitute independent review; all 44 tables retain open locator-level reconciliation and version comparison. Exact source-context line ranges and contextual findings are now recorded per table using the row-semantic, SV/breakend and pedigree/gVCF context reviews. This closes the author locator-capture subtask only; all 44 version-delta assessments and all independent reviews remain open. A preliminary section-level applicability comparison against VCFv4.1-4.4 is now recorded per table. It identifies presence/absence and relevant source locators, but does not establish exact table identity or complete clause-level semantic deltas. All 44 tables still require full clause-level version reconciliation.",
   "counts": {
     "indexed_vcf_tables": 44,
     "not_semantically_reviewed": 0,
@@ -23,11 +23,13 @@
     "reserved_format_rows_atomized": 63,
     "author_dispositions_recorded": 44,
     "locator_level_context_reconciliations_pending": 0,
-    "version_delta_assessments_not_yet_performed": 44,
+    "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
     "open_review_questions": 45,
-    "author_context_locator_reconciliations_complete": 44
+    "author_context_locator_reconciliations_complete": 44,
+    "preliminary_version_comparisons_recorded": 44,
+    "full_clause_level_version_reconciliations_pending": 44
   },
   "tables": [
     {
@@ -59,7 +61,7 @@
         "VCF-REQ-000121"
       ],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the eight percent-encoding mappings and normative control/line-ending rules against the 4.3 and 4.4 sources; verify whether any prior-version encoding rules exist outside a dedicated section. Preserve exact uppercase hex and delimiter exceptions."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
@@ -74,7 +76,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -86,7 +88,27 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "PRESENT",
+          "locator": "VCFv4.3.tex:75-95"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:75-95"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:73-93"
+        }
+      }
     },
     {
       "table_id": "VCF5.2",
@@ -108,7 +130,7 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
@@ -123,7 +145,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -144,7 +166,25 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_4": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:223-229; 720-758"
+        }
+      }
     },
     {
       "table_id": "VCF5.3",
@@ -188,7 +228,7 @@
         "VCF-REQ-000163"
       ],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete row-by-row semantic delta adjudication for all 21 INFO rows, especially END lifecycle, SVLEN cardinality/meaning and SV-specific fields; validate every row's prose/cross-reference locator across all versions. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
@@ -203,7 +243,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -224,7 +264,29 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.1.tex:70-90 and reserved INFO list"
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.2.tex:70-90 and reserved INFO list"
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.3.tex:445-478"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.4.tex:463-500"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.5.tex:443-481"
+        }
+      }
     },
     {
       "table_id": "VCF5.4",
@@ -310,7 +372,7 @@
         "VCF-REQ-000226"
       ],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5.",
+        "Complete row-by-row semantic delta adjudication for the 63 FORMAT rows; resolve GLE removal (4.3), PSL/PSO/PSQ addition (4.4), and the 44-row addition in 4.5. Preserve Number=LA/LR/LG/P/M as 4.5-specific where evidenced; resolve xanthosine alias case ambiguity before implementation. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json.",
         "Upstream VCFv4.5 source inconsistency confirmed in history: commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced MXaoN/DPMXaoN/ADMXaoN in the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN in prose alias lists. No later correction was found in retrieved VCFv4.5 file history and scoped issue/PR searches returned no result. Canonical case remains unresolved; obtain authoritative maintainer clarification or source correction before implementation. Do not normalize or silently accept both."
       ],
       "independent_review_status": "NOT_STARTED",
@@ -326,7 +388,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_WITH_OPEN_UPSTREAM_SOURCE_AMBIGUITY_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED",
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
         "source_internal_issue_ids": [
           "VCF45-FORMAT-XAON-ALIAS-CASE-001"
         ]
@@ -368,7 +430,29 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.1.tex:193-222"
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.2.tex:210-239"
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.3.tex:550-556 and genotype field definitions"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.4.tex:576-582 and genotype field definitions"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.5.tex:517-598"
+        }
+      }
     },
     {
       "table_id": "VCF5.5",
@@ -390,7 +474,7 @@
       "review_status": "AUTHOR_ALGORITHM_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the 4.1/4.2 diploid likelihood ordering with the 4.3 general-ploidy nested-loop/recursive algorithm, inclusive loop-boundary footnote and combinatorial index; confirm 4.4/4.5 retention and atomize each algorithm clause separately from the illustrative matrix."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
@@ -405,7 +489,7 @@
         "status": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX",
         "normative_or_informative_status": "MIXED_DISPOSITION_RECORDED_ATOMIC_PROSE_MAPPING_OPEN",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -417,7 +501,29 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "DIPLOID_ORDERING_DESCRIPTION",
+          "locator": "VCFv4.1.tex:207"
+        },
+        "VCFv4_2": {
+          "status": "DIPLOID_ORDERING_DESCRIPTION",
+          "locator": "VCFv4.2.tex:224"
+        },
+        "VCFv4_3": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.3.tex:507-536"
+        },
+        "VCFv4_4": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.4.tex:533-562"
+        },
+        "VCFv4_5": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.5.tex:632-661"
+        }
+      }
     },
     {
       "table_id": "VCF5.6",
@@ -439,7 +545,7 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Confirm the local-allele family is introduced in 4.5; atomize LAA presence/order, local A/R/G equivalents, BCF empty-vector semantics, and the conditions under which local/global representations are equivalent."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
@@ -454,7 +560,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -466,7 +572,25 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4_4": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:188-202; 686-718"
+        }
+      }
     },
     {
       "table_id": "VCF5.7",
@@ -488,7 +612,7 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
@@ -503,7 +627,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -515,7 +639,25 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_4": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:720-758"
+        }
+      }
     },
     {
       "table_id": "VCF5.8",
@@ -537,7 +679,7 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
@@ -552,7 +694,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -564,7 +706,26 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:496; 598-613"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:594; 771-786"
+        }
+      }
     },
     {
       "table_id": "VCF5.9",
@@ -586,7 +747,7 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
@@ -601,7 +762,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -613,7 +774,26 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:497; 615-635"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:595-596; 788-809"
+        }
+      }
     },
     {
       "table_id": "VCF5.10",
@@ -635,7 +815,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -650,7 +830,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -662,7 +842,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.11",
@@ -684,7 +891,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -699,7 +906,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -711,7 +918,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.12",
@@ -733,7 +967,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -748,7 +982,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -760,7 +994,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.13",
@@ -782,7 +1043,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -797,7 +1058,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -809,7 +1070,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.14",
@@ -831,7 +1119,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -846,7 +1134,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -858,7 +1146,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.15",
@@ -880,7 +1195,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -895,7 +1210,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -907,7 +1222,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.16",
@@ -929,7 +1271,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -944,7 +1286,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -956,7 +1298,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.17",
@@ -978,7 +1347,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -993,7 +1362,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1005,7 +1374,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.18",
@@ -1027,7 +1423,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1042,7 +1438,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1054,7 +1450,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.19",
@@ -1076,7 +1499,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1091,7 +1514,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1103,7 +1526,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.20",
@@ -1125,7 +1575,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1140,7 +1590,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1152,7 +1602,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.21",
@@ -1174,7 +1651,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1189,7 +1666,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1201,7 +1678,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.22",
@@ -1223,7 +1727,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1238,7 +1742,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1250,7 +1754,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.23",
@@ -1272,7 +1803,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1287,7 +1818,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1299,7 +1830,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.24",
@@ -1321,7 +1879,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare the exact example records and surrounding normative anchoring/sorting clauses in each version. Preserve the distinction between illustrative molecular alignments and VCF's loss of explicit molecular equivalence; do not infer a canonical normalization algorithm."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -1336,7 +1894,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1348,7 +1906,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      }
     },
     {
       "table_id": "VCF5.25",
@@ -1370,7 +1955,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1385,7 +1970,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1397,7 +1982,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.26",
@@ -1419,7 +2031,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1434,7 +2046,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1446,7 +2058,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.27",
@@ -1468,7 +2107,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1483,7 +2122,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1504,7 +2143,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.28",
@@ -1526,7 +2192,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1541,7 +2207,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1553,7 +2219,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.29",
@@ -1575,7 +2268,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1590,7 +2283,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1602,7 +2295,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.30",
@@ -1624,7 +2344,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1639,7 +2359,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1651,7 +2371,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.31",
@@ -1673,7 +2420,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1688,7 +2435,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1700,7 +2447,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.32",
@@ -1722,7 +2496,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1737,7 +2511,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1749,7 +2523,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.33",
@@ -1771,7 +2572,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1786,7 +2587,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1798,7 +2599,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.34",
@@ -1820,7 +2648,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1835,7 +2663,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1847,7 +2675,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.35",
@@ -1869,7 +2724,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1884,7 +2739,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1896,7 +2751,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.36",
@@ -1918,7 +2800,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1933,7 +2815,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1945,7 +2827,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.37",
@@ -1967,7 +2876,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1982,7 +2891,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -1994,7 +2903,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.38",
@@ -2016,7 +2952,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -2031,7 +2967,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2043,7 +2979,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.39",
@@ -2065,7 +3028,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -2080,7 +3043,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2092,7 +3055,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.40",
@@ -2114,7 +3104,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -2129,7 +3119,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2141,7 +3131,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.41",
@@ -2163,7 +3180,7 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -2178,7 +3195,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2190,7 +3207,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      }
     },
     {
       "table_id": "VCF5.42",
@@ -2212,7 +3256,7 @@
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare SAMPLE Genomes/Mixture/Description semantics and the two example data models across all five versions; preserve descriptive examples as non-mandatory deconvolution behavior."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
@@ -2227,7 +3271,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2239,7 +3283,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:819-860",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:836-877",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:1262-1307",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1571-1616",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1731-1774",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        }
+      }
     },
     {
       "table_id": "VCF5.43",
@@ -2261,7 +3332,7 @@
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare PEDIGREE syntax, parent/ancestor cardinality, clonal lineage and haplotype identity semantics across all five versions; preserve modal force and distinguish suggestions from requirements."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
@@ -2276,7 +3347,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2297,7 +3368,34 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:132; 861-906",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4_2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:149; 878-923",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:281; 1308-1368",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:295; 1617-1677",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:344; 1776-1843",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        }
+      }
     },
     {
       "table_id": "VCF5.44",
@@ -2324,7 +3422,7 @@
         "VCF-REQ-000129"
       ],
       "open_questions": [
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Compare 4.3/4.4 INFO END reference blocks with 4.5 FORMAT LEN sample-specific blocks, <*> and NON_REF alias, LAA constraints, missing GT/FORMAT restrictions and base-modification propagation. Keep gVCF producer conventions separate from core VCF normative requirements."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
@@ -2339,7 +3437,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -2369,7 +3467,27 @@
           "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
         }
-      ]
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4_1": {
+          "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
+        },
+        "VCFv4_2": {
+          "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
+        },
+        "VCFv4_3": {
+          "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
+          "locator": "VCFv4.3.tex:1428-1460"
+        },
+        "VCFv4_4": {
+          "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
+          "locator": "VCFv4.4.tex:1686-1747"
+        },
+        "VCFv4_5": {
+          "status": "PRESENT_FORMAT_LEN_AND_STAR_ALLELE",
+          "locator": "VCFv4.5.tex:1846-1878"
+        }
+      }
     }
   ],
   "review_controls": {
