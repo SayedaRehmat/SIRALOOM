@@ -147,7 +147,7 @@ The reserved table defines:
 - PSO: Number=P, Integer;
 - PSQ: Number=P, Integer.
 
-Source lines 742–743 of the version-change history say Number=P was added for fields whose cardinality matches sample ploidy/local copy number. The detailed definitions at lines 747 onward (and subsequent PSL/PSO/PSQ definitions) provide field-specific list semantics:
+The version-change history at source line 2731 says Number=P was added for fields whose cardinality matches sample ploidy/local copy number. The reserved table at lines 594–596 assigns P to PSL/PSO/PSQ. Their detailed definitions in the FORMAT genotype-field prose provide field-specific list semantics:
 
 - PSL is a list of phase sets, one for each allele value specified in GT. Unphased alleles (no preceding `|`) use MISSING at the corresponding list position.
 - PSO is a list of phase-set ordinals. Its MISSING value is used when the corresponding PSO value is missing. It describes derivative-chromosome traversal order; it is required in the specified symbolic-SV/breakpoint circumstances.
