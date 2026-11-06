@@ -217,6 +217,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
         ]
+      },
+      {
+        "id": "v41_number_r_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.1 supports Number=A and G; Number=R was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -413,6 +425,18 @@
           "##fileformat=VCFv4.2",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1|0"
+        ]
+      },
+      {
+        "id": "v42_number_r_valid",
+        "category": "version_specific_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.2 adds Number=R for one value per allele including REF",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
         ]
       }
     ],
@@ -2032,6 +2056,36 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
         ]
+      },
+      {
+        "id": "v40_number_a_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "clause_ids": [
+          "V40-CORE-INFO-NUMBER-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 Number is a fixed integer or '.'; per-ALT A cardinality is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele frequency\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAF=0.5"
+        ]
+      },
+      {
+        "id": "v40_number_g_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "clause_ids": [
+          "V40-CORE-FORMAT-NUMBER-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 Number is a fixed integer or '.'; per-genotype G cardinality is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:GL\t0/1:-1,-2,-3"
+        ]
       }
     ]
   },
@@ -2061,7 +2115,9 @@
             "legacy_multiallelic_genotype_valid",
             "legacy_out_of_range_gt_rejected",
             "legacy_phased_gt_valid",
-            "mixed_gt_phase_separators_invalid_v40"
+            "mixed_gt_phase_separators_invalid_v40",
+            "v40_number_a_rejected",
+            "v40_number_g_rejected"
           ]
         },
         {
@@ -2096,7 +2152,8 @@
           "fixture_ids": [
             "duplicate_header_identifier_invalid",
             "mateid_reserved_header_definition_invalid",
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v41_number_r_rejected"
           ]
         },
         {
@@ -2180,7 +2237,8 @@
           "section_title": "Meta-information lines",
           "fixture_ids": [
             "duplicate_header_identifier_invalid",
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v42_number_r_valid"
           ]
         },
         {
