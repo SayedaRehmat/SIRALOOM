@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_ALL_44_ROW_VERSION_DELTAS_RECONCILED_FIELD_LEVEL_CLAUSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_INFO_RESERVED_ROWS_RECONCILED_FORMAT_FIELD_MAPPING_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,7 +25,7 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 2,
+    "full_clause_level_version_reconciliations_pending": 1,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
@@ -35,7 +35,8 @@
     "small_variant_representation_version_deltas_reconciled": 15,
     "breakend_version_deltas_reconciled": 17,
     "sample_mixture_pedigree_version_deltas_reconciled": 2,
-    "reserved_info_format_row_delta_matrices_reconciled": 2
+    "reserved_info_format_row_delta_matrices_reconciled": 2,
+    "info_reserved_row_mappings_complete": 1
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -312,9 +313,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING",
-          "remaining_work": "Complete exact field-by-field normative prose and footnote mapping for the 21 INFO rows across VCFv4.1-4.5, especially END computed/deprecated behavior, SVLEN cardinality, SVTYPE deprecation, confidence intervals, CN and SV-specific fields; map each clause to atomic IDs.",
-          "finding": "The five-version reserved INFO/FORMAT row matrix and mechanical version changes are complete in vcf4.1-4.5-reserved-info-format-field-matrix.v1.json and vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json. This closes row inventory/version-delta comparison but not the field-by-field normative prose/footnote mapping or atomic requirement linkage."
+          "status": "AUTHOR_INFO_RESERVED_ROW_MAPPING_COMPLETE_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify all 21 field interpretations and map them to atomic requirement IDs/tests; continue separate SV INFO field mapping.",
+          "finding": "All 21 reserved INFO row IDs now have per-version presence, exact source lines, descriptions, Number/Type where specified, mechanical deltas and VCFv4.5 semantic interpretations in vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json. AD/ADF/ADR are added in 4.3; END is deprecated in 4.5. SV-specific INFO definitions outside table VCF5.3 remain in the separate SV crosswalk."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -365,7 +366,8 @@
       "version_delta_artifacts": [
         "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
         "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
-      ]
+      ],
+      "version_delta_artifact": "vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json"
     },
     {
       "table_id": "VCF5.4",
