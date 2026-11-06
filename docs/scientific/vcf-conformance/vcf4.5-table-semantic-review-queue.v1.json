@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_VERSION_APPLICABILITY_RECORDED_FOR_ALL_44_TABLES_FULL_CLAUSE_DELTA_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_ORDERING_DELTA_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,10 +26,11 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 45,
+    "open_review_questions": 44,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 44
+    "full_clause_level_version_reconciliations_pending": 43,
+    "genotype_ordering_version_delta_reconciled": 1
   },
   "tables": [
     {
@@ -473,9 +474,7 @@
       "semantic_review_target": "Reconcile combinatorial ordering with pseudocode, loop boundaries, ploidy, allele count and worked indices; verify mathematical equivalence.",
       "review_status": "AUTHOR_ALGORITHM_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Compare the 4.1/4.2 diploid likelihood ordering with the 4.3 general-ploidy nested-loop/recursive algorithm, inclusive loop-boundary footnote and combinatorial index; confirm 4.4/4.5 retention and atomize each algorithm clause separately from the illustrative matrix."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
       "review_notes": "Checked diploid triangular special case against general-ploidy nested loops, recursive algorithm, inclusive loop footnote, combinatorial index formula and worked examples.",
@@ -489,7 +488,7 @@
         "status": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX",
         "normative_or_informative_status": "MIXED_DISPOSITION_RECORDED_ATOMIC_PROSE_MAPPING_OPEN",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_GENOTYPE_ORDERING_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -523,7 +522,8 @@
           "status": "GENERAL_PLOIDY_ALGORITHM",
           "locator": "VCFv4.5.tex:632-661"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-genotype-ordering-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.6",
