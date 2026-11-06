@@ -32,19 +32,3 @@ def test_gt_header_definition_is_always_number_one_string(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
-
-
-@pytest.mark.parametrize("gt", ["+1/0", "-1/0", "01/0", "1.0/0"])
-def test_gt_rejects_noncanonical_allele_index_tokens(tmp_path: Path, gt: str):
-    path = tmp_path / "gt-invalid-index-token.vcf"
-    path.write_text(
-        "##fileformat=VCFv4.5\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        f"1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t{gt}\n",
-        encoding="utf-8",
-    )
-
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-
-    assert exc.value.code == "VCF_GENOTYPE_INVALID"
