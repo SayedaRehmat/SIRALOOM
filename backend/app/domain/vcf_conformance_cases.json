@@ -1960,6 +1960,20 @@
           "2\t2\t.\tA\tG\t.\tPASS\t.",
           "1\t3\t.\tA\tT\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "mixed_gt_phase_separators_invalid_v40",
+        "category": "genotype_phasing",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "clause_ids": [
+          "V40-CORE-GENOTYPE-PHASE-SEPARATOR-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 genotype encoding defines a genotype as phased or unphased using one separator convention; partial phasing is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
+        ]
       }
     ]
   },
@@ -1985,10 +1999,11 @@
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
-            "legacy_multiallelic_genotype_valid",
             "legacy_missing_gt_valid",
+            "legacy_multiallelic_genotype_valid",
+            "legacy_out_of_range_gt_rejected",
             "legacy_phased_gt_valid",
-            "legacy_out_of_range_gt_rejected"
+            "mixed_gt_phase_separators_invalid_v40"
           ]
         },
         {
@@ -2049,6 +2064,7 @@
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "mixed_gt_phase_separators_invalid_v41",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
@@ -2131,6 +2147,7 @@
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "mixed_gt_phase_separators_invalid_v42",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
@@ -2215,6 +2232,7 @@
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "mixed_gt_phase_separators_invalid_v43",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
@@ -2304,6 +2322,7 @@
             "leading_phase_separator_valid",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
+            "partial_gt_phasing_valid_v44",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
             "vcf45_local_allele_encoding_rejected"
@@ -2403,6 +2422,7 @@
             "number_m_unphased_duplicate_alleles_aggregate",
             "number_p_triploid_cardinality_valid",
             "out_of_range_genotype_allele_invalid",
+            "partial_gt_phasing_valid_v45",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
             "unspecified_allele_len_end_mismatch_invalid",
