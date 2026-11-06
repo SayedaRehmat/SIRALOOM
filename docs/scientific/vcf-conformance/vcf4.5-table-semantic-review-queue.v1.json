@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_ORDERING_DELTA_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_AND_PHASE_SET_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,11 +26,12 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 44,
+    "open_review_questions": 42,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 43,
-    "genotype_ordering_version_delta_reconciled": 1
+    "full_clause_level_version_reconciliations_pending": 41,
+    "genotype_ordering_version_delta_reconciled": 1,
+    "phase_set_list_version_deltas_reconciled": 2
   },
   "tables": [
     {
@@ -678,9 +679,7 @@
       "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
       "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
@@ -694,7 +693,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -725,7 +724,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:594; 771-786"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.9",
@@ -746,9 +746,7 @@
       "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Verify the PSL/PSO/PSQ rules introduced in 4.4 and retained in 4.5, including per-GT-allele alignment, PS/PSL non-interoperability, derivative-chromosome traversal order, cross-record breakend constraints and missing-value alignment."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
       "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
@@ -762,7 +760,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -793,7 +791,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:595-596; 788-809"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.10",
