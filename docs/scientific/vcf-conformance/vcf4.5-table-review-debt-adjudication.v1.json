@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_40_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_AND_SAMPLE_PEDIGREE_DELTAS_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_42_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_DELTAS_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,7 +25,7 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 4,
+    "full_clause_level_version_reconciliations_pending": 2,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
@@ -33,7 +33,8 @@
     "character_encoding_version_delta_reconciled": 1,
     "local_allele_version_deltas_reconciled": 1,
     "small_variant_representation_version_deltas_reconciled": 15,
-    "breakend_version_deltas_reconciled": 17
+    "breakend_version_deltas_reconciled": 17,
+    "sample_mixture_pedigree_version_deltas_reconciled": 2
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -4003,9 +4004,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Compare SAMPLE Genomes/Mixture/Description semantics and the two example data models across all five versions; preserve descriptive examples as non-mandatory deconvolution behavior.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify PEDIGREE grammar, modal force, sample/genome distinctions and CN semantics; map to atomic IDs and tests.",
+          "finding": "The sample/genome mixture and pedigree sections are present across all versions. VCFv4.3 changes PEDIGREE syntax from Derived/Name_0 to explicit ID attributes; VCFv4.4 removes DPADJ/CNADJ/CICNADJ and changes CN semantics, with examples updated to AD/CN; VCFv4.5 retains the reviewed model. See vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -4048,7 +4049,8 @@
           "locator": "VCFv4.5.tex:1731-1774",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.43",
@@ -4102,9 +4104,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Compare PEDIGREE syntax, parent/ancestor cardinality, clonal lineage and haplotype identity semantics across all five versions; preserve modal force and distinguish suggestions from requirements.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify PEDIGREE grammar, modal force, sample/genome distinctions and CN semantics; map to atomic IDs and tests.",
+          "finding": "The sample/genome mixture and pedigree sections are present across all versions. VCFv4.3 changes PEDIGREE syntax from Derived/Name_0 to explicit ID attributes; VCFv4.4 removes DPADJ/CNADJ/CICNADJ and changes CN semantics, with examples updated to AD/CN; VCFv4.5 retains the reviewed model. See vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -4156,7 +4158,8 @@
           "locator": "VCFv4.5.tex:344; 1776-1843",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.44",
