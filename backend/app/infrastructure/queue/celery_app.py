@@ -304,7 +304,7 @@ if Celery is not None:
 
     def publish_artifact_validation_dispatch(dispatch_id):
         """Publish one durable artifact-validation intent to its pinned toolchain queue."""
-        from datetime import datetime, timezone
+        from datetime import datetime, timedelta, timezone
         from backend.app.infrastructure.db.models import Artifact, ArtifactValidationDispatch
         from backend.app.infrastructure.db.session import SessionLocal
 
@@ -324,33 +324,66 @@ if Celery is not None:
                 dispatch.completed_at = datetime.now(timezone.utc)
                 db.commit()
                 return None
-            if dispatch.status == "COMPLETED" or dispatch.status == "FAILED":
+            if dispatch.status in {"COMPLETED", "FAILED", "RUNNING", "RETRYING"}:
                 return None
+
+            now = datetime.now(timezone.utc)
             if dispatch.status == "PUBLISHED" and dispatch.task_id:
                 state = celery_app.AsyncResult(dispatch.task_id).state
-                if state not in {"FAILURE", "REVOKED"}:
+                if state in {"FAILURE", "REVOKED"}:
+                    dispatch.status = "PENDING"
+                    dispatch.task_id = None
+                    dispatch.last_error = f"Previous broker task ended in {state}; preparing a new publication."
+                elif state == "PENDING":
+                    published_at = dispatch.published_at
+                    if published_at is not None and published_at.tzinfo is None:
+                        published_at = published_at.replace(tzinfo=timezone.utc)
+                    if published_at is not None and now - published_at < timedelta(minutes=3):
+                        return dispatch.task_id
+                    # A PENDING broker state is ambiguous, not proof of loss.
+                    # Republish only after a conservative stale window, using the
+                    # same deterministic task ID so worker-side fencing remains
+                    # authoritative if the original delivery was merely delayed.
+                    task_id = dispatch.task_id
+                    task = run_artifact_validation_task.apply_async(
+                        args=[str(dispatch.artifact_id)],
+                        task_id=task_id,
+                        queue=dispatch.toolchain_queue,
+                    )
+                    dispatch.published_at = now
+                    dispatch.attempts += 1
+                    dispatch.last_error = None
+                    db.add(dispatch)
+                    db.commit()
+                    return task.id
+                else:
                     return dispatch.task_id
-                dispatch.status = "PENDING"
-                dispatch.task_id = None
-                dispatch.last_error = f"Previous broker task ended in {state}; republishing durable validation."
-                db.commit()
 
-            # Publish while holding the row lock, then commit PUBLISHED. If the
-            # process dies after broker publication but before commit, the same
-            # deterministic task ID may be published again; the worker fence and
-            # idempotent artifact state prevent duplicate scientific mutation.
-            task = run_artifact_validation_task.apply_async(
-                args=[str(dispatch.artifact_id)],
-                task_id=str(dispatch.id),
-                queue=dispatch.toolchain_queue,
-            )
+            # Persist the generation/task identity before broker publication.
+            # If the relay dies after this commit, the stale-PENDING recovery
+            # above republishes the same ID. A fast worker can never observe a
+            # missing or uncommitted dispatch generation.
             dispatch.status = "PUBLISHED"
-            dispatch.task_id = task.id
+            dispatch.task_id = str(dispatch.id)
+            dispatch.published_at = now
             dispatch.attempts += 1
             dispatch.last_error = None
-            dispatch.published_at = datetime.now(timezone.utc)
             db.add(dispatch)
             db.commit()
+
+            try:
+                task = run_artifact_validation_task.apply_async(
+                    args=[str(dispatch.artifact_id)],
+                    task_id=str(dispatch.id),
+                    queue=dispatch.toolchain_queue,
+                )
+            except Exception as exc:
+                dispatch.status = "PENDING"
+                dispatch.task_id = None
+                dispatch.last_error = str(exc)[:4000]
+                db.add(dispatch)
+                db.commit()
+                return None
             return task.id
         except Exception:
             db.rollback()
