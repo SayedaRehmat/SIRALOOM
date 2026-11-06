@@ -62,16 +62,21 @@ _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 _CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
 
+# The upstream VCFv4.5 source contains case-inconsistent xanthosine
+# aliases. Neither spelling is enabled until the specification maintainers
+# establish the canonical identifiers; accepting both would hide ambiguity.
+VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES = frozenset({
+    "MXaoN", "MxaoN", "DPMXaoN", "DPMxaoN", "ADMXaoN", "ADMxaoN",
+})
 VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
     "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
-    "M5caU", "M6mA", "M8oxoG", "MXaoN", "MxaoN",
+    "M5caU", "M6mA", "M8oxoG",
 })
 VCF45_BASE_MODIFICATION_DEPTH_ALIASES = frozenset({
     "DPM5mC", "DPM5hmC", "DPM5fC", "DPM5caC", "DPM5hmU",
-    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG", "DPMXaoN",
-    "DPMxaoN", "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
+    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG",
+    "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
     "ADM5hmU", "ADM5fU", "ADM5caU", "ADM6mA", "ADM8oxoG",
-    "ADMXaoN", "ADMxaoN",
 })
 
 
@@ -772,6 +777,15 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
     identifier = parsed["ID"]
+    if (
+        fileformat == "VCFv4.5"
+        and kind == "FORMAT"
+        and identifier in VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES
+    ):
+        raise StrictVCFValidationError(
+            f"VCFv4.5 base-modification FORMAT alias {identifier!r} is ambiguous in the upstream specification and is blocked pending authoritative clarification at line {line_no}",
+            code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        )
     if not _field_key_is_valid(kind, identifier, fileformat):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
@@ -1842,6 +1856,17 @@ def _validate_record(
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
+        ambiguous_base_modification_aliases = (
+            VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES.intersection(keys)
+            if fileformat == "VCFv4.5"
+            else set()
+        )
+        if ambiguous_base_modification_aliases:
+            identifier = sorted(ambiguous_base_modification_aliases)[0]
+            raise StrictVCFValidationError(
+                f"VCFv4.5 base-modification FORMAT alias {identifier!r} is ambiguous in the upstream specification and is blocked pending authoritative clarification at line {line_no}",
+                code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+            )
         if len(keys) != len(set(keys)) or any(
             not _field_key_is_valid("FORMAT", key, fileformat) for key in keys
         ):
