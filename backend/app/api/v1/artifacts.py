@@ -37,13 +37,7 @@ from backend.app.domain.artifact_integrity import (
 )
 from backend.app.domain.case_intake import case_status_after_vcf_upload
 from backend.app.domain.enums import ArtifactType
-from backend.app.domain.ingestion import (
-    ValidationResult,
-    VCFValidationUnavailable,
-    classify_filename,
-    normalize_build,
-    validate_vcf,
-)
+from backend.app.domain.ingestion import classify_filename, normalize_build
 from backend.app.domain.storage_capacity import preflight_upload_capacity
 from backend.app.domain.upload_idempotency import (
     idempotency_key_sha256,
@@ -114,20 +108,6 @@ def _store(db: Session, organization_id: UUID):
 
 def _safe_filename(filename: str) -> str:
     return Path(filename).name
-
-
-def _validate_vcf_for_upload(path: Path) -> ValidationResult:
-    try:
-        return validate_vcf(path)
-    except VCFValidationUnavailable as exc:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "code": "VCF_VALIDATION_UNAVAILABLE",
-                "message": str(exc),
-                "retryable": True,
-            },
-        ) from exc
 
 
 def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, str]:
