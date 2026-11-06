@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_REVIEW_COMPLETE_RESERVED_INFO_FORMAT_ROWS_ATOMIZED_AS_CANDIDATES_CROSS_VERSION_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_TABLE_DISPOSITIONS_RECORDED_LOCATOR_LEVEL_CONTEXT_AND_VERSION_DELTA_RECONCILIATION_OPEN_INDEPENDENT_REVIEW_NOT_STARTED",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -11,16 +11,19 @@
     "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
   },
   "scope": "All 44 VCF-only table environments indexed by the VCFv4.5 source inventory. Additional raw TeX table environments belong to BCF serialization and are excluded from this VCF-text queue.",
-  "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts.",
+  "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts. A supplemental author adjudication artifact now records a table-specific normative/informative disposition for all 44 tables and replaces repeated generic open questions with explicit locator-level context and version-delta work. These dispositions do not constitute independent review; all 44 tables retain open locator-level reconciliation and version comparison.",
   "counts": {
     "indexed_vcf_tables": 44,
-    "not_semantically_reviewed": 0,
+    "not_semantically_reviewed": 44,
     "atomic_requirements_created": 109,
     "excluded_bcf_tables": "Separate BCF conformance scope.",
     "author_context_reviewed": 44,
     "independently_reviewed": 0,
     "reserved_info_rows_atomized": 21,
-    "reserved_format_rows_atomized": 63
+    "reserved_format_rows_atomized": 63,
+    "author_dispositions_recorded": 44,
+    "locator_level_context_reconciliations_pending": 44,
+    "version_delta_assessments_not_yet_performed": 44
   },
   "tables": [
     {
@@ -52,9 +55,8 @@
         "VCF-REQ-000121"
       ],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Verify the exact normative prose/grammar clauses governing percent-encoding, delimiter escaping, control characters and line terminators; record precise cross-reference and footnote locators.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
@@ -63,7 +65,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.2",
@@ -85,9 +94,8 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map M/DPM/ADM definitions, allele/base ordering, strand and missing-value rules to exact normative prose/footnotes; confirm examples add no independent constraint.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
@@ -96,7 +104,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.3",
@@ -140,9 +155,8 @@
         "VCF-REQ-000163"
       ],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "For each of the 21 INFO rows, map its definition and any deprecation/optionality/allele-cardinality conditions to exact prose clauses; verify END deprecation and SV-key cross-reference locators.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
@@ -151,7 +165,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.4",
@@ -237,9 +258,8 @@
         "VCF-REQ-000226"
       ],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "For each of the 63 FORMAT rows, map definition, Number/Type and any genotype/ploidy/local-allele/base-modification/phase/SV conditions to exact prose clauses; identify reserved-but-not-required behavior.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
@@ -248,7 +268,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.5",
@@ -270,9 +297,8 @@
       "review_status": "AUTHOR_ALGORITHM_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Locate and atomize the normative genotype-ordering algorithm, recursive/general-ploidy rules and loop-boundary footnote separately from the illustrative diploid matrix; verify mathematical equivalence.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
@@ -281,7 +307,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX",
+        "normative_or_informative_status": "MIXED_DISPOSITION_RECORDED_ATOMIC_PROSE_MAPPING_OPEN",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.6",
@@ -303,9 +336,8 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map LAA and local A/R/G cardinality rules, implicit REF handling and zero-length-versus-missing BCF caveat to exact normative prose; ensure the equivalence records remain examples.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
@@ -314,7 +346,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.7",
@@ -336,9 +375,8 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map M/DPM/ADM definitions, allele/base ordering, strand and missing-value rules to exact normative prose/footnotes; confirm examples add no independent constraint.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
@@ -347,7 +385,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.8",
@@ -369,9 +414,8 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map PSL/PSO/PSQ semantics, allele alignment, cross-chromosome scope and PS interoperability limitations to exact normative prose; keep derivative-chromosome examples informative.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
@@ -380,7 +424,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.9",
@@ -402,9 +453,8 @@
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map PSL/PSO/PSQ semantics, allele alignment, cross-chromosome scope and PS interoperability limitations to exact normative prose; keep derivative-chromosome examples informative.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
@@ -413,7 +463,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.10",
@@ -435,9 +492,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -446,7 +502,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.11",
@@ -468,9 +531,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -479,7 +541,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.12",
@@ -501,9 +570,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -512,7 +580,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.13",
@@ -534,9 +609,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -545,7 +619,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.14",
@@ -567,9 +648,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -578,7 +658,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.15",
@@ -600,9 +687,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -611,7 +697,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.16",
@@ -633,9 +726,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -644,7 +736,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.17",
@@ -666,9 +765,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -677,7 +775,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.18",
@@ -699,9 +804,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -710,7 +814,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.19",
@@ -732,9 +843,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -743,7 +853,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.20",
@@ -765,9 +882,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -776,7 +892,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.21",
@@ -798,9 +921,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -809,7 +931,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.22",
@@ -831,9 +960,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -842,7 +970,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.23",
@@ -864,9 +999,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -875,7 +1009,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.24",
@@ -897,9 +1038,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
@@ -908,7 +1048,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.25",
@@ -930,9 +1077,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -941,7 +1087,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.26",
@@ -963,9 +1116,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -974,7 +1126,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.27",
@@ -996,9 +1155,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1007,7 +1165,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.28",
@@ -1029,9 +1194,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1040,7 +1204,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.29",
@@ -1062,9 +1233,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1073,7 +1243,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.30",
@@ -1095,9 +1272,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1106,7 +1282,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.31",
@@ -1128,9 +1311,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1139,7 +1321,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.32",
@@ -1161,9 +1350,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1172,7 +1360,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.33",
@@ -1194,9 +1389,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1205,7 +1399,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.34",
@@ -1227,9 +1428,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1238,7 +1438,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.35",
@@ -1260,9 +1467,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1271,7 +1477,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.36",
@@ -1293,9 +1506,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1304,7 +1516,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.37",
@@ -1326,9 +1545,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1337,7 +1555,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.38",
@@ -1359,9 +1584,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1370,7 +1594,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.39",
@@ -1392,9 +1623,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1403,7 +1633,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.40",
@@ -1425,9 +1662,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1436,7 +1672,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.41",
@@ -1458,9 +1701,8 @@
       "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
@@ -1469,7 +1711,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.42",
@@ -1491,9 +1740,8 @@
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map sample-mixture and clonal/pedigree semantics to exact SAMPLE/PEDIGREE prose; distinguish sample-level representation from genome deconvolution and do not infer a mandatory deconvolution algorithm.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
@@ -1502,7 +1750,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.43",
@@ -1524,9 +1779,8 @@
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Map sample-mixture and clonal/pedigree semantics to exact SAMPLE/PEDIGREE prose; distinguish sample-level representation from genome deconvolution and do not infer a mandatory deconvolution algorithm.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
@@ -1535,7 +1789,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     },
     {
       "table_id": "VCF5.44",
@@ -1562,9 +1823,8 @@
         "VCF-REQ-000129"
       ],
       "open_questions": [
-        "Which rows are normative definitions versus informative examples?",
-        "Which surrounding definitions, footnotes and cross-references alter interpretation?",
-        "Is the behavior version-specific or shared with earlier VCF releases?"
+        "Verify that each linked requirement ID cites normative <*> reference-block/LEN/END/base-modification prose rather than the illustrative records; keep gVCF producer conventions separate from core VCF grammar.",
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
@@ -1573,7 +1833,14 @@
         "vcf4.5-info-format-row-semantic-review.v1.json",
         "vcf4.5-sv-breakend-full-context-review.v1.json",
         "vcf4.5-pedigree-gvcf-context-review.v1.json"
-      ]
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+        "version_delta_status": "NOT_YET_ASSESSED"
+      }
     }
   ],
   "review_controls": {
@@ -1584,5 +1851,6 @@
     "gvcf_conventions_separate": true,
     "version_specificity_required": true,
     "author_review_disclaimer": "Author review status means source-context inspection and classification only; it is not independent approval, implementation mapping, test execution, or laboratory qualification."
-  }
+  },
+  "review_debt_adjudication_artifact": "vcf4.5-table-review-debt-adjudication.v1.json"
 }
