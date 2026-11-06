@@ -81,6 +81,14 @@
     {
       "path": "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
       "blob_sha1": "575f00ce36fc2e030a5e6f3cd64f9e95803451fe"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "6cbf4a84681f7dd109249834ad5527dca60bea61"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "a8a7af8b9674548d1085f2c3e488c5168226c194"
     }
   ],
   "structural_inventory": [
@@ -428,7 +436,9 @@
     "Independent second-person review remains not started.",
     "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved.",
     "The new section applicability and reserved-row crosswalk artifacts are author-level inventories; every candidate requirement still needs atomic, per-version APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED adjudication against exact normative clauses.",
-    "Complete field-by-field normative prose/footnote mapping and atomic requirement linkage for the 21 INFO rows and 64-field union of FORMAT rows (VCF5.3/VCF5.4); the row inventory and mechanical version deltas are already captured."
+    "Complete field-by-field normative prose/footnote mapping and atomic requirement linkage for the 21 INFO rows and 64-field union of FORMAT rows (VCF5.3/VCF5.4); the row inventory and mechanical version deltas are already captured.",
+    "Resolve the upstream xanthosine alias capitalization ambiguity before implementing VCFv4.5 base-modification aliases.",
+    "Independent second-person review of all 44 table context and version-delta adjudications remains mandatory."
   ],
   "controls": [
     "Never project a later-version rule backward without direct source evidence.",
@@ -577,11 +587,14 @@
     "vcf45_tables": 44,
     "author_context_locator_reconciled": 44,
     "preliminary_five_version_applicability_matrices": 44,
-    "table_version_deltas_reconciled": 42,
-    "reserved_info_format_tables_with_row_delta_matrix_but_field_clause_mapping_pending": 2,
-    "open_table_specific_questions": 3,
+    "table_version_deltas_reconciled": 44,
+    "reserved_info_rows_author_mapped": 21,
+    "reserved_format_union_field_ids_author_mapped": 64,
+    "vcf45_format_rows_author_mapped": 63,
+    "open_table_specific_questions": 1,
+    "blocking_source_ambiguities": 1,
     "independent_table_reviews_completed": 0,
-    "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_SUBSTANTIALLY_ADVANCED_NOT_INDEPENDENTLY_APPROVED"
+    "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_COMPLETE_FOR_ALL_44_TABLES_INDEPENDENT_REVIEW_AND_UPSTREAM_ALIAS_RESOLUTION_PENDING"
   },
   "specialized_delta_artifacts": [
     "docs/scientific/vcf-conformance/vcf4.1-4.5-genotype-ordering-version-delta.v1.json",
@@ -597,5 +610,20 @@
     "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
     "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
     "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json"
-  ]
+  ],
+  "reserved_field_clause_mapping": {
+    "info": {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "field_ids": 21,
+      "author_reviewed": 21,
+      "independent_reviewed": 0
+    },
+    "format": {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "union_field_ids": 64,
+      "vcf45_rows": 63,
+      "author_reviewed": 63,
+      "independent_reviewed": 0
+    }
+  }
 }
