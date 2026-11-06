@@ -1799,6 +1799,16 @@ def _validate_record(
         raise StrictVCFValidationError(f"REF must contain only A/C/G/T/N for Phase 1 at line {line_no}", code="VCF_REF_INVALID")
 
     raw_alts = alt.split(",")
+    if fileformat in {"VCFv4.0", "VCFv4.1"} and "*" in raw_alts:
+        raise StrictVCFValidationError(
+            f"The spanning-deletion '*' ALT allele is not defined until VCFv4.2 at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
+    if fileformat in {"VCFv4.0", "VCFv4.1", "VCFv4.2"} and "<*>" in raw_alts:
+        raise StrictVCFValidationError(
+            f"The unspecified allele '<*>' is not defined until VCFv4.3 at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
     if not alt or ("." in raw_alts and raw_alts != ["."]):
         raise StrictVCFValidationError(
             f"ALT '.' must be the only allele when no alternate is present at line {line_no}",
