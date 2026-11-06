@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import tempfile
 from pathlib import Path
 from uuid import UUID
@@ -43,8 +42,6 @@ from backend.app.domain.ingestion import (
     VCFValidationUnavailable,
     classify_filename,
     normalize_build,
-    validate_index,
-    validate_specimen_sample_identity,
     validate_vcf,
 )
 from backend.app.domain.storage_capacity import preflight_upload_capacity
