@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -235,10 +236,26 @@ def build_case_export(db: Session, *, export: CaseExport, store) -> Artifact:
                 )
 
         archive = root / "case_export.zip"
+        # ZIP timestamps and platform metadata must be stable across retries.
+        # A worker can die after the artifact file is published but before its
+        # database transaction commits. A redelivery rebuilds the same export
+        # under the same artifact identity; deterministic members let the
+        # artifact store verify and reuse the already-published bytes safely.
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
             for path in sorted(root.rglob("*")):
-                if path.is_file() and path != archive:
-                    zf.write(path, path.relative_to(root).as_posix())
+                if not path.is_file() or path == archive:
+                    continue
+                member = zipfile.ZipInfo(
+                    path.relative_to(root).as_posix(),
+                    date_time=(1980, 1, 1, 0, 0, 0),
+                )
+                member.compress_type = zipfile.ZIP_DEFLATED
+                member.create_system = 3
+                member.external_attr = 0o100644 << 16
+                with path.open("rb") as source, zf.open(
+                    member, "w", force_zip64=True
+                ) as destination:
+                    shutil.copyfileobj(source, destination, length=8 * 1024 * 1024)
 
         # Bind the artifact identity to the durable export request. The export
         # worker may be redelivered after the broker acknowledged a task but
