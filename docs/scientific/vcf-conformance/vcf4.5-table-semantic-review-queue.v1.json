@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_AND_PHASE_SET_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_PHASE_SET_GVCF_AND_BASE_MODIFICATION_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,12 +26,13 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 42,
+    "open_review_questions": 40,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 41,
+    "full_clause_level_version_reconciliations_pending": 39,
     "genotype_ordering_version_delta_reconciled": 1,
-    "phase_set_list_version_deltas_reconciled": 2
+    "phase_set_list_version_deltas_reconciled": 2,
+    "base_modification_version_deltas_reconciled": 2
   },
   "tables": [
     {
@@ -131,9 +132,7 @@
       "semantic_review_target": "Validate example value placement against M/DPM/ADM rules; examples do not create independent normative obligations.",
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
       "review_notes": "Checked against M/DPM/ADM suffix, allele-order, strand and missing-value prose; illustrative, not an independent normative rule.",
@@ -147,7 +146,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -186,7 +185,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:223-229; 720-758"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.3",
@@ -612,9 +612,7 @@
       "semantic_review_target": "Trace M/DPM/ADM cardinality, strand order, allele sequence order and missing values to prose and definitions.",
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
       "review_notes": "Checked unstranded/stranded CpG examples against intrinsic strand semantics and missing-value placement; no new rule inferred.",
@@ -628,7 +626,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -658,7 +656,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:720-758"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.8",
