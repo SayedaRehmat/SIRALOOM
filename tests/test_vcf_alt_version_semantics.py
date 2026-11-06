@@ -66,3 +66,18 @@ def test_vcf43_accepts_unspecified_star_allele_with_end(tmp_path: Path):
     )
 
     assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf40_rejects_breakend_replacement_notation(tmp_path: Path):
+    path = tmp_path / "breakend-alt-vcf40.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.0\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "1\\t2\\tBND1\\tA\\tA[2:20[\\t.\\tPASS\\tSVTYPE=BND\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_ALT_INVALID"
