@@ -1,6 +1,6 @@
 # SIRALOOM Variant — Phase 1 Acceptance Matrix
 
-> The evidence snapshot dated 2026-10-13 below is historical. The current evidence-backed release decision is in the 2026-10-20 snapshot near the end of this document.
+> Earlier snapshots below are retained as history. The latest evidence-backed release decision is in the 2026-11-01 snapshot at the end of this document.
 
 | Requirement | Implementation | Automated evidence | Live validation | Qualification status |
 |---|---|---|---|---|
@@ -789,3 +789,58 @@ The official HPO references and implementation rationale are recorded in `docs/r
 |---|---|---|
 | PM2/BA1/BS1 do not coerce string, fractional, or boolean population counts | PASS (local automated scope) | Invalid AN/AC forms result in `REQUIRES_REVIEW` and no proposed criterion. Focused criterion/evidence/population suite: **136 passed, 1 skipped**; full backend suite with BCFtools/HTSlib 1.19: **1,683 passed, 36 skipped**; Ruff F/I and diff check passed. Exact-SHA CI run [40881759047](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/40881759047) passed backend, PostgreSQL/Celery worker-loss integration, frontend behavior/build/container and production Compose checks on `87f78321e4722ecef8ad5b6298ddbf8d8b13fac7`. |
 | Disease-specific PM2/BA1/BS1 thresholds and resource qualification | NOT ESTABLISHED BY THIS FIX | Evaluators still require an explicit approved profile; this correction only rejects malformed count types. |
+
+
+## Current release-gate snapshot — 2026-11-01
+
+> This snapshot reconciles the current `main` revision and hosted CI. It does not convert automated test evidence into live deployment, scientific truth-set, clinical validation, or laboratory authorization evidence. Issue [#171](https://github.com/SayedaRehmat/SIRALOOM/issues/171) remains **OPEN / BLOCKED**.
+
+### Exact source and hosted CI
+
+- **Exact `main` revision:** [`e16bb7734f4aaeba93b033e2be50c24b8d01fbef`](https://github.com/SayedaRehmat/SIRALOOM/commit/e16bb7734f4aaeba93b033e2be50c24b8d01fbef).
+- **Exact-SHA CI:** [run #41302148716](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41302148716), triggered for the exact SHA above; conclusion **SUCCESS**.
+- **Per-job outcomes:** [frontend](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41302148716/job/124835168548) PASS; [backend](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41302148716/job/124835168823) PASS; [PostgreSQL integration](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41302148716/job/124835168873) PASS.
+- Backend suite summary recorded for this run: **1,971 passed, 46 skipped, 2 warnings**. CI also completed the configured frontend production checks, backend/container checks, PostgreSQL/Celery integration, and production Compose validation.
+- The exact-SHA CI result is a software-regression result. It is not a record of a deployed authenticated case journey, live provider execution, GIAB comparison, backup restoration, or clinical validation.
+
+### Existing workflow integration evidence — scope boundaries
+
+The current tree contains distinct production-path integration tests:
+- `tests/test_actual_annotation_stage_redelivery.py`: actual annotation workflow stage and Celery task-wrapper redelivery with controlled provider fixtures.
+- `tests/test_actual_population_stage_redelivery.py`: production population/evidence/ACMG workflow replay with controlled local resources and fixtures.
+- `tests/test_reviewer_to_signed_report_integration.py`: reviewer approval through signed report finalization and artifact-write recovery, starting from a seeded finalizable report.
+- `tests/test_workflow_report_stage_reexecution.py`: production workflow entry-point report-stage retry, with upstream stages seeded as completed checkpoints.
+
+These tests provide stage-specific orchestration and recovery evidence. They do **not** collectively establish one uninterrupted VCF-upload-to-reviewed-and-signed-report execution on a deployed laboratory stack. No claim of a complete deployed E2E run is made.
+
+### Open pull-request reconciliation
+
+The following open PRs were inspected against the current release-gate scope. No branch was merged or modified by this snapshot.
+
+| PR | Current disposition for issue #171 | Reason |
+|---|---|---|
+| [#221 — PP3/BP4 calibration provenance](https://github.com/SayedaRehmat/SIRALOOM/pull/221) | **RELEVANT / NOT MERGED** | This affects automated PP3/BP4 criterion eligibility and provenance. At head `a56aa300809c91ecae1089884a60490575833afa`, frontend and PostgreSQL integration checks passed but the backend check failed ([run #41031519113](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/41031519113)). Do not treat this change as integrated or allow the PR's fixture metadata to imply predictor clinical calibration. Resolve the backend failure and independently verify referenced calibration evidence before merge/release use. |
+| [#179 — annotation-stage redelivery](https://github.com/SayedaRehmat/SIRALOOM/pull/179) | **SUPERSEDED FOR CODE INTEGRATION** | Current `main` already contains the later production annotation-stage/Celery recovery test. The old PR head is not required to supply that current-main coverage; do not merge its stale branch. |
+| [#184 — production-readiness hardening](https://github.com/SayedaRehmat/SIRALOOM/pull/184) | **STALE / NOT MERGEABLE AS-IS** | Its branch predates substantial current-main changes. Do not merge the branch wholesale; any still-required hardening must be reconciled as narrow changes against current main and independently tested. |
+| [#166 — laboratory workspace UI](https://github.com/SayedaRehmat/SIRALOOM/pull/166) | **STALE / NOT MERGEABLE AS-IS** | Its old branch is not evidence of the current deployed UI. Reconcile only individual still-required UI changes against current main; no wholesale merge. |
+| [#220 — laboratory workflow blueprint](https://github.com/SayedaRehmat/SIRALOOM/pull/220) | **DOCUMENTATION ONLY / NOT RELEASE EVIDENCE** | The blueprint is useful requirements context, but an open documentation PR cannot prove implementation, execution, or qualification. |
+| [#244 — phenotype amendment lifecycle](https://github.com/SayedaRehmat/SIRALOOM/pull/244), [#245 — Phenopackets/FHIR export](https://github.com/SayedaRehmat/SIRALOOM/pull/245), [#247 — clinical intake provenance](https://github.com/SayedaRehmat/SIRALOOM/pull/247) | **SEPARATE PARALLEL WORKSTREAMS / EXCLUDED FROM THIS RELEASE-GATE CHANGE** | These are active clinical-data lifecycle/interoperability changes. They were not modified, merged, or treated as prerequisites for the narrow current-main CI reconciliation. Their own review and acceptance remain separate. |
+
+Previously merged VCF qualification work, including PRs #254 and #258, remains part of current `main`; it is not reopened or repeated here.
+
+### Updated acceptance decisions
+
+| Gate | Status at `e16bb7734f4aaeba93b033e2be50c24b8d01fbef` | Evidence / outstanding requirement |
+|---|---|---|
+| Exact source revision and configured hosted CI | **PASS — automated scope only** | Exact-SHA run #41302148716 passed all three configured jobs. This does not establish deployed revision identity. |
+| Software-level stage recovery coverage | **PARTIAL** | Annotation, population/evidence/ACMG, and report/review recovery are covered in separate controlled tests. A single uninterrupted deployed VCF-to-sign-out journey remains unrecorded. |
+| Production signup, email verification, login/logout, session expiry and protected-route behavior | **NOT TESTED IN DEPLOYMENT** | Requires the laboratory's configured identity provider/test tenant and captured authenticated execution evidence. |
+| Deployed tenant isolation across two laboratory identities, APIs, membership, artifacts and storage | **NOT TESTED** | Unit/API tests are not a substitute for a deployed two-tenant authorization exercise. |
+| Complete deployed VCF → normalization → annotation → population/evidence → review → report/sign-out → provenance workflow | **NOT TESTED** | Requires controlled non-identifying/authorized VCF, deployed backend and worker, real permitted provider response, persisted artifact hashes, reviewer action, and deployment revision. |
+| Live provider timeout/rate-limit and worker/queue/persistence failure recovery on deployed services | **PARTIAL / NOT TESTED LIVE** | Deterministic recovery tests exist; real provider, deployed queue, worker and object-storage failure injection has not been evidenced. |
+| GIAB or other approved truth-set concordance | **NOT TESTED** | The qualification manifest remains unconfigured. Requires truth VCF, matching reference, confident-region BED, predeclared comparison method and approved acceptance thresholds. No TP/FP/FN, precision, recall or concordance values are claimed. |
+| Reference package deployment, artifact durability, backup/restore and rollback | **NOT TESTED IN LAB INFRASTRUCTURE** | CI/container validation does not prove persistent host/object storage, measured capacity, backup completion, successful restore or rollback. |
+| Live `/health` and `/ready`, PostgreSQL, Redis, API, worker and single Beat scheduler | **NOT TESTED IN DEPLOYMENT** | Requires target laboratory deployment and captured health/readiness evidence. |
+| Clinical validity, clinical utility, accreditation or regulatory authorization | **NOT ESTABLISHED** | These require separate laboratory quality-system validation and applicable authorization; software CI cannot establish them. |
+
+**Release decision: BLOCKED.** Current `main` has passing configured CI and substantial stage-specific recovery coverage. The required deployed end-to-end workflow, deployed identity/tenant isolation, live infrastructure recovery, scientific truth-set concordance, and backup/restore evidence remain absent. Do not authorize a laboratory trial or clinical workflow on the basis of CI alone.
