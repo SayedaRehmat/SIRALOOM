@@ -58,6 +58,32 @@ Use a new, non-existent output directory for each run. Directory creation is ato
 
 A zero exit code means all measured software stages completed and internal reconciliation checks passed. It does not mean the lab's performance thresholds passed.
 
+## Deployment memory and filesystem evidence
+
+The benchmark JSON now includes a deployment_resources snapshot:
+- cgroup v2 or v1 current, peak and configured memory-limit bytes when exposed by the worker runtime;
+- output-filesystem device identity and total, used and free bytes;
+- output-directory permission mode.
+
+Cgroup peak is a workload/container measurement and may include sidecars or concurrent tasks. It is not attributed to this benchmark process and must not be substituted for process RSS. The cgroup peak counter may reflect the lifetime of the cgroup (or the period since its peak counter was reset), not just this benchmark invocation; record the cgroup lifecycle and do not interpret it as a per-run peak unless the deployment deliberately provides an isolated/resettable cgroup. A missing cgroup interface is recorded as null. The snapshot is taken at benchmark completion; it is not a time-series sampler and does not establish transient peak scratch usage. During upper-percentile and concurrency qualification, collect the platform's cgroup/container time series and scratch-volume high-water metrics independently.
+
+## Production storage and index recovery qualification
+
+Execute these tests only in an isolated staging project/bucket and disposable worker/scratch volume, using de-identified or synthetic inputs. Record the exact deployment commit, image digest, storage profile, bucket/object versioning policy, worker limits and preapproved acceptance-policy ID in the controlled laboratory record.
+
+| Fault injection | Required observable result | Evidence to retain |
+|---|---|---|
+| Object upload interrupted before completion | No artifact row may point to a partial object; retry is idempotent and cannot overwrite different bytes | Provider generation, object SHA-256/size, DB artifact identity, retry trace |
+| Upload succeeds but DB commit outcome is uncertain | Preserve object until a fresh DB read proves the row is absent; never delete an object whose commit may have succeeded | DB transaction outcome, object generation, compensation decision |
+| Object download interrupted or returns altered bytes | Integrity verification fails closed; temporary materialization is removed; source object remains unchanged | Expected/observed byte count and hashes, typed failure, cleanup evidence |
+| Provider temporarily unavailable | Workflow remains recoverable with an operational reason; retry does not create duplicate artifacts | Queue/task identity, retry count, artifact IDs and object generations |
+| Scratch filesystem reaches capacity during normalization | No partial normalized VCF/CSI pair is published as complete; source remains immutable; recovery after capacity restoration is deterministic | Free-space/time series, failure stage, temporary/final object inventory, retry hashes |
+| Worker terminates between normalized VCF and CSI publication | Pair is either absent/incomplete and retried, or both artifacts are verified before downstream use | Worker-loss timestamp, task redelivery, VCF/CSI hashes, index-query reconciliation |
+| CSI is stale, truncated or mismatched | Indexed queries fail concordance; the sequential source is not silently rewritten | Original VCF/index hashes, query-vs-sequential counts and hashes, controlled rebuild evidence |
+| CSI is rebuilt from the immutable normalized VCF | Rebuilt index is validated against the unchanged VCF; source VCF hash remains identical | Before/after VCF hash, new CSI hash, per-contig and indexed-query reconciliation |
+
+Do not simulate provider failures against a live clinical bucket. A test that uses an in-memory fake or local filesystem establishes unit/integration behavior only; it does not qualify deployed object-storage durability, provider IAM, generation preconditions, network interruption recovery, or production retention policy. The real provider and deployed worker must be exercised before marking these cells QUALIFIED.
+
 ## Required acceptance review
 
 Review the JSON and generated artifacts against the acceptance policy approved before the run. At minimum assess:
