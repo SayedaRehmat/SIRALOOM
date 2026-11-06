@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_23_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_40_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_AND_SAMPLE_PEDIGREE_DELTAS_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,14 +25,15 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 21,
+    "full_clause_level_version_reconciliations_pending": 4,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
     "gvcf_reference_block_version_deltas_reconciled": 1,
     "character_encoding_version_delta_reconciled": 1,
     "local_allele_version_deltas_reconciled": 1,
-    "small_variant_representation_version_deltas_reconciled": 15
+    "small_variant_representation_version_deltas_reconciled": 15,
+    "breakend_version_deltas_reconciled": 17
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -2437,9 +2438,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2482,7 +2483,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.26",
@@ -2527,9 +2529,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2572,7 +2574,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.27",
@@ -2626,9 +2629,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2680,7 +2683,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.28",
@@ -2725,9 +2729,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2770,7 +2774,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.29",
@@ -2815,9 +2820,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2860,7 +2865,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.30",
@@ -2905,9 +2911,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -2950,7 +2956,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.31",
@@ -2995,9 +3002,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3040,7 +3047,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.32",
@@ -3085,9 +3093,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3130,7 +3138,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.33",
@@ -3175,9 +3184,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3220,7 +3229,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.34",
@@ -3265,9 +3275,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3310,7 +3320,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.35",
@@ -3355,9 +3366,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3400,7 +3411,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.36",
@@ -3445,9 +3457,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3490,7 +3502,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.37",
@@ -3535,9 +3548,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3580,7 +3593,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.38",
@@ -3625,9 +3639,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3670,7 +3684,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.39",
@@ -3715,9 +3730,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3760,7 +3775,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.40",
@@ -3805,9 +3821,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3850,7 +3866,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.41",
@@ -3895,9 +3912,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete table-by-table and clause-by-clause comparison of breakend orientation, mate/partner semantics, inserted sequence/contig forms, telomeres, EVENT, uncertainty and single-breakend behavior against all earlier versions; reconcile with the genotype/SV crosswalk.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify the symbolic <BND> versus breakend replacement distinction, all mate/partner and orientation clauses, and map to atomic IDs/tests.",
+          "finding": "Breakend replacement syntax is present across VCFv4.1-4.5. VCFv4.4 disallows symbolic <BND> ALT records and deprecates SVTYPE while retaining bracketed breakend replacement syntax; VCFv4.5 retains syntax and updates examples for END/SVLEN/SVCLAIM semantics. See vcf4.1-4.5-breakend-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -3940,7 +3957,8 @@
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.42",
