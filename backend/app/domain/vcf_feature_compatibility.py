@@ -80,6 +80,7 @@ VCF_FEATURE_DEFINITIONS = (
         "VCFv4.5+",
         "Native validation of reserved base-modification FORMAT keys, types and value domains.",
         "tests/test_vcf_validation.py: VCFv4.5 base-modification FORMAT tests",
+        "The six case-inconsistent xanthosine aliases (MXaoN/MxaoN, DPMXaoN/DPMxaoN, ADMXaoN/ADMxaoN) are explicitly blocked until the upstream specification maintainers clarify the canonical identifiers.",
     ),
     VCFFeatureDefinition(
         "reserved_info_format_definitions",
