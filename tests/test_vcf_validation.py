@@ -785,13 +785,15 @@ def test_strict_validation_checks_breakend_type_and_mate_relationships(tmp_path,
     assert exc.value.code == code
 
 
-def test_strict_validation_requires_context_for_spanning_deletion_allele(tmp_path):
+def test_strict_validation_accepts_unresolved_spanning_deletion_context(tmp_path):
     path = tmp_path / "orphan-star.vcf"
-    write_vcf(path, "1\t11\t.\tT\t*\t.\tPASS\t.\n")
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
+    write_vcf(path, "1\\t11\\t.\\tT\\t*\\t.\\tPASS\\t.\\n")
 
+    profile = validate_vcf_strict(path)
+
+    assert profile["spanning_deletion_records"] == 1
+    assert profile["spanning_deletion_context_verified_records"] == 0
+    assert profile["spanning_deletion_context_unverified_records"] == 1
 
 def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_record(tmp_path):
     path = tmp_path / "contextual-star.vcf"
@@ -802,21 +804,25 @@ def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_r
     )
     profile = validate_vcf_strict(path)
     assert profile["records"] == 2
+    assert profile["spanning_deletion_context_verified_records"] == 1
+    assert profile["spanning_deletion_context_unverified_records"] == 0
 
 
-def test_strict_validation_rejects_spanning_deletion_carried_by_different_sample(tmp_path):
+def test_strict_validation_preserves_spanning_deletion_with_unmatched_local_carrier(tmp_path):
     path = tmp_path / "wrong-sample-star.vcf"
-    columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
+    columns = "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1"
     write_vcf(
         path,
-        "1\t10\tdel1\tAT\tA\t.\tPASS\t.\tGT\t0/0\n"
-        "1\t11\tstar1\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
+        "1\\t10\\tdel1\\tAT\\tA\\t.\\tPASS\\t.\\tGT\\t0/0\\n"
+        "1\\t11\\tstar1\\tT\\t*\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
         columns=columns,
     )
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-    assert exc.value.code == "VCF_SPANNING_DELETION_CONTEXT_MISSING"
 
+    profile = validate_vcf_strict(path)
+
+    assert profile["records"] == 2
+    assert profile["spanning_deletion_context_verified_records"] == 0
+    assert profile["spanning_deletion_context_unverified_records"] == 1
 
 def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span(tmp_path):
     path = tmp_path / "symbolic-context-star.vcf"
@@ -827,7 +833,9 @@ def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span
         "1\t11\tstar1\tA\t*\t.\tPASS\t.\tGT\t0/1\n",
         columns=columns,
     )
-    assert validate_vcf_strict(path)["records"] == 2
+    profile = validate_vcf_strict(path)
+    assert profile["records"] == 2
+    assert profile["spanning_deletion_context_verified_records"] == 1
 
 
 def test_reference_validation_checks_preserved_gvcf_sv_breakend_and_spanning_records(tmp_path):
