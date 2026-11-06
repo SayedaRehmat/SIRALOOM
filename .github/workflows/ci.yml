@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -200,3 +201,164 @@ jobs:
             SIRALOOM_LAB_B_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-b-artifacts \
             docker compose -f docker-compose.production.yml \
               -f deployment/storage-targets-local.compose.example.yml config --quiet
+
+
+  giab-hg001-qualification:
+    name: GIAB HG001 ${{ matrix.build }} input-processing benchmark
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'qualification/giab-hg001-reproducible-20261102') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        build: [GRCh38, GRCh37]
+    env:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: sqlite:///./giab-qualification.db
+      REDIS_URL: redis://localhost:6379/0
+      GENEBE_ENABLED: "false"
+      GNOMAD_ENABLED: "false"
+      FIREBASE_AUTH_REQUIRED: "false"
+      SIRALOOM_BENCHMARK_SAMPLE_NAME: HG001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-name: bcftools
+          cache-environment: true
+          init-shell: bash
+      - name: Install backend
+        shell: bash -l {0}
+        run: pip install -e .
+      - name: Acquire pinned GIAB VCF, TBI, BED and reference; verify official MD5 and record SHA-256
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          mkdir -p "$RUN_DIR"
+          python scripts/validation/acquire_giab_public_assets.py \
+            --manifest benchmarks/giab/public_assets.v1.json \
+            --build "${{ matrix.build }}" \
+            --output-dir "$RUN_DIR/assets" \
+            --provenance-out "$RUN_DIR/asset-provenance.json"
+      - name: Record unchanged GIAB truth VCF validation outcome
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/giab-${{ matrix.build }}/asset-provenance.json" "$RUNNER_TEMP/giab-${{ matrix.build }}/evidence/raw-validation.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          from backend.app.domain.ingestion import validate_vcf
+          data=json.loads(Path(sys.argv[1]).read_text())
+          result=validate_vcf(Path(data["assets"]["truth_vcf"]["path"]))
+          payload={
+            "status":result.status,
+            "file_kind":result.file_kind,
+            "record_count":result.record_count,
+            "sample_count":len(result.sample_names),
+            "detected_build":result.detected_build,
+            "error_code":result.error_code,
+            "errors":result.errors,
+            "warnings":result.warnings,
+            "toolchain_versions":{
+              "bcftools":(result.metadata or {}).get("bcftools_version"),
+              "htslib":(result.metadata or {}).get("htslib_version")
+            },
+            "sample_identifiers_recorded":False,
+            "interpretation":"Unmodified public GIAB truth VCF intake result; a rejection remains a rejection."
+          }
+          out=Path(sys.argv[2]); out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n")
+          print(json.dumps({k:payload[k] for k in ("status","record_count","sample_count","error_code","errors")},sort_keys=True))
+          PY
+      - name: Diagnose known HG001 star loci against the build-matched confidence BED
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/asset-provenance.json")"
+          BED="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["confident_bed"]["path"])' "$RUN_DIR/asset-provenance.json")"
+          python scripts/validation/diagnose_giab_benchmark_loci.py \
+            --vcf "$VCF" --bed "$BED" --reference-build "${{ matrix.build }}" \
+            --output "$RUN_DIR/evidence/known-star-locus-diagnostic.json"
+      - name: Derive eligible processing input and quarantine whole star-containing records
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/asset-provenance.json")"
+          python scripts/validation/prepare_giab_processing_input.py \
+            --source-vcf "$VCF" \
+            --output-vcf "$RUN_DIR/eligible-processing-input.vcf" \
+            --excluded-records "$RUN_DIR/evidence/quarantined-spanning-deletion-records.jsonl" \
+            --provenance-out "$RUN_DIR/evidence/derivative-provenance.json"
+      - name: Verify matching BGZF FASTA, FAI and GZI geometry
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$RUN_DIR/asset-provenance.json")"
+          python - "$FASTA" <<'PY'
+          import sys
+          from pathlib import Path
+          from backend.app.domain.reference_package import validate_fasta_index_consistency
+          fasta=Path(sys.argv[1]); fai=Path(str(fasta)+".fai"); gzi=Path(str(fasta)+".gzi")
+          if not fai.is_file() or not gzi.is_file():
+              raise SystemExit("Matching FASTA .fai and BGZF .gzi are mandatory")
+          contigs=validate_fasta_index_consistency(fasta,fai)
+          if not contigs:
+              raise SystemExit("Reference has no indexed contigs")
+          print(f"FASTA/FAI/GZI verified: {len(contigs)} indexed contigs")
+          PY
+      - name: Execute SIRALOOM processing and reconciliation on eligible derivative
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-${{ matrix.build }}"
+          FASTA="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["reference_pair"]["fasta"]["path"])' "$RUN_DIR/asset-provenance.json")"
+          python scripts/validation/run_vcf_scale_benchmark.py \
+            --vcf "$RUN_DIR/eligible-processing-input.vcf" \
+            --reference-fasta "$FASTA" \
+            --reference-build "${{ matrix.build }}" \
+            --output-dir "$RUN_DIR/evidence/scale" \
+            --timeout-seconds 14400 \
+            --expected-bcftools-version 1.25 \
+            --expected-htslib-version 1.25
+      - name: Assemble run provenance
+        if: always()
+        shell: bash -l {0}
+        run: |
+          python - "$RUNNER_TEMP/giab-${{ matrix.build }}" "${{ github.sha }}" "${{ matrix.build }}" <<'PY'
+          import json,sys
+          from datetime import datetime,timezone
+          from pathlib import Path
+          root=Path(sys.argv[1]); evidence=root/"evidence"; evidence.mkdir(parents=True,exist_ok=True)
+          payload={
+            "schema_version":"1",
+            "generated_at_utc":datetime.now(timezone.utc).isoformat(),
+            "repository":"${{ github.repository }}",
+            "repository_commit":sys.argv[2],
+            "workflow_run_id":"${{ github.run_id }}",
+            "workflow_attempt":"${{ github.run_attempt }}",
+            "reference_build":sys.argv[3],
+            "asset_provenance":"asset-provenance.json",
+            "raw_validation":"evidence/raw-validation.json",
+            "known_star_locus_diagnostic":"evidence/known-star-locus-diagnostic.json",
+            "derivative_provenance":"evidence/derivative-provenance.json",
+            "processing_report":"evidence/scale/vcf-scale-benchmark.json",
+            "processing_failure":"evidence/scale/vcf-scale-benchmark.failure.json",
+            "qualification_boundary":"Public HG001 input-processing evidence only; star-containing source records are quarantined whole in the derivative; this is not the complete truth set, caller concordance, clinical validation or laboratory qualification."
+          }
+          (evidence/"run-provenance.json").write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n")
+          PY
+      - name: Preserve public benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-giab-hg001-${{ matrix.build }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/giab-${{ matrix.build }}/asset-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/**
+          if-no-files-found: warn
+          retention-days: 90

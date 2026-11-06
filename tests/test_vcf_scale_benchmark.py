@@ -64,7 +64,7 @@ def test_benchmark_requires_an_explicit_sample_mapping(tmp_path, monkeypatch):
     monkeypatch.setattr(
         module,
         "validate_vcf",
-        lambda _path: SimpleNamespace(
+        lambda _path, **_kwargs: SimpleNamespace(
             status="VALID",
             sample_names=["SAMPLE_A"],
             detected_build=None,
@@ -156,7 +156,7 @@ def test_benchmark_records_stage_metrics_without_recording_sample_identifier(tmp
     monkeypatch.setattr(
         module,
         "validate_vcf",
-        lambda _path: SimpleNamespace(
+        lambda _path, **_kwargs: SimpleNamespace(
             status="VALID",
             sample_names=[sample_name],
             detected_build="GRCh38",
