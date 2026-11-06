@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_ALL_44_ROW_VERSION_DELTAS_RECONCILED_FIELD_LEVEL_CLAUSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_INFO_RESERVED_ROWS_RECONCILED_FORMAT_FIELD_MAPPING_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,10 +26,10 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 3,
+    "open_review_questions": 2,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 2,
+    "full_clause_level_version_reconciliations_pending": 1,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
@@ -39,7 +39,8 @@
     "small_variant_representation_version_deltas_reconciled": 15,
     "breakend_version_deltas_reconciled": 17,
     "sample_mixture_pedigree_version_deltas_reconciled": 2,
-    "reserved_info_format_row_delta_matrices_reconciled": 2
+    "reserved_info_format_row_delta_matrices_reconciled": 2,
+    "info_reserved_row_mappings_complete": 1
   },
   "tables": [
     {
@@ -235,9 +236,7 @@
         "VCF-REQ-000162",
         "VCF-REQ-000163"
       ],
-      "open_questions": [
-        "Complete exact field-by-field normative prose and footnote mapping for the 21 INFO rows across VCFv4.1-4.5, especially END computed/deprecated behavior, SVLEN cardinality, SVTYPE deprecation, confidence intervals, CN and SV-specific fields; map each clause to atomic IDs."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
       "review_notes": "All 21 rows reviewed against INFO grammar, Number/Type, optionality, allele cardinality and SV INFO cross-reference; reserved rows are not universally required.",
@@ -251,7 +250,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING"
+        "version_delta_status": "AUTHOR_INFO_RESERVED_ROW_MAPPING_COMPLETE_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -298,7 +297,8 @@
       "version_delta_artifacts": [
         "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
         "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
-      ]
+      ],
+      "version_delta_artifact": "vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json"
     },
     {
       "table_id": "VCF5.4",
