@@ -1030,6 +1030,30 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t|0|1/2"
         ]
+      },
+      {
+        "id": "v44_number_p_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Number=P was introduced in VCFv4.5 and is not valid in VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=CUSTOM,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,20"
+        ]
+      },
+      {
+        "id": "v44_number_m_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Number=M base-modification cardinality was introduced in VCFv4.5 and is not valid in VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=M5mC,Number=M,Type=Float,Description=\"Base modification fraction\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0/1:0.5"
+        ]
       }
     ],
     "VCFv4.5": [
@@ -2660,6 +2684,8 @@
             "partial_gt_phasing_valid_v44",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
+            "v44_number_m_rejected",
+            "v44_number_p_rejected",
             "vcf45_local_allele_encoding_rejected"
           ]
         },
