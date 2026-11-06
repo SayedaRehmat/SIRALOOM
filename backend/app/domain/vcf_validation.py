@@ -57,7 +57,7 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
 PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
-NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ"), ("FORMAT", "GQ"), ("FORMAT", "HQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 _CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
@@ -111,8 +111,8 @@ def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("3", "Float"),
-        "GQ": ("1", "Integer"),
-        "HQ": ("2", "Integer"),
+        "GQ": ("1", "Float"),
+        "HQ": ("2", "Float"),
     }
     definition = reserved.get(field_id)
     if definition is None:
@@ -865,9 +865,16 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         if fileformat == "VCFv4.0" and kind == "FORMAT"
         else None
     )
+    allowed_vcf40_types = (
+        {"Integer", "Float"}
+        if identifier in {"GQ", "HQ"}
+        else {reserved_vcf40_definition["Type"]}
+        if reserved_vcf40_definition is not None
+        else set()
+    )
     if reserved_vcf40_definition is not None and (
         number != reserved_vcf40_definition["Number"]
-        or parsed["Type"] != reserved_vcf40_definition["Type"]
+        or parsed["Type"] not in allowed_vcf40_types
     ):
         raise StrictVCFValidationError(
             f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
