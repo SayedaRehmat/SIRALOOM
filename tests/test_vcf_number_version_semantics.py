@@ -98,3 +98,22 @@ def test_vcf41_accepts_number_a_and_g(
     )
 
     assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize("number", ["P", "M", "LA", "LR", "LG"])
+def test_vcf44_rejects_vcf45_only_format_cardinalities(
+    tmp_path: Path, number: str
+):
+    path = tmp_path / f"vcf44-number-{number}.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\\n"
+        f'##FORMAT=<ID=CUSTOM,Number={number},Type=Float,Description="Custom">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:CUSTOM\\t0/1:0.5\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
