@@ -1967,7 +1967,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
+    spanning_deletion_context_verified = 0
+    spanning_deletion_context_unverified = 0
     for chrom, pos, line_no, star_carriers in spanning_deletion_records:
+        # A VCF may be a filtered or region-restricted callset. The upstream
+        # deletion that explains '*' can therefore be absent from this file,
+        # or its genotype can have been filtered independently. Treat a local
+        # overlapping deletion as corroborating evidence when present, but do
+        # not reject an otherwise structurally valid VCF when that evidence is
+        # unavailable. The '*' allele remains symbolic and is never normalized
+        # as a sequence allele.
         if star_carriers is not None and not star_carriers:
             continue
         overlaps = [
@@ -1977,14 +1986,14 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         ]
         context_exists = any(
             deletion_carriers is None
+            or star_carriers is None
             or bool(star_carriers & deletion_carriers)
             for deletion_carriers in overlaps
         )
-        if not overlaps or not context_exists:
-            raise StrictVCFValidationError(
-                f"Spanning-deletion ALT '*' has no overlapping deletion record on {chrom} at line {line_no}",
-                code="VCF_SPANNING_DELETION_CONTEXT_MISSING",
-            )
+        if context_exists:
+            spanning_deletion_context_verified += 1
+        else:
+            spanning_deletion_context_unverified += 1
 
     return {
         "fileformat": fileformat,
@@ -1995,6 +2004,9 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,
+        "spanning_deletion_records": len(spanning_deletion_records),
+        "spanning_deletion_context_verified_records": spanning_deletion_context_verified,
+        "spanning_deletion_context_unverified_records": spanning_deletion_context_unverified,
         "gvcf_markers": gvcf_markers,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
