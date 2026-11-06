@@ -2965,7 +2965,10 @@
     "For VCFv4.1 and VCFv4.2, do not fabricate Number/Type values; where absent in source, represent as unspecified by source.",
     "VCFv4.5 xanthosine alias capitalization discrepancy remains an upstream blocking ambiguity (VCF45-FORMAT-XAON-ALIAS-CASE-001).",
     "The crosswalk does not establish support for arbitrary custom metadata-defined INFO/FORMAT fields.",
-    "Independent second-person review remains not started."
+    "Independent second-person review remains not started.",
+    "The mechanical 4.2-to-4.3 row diff shows GLE disappearing from the reserved FORMAT inventory. Determine from full normative context and authoritative source history whether this is de-reservation, removal, or an editorial omission; do not silently treat GLE as valid or invalid across versions.",
+    "The mechanical 4.2-to-4.3 description shortening for GT, GL, FT, PS and other FORMAT fields does not mean their semantics disappeared; map each field to its detailed prose section and preserve those source locators.",
+    "The VCFv4.5 44-row FORMAT addition is an inventory delta only; atomize all new row and surrounding prose constraints, including Number=LA/LR/LG/P/M, base modification value order, GT dependency, LAA dependency, reference-block propagation and PS/PSL relationships."
   ],
   "controls": [
     "A field ID persisting across versions does not imply identical semantics.",
@@ -2973,5 +2976,27 @@
     "Keep GT separator subitems separate from reserved FORMAT field IDs.",
     "Do not treat change-log entries or examples as the normative requirement source.",
     "No implementation, test execution or laboratory qualification is claimed."
+  ],
+  "semantic_review_findings": [
+    {
+      "transition": "VCFv4.1_to_VCFv4.2",
+      "finding": "The reserved INFO and FORMAT row IDs and descriptions are identical in this mechanical inventory. This does not mean the full versions are semantically identical; the ALT '*' allele change is separately recorded in the genotype/SV crosswalk.",
+      "status": "ROW_INVENTORY_UNCHANGED_WHOLE_SPEC_DELTA_EXISTS"
+    },
+    {
+      "transition": "VCFv4.2_to_VCFv4.3",
+      "finding": "VCFv4.3 formalizes reserved definitions as Number/Type tables. INFO rows AD/ADF/ADR appear; FORMAT rows AD/ADF/ADR/PP appear; GLE is no longer in the reserved FORMAT inventory. The table descriptions are shortened relative to prose enumerations, so detailed semantics must be reconciled against surrounding definitions rather than treated as deleted. Determine the normative status and any deprecation/compatibility meaning of GLE's removal.",
+      "status": "ROW_DELTA_IDENTIFIED_CONTEXT_REVIEW_REQUIRED"
+    },
+    {
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "finding": "The INFO reserved rows are unchanged in the mechanical inventory; FORMAT adds PSL, PSO and PSQ with Number=P. Their semantics must be read jointly with VCFv4.4 allele-level phasing and derivative-chromosome reconstruction prose.",
+      "status": "ROW_DELTA_IDENTIFIED_CONTEXT_REVIEW_REQUIRED"
+    },
+    {
+      "transition": "VCFv4.4_to_VCFv4.5",
+      "finding": "INFO row IDs are unchanged, but END's table description changes to explicitly deprecated/backward-compatibility status. FORMAT adds 44 row IDs, including LEN, local-allele selectors/equivalents, base-modification families and aliases. The 4.5 reserved FORMAT table's xanthosine aliases contain a case inconsistency with prose; see VCF45-FORMAT-XAON-ALIAS-CASE-001.",
+      "status": "ROW_DELTA_IDENTIFIED_CONTEXT_REVIEW_REQUIRED"
+    }
   ]
 }
