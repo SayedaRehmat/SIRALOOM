@@ -150,3 +150,66 @@ This verifies repository CI for the audited commit. It does not verify normative
 ## 9. Non-claims
 
 This audit does not claim that VCF 4.0–4.5 requirements are complete, that the 226-record ledger is exhaustive, that any requirement has independent approval, that production code implements all clauses, that clause-specific tests have passed, or that any VCF version is laboratory-qualified. PR #293 must remain draft and unmerged while these gates are open.
+
+
+## 10. Subsequent execution work recorded on 2026-11-06
+
+The following work was committed after the initial audit baseline:
+
+- `vcf4.5-table-review-debt-adjudication.v1.json` — table-specific author dispositions for all 44 VCFv4.5 VCF-scope tables.
+- `vcf4.5-table-semantic-review-queue.v1.json` — the three repeated generic questions were replaced by table-specific context-locator and version-delta work. The queue now has 88 baseline open questions plus one source-internal blocking ambiguity.
+- `vcf4.1-4.5-version-delta-register.v1.json` — source-pinned transition register for VCFv4.1→4.2→4.3→4.4→4.5, with structural table metrics and direct VCFv4.4/4.5 source locators.
+- `vcf4.1-4.5-reserved-row-version-crosswalk.v1.json` — all reserved INFO/FORMAT row inventories carried forward through VCFv4.5, retaining prose-only 4.1/4.2 representations without fabricated Number/Type values; mechanical row deltas are explicitly distinguished from semantic conclusions.
+- `vcf4.5-info-format-row-semantic-review.v1.json` — 21 INFO and 63 FORMAT rows were structurally checked for unique IDs, source lines, author disposition and semantic notes.
+
+### 10.1 VCFv4.5 table disposition counts
+
+| Author disposition | Tables |
+|---|---:|
+| Normative table definitions | 3 |
+| Mixed normative prose / informative matrix | 1 |
+| Informative examples or illustrations | 40 |
+| Total | 44 |
+
+All 44 table records have source locators and author dispositions. All 44 still require exact locator-level surrounding-context reconciliation and version-delta assessment. Independent review remains 0/44. The 5.5 genotype-ordering matrix is treated as illustrative; its surrounding general-ploidy algorithm and footnote must be atomized independently. No normative requirement is inferred solely from example rows.
+
+### 10.2 Reserved INFO/FORMAT row inventory
+
+| Version | INFO rows | FORMAT rows | Source representation |
+|---|---:|---:|---|
+| VCFv4.1 | 18 | 13 | Prose enumerations |
+| VCFv4.2 | 18 | 13 | Prose enumerations |
+| VCFv4.3 | 21 | 16 | Number/Type tables |
+| VCFv4.4 | 21 | 19 | Number/Type tables |
+| VCFv4.5 | 21 | 63 | Number/Type tables |
+
+Mechanical row findings:
+- VCFv4.1→4.2 reserved row inventory unchanged; this does not erase the separately recorded ALT-star semantic delta.
+- VCFv4.2→4.3 formalizes Number/Type attributes, adds INFO AD/ADF/ADR and FORMAT AD/ADF/ADR/PP, and removes GLE from the reserved FORMAT inventory. GLE's status requires contextual resolution; no silent compatibility decision is made.
+- VCFv4.3→4.4 adds PSL/PSO/PSQ.
+- VCFv4.4→4.5 adds 44 FORMAT rows and changes the END row description to deprecated/backward-compatibility status.
+
+### 10.3 Newly confirmed upstream VCFv4.5 source ambiguity
+
+A case-sensitive xanthosine alias inconsistency exists in the authoritative pinned VCFv4.5 source:
+
+- Reserved table lines 586–588: `MXaoN`, `DPMXaoN`, `ADMXaoN`.
+- Prose alias lists lines 724, 734 and 740: `MxaoN`, `DPMxaoN`, `ADMxaoN`.
+- The discrepancy is present in upstream commit `44aedcff5032a6a16f271085e2d9b16de1f0ccbf` (2024-06-06, VCFv4.5 RC2), which introduced both spellings in the same change.
+- Retrieved VCFv4.5 file history contains no later correction; scoped issue and pull-request searches returned no result.
+
+The canonical spelling remains unresolved. This is an upstream specification ambiguity, not a SIRALOOM extraction typo. Obtain authoritative maintainer clarification or a source correction before implementation. Do not normalize case or silently accept both spellings.
+
+### 10.4 Within-version source history
+
+Upstream commit `e821e4f02ae25c2175f9a366edca1322d6a2de72` (2026-02-24, #851) changed LGL and LGP Type from Integer to Float. The pinned VCFv4.5 source contains Float for both rows, consistent with that source-history change.
+
+### 10.5 CI status after research commits
+
+GitHub Actions run `42185002380` completed successfully for commit `707dd56963076b9f3f570e5059f26aa3078d6f97`; backend, frontend and postgres-integration jobs all passed. This run predates subsequent research artifact commits, so it is not CI verification of the current PR head. The current PR head has no returned workflow run at the time of this audit refresh. Vercel reported pending for the latest head when last checked.
+
+### 10.6 Current gate status
+
+The 44-table work is now more precisely adjudicated but remains incomplete. Exact locator-level context reconciliation, VCFv4.1–4.4 row and clause comparison, whole-source semantic decomposition, VCFv4.0 immutable source capture, independent second-person review, implementation mapping, executable conformance testing and laboratory qualification remain open. The atomic ledger's complete contents were not independently re-read in this session because the GitHub content retrieval path returned an empty body for its large blob; this is a retrieval limitation, not evidence of an empty ledger.
+
+PR #293 remains draft and unmerged. No production parser, normalizer, validator or BCF implementation changes were made in this research pass.
