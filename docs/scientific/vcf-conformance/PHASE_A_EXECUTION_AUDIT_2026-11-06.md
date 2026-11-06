@@ -452,3 +452,10 @@ A separate reconciliation artifact, `vcf4.5-cardinality-atomic-candidate-reconci
 - 6 records have no matching candidate identified in that candidate artifact.
 
 This confirms that the 34 records must **not** be described as 34 net-new unique scientific requirements. They are a schema-shaped decomposition batch used to make field-specific atomic statements explicit. Canonical-ledger deduplication remains blocked until the full large ledger blob can be retrieved and compared. The addendum is intentionally separate and all records remain IN_REVIEW. The canonical 226-record ledger count is unchanged.
+
+
+### 14.8 CI and branch state after the latest documentation commits
+
+The last PR-triggered workflow retrieved in this continuation was run `42198569374`, associated with commit `9b7523fe5869e1fa6ed8366423a9721c4f1143b2`. Its backend, frontend and PostgreSQL-integration jobs are now all **cancelled**; no failed step was reported, but this is not a passing run. No workflow run was returned for the later documentation-only head `a58c1392375c5d78f1a78098553ed0085540fb8f`.
+
+The research branch comparison against `main` reports 276 commits ahead and 3 behind at the time of this check. No merge or rebase was performed. All changes in this continuation are confined to `docs/scientific/vcf-conformance/`; no application code or CI configuration was modified. CI status for the latest head remains unverified.
