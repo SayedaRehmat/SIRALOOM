@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-gvcf-reference-block-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "Version-specific VCF semantics for unspecified alleles and reference-only blocks, including VCFv4.5 table VCF5.44.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND",
+      "locator": "VCFv4.1.tex: full-source heading scan"
+    },
+    "VCFv4_2": {
+      "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND",
+      "locator": "VCFv4.2.tex: full-source heading scan"
+    },
+    "VCFv4_3": {
+      "status": "SECTION_PRESENT_INFO_END_BASED",
+      "locator": "VCFv4.3.tex:1428-1465",
+      "semantics": [
+        "Reference-only blocks may be represented in one record using INFO END.",
+        "Reference evidence is likelihood against unknown alternate allele <*>.",
+        "<*> is preferred over <NON_REF>.",
+        "Worked examples use INFO END; no FORMAT LEN field appears in the section."
+      ]
+    },
+    "VCFv4_4": {
+      "status": "SECTION_PRESENT_INFO_END_BASED",
+      "locator": "VCFv4.4.tex:1686-1747",
+      "semantics": [
+        "Retains the VCFv4.3 INFO END reference-block model and preference for <*> over <NON_REF>.",
+        "Worked examples use INFO END and no FORMAT LEN."
+      ]
+    },
+    "VCFv4_5": {
+      "status": "SECTION_PRESENT_FORMAT_LEN_SAMPLE_SPECIFIC",
+      "locator": "VCFv4.5.tex:1846-1878",
+      "semantics": [
+        "Uses <*> plus FORMAT LEN for reference-only blocks.",
+        "At positions implicitly called by a preceding <*> for a sample, GT must be missing and no FORMAT fields other than LAA may be present.",
+        "If LAA is present at a reference-block start for a sample, <*> must be included in that sample's LAA even when GT=0/0.",
+        "<NON_REF> should be treated as an alias of <*> for backward compatibility.",
+        "A missing FORMAT LEN should be inferred from INFO END if present.",
+        "Base-modification FORMAT values on a reference-block record apply to all applicable bases covered by the block."
+      ]
+    }
+  },
+  "deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_DEDICATED_GVCF_SECTION_FOUND_IN_EITHER_VERSION"
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "DEDICATED_GVCF_SECTION_PRESENT_IN_4.3",
+      "changes": [
+        "Introduces dedicated section for reference-only blocks using INFO END and <*>; prefers <*> over <NON_REF>."
+      ],
+      "evidence": [
+        "VCFv4.3.tex:1428-1465"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_GVCF_SECTION",
+      "evidence": [
+        "VCFv4.3.tex:1428-1465",
+        "VCFv4.4.tex:1686-1747"
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "MAJOR_SEMANTIC_CHANGE",
+      "changes": [
+        "FORMAT LEN is introduced to support sample-specific <*> reference-block lengths.",
+        "Per-sample implicit-call restrictions are added for GT and other FORMAT fields, with LAA exception.",
+        "LAA must include <*> at a reference-block start when present, even if GT=0/0.",
+        "<NON_REF> becomes a backward-compatible alias of <*> rather than merely a non-preferred alternative.",
+        "Missing FORMAT LEN is inferred from INFO END when present.",
+        "Base-modification values in a reference-block record apply to all applicable bases in the block."
+      ],
+      "evidence": [
+        "VCFv4.5.tex:539",
+        "VCFv4.5.tex:606",
+        "VCFv4.5.tex:1848-1862",
+        "VCFv4.5.tex:1878"
+      ]
+    }
+  ],
+  "example": {
+    "table": "VCF5.44",
+    "locator": "VCFv4.5.tex:1862-1875",
+    "interpretation": "The table is informative; normative rules are the preceding prose. The records demonstrate both FORMAT LEN and redundant INFO END, including records with mixed variant/reference alleles."
+  },
+  "scope_controls": [
+    "Keep the gVCF project/producer conventions separate from the core VCF normative statements.",
+    "Do not infer that a producer's historical gVCF behavior is mandatory for every VCF producer.",
+    "Preserve the exact SHOULD force for the <NON_REF> alias and the exact MUST force for GT/LAA restrictions.",
+    "Do not assume FORMAT LEN can be reconstructed for every sample solely from a shared INFO END; the specification's sample-specific design exists because INFO END cannot represent different block lengths per sample."
+  ],
+  "remaining": [
+    "Independent reviewer must verify the exact modal force and LAA/GT exception interactions.",
+    "Map the gVCF rules to atomic requirement IDs and per-version applicability.",
+    "Add positive/negative tests for mixed sample block lengths, absent/present LEN, END inference, NON_REF alias, GT missing restriction, extra FORMAT rejection and LAA inclusion.",
+    "No implementation or test execution is claimed."
+  ]
+}
