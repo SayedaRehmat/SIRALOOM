@@ -135,9 +135,16 @@ jobs:
               missing = sorted(set(bam_contigs) ^ set(ref_contigs))
               mismatched = sorted(k for k in set(bam_contigs) & set(ref_contigs) if bam_contigs[k] != ref_contigs[k])
               raise SystemExit(f"BAM/reference contig geometry mismatch; differing names={missing[:10]}, lengths={mismatched[:10]}")
-          if len(samples) != 1:
-              raise SystemExit(f"Expected exactly one BAM read-group SM; observed {len(samples)}")
-          print(f"Verified {len(bam_contigs)} BAM/reference contigs and one read-group sample column")
+          manifest = __import__("json").loads(Path("benchmarks/giab/hg001_illumina30x_grch37.v1.json").read_text())
+          expected_samples = {manifest["sample"], manifest["sample_alias"]}
+          if len(samples) != 1 or not samples.issubset(expected_samples):
+              raise SystemExit(
+                  f"BAM read-group sample must be one declared HG001 alias {sorted(expected_samples)}; "
+                  f"observed {sorted(samples)}"
+              )
+          print(
+              f"Verified {len(bam_contigs)} BAM/reference contigs and declared HG001 read-group sample alias"
+          )
           PY
       - name: Prepare uncompressed reference for DeepVariant
         shell: bash -l {0}
@@ -147,6 +154,45 @@ jobs:
           bgzip -dc "$RUN_DIR/input/truth-assets/GRCh37_hs37d5.bgz" > "$RUN_DIR/input/hs37d5.fa"
           samtools faidx "$RUN_DIR/input/hs37d5.fa"
           samtools dict "$RUN_DIR/input/hs37d5.fa" -o "$RUN_DIR/input/hs37d5.dict"
+      - name: Verify BAM reference sequence MD5 values against the exact caller FASTA
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          samtools view -H "$RUN_DIR/input/HG001.bam" > "$RUN_DIR/evidence/bam-header.sam"
+          python - "$RUN_DIR/evidence/bam-header.sam" "$RUN_DIR/input/hs37d5.dict" <<'PY'
+          import sys
+          from pathlib import Path
+
+          def sequence_dictionary(path):
+              result = {}
+              for line in Path(path).read_text().splitlines():
+                  if not line.startswith("@SQ\\t"):
+                      continue
+                  fields = dict(item.split(":", 1) for item in line.split("\\t")[1:] if ":" in item)
+                  name = fields.get("SN")
+                  length = fields.get("LN")
+                  md5 = fields.get("M5")
+                  if not name or not length or not md5:
+                      raise SystemExit(f"Reference dictionary entry lacks SN/LN/M5: {line[:120]}")
+                  result[name] = (int(length), md5.lower())
+              if not result:
+                  raise SystemExit(f"No complete @SQ sequence dictionary found in {path}")
+              return result
+
+          bam = sequence_dictionary(sys.argv[1])
+          fasta = sequence_dictionary(sys.argv[2])
+          if bam != fasta:
+              missing = sorted(set(bam) ^ set(fasta))
+              mismatched = sorted(
+                  name for name in set(bam) & set(fasta) if bam[name] != fasta[name]
+              )
+              raise SystemExit(
+                  f"BAM/reference sequence identity mismatch; differing names={missing[:10]}, "
+                  f"length/MD5 mismatches={mismatched[:10]}"
+              )
+          print(f"Verified exact BAM/FASTA sequence dictionary identity for {len(bam)} contigs")
+          PY
       - name: Run DeepVariant 1.10.0 WGS caller from the independently generated BAM
         shell: bash
         run: |
