@@ -30,6 +30,8 @@ def test_builtin_feature_dispositions_are_declared_by_their_version_profiles():
 
     v45 = _matrix("VCFv4.5")
     assert v45["local_allele_encoding"]["status"] == "NATIVE_VALIDATED"
+    assert v45["base_modification_format_fields"]["status"] == "NATIVE_VALIDATED"
+    assert "xanthosine aliases" in v45["base_modification_format_fields"]["limitation"]
     assert v45["external_assembly_contig_references"]["status"] == "UNSUPPORTED"
 
 
