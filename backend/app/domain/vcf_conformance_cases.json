@@ -263,6 +263,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1"
         ]
+      },
+      {
+        "id": "v41_number_a_valid",
+        "category": "version_specific_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.1 supports Number=A for one value per alternate allele",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=CUSTOM,Number=A,Type=Integer,Description=\"Per-ALT values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,20"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -2386,7 +2398,8 @@
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
-            "triploid_number_g_cardinality_valid"
+            "triploid_number_g_cardinality_valid",
+            "v41_number_a_valid"
           ]
         },
         {
