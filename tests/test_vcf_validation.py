@@ -1353,6 +1353,66 @@ def test_vcf45_reserved_depth_aliases_need_no_header_definitions(tmp_path: Path)
     assert validate_vcf_strict(path)["records"] == 1
 
 
+@pytest.mark.parametrize(
+    ("field_id", "field_type"),
+    [
+        ("MXaoN", "Float"),
+        ("MxaoN", "Float"),
+        ("DPMXaoN", "Integer"),
+        ("DPMxaoN", "Integer"),
+        ("ADMXaoN", "Integer"),
+        ("ADMxaoN", "Integer"),
+    ],
+)
+def test_vcf45_ambiguous_xanthosine_aliases_are_blocked_without_header_definition(
+    tmp_path: Path, field_id: str, field_type: str
+):
+    path = tmp_path / "ambiguous-xanthosine-alias.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\t2\t.\tC\tT\t.\tPASS\t.\tGT:{field_id}\t0/1:1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS"
+
+
+@pytest.mark.parametrize(
+    ("field_id", "field_type"),
+    [
+        ("MXaoN", "Float"),
+        ("MxaoN", "Float"),
+        ("DPMXaoN", "Integer"),
+        ("DPMxaoN", "Integer"),
+        ("ADMXaoN", "Integer"),
+        ("ADMxaoN", "Integer"),
+    ],
+)
+def test_vcf45_ambiguous_xanthosine_aliases_are_blocked_in_header_definitions(
+    tmp_path: Path, field_id: str, field_type: str
+):
+    path = tmp_path / "ambiguous-xanthosine-alias-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            f'##FORMAT=<ID={field_id},Number=M,Type={field_type},Description="Ambiguous upstream alias">'
+        ],
+        f"1\t2\t.\tC\tT\t.\tPASS\t.\tGT:{field_id}\t0/1:1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS"
+
+
 def test_vcf45_reserved_base_modification_fraction_must_be_between_zero_and_one(
     tmp_path: Path,
 ):
