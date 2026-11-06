@@ -75,7 +75,7 @@ type CaseWorkspace = {
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
-type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
+type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; validation_dispatch_status?: string | null; validation_dispatch_error?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
 
 type AuditEvent = {
   event_id: string;
@@ -373,7 +373,9 @@ export default function Home() {
 
   useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
 
-  const hasPendingArtifactValidation = caseArtifacts.some((artifact) => artifact.validation_status === "PENDING");
+  const hasPendingArtifactValidation = caseArtifacts.some(
+    (artifact) => artifact.validation_status === "PENDING" && artifact.validation_dispatch_status !== "FAILED",
+  );
 
   useEffect(() => {
     if (!hasPendingArtifactValidation) return;
@@ -1287,7 +1289,7 @@ export default function Home() {
       <section id="artifacts" className="panel artifacts-panel">
         <div className="panel-head"><div><div className="section-kicker">{t("workspace.files")}</div><h3>{caseArtifacts.length} {t("workspace.files")}</h3><p className="muted">{t("workspace.filesLead")}</p></div><button type="button" className="secondary" onClick={() => void refreshCaseArtifacts()}>{t("workspace.refreshFiles")}</button></div>
         {!caseArtifacts.length ? <div className="empty small"><strong>{t("workspace.noFiles")}</strong></div> : <div className="artifacts-list">{caseArtifacts.map(artifact => <article className="artifact-row" key={artifact.artifact_id}>
-          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small><details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
+          <div className="artifact-main"><strong>{artifact.filename}</strong><span>{prettyStatus(artifact.artifact_type)} · {formatBytes(artifact.size_bytes)} · {artifact.genome_build ?? "—"}</span><small>{t("workspace.validationStatus")}: {prettyStatus(artifact.validation_status ?? "UNKNOWN")} · {artifact.validation_dispatch_status ? prettyStatus(artifact.validation_dispatch_status) : ""} · {t("workspace.createdAt")}: {formatDate(artifact.created_at)}</small>{artifact.validation_dispatch_status === "FAILED" && artifact.validation_dispatch_error && <small className="notice error-notice">{artifact.validation_dispatch_error}</small>}<details><summary>{t("workspace.sha256")}</summary><code>{artifact.sha256}</code>{artifact.metadata && <pre>{JSON.stringify(artifact.metadata, null, 2)}</pre>}</details></div>
           <div className="artifact-actions"><code>{artifact.artifact_id.slice(0, 12)}…</code><button type="button" className="secondary small" onClick={() => void downloadAuthenticated(`/artifacts/${artifact.artifact_id}/download`, artifact.filename)}>{t("workspace.downloadArtifact")}</button></div>
         </article>)}</div>}
       </section>
