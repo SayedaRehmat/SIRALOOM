@@ -369,7 +369,8 @@
     "Complete version comparison for all VCF 4.5 tables and every non-table section, including definitions, grammar, enumerations, footnotes, examples and cross-references.",
     "Check 4.4-to-4.5 GT, SV INFO/FORMAT and BCF interactions line by line; the listed 4.5 GT item is explicitly a retained-semantics check, not a claimed new delta.",
     "Acquire and pin VCFv4.0 before making any 4.0 applicability claim.",
-    "Independent second-person review remains not started."
+    "Independent second-person review remains not started.",
+    "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved."
   ],
   "controls": [
     "Never project a later-version rule backward without direct source evidence.",
@@ -377,5 +378,42 @@
     "Keep VCF text, BCF serialization, gVCF producer conventions and 1000 Genomes producer conventions as separate scopes.",
     "Keep examples and change logs as discovery/corroboration evidence; derive normative obligations from the normative clauses.",
     "No requirement is considered implemented, tested or qualified by this artifact."
+  ],
+  "within_version_source_history": [
+    {
+      "source_file": "VCFv4.5.tex",
+      "commit": "e821e4f02ae25c2175f9a366edca1322d6a2de72",
+      "date": "2026-02-24T21:03:35Z",
+      "message": "Change LGL and LGP representation from Integer to Float (#851)",
+      "source_patch_finding": "The upstream patch changes the Number=LG reserved FORMAT row Type for LGL and LGP from Integer to Float at VCFv4.5.tex lines 549-550.",
+      "current_pinned_source_finding": "The pinned SIRALOOM source contains Float for both LGL and LGP, consistent with this upstream change.",
+      "evidence": "https://github.com/samtools/hts-specs/commit/e821e4f02ae25c2175f9a366edca1322d6a2de72",
+      "status": "HISTORY_CONFIRMED_CURRENT_PINNED_BYTES_CONTAIN_FLOAT"
+    },
+    {
+      "source_file": "VCFv4.5.tex",
+      "commit": "44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "date": "2024-06-06T06:50:17Z",
+      "message": "Updated VCFv4.5 to RC2 (#770)",
+      "source_patch_finding": "The same upstream patch adds MXaoN/DPMXaoN/ADMXaoN to the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN to the prose alias lists.",
+      "current_pinned_source_finding": "The capitalization discrepancy remains in the pinned VCFv4.5 source at table lines 586-588 and prose lines 724, 734 and 740.",
+      "evidence": "https://github.com/samtools/hts-specs/commit/44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "status": "UPSTREAM_SOURCE_INCONSISTENCY_CONFIRMED_CANONICAL_ALIAS_UNRESOLVED"
+    }
+  ],
+  "blocking_source_ambiguities": [
+    {
+      "id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+      "topic": "Case-sensitive xanthosine aliases",
+      "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
+      "table": "VCF5.4",
+      "table_locator": "VCFv4.5.tex:586-588",
+      "prose_locators": [
+        "VCFv4.5.tex:724",
+        "VCFv4.5.tex:734",
+        "VCFv4.5.tex:740"
+      ],
+      "decision": "Do not guess, normalize or silently accept both spellings."
+    }
   ]
 }
