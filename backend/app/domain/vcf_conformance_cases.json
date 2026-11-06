@@ -275,6 +275,18 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,20"
         ]
+      },
+      {
+        "id": "v41_number_g_without_gt_diploid_default_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "When GT is absent, Number=G genotype likelihood cardinality assumes diploidy",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,1,2"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -2423,7 +2435,8 @@
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
-            "v41_number_a_valid"
+            "v41_number_a_valid",
+            "v41_number_g_without_gt_diploid_default_valid"
           ]
         },
         {
