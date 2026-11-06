@@ -21,6 +21,10 @@
     {
       "path": "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json",
       "blob_sha1": "4e1c0e88cb7b19c03e5f836d8acfdbac76e46aa3"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+      "blob_sha1": "c5659737fbf9a4406905d2e395e6d87bf49a407f"
     }
   ],
   "structural_inventory": [
@@ -280,14 +284,20 @@
             "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
             "file": "VCFv4.4.tex",
             "blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
-            "source_sha256": null
+            "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+            "raw_source_byte_length": 149282,
+            "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+            "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE"
           },
           {
             "repository": "samtools/hts-specs",
             "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
             "file": "VCFv4.5.tex",
             "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-            "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+            "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+            "raw_source_byte_length": 164356,
+            "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+            "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE"
           }
         ],
         "normative_source_locators": [
