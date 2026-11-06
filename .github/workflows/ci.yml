@@ -38,6 +38,8 @@ jobs:
         run: |
           uv lock --check
           uv sync --locked --extra dev
+      - name: Enforce runtime executable inventory
+        run: uv run --locked python scripts/validation/check_runtime_executable_inventory.py
       - name: Verify installed Redis client is accepted by the selected Kombu transport
         run: uv run --locked python -c "import redis, kombu; import kombu.transport.redis; print(f'redis-py={redis.__version__}, kombu={kombu.__version__}')"
       - name: Backend tests
