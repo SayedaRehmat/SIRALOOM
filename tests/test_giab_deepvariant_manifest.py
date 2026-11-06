@@ -46,3 +46,15 @@ def test_hg001_caller_manifest_pins_deepvariant_and_matching_truth_build() -> No
     assert manifest["truth_set"]["manifest"] == "benchmarks/giab/public_assets.v1.json"
     assert manifest["truth_set"]["reference_build"] == "GRCh37"
     assert manifest["truth_set"]["release"] == "NISTv4.2.1"
+
+
+def test_caller_workflow_requires_declared_bam_sample_and_exact_reference_identity() -> None:
+    workflow = (
+        ROOT / ".github/workflows/giab-hg001-deepvariant.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'expected_samples = {manifest["sample"], manifest["sample_alias"]}' in workflow
+    assert "BAM read-group sample must be one declared HG001 alias" in workflow
+    assert "Verify BAM reference sequence MD5 values against the exact caller FASTA" in workflow
+    assert 'fields.get("M5")' in workflow
+    assert "BAM/reference sequence identity mismatch" in workflow
