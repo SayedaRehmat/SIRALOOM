@@ -1521,8 +1521,8 @@
         "lines": [
           "##fileformat=VCFv4.5",
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
-          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
-          "1\t2\t.\tC\t<DEL>\t.\tPASS\tEND=5\tGT:M5mC\t0/1:0.5"
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSYMBOLIC\tMISSING",
+          "1\t2\t.\tC\t<DEL>\t.\tPASS\tEND=5\tGT:M5mC\t0/1:0.5\t0/.:0.6"
         ]
       },
       {
