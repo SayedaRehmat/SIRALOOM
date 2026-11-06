@@ -132,19 +132,32 @@ def _refresh_case_vcf_intake_status(db: Session, case_id: UUID) -> tuple[Case, s
             Artifact.artifact_type == ArtifactType.VCF,
         )
     ).all()
-    case.status = case_status_after_vcf_upload(
-        case.status,
-        has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
-        has_vcf=bool(vcf_rows),
-        has_site_only_vcf=any(
-            status == "VALID_SITE_ONLY"
-            or (
-                isinstance(metadata, dict)
-                and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
-            )
-            for status, metadata in vcf_rows
-        ),
-    )
+    has_valid_vcf = any(status == "VALID" for status, _metadata in vcf_rows)
+    has_pending_vcf = any(status == "PENDING" for status, _metadata in vcf_rows)
+    if case.status in {
+        "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+        "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+    } and has_valid_vcf:
+        case.status = "READY_FOR_ANALYSIS"
+    elif case.status in {
+        "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+        "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+    } and has_pending_vcf:
+        case.status = "VALIDATING"
+    else:
+        case.status = case_status_after_vcf_upload(
+            case.status,
+            has_valid_vcf=has_valid_vcf,
+            has_vcf=bool(vcf_rows),
+            has_site_only_vcf=any(
+                status == "VALID_SITE_ONLY"
+                or (
+                    isinstance(metadata, dict)
+                    and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
+                )
+                for status, metadata in vcf_rows
+            ),
+        )
     return case, before_status
 
 
@@ -502,11 +515,8 @@ async def upload_artifact(
             db.add(dispatch)
 
             before_status = case.status
-            if kind == "VCF" and case.status in {
-                "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
-                "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
-            }:
-                case.status = "VALIDATING"
+            if kind == "VCF":
+                case, before_status = _refresh_case_vcf_intake_status(db, case_id)
 
             AuditService(db).record(
                 event_type="ARTIFACT_VALIDATION_QUEUED",
