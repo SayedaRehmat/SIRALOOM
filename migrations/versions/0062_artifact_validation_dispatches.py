@@ -53,9 +53,54 @@ def upgrade():
         "artifact_validation_dispatches",
         ["case_id", "status"],
     )
+    connection = op.get_bind()
+    if connection.dialect.name == "postgresql":
+        op.execute("""
+            CREATE FUNCTION siraloom_reject_artifact_validation_identity_mutation()
+            RETURNS trigger AS $siraloom$
+            BEGIN
+                IF OLD.artifact_id IS DISTINCT FROM NEW.artifact_id
+                   OR OLD.organization_id IS DISTINCT FROM NEW.organization_id
+                   OR OLD.case_id IS DISTINCT FROM NEW.case_id
+                   OR OLD.toolchain_profile_id IS DISTINCT FROM NEW.toolchain_profile_id
+                   OR OLD.toolchain_bcftools_version IS DISTINCT FROM NEW.toolchain_bcftools_version
+                   OR OLD.toolchain_htslib_version IS DISTINCT FROM NEW.toolchain_htslib_version
+                   OR OLD.toolchain_queue IS DISTINCT FROM NEW.toolchain_queue
+                   OR OLD.toolchain_snapshot::text IS DISTINCT FROM NEW.toolchain_snapshot::text THEN
+                    RAISE EXCEPTION 'artifact validation dispatch identity and toolchain provenance are immutable';
+                END IF;
+                RETURN NEW;
+            END;
+            $siraloom$ LANGUAGE plpgsql
+        """)
+        op.execute("""
+            CREATE TRIGGER trg_artifact_validation_identity_immutable
+            BEFORE UPDATE ON artifact_validation_dispatches
+            FOR EACH ROW EXECUTE FUNCTION siraloom_reject_artifact_validation_identity_mutation()
+        """)
+    elif connection.dialect.name == "sqlite":
+        op.execute("""
+            CREATE TRIGGER trg_artifact_validation_identity_immutable
+            BEFORE UPDATE ON artifact_validation_dispatches
+            WHEN OLD.artifact_id != NEW.artifact_id
+              OR OLD.organization_id != NEW.organization_id
+              OR OLD.case_id != NEW.case_id
+              OR OLD.toolchain_profile_id != NEW.toolchain_profile_id
+              OR OLD.toolchain_bcftools_version != NEW.toolchain_bcftools_version
+              OR OLD.toolchain_htslib_version != NEW.toolchain_htslib_version
+              OR OLD.toolchain_queue != NEW.toolchain_queue
+              OR OLD.toolchain_snapshot != NEW.toolchain_snapshot
+            BEGIN SELECT RAISE(ABORT, 'artifact validation dispatch identity and toolchain provenance are immutable'); END
+        """)
 
 
 def downgrade():
+    connection = op.get_bind()
+    if connection.dialect.name == "postgresql":
+        op.execute("DROP TRIGGER IF EXISTS trg_artifact_validation_identity_immutable ON artifact_validation_dispatches")
+        op.execute("DROP FUNCTION IF EXISTS siraloom_reject_artifact_validation_identity_mutation()")
+    elif connection.dialect.name == "sqlite":
+        op.execute("DROP TRIGGER IF EXISTS trg_artifact_validation_identity_immutable")
     op.drop_index("ix_artifact_validation_dispatch_case_status", table_name="artifact_validation_dispatches")
     op.drop_index("ix_artifact_validation_dispatch_status_created", table_name="artifact_validation_dispatches")
     op.drop_table("artifact_validation_dispatches")
