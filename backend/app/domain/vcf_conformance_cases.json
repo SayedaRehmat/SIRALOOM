@@ -1766,6 +1766,30 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:FLA\t1/2:2,1:10"
         ]
+      },
+      {
+        "id": "number_p_populated_without_gt_rejected",
+        "category": "format_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=P cardinality is defined by allele values in GT and cannot be inferred when GT is absent",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM_P\t10,20"
+        ]
+      },
+      {
+        "id": "number_p_missing_without_gt_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "A missing Number=P value remains missing when GT is absent; no allele cardinality is asserted",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM_P\t."
+        ]
       }
     ],
     "VCFv4.0": [
@@ -2674,6 +2698,8 @@
             "number_m_n_counts_both_strands",
             "number_m_phased_duplicate_alleles_remain_distinct",
             "number_m_unphased_duplicate_alleles_aggregate",
+            "number_p_missing_without_gt_valid",
+            "number_p_populated_without_gt_rejected",
             "number_p_triploid_cardinality_valid",
             "out_of_range_genotype_allele_invalid",
             "partial_gt_phasing_valid_v45",
