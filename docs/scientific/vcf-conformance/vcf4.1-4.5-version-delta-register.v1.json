@@ -33,6 +33,54 @@
     {
       "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-semantic-section-applicability.v1.json",
       "blob_sha1": "b9d821264ef54166888ab3bf73537deaed80e571"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-genotype-ordering-version-delta.v1.json",
+      "blob_sha1": "fc2ace92568ed9c22f35eb5eda4bf27effa8e3a8"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-phase-set-list-version-delta.v1.json",
+      "blob_sha1": "0f0a03902eef2ca5bf36e96c1fa771dbfae5b8b7"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json",
+      "blob_sha1": "47b96602735113b41549ebc8065397e2fff50f71"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-base-modification-version-delta.v1.json",
+      "blob_sha1": "ad6e619005be7e8d61547f1f88c77620924be933"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-character-encoding-version-delta.v1.json",
+      "blob_sha1": "f8e0992d8055c2470dd1d577123715fcc7bb00df"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-local-allele-version-delta.v1.json",
+      "blob_sha1": "8a2a91d4e60f57f638bb13067e627b6054eabb1c"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-small-variant-representation-version-delta.v1.json",
+      "blob_sha1": "90f1fc229c2b83fa99bea5aa38b227130a9b0c22"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-breakend-version-delta.v1.json",
+      "blob_sha1": "5227c87498155f2605f228356a8aa2316eb86828"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json",
+      "blob_sha1": "9a71ff092d87f4f47d6c1aff793b9f4fe0909467"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json",
+      "blob_sha1": "1cb7a5dc11bc5ebe6222e8665f1da8dbccdf3583"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+      "blob_sha1": "8134576a46af696754ee406e8a3e327c4044cb4d"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
+      "blob_sha1": "575f00ce36fc2e030a5e6f3cd64f9e95803451fe"
     }
   ],
   "structural_inventory": [
@@ -379,7 +427,8 @@
     "Acquire and pin VCFv4.0 before making any 4.0 applicability claim.",
     "Independent second-person review remains not started.",
     "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved.",
-    "The new section applicability and reserved-row crosswalk artifacts are author-level inventories; every candidate requirement still needs atomic, per-version APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED adjudication against exact normative clauses."
+    "The new section applicability and reserved-row crosswalk artifacts are author-level inventories; every candidate requirement still needs atomic, per-version APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED adjudication against exact normative clauses.",
+    "Complete field-by-field normative prose/footnote mapping and atomic requirement linkage for the 21 INFO rows and 64-field union of FORMAT rows (VCF5.3/VCF5.4); the row inventory and mechanical version deltas are already captured."
   ],
   "controls": [
     "Never project a later-version rule backward without direct source evidence.",
@@ -523,5 +572,30 @@
       ],
       "status": "AUTHOR_CONFIRMED_NEW_VCF4_5_FEATURES"
     }
+  ],
+  "table_version_delta_progress": {
+    "vcf45_tables": 44,
+    "author_context_locator_reconciled": 44,
+    "preliminary_five_version_applicability_matrices": 44,
+    "table_version_deltas_reconciled": 42,
+    "reserved_info_format_tables_with_row_delta_matrix_but_field_clause_mapping_pending": 2,
+    "open_table_specific_questions": 3,
+    "independent_table_reviews_completed": 0,
+    "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_SUBSTANTIALLY_ADVANCED_NOT_INDEPENDENTLY_APPROVED"
+  },
+  "specialized_delta_artifacts": [
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-genotype-ordering-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-phase-set-list-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-base-modification-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-character-encoding-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-local-allele-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-small-variant-representation-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-breakend-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json"
   ]
 }
