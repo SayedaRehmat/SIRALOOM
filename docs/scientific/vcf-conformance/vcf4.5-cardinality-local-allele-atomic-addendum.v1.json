@@ -10,8 +10,8 @@
       "VCFv4.4.tex",
       "VCFv4.5.tex"
     ],
-    "candidate_lines_reviewed": 55,
-    "atomic_requirements_created": 29,
+    "candidate_lines_reviewed": 213,
+    "atomic_requirements_created": 34,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
@@ -2884,6 +2884,466 @@
       "review": {
         "status": "IN_REVIEW",
         "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000256",
+      "title": "Base-modification fraction bounds",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Values in M base-modification fraction fields must be between 0 and 1.",
+      "actor": "VCF producer",
+      "condition": "An M base-modification fraction value is encoded.",
+      "required_or_prohibited_behavior": "Values in M base-modification fraction fields must be between 0 and 1.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Values below 0 or above 1 are rejected; 0 and 1 are accepted.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:7-2",
+            "start_line": "7",
+            "end_line": "2"
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000257",
+      "title": "Base-modification key families reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the M, DPM or ADM base-modification key patterns are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches one of the specification-defined base-modification key patterns.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the M, DPM or ADM base-modification key patterns are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:7-2",
+            "start_line": "7",
+            "end_line": "2"
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000258",
+      "title": "Named base-modification aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified named aliases should be used instead of their corresponding ChEBI-keyed base-modification field names.",
+      "actor": "VCF producer",
+      "condition": "A base-modification field has a named alias defined by the specification.",
+      "required_or_prohibited_behavior": "The specified named aliases should be used instead of their corresponding ChEBI-keyed base-modification field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:7-2",
+            "start_line": "7",
+            "end_line": "2"
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000259",
+      "title": "Base-modification annotations propagate across reference blocks",
+      "requirement_domain": "GVCF",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When base-modification information is present in a reference-block record, it applies to all applicable bases covered by that reference block.",
+      "actor": "VCF producer or consumer",
+      "condition": "A reference-block record contains base-modification information.",
+      "required_or_prohibited_behavior": "When base-modification information is present in a reference-block record, it applies to all applicable bases covered by that reference block.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The annotation is interpreted across all applicable bases covered by the reference block.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:7-2",
+            "start_line": "7",
+            "end_line": "2"
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000260",
+      "title": "ADFM and ADRM base-modification key families are not reserved",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the ADFM or ADRM base-modification key families are not reserved by VCFv4.5.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key begins with ADFM or ADRM and otherwise resembles a base-modification key.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the ADFM or ADRM base-modification key families are not reserved by VCFv4.5.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The validator does not classify these forms as specification-reserved base-modification keys solely by pattern.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:7-4",
+            "start_line": "7",
+            "end_line": "4"
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
         "reviewer_role": "author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
