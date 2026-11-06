@@ -1,6 +1,8 @@
 import importlib
 from uuid import uuid4
 
+import pytest
+
 
 def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
@@ -161,14 +163,23 @@ def test_analysis_execution_claim_allows_continuation_of_running_work():
     assert db.commits == 1
 
 
-def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch):
+@pytest.mark.parametrize(
+    "toolchain_queue",
+    [
+        "bioinformatics.bcftools.1_25",
+        "bioinformatics.bcftools.1_24_1",
+        "bioinformatics.bcftools.1_23_3",
+        "bioinformatics.bcftools.1_22_4",
+    ],
+)
+def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatch, toolchain_queue):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     db_session = importlib.import_module("backend.app.infrastructure.db.session")
     from backend.app.domain.enums import AnalysisStatus
 
     analysis_id = uuid4()
     dispatch_id = uuid4()
-    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id)})()
+    analysis = type("Analysis", (), {"id": analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": str(dispatch_id), "toolchain_queue": toolchain_queue})()
     dispatch = type(
         "AnalysisDispatch",
         (),
@@ -203,9 +214,19 @@ def test_publish_analysis_dispatch_persists_task_id_after_publication(monkeypatc
         id = "dispatch-task-1"
 
     monkeypatch.setattr(db_session, "SessionLocal", FakeDB)
-    monkeypatch.setattr(module.run_analysis_task, "apply_async", lambda **kwargs: FakeTask())
+    published = []
+    monkeypatch.setattr(
+        module.run_analysis_task,
+        "apply_async",
+        lambda **kwargs: published.append(kwargs) or FakeTask(),
+    )
 
     assert module.publish_analysis_dispatch(dispatch_id) == "dispatch-task-1"
+    assert published == [{
+        "args": [str(analysis_id)],
+        "task_id": str(dispatch_id),
+        "queue": toolchain_queue,
+    }]
     assert dispatch.status == "PUBLISHED"
     assert dispatch.task_id == "dispatch-task-1"
     assert analysis.queue_task_id == "dispatch-task-1"
@@ -1077,3 +1098,71 @@ def test_redelivered_analysis_recovers_after_claim_before_workflow_starts(monkey
     )
     assert claim_db.closed is True
     assert recovery_db.closed is True
+
+
+def test_wrong_toolchain_worker_requeues_before_claim_or_execution(monkeypatch):
+    from celery.exceptions import Reject
+
+    module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    analysis = type(
+        "Analysis",
+        (),
+        {
+            "id": uuid4(),
+            "toolchain_profile_id": "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
+            "toolchain_bcftools_version": "1.22.3",
+            "toolchain_htslib_version": "1.22.4",
+            "toolchain_queue": "bioinformatics.bcftools.1_22_4",
+            "toolchain_snapshot": {
+                "profile_id": "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
+                "bcftools_version": "1.22.3",
+                "htslib_version": "1.22.4",
+                "worker_queue": "bioinformatics.bcftools.1_22_4",
+            },
+        },
+    )()
+
+    class FakeDB:
+        def get(self, _model, analysis_id):
+            assert analysis_id == analysis.id
+            return analysis
+
+        def close(self):
+            pass
+
+    session_module = importlib.import_module("backend.app.infrastructure.db.session")
+    monkeypatch.setattr(session_module, "SessionLocal", FakeDB)
+    monkeypatch.setattr(
+        session_module,
+        "engine",
+        type("Engine", (), {"dialect": type("Dialect", (), {"name": "sqlite"})()})(),
+    )
+    monkeypatch.setattr(
+        module,
+        "settings",
+        type(
+            "Settings",
+            (),
+            {
+                "bcftools_profile_id": "bcftools-1.25-htslib-1.25-linux-64",
+                "bcftools_version": "1.25",
+                "htslib_version": "1.25",
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        module,
+        "_claim_analysis_execution",
+        lambda *_args, **_kwargs: pytest.fail("wrong worker must not claim the analysis"),
+    )
+
+    task = module.run_analysis_task
+    task.push_request(id="wrong-worker-test-task", retries=0, delivery_info={})
+    try:
+        with pytest.raises(Reject) as rejected:
+            task.run(str(analysis.id))
+    finally:
+        task.pop_request()
+
+    assert rejected.value.requeue is True
+

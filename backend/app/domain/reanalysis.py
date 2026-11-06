@@ -599,7 +599,7 @@ def create_reanalysis(db: Session, *, parent: Analysis, trigger_type: str, reque
         "resource_plan_policy": "FULL_REPLAY_FROM_NORMALIZATION" if profile_bound else "INCREMENTAL_REUSE",
         **({"forced_replay_reason": forced_replay_reason} if forced_replay_reason else {}),
     }
-    child = Analysis(id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id, assay_id=parent.assay_id, analysis_type=parent.analysis_type, workflow_id=parent.workflow_id, workflow_version=parent.workflow_version, status="CREATED", queue_task_id=None, reference_build=parent.reference_build, configuration=child_configuration, started_at=None, completed_at=None, created_by=requested_by, analysis_version=next_version)
+    child = Analysis(id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id, assay_id=parent.assay_id, analysis_type=parent.analysis_type, workflow_id=parent.workflow_id, workflow_version=parent.workflow_version, status="CREATED", queue_task_id=None, reference_build=parent.reference_build, configuration=child_configuration, started_at=None, completed_at=None, created_by=requested_by, analysis_version=next_version, toolchain_profile_id=parent.toolchain_profile_id, toolchain_bcftools_version=parent.toolchain_bcftools_version, toolchain_htslib_version=parent.toolchain_htslib_version, toolchain_queue=parent.toolchain_queue, toolchain_snapshot=dict(parent.toolchain_snapshot or {}))
     try:
         with db.begin_nested():
             db.add(child)

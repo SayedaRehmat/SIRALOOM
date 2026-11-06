@@ -1,4 +1,8 @@
+import hashlib
+from pathlib import Path
 from uuid import uuid4
+
+import pytest
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -29,7 +33,18 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "queue", "lock_file"),
+    [
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25", "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1", "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3", "configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-64-build.lock"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4", "configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-64-build.lock"),
+    ],
+)
+def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit(
+    profile_id, bcftools_version, htslib_version, queue, lock_file
+):
     from backend.app.application.entitlements import TRIAL_MAX_ANALYSES
     from backend.app.domain.reanalysis import create_reanalysis
     from backend.app.infrastructure.db.models import AuditEvent, OrganizationEntitlement
@@ -44,6 +59,8 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
     )
 
     organization_id, case_id, parent_id, user_id = uuid4(), uuid4(), uuid4(), uuid4()
+    repo_root = Path(__file__).resolve().parents[1]
+    lock_sha256 = hashlib.sha256((repo_root / lock_file).read_bytes()).hexdigest()
     with Session(engine) as db:
         db.add(Organization(id=organization_id, name="Reanalysis Safety Lab", external_identifier=None))
         db.add(Case(
@@ -60,6 +77,19 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
             workflow_version="2.1", status="SUCCEEDED", queue_task_id=None,
             reference_build="GRCh38", configuration={}, started_at=None,
             completed_at=None, created_by=user_id, analysis_version=1,
+            toolchain_profile_id=profile_id,
+            toolchain_bcftools_version=bcftools_version,
+            toolchain_htslib_version=htslib_version,
+            toolchain_queue=queue,
+            toolchain_snapshot={
+                "profile_id": profile_id,
+                "bcftools_version": bcftools_version,
+                "htslib_version": htslib_version,
+                "worker_queue": queue,
+                "platform": "linux-64",
+                "lock_file": lock_file,
+                "lock_sha256": lock_sha256,
+            },
         ))
         db.commit()
 
@@ -71,6 +101,11 @@ def test_manual_reanalysis_is_idempotent_and_consumes_one_quota_unit():
         entitlement = db.scalar(select(OrganizationEntitlement).where(OrganizationEntitlement.organization_id == organization_id))
         assert first.analysis_version == 2
         assert first.parent_analysis_id == parent_id
+        assert first.toolchain_profile_id == parent.toolchain_profile_id
+        assert first.toolchain_bcftools_version == parent.toolchain_bcftools_version
+        assert first.toolchain_htslib_version == parent.toolchain_htslib_version
+        assert first.toolchain_queue == parent.toolchain_queue
+        assert first.toolchain_snapshot == parent.toolchain_snapshot
         assert first_candidate is None
         assert entitlement.analyses_used == 1
         assert db.query(AuditEvent).filter(AuditEvent.event_type == "REANALYSIS_REQUESTED").count() == 1

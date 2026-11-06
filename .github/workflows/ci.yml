@@ -2,8 +2,13 @@ name: SIRALOOM CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -75,7 +80,6 @@ jobs:
         run: |
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
           test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
-
   postgres-integration:
     runs-on: ubuntu-latest
     defaults:

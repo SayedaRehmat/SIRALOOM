@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from backend.app.domain.enums import AnalysisStatus, ArtifactType
 from backend.app.domain.ingestion import normalize_build
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
+from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
 from backend.app.domain.resource_profile_resolver import (
     AnalysisResourcePlan,
     build_workflow_stage_resource_plan,
@@ -88,6 +89,7 @@ def create_analysis(
     configuration: dict,
     created_by: UUID | None,
     resource_profile_id: str | None = None,
+    toolchain_profile_id: str | None = None,
     commit: bool = True,
 ) -> Analysis:
     artifact = db.get(Artifact, input_artifact_id)
@@ -109,6 +111,27 @@ def create_analysis(
     validate_analysis_input_artifact(artifact, reference_build, expected_sample_name)
 
     analysis_configuration = dict(configuration or {})
+    configured_toolchain_id = analysis_configuration.get("toolchain_profile_id")
+    if toolchain_profile_id and configured_toolchain_id and str(toolchain_profile_id) != str(configured_toolchain_id):
+        raise ValueError("toolchain_profile_id conflicts with configuration.toolchain_profile_id")
+    from backend.app.config import settings
+    selected_toolchain_id = str(
+        toolchain_profile_id
+        or configured_toolchain_id
+        or settings.bcftools_profile_id
+    )
+    toolchain_profile = resolve_registered_toolchain_profile(selected_toolchain_id)
+    toolchain_snapshot = {
+        "profile_id": selected_toolchain_id,
+        "bcftools_version": toolchain_profile["bcftools_version"],
+        "htslib_version": toolchain_profile["htslib_version"],
+        "platform": toolchain_profile["platform"],
+        "worker_queue": toolchain_profile["worker_queue"],
+        "lock_file": toolchain_profile["lock_file"],
+        "lock_sha256": toolchain_profile["lock_sha256"],
+        "qualification_scope": toolchain_profile.get("qualification_scope"),
+    }
+    analysis_configuration["toolchain_profile_id"] = selected_toolchain_id
     configured_profile_id = analysis_configuration.get("resource_profile_id")
     if resource_profile_id and configured_profile_id and str(resource_profile_id) != str(configured_profile_id):
         raise ValueError("resource_profile_id conflicts with configuration.resource_profile_id")
@@ -133,6 +156,11 @@ def create_analysis(
         started_at=None,
         completed_at=None,
         created_by=created_by,
+        toolchain_profile_id=selected_toolchain_id,
+        toolchain_bcftools_version=toolchain_profile["bcftools_version"],
+        toolchain_htslib_version=toolchain_profile["htslib_version"],
+        toolchain_queue=toolchain_profile["worker_queue"],
+        toolchain_snapshot=toolchain_snapshot,
     )
 
     db.add(analysis)

@@ -1,0 +1,244 @@
+name: BCFtools source-profile qualification matrix
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/build_bcftools_from_profile.sh"
+      - "docker/backend-bcftools-source.Dockerfile"
+      - "configs/bioinformatics/toolchain-profiles.v1.json"
+      - "configs/bioinformatics/profiles/**"
+      - "docker-compose.production.yml"
+      - "backend/app/domain/toolchain_profiles.py"
+      - "backend/app/application/analysis.py"
+      - "backend/app/domain/reanalysis.py"
+      - "backend/app/infrastructure/queue/celery_app.py"
+      - "backend/app/infrastructure/db/models.py"
+      - "migrations/versions/0061_analysis_toolchain_profiles.py"
+      - "scripts/start_worker.sh"
+      - "tests/test_queue_dispatch_recovery.py"
+      - "tests/test_reanalysis.py"
+      - "tests/integration/test_analysis_dispatch_postgres.py"
+      - "docker-compose.production.yml"
+      - "backend/app/domain/toolchain_profiles.py"
+      - "backend/app/application/analysis.py"
+      - "backend/app/domain/reanalysis.py"
+      - "backend/app/infrastructure/queue/celery_app.py"
+      - "backend/app/infrastructure/db/models.py"
+      - "migrations/versions/0061_analysis_toolchain_profiles.py"
+      - "scripts/start_worker.sh"
+      - "tests/test_queue_dispatch_recovery.py"
+      - "tests/test_reanalysis.py"
+      - "tests/integration/test_analysis_dispatch_postgres.py"
+      - "tests/test_toolchain_profiles.py"
+      - "tests/test_vcf_tools.py"
+      - "tests/test_bcftools_normalization.py"
+      - ".github/workflows/bcftools-source-profile-matrix.yml"
+  pull_request:
+    paths:
+      - "scripts/build_bcftools_from_profile.sh"
+      - "docker/backend-bcftools-source.Dockerfile"
+      - "configs/bioinformatics/toolchain-profiles.v1.json"
+      - "configs/bioinformatics/profiles/**"
+      - "tests/test_toolchain_profiles.py"
+      - "tests/test_vcf_tools.py"
+      - "tests/test_bcftools_normalization.py"
+      - ".github/workflows/bcftools-source-profile-matrix.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.profiles.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production Compose profile wiring
+        run: |
+          set -euo pipefail
+          export POSTGRES_DB=ci POSTGRES_USER=ci POSTGRES_PASSWORD=ci-postgres-password
+          export REDIS_PASSWORD=ci-redis-password
+          export SIRALOOM_RUNTIME_ENV_FILE=.env.example
+          export NEXT_PUBLIC_SIRALOOM_API_BASE=https://example.invalid/api/v1
+          export NEXT_PUBLIC_FIREBASE_API_KEY=ci-firebase-api-key
+          export NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=example.invalid
+          export NEXT_PUBLIC_FIREBASE_PROJECT_ID=ci-project
+          export NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=ci-bucket
+          export NEXT_PUBLIC_FIREBASE_APP_ID=ci-app
+          export FIREBASE_ADMIN_CREDENTIALS_HOST_PATH=/tmp/firebase-admin.json
+          docker compose -f docker-compose.production.yml config >/dev/null
+      - name: Discover immutable source-build profiles
+        id: profiles
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+
+          registry = json.loads(Path("configs/bioinformatics/toolchain-profiles.v1.json").read_text())
+          profiles = []
+          for profile in registry["profiles"]:
+              if profile.get("installation_method") != "verified_source_build":
+                  continue
+              if profile.get("status") not in {"CANDIDATE", "SOFTWARE_QUALIFIED"}:
+                  continue
+              if profile.get("security_review", {}).get("status") != "PATCHED_UPSTREAM_RELEASE":
+                  continue
+              if profile.get("platform") != "linux-64":
+                  continue
+              lock_file = profile.get("lock_file")
+              if not lock_file or not Path(lock_file).is_file():
+                  raise SystemExit(f"missing explicit build lock for {profile.get('id')}")
+              if not profile.get("worker_queue"):
+                  raise SystemExit(f"missing isolated worker queue for {profile.get('id')}")
+              profiles.append({
+                  "id": profile["id"],
+                  "bcftools_version": profile["bcftools_version"],
+                  "htslib_version": profile["htslib_version"],
+                  "lock_file": lock_file,
+                  "worker_queue": profile["worker_queue"],
+              })
+          if not profiles:
+              raise SystemExit("no verified source-build profiles are registered")
+          print("matrix=" + json.dumps({"include": profiles}, separators=(",", ":")))
+          PY
+
+  qualify:
+    needs: discover
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: ${{ matrix.lock_file }}
+          environment-name: bcftools-build
+          cache-environment: false
+          init-shell: bash
+      - name: Verify the explicit build lock is reproducible
+        run: |
+          set -euo pipefail
+          micromamba env export --explicit --name bcftools-build > "$RUNNER_TEMP/profile-build.lock"
+          diff -u "${{ matrix.lock_file }}" "$RUNNER_TEMP/profile-build.lock"
+      - name: Build exact BCFtools/HTSlib source pair with SHA-256 verification
+        env:
+          BCFTOOLS_PROFILE_ID: ${{ matrix.id }}
+          BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
+          HTSLIB_VERSION: ${{ matrix.htslib_version }}
+          BCFTOOLS_PROFILE_REGISTRY: configs/bioinformatics/toolchain-profiles.v1.json
+        run: |
+          set -euo pipefail
+          export BCFTOOLS_PREFIX="$MAMBA_ROOT_PREFIX/envs/bcftools-build"
+          bash scripts/build_bcftools_from_profile.sh
+      - name: Qualify normalization, multiallelic handling, BGZF and CSI
+        env:
+          BCFTOOLS_BIN: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-build/bin/bcftools
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/bcftools-profile-smoke"
+          mkdir -p "$work"
+          cat > "$work/ref.fa" <<'EOF'
+          >chr1
+          AAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT
+          EOF
+          printf "chr1\\t40\\t6\\t40\\t41\\n" > "$work/ref.fa.fai"
+          cat > "$work/input.vcf" <<'EOF'
+          ##fileformat=VCFv4.2
+          ##contig=<ID=chr1,length=40>
+          #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+          chr1	11	.	C	CA,CAA	50	PASS	.
+          EOF
+          "$BCFTOOLS_BIN" norm -f "$work/ref.fa" -m -any -Oz -o "$work/normalized.vcf.gz" "$work/input.vcf"
+          "$BCFTOOLS_BIN" index --csi "$work/normalized.vcf.gz"
+          test "$("$BCFTOOLS_BIN" view -H "$work/normalized.vcf.gz" | wc -l)" -eq 2
+          test -s "$work/normalized.vcf.gz.csi"
+          "$BCFTOOLS_BIN" --version
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Create isolated candidate qualification registry
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/qualified-config-root"
+          mkdir -p "$root/configs"
+          cp -R configs/bioinformatics "$root/configs/"
+          python - "$root/configs/bioinformatics/toolchain-profiles.v1.json" "${{ matrix.id }}" <<'PY'
+          import json, sys
+          path, profile_id = sys.argv[1:]
+          payload = json.load(open(path, encoding="utf-8"))
+          profile = next(p for p in payload["profiles"] if p["id"] == profile_id)
+          # Candidate status is promoted only in this disposable test copy.
+          profile["status"] = "SOFTWARE_QUALIFIED"
+          json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
+          PY
+      - name: Run backend regression suite against this exact native toolchain
+        env:
+          BCFTOOLS_PROFILE_ID: ${{ matrix.id }}
+          BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
+          HTSLIB_VERSION: ${{ matrix.htslib_version }}
+          DATABASE_URL: sqlite:///./ci-bcftools-profile.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+          SIRALOOM_CONFIG_ROOT: ${{ runner.temp }}/qualified-config-root
+        run: |
+          export BCFTOOLS_EXECUTABLE="$MAMBA_ROOT_PREFIX/envs/bcftools-build/bin/bcftools"
+          python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
+          uv lock --check
+          uv sync --locked --extra dev
+          uv run --locked pytest -q
+      - name: Build and qualify isolated non-root runtime image
+        env:
+          PROFILE_ID: ${{ matrix.id }}
+          BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
+          HTSLIB_VERSION: ${{ matrix.htslib_version }}
+          BUILD_LOCK: ${{ matrix.lock_file }}
+          WORKER_QUEUE: ${{ matrix.worker_queue }}
+        run: |
+          set -euo pipefail
+          registry=configs/bioinformatics/toolchain-profiles.v1.json
+          backup="$RUNNER_TEMP/toolchain-profiles.matrix.json"
+          cp "$registry" "$backup"
+          trap 'cp "$backup" "$registry"' EXIT
+          python - "$registry" "$PROFILE_ID" <<'PY'
+          import json, sys
+          path, profile_id = sys.argv[1:]
+          payload = json.load(open(path, encoding="utf-8"))
+          next(p for p in payload["profiles"] if p["id"] == profile_id)["status"] = "SOFTWARE_QUALIFIED"
+          json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
+          PY
+          docker build \
+            --build-arg BCFTOOLS_BUILD_LOCK_FILE="$BUILD_LOCK" \
+            --build-arg BCFTOOLS_PROFILE_ID="$PROFILE_ID" \
+            --build-arg BCFTOOLS_VERSION="$BCFTOOLS_VERSION" \
+            --build-arg HTSLIB_VERSION="$HTSLIB_VERSION" \
+            --build-arg BCFTOOLS_WORKER_QUEUE="$WORKER_QUEUE" \
+            --file docker/backend-bcftools-source.Dockerfile \
+            --tag "siraloom-backend:$PROFILE_ID" .
+          image="siraloom-backend:$PROFILE_ID"
+          test "$(docker run --rm --entrypoint bcftools "$image" --version | sed -n '1p')" = "bcftools $BCFTOOLS_VERSION"
+          test "$(docker run --rm --entrypoint bcftools "$image" --version | sed -n '2p')" = "Using htslib $HTSLIB_VERSION"
+          test "$(docker run --rm --entrypoint bgzip "$image" --version | sed -n '1p')" = "bgzip (htslib) $HTSLIB_VERSION"
+          docker run --rm --entrypoint bcftools "$image" +fill-tags -h >/dev/null
+          docker run --rm --entrypoint sh "$image" -c 'test "$(id -u)" = 10001 && ! command -v gcc'
+          docker run --rm --entrypoint sh "$image" -c 'for b in /opt/conda/bin/bcftools /opt/conda/bin/bgzip /opt/conda/bin/tabix; do ldd "$b" | tee /tmp/ldd.out; ! grep -q "not found" /tmp/ldd.out; done'
+          docker run --rm -e DATABASE_URL=sqlite:///./ci.db -e REDIS_URL=redis://localhost:6379/0 --entrypoint python "$image" -c "from backend.app.config import settings; assert settings.bcftools_profile_id == '$PROFILE_ID'"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bcftools-profile-${{ matrix.id }}-qualification
+          path: ${{ runner.temp }}/profile-build.lock
+          if-no-files-found: error

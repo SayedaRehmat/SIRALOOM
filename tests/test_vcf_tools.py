@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pytest
 
+from backend.app.config import settings
+
 from backend.app.domain.vcf_tools import (
     MULTIALLELIC_OVERLAP_POLICY,
     VCFToolError,
@@ -118,10 +120,10 @@ def test_bcftools_reference_normalization_accepts_each_supported_vcf_version(
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
-    assert result["tool_version"] == "bcftools 1.25"
+    assert result["tool_version"] == f"bcftools {settings.bcftools_version}"
     import gzip
 
     with gzip.open(output_vcf, "rt", encoding="utf-8") as handle:
@@ -149,12 +151,12 @@ def test_bcftools_reference_aware_normalization_splits_and_left_aligns(tmp_path:
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     assert result["tool"] == "bcftools"
-    assert result["tool_version"] == "bcftools 1.25"
-    assert result["expected_tool_version"] == "1.25"
+    assert result["tool_version"] == f"bcftools {settings.bcftools_version}"
+    assert result["expected_tool_version"] == settings.bcftools_version
     assert result["reference_check"] == "error"
     reference_identity = result["reference_identity"]
     assert reference_identity["method"] == "SHA256_REFERENCE_FASTA_AND_INDEX_ARTIFACTS"
@@ -208,7 +210,7 @@ def test_router_source_identity_reconciles_normalized_multiallelic_children(tmp_
         routed["sequence_path"],
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     assert result["source_child_reconciliation"] == {
@@ -244,7 +246,7 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\nUsing htslib 1.25\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout=f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "sort":
@@ -268,7 +270,7 @@ def test_reference_artifact_mutation_aborts_publication_and_preserves_previous_o
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.25",
+            expected_bcftools_version=settings.bcftools_version,
         )
 
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
@@ -292,7 +294,7 @@ def test_bcftools_rejects_reference_allele_mismatch(tmp_path: Path):
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.25",
+            expected_bcftools_version=settings.bcftools_version,
         )
 
 
@@ -338,7 +340,7 @@ def test_failed_normalization_preserves_existing_vcf_and_index(tmp_path: Path):
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.25",
+            expected_bcftools_version=settings.bcftools_version,
         )
 
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
@@ -359,7 +361,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
 
     def fake_run(command, **kwargs):
         if command[1] == "--version":
-            return subprocess.CompletedProcess(command, 0, stdout="bcftools 1.25\nUsing htslib 1.25\n", stderr="")
+            return subprocess.CompletedProcess(command, 0, stdout=f"bcftools {settings.bcftools_version}\nUsing htslib {settings.htslib_version}\n", stderr="")
         if command[1] in {"view", "norm", "sort"}:
             target = Path(command[command.index("-o") + 1])
             if command[1] == "view":
@@ -384,7 +386,7 @@ def test_index_failure_preserves_existing_vcf_and_index(monkeypatch, tmp_path: P
             input_vcf,
             output_vcf,
             reference_fasta=fasta,
-            expected_bcftools_version="1.25",
+            expected_bcftools_version=settings.bcftools_version,
         )
 
     assert output_vcf.read_bytes() == b"previous-valid-vcf"
@@ -668,7 +670,7 @@ def test_bcftools_multiallelic_split_preserves_genotype_and_allele_cardinality(t
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     import gzip
@@ -723,7 +725,7 @@ def test_bcftools_multiallelic_split_preserves_phasing_and_sample_order(tmp_path
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     import gzip
@@ -931,12 +933,12 @@ def test_uploaded_tbi_and_csi_indexes_are_verified_against_the_bgzf_record_strea
 
     result = validate_vcf_index_concordance(
         bgzf,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     assert result["status"] == "VALIDATED"
     assert result["index_type"] == expected_index_type
-    assert result["tool_version"] == "bcftools 1.25"
+    assert result["tool_version"] == f"bcftools {settings.bcftools_version}"
     assert result["concordance"]["records"] == 2
     assert result["concordance"]["indexed_query_records_verified"] == 2
 
@@ -987,10 +989,10 @@ def test_bcftools_125_multiallelic_normalization_keeps_number_m_fields_source_on
         input_vcf,
         output_vcf,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
-    assert result["tool_version"] == "bcftools 1.25"
+    assert result["tool_version"] == f"bcftools {settings.bcftools_version}"
     assert result["multiallelic_overlap_policy"] == MULTIALLELIC_OVERLAP_POLICY
     assert result["source_only_format_fields"] == ["M5mC"]
     assert result["source_only_format_fields_policy"] == "IMMUTABLE_SOURCE_VCF_ONLY"
@@ -1237,7 +1239,7 @@ def test_source_child_reconciliation_rejects_original_locus_or_ref_mapping_drift
         routed["sequence_path"],
         normalized,
         reference_fasta=fasta,
-        expected_bcftools_version="1.25",
+        expected_bcftools_version=settings.bcftools_version,
     )
 
     with gzip.open(normalized, "rt", encoding="utf-8") as input_handle:

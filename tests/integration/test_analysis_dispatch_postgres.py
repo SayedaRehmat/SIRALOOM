@@ -1,4 +1,6 @@
+import hashlib
 import os
+from pathlib import Path
 import threading
 from uuid import uuid4
 
@@ -205,6 +207,7 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
             completed_at=None,
             created_by=user_id,
             analysis_version=1,
+            toolchain_queue="bioinformatics.bcftools.1_25",
         ))
         db.add(AnalysisDispatch(
             id=dispatch_id,
@@ -227,7 +230,8 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
     publish_calls = {"count": 0}
     publish_lock = threading.Lock()
 
-    def fake_apply_async(*, args, task_id):
+    def fake_apply_async(*, args, task_id, queue):
+        assert queue == "bioinformatics.bcftools.1_25"
         with publish_lock:
             publish_calls["count"] += 1
         import time
@@ -291,7 +295,18 @@ def test_postgres_concurrent_dispatch_relays_publish_once(monkeypatch):
 
 
 @pytest.mark.integration
-def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeypatch):
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "toolchain_queue", "lock_file"),
+    [
+        ("bcftools-1.25-htslib-1.25-linux-64", "1.25", "1.25", "bioinformatics.bcftools.1_25", "configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock"),
+        ("bcftools-1.24.1-htslib-1.24.1-linux-64-source", "1.24.1", "1.24.1", "bioinformatics.bcftools.1_24_1", "configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-64-source", "1.23.3", "1.23.3", "bioinformatics.bcftools.1_23_3", "configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-64-build.lock"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-64-source", "1.22.3", "1.22.4", "bioinformatics.bcftools.1_22_4", "configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-64-build.lock"),
+    ],
+)
+def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(
+    monkeypatch, profile_id, bcftools_version, htslib_version, toolchain_queue, lock_file
+):
     """A retry generation must remain the sole queue owner when an old relay runs afterward."""
     database_url = os.environ.get("DATABASE_URL", "")
     if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
@@ -356,6 +371,19 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 completed_at=None,
                 created_by=user_id,
                 analysis_version=1,
+                toolchain_profile_id=profile_id,
+                toolchain_bcftools_version=bcftools_version,
+                toolchain_htslib_version=htslib_version,
+                toolchain_queue=toolchain_queue,
+                toolchain_snapshot={
+                    "profile_id": profile_id,
+                    "bcftools_version": bcftools_version,
+                    "htslib_version": htslib_version,
+                    "worker_queue": toolchain_queue,
+                    "platform": "linux-64",
+                    "lock_file": lock_file,
+                    "lock_sha256": hashlib.sha256(Path(lock_file).read_bytes()).hexdigest(),
+                },
             ))
             db.add(AnalysisDispatch(
                 id=old_dispatch_id,
@@ -384,7 +412,10 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
             celery_module,
             "run_analysis_task",
             SimpleNamespace(
-                apply_async=lambda *, args, task_id: SimpleNamespace(id=task_id)
+                apply_async=lambda *, args, task_id, queue: (
+                    queue == toolchain_queue
+                    and SimpleNamespace(id=task_id)
+                )
             ),
         )
 
@@ -400,6 +431,11 @@ def test_postgres_retry_supersedes_old_dispatch_before_legacy_relay_runs(monkeyp
                 .order_by(AnalysisDispatch.dispatch_generation)
             ).all()
             assert analysis.status == AnalysisStatus.QUEUED
+            assert analysis.toolchain_profile_id == profile_id
+            assert analysis.toolchain_bcftools_version == bcftools_version
+            assert analysis.toolchain_htslib_version == htslib_version
+            assert analysis.toolchain_queue == toolchain_queue
+            assert analysis.toolchain_snapshot["profile_id"] == profile_id
             assert len(dispatches) == 2
             assert analysis.queue_task_id == str(dispatches[1].id)
 

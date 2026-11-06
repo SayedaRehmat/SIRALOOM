@@ -236,7 +236,13 @@ if Celery is not None:
                 dispatch.status = "PENDING"
                 dispatch.task_id = None
                 dispatch.last_error = None
-                # Keep the durable generation pointer on this dispatch while\n                # its broker publication is retried. Clearing it would make the\n                # current dispatch look stale to the generation fence below.\n                analysis.queue_task_id = str(dispatch.id)\n                db.add(dispatch)\n                db.add(analysis)\n                db.commit()
+                # Keep the durable generation pointer on this dispatch while
+                # its broker publication is retried. Clearing it would make the
+                # current dispatch look stale to the generation fence below.
+                analysis.queue_task_id = str(dispatch.id)
+                db.add(dispatch)
+                db.add(analysis)
+                db.commit()
 
             analysis = db.get(Analysis, dispatch.analysis_id, with_for_update=True)
             if analysis is None:
@@ -271,6 +277,7 @@ if Celery is not None:
                 task = run_analysis_task.apply_async(
                     args=[str(analysis.id)],
                     task_id=str(dispatch.id),
+                    queue=str(getattr(analysis, "toolchain_queue", "bioinformatics.bcftools.1_25")),
                 )
             except Exception as exc:
                 dispatch.last_error = str(exc)
@@ -317,6 +324,24 @@ if Celery is not None:
                 if claim_lock_connection is not None
                 else {}
             )
+            from backend.app.infrastructure.db.models import Analysis
+            from backend.app.domain.toolchain_profiles import ToolchainProfileError, assert_analysis_toolchain_matches_worker
+            persisted_analysis = claim_db.get(Analysis, UUID(analysis_id))
+            if persisted_analysis is None:
+                return {"analysis_id": analysis_id, "status": "NOT_FOUND"}
+            try:
+                assert_analysis_toolchain_matches_worker(
+                    persisted_analysis,
+                    worker_profile_id=settings.bcftools_profile_id,
+                    worker_bcftools_version=settings.bcftools_version,
+                    worker_htslib_version=settings.htslib_version,
+                )
+            except ToolchainProfileError as exc:
+                from celery.exceptions import Reject
+                # A wrong pool must not fail/ack a task assigned to another
+                # native toolchain. Requeue the same broker message so the
+                # correctly configured profile pool can claim it later.
+                raise Reject(str(exc), requeue=True) from exc
             claimed = _claim_analysis_execution(
                 claim_db,
                 UUID(analysis_id),

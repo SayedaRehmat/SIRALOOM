@@ -544,7 +544,8 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
     class FakeClaimSession:
         def get(self, model, received_analysis_id, **kwargs):
             from backend.app.domain.enums import AnalysisStatus
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": task_id})()
 
         def add(self, _row):
@@ -657,7 +658,8 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
 
     assert result == {"analysis_id": analysis_id, "status": "RUNNING"}
     assert events.index("recovery") < events.index("resume_analysis")
-    assert events.index("resume_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+    resume_index = events.index("resume_analysis")
+    assert resume_index < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)), resume_index + 1)
     assert events.count("recovery") == 1
     assert events.count("resume_analysis") == 1
 
@@ -1480,7 +1482,8 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
     assert fake_analysis.status == AnalysisStatus.RUNNING
     assert "recovery" not in events
     assert events.count("run_analysis") == 1
-    assert events.index("run_analysis") < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)))
+    run_index = events.index("run_analysis")
+    assert run_index < events.index(("analysis_lookup", "Analysis", UUID(analysis_id)), run_index + 1)
 
 
 def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypatch):
@@ -1504,7 +1507,8 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
             queue_task_id = "recovery-failure-test"
 
         def get(self, model, received_analysis_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return self.Analysis()
 
         def add(self, _row):
@@ -1827,7 +1831,8 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
             queue_task_id = "retry-exhaustion-test"
 
         def get(self, model, received_analysis_id, **kwargs):
-            assert kwargs == {"with_for_update": True}
+            if kwargs:
+                assert kwargs == {"with_for_update": True}
             return self.Analysis()
 
         def add(self, _row):

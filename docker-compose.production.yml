@@ -103,6 +103,139 @@ services:
       - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
       - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
 
+
+  worker-bcftools-1-24-1:
+    profiles: ["bcftools-1.24.1"]
+    build:
+      context: .
+      dockerfile: docker/backend-bcftools-source.Dockerfile
+      args:
+        BCFTOOLS_BUILD_LOCK_FILE: configs/bioinformatics/profiles/bcftools-1.24.1-build-linux-64.lock
+        BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
+        BCFTOOLS_VERSION: "1.24.1"
+        HTSLIB_VERSION: "1.24.1"
+        BCFTOOLS_WORKER_QUEUE: bioinformatics.bcftools.1_24_1
+    restart: unless-stopped
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
+    environment:
+      APP_ENV: production
+      BCFTOOLS_PROFILE_ID: bcftools-1.24.1-htslib-1.24.1-linux-64-source
+      BCFTOOLS_VERSION: "1.24.1"
+      HTSLIB_VERSION: "1.24.1"
+      CELERY_QUEUES: bioinformatics.bcftools.1_24_1
+      TMPDIR: /data/siraloom/scratch
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
+    command: ["/app/scripts/start_worker.sh"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
+
+  worker-bcftools-1-23-3:
+    profiles: ["bcftools-1.23.3"]
+    build:
+      context: .
+      dockerfile: docker/backend-bcftools-source.Dockerfile
+      args:
+        BCFTOOLS_BUILD_LOCK_FILE: configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-64-build.lock
+        BCFTOOLS_PROFILE_ID: bcftools-1.23.3-htslib-1.23.3-linux-64-source
+        BCFTOOLS_VERSION: "1.23.3"
+        HTSLIB_VERSION: "1.23.3"
+        BCFTOOLS_WORKER_QUEUE: bioinformatics.bcftools.1_23_3
+    restart: unless-stopped
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
+    environment:
+      APP_ENV: production
+      BCFTOOLS_PROFILE_ID: bcftools-1.23.3-htslib-1.23.3-linux-64-source
+      BCFTOOLS_VERSION: "1.23.3"
+      HTSLIB_VERSION: "1.23.3"
+      CELERY_QUEUES: bioinformatics.bcftools.1_23_3
+      TMPDIR: /data/siraloom/scratch
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
+    command: ["/app/scripts/start_worker.sh"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
+
+  worker-bcftools-1-22-3:
+    profiles: ["bcftools-1.22.3"]
+    build:
+      context: .
+      dockerfile: docker/backend-bcftools-source.Dockerfile
+      args:
+        BCFTOOLS_BUILD_LOCK_FILE: configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-64-build.lock
+        BCFTOOLS_PROFILE_ID: bcftools-1.22.3-htslib-1.22.4-linux-64-source
+        BCFTOOLS_VERSION: "1.22.3"
+        HTSLIB_VERSION: "1.22.4"
+        BCFTOOLS_WORKER_QUEUE: bioinformatics.bcftools.1_22_4
+    restart: unless-stopped
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
+    environment:
+      APP_ENV: production
+      BCFTOOLS_PROFILE_ID: bcftools-1.22.3-htslib-1.22.4-linux-64-source
+      BCFTOOLS_VERSION: "1.22.3"
+      HTSLIB_VERSION: "1.22.4"
+      CELERY_QUEUES: bioinformatics.bcftools.1_22_4
+      TMPDIR: /data/siraloom/scratch
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
+    command: ["/app/scripts/start_worker.sh"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
+
+  worker-bcftools-1-21-3:
+    profiles: ["bcftools-1.21.3"]
+    build:
+      context: .
+      dockerfile: docker/backend-bcftools-source.Dockerfile
+      args:
+        BCFTOOLS_BUILD_LOCK_FILE: configs/bioinformatics/profiles/bcftools-1.21.3-htslib-1.21.3-linux-64-build.lock
+        BCFTOOLS_PROFILE_ID: bcftools-1.21.3-htslib-1.21.3-linux-64-source
+        BCFTOOLS_VERSION: "1.21.3"
+        HTSLIB_VERSION: "1.21.3"
+        BCFTOOLS_WORKER_QUEUE: bioinformatics.bcftools.1_21_3
+    restart: unless-stopped
+    env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
+    environment:
+      APP_ENV: production
+      BCFTOOLS_PROFILE_ID: bcftools-1.21.3-htslib-1.21.3-linux-64-source
+      BCFTOOLS_VERSION: "1.21.3"
+      HTSLIB_VERSION: "1.21.3"
+      CELERY_QUEUES: bioinformatics.bcftools.1_21_3
+      TMPDIR: /data/siraloom/scratch
+      REDIS_URL: "redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD}@redis:6379/0"
+    command: ["/app/scripts/start_worker.sh"]
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${SIRALOOM_ARTIFACT_HOST_PATH:-artifact_data}:/data/siraloom/artifacts
+      - ${SIRALOOM_REFERENCE_HOST_PATH:-reference_data}:/data/references:ro
+      - ${SIRALOOM_RESOURCE_CACHE_HOST_PATH:-resource_cache_data}:/data/siraloom/resource-cache
+      - ${SIRALOOM_SCRATCH_HOST_PATH:-scratch_data}:/data/siraloom/scratch
+
   beat:
     build:
       context: .
