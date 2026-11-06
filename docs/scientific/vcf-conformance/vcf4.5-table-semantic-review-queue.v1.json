@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_42_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_DELTAS_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_ALL_44_ROW_VERSION_DELTAS_RECONCILED_FIELD_LEVEL_CLAUSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -38,7 +38,8 @@
     "local_allele_version_deltas_reconciled": 1,
     "small_variant_representation_version_deltas_reconciled": 15,
     "breakend_version_deltas_reconciled": 17,
-    "sample_mixture_pedigree_version_deltas_reconciled": 2
+    "sample_mixture_pedigree_version_deltas_reconciled": 2,
+    "reserved_info_format_row_delta_matrices_reconciled": 2
   },
   "tables": [
     {
@@ -235,7 +236,7 @@
         "VCF-REQ-000163"
       ],
       "open_questions": [
-        "Complete row-by-row semantic delta adjudication for all 21 INFO rows, especially END lifecycle, SVLEN cardinality/meaning and SV-specific fields; validate every row's prose/cross-reference locator across all versions. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json."
+        "Complete exact field-by-field normative prose and footnote mapping for the 21 INFO rows across VCFv4.1-4.5, especially END computed/deprecated behavior, SVLEN cardinality, SVTYPE deprecation, confidence intervals, CN and SV-specific fields; map each clause to atomic IDs."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
@@ -250,7 +251,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING"
       },
       "reviewed_context_locators": [
         {
@@ -293,7 +294,11 @@
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:443-481"
         }
-      }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ]
     },
     {
       "table_id": "VCF5.4",
@@ -379,7 +384,7 @@
         "VCF-REQ-000226"
       ],
       "open_questions": [
-        "Complete row-by-row semantic delta adjudication for the 63 FORMAT rows; resolve GLE removal (4.3), PSL/PSO/PSQ addition (4.4), and the 44-row addition in 4.5. Preserve Number=LA/LR/LG/P/M as 4.5-specific where evidenced; resolve xanthosine alias case ambiguity before implementation. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json.",
+        "Complete exact field-by-field normative prose and footnote mapping for the 64-field union across VCFv4.1-4.5; reconcile GLE removal, Number=P, PSL/PSO/PSQ, local-allele fields, base-modification families, and gVCF LEN. Resolve VCF45-FORMAT-XAON-ALIAS-CASE-001 before implementation and map clauses to atomic IDs.",
         "Upstream VCFv4.5 source inconsistency confirmed in history: commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced MXaoN/DPMXaoN/ADMXaoN in the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN in prose alias lists. No later correction was found in retrieved VCFv4.5 file history and scoped issue/PR searches returned no result. Canonical case remains unresolved; obtain authoritative maintainer clarification or source correction before implementation. Do not normalize or silently accept both."
       ],
       "independent_review_status": "NOT_STARTED",
@@ -395,7 +400,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_WITH_OPEN_UPSTREAM_SOURCE_AMBIGUITY_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
+        "version_delta_status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING",
         "source_internal_issue_ids": [
           "VCF45-FORMAT-XAON-ALIAS-CASE-001"
         ]
@@ -459,7 +464,11 @@
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:517-598"
         }
-      }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ]
     },
     {
       "table_id": "VCF5.5",
