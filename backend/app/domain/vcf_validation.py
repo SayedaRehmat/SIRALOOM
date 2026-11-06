@@ -800,7 +800,15 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     number = parsed["Number"]
-    allowed_cardinality = {"A", "R", "G", "."}
+    if fileformat == "VCFv4.0":
+        # The historical VCFv4.0 Number field is a fixed integer or '.'.
+        allowed_cardinality = {"."}
+    elif fileformat == "VCFv4.1":
+        # VCFv4.1 introduced per-ALT (A) and per-genotype (G) cardinalities.
+        # Per-allele including REF (R) was added in VCFv4.2.
+        allowed_cardinality = {"A", "G", "."}
+    else:
+        allowed_cardinality = {"A", "R", "G", "."}
     if fileformat == "VCFv4.5" and kind == "FORMAT":
         allowed_cardinality.update({"LA", "LR", "LG", "P", "M"})
     if number not in allowed_cardinality and not re.fullmatch(r"[0-9]+", number):
