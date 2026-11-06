@@ -25,10 +25,11 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 39,
+    "full_clause_level_version_reconciliations_pending": 38,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
-    "base_modification_version_deltas_reconciled": 2
+    "base_modification_version_deltas_reconciled": 2,
+    "gvcf_reference_block_version_deltas_reconciled": 1
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -4185,9 +4186,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Compare 4.3/4.4 INFO END reference blocks with 4.5 FORMAT LEN sample-specific blocks, <*> and NON_REF alias, LAA constraints, missing GT/FORMAT restrictions and base-modification propagation. Keep gVCF producer conventions separate from core VCF normative requirements.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_GVCF_REFERENCE_BLOCK_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to validate exact MUST/SHOULD force and cross-field interactions; map to atomic requirement IDs and executable tests.",
+          "finding": "VCFv4.3/4.4 use INFO END reference-block examples and prefer <*> over <NON_REF>; VCFv4.5 introduces sample-specific FORMAT LEN, per-sample GT/LAA restrictions, NON_REF alias compatibility, END inference and base-modification propagation. See vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -4241,7 +4242,8 @@
           "status": "PRESENT_FORMAT_LEN_AND_STAR_ALLELE",
           "locator": "VCFv4.5.tex:1846-1878"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json"
     }
   ]
 }
