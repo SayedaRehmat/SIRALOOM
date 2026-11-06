@@ -2857,11 +2857,9 @@
           "exceptions": []
         },
         "VCFv4.4": {
-          "status": "APPLICABLE",
-          "source_reference_ids": [
-            "VCF44-HTS-510c107"
-          ],
-          "delta_summary": null,
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "PSQ exists in VCFv4.4, but this explicit MISSING rule is added in VCFv4.5; do not back-port the clarification.",
           "exceptions": []
         },
         "VCFv4.5": {
