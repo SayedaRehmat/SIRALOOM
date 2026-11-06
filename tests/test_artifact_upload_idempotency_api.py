@@ -170,18 +170,30 @@ def test_artifact_upload_http_retry_returns_original_artifact_and_rejects_change
                 select(ArtifactUploadIntent).where(ArtifactUploadIntent.case_id == case_id)
             )
         )
-        audits = list(
+        from backend.app.infrastructure.db.models import ArtifactValidationDispatch
+        queued_audits = list(
             db.scalars(
                 select(AuditEvent).where(
                     AuditEvent.case_id == case_id,
-                    AuditEvent.event_type == "ARTIFACT_VALIDATION_COMPLETED",
+                    AuditEvent.event_type == "ARTIFACT_VALIDATION_QUEUED",
+                )
+            )
+        )
+        dispatches = list(
+            db.scalars(
+                select(ArtifactValidationDispatch).where(
+                    ArtifactValidationDispatch.case_id == case_id
                 )
             )
         )
         assert len(artifacts) == 1
+        assert artifacts[0].validation_status == "PENDING"
         assert len(intents) == 1
         assert intents[0].status == "COMMITTED"
-        assert len(audits) == 1
+        assert len(queued_audits) == 1
+        assert len(dispatches) == 1
+        assert dispatches[0].status == "PENDING"
+        assert dispatches[0].artifact_id == artifacts[0].id
 
 
 def test_artifact_upload_http_retry_fails_closed_for_committed_intent_without_artifact(upload_api):
