@@ -373,6 +373,23 @@ export default function Home() {
 
   useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
 
+  const hasPendingArtifactValidation = caseArtifacts.some((artifact) => artifact.validation_status === "PENDING");
+
+  useEffect(() => {
+    if (!hasPendingArtifactValidation) return;
+    const timer = setInterval(() => { void refreshCaseArtifacts(); }, 2000);
+    return () => clearInterval(timer);
+  }, [hasPendingArtifactValidation, refreshCaseArtifacts]);
+
+  useEffect(() => {
+    if (artifactId) return;
+    const validatedPrimary = caseArtifacts.find(
+      (artifact) => artifact.artifact_type === "VCF" && artifact.validation_status === "VALID",
+    );
+    if (validatedPrimary) setArtifactId(validatedPrimary.artifact_id);
+  }, [artifactId, caseArtifacts]);
+
+
   useEffect(() => {
     if (!caseId) return;
     let cancelled = false;
