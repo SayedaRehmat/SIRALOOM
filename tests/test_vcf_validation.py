@@ -3348,3 +3348,67 @@ def test_vcf45_reserved_lec_accepts_laa_scoped_cardinality(tmp_path: Path):
     )
 
     assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("gt", "value", "valid"),
+    [
+        ("0|1/0", "0.2,0.3", True),
+        ("0|1/0", "0.2,0.3,0.4", False),
+        ("0/1|0", "0.2,0.3,0.4", True),
+        ("0/1|0", "0.2,0.3", False),
+        ("/0/1", "0.2,0.3", True),
+    ],
+)
+def test_vcf45_number_m_uses_implicit_first_phase_indicator(
+    tmp_path: Path, gt: str, value: str, valid: bool
+):
+    path = tmp_path / "vcf45-number-m-prefix-phasing.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
+        ],
+        f"1\\t2\\t.\\tC\\tG\\t.\\tPASS\\t.\\tGT:M5mC\\t{gt}:{value}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    if valid:
+        assert validate_vcf_strict(path)["records"] == 1
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("gt", "values", "valid"),
+    [
+        ("0", "10", True),
+        ("0/1", "10,20", True),
+        ("0/1/1", "10,20,30", True),
+        (".", "10", True),
+        ("./.", "10,20", True),
+        ("0/1/1", "10,20", False),
+    ],
+)
+def test_vcf45_number_p_cardinality_tracks_sample_ploidy(
+    tmp_path: Path, gt: str, values: str, valid: bool
+):
+    path = tmp_path / "vcf45-number-p-ploidy.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description="Per-allele values">'],
+        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:CUSTOM_P\\t{gt}:{values}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    if valid:
+        assert validate_vcf_strict(path)["records"] == 1
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
