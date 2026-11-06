@@ -1,0 +1,290 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-cardinality-local-allele-atomic-candidate-reconciliation",
+  "status": "PROVISIONAL_CANDIDATE_OVERLAP_MAPPED_CANONICAL_LEDGER_DEDUP_PENDING",
+  "scope": "Crosswalk between supplemental VCF-REQ-000227..000260 records and the existing genotype-format-atomic-candidates.v1.json candidate IDs. This is a deduplication control, not a declaration that the mapped candidates are approved or that the canonical ledger has been updated.",
+  "source_artifacts": [
+    "vcf4.5-cardinality-local-allele-atomic-addendum.v1.json",
+    "genotype-format-atomic-candidates.v1.json",
+    "VCF45_CARDINALITY_LOCAL_ALLELE_SEMANTIC_REVIEW_2026-11-06.md"
+  ],
+  "mappings": [
+    {
+      "requirement_id": "VCF-REQ-000227",
+      "candidate_ids": [
+        "FMT-GT-058"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "LA semantics are represented alongside LR in one candidate; split LA and LR for independent cardinality checks."
+    },
+    {
+      "requirement_id": "VCF-REQ-000228",
+      "candidate_ids": [
+        "FMT-GT-058"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "LR semantics are represented alongside LA in one candidate; split LA and LR for independent cardinality checks."
+    },
+    {
+      "requirement_id": "VCF-REQ-000229",
+      "candidate_ids": [
+        "FMT-GT-059"
+      ],
+      "status": "DIRECT",
+      "notes": "LG restriction to the LAA-selected allele set."
+    },
+    {
+      "requirement_id": "VCF-REQ-000230",
+      "candidate_ids": [
+        "FMT-GT-037"
+      ],
+      "status": "DIRECT",
+      "notes": "LAA distinct one-based ALT indices."
+    },
+    {
+      "requirement_id": "VCF-REQ-000231",
+      "candidate_ids": [
+        "FMT-GT-038"
+      ],
+      "status": "DIRECT",
+      "notes": "LAA order defines local allele interpretation order."
+    },
+    {
+      "requirement_id": "VCF-REQ-000232",
+      "candidate_ids": [
+        "FMT-GT-017",
+        "FMT-GT-039"
+      ],
+      "status": "NARROWED_AND_EXPANDED",
+      "notes": "Use the narrower non-omitted/non-MISSING condition in FMT-GT-039; FORMAT ordering rule is retained from FMT-GT-017."
+    },
+    {
+      "requirement_id": "VCF-REQ-000233",
+      "candidate_ids": [
+        "FMT-GT-040"
+      ],
+      "status": "DIRECT",
+      "notes": "BCF zero-length vector and MISSING LAA semantics."
+    },
+    {
+      "requirement_id": "VCF-REQ-000234",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "GQ retains genotype-quality semantics under local allele encoding; candidate artifact does not contain a separate atomic candidate for this statement."
+    },
+    {
+      "requirement_id": "VCF-REQ-000235",
+      "candidate_ids": [
+        "FMT-GT-041"
+      ],
+      "status": "DIRECT",
+      "notes": "Local A/R/G equivalents preserve matching global field semantics over the local allele subset."
+    },
+    {
+      "requirement_id": "VCF-REQ-000236",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "Recommended consumer-facing API abstraction for local allele encoding."
+    },
+    {
+      "requirement_id": "VCF-REQ-000237",
+      "candidate_ids": [
+        "FMT-GT-046",
+        "FMT-GT-061"
+      ],
+      "status": "DIRECT_OVERLAP",
+      "notes": "Number=M general cardinality and genotype-dependent cardinality."
+    },
+    {
+      "requirement_id": "VCF-REQ-000238",
+      "candidate_ids": [
+        "FMT-GT-045"
+      ],
+      "status": "DIRECT",
+      "notes": "Base-modification keys require GT."
+    },
+    {
+      "requirement_id": "VCF-REQ-000239",
+      "candidate_ids": [
+        "FMT-GT-044"
+      ],
+      "status": "DIRECT",
+      "notes": "U suffix treated as synonymous with T."
+    },
+    {
+      "requirement_id": "VCF-REQ-000240",
+      "candidate_ids": [
+        "FMT-GT-047"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "Candidate combines per-allele count and sequence order; addendum splits count from ordering."
+    },
+    {
+      "requirement_id": "VCF-REQ-000241",
+      "candidate_ids": [
+        "FMT-GT-047"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "Candidate combines per-allele count and sequence order; addendum splits count from ordering."
+    },
+    {
+      "requirement_id": "VCF-REQ-000242",
+      "candidate_ids": [
+        "FMT-GT-048"
+      ],
+      "status": "DIRECT",
+      "notes": "N modification positive/negative strand adjacency."
+    },
+    {
+      "requirement_id": "VCF-REQ-000243",
+      "candidate_ids": [
+        "FMT-GT-049"
+      ],
+      "status": "DIRECT",
+      "notes": "Base-modification value order follows GT allele order and phasing."
+    },
+    {
+      "requirement_id": "VCF-REQ-000244",
+      "candidate_ids": [
+        "FMT-GT-050"
+      ],
+      "status": "DIRECT",
+      "notes": "Unphased base-modification aggregation at first occurrence."
+    },
+    {
+      "requirement_id": "VCF-REQ-000245",
+      "candidate_ids": [
+        "FMT-GT-051"
+      ],
+      "status": "DIRECT",
+      "notes": "Missing and symbolic alleles contribute no base-modification values."
+    },
+    {
+      "requirement_id": "VCF-REQ-000246",
+      "candidate_ids": [
+        "FMT-GT-052"
+      ],
+      "status": "DIRECT",
+      "notes": "Unstranded base-modification storage at lowest POS."
+    },
+    {
+      "requirement_id": "VCF-REQ-000247",
+      "candidate_ids": [
+        "FMT-GT-053"
+      ],
+      "status": "DIRECT",
+      "notes": "Unstranded N modification positive/negative value convention."
+    },
+    {
+      "requirement_id": "VCF-REQ-000248",
+      "candidate_ids": [
+        "FMT-GT-060"
+      ],
+      "status": "DIRECT",
+      "notes": "Number=P cardinality is one value per GT allele value."
+    },
+    {
+      "requirement_id": "VCF-REQ-000249",
+      "candidate_ids": [
+        "FMT-GT-029"
+      ],
+      "status": "DIRECT",
+      "notes": "PSL has one entry for each GT allele value."
+    },
+    {
+      "requirement_id": "VCF-REQ-000250",
+      "candidate_ids": [
+        "FMT-GT-030"
+      ],
+      "status": "DIRECT",
+      "notes": "Unphased GT allele has MISSING at corresponding PSL position."
+    },
+    {
+      "requirement_id": "VCF-REQ-000251",
+      "candidate_ids": [
+        "FMT-GT-027"
+      ],
+      "status": "DIRECT",
+      "notes": "PS and PSL cannot coexist in one sample genotype."
+    },
+    {
+      "requirement_id": "VCF-REQ-000252",
+      "candidate_ids": [
+        "FMT-GT-032"
+      ],
+      "status": "DIRECT",
+      "notes": "PSO phase-set ordinal and derivative chromosome traversal order."
+    },
+    {
+      "requirement_id": "VCF-REQ-000253",
+      "candidate_ids": [
+        "FMT-GT-033"
+      ],
+      "status": "DIRECT",
+      "notes": "SHOULD define PSO for phase sets containing symbolic SV or breakend alleles."
+    },
+    {
+      "requirement_id": "VCF-REQ-000254",
+      "candidate_ids": [
+        "FMT-GT-034"
+      ],
+      "status": "DIRECT",
+      "notes": "Breakend mate records must have matching PSL and PSO."
+    },
+    {
+      "requirement_id": "VCF-REQ-000255",
+      "candidate_ids": [
+        "FMT-GT-036"
+      ],
+      "status": "DIRECT",
+      "notes": "VCFv4.5 PSQ missing-value clarification; keep VCFv4.4 applicability CHANGED."
+    },
+    {
+      "requirement_id": "VCF-REQ-000256",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "M base-modification fraction range 0..1."
+    },
+    {
+      "requirement_id": "VCF-REQ-000257",
+      "candidate_ids": [
+        "FMT-GT-054",
+        "FMT-GT-055",
+        "FMT-GT-056"
+      ],
+      "status": "DIRECT",
+      "notes": "M/DPM/ADM reserved key families even for unrecognized ChEBI IDs."
+    },
+    {
+      "requirement_id": "VCF-REQ-000258",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "Recommendation to use named aliases instead of ChEBI-keyed names."
+    },
+    {
+      "requirement_id": "VCF-REQ-000259",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "Base-modification information on reference-block records applies to all applicable bases covered by the block."
+    },
+    {
+      "requirement_id": "VCF-REQ-000260",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "ADFM/ADRM forms are not reserved FORMAT key families."
+    }
+  ],
+  "counts": {
+    "supplemental_requirement_records": 34,
+    "mapped_to_existing_candidate_ids": 28,
+    "no_existing_candidate_match_identified": 6,
+    "direct_overlaps": 23,
+    "partial_or_combined": 5
+  },
+  "controls": [
+    "Do not merge the supplemental records into atomic-requirements.v1.json until every mapped candidate is compared against the full canonical ledger.",
+    "Do not count a mapped supplemental record as a net-new requirement unless the canonical ledger lacks an equivalent atomic statement.",
+    "Where one existing candidate combines multiple obligations, retain child requirements only if the final ledger explicitly records the split and links the parent candidate.",
+    "No candidate or requirement in this crosswalk is independently approved, implementation-mapped or test-executed."
+  ]
+}
