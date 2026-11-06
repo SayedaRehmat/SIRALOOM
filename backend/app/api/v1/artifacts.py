@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import tempfile
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import (
     APIRouter,
@@ -492,7 +492,7 @@ async def upload_artifact(
 
             profile = resolve_registered_toolchain_profile(settings.bcftools_profile_id)
             dispatch = ArtifactValidationDispatch(
-                id=UUID(str(artifact.id)),
+                id=uuid4(),
                 artifact_id=artifact.id,
                 organization_id=case.organization_id,
                 case_id=case_id,
