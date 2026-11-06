@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_VERSION_APPLICABILITY_RECORDED_FOR_ALL_44_TABLES_FULL_CLAUSE_DELTA_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_ORDERING_DELTA_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,7 +25,8 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 44
+    "full_clause_level_version_reconciliations_pending": 43,
+    "genotype_ordering_version_delta_reconciled": 1
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -647,9 +648,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Compare the 4.1/4.2 diploid likelihood ordering with the 4.3 general-ploidy nested-loop/recursive algorithm, inclusive loop-boundary footnote and combinatorial index; confirm 4.4/4.5 retention and atomize each algorithm clause separately from the illustrative matrix.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_GENOTYPE_ORDERING_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to verify exact mathematical equivalence and loop boundaries; map Number=G/GL/PL/GP atomic requirements and add executable ploidy tests.",
+          "finding": "The 4.1/4.2 diploid GL formula and GLE field, 4.3 GLE removal plus general-ploidy algorithm, and 4.4/4.5 retention have been reconciled in vcf4.1-4.5-genotype-ordering-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -687,7 +688,8 @@
           "status": "GENERAL_PLOIDY_ALGORITHM",
           "locator": "VCFv4.5.tex:632-661"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-genotype-ordering-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.6",
