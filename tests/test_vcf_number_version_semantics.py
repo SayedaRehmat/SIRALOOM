@@ -117,3 +117,16 @@ def test_vcf44_rejects_vcf45_only_format_cardinalities(
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_HEADER_DEFINITION_INVALID"
+
+
+def test_number_g_without_gt_uses_diploid_default(tmp_path: Path):
+    path = tmp_path / "number-g-without-gt.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.1\\n"
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tPL\\t0,1,2\\n",
+        encoding="utf-8",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
