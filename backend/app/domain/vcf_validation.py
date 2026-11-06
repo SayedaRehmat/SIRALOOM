@@ -1967,8 +1967,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
-    spanning_deletion_context_verified = 0
-    spanning_deletion_context_unverified = 0
+    spanning_deletion_context_corroborated = 0
+    spanning_deletion_context_unresolved = 0
     for chrom, pos, line_no, star_carriers in spanning_deletion_records:
         # A VCF may be a filtered or region-restricted callset. The upstream
         # deletion that explains '*' can therefore be absent from this file,
@@ -1984,18 +1984,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             for start, end, deletion_carriers in deletion_intervals.get(chrom, ())
             if start <= pos <= end
         ]
-        context_exists = any(
-            deletion_carriers is None
+        context_corroborated = any(
+            (
+                deletion_carriers is None
+                and star_carriers is None
+            )
             or (
-                star_carriers is not None
+                deletion_carriers is not None
+                and star_carriers is not None
                 and bool(star_carriers & deletion_carriers)
             )
             for deletion_carriers in overlaps
         )
-        if context_exists:
-            spanning_deletion_context_verified += 1
+        if context_corroborated:
+            spanning_deletion_context_corroborated += 1
         else:
-            spanning_deletion_context_unverified += 1
+            spanning_deletion_context_unresolved += 1
 
     return {
         "fileformat": fileformat,
@@ -2007,8 +2011,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "symbolic_records": symbolic,
         "breakend_records": breakends,
         "spanning_deletion_records": len(spanning_deletion_records),
-        "spanning_deletion_context_verified_records": spanning_deletion_context_verified,
-        "spanning_deletion_context_unverified_records": spanning_deletion_context_unverified,
+        "spanning_deletion_context_corroborated_records": spanning_deletion_context_corroborated,
+        "spanning_deletion_context_unresolved_records": spanning_deletion_context_unresolved,
         "gvcf_markers": gvcf_markers,
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),

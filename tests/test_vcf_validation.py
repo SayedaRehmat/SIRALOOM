@@ -792,8 +792,8 @@ def test_strict_validation_accepts_unresolved_spanning_deletion_context(tmp_path
     profile = validate_vcf_strict(path)
 
     assert profile["spanning_deletion_records"] == 1
-    assert profile["spanning_deletion_context_verified_records"] == 0
-    assert profile["spanning_deletion_context_unverified_records"] == 1
+    assert profile["spanning_deletion_context_corroborated_records"] == 0
+    assert profile["spanning_deletion_context_unresolved_records"] == 1
 
 def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_record(tmp_path):
     path = tmp_path / "contextual-star.vcf"
@@ -804,8 +804,8 @@ def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_r
     )
     profile = validate_vcf_strict(path)
     assert profile["records"] == 2
-    assert profile["spanning_deletion_context_verified_records"] == 1
-    assert profile["spanning_deletion_context_unverified_records"] == 0
+    assert profile["spanning_deletion_context_corroborated_records"] == 1
+    assert profile["spanning_deletion_context_unresolved_records"] == 0
 
 
 def test_strict_validation_preserves_spanning_deletion_with_unmatched_local_carrier(tmp_path):
@@ -821,8 +821,8 @@ def test_strict_validation_preserves_spanning_deletion_with_unmatched_local_carr
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 2
-    assert profile["spanning_deletion_context_verified_records"] == 0
-    assert profile["spanning_deletion_context_unverified_records"] == 1
+    assert profile["spanning_deletion_context_corroborated_records"] == 0
+    assert profile["spanning_deletion_context_unresolved_records"] == 1
 
 def test_strict_validation_does_not_claim_context_when_star_genotype_is_unavailable(tmp_path):
     path = tmp_path / "missing-star-gt.vcf"
@@ -836,8 +836,8 @@ def test_strict_validation_does_not_claim_context_when_star_genotype_is_unavaila
 
     profile = validate_vcf_strict(path)
 
-    assert profile["spanning_deletion_context_verified_records"] == 0
-    assert profile["spanning_deletion_context_unverified_records"] == 1
+    assert profile["spanning_deletion_context_corroborated_records"] == 0
+    assert profile["spanning_deletion_context_unresolved_records"] == 1
 
 
 def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span(tmp_path):
@@ -851,7 +851,7 @@ def test_strict_validation_accepts_spanning_deletion_from_symbolic_deletion_span
     )
     profile = validate_vcf_strict(path)
     assert profile["records"] == 2
-    assert profile["spanning_deletion_context_verified_records"] == 1
+    assert profile["spanning_deletion_context_corroborated_records"] == 1
 
 
 def test_reference_validation_checks_preserved_gvcf_sv_breakend_and_spanning_records(tmp_path):
