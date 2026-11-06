@@ -190,8 +190,12 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
                 if str(a.id) in dispatch_by_artifact else None
             ),
             "validation_dispatch_error": (
-                dispatch_by_artifact[str(a.id)].last_error
-                if str(a.id) in dispatch_by_artifact else None
+                "Validation could not complete. Contact a laboratory administrator for reconciliation."
+                if (
+                    str(a.id) in dispatch_by_artifact
+                    and dispatch_by_artifact[str(a.id)].status == "FAILED"
+                )
+                else None
             ),
             "metadata": a.metadata_json or {},
             "created_at": a.created_at.isoformat(),
