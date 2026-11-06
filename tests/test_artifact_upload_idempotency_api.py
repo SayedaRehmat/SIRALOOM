@@ -148,6 +148,12 @@ def test_artifact_upload_http_retry_returns_original_artifact_and_rejects_change
     assert first.json()["sha256"] == replay.json()["sha256"]
     assert conflict.json()["detail"]["code"] == "IDEMPOTENCY_KEY_REUSED"
 
+    listed = client.get(f"/api/v1/cases/{case_id}/artifacts")
+    assert listed.status_code == 200, listed.text
+    assert listed.json()[0]["validation_status"] == "PENDING"
+    assert listed.json()[0]["validation_dispatch_status"] == "PENDING"
+    assert listed.json()[0]["validation_dispatch_error"] is None
+
     with upload_api["session_factory"]() as db:
         artifacts = list(db.scalars(select(Artifact).where(Artifact.case_id == case_id)))
         intents = list(
