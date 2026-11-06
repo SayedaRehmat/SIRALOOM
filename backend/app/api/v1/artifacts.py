@@ -462,7 +462,7 @@ async def upload_artifact(
                 metadata=validation_metadata,
                 specimen_id=specimen_id,
                 paired_artifact_id=paired_artifact_id,
-                validation_status=artifact_validation_status or result.status,
+                validation_status=artifact_validation_status,
                 artifact_id=upload_intent.artifact_id if upload_intent is not None else None,
             )
         except Exception as exc:
