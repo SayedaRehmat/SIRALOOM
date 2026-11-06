@@ -327,123 +327,51 @@ async def upload_artifact(
         if digest_size == 0:
             raise HTTPException(status_code=400, detail="The uploaded artifact is empty.")
 
-        artifact_validation_status = None
         if kind == "VCF":
-            result = _validate_vcf_for_upload(staged)
-            if result.sample_names and specimen is None:
-                result = ValidationResult(
-                    "INVALID", result.file_kind, result.record_count, result.sample_names,
-                    result.detected_build,
-                    [*result.errors, "A sample-bearing VCF must be linked to a specimen with an explicit VCF sample-name mapping."],
-                    result.warnings, result.fileformat, result.metadata,
-                    "VCF_SPECIMEN_REQUIRED",
-                )
-            elif specimen is not None:
-                result = validate_specimen_sample_identity(
-                    result,
-                    (specimen.metadata_json or {}).get("vcf_sample_name"),
-                )
-            if result.detected_build and result.detected_build != requested_build:
-                result = type(result)(
-                    "INVALID",
-                    result.file_kind,
-                    result.record_count,
-                    result.sample_names,
-                    result.detected_build,
-                    [
-                        *result.errors,
-                        f"VCF header indicates {result.detected_build}, but the selected genome build is {requested_build}.",
-                    ],
-                    result.warnings,
-                    result.fileformat,
-                    result.metadata,
-                    "VCF_REFERENCE_DECLARATION_MISMATCH",
-                )
             artifact_type = ArtifactType.VCF
+            build_for_artifact = requested_build
             validation_metadata = {
                 "validation": {
-                    "status": result.status, "fileformat": result.fileformat,
-                    "record_count": result.record_count, "sample_count": len(result.sample_names),
-                    "sample_names": result.sample_names, "detected_build": result.detected_build,
-                    "errors": result.errors, "warnings": result.warnings,
-                    "error_code": result.error_code,
-                    **(result.metadata or {}),
+                    "status": "PENDING",
+                    "errors": [],
+                    "warnings": [],
+                    "message": "Persisted; awaiting isolated worker validation.",
                 },
-                "ingestion": {"file_kind": "VCF", "original_filename": filename, "capacity_preflight": capacity_preflight},
+                "workflow_eligibility": "PENDING_VALIDATION",
+                "ingestion": {
+                    "file_kind": "VCF",
+                    "original_filename": filename,
+                    "capacity_preflight": capacity_preflight,
+                },
             }
-            if result.status == "VALID" and not result.sample_names:
-                # Valid VCF syntax is not equivalent to a patient-specific
-                # callset. Keep site-only inputs accessible without marking the
-                # case ready for sample-level interpretation.
-                validation_metadata["workflow_eligibility"] = "SITE_LEVEL_ONLY"
-                artifact_validation_status = "VALID_SITE_ONLY"
-            elif result.status == "VALID":
-                validation_metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
-                artifact_validation_status = "VALID"
-            else:
-                validation_metadata["workflow_eligibility"] = "INELIGIBLE"
-                artifact_validation_status = result.status
-            build_for_artifact = requested_build
         else:
             if primary is None:
                 raise HTTPException(status_code=400, detail="A primary VCF is required for index validation.")
-            primary_validation_path = Path(tmp) / primary.filename
-            try:
-                primary_store = artifact_store_for_uri(
-                    db,
-                    organization_id=principal.organization_id,
-                    storage_uri=primary.storage_uri,
-                )
-                if hasattr(primary_store, "download_to_file"):
-                    primary_store.download_to_file(
-                        primary.storage_uri,
-                        primary_validation_path,
-                        expected_sha256=primary.sha256,
-                        expected_size_bytes=primary.size_bytes,
-                    )
-                else:
-                    stored_primary_path = primary_store.local_path(primary.storage_uri)
-                    verify_artifact_file(
-                        stored_primary_path,
-                        sha256=primary.sha256,
-                        size_bytes=primary.size_bytes,
-                    )
-                    primary_validation_path.symlink_to(stored_primary_path)
-                index_suffix = ".tbi" if kind == "TBI" else ".csi"
-                staged_index_path = Path(str(primary_validation_path) + index_suffix)
-                shutil.copyfile(staged, staged_index_path)
-            except (ArtifactIntegrityError, OSError, StorageProfileError) as exc:
+            if primary.validation_status not in {"VALID", "VALID_SITE_ONLY"}:
                 raise HTTPException(
                     status_code=409,
-                    detail="The paired primary VCF could not be integrity-verified for index validation.",
-                ) from exc
-            try:
-                result = validate_index(
-                    staged_index_path,
-                    primary.filename,
-                    primary_path=primary_validation_path,
-                    expected_bcftools_version=settings.bcftools_version,
-                )
-            except VCFValidationUnavailable as exc:
-                raise HTTPException(
-                    status_code=503,
                     detail={
-                        "code": "VCF_VALIDATION_UNAVAILABLE",
-                        "message": str(exc),
+                        "code": "PRIMARY_VCF_NOT_VALIDATED",
+                        "message": "The paired primary VCF must finish validation before its index can be uploaded.",
                         "retryable": True,
                     },
-                ) from exc
+                )
             artifact_type = ArtifactType.VCF_INDEX_TBI if kind == "TBI" else ArtifactType.VCF_INDEX_CSI
+            build_for_artifact = primary.genome_build
             validation_metadata = {
                 "validation": {
-                    "status": result.status,
-                    "errors": result.errors,
-                    "warnings": result.warnings,
-                    **(result.metadata or {}),
+                    "status": "PENDING",
+                    "errors": [],
+                    "warnings": [],
+                    "message": "Persisted; awaiting isolated worker validation.",
                 },
-                "ingestion": {"file_kind": kind, "paired_primary_artifact_id": str(primary.id), "capacity_preflight": capacity_preflight},
+                "ingestion": {
+                    "file_kind": kind,
+                    "paired_primary_artifact_id": str(primary.id),
+                    "capacity_preflight": capacity_preflight,
+                },
             }
-            build_for_artifact = primary.genome_build
+        artifact_validation_status = "PENDING"
 
         upload_intent = None
         request_fingerprint = None
@@ -569,59 +497,61 @@ async def upload_artifact(
             return _artifact_upload_response(existing_artifact, case)
 
         try:
-            if kind in {"TBI", "CSI"} and primary:
-                primary.metadata_json = {
-                    **(primary.metadata_json or {}),
-                    "index": {
-                        "artifact_id": str(artifact.id),
-                        "status": result.status,
-                        "type": kind,
-                        "concordance": (result.metadata or {}).get("index_concordance", {"status": "NOT_CHECKED"}),
-                    },
-                }
+            from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
+            from backend.app.infrastructure.db.models import ArtifactValidationDispatch
+
+            profile = resolve_registered_toolchain_profile(settings.bcftools_profile_id)
+            dispatch = ArtifactValidationDispatch(
+                id=UUID(str(artifact.id)),
+                artifact_id=artifact.id,
+                organization_id=case.organization_id,
+                case_id=case_id,
+                status="PENDING",
+                toolchain_profile_id=str(profile["id"]),
+                toolchain_bcftools_version=str(profile["bcftools_version"]),
+                toolchain_htslib_version=str(profile["htslib_version"]),
+                toolchain_queue=str(profile["worker_queue"]),
+                toolchain_snapshot={
+                    "profile_id": profile["id"],
+                    "bcftools_version": profile["bcftools_version"],
+                    "htslib_version": profile["htslib_version"],
+                    "platform": profile["platform"],
+                    "worker_queue": profile["worker_queue"],
+                    "lock_file": profile["lock_file"],
+                    "lock_sha256": profile["lock_sha256"],
+                    "qualification_scope": profile.get("qualification_scope"),
+                },
+            )
+            db.add(dispatch)
 
             before_status = case.status
-            if kind == "VCF":
-                # Derive case readiness from all durable primary VCFs. A later
-                # rejected upload must not hide an earlier valid input, and
-                # new intake must not reset a case already in a later lifecycle.
-                # Serialize this read/modify/write on the case row. Concurrent
-                # uploads otherwise can each compute readiness from a snapshot
-                # that excludes the other's uncommitted artifact, allowing a
-                # later invalid upload to overwrite READY with INVALID.
-                case, before_status = _refresh_case_vcf_intake_status(db, case_id)
-            elif primary:
-                # An optional index cannot change the primary VCF's intake state.
-                vcf_rows = db.execute(
-                    select(Artifact.validation_status, Artifact.metadata_json).where(
-                        Artifact.case_id == case_id,
-                        Artifact.artifact_type == ArtifactType.VCF,
-                    )
-                ).all()
-                case.status = case_status_after_vcf_upload(
-                    case.status,
-                    has_valid_vcf=any(status == "VALID" for status, _metadata in vcf_rows),
-                    has_vcf=bool(vcf_rows),
-                    has_site_only_vcf=any(
-                        status == "VALID_SITE_ONLY"
-                        or (
-                            isinstance(metadata, dict)
-                            and metadata.get("workflow_eligibility") == "SITE_LEVEL_ONLY"
-                        )
-                        for status, metadata in vcf_rows
-                    ),
-                )
+            if kind == "VCF" and case.status in {
+                "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+                "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+            }:
+                case.status = "VALIDATING"
 
-            audit = AuditService(db)
-            audit.record(
-                event_type="ARTIFACT_VALIDATION_COMPLETED" if result.status == "VALID" else "ARTIFACT_VALIDATION_FAILED",
-                case_id=case_id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
-                subject_type="ARTIFACT", subject_id=str(artifact.id), operation="VALIDATE",
+            AuditService(db).record(
+                event_type="ARTIFACT_VALIDATION_QUEUED",
+                case_id=case_id,
+                analysis_id=None,
+                actor_type="HUMAN",
+                actor_id=str(principal.user_id),
+                subject_type="ARTIFACT",
+                subject_id=str(artifact.id),
+                operation="QUEUE_VALIDATION",
                 before_state={"case_status": before_status},
-                after_state={"case_status": case.status, "validation_status": result.status},
-                reason="Variant artifact ingestion validation",
-                output_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
-                payload={"filename": filename, "file_kind": kind, "validation": validation_metadata["validation"], "capacity_preflight": capacity_preflight},
+                after_state={"case_status": case.status, "validation_status": "PENDING"},
+                reason="Artifact bytes durably stored; scientific validation dispatched asynchronously.",
+                input_artifacts=[{"artifact_id": str(artifact.id), "sha256": artifact.sha256}],
+                payload={
+                    "filename": filename,
+                    "file_kind": kind,
+                    "capacity_preflight": capacity_preflight,
+                    "toolchain_profile_id": profile["id"],
+                    "toolchain_bcftools_version": profile["bcftools_version"],
+                    "toolchain_htslib_version": profile["htslib_version"],
+                },
             )
             if upload_intent is not None:
                 upload_intent.status = "COMMITTED"
