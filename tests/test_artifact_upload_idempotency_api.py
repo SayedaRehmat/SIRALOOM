@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import backend.app.api.v1.artifacts as artifacts_api
 from backend.app.auth.principal import Principal, get_current_principal
-from backend.app.domain.ingestion import ValidationResult
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db import models as _models
 from backend.app.infrastructure.db.artifact_upload_intents import ArtifactUploadIntent
@@ -94,20 +93,6 @@ def upload_api(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         artifacts_api,
         "preflight_upload_capacity",
         lambda incoming_size, **kwargs: {"status": "READY", "issues": []},
-    )
-    monkeypatch.setattr(
-        artifacts_api,
-        "_validate_vcf_for_upload",
-        lambda path: ValidationResult(
-            status="VALID",
-            file_kind="VCF",
-            record_count=1,
-            sample_names=[],
-            detected_build=None,
-            errors=[],
-            warnings=[],
-            fileformat="VCFv4.2",
-        ),
     )
     monkeypatch.setattr(
         artifacts_api,
