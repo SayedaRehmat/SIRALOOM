@@ -710,7 +710,9 @@ export default function Home() {
       await refreshCaseArtifacts();
       clearUploadIdempotencyAttempt(window.sessionStorage, uploadAttempt);
       const warnings = Array.isArray(result.validation?.warnings) ? result.validation.warnings.join(" ") : "";
-      if (siteLevelOnly) {
+      if (result.validation_status === "PENDING") {
+        setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256} · ${t("workspace.validationStatus")}: ${t("workspace.queued")}`);
+      } else if (siteLevelOnly) {
         setMessage(`${t("workspace.inputRegisteredPrefix")}${result.sha256}${warnings ? ` · ${warnings}` : ""}`);
       } else if (!validatedId) {
         const validationErrors = Array.isArray(result.validation?.errors) ? result.validation.errors.join(" ") : "";
