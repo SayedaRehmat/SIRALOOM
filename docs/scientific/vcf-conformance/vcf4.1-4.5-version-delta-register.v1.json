@@ -25,6 +25,14 @@
     {
       "path": "docs/scientific/vcf-conformance/PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
       "blob_sha1": "c5659737fbf9a4406905d2e395e6d87bf49a407f"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-semantic-section-applicability.v1.json",
+      "blob_sha1": "b9d821264ef54166888ab3bf73537deaed80e571"
     }
   ],
   "structural_inventory": [
@@ -370,7 +378,8 @@
     "Check 4.4-to-4.5 GT, SV INFO/FORMAT and BCF interactions line by line; the listed 4.5 GT item is explicitly a retained-semantics check, not a claimed new delta.",
     "Acquire and pin VCFv4.0 before making any 4.0 applicability claim.",
     "Independent second-person review remains not started.",
-    "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved."
+    "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved.",
+    "The new section applicability and reserved-row crosswalk artifacts are author-level inventories; every candidate requirement still needs atomic, per-version APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED adjudication against exact normative clauses."
   ],
   "controls": [
     "Never project a later-version rule backward without direct source evidence.",
@@ -414,6 +423,105 @@
         "VCFv4.5.tex:740"
       ],
       "decision": "Do not guess, normalize or silently accept both spellings."
+    }
+  ],
+  "semantic_section_applicability_artifact": {
+    "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-semantic-section-applicability.v1.json",
+    "status": "AUTHOR_STRUCTURAL_APPLICABILITY_AND_MAJOR_VERSION_DELTAS_RECORDED_CLAUSE_LEVEL_RECONCILIATION_PENDING",
+    "major_semantic_changes": 10,
+    "whole_spec_domains": 10
+  },
+  "reserved_row_crosswalk_artifact": {
+    "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+    "status": "AUTHOR_ROW_INVENTORY_AND_MECHANICAL_DELTA_COMPARISON_COMPLETE_SEMANTIC_ADJUDICATION_PENDING",
+    "transitions": [
+      {
+        "from": "VCFv4.1",
+        "to": "VCFv4.2",
+        "info_added": 0,
+        "format_added": 0,
+        "format_removed": 0
+      },
+      {
+        "from": "VCFv4.2",
+        "to": "VCFv4.3",
+        "info_added": 3,
+        "format_added": 4,
+        "format_removed": 1
+      },
+      {
+        "from": "VCFv4.3",
+        "to": "VCFv4.4",
+        "info_added": 0,
+        "format_added": 3,
+        "format_removed": 0
+      },
+      {
+        "from": "VCFv4.4",
+        "to": "VCFv4.5",
+        "info_added": 0,
+        "format_added": 44,
+        "format_removed": 0
+      }
+    ]
+  },
+  "confirmed_semantic_changes": [
+    {
+      "feature": "GLE FORMAT tag removal",
+      "transition": "VCFv4.2_to_VCFv4.3",
+      "evidence": [
+        "VCFv4.1.tex:208",
+        "VCFv4.2.tex:225",
+        "VCFv4.3.tex:2168"
+      ],
+      "status": "AUTHOR_CONFIRMED_REMOVAL_FROM_RESERVED_SET"
+    },
+    {
+      "feature": "PSL/PSO/PSQ",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.4.tex:496-498",
+        "VCFv4.4.tex:598-635"
+      ],
+      "status": "AUTHOR_CONFIRMED_ADDITION"
+    },
+    {
+      "feature": "Number=P",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.4.tex:2561"
+      ],
+      "status": "AUTHOR_CONFIRMED_ADDITION"
+    },
+    {
+      "feature": "SVLEN Number cardinality",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.3.tex:635",
+        "VCFv4.4.tex:720-733"
+      ],
+      "status": "AUTHOR_CONFIRMED_CHANGE_FROM_DOT_TO_A"
+    },
+    {
+      "feature": "SVTYPE deprecation",
+      "transition": "VCFv4.3_to_VCFv4.4_and_retained_in_4.5",
+      "evidence": [
+        "VCFv4.4.tex:2583",
+        "VCFv4.5.tex:871-877"
+      ],
+      "status": "AUTHOR_CONFIRMED_DEPRECATION"
+    },
+    {
+      "feature": "Local alleles, base modifications, FORMAT LEN, END deprecation",
+      "transition": "VCFv4.4_to_VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:188-218",
+        "VCFv4.5.tex:501-502",
+        "VCFv4.5.tex:686-758",
+        "VCFv4.5.tex:867",
+        "VCFv4.5.tex:1846-1860"
+      ],
+      "status": "AUTHOR_CONFIRMED_NEW_VCF4_5_FEATURES"
     }
   ]
 }
