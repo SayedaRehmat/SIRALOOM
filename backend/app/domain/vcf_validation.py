@@ -2526,6 +2526,15 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
                         if (
+                            definition["Number"] == "P"
+                            and gt_index is None
+                            and value not in {None, "."}
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{key} Number=P requires FORMAT/GT to determine the allele-value cardinality at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
+                        if (
                             definition["Number"] == "G"
                             and genotype_ploidy is None
                             and value not in {None, "."}
