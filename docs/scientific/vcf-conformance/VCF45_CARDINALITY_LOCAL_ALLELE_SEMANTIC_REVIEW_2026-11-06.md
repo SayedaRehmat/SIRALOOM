@@ -146,24 +146,35 @@ The same ordering is used for LGL/LGP/LPL/LPP after restricting the allele domai
 
 ## 6. Number=P and phase-set list semantics
 
-The reserved table defines:
+### 6.1 General Number=P cardinality
+
+The general FORMAT Number definitions at VCFv4.5 source lines 195–197 define Number=P as one value for each allele value defined in GT. This is more precise than describing P only as “ploidy/local copy number”: the actual cardinality is anchored to the allele-value positions represented in GT. The version-delta review records Number=P and PSL/PSO/PSQ as introduced in VCFv4.4 and retained in VCFv4.5.
+
+Reserved table rows at lines 594–596:
 - PSL: Number=P, String;
 - PSO: Number=P, Integer;
 - PSQ: Number=P, Integer.
 
-The version-change history at source line 2731 says Number=P was added for fields whose cardinality matches sample ploidy/local copy number. The reserved table at lines 594–596 assigns P to PSL/PSO/PSQ. Their detailed definitions in the FORMAT genotype-field prose provide field-specific list semantics:
+The VCFv4.4 general definition is at lines 198–202 and the reserved rows at 496–498. The VCFv4.5 general definition and reserved rows are at 195–197 and 594–596 respectively.
 
-- PSL is a list of phase sets, one for each allele value specified in GT. Unphased alleles (no preceding `|`) use MISSING at the corresponding list position.
-- PSO is a list of phase-set ordinals. Its MISSING value is used when the corresponding PSO value is missing. It describes derivative-chromosome traversal order; it is required in the specified symbolic-SV/breakpoint circumstances.
-- PSQ is the list of phasing-quality values, one for each phase set in PSL. MISSING is used when the corresponding PSL value is missing or phasing quality is unknown.
+### 6.2 Field-specific list semantics
 
-The source's examples show per-allele list alignment for PSL/PSO and matching PSQ positions. A validator must retain the distinction between:
-- Number=P as the declared cardinality class;
-- actual list semantics for each key;
-- ploidy/local-copy-number context;
-- MISSING entries, which preserve positional alignment.
+The detailed definitions provide field-specific behavior:
 
-**Open review item:** independently reconcile the general Number=P phrase (“sample ploidy/local copy number”) against all PSL/PSO/PSQ field-specific list definitions and examples. Do not impose a simplistic `len(value) == GT ploidy` rule without handling the PSL/PSO/PSQ alignment rules and the relevant local-copy-number cases.
+- **PSL** is a list of phase sets, one for each allele value specified in GT. Unphased alleles (no preceding `|`) use MISSING at the corresponding list position.
+- **PSO** is a list of phase-set ordinals. Its MISSING value represents a missing PSO value. It describes derivative-chromosome traversal order. For each phase-set name, PSO should be defined if any allele with that name on any record is a symbolic SV or uses breakend notation. Breakend records must have matching PSL and PSO on both records.
+- **PSQ** is a list of PQ values, one for each phase set in PSL. VCFv4.5 says MISSING should be used when the corresponding PSL value is MISSING or when phasing quality is unknown.
+
+### 6.3 Cardinality reconciliation still required
+
+A validator must preserve the distinction between:
+- the general Number=P definition: one value per allele value defined in GT;
+- PSL and PSO's per-GT-allele list semantics;
+- PSQ's field-specific description as one value per phase set in PSL;
+- MISSING entries, which preserve positional meaning;
+- the fact that Number=P is distinct from Number=G genotype-combination cardinality.
+
+**Open review item:** independently reconcile the general Number=P definition with PSQ's “one for each phase set in PSL” wording, including cases where phase-set identifiers repeat across GT allele positions. Do not impose a simplistic `len(value) == GT ploidy` rule without resolving the field-specific semantics and the relevant local-copy-number cases.
 
 ## 7. Number=M and base-modification fields
 
