@@ -422,7 +422,7 @@ if Celery is not None:
         from celery.exceptions import Reject
         from sqlalchemy import select
         from backend.app.config import settings
-        from backend.app.infrastructure.db.models import ArtifactValidationDispatch
+        from backend.app.infrastructure.db.models import Artifact, ArtifactValidationDispatch, Case
         from backend.app.infrastructure.db.session import SessionLocal
         from backend.app.domain.artifact_validation import validate_persisted_artifact
         from backend.app.domain.ingestion import VCFValidationUnavailable
@@ -445,6 +445,22 @@ if Celery is not None:
                 return {"artifact_id": artifact_id, "status": dispatch.status}
             if dispatch.status == "RUNNING" and not redelivered and self.request.retries == 0:
                 return {"artifact_id": artifact_id, "status": "ALREADY_CLAIMED"}
+
+            artifact = db.get(Artifact, artifact_uuid)
+            case = db.get(Case, artifact.case_id) if artifact is not None else None
+            if (
+                artifact is None
+                or case is None
+                or dispatch.artifact_id != artifact.id
+                or dispatch.case_id != artifact.case_id
+                or dispatch.organization_id != case.organization_id
+            ):
+                dispatch.status = "FAILED"
+                dispatch.last_error = "Validation dispatch tenant/case/artifact identity does not match persisted records."
+                dispatch.completed_at = datetime.now(timezone.utc)
+                db.add(dispatch)
+                db.commit()
+                return {"artifact_id": artifact_id, "status": "IDENTITY_MISMATCH"}
 
             if (
                 dispatch.toolchain_profile_id != settings.bcftools_profile_id
