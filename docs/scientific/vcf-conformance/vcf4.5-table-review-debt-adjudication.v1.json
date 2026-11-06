@@ -1,0 +1,1896 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-table-review-debt-adjudication",
+  "status": "AUTHOR_ADJUDICATION_RECORDED_VERSION_DELTA_AND_LOCATOR_LEVEL_RECONCILIATION_OPEN_INDEPENDENT_REVIEW_NOT_STARTED",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "file": "VCFv4.5.tex",
+    "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+    "table_queue_path": "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json",
+    "table_queue_blob_sha1": "16d348b0a9f0523ed965914c9a69daf05ba1c353"
+  },
+  "method": "This supplemental adjudication converts the three repeated generic questions for each indexed table into explicit author disposition, locator-level context debt, and version-delta debt. It reuses only the table classification, semantic disposition, review notes, linked candidate IDs, source locators and context-artifact references already present in the source queue. It does not assert independent review, complete normative coverage, completed version comparison, or conformance. Normative/informative classification is an author-level disposition and remains subject to independent review.",
+  "counts": {
+    "indexed_tables": 44,
+    "normative_table_definitions": 3,
+    "mixed_normative_prose_informative_matrix": 1,
+    "informative_examples_or_illustrations": 40,
+    "author_dispositions_recorded": 44,
+    "locator_level_context_reconciliations_pending": 44,
+    "version_delta_assessments_not_yet_performed": 44,
+    "independent_reviews_completed": 0,
+    "linked_candidate_requirement_ids": 96
+  },
+  "gate_rules": [
+    "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
+    "An informative example may illustrate a normative rule stated elsewhere; candidate requirements must cite the normative source, not infer a rule from example data.",
+    "A table with no linked requirement IDs is not presumed to have no normative content in its surrounding prose.",
+    "Version-specificity remains unresolved until a source-backed comparison against each applicable earlier version is recorded.",
+    "Independent review must be performed by a reviewer other than the author; this artifact does not self-approve."
+  ],
+  "tables": [
+    {
+      "table_id": "VCF5.1",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 84,
+        "end_line": 93,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Character encoding, non-printable characters and characters with special meaning",
+      "classification": "CHARACTER_ENCODING_ENUMERATION",
+      "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
+      "author_disposition": "NORMATIVE_TABLE_DEFINITION",
+      "disposition_basis": "CHARACTER_ENCODING_ENUMERATION; NORMATIVE_ENCODING_MAPPING. Eight escape mappings reconciled to preceding UTF-8, BOM, control-character, delimiter and uppercase percent-encoding prose; each mapping atomized separately.",
+      "linked_candidate_requirement_ids": [
+        "VCF-REQ-000114",
+        "VCF-REQ-000115",
+        "VCF-REQ-000116",
+        "VCF-REQ-000117",
+        "VCF-REQ-000118",
+        "VCF-REQ-000119",
+        "VCF-REQ-000120",
+        "VCF-REQ-000121"
+      ],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "NORMATIVE_TABLE_DEFINITION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Verify the exact normative prose/grammar clauses governing percent-encoding, delimiter escaping, control characters and line terminators; record precise cross-reference and footnote locators."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.2",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 223,
+        "end_line": 229,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Individual format field format",
+      "classification": "BASE_MODIFICATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "BASE_MODIFICATION_EXAMPLE; INFORMATIVE_BASE_MODIFICATION_EXAMPLE. Checked against M/DPM/ADM suffix, allele-order, strand and missing-value prose; illustrative, not an independent normative rule.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map M/DPM/ADM definitions, allele/base ordering, strand and missing-value rules to exact normative prose/footnotes; confirm examples add no independent constraint."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.3",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 443,
+        "end_line": 481,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Fixed fields",
+      "classification": "RESERVED_INFO_DEFINITION_TABLE",
+      "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
+      "author_disposition": "NORMATIVE_TABLE_DEFINITION",
+      "disposition_basis": "RESERVED_INFO_DEFINITION_TABLE; NORMATIVE_RESERVED_INFO_TABLE. All 21 rows reviewed against INFO grammar, Number/Type, optionality, allele cardinality and SV INFO cross-reference; reserved rows are not universally required.",
+      "linked_candidate_requirement_ids": [
+        "VCF-REQ-000143",
+        "VCF-REQ-000144",
+        "VCF-REQ-000145",
+        "VCF-REQ-000146",
+        "VCF-REQ-000147",
+        "VCF-REQ-000148",
+        "VCF-REQ-000149",
+        "VCF-REQ-000150",
+        "VCF-REQ-000151",
+        "VCF-REQ-000152",
+        "VCF-REQ-000153",
+        "VCF-REQ-000154",
+        "VCF-REQ-000155",
+        "VCF-REQ-000156",
+        "VCF-REQ-000157",
+        "VCF-REQ-000158",
+        "VCF-REQ-000159",
+        "VCF-REQ-000160",
+        "VCF-REQ-000161",
+        "VCF-REQ-000162",
+        "VCF-REQ-000163"
+      ],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "NORMATIVE_TABLE_DEFINITION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "For each of the 21 INFO rows, map its definition and any deprecation/optionality/allele-cardinality conditions to exact prose clauses; verify END deprecation and SV-key cross-reference locators."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.4",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 517,
+        "end_line": 598,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "RESERVED_FORMAT_DEFINITION_TABLE",
+      "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
+      "author_disposition": "NORMATIVE_TABLE_DEFINITION",
+      "disposition_basis": "RESERVED_FORMAT_DEFINITION_TABLE; NORMATIVE_RESERVED_FORMAT_TABLE. All 63 rows reviewed against FORMAT prose, GT/ploidy/order, local allele, base-modification, phase-set and SV FORMAT cross-references; no FORMAT key is universally required.",
+      "linked_candidate_requirement_ids": [
+        "VCF-REQ-000164",
+        "VCF-REQ-000165",
+        "VCF-REQ-000166",
+        "VCF-REQ-000167",
+        "VCF-REQ-000168",
+        "VCF-REQ-000169",
+        "VCF-REQ-000170",
+        "VCF-REQ-000171",
+        "VCF-REQ-000172",
+        "VCF-REQ-000173",
+        "VCF-REQ-000174",
+        "VCF-REQ-000175",
+        "VCF-REQ-000176",
+        "VCF-REQ-000177",
+        "VCF-REQ-000178",
+        "VCF-REQ-000179",
+        "VCF-REQ-000180",
+        "VCF-REQ-000181",
+        "VCF-REQ-000182",
+        "VCF-REQ-000183",
+        "VCF-REQ-000184",
+        "VCF-REQ-000185",
+        "VCF-REQ-000186",
+        "VCF-REQ-000187",
+        "VCF-REQ-000188",
+        "VCF-REQ-000189",
+        "VCF-REQ-000190",
+        "VCF-REQ-000191",
+        "VCF-REQ-000192",
+        "VCF-REQ-000193",
+        "VCF-REQ-000194",
+        "VCF-REQ-000195",
+        "VCF-REQ-000196",
+        "VCF-REQ-000197",
+        "VCF-REQ-000198",
+        "VCF-REQ-000199",
+        "VCF-REQ-000200",
+        "VCF-REQ-000201",
+        "VCF-REQ-000202",
+        "VCF-REQ-000203",
+        "VCF-REQ-000204",
+        "VCF-REQ-000205",
+        "VCF-REQ-000206",
+        "VCF-REQ-000207",
+        "VCF-REQ-000208",
+        "VCF-REQ-000209",
+        "VCF-REQ-000210",
+        "VCF-REQ-000211",
+        "VCF-REQ-000212",
+        "VCF-REQ-000213",
+        "VCF-REQ-000214",
+        "VCF-REQ-000215",
+        "VCF-REQ-000216",
+        "VCF-REQ-000217",
+        "VCF-REQ-000218",
+        "VCF-REQ-000219",
+        "VCF-REQ-000220",
+        "VCF-REQ-000221",
+        "VCF-REQ-000222",
+        "VCF-REQ-000223",
+        "VCF-REQ-000224",
+        "VCF-REQ-000225",
+        "VCF-REQ-000226"
+      ],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "NORMATIVE_TABLE_DEFINITION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "For each of the 63 FORMAT rows, map definition, Number/Type and any genotype/ploidy/local-allele/base-modification/phase/SV conditions to exact prose clauses; identify reserved-but-not-required behavior."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.5",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 675,
+        "end_line": 681,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "GENOTYPE_ORDERING_ALGORITHM_TABLE",
+      "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
+      "author_disposition": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX",
+      "disposition_basis": "GENOTYPE_ORDERING_ALGORITHM_TABLE; GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX. The matrix is illustrative; the general-ploidy ordering algorithm and its surrounding prose/footnotes require their own atomic requirement mapping. Checked diploid triangular special case against general-ploidy nested loops, recursive algorithm, inclusive loop footnote, combinatorial index formula and worked examples.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "MIXED_DISPOSITION_RECORDED_ATOMIC_PROSE_MAPPING_OPEN",
+          "finding": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Locate and atomize the normative genotype-ordering algorithm, recursive/general-ploidy rules and loop-boundary footnote separately from the illustrative diploid matrix; verify mathematical equivalence."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.6",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 701,
+        "end_line": 711,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "LOCAL_ALLELE_EQUIVALENCE_EXAMPLE",
+      "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "LOCAL_ALLELE_EQUIVALENCE_EXAMPLE; LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE. Checked local/global equivalence, LAA 1-based ALT ordering, implicit REF, local A/R/G mapping and BCF empty-vector caveat against prose.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map LAA and local A/R/G cardinality rules, implicit REF handling and zero-length-versus-missing BCF caveat to exact normative prose; ensure the equivalence records remain examples."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.7",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 749,
+        "end_line": 755,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "BASE_MODIFICATION_EXAMPLE",
+      "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "BASE_MODIFICATION_EXAMPLE; BASE_MODIFICATION_INFORMATIVE_EXAMPLE. Checked unstranded/stranded CpG examples against intrinsic strand semantics and missing-value placement; no new rule inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map M/DPM/ADM definitions, allele/base ordering, strand and missing-value rules to exact normative prose/footnotes; confirm examples add no independent constraint."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.8",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 781,
+        "end_line": 786,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "PHASE_SET_LIST_EXAMPLE",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "PHASE_SET_LIST_EXAMPLE; PHASE_SET_LIST_INFORMATIVE_EXAMPLE. Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map PSL/PSO/PSQ semantics, allele alignment, cross-chromosome scope and PS interoperability limitations to exact normative prose; keep derivative-chromosome examples informative."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.9",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 798,
+        "end_line": 803,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "classification": "PHASE_SET_LIST_EXAMPLE",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "PHASE_SET_LIST_EXAMPLE; PHASE_SET_LIST_INFORMATIVE_EXAMPLE. Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map PSL/PSO/PSQ semantics, allele alignment, cross-chromosome scope and PS interoperability limitations to exact normative prose; keep derivative-chromosome examples informative."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.10",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1170,
+        "end_line": 1177,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 1",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.11",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1190,
+        "end_line": 1195,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 1",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.12",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1201,
+        "end_line": 1207,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 2",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.13",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1213,
+        "end_line": 1216,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 2",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.14",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1221,
+        "end_line": 1228,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 3",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.15",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1235,
+        "end_line": 1238,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 3",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.16",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1249,
+        "end_line": 1252,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "SNP VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.17",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1258,
+        "end_line": 1263,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "SNP VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.18",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1269,
+        "end_line": 1272,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Insertion VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.19",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1279,
+        "end_line": 1284,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Insertion VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.20",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1290,
+        "end_line": 1293,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Deletion VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.21",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1300,
+        "end_line": 1305,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Deletion VCF record",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.22",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1311,
+        "end_line": 1314,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.23",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1321,
+        "end_line": 1327,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.24",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1334,
+        "end_line": 1340,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "SMALL_VARIANT_REPRESENTATION_EXAMPLE; INFORMATIVE_SMALL_VARIANT_REPRESENTATION. Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map the illustrated REF/POS anchoring, indel representation and sorting behaviors to their exact normative prose; confirm equivalent-sequence examples do not imply normalization or molecular-placement rules absent from the text."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.25",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1418,
+        "end_line": 1424,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Specifying complex rearrangements with breakends",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.26",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1438,
+        "end_line": 1446,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Specifying complex rearrangements with breakends",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.27",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1460,
+        "end_line": 1464,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inserted Sequence",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.28",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1479,
+        "end_line": 1483,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.29",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1490,
+        "end_line": 1493,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.30",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1500,
+        "end_line": 1504,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.31",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1512,
+        "end_line": 1518,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.32",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1531,
+        "end_line": 1536,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Multiple mates",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.33",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1554,
+        "end_line": 1560,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Explicit partners",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.34",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1578,
+        "end_line": 1584,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Telomeres",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.35",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1602,
+        "end_line": 1608,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Event modifiers",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.36",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1628,
+        "end_line": 1631,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inversions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.37",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1639,
+        "end_line": 1645,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inversions",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.38",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1666,
+        "end_line": 1670,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Uncertainty around breakend location",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.39",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1692,
+        "end_line": 1698,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.40",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1710,
+        "end_line": 1715,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.41",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1723,
+        "end_line": 1728,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SV_BREAKEND_EXAMPLE. Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map each illustrated SV/breakend construct to exact normative definitions for orientation, inserted sequence, contig coordinates, circular adjacency, mates/partners, telomeres, EVENT, uncertainty and single-breakend behavior; do not derive obligations from example records."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.42",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1750,
+        "end_line": 1756,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Sample mixtures",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE. Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map sample-mixture and clonal/pedigree semantics to exact SAMPLE/PEDIGREE prose; distinguish sample-level representation from genome deconvolution and do not infer a mandatory deconvolution algorithm."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.43",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1766,
+        "end_line": 1772,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Sample mixtures",
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE; INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE. Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "linked_candidate_requirement_ids": [],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Map sample-mixture and clonal/pedigree semantics to exact SAMPLE/PEDIGREE prose; distinguish sample-level representation from genome deconvolution and do not infer a mandatory deconvolution algorithm."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    {
+      "table_id": "VCF5.44",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1865,
+        "end_line": 1874,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Representing unspecified alleles and REF-only blocks (gVCF)",
+      "classification": "GVCF_OR_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
+      "author_disposition": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+      "disposition_basis": "GVCF_OR_VARIANT_REPRESENTATION_EXAMPLE; GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE. Reviewed against <*> reference-block, LAA, LEN/END compatibility and base-modification coverage prose. gVCF convention is distinguished from core VCF grammar.",
+      "linked_candidate_requirement_ids": [
+        "VCF-REQ-000125",
+        "VCF-REQ-000126",
+        "VCF-REQ-000127",
+        "VCF-REQ-000129"
+      ],
+      "referenced_context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "question_dispositions": {
+        "normative_or_informative": {
+          "status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+          "finding": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION"
+        },
+        "surrounding_definitions_footnotes_cross_references": {
+          "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
+          "remaining_work": "Verify that each linked requirement ID cites normative <*> reference-block/LEN/END/base-modification prose rather than the illustrative records; keep gVCF producer conventions separate from core VCF grammar."
+        },
+        "version_specificity_or_shared_behavior": {
+          "status": "NOT_YET_ASSESSED",
+          "remaining_work": "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        }
+      },
+      "independent_review_status": "NOT_STARTED",
+      "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    }
+  ]
+}
