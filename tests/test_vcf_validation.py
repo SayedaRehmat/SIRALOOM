@@ -787,7 +787,7 @@ def test_strict_validation_checks_breakend_type_and_mate_relationships(tmp_path,
 
 def test_strict_validation_accepts_unresolved_spanning_deletion_context(tmp_path):
     path = tmp_path / "orphan-star.vcf"
-    write_vcf(path, "1\\t11\\t.\\tT\\t*\\t.\\tPASS\\t.\\n")
+    write_vcf(path, "1\t11\t.\tT\t*\t.\tPASS\t.\n")
 
     profile = validate_vcf_strict(path)
 
@@ -810,11 +810,11 @@ def test_strict_validation_accepts_spanning_deletion_with_overlapping_deletion_r
 
 def test_strict_validation_preserves_spanning_deletion_with_unmatched_local_carrier(tmp_path):
     path = tmp_path / "wrong-sample-star.vcf"
-    columns = "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tS1"
+    columns = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1"
     write_vcf(
         path,
-        "1\\t10\\tdel1\\tAT\\tA\\t.\\tPASS\\t.\\tGT\\t0/0\\n"
-        "1\\t11\\tstar1\\tT\\t*\\t.\\tPASS\\t.\\tGT\\t0/1\\n",
+        "1\t10\tdel1\tAT\tA\t.\tPASS\t.\tGT\t0/0\n"
+        "1\t11\tstar1\tT\t*\t.\tPASS\t.\tGT\t0/1\n",
         columns=columns,
     )
 
