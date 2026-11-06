@@ -123,9 +123,11 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
         if kind not in {"VCF", "TBI", "CSI"}:
             raise RuntimeError(f"Unsupported persisted artifact validation kind: {kind!r}")
 
+        scratch_root = Path(settings.worker_scratch_root).expanduser()
+        scratch_root.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(
             prefix="siraloom-artifact-validation-",
-            dir=Path(settings.worker_scratch_root).expanduser(),
+            dir=scratch_root,
         ) as tmp:
             root = Path(tmp)
             artifact_path = root / Path(artifact.filename).name
