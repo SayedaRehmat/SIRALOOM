@@ -186,5 +186,34 @@
       "inputs": "Governed VEP binary, cache, species and assembly",
       "outputs": "Runtime qualification evidence"
     }
+,
+    {
+      "path": "backend/app/adapters/population/gnomad.py",
+      "function": "query_variant",
+      "api": "subprocess.Popen",
+      "count": 1,
+      "tool": "tabix",
+      "owner": "Local gnomAD population adapter",
+      "execution_plane": "Celery analysis worker",
+      "purpose": "Query a locally staged governed gnomAD VCF by genomic region",
+      "timeout_seconds": "Provider communication timeout",
+      "retry": "Provider error classification and workflow retry policy",
+      "inputs": "Canonical variant and governed local gnomAD VCF",
+      "outputs": "Population observation with resource provenance"
+    },
+    {
+      "path": "backend/app/adapters/population/secondary.py",
+      "function": "query_variant_with_provenance",
+      "api": "subprocess.run",
+      "count": 1,
+      "tool": "tabix",
+      "owner": "Secondary local population adapter",
+      "execution_plane": "Celery analysis worker",
+      "purpose": "Query a governed local population VCF by genomic region",
+      "timeout_seconds": "Provider configured timeout",
+      "retry": "Provider error classification and workflow retry policy",
+      "inputs": "Canonical variant and governed local population VCF",
+      "outputs": "Population observation with source provenance"
+    }
   ]
 }
