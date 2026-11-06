@@ -215,5 +215,20 @@
       "inputs": "Canonical variant and governed local population VCF",
       "outputs": "Population observation with source provenance"
     }
+,
+    {
+      "path": "backend/app/domain/local_resources.py",
+      "function": "resolve_local_path",
+      "api": "shutil.which",
+      "count": 1,
+      "tool": "Lab-configured executable",
+      "owner": "Local resource resolver",
+      "execution_plane": "API or worker caller context",
+      "purpose": "Resolve an explicitly configured local executable resource",
+      "timeout_seconds": null,
+      "retry": "Caller receives NOT_AVAILABLE or STAGING_REQUIRED when no path resolves",
+      "inputs": "Explicit configured path or executable name",
+      "outputs": "Resolved local path"
+    }
   ]
 }
