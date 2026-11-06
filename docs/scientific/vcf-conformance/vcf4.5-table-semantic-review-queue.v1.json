@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_PHASE_SET_GVCF_AND_BASE_MODIFICATION_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_SEVEN_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,14 +26,15 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 39,
+    "open_review_questions": 38,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 38,
+    "full_clause_level_version_reconciliations_pending": 37,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
-    "gvcf_reference_block_version_deltas_reconciled": 1
+    "gvcf_reference_block_version_deltas_reconciled": 1,
+    "character_encoding_version_delta_reconciled": 1
   },
   "tables": [
     {
@@ -64,9 +65,7 @@
         "VCF-REQ-000120",
         "VCF-REQ-000121"
       ],
-      "open_questions": [
-        "Compare the eight percent-encoding mappings and normative control/line-ending rules against the 4.3 and 4.4 sources; verify whether any prior-version encoding rules exist outside a dedicated section. Preserve exact uppercase hex and delimiter exceptions."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
       "review_notes": "Eight escape mappings reconciled to preceding UTF-8, BOM, control-character, delimiter and uppercase percent-encoding prose; each mapping atomized separately.",
@@ -80,7 +79,7 @@
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_CHARACTER_ENCODING_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -112,7 +111,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:73-93"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-character-encoding-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.2",
