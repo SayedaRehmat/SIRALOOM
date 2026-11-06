@@ -3319,3 +3319,32 @@ def test_strict_validation_accepts_breakend_mates_without_optional_svtype(tmp_pa
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 2
+
+
+def test_vcf45_reserved_lec_requires_laa_even_without_header_definition(tmp_path: Path):
+    path = tmp_path / "vcf45-lec-without-laa.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LEC\\t0/1:5,6\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
+
+
+def test_vcf45_reserved_lec_accepts_laa_scoped_cardinality(tmp_path: Path):
+    path = tmp_path / "vcf45-lec-with-laa.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:LEC\\t0/1:2:5\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
