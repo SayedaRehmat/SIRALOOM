@@ -126,3 +126,30 @@ def test_worker_validates_persisted_vcf_and_records_site_only_eligibility(
         assert artifact.metadata_json["workflow_eligibility"] == "SITE_LEVEL_ONLY"
         assert case.status == "ARTIFACT_UPLOADED"
         assert audit is not None
+
+
+def test_worker_tool_unavailability_does_not_classify_vcf_as_invalid(
+    validation_runtime, monkeypatch
+):
+    from backend.app.domain.ingestion import VCFValidationUnavailable
+
+    def unavailable(_path):
+        raise VCFValidationUnavailable("temporary BCFtools outage")
+
+    monkeypatch.setattr(validation, "validate_vcf", unavailable)
+
+    with pytest.raises(VCFValidationUnavailable, match="temporary BCFtools outage"):
+        validation.validate_persisted_artifact(validation_runtime["artifact_id"])
+
+    with validation_runtime["factory"]() as db:
+        artifact = db.get(Artifact, validation_runtime["artifact_id"])
+        assert artifact.validation_status == "PENDING"
+        assert artifact.metadata_json["ingestion"]["file_kind"] == "VCF"
+        assert db.scalar(
+            select(AuditEvent).where(
+                AuditEvent.case_id == validation_runtime["case_id"],
+                AuditEvent.event_type.in_(
+                    ("ARTIFACT_VALIDATION_COMPLETED", "ARTIFACT_VALIDATION_FAILED")
+                ),
+            )
+        ) is None
