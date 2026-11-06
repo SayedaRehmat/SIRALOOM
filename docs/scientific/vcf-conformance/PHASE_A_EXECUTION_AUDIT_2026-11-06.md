@@ -339,3 +339,46 @@ The xanthosine alias discrepancy is traced to upstream VCFv4.5 RC2 commit `44aed
 - Laboratory qualification: not started.
 
 The current PR remains draft and unmerged. CI and Vercel results must be checked against the final PR head; prior successful CI runs on older commits do not qualify the current head.
+
+
+## 13. Reserved INFO/FORMAT field mapping complete at author level
+
+### 13.1 VCF5.3 — reserved INFO
+
+`vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json` now maps all 21 reserved INFO field IDs across VCFv4.1–4.5, including:
+- exact source line and original description for each version;
+- prose enumeration versus Number/Type table representation;
+- Number/Type only where the source actually specifies them;
+- field interpretation and VCFv4.5 semantic note;
+- mechanical additions, removals and description changes.
+
+Findings: AD/ADF/ADR enter the reserved INFO inventory in VCFv4.3; END's description changes to deprecated/backward-compatibility in VCFv4.5. The 21 INFO rows are author-mapped. SV-specific INFO definitions outside table VCF5.3 (e.g. SVLEN, SVTYPE, confidence intervals, CN, MATEID/PARID/EVENT/SVCLAIM) remain separate from this 21-row table and are handled in the SV semantic crosswalk.
+
+### 13.2 VCF5.4 — reserved FORMAT
+
+`vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json` maps the union of 64 reserved FORMAT field IDs across VCFv4.1–4.5:
+- VCFv4.1/4.2: 13 prose-defined fields, including GLE;
+- VCFv4.3: 16 table-defined fields; AD/ADF/ADR/PP added and GLE removed;
+- VCFv4.4: 19 table-defined fields; PSL/PSO/PSQ added;
+- VCFv4.5: 63 table-defined fields; 44 new rows (LEN, local-allele family and base-modification families/aliases).
+
+All 63 VCFv4.5 rows have author row/context review. The union count is 64 because GLE remains part of the historical version matrix but is removed from VCFv4.3 onward.
+
+### 13.3 Table version-delta gate
+
+The table adjudication queue now records:
+- 44/44 VCFv4.5 table contexts reconciled at author level;
+- 44/44 preliminary five-version applicability matrices;
+- 44/44 table version-delta assessments reconciled at author level;
+- 21/21 INFO row IDs author-mapped;
+- 64/64 FORMAT union IDs author-mapped (63/63 in VCFv4.5);
+- 0 independent reviews completed;
+- 1 open source-level blocker: VCFv4.5 xanthosine alias capitalization.
+
+**This completes the author-level VCFv4.5 table version-delta workstream, not the entire VCF stage.** Whole-source atomic requirement decomposition, exact clause-to-ledger linkage, independent review, VCFv4.0 source capture, implementation mapping, executable conformance and laboratory qualification remain separate gates.
+
+### 13.4 Final current limitation
+
+The xanthosine alias case discrepancy remains unresolved upstream. It is not safe to choose one spelling or silently accept both. The project must obtain authoritative maintainer clarification or a specification correction before implementing those aliases.
+
+The GitHub content connector still did not permit a full independent re-read of the large atomic requirement ledger blob in this session. Row and version artifacts were validated structurally from their retrievable contents; complete ledger-to-source hash re-computation remains an explicit independent verification task.
