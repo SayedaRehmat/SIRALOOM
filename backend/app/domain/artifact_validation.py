@@ -72,12 +72,23 @@ def _refresh_case_intake(db: Session, case: Case) -> None:
             Artifact.artifact_type == ArtifactType.VCF,
         )
     ).all()
-    if any(status == "PENDING" for status, _metadata in rows):
+    has_valid_vcf = any(status == "VALID" for status, _metadata in rows)
+    has_pending_vcf = any(status == "PENDING" for status, _metadata in rows)
+    if case.status in {
+        "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+        "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+    } and has_valid_vcf:
+        case.status = "READY_FOR_ANALYSIS"
+        return
+    if case.status in {
+        "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+        "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+    } and has_pending_vcf:
         case.status = "VALIDATING"
         return
     case.status = case_status_after_vcf_upload(
         case.status,
-        has_valid_vcf=any(status == "VALID" for status, _metadata in rows),
+        has_valid_vcf=has_valid_vcf,
         has_vcf=bool(rows),
         has_site_only_vcf=any(
             status == "VALID_SITE_ONLY"
