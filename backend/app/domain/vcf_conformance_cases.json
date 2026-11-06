@@ -1838,6 +1838,62 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM_P\t."
         ]
+      },
+      {
+        "id": "number_m_partial_phasing_mixed_separators_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M follows each allele's phase indicator and aggregates repeated unphased allele values",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0|1/0:0.1,0.2"
+        ]
+      },
+      {
+        "id": "number_m_partial_phasing_mixed_separators_cardinality_invalid",
+        "category": "base_modification_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=M does not duplicate the first unphased allele value when the same allele recurs",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0|1/0:0.1,0.2,0.3"
+        ]
+      },
+      {
+        "id": "number_m_partial_phasing_unphased_then_phased_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M preserves a phased copy after an earlier unphased occurrence of the same allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0/1|0:0.1,0.2,0.3"
+        ]
+      },
+      {
+        "id": "number_m_implicit_prefix_unphased_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 permits an explicit leading phase indicator; an unphased prefix aggregates each distinct unphased allele once",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t/0/1:0.1,0.2"
+        ]
+      },
+      {
+        "id": "number_p_haploid_diploid_missing_triploid_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=P cardinality tracks haploid, diploid missing and triploid GT allele counts independently per sample",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHAPLOID\tDIPLOID_MISSING\tTRIPLOID",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM_P\t0:10\t./.:10,20\t0/1/1:1,2,3"
+        ]
       }
     ],
     "VCFv4.0": [
@@ -2793,10 +2849,15 @@
             "local_pl_projection_uses_laa_order_and_colex_genotype_order",
             "local_reference_only_laa_missing_values_cardinality_valid",
             "multiallelic_genotype_valid",
+            "number_m_implicit_prefix_unphased_valid",
             "number_m_missing_and_symbolic_alleles_contribute_no_bases",
             "number_m_n_counts_both_strands",
+            "number_m_partial_phasing_mixed_separators_cardinality_invalid",
+            "number_m_partial_phasing_mixed_separators_valid",
+            "number_m_partial_phasing_unphased_then_phased_valid",
             "number_m_phased_duplicate_alleles_remain_distinct",
             "number_m_unphased_duplicate_alleles_aggregate",
+            "number_p_haploid_diploid_missing_triploid_valid",
             "number_p_missing_without_gt_valid",
             "number_p_populated_without_gt_rejected",
             "number_p_triploid_cardinality_valid",
