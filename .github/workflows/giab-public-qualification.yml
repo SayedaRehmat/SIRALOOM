@@ -57,9 +57,15 @@ jobs:
           cache-environment: true
           init-shell: bash
 
-      - name: Install SIRALOOM backend
+      - name: Install SIRALOOM backend and focused test runner
         shell: bash -l {0}
-        run: pip install -e .
+        run: pip install -e . pytest
+
+      - name: Run VCF validation and scale-harness regression tests
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          pytest -q tests/test_vcf_validation.py tests/test_vcf_scale_benchmark.py
 
       - name: Acquire NIST assets and verify official MD5 plus local SHA-256
         shell: bash -l {0}
