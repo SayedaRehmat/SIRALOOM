@@ -104,6 +104,22 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     return None
 
 
+def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the historical VCFv4.0 reserved genotype-field definitions."""
+    reserved = {
+        "GT": ("1", "String"),
+        "DP": ("1", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("3", "Float"),
+        "GQ": ("1", "Integer"),
+        "HQ": ("2", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
+
+
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
@@ -842,6 +858,21 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
     ):
         raise StrictVCFValidationError(
             f"FORMAT/GT must declare Number=1 and Type=String at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    reserved_vcf40_definition = (
+        _reserved_vcf40_format_definition(identifier)
+        if fileformat == "VCFv4.0" and kind == "FORMAT"
+        else None
+    )
+    if reserved_vcf40_definition is not None and (
+        number != reserved_vcf40_definition["Number"]
+        or parsed["Type"] != reserved_vcf40_definition["Type"]
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
+            f"Number={reserved_vcf40_definition['Number']} and "
+            f"Type={reserved_vcf40_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     reserved_vcf45_definition = None
@@ -2522,9 +2553,21 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 )
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.0":
+                        definition = _reserved_vcf40_format_definition(key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
+                        if (
+                            fileformat == "VCFv4.0"
+                            and key == "GL"
+                            and value not in {None, "."}
+                            and len(alts) != 1
+                        ):
+                            raise StrictVCFValidationError(
+                                f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
                         if (
                             definition["Number"] == "P"
                             and gt_index is None
