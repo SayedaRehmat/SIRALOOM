@@ -26,13 +26,14 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 40,
+    "open_review_questions": 39,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 39,
+    "full_clause_level_version_reconciliations_pending": 38,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
-    "base_modification_version_deltas_reconciled": 2
+    "base_modification_version_deltas_reconciled": 2,
+    "gvcf_reference_block_version_deltas_reconciled": 1
   },
   "tables": [
     {
@@ -3419,9 +3420,7 @@
         "VCF-REQ-000127",
         "VCF-REQ-000129"
       ],
-      "open_questions": [
-        "Compare 4.3/4.4 INFO END reference blocks with 4.5 FORMAT LEN sample-specific blocks, <*> and NON_REF alias, LAA constraints, missing GT/FORMAT restrictions and base-modification propagation. Keep gVCF producer conventions separate from core VCF normative requirements."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
       "review_notes": "Reviewed against <*> reference-block, LAA, LEN/END compatibility and base-modification coverage prose. gVCF convention is distinguished from core VCF grammar.",
@@ -3435,7 +3434,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_GVCF_REFERENCE_BLOCK_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -3485,7 +3484,8 @@
           "status": "PRESENT_FORMAT_LEN_AND_STAR_ALLELE",
           "locator": "VCFv4.5.tex:1846-1878"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json"
     }
   ],
   "review_controls": {
