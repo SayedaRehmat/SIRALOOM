@@ -229,6 +229,28 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
         ]
+      },
+      {
+        "id": "v41_spanning_deletion_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The spanning-deletion '*' allele was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v41_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -437,6 +459,28 @@
           "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
+        ]
+      },
+      {
+        "id": "v42_spanning_deletion_star_valid",
+        "category": "version_specific_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.2 introduced the spanning-deletion '*' ALT allele",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v42_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
         ]
       }
     ],
@@ -704,6 +748,17 @@
           "##fileformat=VCFv4.3",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
+        ]
+      },
+      {
+        "id": "v43_unspecified_star_valid",
+        "category": "version_specific_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.3 introduced the unspecified allele '<*>' for gVCF reference-block representation",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
         ]
       }
     ],
@@ -2117,6 +2172,34 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tDP\t10"
         ]
+      },
+      {
+        "id": "v40_spanning_deletion_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-001"
+        ],
+        "spec_basis": "The spanning-deletion '*' allele was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v40_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-002"
+        ],
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
+        ]
       }
     ]
   },
@@ -2134,9 +2217,11 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "legacy_minimal_snp_valid",
             "legacy_invalid_pos_rejected",
-            "legacy_invalid_ref_rejected"
+            "legacy_invalid_ref_rejected",
+            "legacy_minimal_snp_valid",
+            "v40_spanning_deletion_star_rejected",
+            "v40_unspecified_star_rejected"
           ]
         },
         {
@@ -2205,7 +2290,9 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v41_spanning_deletion_star_rejected",
+            "v41_unspecified_star_rejected"
           ]
         },
         {
@@ -2289,7 +2376,9 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v42_spanning_deletion_star_valid",
+            "v42_unspecified_star_rejected"
           ]
         },
         {
@@ -2374,7 +2463,8 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v43_unspecified_star_valid"
           ]
         },
         {
