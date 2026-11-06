@@ -459,3 +459,14 @@ This confirms that the 34 records must **not** be described as 34 net-new unique
 The last PR-triggered workflow retrieved in this continuation was run `42198569374`, associated with commit `9b7523fe5869e1fa6ed8366423a9721c4f1143b2`. Its backend, frontend and PostgreSQL-integration jobs are now all **cancelled**; no failed step was reported, but this is not a passing run. No workflow run was returned for the later documentation-only head `a58c1392375c5d78f1a78098553ed0085540fb8f`.
 
 The research branch comparison against `main` reports 276 commits ahead and 3 behind at the time of this check. No merge or rebase was performed. All changes in this continuation are confined to `docs/scientific/vcf-conformance/`; no application code or CI configuration was modified. CI status for the latest head remains unverified.
+
+
+### 14.9 Additional VCFv4.5 GT/GL semantic review
+
+Created `VCF45_GT_GL_SEMANTIC_REVIEW_2026-11-06.md`, reviewing source lines 498–516 and 612–683. It decomposes FORMAT ordering, duplicate-key prohibition, GT-first, no-required-key semantics, missing values, trailing-field omission, GT phasing indicators, allele values, ploidy, GL/GP/PL/PP semantics and the general-ploidy genotype-ordering algorithm. It also identifies a candidate-force correction: VCFv4.5 says GT should remain present when specified in FORMAT, so the trailing-GT exception must not be promoted from SHOULD to MUST.
+
+The review maps the existing FMT-GT candidate IDs and keeps examples distinct from normative prose. The local-allele GT example inconsistency remains quarantined. No new canonical requirement IDs were allocated in this GT/GL review, avoiding another overlapping ID batch.
+
+The commit for this GT/GL review is `9ac60ba09abb779bd997f9a16254ffdf135b7a34`. GitHub Actions run `42199179587` was returned as pending for that commit at the time of inspection. It has not been observed passing; no CI pass is claimed.
+
+At the latest branch comparison, the research branch is 280 commits ahead and 3 behind `main`. No merge or rebase was performed.
