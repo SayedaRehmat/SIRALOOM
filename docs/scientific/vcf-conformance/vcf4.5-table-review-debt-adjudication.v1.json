@@ -291,7 +291,7 @@
         {
           "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
           "severity": "BLOCKING_SPECIFICATION_AMBIGUITY",
-          "status": "OPEN_NEEDS_SOURCE_HISTORY_OR_MAINTAINER_CLARIFICATION",
+          "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
           "table_row_locators": [
             "VCFv4.5.tex:586-588"
           ],
@@ -312,7 +312,28 @@
             "ADMxaoN"
           ],
           "consequence": "VCF identifiers are case-sensitive; implementation must not guess which spelling is canonical or silently accept both as equivalent without a documented compatibility policy.",
-          "required_resolution": "Inspect exact upstream commit history for the affected lines and seek maintainer clarification if history does not establish intent. Record resolution and source evidence before freezing requirements."
+          "required_resolution": "Inspect exact upstream commit history for the affected lines and seek maintainer clarification if history does not establish intent. Record resolution and source evidence before freezing requirements.",
+          "history_investigation": {
+            "status": "INTRODUCED_IN_SOURCE_HISTORY; NO_LATER_CORRECTION_FOUND_IN_RETRIEVED_FILE_HISTORY",
+            "introducing_commit": "44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+            "introducing_commit_date": "2024-06-06T06:50:17Z",
+            "introducing_commit_message": "Updated VCFv4.5 to RC2 (#770)",
+            "finding": "The same commit patch adds MXaoN/DPMXaoN/ADMXaoN in the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN in the prose alias lists. The inconsistency is therefore present at introduction, not introduced by SIRALOOM extraction.",
+            "later_history_checked": [
+              "7c2541b1f697caf3c1b2b5073eebadf59ae9d9eb",
+              "1ce56b0ec57e414f9f99f4a5fe1f2e75caf46b84",
+              "960c5fe8cc6e3715f1321fb4de82f4d3824d77f6",
+              "eeff0c6b494ec03e935094a02129fc52b28b97f8",
+              "c101c797106d8a1006b9b06f75e8bcc6062cf81e",
+              "e821e4f02ae25c2175f9a366edca1322d6a2de72"
+            ],
+            "issue_and_pr_search": "GitHub issue and pull-request searches scoped to samtools/hts-specs for MxaoN/MXaoN returned zero results at audit time.",
+            "evidence_urls": [
+              "https://github.com/samtools/hts-specs/commit/44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+              "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex"
+            ],
+            "interpretation": "The source history confirms an upstream specification inconsistency but does not establish which capitalization is canonical. Do not normalize or silently accept both spellings. Maintainer clarification or an authoritative correction is still required."
+          }
         }
       ]
     },
