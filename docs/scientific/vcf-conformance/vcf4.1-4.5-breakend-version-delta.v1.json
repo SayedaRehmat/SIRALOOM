@@ -1,0 +1,155 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-breakend-version-delta",
+  "status": "AUTHOR_SECTION_LEVEL_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "Breakend replacement syntax, mate/partner relationships, inserted sequence/contig examples, telomeres, event/uncertainty and single-breakend examples corresponding to VCFv4.5 tables VCF5.25-VCF5.41.",
+  "sections": {
+    "VCFv4_1": "VCFv4.1.tex:524-816",
+    "VCFv4_2": "VCFv4.2.tex:541-833",
+    "VCFv4_3": "VCFv4.3.tex:925-1246",
+    "VCFv4_4": "VCFv4.4.tex:1234-1555",
+    "VCFv4_5": "VCFv4.5.tex:1394-1729"
+  },
+  "transitions": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_MATERIAL_BREAKEND_SECTION_CHANGE_FOUND",
+      "finding": "The normalized non-empty breakend section lines are identical in the reviewed section ranges. The separate ALT '*' allele addition in VCFv4.2 is recorded in the genotype/SV crosswalk and is not a breakend syntax change.",
+      "evidence": [
+        "VCFv4.1.tex:524-816",
+        "VCFv4.2.tex:541-833"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "SECTION_REORGANIZED_AND_EXPANDED_WITH_NO_NEW_BREAKEND_SYNTAX_RULE_CONFIRMED_IN_THIS_PASS",
+      "finding": "The source prose is restructured and split into smaller source lines/paragraphs; the core two-breakend/one-record-per-breakend replacement syntax, four bracket orientations, mate coordinate and partner/telomere concepts are retained. This is a section-level finding; exact line-by-line requirement comparison remains part of the full source audit.",
+      "evidence": [
+        "VCFv4.2.tex:541-833",
+        "VCFv4.3.tex:925-1246"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "BND_SYMBOLIC_ALT_RECORDS_DISALLOWED_SVTYPE_DEPRECATED_BREAKEND_REPLACEMENT_SYNTAX_RETAINED",
+      "finding": "VCFv4.4 change log disallows BND ALT records and says to use breakpoint notation; this does not disallow the breakend replacement ALT syntax itself. SVTYPE is deprecated, so the earlier SVTYPE=BND tag is no longer used in the updated examples. Breakend replacement notation, mate IDs and partner semantics remain.",
+      "evidence": [
+        "VCFv4.4.tex:1234-1555",
+        "VCFv4.4.tex:2583-2590"
+      ],
+      "controls": [
+        "Do not interpret 'Disallowed BND ALT records' as prohibiting breakend replacement strings; the note directs to breakpoint notation.",
+        "Distinguish the symbolic ALT allele <BND> from breakend replacement notation using bracketed mate coordinates."
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "BREAKEND_SYNTAX_RETAINED_EXAMPLES_UPDATED_FOR_END_SVLEN_SVCLAIM_CHANGES",
+      "finding": "The breakend replacement syntax, mate/partner distinction, contig insertion, multiple mates, telomeres, EVENT and single-breakend concepts are retained. The VCFv4.5 examples reflect END deprecation/computed semantics, positive SVLEN/INV support and SVCLAIM semantics; the breakend section itself has no new bracket-orientation rule identified in this comparison.",
+      "evidence": [
+        "VCFv4.4.tex:1234-1555",
+        "VCFv4.5.tex:1394-1729",
+        "VCFv4.5.tex:867-894",
+        "VCFv4.5.tex:1024-1066"
+      ]
+    }
+  ],
+  "contextual_rules_reconciled_from_vcf45": {
+    "anchors": [
+      {
+        "id": "BREAKEND-SYNTAX",
+        "locator": "VCFv4.5.tex:1394-1465",
+        "rules": [
+          "one VCF record for each breakend of a novel adjacency",
+          "REF is the sequence beginning at POS",
+          "ALT replacement contains replacement sequence, mate coordinate and orientation",
+          "four bracket arrangements encode orientation"
+        ]
+      },
+      {
+        "id": "BREAKEND-CONTIG-AND-MULTIMATE",
+        "locator": "VCFv4.5.tex:1468-1537",
+        "rules": [
+          "inserted sequence may be embedded in ALT",
+          "large inserted sequence may use assembly contig",
+          "complete contig insertion shorthand is recommended",
+          "partial contig intervals and circular adjacency are represented",
+          "multiple mates are alternate alleles"
+        ]
+      },
+      {
+        "id": "BREAKEND-PARTNER-TELOMERE",
+        "locator": "VCFv4.5.tex:1539-1585",
+        "rules": [
+          "partner is distinct from mate",
+          "each breakend has one partner",
+          "PARID can explicitly identify partner",
+          "virtual telomeric partners are at coordinates 0 and N+1"
+        ]
+      },
+      {
+        "id": "BREAKEND-EVENT-UNCERTAINTY",
+        "locator": "VCFv4.5.tex:1587-1680",
+        "rules": [
+          "EVENT groups related adjacencies",
+          "symbolic inversion shorthand and explicit breakends are alternatives",
+          "microhomology uncertainty uses leftmost placement and CIPOS",
+          "MATEID and PARID preserve different relations"
+        ]
+      },
+      {
+        "id": "SINGLE-BREAKENDS",
+        "locator": "VCFv4.5.tex:1682-1729",
+        "rules": [
+          "single breakend has no mate",
+          "unobserved partner may be represented",
+          "examples of copy-number contexts and partial insertions are illustrative, not universal obligations"
+        ]
+      }
+    ],
+    "table_groups": [
+      {
+        "tables": "VCF5.25-VCF5.27",
+        "context": "Basic breakend syntax and inserted sequence",
+        "locator": "VCFv4.5.tex:1394-1465"
+      },
+      {
+        "tables": "VCF5.28-VCF5.32",
+        "context": "Contig insertion and multiple mates",
+        "locator": "VCFv4.5.tex:1468-1537"
+      },
+      {
+        "tables": "VCF5.33-VCF5.34",
+        "context": "Explicit partners and telomeres",
+        "locator": "VCFv4.5.tex:1539-1585"
+      },
+      {
+        "tables": "VCF5.35-VCF5.38",
+        "context": "Events, inversion and uncertainty",
+        "locator": "VCFv4.5.tex:1587-1680"
+      },
+      {
+        "tables": "VCF5.39-VCF5.41",
+        "context": "Single breakends",
+        "locator": "VCFv4.5.tex:1682-1729"
+      }
+    ]
+  },
+  "related_deltas": {
+    "svtype": "VCFv4.4 deprecates SVTYPE; VCFv4.5 explains redundancy with ALT. See VCFv4.4.tex:2583-2590 and VCFv4.5.tex:871-877.",
+    "end_svlen": "VCFv4.5 deprecates END, defines computed compatibility semantics and updates examples to SVLEN/FORMAT LEN. See VCFv4.5.tex:867-894.",
+    "svclaim": "VCFv4.4 introduces SVCLAIM and claim semantics; VCFv4.5 retains. See VCFv4.4.tex:853-860; 4.5.tex:1024-1066."
+  },
+  "remaining": [
+    "Independent reviewer must verify the distinction between symbolic <BND> ALT and breakend replacement notation.",
+    "Complete row-by-row SV INFO/FORMAT version reconciliation in the reserved-row workstream; this breakend example delta does not close VCF5.3/VCF5.4.",
+    "Map every breakend syntax/relationship clause to atomic requirement IDs and positive/negative tests.",
+    "No implementation or test execution is claimed."
+  ]
+}
