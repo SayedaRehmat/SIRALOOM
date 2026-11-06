@@ -1,0 +1,336 @@
+name: GIAB HG001 DeepVariant 30x caller concordance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: giab-hg001-deepvariant-grch37
+  cancel-in-progress: false
+
+jobs:
+  deepvariant-30x-grch37:
+    name: DeepVariant 1.10.0 — HG001 30x — GRCh37
+    # This workload is deliberately isolated from ordinary GitHub-hosted CI.
+    # Register a Linux x64 self-hosted runner with these labels and >=256 GiB RAM,
+    # >=32 CPU cores, and >=500 GB free scratch before dispatching.
+    runs-on: [self-hosted, linux, x64, giab-highmem]
+    timeout-minutes: 1440
+    env:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: sqlite:///./giab-caller-benchmark.db
+      REDIS_URL: redis://localhost:6379/0
+      GENEBE_ENABLED: "false"
+      GNOMAD_ENABLED: "false"
+      FIREBASE_AUTH_REQUIRED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preflight runner resources and tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, shutil
+          mem_kib = 0
+          with open("/proc/meminfo", encoding="utf-8") as handle:
+              for line in handle:
+                  if line.startswith("MemTotal:"):
+                      mem_kib = int(line.split()[1])
+                      break
+          free_bytes = shutil.disk_usage(os.environ["RUNNER_TEMP"]).free
+          cpus = os.cpu_count() or 0
+          if mem_kib < 256 * 1024 * 1024:
+              raise SystemExit(f"Runner requires >=256 GiB RAM; found {mem_kib / 1024 / 1024:.1f} GiB")
+          if cpus < 32:
+              raise SystemExit(f"Runner requires >=32 CPU cores; found {cpus}")
+          if free_bytes < 500 * 1024**3:
+              raise SystemExit(f"Runner requires >=500 GB free scratch; found {free_bytes / 1024**3:.1f} GB")
+          for tool in ("docker", "curl", "md5sum"):
+              if not shutil.which(tool):
+                  raise SystemExit(f"Required executable missing: {tool}")
+          print(f"Runner preflight passed: {cpus} CPUs, {mem_kib / 1024 / 1024:.1f} GiB RAM, {free_bytes / 1024**3:.1f} GB free")
+          PY
+          docker info >/dev/null
+      - name: Set up pinned bioinformatics environment
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-file: configs/bioinformatics/bcftools-environment.yml
+          environment-name: bcftools
+          cache-environment: true
+          init-shell: bash
+      - name: Install pinned samtools for BAM verification and reference indexing
+        shell: bash -l {0}
+        run: micromamba install --yes --name bcftools samtools=1.23.1
+      - name: Install SIRALOOM backend
+        shell: bash -l {0}
+        run: pip install -e .
+      - name: Acquire checksum-pinned HG001 30x BAM and BAI
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          mkdir -p "$RUN_DIR/input" "$RUN_DIR/output" "$RUN_DIR/evidence"
+          python - "$RUN_DIR" <<'PY'
+          import hashlib, json, pathlib, sys, urllib.request
+          root = pathlib.Path(sys.argv[1])
+          manifest = json.loads(pathlib.Path("benchmarks/giab/hg001_illumina30x_grch37.v1.json").read_text())
+          for key in ("bam", "bai"):
+              spec = manifest["assets"][key]
+              dest = root / "input" / ("HG001.bam" if key == "bam" else "HG001.bam.bai")
+              digest = hashlib.md5(usedforsecurity=False)
+              request = urllib.request.Request(spec["url"], headers={"User-Agent": "SIRALOOM-GIAB-caller-benchmark/1.0"})
+              with urllib.request.urlopen(request, timeout=180) as response, dest.open("xb") as out:
+                  if response.status != 200:
+                      raise SystemExit(f"Unexpected HTTP status for {key}: {response.status}")
+                  while chunk := response.read(1024 * 1024):
+                      out.write(chunk)
+                      digest.update(chunk)
+              observed = digest.hexdigest()
+              if observed != spec["official_md5"]:
+                  dest.unlink(missing_ok=True)
+                  raise SystemExit(f"{key} official MD5 mismatch: expected {spec['official_md5']}, observed {observed}")
+              print(json.dumps({"asset": key, "size_bytes": dest.stat().st_size, "official_md5_verified": True, "md5": observed}))
+          PY
+      - name: Acquire pinned GRCh37 truth, confident BED and hs37d5 reference
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          python scripts/validation/acquire_giab_public_assets.py \
+            --manifest benchmarks/giab/public_assets.v1.json \
+            --build GRCh37 \
+            --output-dir "$RUN_DIR/input/truth-assets" \
+            --provenance-out "$RUN_DIR/evidence/asset-provenance.json"
+      - name: Verify BAM integrity, read-group sample, and exact reference contig geometry
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          BAM="$RUN_DIR/input/HG001.bam"
+          samtools quickcheck -v "$BAM"
+          samtools view -H "$BAM" > "$RUN_DIR/evidence/bam-header.sam"
+          python - "$RUN_DIR/evidence/bam-header.sam" "$RUN_DIR/input/truth-assets/GRCh37_hs37d5.bgz.fai" <<'PY'
+          import sys
+          from pathlib import Path
+          header = Path(sys.argv[1]).read_text().splitlines()
+          fai = Path(sys.argv[2])
+          bam_contigs = {}
+          samples = set()
+          for line in header:
+              fields = line.split("\t")
+              if fields[0] == "@SQ":
+                  values = dict(item.split(":", 1) for item in fields[1:] if ":" in item)
+                  bam_contigs[values["SN"]] = int(values["LN"])
+              elif fields[0] == "@RG":
+                  values = dict(item.split(":", 1) for item in fields[1:] if ":" in item)
+                  if values.get("SM"):
+                      samples.add(values["SM"])
+          ref_contigs = {}
+          for line in fai.read_text().splitlines():
+              name, length, *_ = line.split("\t")
+              ref_contigs[name] = int(length)
+          if not bam_contigs or bam_contigs != ref_contigs:
+              missing = sorted(set(bam_contigs) ^ set(ref_contigs))
+              mismatched = sorted(k for k in set(bam_contigs) & set(ref_contigs) if bam_contigs[k] != ref_contigs[k])
+              raise SystemExit(f"BAM/reference contig geometry mismatch; differing names={missing[:10]}, lengths={mismatched[:10]}")
+          manifest = __import__("json").loads(Path("benchmarks/giab/hg001_illumina30x_grch37.v1.json").read_text())
+          expected_samples = {manifest["sample"], manifest["sample_alias"]}
+          if len(samples) != 1 or not samples.issubset(expected_samples):
+              raise SystemExit(
+                  f"BAM read-group sample must be one declared HG001 alias {sorted(expected_samples)}; "
+                  f"observed {sorted(samples)}"
+              )
+          print(
+              f"Verified {len(bam_contigs)} BAM/reference contigs and declared HG001 read-group sample alias"
+          )
+          PY
+      - name: Prepare uncompressed reference for DeepVariant
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          bgzip -dc "$RUN_DIR/input/truth-assets/GRCh37_hs37d5.bgz" > "$RUN_DIR/input/hs37d5.fa"
+          samtools faidx "$RUN_DIR/input/hs37d5.fa"
+          samtools dict "$RUN_DIR/input/hs37d5.fa" -o "$RUN_DIR/input/hs37d5.dict"
+      - name: Verify BAM reference sequence MD5 values against the exact caller FASTA
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          samtools view -H "$RUN_DIR/input/HG001.bam" > "$RUN_DIR/evidence/bam-header.sam"
+          python - "$RUN_DIR/evidence/bam-header.sam" "$RUN_DIR/input/hs37d5.dict" <<'PY'
+          import sys
+          from pathlib import Path
+
+          def sequence_dictionary(path):
+              result = {}
+              for line in Path(path).read_text().splitlines():
+                  if not line.startswith("@SQ\\t"):
+                      continue
+                  fields = dict(item.split(":", 1) for item in line.split("\\t")[1:] if ":" in item)
+                  name = fields.get("SN")
+                  length = fields.get("LN")
+                  md5 = fields.get("M5")
+                  if not name or not length or not md5:
+                      raise SystemExit(f"Reference dictionary entry lacks SN/LN/M5: {line[:120]}")
+                  result[name] = (int(length), md5.lower())
+              if not result:
+                  raise SystemExit(f"No complete @SQ sequence dictionary found in {path}")
+              return result
+
+          bam = sequence_dictionary(sys.argv[1])
+          fasta = sequence_dictionary(sys.argv[2])
+          if bam != fasta:
+              missing = sorted(set(bam) ^ set(fasta))
+              mismatched = sorted(
+                  name for name in set(bam) & set(fasta) if bam[name] != fasta[name]
+              )
+              raise SystemExit(
+                  f"BAM/reference sequence identity mismatch; differing names={missing[:10]}, "
+                  f"length/MD5 mismatches={mismatched[:10]}"
+              )
+          print(f"Verified exact BAM/FASTA sequence dictionary identity for {len(bam)} contigs")
+          PY
+      - name: Run DeepVariant 1.10.0 WGS caller from the independently generated BAM
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          docker pull google/deepvariant:1.10.0
+          docker run --rm \
+            -v "$RUN_DIR/input:/input" \
+            -v "$RUN_DIR/output:/output" \
+            google/deepvariant:1.10.0 \
+            /opt/deepvariant/bin/run_deepvariant \
+            --model_type=WGS \
+            --ref=/input/hs37d5.fa \
+            --reads=/input/HG001.bam \
+            --output_vcf=/output/HG001.deepvariant.vcf.gz \
+            --output_gvcf=/output/HG001.deepvariant.g.vcf.gz \
+            --num_shards=32 \
+            --vcf_stats_report=true \
+            --logging_dir=/output/logs
+          bcftools index --tbi -f "$RUN_DIR/output/HG001.deepvariant.vcf.gz"
+          bcftools index --tbi -f "$RUN_DIR/output/HG001.deepvariant.g.vcf.gz"
+          bcftools query -l "$RUN_DIR/output/HG001.deepvariant.vcf.gz" > "$RUN_DIR/evidence/query-samples.txt"
+          test "$(wc -l < "$RUN_DIR/evidence/query-samples.txt")" -eq 1
+      - name: Build private sample-column mapping without exposing identifiers in command arguments
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          TRUTH_VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/evidence/asset-provenance.json")"
+          python - "$TRUTH_VCF" "$RUN_DIR/output/HG001.deepvariant.vcf.gz" "$RUN_DIR/evidence/sample-mapping.json" <<'PY'
+          import gzip, json, sys
+          from pathlib import Path
+          def sample(path):
+              opener = gzip.open if str(path).endswith((".gz", ".bgz")) else open
+              with opener(path, "rt", encoding="utf-8") as handle:
+                  for line in handle:
+                      if line.startswith("#CHROM"):
+                          cols = line.rstrip("\r\n").split("\t")
+                          if len(cols) != 10 or not cols[9]:
+                              raise SystemExit("Expected exactly one sample column in VCF")
+                          return cols[9]
+              raise SystemExit("VCF #CHROM header missing")
+          payload = {"schema_version": "1.0", "truth_sample_name": sample(Path(sys.argv[1])), "query_sample_name": sample(Path(sys.argv[2]))}
+          out = Path(sys.argv[3]); out.write_text(json.dumps(payload) + "\n"); out.chmod(0o600)
+          print("Verified one truth and one caller sample column; identifiers excluded from run summary")
+          PY
+      - name: Run hap.py 0.3.15 against original GIAB truth within confident BED
+        shell: bash -l {0}
+        run: |
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          TRUTH_VCF="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["truth_vcf"]["path"])' "$RUN_DIR/evidence/asset-provenance.json")"
+          BED="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["assets"]["confident_bed"]["path"])' "$RUN_DIR/evidence/asset-provenance.json")"
+          IMAGE="mgibio/hap.py:v0.3.15"
+          docker pull "$IMAGE"
+          cat > "$RUNNER_TEMP/hap.py" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          IMAGE="mgibio/hap.py:v0.3.15"
+          if [[ "${1:-}" == "--version" ]]; then
+            docker run --rm "$IMAGE" /opt/hap.py/bin/hap.py --version
+            exit
+          fi
+          mapped=()
+          for arg in "$@"; do
+            if [[ "$arg" == "$RUN_DIR"/* ]]; then
+              mapped+=("/data/${arg#"$RUN_DIR"/}")
+            else
+              mapped+=("$arg")
+            fi
+          done
+          docker run --rm -v "$RUN_DIR:/data" "$IMAGE" /opt/hap.py/bin/hap.py "${mapped[@]}"
+          SH
+          chmod 700 "$RUNNER_TEMP/hap.py"
+          mkdir -p "$RUN_DIR/evidence/concordance"
+          python scripts/validation/run_giab_concordance.py \
+            --truth-vcf "$TRUTH_VCF" \
+            --query-vcf "$RUN_DIR/output/HG001.deepvariant.vcf.gz" \
+            --confident-bed "$BED" \
+            --reference-fasta "$RUN_DIR/input/hs37d5.fa" \
+            --reference-build GRCh37 \
+            --assay WGS \
+            --caller DeepVariant \
+            --caller-version 1.10.0 \
+            --sample-mapping-file "$RUN_DIR/evidence/sample-mapping.json" \
+            --truth-set-id NIST_GIAB_HG001_NISTv4.2.1_GRCh37 \
+            --truth-set-version 4.2.1 \
+            --acceptance-policy-id RESEARCH_ONLY_NO_PREAPPROVED_THRESHOLD \
+            --output-dir "$RUN_DIR/evidence/concordance" \
+            --hap-py "$RUNNER_TEMP/hap.py" \
+            --threads 32 \
+            --timeout-seconds 86400
+      - name: Assemble caller provenance and checksums
+        if: always()
+        shell: bash
+        run: |
+          RUN_DIR="$RUNNER_TEMP/giab-hg001-deepvariant"
+          python - "$RUN_DIR" "$GITHUB_SHA" <<'PY'
+          import hashlib, json, os, platform, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root = Path(sys.argv[1]); evidence = root / "evidence"; evidence.mkdir(parents=True, exist_ok=True)
+          def digest(path):
+              h = hashlib.sha256()
+              with path.open("rb") as f:
+                  for block in iter(lambda: f.read(1024*1024), b""): h.update(block)
+              return h.hexdigest()
+          files = {}
+          for path in sorted([*root.glob("input/HG001.bam"), *root.glob("input/HG001.bam.bai"), *root.glob("output/HG001.deepvariant.vcf.gz"), *root.glob("output/HG001.deepvariant.vcf.gz.tbi"), *root.glob("output/HG001.deepvariant.g.vcf.gz"), *root.glob("output/HG001.deepvariant.g.vcf.gz.tbi"), *root.glob("input/hs37d5.fa"), *root.glob("input/hs37d5.fa.fai"), *evidence.glob("concordance/giab-concordance.json"), *evidence.glob("asset-provenance.json")]):
+              files[str(path.relative_to(root))] = {"size_bytes": path.stat().st_size, "sha256": digest(path)}
+          payload = {
+              "schema_version": "1",
+              "status": "RUN_COMPLETE_REVIEW_REQUIRED" if (evidence / "concordance/giab-concordance.json").is_file() else "RUN_INCOMPLETE_REVIEW_REQUIRED",
+              "benchmark": "GIAB HG001 Illumina 30x WGS / GRCh37 hs37d5",
+              "caller": {"name": "Google DeepVariant", "version": "1.10.0", "image": "google/deepvariant:1.10.0", "model_type": "WGS"},
+              "repository_commit": sys.argv[2],
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "platform": platform.platform(),
+              "sample_identifiers_recorded": False,
+              "input_provenance_manifest": "benchmarks/giab/hg001_illumina30x_grch37.v1.json",
+              "assets": files,
+              "qualification_boundary": "Technical caller concordance in the declared GIAB confident regions only; no clinical validation, no acceptance threshold approved, and no laboratory authorization."
+          }
+          (evidence / "caller-run-provenance.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+          print(json.dumps({"status": payload["status"], "hashed_assets": len(files)}))
+          PY
+      - name: Upload caller and concordance evidence (never upload the source BAM)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-giab-hg001-deepvariant-30x-grch37-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.vcf.gz
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.vcf.gz.tbi
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.g.vcf.gz
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/HG001.deepvariant.g.vcf.gz.tbi
+            ${{ runner.temp }}/giab-hg001-deepvariant/evidence/
+            ${{ runner.temp }}/giab-hg001-deepvariant/output/logs/
+          if-no-files-found: warn
+          retention-days: 90
