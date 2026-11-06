@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_42_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_DELTAS_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_ALL_44_ROW_VERSION_DELTAS_RECONCILED_FIELD_LEVEL_CLAUSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -34,7 +34,8 @@
     "local_allele_version_deltas_reconciled": 1,
     "small_variant_representation_version_deltas_reconciled": 15,
     "breakend_version_deltas_reconciled": 17,
-    "sample_mixture_pedigree_version_deltas_reconciled": 2
+    "sample_mixture_pedigree_version_deltas_reconciled": 2,
+    "reserved_info_format_row_delta_matrices_reconciled": 2
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -311,9 +312,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete row-by-row semantic delta adjudication for all 21 INFO rows, especially END lifecycle, SVLEN cardinality/meaning and SV-specific fields; validate every row's prose/cross-reference locator across all versions. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING",
+          "remaining_work": "Complete exact field-by-field normative prose and footnote mapping for the 21 INFO rows across VCFv4.1-4.5, especially END computed/deprecated behavior, SVLEN cardinality, SVTYPE deprecation, confidence intervals, CN and SV-specific fields; map each clause to atomic IDs.",
+          "finding": "The five-version reserved INFO/FORMAT row matrix and mechanical version changes are complete in vcf4.1-4.5-reserved-info-format-field-matrix.v1.json and vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json. This closes row inventory/version-delta comparison but not the field-by-field normative prose/footnote mapping or atomic requirement linkage."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -360,7 +361,11 @@
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:443-481"
         }
-      }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ]
     },
     {
       "table_id": "VCF5.4",
@@ -497,9 +502,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Complete row-by-row semantic delta adjudication for the 63 FORMAT rows; resolve GLE removal (4.3), PSL/PSO/PSQ addition (4.4), and the 44-row addition in 4.5. Preserve Number=LA/LR/LG/P/M as 4.5-specific where evidenced; resolve xanthosine alias case ambiguity before implementation. See vcf4.1-4.5-reserved-row-version-crosswalk.v1.json.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_RESERVED_ROW_VERSION_DELTA_RECONCILED_FIELD_CLAUSE_MAPPING_PENDING",
+          "remaining_work": "Complete exact field-by-field normative prose and footnote mapping for the 64-field union across VCFv4.1-4.5; reconcile GLE removal, Number=P, PSL/PSO/PSQ, local-allele fields, base-modification families, and gVCF LEN. Resolve VCF45-FORMAT-XAON-ALIAS-CASE-001 before implementation and map clauses to atomic IDs.",
+          "finding": "The five-version reserved INFO/FORMAT row matrix and mechanical version changes are complete in vcf4.1-4.5-reserved-info-format-field-matrix.v1.json and vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json. This closes row inventory/version-delta comparison but not the field-by-field normative prose/footnote mapping or atomic requirement linkage."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -613,7 +618,11 @@
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:517-598"
         }
-      }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ]
     },
     {
       "table_id": "VCF5.5",
