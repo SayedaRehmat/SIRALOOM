@@ -440,3 +440,15 @@ VCFv4.0 source discovery continues separately. The IGSR historical page remains 
 ### 14.6 Latest commit and qualification state
 
 Latest commit recorded for this continuation: `c4828d8746aaa06031a7d6813895f331af82d1f0` (PSQ VCFv4.4/4.5 applicability correction). The semantic review, source-discovery audit and supplemental atomic addendum are committed on the research branch. No parser/validator/normalizer code was changed; no conformance tests were run; no CI pass or laboratory qualification is claimed.
+
+
+### 14.7 Deduplication against the existing genotype candidate set
+
+A separate reconciliation artifact, `vcf4.5-cardinality-atomic-candidate-reconciliation.v1.json`, maps the 34 supplemental IDs to the existing 61-item `genotype-format-atomic-candidates.v1.json` set:
+
+- 28 supplemental records map to one or more existing candidate IDs;
+- 23 mappings are direct or direct-overlap matches;
+- 5 mappings are split, narrowed or combined candidate relationships;
+- 6 records have no matching candidate identified in that candidate artifact.
+
+This confirms that the 34 records must **not** be described as 34 net-new unique scientific requirements. They are a schema-shaped decomposition batch used to make field-specific atomic statements explicit. Canonical-ledger deduplication remains blocked until the full large ledger blob can be retrieved and compared. The addendum is intentionally separate and all records remain IN_REVIEW. The canonical 226-record ledger count is unchanged.
