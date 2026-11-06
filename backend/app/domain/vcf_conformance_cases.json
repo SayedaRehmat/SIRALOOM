@@ -2266,6 +2266,20 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:GL\t1/2:-1,-2,-3"
         ]
+      },
+      {
+        "id": "v40_breakend_replacement_notation_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-003"
+        ],
+        "spec_basis": "Historical VCFv4.0 ALT permits sequence or symbolic ID alleles; breakend replacement notation is defined in VCFv4.1",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\tBND1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ]
   },
@@ -2286,6 +2300,7 @@
             "legacy_invalid_pos_rejected",
             "legacy_invalid_ref_rejected",
             "legacy_minimal_snp_valid",
+            "v40_breakend_replacement_notation_rejected",
             "v40_spanning_deletion_star_rejected",
             "v40_unspecified_star_rejected"
           ]
