@@ -55,7 +55,7 @@ from backend.app.infrastructure.artifacts.upload_intents import (
     reserve_upload_intent,
 )
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Artifact, Case, Specimen
+from backend.app.infrastructure.db.models import Artifact, ArtifactValidationDispatch, Case, Specimen
 from backend.app.infrastructure.db.session import SessionLocal, get_db
 
 router = APIRouter(tags=["artifacts"])
@@ -168,6 +168,12 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_permission(case, principal, db, "read")
     rows = db.scalars(select(Artifact).where(Artifact.case_id == case_id).order_by(Artifact.created_at.desc())).all()
+    dispatches = db.scalars(
+        select(ArtifactValidationDispatch).where(
+            ArtifactValidationDispatch.case_id == case_id
+        )
+    ).all()
+    dispatch_by_artifact = {str(item.artifact_id): item for item in dispatches}
     for artifact in rows:
         # Apply the same ownership and report-lineage checks used by downloads
         # before exposing artifact identifiers or hashes in the case dossier.
@@ -178,7 +184,16 @@ def list_case_artifacts(case_id: UUID, db: Session = Depends(get_db), principal:
             "size_bytes": a.size_bytes, "sha256": a.sha256, "genome_build": a.genome_build,
             "specimen_id": str(a.specimen_id) if a.specimen_id else None,
             "paired_artifact_id": str(a.paired_artifact_id) if a.paired_artifact_id else None,
-            "validation_status": a.validation_status, "metadata": a.metadata_json or {},
+            "validation_status": a.validation_status,
+            "validation_dispatch_status": (
+                dispatch_by_artifact[str(a.id)].status
+                if str(a.id) in dispatch_by_artifact else None
+            ),
+            "validation_dispatch_error": (
+                dispatch_by_artifact[str(a.id)].last_error
+                if str(a.id) in dispatch_by_artifact else None
+            ),
+            "metadata": a.metadata_json or {},
             "created_at": a.created_at.isoformat(),
         }
         for a in rows
