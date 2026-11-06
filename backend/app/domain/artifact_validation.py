@@ -250,6 +250,11 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
     except VCFValidationUnavailable:
         db.rollback()
         raise
+    except OSError as exc:
+        db.rollback()
+        raise VCFValidationUnavailable(
+            f"Artifact validation storage or worker scratch I/O is temporarily unavailable: {exc}"
+        ) from exc
     except Exception:
         db.rollback()
         raise
