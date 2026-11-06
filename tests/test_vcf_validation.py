@@ -1354,18 +1354,11 @@ def test_vcf45_reserved_depth_aliases_need_no_header_definitions(tmp_path: Path)
 
 
 @pytest.mark.parametrize(
-    ("field_id", "field_type"),
-    [
-        ("MXaoN", "Float"),
-        ("MxaoN", "Float"),
-        ("DPMXaoN", "Integer"),
-        ("DPMxaoN", "Integer"),
-        ("ADMXaoN", "Integer"),
-        ("ADMxaoN", "Integer"),
-    ],
+    "field_id",
+    ["MXaoN", "MxaoN", "DPMXaoN", "DPMxaoN", "ADMXaoN", "ADMxaoN"],
 )
 def test_vcf45_ambiguous_xanthosine_aliases_are_blocked_without_header_definition(
-    tmp_path: Path, field_id: str, field_type: str
+    tmp_path: Path, field_id: str
 ):
     path = tmp_path / "ambiguous-xanthosine-alias.vcf"
     write_vcf_with_metadata(
