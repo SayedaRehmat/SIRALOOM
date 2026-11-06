@@ -34,7 +34,7 @@ def test_vcf40_rejects_post_v40_special_number_tokens(
 
 
 @pytest.mark.parametrize("kind", ["INFO", "FORMAT"])
-def test_vcf41_rejects_number_r_but_retains_a_and_g(
+def test_vcf41_rejects_number_r(
     tmp_path: Path, kind: str
 ):
     path = tmp_path / f"vcf41-number-r-{kind.lower()}.vcf"
@@ -72,6 +72,28 @@ def test_vcf42_accepts_number_r_for_reference_plus_alternates(
         record = "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,5"
     path.write_text(
         f"##fileformat=VCFv4.2\n{definition}\n{columns}\n{record}\n",
+        encoding="utf-8",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("number", "alt", "gt", "value"),
+    [
+        ("A", "C,G", "0/1", "10,20"),
+        ("G", "C", "0/1", "10,20,30"),
+    ],
+)
+def test_vcf41_accepts_number_a_and_g(
+    tmp_path: Path, number: str, alt: str, gt: str, value: str
+):
+    path = tmp_path / f"vcf41-number-{number}.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.1\\n"
+        f'##FORMAT=<ID=CUSTOM,Number={number},Type=Integer,Description="Custom">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        f"1\\t2\\t.\\tA\\t{alt}\\t.\\tPASS\\t.\\tGT:CUSTOM\\t{gt}:{value}\\n",
         encoding="utf-8",
     )
 
