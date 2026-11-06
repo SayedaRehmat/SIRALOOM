@@ -1632,6 +1632,16 @@ def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str
             f"Invalid GT separator/allele structure at line {line_no}: {gt!r}",
             code="VCF_GENOTYPE_INVALID",
         )
+    # VCFv4.4 introduced per-allele partial phasing. In VCFv4.1-4.3,
+    # the genotype is either fully phased or fully unphased, so mixing
+    # '/' and '|' separators is not a valid GT representation.
+    if fileformat in {"VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3"}:
+        separators = re.findall(r"[/|]", value)
+        if len(set(separators)) > 1:
+            raise StrictVCFValidationError(
+                f"Mixed phased and unphased GT separators require VCFv4.4 or later at line {line_no}: {gt!r}",
+                code="VCF_GENOTYPE_INVALID",
+            )
     return tokens
 
 
