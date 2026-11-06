@@ -1639,6 +1639,42 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
           "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:M5hmC:M5fC:M5caC:M5hmU:M5fU:M5caU:M6mA:M8oxoG:DPM5mC:DPM5hmC:DPM5fC:DPM5caC:DPM5hmU:DPM5fU:DPM5caU:DPM6mA:DPM8oxoG:ADM5mC:ADM5hmC:ADM5fC:ADM5caC:ADM5hmU:ADM5fU:ADM5caU:ADM6mA:ADM8oxoG\t0/1:0.5:0.5:0.5:0.5:0.5:0.5:0.5:0.5:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10"
         ]
+      },
+      {
+        "id": "local_lec_requires_laa_invalid",
+        "category": "local_allele_header",
+        "expected": "VCF_LOCAL_ALLELE_HEADER_INVALID",
+        "spec_basis": "VCFv4.5 LEC is a local-allele FORMAT field and requires LAA immediately after GT",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LEC\t0/1:5,6"
+        ]
+      },
+      {
+        "id": "local_laa_duplicate_alt_index_invalid",
+        "category": "local_allele_validation",
+        "expected": "VCF_LOCAL_ALLELE_INVALID",
+        "spec_basis": "VCFv4.5 LAA is a list of distinct 1-based ALT allele indexes",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA\t2/2:2,2"
+        ]
+      },
+      {
+        "id": "local_number_la_cardinality_invalid",
+        "category": "local_allele_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=LA requires one value for each alternate allele in LAA",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "##FORMAT=<ID=FLA,Number=LA,Type=Integer,Description=\"Local alternate values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:FLA\t1/2:2,1:10"
+        ]
       }
     ],
     "VCFv4.0": [
@@ -2433,6 +2469,9 @@
             "base_modification_fraction_valid",
             "local_allele_encoding_valid",
             "local_global_projection_missing_side_is_ignored",
+            "local_laa_duplicate_alt_index_invalid",
+            "local_lec_requires_laa_invalid",
+            "local_number_la_cardinality_invalid",
             "local_number_la_lr_lg_cardinality_valid",
             "local_pl_projection_mismatch_rejected",
             "local_pl_projection_uses_laa_order_and_colex_genotype_order",
