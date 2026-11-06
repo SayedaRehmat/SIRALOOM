@@ -24,7 +24,9 @@
     "author_dispositions_recorded": 44,
     "locator_level_context_reconciliations_pending": 44,
     "version_delta_assessments_not_yet_performed": 44,
-    "semantic_reconciliation_incomplete": 44
+    "semantic_reconciliation_incomplete": 44,
+    "source_internal_blocking_ambiguities": 1,
+    "open_review_questions": 89
   },
   "tables": [
     {
@@ -260,7 +262,8 @@
       ],
       "open_questions": [
         "For each of the 63 FORMAT rows, map definition, Number/Type and any genotype/ploidy/local-allele/base-modification/phase/SV conditions to exact prose clauses; identify reserved-but-not-required behavior.",
-        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5."
+        "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5.",
+        "Blocking source-internal case discrepancy: the reserved FORMAT table spells the xanthosine aliases MXaoN/DPMXaoN/ADMXaoN (VCFv4.5.tex:586-588), while the surrounding prose uses MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740; also inspect line 218). Resolve from pinned source history or authoritative maintainer clarification; identifiers are case-sensitive and implementation must not guess."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
@@ -274,8 +277,11 @@
         "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
-        "context_locator_status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
-        "version_delta_status": "NOT_YET_ASSESSED"
+        "context_locator_status": "PARTIAL_REVIEW_WITH_BLOCKING_SOURCE_INTERNAL_ALIAS_CASE_AMBIGUITY",
+        "version_delta_status": "NOT_YET_ASSESSED",
+        "source_internal_issue_ids": [
+          "VCF45-FORMAT-XAON-ALIAS-CASE-001"
+        ]
       }
     },
     {
