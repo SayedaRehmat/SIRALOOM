@@ -263,7 +263,7 @@
       "open_questions": [
         "For each of the 63 FORMAT rows, map definition, Number/Type and any genotype/ploidy/local-allele/base-modification/phase/SV conditions to exact prose clauses; identify reserved-but-not-required behavior.",
         "Perform explicit VCFv4.1–4.4 comparison against the pinned version sources; record APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED with source locators. Do not infer backward compatibility from VCFv4.5.",
-        "Blocking source-internal case discrepancy: the reserved FORMAT table spells the xanthosine aliases MXaoN/DPMXaoN/ADMXaoN (VCFv4.5.tex:586-588), while the surrounding prose uses MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740; also inspect line 218). Resolve from pinned source history or authoritative maintainer clarification; identifiers are case-sensitive and implementation must not guess."
+        "Upstream VCFv4.5 source inconsistency confirmed in history: commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced MXaoN/DPMXaoN/ADMXaoN in the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN in prose alias lists. No later correction was found in retrieved VCFv4.5 file history and scoped issue/PR searches returned no result. Canonical case remains unresolved; obtain authoritative maintainer clarification or source correction before implementation. Do not normalize or silently accept both."
       ],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
@@ -277,7 +277,7 @@
         "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
         "status": "NORMATIVE_TABLE_DEFINITION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
-        "context_locator_status": "PARTIAL_REVIEW_WITH_BLOCKING_SOURCE_INTERNAL_ALIAS_CASE_AMBIGUITY",
+        "context_locator_status": "PARTIAL_REVIEW_WITH_UPSTREAM_SOURCE_INTERNAL_ALIAS_CASE_AMBIGUITY",
         "version_delta_status": "NOT_YET_ASSESSED",
         "source_internal_issue_ids": [
           "VCF45-FORMAT-XAON-ALIAS-CASE-001"
