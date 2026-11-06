@@ -28,7 +28,7 @@
       "change_log": "VCFv4.4.tex:2561; 2570"
     },
     "VCFv4_5": {
-      "status": "RETAINED_WITH_PS​​Q_MISSING_VALUE_CLARIFICATION",
+      "status": "RETAINED_WITH_PSQ_MISSING_VALUE_CLARIFICATION",
       "table_rows": "VCFv4.5.tex:594-596",
       "definitions": "VCFv4.5.tex:771-809"
     }
