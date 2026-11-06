@@ -107,21 +107,21 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT",
           "locator": "VCFv4.3.tex:75-95"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT",
           "locator": "VCFv4.4.tex:75-95"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:73-93"
         }
@@ -208,19 +208,19 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:223-229; 720-758"
         }
@@ -329,23 +329,23 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_PROSE_ENUMERATION",
           "locator": "VCFv4.1.tex:70-90 and reserved INFO list"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_PROSE_ENUMERATION",
           "locator": "VCFv4.2.tex:70-90 and reserved INFO list"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.3.tex:445-478"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.4.tex:463-500"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:443-481"
         }
@@ -582,23 +582,23 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_PROSE_ENUMERATION",
           "locator": "VCFv4.1.tex:193-222"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_PROSE_ENUMERATION",
           "locator": "VCFv4.2.tex:210-239"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.3.tex:550-556 and genotype field definitions"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.4.tex:576-582 and genotype field definitions"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_NUMBER_TYPE_TABLE",
           "locator": "VCFv4.5.tex:517-598"
         }
@@ -667,23 +667,23 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "DIPLOID_ORDERING_DESCRIPTION",
           "locator": "VCFv4.1.tex:207"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "DIPLOID_ORDERING_DESCRIPTION",
           "locator": "VCFv4.2.tex:224"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "GENERAL_PLOIDY_ALGORITHM",
           "locator": "VCFv4.3.tex:507-536"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "GENERAL_PLOIDY_ALGORITHM",
           "locator": "VCFv4.4.tex:533-562"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "GENERAL_PLOIDY_ALGORITHM",
           "locator": "VCFv4.5.tex:632-661"
         }
@@ -752,19 +752,19 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:188-202; 686-718"
         }
@@ -833,19 +833,19 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:720-758"
         }
@@ -914,20 +914,20 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT",
           "locator": "VCFv4.4.tex:496; 598-613"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:594; 771-786"
         }
@@ -996,20 +996,20 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT",
           "locator": "VCFv4.4.tex:497; 615-635"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:595-596; 788-809"
         }
@@ -1078,27 +1078,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1168,27 +1168,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1258,27 +1258,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1348,27 +1348,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1438,27 +1438,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1528,27 +1528,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1618,27 +1618,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1708,27 +1708,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1798,27 +1798,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1888,27 +1888,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -1978,27 +1978,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -2068,27 +2068,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -2158,27 +2158,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -2248,27 +2248,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -2338,27 +2338,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:299-467",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:316-484",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:692-869",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1003-1180",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1164-1341",
           "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
@@ -2428,27 +2428,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2518,27 +2518,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2626,27 +2626,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2716,27 +2716,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2806,27 +2806,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2896,27 +2896,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -2986,27 +2986,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3076,27 +3076,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3166,27 +3166,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3256,27 +3256,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3346,27 +3346,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3436,27 +3436,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3526,27 +3526,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3616,27 +3616,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3706,27 +3706,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3796,27 +3796,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3886,27 +3886,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:524-816",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:541-833",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:925-1246",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1234-1555",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1394-1729",
           "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
@@ -3976,27 +3976,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:819-860",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:836-877",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:1262-1307",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:1571-1616",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:1731-1774",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
@@ -4084,27 +4084,27 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.1.tex:132; 861-906",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.2.tex:149; 878-923",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.3.tex:281; 1308-1368",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.4.tex:295; 1617-1677",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_SECTION_LEVEL",
           "locator": "VCFv4.5.tex:344; 1776-1843",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
@@ -4215,21 +4215,21 @@
         }
       ],
       "preliminary_version_applicability": {
-        "VCFv4_1": {
+        "VCFv4.1": {
           "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
         },
-        "VCFv4_2": {
+        "VCFv4.2": {
           "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
         },
-        "VCFv4_3": {
+        "VCFv4.3": {
           "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
           "locator": "VCFv4.3.tex:1428-1460"
         },
-        "VCFv4_4": {
+        "VCFv4.4": {
           "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
           "locator": "VCFv4.4.tex:1686-1747"
         },
-        "VCFv4_5": {
+        "VCFv4.5": {
           "status": "PRESENT_FORMAT_LEN_AND_STAR_ALLELE",
           "locator": "VCFv4.5.tex:1846-1878"
         }
