@@ -213,3 +213,60 @@ GitHub Actions run `42185002380` completed successfully for commit `707dd5696307
 The 44-table work is now more precisely adjudicated but remains incomplete. Exact locator-level context reconciliation, VCFv4.1–4.4 row and clause comparison, whole-source semantic decomposition, VCFv4.0 immutable source capture, independent second-person review, implementation mapping, executable conformance testing and laboratory qualification remain open. The atomic ledger's complete contents were not independently re-read in this session because the GitHub content retrieval path returned an empty body for its large blob; this is a retrieval limitation, not evidence of an empty ledger.
 
 PR #293 remains draft and unmerged. No production parser, normalizer, validator or BCF implementation changes were made in this research pass.
+
+
+## 11. Second execution increment — context closure and version applicability
+
+### 11.1 All 44 VCFv4.5 table context locators captured
+
+The table adjudication and queue now carry exact source-context locators for every VCFv4.5 table. Context evidence is drawn from the row-level INFO/FORMAT review, the full SV/breakend context review, and the sample-mixture/PEDIGREE/gVCF context review. The table queue has:
+- 44/44 author-context locator reconciliations recorded;
+- 0 generic boilerplate questions remaining;
+- 44/44 preliminary five-version applicability matrices recorded;
+- 44/44 full clause-level version reconciliations still pending;
+- 0 independent reviews completed;
+- 45 specific open questions (one full-delta question per table plus the VCFv4.5 alias ambiguity).
+
+The table review status is therefore **author context and preliminary applicability recorded; full clause-level version delta and independent review pending**.
+
+### 11.2 Preliminary version applicability by table
+
+Each of the 44 VCFv4.5 table records now has a five-column applicability record for VCFv4.1, 4.2, 4.3, 4.4 and 4.5. The record distinguishes:
+- absent/not found in the pinned source scan;
+- prose enumeration versus Number/Type table;
+- section-level correspondence versus exact table identity;
+- features introduced in a later version;
+- unresolved clause-level semantics.
+
+This matrix is a source-navigation and applicability aid, not proof that all earlier-version clauses are equivalent or absent.
+
+### 11.3 Confirmed version-specific semantic findings
+
+The source-backed feature matrix and reserved-row crosswalk now record these high-confidence findings:
+
+1. GLE is present in VCFv4.1 and VCFv4.2; VCFv4.3 change log explicitly records removal of the unused/ill-defined GLE FORMAT tag.
+2. VCFv4.3 introduces the general-ploidy genotype-ordering algorithm; VCFv4.1/4.2 describe the earlier diploid likelihood ordering. VCFv4.4/4.5 retain the general-ploidy algorithm.
+3. VCFv4.4 adds PSL/PSO/PSQ and Number=P; VCFv4.5 retains them.
+4. SVLEN changes from Number=. in VCFv4.1–4.3 to Number=A in VCFv4.4, with explicit per-ALT semantics; VCFv4.5 retains and further specifies missing-value and compatibility behavior.
+5. SVTYPE deprecation is recorded in VCFv4.4's change log and explicitly explained in VCFv4.5 normative prose as redundant with symbolic ALT.
+6. VCFv4.5 introduces local-allele fields/Number=LA/LR/LG, base-modification M/DPM/ADM families, FORMAT LEN and END deprecation/computed semantics.
+7. A dedicated character-encoding/percent-encoding section is present in VCFv4.3–4.5; no equivalent dedicated section/table was found in the VCFv4.1/4.2 scan.
+8. Dedicated gVCF reference-block sections are present in VCFv4.3–4.5; VCFv4.5 adds sample-specific FORMAT LEN and the <NON_REF> alias of <*>.
+9. Tandem-repeat section is present in VCFv4.4/4.5.
+10. Sample mixture, PEDIGREE, small-variant representation and breakend sections are present across VCFv4.1–4.5; their version-specific clause changes still need reconciliation.
+
+### 11.4 Reserved INFO/FORMAT row deltas
+
+The new five-version row crosswalk preserves the earlier prose-only VCFv4.1/4.2 representations and does not invent Number/Type attributes for them. It mechanically records:
+- VCFv4.1→4.2: reserved row inventory unchanged;
+- VCFv4.2→4.3: INFO AD/ADF/ADR and FORMAT AD/ADF/ADR/PP added; GLE removed; Number/Type table representation formalized;
+- VCFv4.3→4.4: FORMAT PSL/PSO/PSQ added;
+- VCFv4.4→4.5: 44 FORMAT rows added and the INFO END row description changes to deprecated/backward-compatibility status.
+
+Description changes in table rows are not treated as proof that the detailed field semantics were removed; the prose definitions remain the controlling context.
+
+### 11.5 Current CI and review gates
+
+At the time of this audit refresh, the current PR head is `f3a764a62c878e36b80e32becfe110988f061470`. GitHub Actions run `42186100933` is pending for that head; Vercel is also pending. A prior run `42185002380` passed all three jobs (backend, frontend and postgres-integration) for an earlier commit `707dd56963076b9f3f570e5059f26aa3078d6f97`; it must not be represented as a pass on the current head.
+
+The next work is the full clause-level delta reconciliation for all 44 tables and then the remaining whole-source requirement ledger review. PR #293 remains draft and unmerged. Independent review, implementation mapping, clause-specific executable conformance testing and laboratory qualification remain open.
