@@ -1353,6 +1353,59 @@ def test_vcf45_reserved_depth_aliases_need_no_header_definitions(tmp_path: Path)
     assert validate_vcf_strict(path)["records"] == 1
 
 
+@pytest.mark.parametrize(
+    "field_id",
+    ["MXaoN", "MxaoN", "DPMXaoN", "DPMxaoN", "ADMXaoN", "ADMxaoN"],
+)
+def test_vcf45_ambiguous_xanthosine_aliases_are_blocked_without_header_definition(
+    tmp_path: Path, field_id: str
+):
+    path = tmp_path / "ambiguous-xanthosine-alias.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        f"1\t2\t.\tC\tT\t.\tPASS\t.\tGT:{field_id}\t0/1:1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS"
+
+
+@pytest.mark.parametrize(
+    ("field_id", "field_type"),
+    [
+        ("MXaoN", "Float"),
+        ("MxaoN", "Float"),
+        ("DPMXaoN", "Integer"),
+        ("DPMxaoN", "Integer"),
+        ("ADMXaoN", "Integer"),
+        ("ADMxaoN", "Integer"),
+    ],
+)
+def test_vcf45_ambiguous_xanthosine_aliases_are_blocked_in_header_definitions(
+    tmp_path: Path, field_id: str, field_type: str
+):
+    path = tmp_path / "ambiguous-xanthosine-alias-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            f'##FORMAT=<ID={field_id},Number=M,Type={field_type},Description="Ambiguous upstream alias">'
+        ],
+        f"1\t2\t.\tC\tT\t.\tPASS\t.\tGT:{field_id}\t0/1:1\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS"
+
+
 def test_vcf45_reserved_base_modification_fraction_must_be_between_zero_and_one(
     tmp_path: Path,
 ):
@@ -2476,8 +2529,8 @@ def test_vcf_feature_qualification_rejects_unknown_specification_versions():
 
 def test_vcf_specification_profiles_use_official_documents_and_label_legacy_scope():
     legacy = get_vcf_specification_profile("VCFv4.0")
-    assert legacy.support_status == "LEGACY_COMPATIBILITY_ONLY"
-    assert legacy.validation_mode == "LEGACY_PARSER_SMOKE_ONLY"
+    assert legacy.support_status == "PARTIAL_LEGACY_SPECIFICATION_QUALIFICATION"
+    assert legacy.validation_mode == "VERSION_AWARE_PARTIAL"
     assert legacy.specification_document == (
         "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/"
     )
@@ -3266,3 +3319,96 @@ def test_strict_validation_accepts_breakend_mates_without_optional_svtype(tmp_pa
     profile = validate_vcf_strict(path)
 
     assert profile["records"] == 2
+
+
+def test_vcf45_reserved_lec_requires_laa_even_without_header_definition(tmp_path: Path):
+    path = tmp_path / "vcf45-lec-without-laa.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LEC\\t0/1:5,6\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
+
+
+def test_vcf45_reserved_lec_accepts_laa_scoped_cardinality(tmp_path: Path):
+    path = tmp_path / "vcf45-lec-with-laa.vcf"
+    write_vcf_with_metadata(
+        path,
+        [],
+        "1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:LEC\\t0/1:2:5\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("gt", "value", "valid"),
+    [
+        ("0|1/0", "0.2,0.3", True),
+        ("0|1/0", "0.2,0.3,0.4", False),
+        ("0/1|0", "0.2,0.3,0.4", True),
+        ("0/1|0", "0.2,0.3", False),
+        ("/0/1", "0.2,0.3", True),
+    ],
+)
+def test_vcf45_number_m_uses_implicit_first_phase_indicator(
+    tmp_path: Path, gt: str, value: str, valid: bool
+):
+    path = tmp_path / "vcf45-number-m-prefix-phasing.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">',
+        ],
+        f"1\\t2\\t.\\tC\\tG\\t.\\tPASS\\t.\\tGT:M5mC\\t{gt}:{value}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    if valid:
+        assert validate_vcf_strict(path)["records"] == 1
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("gt", "values", "valid"),
+    [
+        ("0", "10", True),
+        ("0/1", "10,20", True),
+        ("0/1/1", "10,20,30", True),
+        (".", "10", True),
+        ("./.", "10,20", True),
+        ("0/1/1", "10,20", False),
+    ],
+)
+def test_vcf45_number_p_cardinality_tracks_sample_ploidy(
+    tmp_path: Path, gt: str, values: str, valid: bool
+):
+    path = tmp_path / "vcf45-number-p-ploidy.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description="Per-allele values">'],
+        f"1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:CUSTOM_P\\t{gt}:{values}\\n",
+        sample=True,
+        version="VCFv4.5",
+    )
+
+    if valid:
+        assert validate_vcf_strict(path)["records"] == 1
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"

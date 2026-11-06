@@ -57,21 +57,26 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
 PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
-NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ"), ("FORMAT", "GQ"), ("FORMAT", "HQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 _CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
 
+# The upstream VCFv4.5 source contains case-inconsistent xanthosine
+# aliases. Neither spelling is enabled until the specification maintainers
+# establish the canonical identifiers; accepting both would hide ambiguity.
+VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES = frozenset({
+    "MXaoN", "MxaoN", "DPMXaoN", "DPMxaoN", "ADMXaoN", "ADMxaoN",
+})
 VCF45_BASE_MODIFICATION_FLOAT_ALIASES = frozenset({
     "M5mC", "M5hmC", "M5fC", "M5caC", "M5hmU", "M5fU",
-    "M5caU", "M6mA", "M8oxoG", "MXaoN", "MxaoN",
+    "M5caU", "M6mA", "M8oxoG",
 })
 VCF45_BASE_MODIFICATION_DEPTH_ALIASES = frozenset({
     "DPM5mC", "DPM5hmC", "DPM5fC", "DPM5caC", "DPM5hmU",
-    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG", "DPMXaoN",
-    "DPMxaoN", "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
+    "DPM5fU", "DPM5caU", "DPM6mA", "DPM8oxoG",
+    "ADM5mC", "ADM5hmC", "ADM5fC", "ADM5caC",
     "ADM5hmU", "ADM5fU", "ADM5caU", "ADM6mA", "ADM8oxoG",
-    "ADMXaoN", "ADMxaoN",
 })
 
 
@@ -97,6 +102,22 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     if field_kind == "depth":
         return {"Number": "M", "Type": "Integer"}
     return None
+
+
+def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the historical VCFv4.0 reserved genotype-field definitions."""
+    reserved = {
+        "GT": ("1", "String"),
+        "DP": ("1", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("3", "Float"),
+        "GQ": ("1", "Float"),
+        "HQ": ("2", "Float"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
 
 
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
@@ -206,6 +227,17 @@ class StrictVCFValidationError(ValueError):
     def __init__(self, message: str, *, code: str = "VCF_INVALID"):
         super().__init__(message)
         self.code = code
+
+
+def _reject_ambiguous_vcf45_base_modification_alias(
+    identifier: str, line_no: int
+) -> None:
+    raise StrictVCFValidationError(
+        f"VCF45-FORMAT-XAON-ALIAS-CASE-001: alias {identifier!r} has "
+        f"conflicting upstream capitalization and is blocked pending "
+        f"authoritative clarification at line {line_no}",
+        code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+    )
 
 
 def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
@@ -772,13 +804,27 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
     identifier = parsed["ID"]
+    if (
+        fileformat == "VCFv4.5"
+        and kind == "FORMAT"
+        and identifier in VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES
+    ):
+        _reject_ambiguous_vcf45_base_modification_alias(identifier, line_no)
     if not _field_key_is_valid(kind, identifier, fileformat):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
     number = parsed["Number"]
-    allowed_cardinality = {"A", "R", "G", "."}
+    if fileformat == "VCFv4.0":
+        # The historical VCFv4.0 Number field is a fixed integer or '.'.
+        allowed_cardinality = {"."}
+    elif fileformat == "VCFv4.1":
+        # VCFv4.1 introduced per-ALT (A) and per-genotype (G) cardinalities.
+        # Per-allele including REF (R) was added in VCFv4.2.
+        allowed_cardinality = {"A", "G", "."}
+    else:
+        allowed_cardinality = {"A", "R", "G", "."}
     if fileformat == "VCFv4.5" and kind == "FORMAT":
         allowed_cardinality.update({"LA", "LR", "LG", "P", "M"})
     if number not in allowed_cardinality and not re.fullmatch(r"[0-9]+", number):
@@ -807,6 +853,35 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+    if kind == "FORMAT" and identifier == "GT" and (
+        number != "1" or parsed["Type"] != "String"
+    ):
+        raise StrictVCFValidationError(
+            f"FORMAT/GT must declare Number=1 and Type=String at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
+    reserved_vcf40_definition = (
+        _reserved_vcf40_format_definition(identifier)
+        if fileformat == "VCFv4.0" and kind == "FORMAT"
+        else None
+    )
+    allowed_vcf40_types = (
+        {"Integer", "Float"}
+        if identifier in {"GQ", "HQ"}
+        else {reserved_vcf40_definition["Type"]}
+        if reserved_vcf40_definition is not None
+        else set()
+    )
+    if reserved_vcf40_definition is not None and (
+        number != reserved_vcf40_definition["Number"]
+        or parsed["Type"] not in allowed_vcf40_types
+    ):
+        raise StrictVCFValidationError(
+            f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
+            f"Number={reserved_vcf40_definition['Number']} and "
+            f"Type={reserved_vcf40_definition['Type']} at line {line_no}",
+            code="VCF_HEADER_DEFINITION_INVALID",
+        )
     reserved_vcf45_definition = None
     if fileformat == "VCFv4.5":
         if kind == "FORMAT":
@@ -1610,6 +1685,16 @@ def _gt_allele_tokens(gt: str, fileformat: str | None, line_no: int) -> list[str
             f"Invalid GT separator/allele structure at line {line_no}: {gt!r}",
             code="VCF_GENOTYPE_INVALID",
         )
+    # VCFv4.4 introduced per-allele partial phasing. In VCFv4.1-4.3,
+    # the genotype is either fully phased or fully unphased, so mixing
+    # '/' and '|' separators is not a valid GT representation.
+    if fileformat in {"VCFv4.0", "VCFv4.1", "VCFv4.2", "VCFv4.3"}:
+        separators = re.findall(r"[/|]", value)
+        if len(set(separators)) > 1:
+            raise StrictVCFValidationError(
+                f"Mixed phased and unphased GT separators require VCFv4.4 or later at line {line_no}: {gt!r}",
+                code="VCF_GENOTYPE_INVALID",
+            )
     return tokens
 
 
@@ -1759,6 +1844,23 @@ def _validate_record(
         raise StrictVCFValidationError(f"REF must contain only A/C/G/T/N for Phase 1 at line {line_no}", code="VCF_REF_INVALID")
 
     raw_alts = alt.split(",")
+    if fileformat == "VCFv4.0" and any(
+        "[" in allele or "]" in allele for allele in raw_alts
+    ):
+        raise StrictVCFValidationError(
+            f"Breakend replacement ALT syntax is not defined in historical VCFv4.0 at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
+    if fileformat in {"VCFv4.0", "VCFv4.1"} and "*" in raw_alts:
+        raise StrictVCFValidationError(
+            f"The spanning-deletion '*' ALT allele is not defined until VCFv4.2 at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
+    if fileformat in {"VCFv4.0", "VCFv4.1", "VCFv4.2"} and "<*>" in raw_alts:
+        raise StrictVCFValidationError(
+            f"The unspecified allele '<*>' is not defined until VCFv4.3 at line {line_no}",
+            code="VCF_ALT_INVALID",
+        )
     if not alt or ("." in raw_alts and raw_alts != ["."]):
         raise StrictVCFValidationError(
             f"ALT '.' must be the only allele when no alternate is present at line {line_no}",
@@ -1842,6 +1944,19 @@ def _validate_record(
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
+        if fileformat == "VCFv4.0" and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data requires FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
+        ambiguous_base_modification_aliases = (
+            VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES.intersection(keys)
+            if fileformat == "VCFv4.5"
+            else set()
+        )
+        if ambiguous_base_modification_aliases:
+            identifier = sorted(ambiguous_base_modification_aliases)[0]
+            _reject_ambiguous_vcf45_base_modification_alias(identifier, line_no)
         if len(keys) != len(set(keys)) or any(
             not _field_key_is_valid("FORMAT", key, fileformat) for key in keys
         ):
@@ -1867,7 +1982,7 @@ def _validate_record(
             )
         if fileformat == "VCFv4.5" and (
             any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
-            or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
+            or any(key in {"LAA", "LAD", "LADF", "LADR", "LEC", "LGL", "LGP", "LPL", "LPP"} for key in keys)
         ):
             if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
                 raise StrictVCFValidationError(
@@ -2452,9 +2567,30 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 )
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.0":
+                        definition = _reserved_vcf40_format_definition(key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
+                        if (
+                            fileformat == "VCFv4.0"
+                            and key == "GL"
+                            and value not in {None, "."}
+                            and len(alts) != 1
+                        ):
+                            raise StrictVCFValidationError(
+                                f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
+                        if (
+                            definition["Number"] == "P"
+                            and gt_index is None
+                            and value not in {None, "."}
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{key} Number=P requires FORMAT/GT to determine the allele-value cardinality at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
                         if (
                             definition["Number"] == "G"
                             and genotype_ploidy is None

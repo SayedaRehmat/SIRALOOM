@@ -206,6 +206,87 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "mixed_gt_phase_separators_invalid_v41",
+        "category": "genotype_phasing",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "VCFv4.1 GT encodes a genotype as phased or unphased; per-allele partial phasing is not defined",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
+        ]
+      },
+      {
+        "id": "v41_number_r_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "VCFv4.1 supports Number=A and G; Number=R was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
+        ]
+      },
+      {
+        "id": "v41_spanning_deletion_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The spanning-deletion '*' allele was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v41_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
+        ]
+      },
+      {
+        "id": "gt_header_wrong_type_rejected",
+        "category": "genotype_header",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Reserved FORMAT/GT is Number=1,Type=String",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1"
+        ]
+      },
+      {
+        "id": "v41_number_a_valid",
+        "category": "version_specific_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.1 supports Number=A for one value per alternate allele",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=CUSTOM,Number=A,Type=Integer,Description=\"Per-ALT values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,20"
+        ]
+      },
+      {
+        "id": "v41_number_g_without_gt_diploid_default_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "When GT is absent, Number=G genotype likelihood cardinality assumes diploidy",
+        "lines": [
+          "##fileformat=VCFv4.1",
+          "##FORMAT=<ID=PL,Number=G,Type=Integer,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tPL\t0,1,2"
+        ]
       }
     ],
     "VCFv4.2": [
@@ -391,6 +472,51 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t15\tbnd1\tA\tA]2:20]\t.\tPASS\tSVTYPE=BND",
           "1\t25\tbnd1\tA\tA]2:30]\t.\tPASS\tSVTYPE=BND"
+        ]
+      },
+      {
+        "id": "mixed_gt_phase_separators_invalid_v42",
+        "category": "genotype_phasing",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "VCFv4.2 GT encodes a genotype as phased or unphased; per-allele partial phasing is not defined",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0/1|0"
+        ]
+      },
+      {
+        "id": "v42_number_r_valid",
+        "category": "version_specific_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.2 adds Number=R for one value per allele including REF",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
+        ]
+      },
+      {
+        "id": "v42_spanning_deletion_star_valid",
+        "category": "version_specific_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.2 introduced the spanning-deletion '*' ALT allele",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v42_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.2",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
         ]
       }
     ],
@@ -648,6 +774,28 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "mixed_gt_phase_separators_invalid_v43",
+        "category": "genotype_phasing",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "spec_basis": "VCFv4.3 GT encodes a genotype as phased or unphased; partial phasing was added in VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
+        ]
+      },
+      {
+        "id": "v43_unspecified_star_valid",
+        "category": "version_specific_alt",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.3 introduced the unspecified allele '<*>' for gVCF reference-block representation",
+        "lines": [
+          "##fileformat=VCFv4.3",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
+        ]
       }
     ],
     "VCFv4.4": [
@@ -882,6 +1030,41 @@
           "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakend\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "partial_gt_phasing_valid_v44",
+        "category": "genotype_phasing",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.4 introduced polyploid partial phasing and optional first phasing indicator",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t|0|1/2"
+        ]
+      },
+      {
+        "id": "v44_number_p_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Number=P was introduced in VCFv4.5 and is not valid in VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=CUSTOM,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM\t0/1:10,20"
+        ]
+      },
+      {
+        "id": "v44_number_m_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "spec_basis": "Number=M base-modification cardinality was introduced in VCFv4.5 and is not valid in VCFv4.4",
+        "lines": [
+          "##fileformat=VCFv4.4",
+          "##FORMAT=<ID=M5mC,Number=M,Type=Float,Description=\"Base modification fraction\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0/1:0.5"
         ]
       }
     ],
@@ -1367,6 +1550,350 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\tC\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "xanthosine_fraction_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 724",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:MXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_fraction_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:724 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:MxaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_detectable_depth_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 734",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:DPMXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_detectable_depth_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:734 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:DPMxaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_modified_depth_table_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:586-588 table spelling conflicts with prose spelling at line 740",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:ADMXaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "xanthosine_modified_depth_prose_spelling_blocked",
+        "category": "version_specific_invalid_vcf45",
+        "expected": "VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+        "spec_basis": "VCFv4.5.tex:740 prose spelling conflicts with table spelling at lines 586-588",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tA\t.\tPASS\t.\tGT:ADMxaoN\t0/1:1"
+        ]
+      },
+      {
+        "id": "partial_gt_phasing_valid_v45",
+        "category": "genotype_phasing",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 retains prefix GT notation and per-allele partial phasing",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT\t0/1|0"
+        ]
+      },
+      {
+        "id": "number_m_unphased_duplicate_alleles_aggregate",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M aggregates identical unphased allele values at the first occurrence",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0/0:0.5"
+        ]
+      },
+      {
+        "id": "number_m_phased_duplicate_alleles_remain_distinct",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M retains separate values for phased allele copies",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0|0:0.5,0.6"
+        ]
+      },
+      {
+        "id": "number_m_missing_and_symbolic_alleles_contribute_no_bases",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M missing and symbolic alleles contribute no modifiable bases",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSYMBOLIC\tMISSING",
+          "1\t2\t.\tC\t<DEL>\t.\tPASS\tEND=5\tGT:M5mC\t0/1:0.5\t0/.:0.6"
+        ]
+      },
+      {
+        "id": "number_m_n_counts_both_strands",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M base N represents both positive and negative strands",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tAC\tGT\t.\tPASS\t.\tGT:M18107N\t0/1:0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8"
+        ]
+      },
+      {
+        "id": "number_p_triploid_cardinality_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=P has one value for each allele value in GT",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM_P\t0/1/1:10,20,30"
+        ]
+      },
+      {
+        "id": "local_number_la_lr_lg_cardinality_valid",
+        "category": "local_allele_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=LA, LR and LG cardinalities are scoped to LAA local alleles and sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "##FORMAT=<ID=FLA,Number=LA,Type=Integer,Description=\"Local alternate values\">",
+          "##FORMAT=<ID=FLR,Number=LR,Type=Integer,Description=\"Local allele values\">",
+          "##FORMAT=<ID=FLG,Number=LG,Type=Integer,Description=\"Local genotype values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:FLA:FLR:FLG\t1/2:2,1:10,20:1,2,3:0,1,2,3,4,5"
+        ]
+      },
+      {
+        "id": "local_pl_projection_uses_laa_order_and_colex_genotype_order",
+        "category": "local_allele_projection",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 local likelihood fields project global likelihoods using LAA order and prescribed genotype ordering",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,3,5,1,4,2"
+        ]
+      },
+      {
+        "id": "local_pl_projection_mismatch_rejected",
+        "category": "local_allele_projection",
+        "expected": "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID",
+        "spec_basis": "VCFv4.5 global and local likelihood representations must encode identical information",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,3,5,1,4,99"
+        ]
+      },
+      {
+        "id": "local_global_projection_missing_side_is_ignored",
+        "category": "local_allele_projection",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 permits one of a global field and its local-allele equivalent to be missing or omitted",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:.:0,3,5,1,4,2"
+        ]
+      },
+      {
+        "id": "local_reference_only_laa_missing_values_cardinality_valid",
+        "category": "local_allele_missing_values",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 missing LAA denotes an empty local ALT vector and local genotype fields retain reference-only cardinality",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:LAA:AD:LAD:PL:LPL\t0/.:.:10,.:10:0,1,2:0"
+        ]
+      },
+      {
+        "id": "vcf45_all_reserved_format_definitions_valid",
+        "category": "reserved_format_field_matrix",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 reserved FORMAT field identifiers, implicit Number/Type definitions, cardinality, local projections and sample ploidy",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:LA:AD:ADF:ADR:DP:EC:FT:GL:GP:GQ:HQ:LAD:LADF:LADR:LEC:LGL:LGP:LPL:LPP:LEN:MQ:PL:PP:PQ:PS:PSL:PSO:PSQ:CN:CNL:CNP:CNQ:CICN:HAP:AHAP:NQ:M5mC\t0|1:2,1:.:10,5,5:5,2,3:5,3,2:10:1,2:PASS:-1,-2,-3,-4,-5,-6:0.1,0.2,0.1,0.2,0.2,0.2:30:20,20:10,5,5:5,3,2:5,2,3:2,1:-1,-4,-6,-2,-5,-3:0.1,0.2,0.2,0.2,0.2,0.1:0,3,5,1,4,2:10,13,15,11,14,12:.:60:0,1,2,3,4,5:10,11,12,13,14,15:10:100:.,.:.,.:.:2.0:-1,-2,-3,-4,-5,-6:0.1,0.2,0.1,0.2,0.2,0.2:30.0:1.0,2.0:1:1:20:0.5"
+        ]
+      },
+      {
+        "id": "vcf45_base_modification_alias_matrix_valid",
+        "category": "base_modification_reserved_fields",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 reserved base-modification aliases use Number=M with Float fraction or Integer depth types and base-specific cardinality",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:M5hmC:M5fC:M5caC:M5hmU:M5fU:M5caU:M6mA:M8oxoG:DPM5mC:DPM5hmC:DPM5fC:DPM5caC:DPM5hmU:DPM5fU:DPM5caU:DPM6mA:DPM8oxoG:ADM5mC:ADM5hmC:ADM5fC:ADM5caC:ADM5hmU:ADM5fU:ADM5caU:ADM6mA:ADM8oxoG\t0/1:0.5:0.5:0.5:0.5:0.5:0.5:0.5:0.5:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10:10"
+        ]
+      },
+      {
+        "id": "local_lec_requires_laa_invalid",
+        "category": "local_allele_header",
+        "expected": "VCF_LOCAL_ALLELE_HEADER_INVALID",
+        "spec_basis": "VCFv4.5 LEC is a local-allele FORMAT field and requires LAA immediately after GT",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LEC\t0/1:5,6"
+        ]
+      },
+      {
+        "id": "local_laa_duplicate_alt_index_invalid",
+        "category": "local_allele_validation",
+        "expected": "VCF_LOCAL_ALLELE_INVALID",
+        "spec_basis": "VCFv4.5 LAA is a list of distinct 1-based ALT allele indexes",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA\t2/2:2,2"
+        ]
+      },
+      {
+        "id": "local_number_la_cardinality_invalid",
+        "category": "local_allele_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=LA requires one value for each alternate allele in LAA",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
+          "##FORMAT=<ID=FLA,Number=LA,Type=Integer,Description=\"Local alternate values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:FLA\t1/2:2,1:10"
+        ]
+      },
+      {
+        "id": "number_p_populated_without_gt_rejected",
+        "category": "format_ploidy_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=P cardinality is defined by allele values in GT and cannot be inferred when GT is absent",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM_P\t10,20"
+        ]
+      },
+      {
+        "id": "number_p_missing_without_gt_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "A missing Number=P value remains missing when GT is absent; no allele cardinality is asserted",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tCUSTOM_P\t."
+        ]
+      },
+      {
+        "id": "number_m_partial_phasing_mixed_separators_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M follows each allele's phase indicator and aggregates repeated unphased allele values",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0|1/0:0.1,0.2"
+        ]
+      },
+      {
+        "id": "number_m_partial_phasing_mixed_separators_cardinality_invalid",
+        "category": "base_modification_cardinality",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "spec_basis": "VCFv4.5 Number=M does not duplicate the first unphased allele value when the same allele recurs",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0|1/0:0.1,0.2,0.3"
+        ]
+      },
+      {
+        "id": "number_m_partial_phasing_unphased_then_phased_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=M preserves a phased copy after an earlier unphased occurrence of the same allele",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t0/1|0:0.1,0.2,0.3"
+        ]
+      },
+      {
+        "id": "number_m_implicit_prefix_unphased_valid",
+        "category": "base_modification_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 permits an explicit leading phase indicator; an unphased prefix aggregates each distinct unphased allele once",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tC\tG\t.\tPASS\t.\tGT:M5mC\t/0/1:0.1,0.2"
+        ]
+      },
+      {
+        "id": "number_p_haploid_diploid_missing_triploid_valid",
+        "category": "format_ploidy_cardinality",
+        "expected": "PASS",
+        "spec_basis": "VCFv4.5 Number=P cardinality tracks haploid, diploid missing and triploid GT allele counts independently per sample",
+        "lines": [
+          "##fileformat=VCFv4.5",
+          "##FORMAT=<ID=CUSTOM_P,Number=P,Type=Integer,Description=\"Per-allele values\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tHAPLOID\tDIPLOID_MISSING\tTRIPLOID",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM_P\t0:10\t./.:10,20\t0/1/1:1,2,3"
+        ]
       }
     ],
     "VCFv4.0": [
@@ -1710,6 +2237,153 @@
           "2\t2\t.\tA\tG\t.\tPASS\t.",
           "1\t3\t.\tA\tT\t.\tPASS\t."
         ]
+      },
+      {
+        "id": "mixed_gt_phase_separators_invalid_v40",
+        "category": "genotype_phasing",
+        "expected": "VCF_GENOTYPE_INVALID",
+        "clause_ids": [
+          "V40-CORE-GENOTYPE-PHASE-SEPARATOR-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 genotype encoding defines a genotype as phased or unphased using one separator convention; partial phasing is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT\t0|1/0"
+        ]
+      },
+      {
+        "id": "v40_number_a_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "clause_ids": [
+          "V40-CORE-INFO-NUMBER-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 Number is a fixed integer or '.'; per-ALT A cardinality is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=AF,Number=A,Type=Float,Description=\"Allele frequency\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAF=0.5"
+        ]
+      },
+      {
+        "id": "v40_number_g_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "clause_ids": [
+          "V40-CORE-FORMAT-NUMBER-001"
+        ],
+        "spec_basis": "Historical VCFv4.0 Number is a fixed integer or '.'; per-genotype G cardinality is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=GL,Number=G,Type=Float,Description=\"Genotype likelihoods\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:GL\t0/1:-1,-2,-3"
+        ]
+      },
+      {
+        "id": "v40_number_r_rejected",
+        "category": "version_specific_cardinality",
+        "expected": "VCF_HEADER_DEFINITION_INVALID",
+        "clause_ids": [
+          "V40-CORE-INFO-NUMBER-002"
+        ],
+        "spec_basis": "Historical VCFv4.0 Number is a fixed integer or '.'; per-allele including REF R cardinality is not defined",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##INFO=<ID=AD,Number=R,Type=Integer,Description=\"Per-allele depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\tC\t.\tPASS\tAD=10,5"
+        ]
+      },
+      {
+        "id": "v40_sample_genotype_requires_gt_invalid",
+        "category": "legacy_genotype",
+        "expected": "VCF_FORMAT_INVALID",
+        "clause_ids": [
+          "V40-CORE-005",
+          "V40-CORE-024"
+        ],
+        "spec_basis": "Historical VCFv4.0 requires GT when sample genotype columns are present",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tDP\t10"
+        ]
+      },
+      {
+        "id": "v40_spanning_deletion_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-001"
+        ],
+        "spec_basis": "The spanning-deletion '*' allele was added in VCFv4.2",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t*\t.\tPASS\t."
+        ]
+      },
+      {
+        "id": "v40_unspecified_star_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-002"
+        ],
+        "spec_basis": "The unspecified allele '<*>' was added in VCFv4.3",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
+        ]
+      },
+      {
+        "id": "v40_reserved_format_gl_biallelic_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-026"
+        ],
+        "spec_basis": "Historical VCFv4.0 GL stores three Float likelihoods for the diploid biallelic genotypes AA, AB and BB",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:DP:FT:GL:GQ:HQ\t0/1:20:PASS:-1,-2,-3:20.5:20.5,21.5"
+        ]
+      },
+      {
+        "id": "v40_reserved_format_gl_multiallelic_invalid",
+        "category": "legacy_genotype",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-026"
+        ],
+        "spec_basis": "Historical VCFv4.0 GL is defined only for biallelic records",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:GL\t1/2:-1,-2,-3"
+        ]
+      },
+      {
+        "id": "v40_breakend_replacement_notation_rejected",
+        "category": "version_specific_alt",
+        "expected": "VCF_ALT_INVALID",
+        "clause_ids": [
+          "V40-CORE-ALT-003"
+        ],
+        "spec_basis": "Historical VCFv4.0 ALT permits sequence or symbolic ID alleles; breakend replacement notation is defined in VCFv4.1",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+          "1\t2\tBND1\tA\tA[2:20[\t.\tPASS\tSVTYPE=BND"
+        ]
       }
     ]
   },
@@ -1727,18 +2401,27 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "legacy_minimal_snp_valid",
             "legacy_invalid_pos_rejected",
-            "legacy_invalid_ref_rejected"
+            "legacy_invalid_ref_rejected",
+            "legacy_minimal_snp_valid",
+            "v40_breakend_replacement_notation_rejected",
+            "v40_spanning_deletion_star_rejected",
+            "v40_unspecified_star_rejected"
           ]
         },
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
-            "legacy_multiallelic_genotype_valid",
             "legacy_missing_gt_valid",
+            "legacy_multiallelic_genotype_valid",
+            "legacy_out_of_range_gt_rejected",
             "legacy_phased_gt_valid",
-            "legacy_out_of_range_gt_rejected"
+            "mixed_gt_phase_separators_invalid_v40",
+            "v40_number_a_rejected",
+            "v40_number_g_rejected",
+            "v40_reserved_format_gl_biallelic_valid",
+            "v40_reserved_format_gl_multiallelic_invalid",
+            "v40_sample_genotype_requires_gt_invalid"
           ]
         },
         {
@@ -1773,7 +2456,8 @@
           "fixture_ids": [
             "duplicate_header_identifier_invalid",
             "mateid_reserved_header_definition_invalid",
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v41_number_r_rejected"
           ]
         },
         {
@@ -1793,16 +2477,22 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v41_spanning_deletion_star_rejected",
+            "v41_unspecified_star_rejected"
           ]
         },
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "gt_header_wrong_type_rejected",
+            "mixed_gt_phase_separators_invalid_v41",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
-            "triploid_number_g_cardinality_valid"
+            "triploid_number_g_cardinality_valid",
+            "v41_number_a_valid",
+            "v41_number_g_without_gt_diploid_default_valid"
           ]
         },
         {
@@ -1856,7 +2546,8 @@
           "section_title": "Meta-information lines",
           "fixture_ids": [
             "duplicate_header_identifier_invalid",
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v42_number_r_valid"
           ]
         },
         {
@@ -1875,12 +2566,15 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v42_spanning_deletion_star_valid",
+            "v42_unspecified_star_rejected"
           ]
         },
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "mixed_gt_phase_separators_invalid_v42",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
@@ -1959,12 +2653,14 @@
         {
           "section_title": "Fixed fields",
           "fixture_ids": [
-            "minimal_snp_valid"
+            "minimal_snp_valid",
+            "v43_unspecified_star_valid"
           ]
         },
         {
           "section_title": "Genotype fields",
           "fixture_ids": [
+            "mixed_gt_phase_separators_invalid_v43",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
             "triploid_number_g_cardinality_invalid",
@@ -2054,8 +2750,11 @@
             "leading_phase_separator_valid",
             "multiallelic_genotype_valid",
             "out_of_range_genotype_allele_invalid",
+            "partial_gt_phasing_valid_v44",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
+            "v44_number_m_rejected",
+            "v44_number_p_rejected",
             "vcf45_local_allele_encoding_rejected"
           ]
         },
@@ -2141,12 +2840,35 @@
             "base_modification_fraction_out_of_range",
             "base_modification_fraction_valid",
             "local_allele_encoding_valid",
+            "local_global_projection_missing_side_is_ignored",
+            "local_laa_duplicate_alt_index_invalid",
+            "local_lec_requires_laa_invalid",
+            "local_number_la_cardinality_invalid",
+            "local_number_la_lr_lg_cardinality_valid",
+            "local_pl_projection_mismatch_rejected",
+            "local_pl_projection_uses_laa_order_and_colex_genotype_order",
+            "local_reference_only_laa_missing_values_cardinality_valid",
             "multiallelic_genotype_valid",
+            "number_m_implicit_prefix_unphased_valid",
+            "number_m_missing_and_symbolic_alleles_contribute_no_bases",
+            "number_m_n_counts_both_strands",
+            "number_m_partial_phasing_mixed_separators_cardinality_invalid",
+            "number_m_partial_phasing_mixed_separators_valid",
+            "number_m_partial_phasing_unphased_then_phased_valid",
+            "number_m_phased_duplicate_alleles_remain_distinct",
+            "number_m_unphased_duplicate_alleles_aggregate",
+            "number_p_haploid_diploid_missing_triploid_valid",
+            "number_p_missing_without_gt_valid",
+            "number_p_populated_without_gt_rejected",
+            "number_p_triploid_cardinality_valid",
             "out_of_range_genotype_allele_invalid",
+            "partial_gt_phasing_valid_v45",
             "triploid_number_g_cardinality_invalid",
             "triploid_number_g_cardinality_valid",
             "unspecified_allele_len_end_mismatch_invalid",
-            "unspecified_allele_len_reference_block_valid"
+            "unspecified_allele_len_reference_block_valid",
+            "vcf45_all_reserved_format_definitions_valid",
+            "vcf45_base_modification_alias_matrix_valid"
           ]
         },
         {
