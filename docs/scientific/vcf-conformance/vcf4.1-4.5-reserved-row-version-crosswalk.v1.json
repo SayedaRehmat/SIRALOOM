@@ -19,7 +19,7 @@
     }
   ],
   "scope": "Reserved INFO and FORMAT field inventories for VCFv4.1 through VCFv4.5. VCFv4.1/4.2 are preserved as prose enumerations without fabricated Number/Type attributes; VCFv4.3/4.4/4.5 use explicit Number/Type tables. This artifact does not cover all normative prose or non-reserved custom fields.",
-  "method": "Imported exact row text, source line, field ID and declared Number/Type (where actually present) from pinned source-derived artifacts. Mechanical transitions compare row IDs, Number, Type and normalized descriptions. Source locators remain version-specific. No backward inference is applied.",
+  "method": "Imported exact row text, source line, field ID and declared Number/Type (where actually present) from pinned source-derived artifacts. Mechanical transitions compare row IDs, Number, Type and normalized descriptions. Attributes first appearing in a later table are classified as newly_specified rather than semantic changes. Source locators remain version-specific. No backward inference is applied.",
   "versions": {
     "VCFv4.1": {
       "source": {
@@ -2167,14 +2167,16 @@
       "info": {
         "added": [],
         "removed": [],
-        "modified": []
+        "newly_specified": [],
+        "changed": []
       },
       "format": {
         "added": [],
         "removed": [],
-        "modified": []
+        "newly_specified": [],
+        "changed": []
       },
-      "interpretation": "Mechanical row-set/declared-attribute comparison only. Description deltas and row additions/removals require source-context semantic adjudication; unchanged row names do not prove unchanged behavior."
+      "interpretation": "Mechanical source-row comparison. newly_specified means a later version adds Number/Type attributes where the earlier source had none; it is a formalization delta, not proof that the earlier version had those attributes. changed records only compare attributes specified in both versions and normalized descriptions. Semantic effects require contextual review."
     },
     {
       "from": "VCFv4.2",
@@ -2187,50 +2189,246 @@
           "ADR"
         ],
         "removed": [],
-        "modified": [
+        "newly_specified": [
           {
             "id": "AA",
-            "changes": [
+            "fields": [
               {
                 "field": "Number",
-                "from": null,
-                "to": "1"
+                "value": "1"
               },
               {
                 "field": "Type",
-                "from": null,
-                "to": "String"
+                "value": "String"
               }
             ]
           },
           {
             "id": "AC",
-            "changes": [
+            "fields": [
               {
                 "field": "Number",
-                "from": null,
-                "to": "A"
+                "value": "A"
               },
               {
                 "field": "Type",
-                "from": null,
-                "to": "Integer"
+                "value": "Integer"
               }
             ]
           },
           {
             "id": "AF",
-            "changes": [
+            "fields": [
               {
                 "field": "Number",
-                "from": null,
-                "to": "A"
+                "value": "A"
               },
               {
                 "field": "Type",
-                "from": null,
-                "to": "Float"
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "AN",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
               },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "BQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "CIGAR",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "DB",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "END",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "H2",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "H3",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "MQ0",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "NS",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "SB",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "4"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "SOMATIC",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "VALIDATED",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "1000G",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          }
+        ],
+        "changed": [
+          {
+            "id": "AF",
+            "changes": [
               {
                 "field": "description",
                 "from": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
@@ -2239,33 +2437,8 @@
             ]
           },
           {
-            "id": "AN",
-            "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              }
-            ]
-          },
-          {
             "id": "BQ",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Float"
-              },
               {
                 "field": "description",
                 "from": "RMS base quality at this position",
@@ -2274,48 +2447,8 @@
             ]
           },
           {
-            "id": "CIGAR",
-            "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "A"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "String"
-              }
-            ]
-          },
-          {
-            "id": "DB",
-            "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              }
-            ]
-          },
-          {
             "id": "DP",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "combined depth across samples, e.g.\\ DP=154",
@@ -2327,16 +2460,6 @@
             "id": "END",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "end position of the variant described in this record (for use with symbolic alleles)",
                 "to": "End position on CHROM (used with symbolic alleles; see below)"
@@ -2346,16 +2469,6 @@
           {
             "id": "H2",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              },
               {
                 "field": "description",
                 "from": "membership in hapmap2",
@@ -2367,16 +2480,6 @@
             "id": "H3",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              },
-              {
                 "field": "description",
                 "from": "membership in hapmap3",
                 "to": "HapMap3 membership"
@@ -2386,16 +2489,6 @@
           {
             "id": "MQ",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Float"
-              },
               {
                 "field": "description",
                 "from": "RMS mapping quality, e.g.\\ MQ=52",
@@ -2407,16 +2500,6 @@
             "id": "MQ0",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "Number of MAPQ == 0 reads covering this record",
                 "to": "Number of MAPQ == 0 reads"
@@ -2424,33 +2507,8 @@
             ]
           },
           {
-            "id": "NS",
-            "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              }
-            ]
-          },
-          {
             "id": "SB",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "4"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "strand bias at this position",
@@ -2462,16 +2520,6 @@
             "id": "SOMATIC",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              },
-              {
                 "field": "description",
                 "from": "indicates that the record is a somatic mutation, for cancer genomics",
                 "to": "Somatic mutation (for cancer genomics)"
@@ -2479,33 +2527,8 @@
             ]
           },
           {
-            "id": "VALIDATED",
-            "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              }
-            ]
-          },
-          {
             "id": "1000G",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "0"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Flag"
-              },
               {
                 "field": "description",
                 "from": "membership in 1000 Genomes",
@@ -2525,20 +2548,168 @@
         "removed": [
           "GLE"
         ],
-        "modified": [
+        "newly_specified": [
           {
             "id": "GT",
-            "changes": [
+            "fields": [
               {
                 "field": "Number",
-                "from": null,
-                "to": "1"
+                "value": "1"
               },
               {
                 "field": "Type",
-                "from": null,
-                "to": "String"
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
               },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "FT",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "GL",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "PL",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "GP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "GQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "HQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "2"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "PS",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "PQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "EC",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          }
+        ],
+        "changed": [
+          {
+            "id": "GT",
+            "changes": [
               {
                 "field": "description",
                 "from": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
@@ -2550,16 +2721,6 @@
             "id": "DP",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "read depth at this position for this sample (Integer)",
                 "to": "Read depth"
@@ -2569,16 +2730,6 @@
           {
             "id": "FT",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "String"
-              },
               {
                 "field": "description",
                 "from": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
@@ -2590,16 +2741,6 @@
             "id": "GL",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "G"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Float"
-              },
-              {
                 "field": "description",
                 "from": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
                 "to": "Genotype likelihoods"
@@ -2609,16 +2750,6 @@
           {
             "id": "PL",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "G"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
@@ -2630,16 +2761,6 @@
             "id": "GP",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "G"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Float"
-              },
-              {
                 "field": "description",
                 "from": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
                 "to": "Genotype posterior probabilities"
@@ -2649,16 +2770,6 @@
           {
             "id": "GQ",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
@@ -2670,16 +2781,6 @@
             "id": "HQ",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "2"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "haplotype qualities, two comma separated phred qualities (Integers)",
                 "to": "Haplotype quality"
@@ -2689,16 +2790,6 @@
           {
             "id": "PS",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
@@ -2710,16 +2801,6 @@
             "id": "PQ",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
                 "to": "Phasing quality"
@@ -2729,16 +2810,6 @@
           {
             "id": "EC",
             "changes": [
-              {
-                "field": "Number",
-                "from": null,
-                "to": "A"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
               {
                 "field": "description",
                 "from": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
@@ -2750,16 +2821,6 @@
             "id": "MQ",
             "changes": [
               {
-                "field": "Number",
-                "from": null,
-                "to": "1"
-              },
-              {
-                "field": "Type",
-                "from": null,
-                "to": "Integer"
-              },
-              {
                 "field": "description",
                 "from": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
                 "to": "RMS mapping quality"
@@ -2768,7 +2829,7 @@
           }
         ]
       },
-      "interpretation": "Mechanical row-set/declared-attribute comparison only. Description deltas and row additions/removals require source-context semantic adjudication; unchanged row names do not prove unchanged behavior."
+      "interpretation": "Mechanical source-row comparison. newly_specified means a later version adds Number/Type attributes where the earlier source had none; it is a formalization delta, not proof that the earlier version had those attributes. changed records only compare attributes specified in both versions and normalized descriptions. Semantic effects require contextual review."
     },
     {
       "from": "VCFv4.3",
@@ -2777,7 +2838,8 @@
       "info": {
         "added": [],
         "removed": [],
-        "modified": []
+        "newly_specified": [],
+        "changed": []
       },
       "format": {
         "added": [
@@ -2786,9 +2848,10 @@
           "PSQ"
         ],
         "removed": [],
-        "modified": []
+        "newly_specified": [],
+        "changed": []
       },
-      "interpretation": "Mechanical row-set/declared-attribute comparison only. Description deltas and row additions/removals require source-context semantic adjudication; unchanged row names do not prove unchanged behavior."
+      "interpretation": "Mechanical source-row comparison. newly_specified means a later version adds Number/Type attributes where the earlier source had none; it is a formalization delta, not proof that the earlier version had those attributes. changed records only compare attributes specified in both versions and normalized descriptions. Semantic effects require contextual review."
     },
     {
       "from": "VCFv4.4",
@@ -2797,7 +2860,8 @@
       "info": {
         "added": [],
         "removed": [],
-        "modified": [
+        "newly_specified": [],
+        "changed": [
           {
             "id": "END",
             "changes": [
@@ -2858,9 +2922,10 @@
           "ADMXaoN"
         ],
         "removed": [],
-        "modified": []
+        "newly_specified": [],
+        "changed": []
       },
-      "interpretation": "Mechanical row-set/declared-attribute comparison only. Description deltas and row additions/removals require source-context semantic adjudication; unchanged row names do not prove unchanged behavior."
+      "interpretation": "Mechanical source-row comparison. newly_specified means a later version adds Number/Type attributes where the earlier source had none; it is a formalization delta, not proof that the earlier version had those attributes. changed records only compare attributes specified in both versions and normalized descriptions. Semantic effects require contextual review."
     }
   ],
   "counts": {
