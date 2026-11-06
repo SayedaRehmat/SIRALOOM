@@ -72,3 +72,24 @@ The IGSR announcements archive records a July 20, 2010 pilot-project variant-cal
 ## Non-claims
 
 This discovery audit does not establish complete VCFv4.0 coverage, source-byte provenance, parser or validator conformance, implementation mapping, clause-specific test execution, independent standards approval, or laboratory qualification. The 226-record candidate ledger and all existing VCFv4.0 `SOURCE_NOT_PINNED` statuses remain unchanged.
+
+
+## Follow-up inspection of the detailed IGSR page
+
+A direct inspection of the detailed IGSR page at:
+
+https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/
+
+returned a rendered HTML document with 245 extracted lines. The visible page includes:
+
+- explicit VCFv4.0 designation and an example carrying `##fileformat=VCFv4.0`;
+- meta-information syntax and allowed historical types;
+- the eight fixed columns and optional FORMAT/sample columns;
+- fixed-field semantics and the reserved INFO keywords;
+- GT, DP, FT, GL, GQ and HQ descriptions plus missing-value and trailing-field text;
+- the haplotype/allele representation discussion and worked SNP, insertion, deletion, multiallelic and mixed examples;
+- an explicit cross-reference to the separate 1000 Genomes SV conventions page.
+
+The visible footer identifies EMBL-EBI and a rolling site copyright range (2008–2026). The inspected page does not expose an original VCFv4.0 publication revision, a historical source commit, or a stable artifact digest. The current rendered HTML is therefore valuable for content review and source-location planning, but it cannot be silently substituted for the original immutable normative artifact.
+
+This follow-up strengthens the candidate identification and confirms that the page contains substantial core-format content. It does not change the provenance decision above: exact original source bytes and a defensible original revision remain unavailable, so VCFv4.0 remains `SOURCE_NOT_PINNED`.
