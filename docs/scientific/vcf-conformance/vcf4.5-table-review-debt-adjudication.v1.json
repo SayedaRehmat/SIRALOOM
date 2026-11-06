@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-review-debt-adjudication",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_AND_PHASE_SET_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_GENOTYPE_PHASE_SET_GVCF_AND_BASE_MODIFICATION_DELTAS_RECONCILED_REMAINING_TABLE_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source": {
     "repository": "samtools/hts-specs",
@@ -25,9 +25,10 @@
     "linked_candidate_requirement_ids": 96,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 41,
+    "full_clause_level_version_reconciliations_pending": 39,
     "genotype_ordering_version_delta_reconciled": 1,
-    "phase_set_list_version_deltas_reconciled": 2
+    "phase_set_list_version_deltas_reconciled": 2,
+    "base_modification_version_deltas_reconciled": 2
   },
   "gate_rules": [
     "A table disposition is not an atomic requirement and does not close the surrounding prose review.",
@@ -181,9 +182,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to validate Number=M semantics and field ordering; resolve the upstream xanthosine alias capitalization issue before implementation.",
+          "finding": "M/DPM/ADM base-modification fields and aliases are introduced in VCFv4.5; no corresponding field family was found in VCFv4.1-4.4. Number=M cardinality, GT/allele order, strand/missing behavior and reference-block propagation are reconciled in vcf4.1-4.5-base-modification-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -226,7 +227,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:223-229; 720-758"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.3",
@@ -816,9 +818,9 @@
           ]
         },
         "version_specificity_or_shared_behavior": {
-          "status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING",
-          "remaining_work": "Confirm this is VCFv4.5-only by full source scan, then atomize the M/DPM/ADM field family and its aliases, allele/base ordering, strand/missing semantics and reference-block propagation. Resolve the xanthosine alias case issue for affected examples.",
-          "finding": "A preliminary version applicability scan is now recorded for VCFv4.1-4.5. This is not the final semantic delta adjudication and does not establish exact table identity or backward compatibility."
+          "status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW",
+          "remaining_work": "Independent reviewer to validate Number=M semantics and field ordering; resolve the upstream xanthosine alias capitalization issue before implementation.",
+          "finding": "M/DPM/ADM base-modification fields and aliases are introduced in VCFv4.5; no corresponding field family was found in VCFv4.1-4.4. Number=M cardinality, GT/allele order, strand/missing behavior and reference-block propagation are reconciled in vcf4.1-4.5-base-modification-version-delta.v1.json."
         }
       },
       "independent_review_status": "NOT_STARTED",
@@ -852,7 +854,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:720-758"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.8",
