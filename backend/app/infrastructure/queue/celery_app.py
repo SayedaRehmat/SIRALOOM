@@ -387,33 +387,20 @@ if Celery is not None:
         from datetime import datetime, timezone
         from uuid import UUID
         from celery.exceptions import Reject
+        from sqlalchemy import select
         from backend.app.config import settings
         from backend.app.infrastructure.db.models import ArtifactValidationDispatch
-        from backend.app.infrastructure.db.session import SessionLocal, engine
+        from backend.app.infrastructure.db.session import SessionLocal
         from backend.app.domain.artifact_validation import validate_persisted_artifact
         from backend.app.domain.ingestion import VCFValidationUnavailable
 
         artifact_uuid = UUID(artifact_id)
         task_id = str(self.request.id or "")
         redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
-        lock_connection = engine.connect() if engine.dialect.name == "postgresql" else None
-        lock_key = int.from_bytes(
-            hashlib.sha256(f"artifact-validation:{artifact_uuid}".encode("utf-8")).digest()[:8],
-            byteorder="big",
-            signed=True,
-        )
         db = SessionLocal()
         try:
-            if lock_connection is not None:
-                acquired = bool(lock_connection.execute(
-                    "SELECT pg_try_advisory_lock(:lock_key)", {"lock_key": lock_key}
-                ).scalar_one())
-                lock_connection.commit()
-                if not acquired:
-                    return {"artifact_id": artifact_id, "status": "ALREADY_RUNNING"}
-
             dispatch = db.scalar(
-                __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                select(ArtifactValidationDispatch)
                 .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
                 .with_for_update()
             )
@@ -450,7 +437,7 @@ if Celery is not None:
             retry_db = SessionLocal()
             try:
                 dispatch = retry_db.scalar(
-                    __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                    select(ArtifactValidationDispatch)
                     .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
                     .with_for_update()
                 )
@@ -465,7 +452,7 @@ if Celery is not None:
                 terminal_db = SessionLocal()
                 try:
                     dispatch = terminal_db.scalar(
-                        __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                        select(ArtifactValidationDispatch)
                         .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
                         .with_for_update()
                     )
@@ -483,7 +470,7 @@ if Celery is not None:
             failure_db = SessionLocal()
             try:
                 dispatch = failure_db.scalar(
-                    __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                    select(ArtifactValidationDispatch)
                     .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
                     .with_for_update()
                 )
@@ -500,7 +487,7 @@ if Celery is not None:
         complete_db = SessionLocal()
         try:
             dispatch = complete_db.scalar(
-                __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                select(ArtifactValidationDispatch)
                 .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
                 .with_for_update()
             )
