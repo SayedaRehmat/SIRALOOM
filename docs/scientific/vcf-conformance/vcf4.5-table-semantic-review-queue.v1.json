@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_40_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_AND_SAMPLE_PEDIGREE_DELTAS_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_42_TABLE_VERSION_DELTAS_RECONCILED_RESERVED_INFO_FORMAT_DELTAS_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,10 +26,10 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 5,
+    "open_review_questions": 3,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 4,
+    "full_clause_level_version_reconciliations_pending": 2,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
@@ -37,7 +37,8 @@
     "character_encoding_version_delta_reconciled": 1,
     "local_allele_version_deltas_reconciled": 1,
     "small_variant_representation_version_deltas_reconciled": 15,
-    "breakend_version_deltas_reconciled": 17
+    "breakend_version_deltas_reconciled": 17,
+    "sample_mixture_pedigree_version_deltas_reconciled": 2
   },
   "tables": [
     {
@@ -3224,9 +3225,7 @@
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Compare SAMPLE Genomes/Mixture/Description semantics and the two example data models across all five versions; preserve descriptive examples as non-mandatory deconvolution behavior."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
       "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
@@ -3240,7 +3239,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -3279,7 +3278,8 @@
           "locator": "VCFv4.5.tex:1731-1774",
           "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.43",
@@ -3300,9 +3300,7 @@
       "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
       "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Compare PEDIGREE syntax, parent/ancestor cardinality, clonal lineage and haplotype identity semantics across all five versions; preserve modal force and distinguish suggestions from requirements."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
       "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
@@ -3316,7 +3314,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -3364,7 +3362,8 @@
           "locator": "VCFv4.5.tex:344; 1776-1843",
           "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.44",
