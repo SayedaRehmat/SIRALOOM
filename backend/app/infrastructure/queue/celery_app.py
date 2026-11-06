@@ -27,6 +27,10 @@ if Celery is not None:
                 "task": "siraloom.scan_reanalysis_resources",
                 "schedule": 86400.0,
             },
+            "dispatch-pending-artifact-validation-outbox": {
+                "task": "siraloom.dispatch_pending_artifact_validation_outbox",
+                "schedule": 15.0,
+            },
             "recover-analysis-dispatch-outbox": {
                 "task": "siraloom.dispatch_pending_analysis_outbox",
                 "schedule": 30.0,
@@ -296,6 +300,219 @@ if Celery is not None:
             return task.id
         finally:
             db.close()
+
+
+    def publish_artifact_validation_dispatch(dispatch_id):
+        """Publish one durable artifact-validation intent to its pinned toolchain queue."""
+        from datetime import datetime, timezone
+        from backend.app.infrastructure.db.models import Artifact, ArtifactValidationDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            dispatch = db.get(ArtifactValidationDispatch, dispatch_id, with_for_update=True)
+            if dispatch is None:
+                return None
+            artifact = db.get(Artifact, dispatch.artifact_id)
+            if artifact is None:
+                dispatch.status = "FAILED"
+                dispatch.last_error = "Artifact row is missing; validation cannot execute."
+                db.commit()
+                return None
+            if artifact.validation_status != "PENDING":
+                dispatch.status = "COMPLETED"
+                dispatch.completed_at = datetime.now(timezone.utc)
+                db.commit()
+                return None
+            if dispatch.status == "COMPLETED" or dispatch.status == "FAILED":
+                return None
+            if dispatch.status == "PUBLISHED" and dispatch.task_id:
+                state = celery_app.AsyncResult(dispatch.task_id).state
+                if state not in {"FAILURE", "REVOKED"}:
+                    return dispatch.task_id
+                dispatch.status = "PENDING"
+                dispatch.task_id = None
+                dispatch.last_error = f"Previous broker task ended in {state}; republishing durable validation."
+                db.commit()
+
+            # Publish while holding the row lock, then commit PUBLISHED. If the
+            # process dies after broker publication but before commit, the same
+            # deterministic task ID may be published again; the worker fence and
+            # idempotent artifact state prevent duplicate scientific mutation.
+            task = run_artifact_validation_task.apply_async(
+                args=[str(dispatch.artifact_id)],
+                task_id=str(dispatch.id),
+                queue=dispatch.toolchain_queue,
+            )
+            dispatch.status = "PUBLISHED"
+            dispatch.task_id = task.id
+            dispatch.attempts += 1
+            dispatch.last_error = None
+            dispatch.published_at = datetime.now(timezone.utc)
+            db.add(dispatch)
+            db.commit()
+            return task.id
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+
+    @celery_app.task(name="siraloom.dispatch_pending_artifact_validation_outbox", autoretry_for=(), acks_late=True)
+    def dispatch_pending_artifact_validation_outbox():
+        from sqlalchemy import select
+        from backend.app.infrastructure.db.models import ArtifactValidationDispatch
+        from backend.app.infrastructure.db.session import SessionLocal
+
+        db = SessionLocal()
+        try:
+            dispatch_ids = list(db.scalars(
+                select(ArtifactValidationDispatch.id).where(
+                    ArtifactValidationDispatch.status.in_(("PENDING", "PUBLISHED"))
+                ).order_by(ArtifactValidationDispatch.created_at)
+            ))
+        finally:
+            db.close()
+
+        dispatched = 0
+        for dispatch_id in dispatch_ids:
+            if publish_artifact_validation_dispatch(dispatch_id):
+                dispatched += 1
+        return {"inspected": len(dispatch_ids), "dispatched": dispatched}
+
+
+    @celery_app.task(bind=True, name="siraloom.run_artifact_validation", autoretry_for=(), acks_late=True, max_retries=3)
+    def run_artifact_validation_task(self, artifact_id: str):
+        from datetime import datetime, timezone
+        from uuid import UUID
+        from celery.exceptions import Reject
+        from backend.app.config import settings
+        from backend.app.infrastructure.db.models import ArtifactValidationDispatch
+        from backend.app.infrastructure.db.session import SessionLocal, engine
+        from backend.app.domain.artifact_validation import validate_persisted_artifact
+        from backend.app.domain.ingestion import VCFValidationUnavailable
+
+        artifact_uuid = UUID(artifact_id)
+        task_id = str(self.request.id or "")
+        redelivered = bool((self.request.delivery_info or {}).get("redelivered"))
+        lock_connection = engine.connect() if engine.dialect.name == "postgresql" else None
+        lock_key = int.from_bytes(
+            hashlib.sha256(f"artifact-validation:{artifact_uuid}".encode("utf-8")).digest()[:8],
+            byteorder="big",
+            signed=True,
+        )
+        db = SessionLocal()
+        try:
+            if lock_connection is not None:
+                acquired = bool(lock_connection.execute(
+                    "SELECT pg_try_advisory_lock(:lock_key)", {"lock_key": lock_key}
+                ).scalar_one())
+                lock_connection.commit()
+                if not acquired:
+                    return {"artifact_id": artifact_id, "status": "ALREADY_RUNNING"}
+
+            dispatch = db.scalar(
+                __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
+                .with_for_update()
+            )
+            if dispatch is None:
+                return {"artifact_id": artifact_id, "status": "DISPATCH_NOT_FOUND"}
+            if dispatch.task_id != task_id:
+                return {"artifact_id": artifact_id, "status": "STALE_TASK_FENCED"}
+            if dispatch.status in {"COMPLETED", "FAILED"}:
+                return {"artifact_id": artifact_id, "status": dispatch.status}
+            if dispatch.status == "RUNNING" and not redelivered and self.request.retries == 0:
+                return {"artifact_id": artifact_id, "status": "ALREADY_CLAIMED"}
+
+            if (
+                dispatch.toolchain_profile_id != settings.bcftools_profile_id
+                or dispatch.toolchain_bcftools_version != settings.bcftools_version
+                or dispatch.toolchain_htslib_version != settings.htslib_version
+            ):
+                raise Reject(
+                    "Artifact validation task reached a worker with a different BCFtools/HTSlib profile.",
+                    requeue=True,
+                )
+            dispatch.status = "RUNNING"
+            dispatch.attempts += 1
+            dispatch.started_at = datetime.now(timezone.utc)
+            dispatch.last_error = None
+            db.add(dispatch)
+            db.commit()
+        finally:
+            db.close()
+
+        try:
+            result = validate_persisted_artifact(artifact_uuid)
+        except VCFValidationUnavailable as exc:
+            retry_db = SessionLocal()
+            try:
+                dispatch = retry_db.scalar(
+                    __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                    .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
+                    .with_for_update()
+                )
+                if dispatch is not None and dispatch.task_id == task_id:
+                    dispatch.status = "RETRYING"
+                    dispatch.last_error = str(exc)[:4000]
+                    retry_db.add(dispatch)
+                    retry_db.commit()
+            finally:
+                retry_db.close()
+            if self.request.retries >= 3:
+                terminal_db = SessionLocal()
+                try:
+                    dispatch = terminal_db.scalar(
+                        __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                        .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
+                        .with_for_update()
+                    )
+                    if dispatch is not None and dispatch.task_id == task_id:
+                        dispatch.status = "FAILED"
+                        dispatch.last_error = f"Validation unavailable after bounded retries: {exc}"[:4000]
+                        dispatch.completed_at = datetime.now(timezone.utc)
+                        terminal_db.add(dispatch)
+                        terminal_db.commit()
+                finally:
+                    terminal_db.close()
+                raise
+            raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)), max_retries=3)
+        except Exception as exc:
+            failure_db = SessionLocal()
+            try:
+                dispatch = failure_db.scalar(
+                    __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                    .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
+                    .with_for_update()
+                )
+                if dispatch is not None and dispatch.task_id == task_id:
+                    dispatch.status = "FAILED"
+                    dispatch.last_error = str(exc)[:4000]
+                    dispatch.completed_at = datetime.now(timezone.utc)
+                    failure_db.add(dispatch)
+                    failure_db.commit()
+            finally:
+                failure_db.close()
+            raise
+
+        complete_db = SessionLocal()
+        try:
+            dispatch = complete_db.scalar(
+                __import__("sqlalchemy").select(ArtifactValidationDispatch)
+                .where(ArtifactValidationDispatch.artifact_id == artifact_uuid)
+                .with_for_update()
+            )
+            if dispatch is not None and dispatch.task_id == task_id:
+                dispatch.status = "COMPLETED"
+                dispatch.completed_at = datetime.now(timezone.utc)
+                dispatch.last_error = None
+                complete_db.add(dispatch)
+                complete_db.commit()
+        finally:
+            complete_db.close()
+        return result
 
 
     @celery_app.task(bind=True, autoretry_for=(), acks_late=True, max_retries=3)
