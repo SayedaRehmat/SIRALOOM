@@ -276,7 +276,8 @@
         },
         "surrounding_definitions_footnotes_cross_references": {
           "status": "PARTIAL_REVIEW_LOCATOR_LEVEL_RECONCILIATION_PENDING",
-          "remaining_work": "For each of the 63 FORMAT rows, map definition, Number/Type and any genotype/ploidy/local-allele/base-modification/phase/SV conditions to exact prose clauses; identify reserved-but-not-required behavior."
+          "remaining_work": "Resolve the case-sensitive xanthosine alias discrepancy using source history and/or authoritative maintainer clarification; record the canonical spellings and provenance. Also complete exact row-to-prose/footnote locator mapping for all 63 FORMAT rows, including GT/ploidy, local-allele, base-modification, phase-set and SV dependencies.",
+          "finding": "A source-internal case discrepancy is recorded for the xanthosine alias family: the reserved FORMAT table uses MXaoN/DPMXaoN/ADMXaoN at lines 586-588, while surrounding prose uses MxaoN/DPMxaoN/ADMxaoN at lines 724, 734 and 740 (the base-modification prose/alias context also requires checking line 218). This must be resolved from pinned source history or authoritative maintainer clarification; do not silently normalize case."
         },
         "version_specificity_or_shared_behavior": {
           "status": "NOT_YET_ASSESSED",
@@ -285,7 +286,35 @@
       },
       "independent_review_status": "NOT_STARTED",
       "review_basis_source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
-      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      "review_basis_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_internal_issues": [
+        {
+          "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+          "severity": "BLOCKING_SPECIFICATION_AMBIGUITY",
+          "status": "OPEN_NEEDS_SOURCE_HISTORY_OR_MAINTAINER_CLARIFICATION",
+          "table_row_locators": [
+            "VCFv4.5.tex:586-588"
+          ],
+          "prose_locators": [
+            "VCFv4.5.tex:724",
+            "VCFv4.5.tex:734",
+            "VCFv4.5.tex:740",
+            "VCFv4.5.tex:218"
+          ],
+          "table_spellings": [
+            "MXaoN",
+            "DPMXaoN",
+            "ADMXaoN"
+          ],
+          "prose_spellings": [
+            "MxaoN",
+            "DPMxaoN",
+            "ADMxaoN"
+          ],
+          "consequence": "VCF identifiers are case-sensitive; implementation must not guess which spelling is canonical or silently accept both as equivalent without a documented compatibility policy.",
+          "required_resolution": "Inspect exact upstream commit history for the affected lines and seek maintainer clarification if history does not establish intent. Record resolution and source evidence before freezing requirements."
+        }
+      ]
     },
     {
       "table_id": "VCF5.5",
