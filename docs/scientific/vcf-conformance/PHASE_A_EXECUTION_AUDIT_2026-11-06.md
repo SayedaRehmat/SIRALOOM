@@ -270,3 +270,72 @@ Description changes in table rows are not treated as proof that the detailed fie
 At the time of this audit refresh, the current PR head is `f3a764a62c878e36b80e32becfe110988f061470`. GitHub Actions run `42186100933` is pending for that head; Vercel is also pending. A prior run `42185002380` passed all three jobs (backend, frontend and postgres-integration) for an earlier commit `707dd56963076b9f3f570e5059f26aa3078d6f97`; it must not be represented as a pass on the current head.
 
 The next work is the full clause-level delta reconciliation for all 44 tables and then the remaining whole-source requirement ledger review. PR #293 remains draft and unmerged. Independent review, implementation mapping, clause-specific executable conformance testing and laboratory qualification remain open.
+
+
+## 12. Reserved-row reconciliation and remaining VCF 4.5 table debt
+
+### 12.1 All 44 tables: current status
+
+The author-level table work now records:
+- 44/44 exact source-context locator sets;
+- 44/44 preliminary VCFv4.1–4.5 applicability matrices;
+- 42/44 table version-delta assessments reconciled into dedicated evidence artifacts;
+- 2/44 reserved INFO/FORMAT tables with row-level version deltas inventoried but field-by-field normative prose/footnote mapping still pending;
+- 0 independent table reviews completed.
+
+The only three table-specific open questions are:
+1. VCF5.3 — complete field-by-field normative prose/footnote mapping for the 21 INFO rows across all five versions.
+2. VCF5.4 — complete field-by-field normative prose/footnote mapping for the 64-field union of FORMAT IDs across all five versions.
+3. VCF5.4 — resolve the upstream case-sensitive xanthosine alias inconsistency (VCF45-FORMAT-XAON-ALIAS-CASE-001).
+
+### 12.2 New reserved INFO/FORMAT matrix
+
+`vcf4.1-4.5-reserved-info-format-field-matrix.v1.json` now contains the union of all reserved row IDs and per-version row data:
+
+- 21 reserved INFO row IDs across VCFv4.1–4.5.
+- 64 reserved FORMAT row IDs across VCFv4.1–4.5 (the union includes GLE, which is removed in VCFv4.3).
+- VCFv4.5 specifically contains 21 INFO rows and 63 FORMAT rows; all 84 have author row/context dispositions.
+- VCFv4.1/4.2 prose-only representations are retained without fabricated Number/Type values.
+- Per-version source lines, descriptions, Number/Type where present, and mechanical row changes are recorded.
+
+### 12.3 Reserved-row transition findings
+
+The reserved-row semantic delta artifact records:
+
+- VCFv4.1→4.2: no reserved INFO/FORMAT row inventory changes found.
+- VCFv4.2→4.3: INFO AD/ADF/ADR and FORMAT AD/ADF/ADR/PP added; GLE removed; Number/Type attributes formalized in tables.
+- VCFv4.3→4.4: PSL/PSO/PSQ added with Number=P; SVLEN changes from Number=. to Number=A.
+- VCFv4.4→4.5: 44 FORMAT rows added (one LEN, ten local-allele fields, three base-modification generic key patterns and 30 named aliases); INFO END row becomes explicitly deprecated/backward-compatibility.
+
+The row inventory and mechanical version deltas are now reconciled. The remaining VCF5.3/VCF5.4 work is the exact field-by-field prose/footnote mapping and atomic requirement linkage, not re-counting or re-discovering the row sets.
+
+### 12.4 Table-specific version-delta artifacts completed
+
+Dedicated source-backed version-delta artifacts have been added for:
+- genotype ordering and GLE removal/general-ploidy transition;
+- PSL/PSO/PSQ phase-set list fields;
+- gVCF reference blocks and FORMAT LEN;
+- base modifications and Number=M;
+- character encoding and percent-encoding;
+- local alleles and Number=LA/LR/LG;
+- small-variant representation and the VCFv4.3 increasing-POS rule;
+- breakend syntax, symbolic <BND> prohibition and SVTYPE deprecation;
+- sample mixture/PEDIGREE syntax, DPADJ/CNADJ/CICNADJ removal and CN changes.
+
+These author-level artifacts are attached to the 44-table adjudication records. They do not constitute independent approval or executable conformance.
+
+### 12.5 Upstream alias ambiguity remains blocking
+
+The xanthosine alias discrepancy is traced to upstream VCFv4.5 RC2 commit `44aedcff5032a6a16f271085e2d9b16de1f0ccbf`; both spellings were introduced in the same upstream change. The source history does not establish canonical case. This remains an unresolved specification ambiguity and must not be normalized or silently accepted by implementation.
+
+### 12.6 Current quality gates
+
+- Independent second-person review: 0 completed.
+- Atomic ledger field-level mapping for VCF5.3/5.4: pending.
+- Complete source-to-requirement reconciliation for VCFv4.1–4.5: pending.
+- VCFv4.0 authoritative historical source capture: pending.
+- Production implementation mapping: not started.
+- Clause-specific executable conformance tests: not started.
+- Laboratory qualification: not started.
+
+The current PR remains draft and unmerged. CI and Vercel results must be checked against the final PR head; prior successful CI runs on older commits do not qualify the current head.
