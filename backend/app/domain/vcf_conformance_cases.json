@@ -1576,7 +1576,7 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
-          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,3,5"
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,3,5,1,4,2"
         ]
       },
       {
@@ -1589,7 +1589,7 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
-          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,4,5"
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:0,1,2,3,4,5:0,3,5,1,4,99"
         ]
       },
       {
@@ -1602,7 +1602,7 @@
           "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">",
           "##FORMAT=<ID=LAA,Number=.,Type=Integer,Description=\"Local ALT allele indexes\">",
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
-          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:.:0,3,5"
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:PL:LPL\t1/2:2,1:.:0,3,5,1,4,2"
         ]
       },
       {
