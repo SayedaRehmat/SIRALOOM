@@ -1882,6 +1882,11 @@ def _validate_record(
         if not fmt:
             raise StrictVCFValidationError(f"FORMAT is empty at line {line_no}", code="VCF_FORMAT_INVALID")
         keys = fmt.split(":")
+        if fileformat == "VCFv4.0" and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data requires FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         ambiguous_base_modification_aliases = (
             VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES.intersection(keys)
             if fileformat == "VCFv4.5"
