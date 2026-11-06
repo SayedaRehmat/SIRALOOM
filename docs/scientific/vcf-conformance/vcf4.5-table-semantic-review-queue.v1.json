@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-table-semantic-review-queue",
-  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_SEVEN_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
+  "status": "AUTHOR_CONTEXT_AND_PRELIMINARY_APPLICABILITY_COMPLETE_EIGHT_TABLE_VERSION_DELTAS_RECONCILED_REMAINING_DELTAS_AND_INDEPENDENT_REVIEW_PENDING",
   "source": {
     "repository": "samtools/hts-specs",
     "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
@@ -26,15 +26,16 @@
     "version_delta_assessments_not_yet_performed": 0,
     "semantic_reconciliation_incomplete": 44,
     "source_internal_blocking_ambiguities": 1,
-    "open_review_questions": 38,
+    "open_review_questions": 37,
     "author_context_locator_reconciliations_complete": 44,
     "preliminary_version_comparisons_recorded": 44,
-    "full_clause_level_version_reconciliations_pending": 37,
+    "full_clause_level_version_reconciliations_pending": 36,
     "genotype_ordering_version_delta_reconciled": 1,
     "phase_set_list_version_deltas_reconciled": 2,
     "base_modification_version_deltas_reconciled": 2,
     "gvcf_reference_block_version_deltas_reconciled": 1,
-    "character_encoding_version_delta_reconciled": 1
+    "character_encoding_version_delta_reconciled": 1,
+    "local_allele_version_deltas_reconciled": 1
   },
   "tables": [
     {
@@ -546,9 +547,7 @@
       "semantic_review_target": "Review local/global allele vector mapping, LAA order, LA/LR/LG cardinalities and REF handling against prose.",
       "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
       "atomic_requirement_ids": [],
-      "open_questions": [
-        "Confirm the local-allele family is introduced in 4.5; atomize LAA presence/order, local A/R/G equivalents, BCF empty-vector semantics, and the conditions under which local/global representations are equivalent."
-      ],
+      "open_questions": [],
       "independent_review_status": "NOT_STARTED",
       "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
       "review_notes": "Checked local/global equivalence, LAA 1-based ALT ordering, implicit REF, local A/R/G mapping and BCF empty-vector caveat against prose.",
@@ -562,7 +561,7 @@
         "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
         "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
         "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
-        "version_delta_status": "PRELIMINARY_SECTION_LEVEL_COMPARISON_RECORDED_FULL_CLAUSE_DELTA_PENDING"
+        "version_delta_status": "AUTHOR_LOCAL_ALLELE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
       },
       "reviewed_context_locators": [
         {
@@ -592,7 +591,8 @@
           "status": "PRESENT",
           "locator": "VCFv4.5.tex:188-202; 686-718"
         }
-      }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-local-allele-version-delta.v1.json"
     },
     {
       "table_id": "VCF5.7",
