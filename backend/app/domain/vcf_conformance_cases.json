@@ -2236,6 +2236,36 @@
           "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
           "1\t2\t.\tA\t<*>\t.\tPASS\tEND=2"
         ]
+      },
+      {
+        "id": "v40_reserved_format_gl_biallelic_valid",
+        "category": "legacy_genotype",
+        "expected": "PASS",
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-026"
+        ],
+        "spec_basis": "Historical VCFv4.0 GL stores three Float likelihoods for the diploid biallelic genotypes AA, AB and BB",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:DP:FT:GL:GQ:HQ\t0/1:20:PASS:-1,-2,-3:20.5:20.5,21.5"
+        ]
+      },
+      {
+        "id": "v40_reserved_format_gl_multiallelic_invalid",
+        "category": "legacy_genotype",
+        "expected": "VCF_FIELD_CARDINALITY_INVALID",
+        "clause_ids": [
+          "V40-CORE-024",
+          "V40-CORE-026"
+        ],
+        "spec_basis": "Historical VCFv4.0 GL is defined only for biallelic records",
+        "lines": [
+          "##fileformat=VCFv4.0",
+          "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+          "1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:GL\t1/2:-1,-2,-3"
+        ]
       }
     ]
   },
@@ -2270,6 +2300,8 @@
             "mixed_gt_phase_separators_invalid_v40",
             "v40_number_a_rejected",
             "v40_number_g_rejected",
+            "v40_reserved_format_gl_biallelic_valid",
+            "v40_reserved_format_gl_multiallelic_invalid",
             "v40_sample_genotype_requires_gt_invalid"
           ]
         },
