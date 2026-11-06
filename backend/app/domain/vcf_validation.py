@@ -213,6 +213,17 @@ class StrictVCFValidationError(ValueError):
         self.code = code
 
 
+def _reject_ambiguous_vcf45_base_modification_alias(
+    identifier: str, line_no: int
+) -> None:
+    raise StrictVCFValidationError(
+        f"VCF45-FORMAT-XAON-ALIAS-CASE-001: alias {identifier!r} has "
+        f"conflicting upstream capitalization and is blocked pending "
+        f"authoritative clarification at line {line_no}",
+        code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
+    )
+
+
 def _verify_bgzf(path: str | Path) -> dict[str, int | str | bool]:
     """Validate every BGZF block and return compression provenance."""
     source = Path(path)
@@ -782,10 +793,7 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         and kind == "FORMAT"
         and identifier in VCF45_AMBIGUOUS_BASE_MODIFICATION_ALIASES
     ):
-        raise StrictVCFValidationError(
-            f"VCFv4.5 base-modification FORMAT alias {identifier!r} is ambiguous in the upstream specification and is blocked pending authoritative clarification at line {line_no}",
-            code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
-        )
+        _reject_ambiguous_vcf45_base_modification_alias(identifier, line_no)
     if not _field_key_is_valid(kind, identifier, fileformat):
         raise StrictVCFValidationError(
             f"Invalid {kind} field ID at line {line_no}: {identifier!r}",
@@ -1863,10 +1871,7 @@ def _validate_record(
         )
         if ambiguous_base_modification_aliases:
             identifier = sorted(ambiguous_base_modification_aliases)[0]
-            raise StrictVCFValidationError(
-                f"VCFv4.5 base-modification FORMAT alias {identifier!r} is ambiguous in the upstream specification and is blocked pending authoritative clarification at line {line_no}",
-                code="VCF_BASE_MODIFICATION_ALIAS_AMBIGUOUS",
-            )
+            _reject_ambiguous_vcf45_base_modification_alias(identifier, line_no)
         if len(keys) != len(set(keys)) or any(
             not _field_key_is_valid("FORMAT", key, fileformat) for key in keys
         ):
