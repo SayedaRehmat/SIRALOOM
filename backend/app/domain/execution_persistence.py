@@ -432,18 +432,23 @@ def complete_tool_execution(
     artifact_ids: list[UUID] = []
     expected_hashes: dict[str, str] = {}
     for item in safe_outputs:
-        if not isinstance(item, dict) or not item.get("name") or not item.get("artifact_id"):
-            raise ExecutionPersistenceError("Each output must identify its name, persisted artifact_id and SHA-256.")
+        if not isinstance(item, dict) or not item.get("name"):
+            raise ExecutionPersistenceError("Each output must identify its name and SHA-256.")
+        if not item.get("artifact_id") and item.get("retention") != "EPHEMERAL_INTERMEDIATE":
+            raise ExecutionPersistenceError(
+                "An output without a persisted artifact_id must be explicitly classified as an ephemeral intermediate."
+            )
         name = item["name"]
         if name in output_names:
             raise ExecutionPersistenceError("Output manifest names must be unique.")
         output_names.add(name)
         _require_sha256(item.get("sha256"), f"Output {name} SHA-256")
-        try:
-            artifact_id = UUID(str(item["artifact_id"]))
-        except (ValueError, TypeError) as exc:
-            raise ExecutionPersistenceError(f"Output {name} has an invalid artifact ID.") from exc
-        artifact_ids.append(artifact_id)
+        if item.get("artifact_id"):
+            try:
+                artifact_id = UUID(str(item["artifact_id"]))
+            except (ValueError, TypeError) as exc:
+                raise ExecutionPersistenceError(f"Output {name} has an invalid artifact ID.") from exc
+            artifact_ids.append(artifact_id)
         expected_hashes[name] = item["sha256"].lower()
 
     artifacts = db.scalars(select(Artifact).where(Artifact.id.in_(artifact_ids))).all() if artifact_ids else []
@@ -452,6 +457,8 @@ def complete_tool_execution(
         raise ExecutionPersistenceError("One or more declared output artifacts are not durably registered.")
     analysis_case_id = db.scalar(select(Analysis.case_id).where(Analysis.id == row.analysis_id))
     for item in safe_outputs:
+        if not item.get("artifact_id"):
+            continue
         artifact = by_id[UUID(str(item["artifact_id"]))]
         if artifact.analysis_id != row.analysis_id or artifact.case_id != analysis_case_id:
             raise ExecutionPersistenceError("Output artifact is not attached to this analysis and case.")
