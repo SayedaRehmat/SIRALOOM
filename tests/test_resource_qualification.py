@@ -204,9 +204,9 @@ def _vep_resource(tmp_path: Path):
         }],
     }, sort_keys=True), encoding="utf-8")
     fasta = tmp_path / "GRCh38.fa"
-    fasta.write_text(">1\\nACGTACGT\\n", encoding="utf-8")
+    fasta.write_text(">1\nACGTACGT\n", encoding="utf-8")
     fai = tmp_path / "GRCh38.fa.fai"
-    fai.write_text("1\\t8\\t3\\t8\\t9\\n", encoding="utf-8")
+    fai.write_text("1\t8\t3\t8\t9\n", encoding="utf-8")
     reference_package = {
         "resource_id": "reference-grch38",
         "version": "reference-v1",
