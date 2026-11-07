@@ -114,16 +114,7 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                 "status": artifact.validation_status,
                 "idempotent": True,
             }
-        # Serialize case-level intake recomputation with concurrent VCF
-        # uploads and validation workers. Match the upload path's NO KEY UPDATE
-        # lock (SQLAlchemy key_share=True) and refresh an identity-map instance
-        # that may have been loaded before waiting for the row lock.
-        case = db.scalar(
-            select(Case)
-            .where(Case.id == artifact.case_id)
-            .with_for_update(key_share=True)
-            .execution_options(populate_existing=True)
-        )
+        case = db.get(Case, artifact.case_id)
         if case is None or case.organization_id is None:
             raise RuntimeError("Artifact case/tenant identity is unavailable for validation.")
         metadata = dict(artifact.metadata_json or {})
@@ -226,6 +217,17 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
         db.add(artifact)
         db.add(case)
         if kind == "VCF":
+            # Lock only after this artifact's validation result is staged, so
+            # independent VCF validation can run concurrently. The lock must
+            # precede the aggregate status query in _refresh_case_intake().
+            case = db.scalar(
+                select(Case)
+                .where(Case.id == artifact.case_id)
+                .with_for_update(key_share=True)
+                .execution_options(populate_existing=True)
+            )
+            if case is None:
+                raise RuntimeError("Artifact case disappeared during validation.")
             _refresh_case_intake(db, case)
         AuditService(db).record(
             event_type=event_type,
