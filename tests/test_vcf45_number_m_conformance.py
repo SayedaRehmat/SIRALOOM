@@ -137,7 +137,7 @@ def test_number_m_U_is_synonymous_with_T(tmp_path: Path):
     path = tmp_path / "number-m-uracil-synonymous-with-thymine.vcf"
     _write_number_m_vcf(
         path,
-        reference="TAA",
+        reference="TCC",
         alternate=".",
         genotype="0",
         field_id="M16964U",
