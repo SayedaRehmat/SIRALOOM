@@ -1,0 +1,3128 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-atomic-context-review-pass2-2026-11-07",
+  "status": "AUTHOR_CONTEXT_REVIEW_COMPLETE_INDEPENDENT_REVIEW_PENDING",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source": {
+    "file": "VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "input_registry_blob_sha": "d72ac4b4fe3231c9c2418293af6e38a9c006f5ae",
+  "counts": {
+    "records_reviewed": 161,
+    "records_with_valid_source_pins_and_locators": 161,
+    "records_corrected_or_refined": 30,
+    "records_with_source_ambiguity_retained": 10,
+    "informative_or_definitional_records": 29
+  },
+  "method": "Each provisional statement was reread with its complete source paragraph/table/list context in the pinned VCFv4.5.tex file. Review checked actor/referent, conditions, normative force, one-behavior atomicity, source line accuracy, descriptive versus normative content, repeated clauses and source ambiguities. This is an author-level review; no independent approval is claimed.",
+  "limitations": [
+    "The source text itself contains unresolved internal inconsistencies documented in the ambiguity artifact.",
+    "Some descriptive/definition records are supporting semantic evidence, not standalone file-validation MUST rules.",
+    "A single computed END maximum is retained as one aggregate rule because the three endpoints jointly define the maximum operation.",
+    "The review does not establish VCFv4.1–4.4 or VCFv4.0 applicability."
+  ],
+  "records": [
+    {
+      "requirement_id": "VCF-REQ-900001",
+      "source_locators": [
+        {
+          "start_line": 104,
+          "end_line": 104,
+          "locator_value": "VCFv4.5.tex:L104"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900002",
+      "source_locators": [
+        {
+          "start_line": 104,
+          "end_line": 104,
+          "locator_value": "VCFv4.5.tex:L104"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900003",
+      "source_locators": [
+        {
+          "start_line": 105,
+          "end_line": 105,
+          "locator_value": "VCFv4.5.tex:L105"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900004",
+      "source_locators": [
+        {
+          "start_line": 105,
+          "end_line": 105,
+          "locator_value": "VCFv4.5.tex:L105"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900005",
+      "source_locators": [
+        {
+          "start_line": 107,
+          "end_line": 107,
+          "locator_value": "VCFv4.5.tex:L107"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900006",
+      "source_locators": [
+        {
+          "start_line": 107,
+          "end_line": 107,
+          "locator_value": "VCFv4.5.tex:L107"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900007",
+      "source_locators": [
+        {
+          "start_line": 107,
+          "end_line": 107,
+          "locator_value": "VCFv4.5.tex:L107"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900008",
+      "source_locators": [
+        {
+          "start_line": 119,
+          "end_line": 119,
+          "locator_value": "VCFv4.5.tex:L119"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900009",
+      "source_locators": [
+        {
+          "start_line": 119,
+          "end_line": 119,
+          "locator_value": "VCFv4.5.tex:L119"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900010",
+      "source_locators": [
+        {
+          "start_line": 120,
+          "end_line": 120,
+          "locator_value": "VCFv4.5.tex:L120"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900011",
+      "source_locators": [
+        {
+          "start_line": 126,
+          "end_line": 126,
+          "locator_value": "VCFv4.5.tex:L126"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900012",
+      "source_locators": [
+        {
+          "start_line": 127,
+          "end_line": 127,
+          "locator_value": "VCFv4.5.tex:L127"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900013",
+      "source_locators": [
+        {
+          "start_line": 127,
+          "end_line": 127,
+          "locator_value": "VCFv4.5.tex:L127"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900014",
+      "source_locators": [
+        {
+          "start_line": 129,
+          "end_line": 129,
+          "locator_value": "VCFv4.5.tex:L129"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900015",
+      "source_locators": [
+        {
+          "start_line": 129,
+          "end_line": 129,
+          "locator_value": "VCFv4.5.tex:L129"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900016",
+      "source_locators": [
+        {
+          "start_line": 132,
+          "end_line": 132,
+          "locator_value": "VCFv4.5.tex:L132"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900017",
+      "source_locators": [
+        {
+          "start_line": 133,
+          "end_line": 133,
+          "locator_value": "VCFv4.5.tex:L133"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900018",
+      "source_locators": [
+        {
+          "start_line": 133,
+          "end_line": 133,
+          "locator_value": "VCFv4.5.tex:L133"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900019",
+      "source_locators": [
+        {
+          "start_line": 135,
+          "end_line": 135,
+          "locator_value": "VCFv4.5.tex:L135"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900020",
+      "source_locators": [
+        {
+          "start_line": 135,
+          "end_line": 135,
+          "locator_value": "VCFv4.5.tex:L135"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900021",
+      "source_locators": [
+        {
+          "start_line": 136,
+          "end_line": 136,
+          "locator_value": "VCFv4.5.tex:L136"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900022",
+      "source_locators": [
+        {
+          "start_line": 138,
+          "end_line": 138,
+          "locator_value": "VCFv4.5.tex:L138"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900023",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900024",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900025",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900026",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900027",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900028",
+      "source_locators": [
+        {
+          "start_line": 151,
+          "end_line": 151,
+          "locator_value": "VCFv4.5.tex:L151"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900029",
+      "source_locators": [
+        {
+          "start_line": 159,
+          "end_line": 159,
+          "locator_value": "VCFv4.5.tex:L159"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900030",
+      "source_locators": [
+        {
+          "start_line": 164,
+          "end_line": 164,
+          "locator_value": "VCFv4.5.tex:L164"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900031",
+      "source_locators": [
+        {
+          "start_line": 164,
+          "end_line": 164,
+          "locator_value": "VCFv4.5.tex:L164"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900032",
+      "source_locators": [
+        {
+          "start_line": 166,
+          "end_line": 166,
+          "locator_value": "VCFv4.5.tex:L166"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900033",
+      "source_locators": [
+        {
+          "start_line": 166,
+          "end_line": 166,
+          "locator_value": "VCFv4.5.tex:L166"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900034",
+      "source_locators": [
+        {
+          "start_line": 172,
+          "end_line": 172,
+          "locator_value": "VCFv4.5.tex:L172"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900035",
+      "source_locators": [
+        {
+          "start_line": 172,
+          "end_line": 172,
+          "locator_value": "VCFv4.5.tex:L172"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900036",
+      "source_locators": [
+        {
+          "start_line": 173,
+          "end_line": 173,
+          "locator_value": "VCFv4.5.tex:L173"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900037",
+      "source_locators": [
+        {
+          "start_line": 174,
+          "end_line": 174,
+          "locator_value": "VCFv4.5.tex:L174"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900038",
+      "source_locators": [
+        {
+          "start_line": 175,
+          "end_line": 175,
+          "locator_value": "VCFv4.5.tex:L175"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900039",
+      "source_locators": [
+        {
+          "start_line": 175,
+          "end_line": 175,
+          "locator_value": "VCFv4.5.tex:L175"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900040",
+      "source_locators": [
+        {
+          "start_line": 175,
+          "end_line": 175,
+          "locator_value": "VCFv4.5.tex:L175"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900041",
+      "source_locators": [
+        {
+          "start_line": 175,
+          "end_line": 175,
+          "locator_value": "VCFv4.5.tex:L175"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900042",
+      "source_locators": [
+        {
+          "start_line": 178,
+          "end_line": 178,
+          "locator_value": "VCFv4.5.tex:L178"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900043",
+      "source_locators": [
+        {
+          "start_line": 178,
+          "end_line": 178,
+          "locator_value": "VCFv4.5.tex:L178"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900044",
+      "source_locators": [
+        {
+          "start_line": 185,
+          "end_line": 185,
+          "locator_value": "VCFv4.5.tex:L185"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900045",
+      "source_locators": [
+        {
+          "start_line": 185,
+          "end_line": 185,
+          "locator_value": "VCFv4.5.tex:L185"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900046",
+      "source_locators": [
+        {
+          "start_line": 185,
+          "end_line": 185,
+          "locator_value": "VCFv4.5.tex:L185"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900047",
+      "source_locators": [
+        {
+          "start_line": 185,
+          "end_line": 185,
+          "locator_value": "VCFv4.5.tex:L185"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900049",
+      "source_locators": [
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "locator_value": "VCFv4.5.tex:L258"
+        },
+        {
+          "start_line": 419,
+          "end_line": 419,
+          "locator_value": "VCFv4.5.tex:L419"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900050",
+      "source_locators": [
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "locator_value": "VCFv4.5.tex:L258"
+        },
+        {
+          "start_line": 419,
+          "end_line": 419,
+          "locator_value": "VCFv4.5.tex:L419"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900051",
+      "source_locators": [
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "locator_value": "VCFv4.5.tex:L258"
+        },
+        {
+          "start_line": 419,
+          "end_line": 419,
+          "locator_value": "VCFv4.5.tex:L419"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900052",
+      "source_locators": [
+        {
+          "start_line": 259,
+          "end_line": 265,
+          "locator_value": "VCFv4.5.tex:L259-L265"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900053",
+      "source_locators": [
+        {
+          "start_line": 268,
+          "end_line": 268,
+          "locator_value": "VCFv4.5.tex:L268"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900054",
+      "source_locators": [
+        {
+          "start_line": 292,
+          "end_line": 292,
+          "locator_value": "VCFv4.5.tex:L292"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900055",
+      "source_locators": [
+        {
+          "start_line": 301,
+          "end_line": 301,
+          "locator_value": "VCFv4.5.tex:L301"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900056",
+      "source_locators": [
+        {
+          "start_line": 301,
+          "end_line": 301,
+          "locator_value": "VCFv4.5.tex:L301"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900057",
+      "source_locators": [
+        {
+          "start_line": 302,
+          "end_line": 302,
+          "locator_value": "VCFv4.5.tex:L302"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900058",
+      "source_locators": [
+        {
+          "start_line": 302,
+          "end_line": 302,
+          "locator_value": "VCFv4.5.tex:L302"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900059",
+      "source_locators": [
+        {
+          "start_line": 322,
+          "end_line": 322,
+          "locator_value": "VCFv4.5.tex:L322"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900060",
+      "source_locators": [
+        {
+          "start_line": 322,
+          "end_line": 322,
+          "locator_value": "VCFv4.5.tex:L322"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900061",
+      "source_locators": [
+        {
+          "start_line": 322,
+          "end_line": 322,
+          "locator_value": "VCFv4.5.tex:L322"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900062",
+      "source_locators": [
+        {
+          "start_line": 329,
+          "end_line": 329,
+          "locator_value": "VCFv4.5.tex:L329"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900063",
+      "source_locators": [
+        {
+          "start_line": 391,
+          "end_line": 391,
+          "locator_value": "VCFv4.5.tex:L391"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900064",
+      "source_locators": [
+        {
+          "start_line": 392,
+          "end_line": 392,
+          "locator_value": "VCFv4.5.tex:L392"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900065",
+      "source_locators": [
+        {
+          "start_line": 397,
+          "end_line": 397,
+          "locator_value": "VCFv4.5.tex:L397"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900066",
+      "source_locators": [
+        {
+          "start_line": 399,
+          "end_line": 399,
+          "locator_value": "VCFv4.5.tex:L399"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900067",
+      "source_locators": [
+        {
+          "start_line": 400,
+          "end_line": 400,
+          "locator_value": "VCFv4.5.tex:L400"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900068",
+      "source_locators": [
+        {
+          "start_line": 403,
+          "end_line": 403,
+          "locator_value": "VCFv4.5.tex:L403"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900069",
+      "source_locators": [
+        {
+          "start_line": 406,
+          "end_line": 406,
+          "locator_value": "VCFv4.5.tex:L406"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900070",
+      "source_locators": [
+        {
+          "start_line": 406,
+          "end_line": 406,
+          "locator_value": "VCFv4.5.tex:L406"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900071",
+      "source_locators": [
+        {
+          "start_line": 406,
+          "end_line": 406,
+          "locator_value": "VCFv4.5.tex:L406"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900072",
+      "source_locators": [
+        {
+          "start_line": 407,
+          "end_line": 407,
+          "locator_value": "VCFv4.5.tex:L407"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900073",
+      "source_locators": [
+        {
+          "start_line": 407,
+          "end_line": 407,
+          "locator_value": "VCFv4.5.tex:L407"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900074",
+      "source_locators": [
+        {
+          "start_line": 409,
+          "end_line": 409,
+          "locator_value": "VCFv4.5.tex:L409"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900075",
+      "source_locators": [
+        {
+          "start_line": 411,
+          "end_line": 411,
+          "locator_value": "VCFv4.5.tex:L411"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900076",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900077",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900078",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900079",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900080",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900081",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900082",
+      "source_locators": [
+        {
+          "start_line": 417,
+          "end_line": 417,
+          "locator_value": "VCFv4.5.tex:L417"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900083",
+      "source_locators": [
+        {
+          "start_line": 418,
+          "end_line": 418,
+          "locator_value": "VCFv4.5.tex:L418"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900084",
+      "source_locators": [
+        {
+          "start_line": 418,
+          "end_line": 418,
+          "locator_value": "VCFv4.5.tex:L418"
+        },
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "locator_value": "VCFv4.5.tex:L258"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900085",
+      "source_locators": [
+        {
+          "start_line": 422,
+          "end_line": 422,
+          "locator_value": "VCFv4.5.tex:L422"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900086",
+      "source_locators": [
+        {
+          "start_line": 425,
+          "end_line": 425,
+          "locator_value": "VCFv4.5.tex:L425"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900087",
+      "source_locators": [
+        {
+          "start_line": 426,
+          "end_line": 426,
+          "locator_value": "VCFv4.5.tex:L426"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900088",
+      "source_locators": [
+        {
+          "start_line": 429,
+          "end_line": 429,
+          "locator_value": "VCFv4.5.tex:L429"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900089",
+      "source_locators": [
+        {
+          "start_line": 433,
+          "end_line": 433,
+          "locator_value": "VCFv4.5.tex:L433"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900090",
+      "source_locators": [
+        {
+          "start_line": 433,
+          "end_line": 433,
+          "locator_value": "VCFv4.5.tex:L433"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900091",
+      "source_locators": [
+        {
+          "start_line": 435,
+          "end_line": 435,
+          "locator_value": "VCFv4.5.tex:L435"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900092",
+      "source_locators": [
+        {
+          "start_line": 435,
+          "end_line": 435,
+          "locator_value": "VCFv4.5.tex:L435"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900093",
+      "source_locators": [
+        {
+          "start_line": 437,
+          "end_line": 437,
+          "locator_value": "VCFv4.5.tex:L437"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900094",
+      "source_locators": [
+        {
+          "start_line": 439,
+          "end_line": 439,
+          "locator_value": "VCFv4.5.tex:L439"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900095",
+      "source_locators": [
+        {
+          "start_line": 488,
+          "end_line": 491,
+          "locator_value": "VCFv4.5.tex:L488-L491"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "SINGLE_COMPUTED_MAXIMUM_RULE_WITH_THREE_REQUIRED_INPUTS",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900096",
+      "source_locators": [
+        {
+          "start_line": 609,
+          "end_line": 609,
+          "locator_value": "VCFv4.5.tex:L609"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900097",
+      "source_locators": [
+        {
+          "start_line": 845,
+          "end_line": 845,
+          "locator_value": "VCFv4.5.tex:L845"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900098",
+      "source_locators": [
+        {
+          "start_line": 846,
+          "end_line": 846,
+          "locator_value": "VCFv4.5.tex:L846"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "SUBSUMED_BY_CANONICAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900099",
+      "source_locators": [
+        {
+          "start_line": 1487,
+          "end_line": 1487,
+          "locator_value": "VCFv4.5.tex:L1487"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900100",
+      "source_locators": [
+        {
+          "start_line": 1623,
+          "end_line": 1623,
+          "locator_value": "VCFv4.5.tex:L1623"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900101",
+      "source_locators": [
+        {
+          "start_line": 1889,
+          "end_line": 1889,
+          "locator_value": "VCFv4.5.tex:L1889"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900102",
+      "source_locators": [
+        {
+          "start_line": 1889,
+          "end_line": 1889,
+          "locator_value": "VCFv4.5.tex:L1889"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900103",
+      "source_locators": [
+        {
+          "start_line": 1900,
+          "end_line": 1900,
+          "locator_value": "VCFv4.5.tex:L1900"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900104",
+      "source_locators": [
+        {
+          "start_line": 1901,
+          "end_line": 1901,
+          "locator_value": "VCFv4.5.tex:L1901"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900105",
+      "source_locators": [
+        {
+          "start_line": 1901,
+          "end_line": 1901,
+          "locator_value": "VCFv4.5.tex:L1901"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900106",
+      "source_locators": [
+        {
+          "start_line": 1903,
+          "end_line": 1903,
+          "locator_value": "VCFv4.5.tex:L1903"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900107",
+      "source_locators": [
+        {
+          "start_line": 1903,
+          "end_line": 1903,
+          "locator_value": "VCFv4.5.tex:L1903"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900108",
+      "source_locators": [
+        {
+          "start_line": 1946,
+          "end_line": 1946,
+          "locator_value": "VCFv4.5.tex:L1946"
+        },
+        {
+          "start_line": 1985,
+          "end_line": 1985,
+          "locator_value": "VCFv4.5.tex:L1985"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900109",
+      "source_locators": [
+        {
+          "start_line": 1982,
+          "end_line": 1982,
+          "locator_value": "VCFv4.5.tex:L1982"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900110",
+      "source_locators": [
+        {
+          "start_line": 1983,
+          "end_line": 1983,
+          "locator_value": "VCFv4.5.tex:L1983"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900112",
+      "source_locators": [
+        {
+          "start_line": 1986,
+          "end_line": 1986,
+          "locator_value": "VCFv4.5.tex:L1986"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900113",
+      "source_locators": [
+        {
+          "start_line": 1986,
+          "end_line": 1986,
+          "locator_value": "VCFv4.5.tex:L1986"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900114",
+      "source_locators": [
+        {
+          "start_line": 1988,
+          "end_line": 1988,
+          "locator_value": "VCFv4.5.tex:L1988"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900115",
+      "source_locators": [
+        {
+          "start_line": 1988,
+          "end_line": 1988,
+          "locator_value": "VCFv4.5.tex:L1988"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900116",
+      "source_locators": [
+        {
+          "start_line": 1989,
+          "end_line": 1989,
+          "locator_value": "VCFv4.5.tex:L1989"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900117",
+      "source_locators": [
+        {
+          "start_line": 1989,
+          "end_line": 1989,
+          "locator_value": "VCFv4.5.tex:L1989"
+        },
+        {
+          "start_line": 1887,
+          "end_line": 1887,
+          "locator_value": "VCFv4.5.tex:L1887"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900118",
+      "source_locators": [
+        {
+          "start_line": 1994,
+          "end_line": 1994,
+          "locator_value": "VCFv4.5.tex:L1994"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900119",
+      "source_locators": [
+        {
+          "start_line": 1994,
+          "end_line": 1994,
+          "locator_value": "VCFv4.5.tex:L1994"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900120",
+      "source_locators": [
+        {
+          "start_line": 1995,
+          "end_line": 1995,
+          "locator_value": "VCFv4.5.tex:L1995"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900121",
+      "source_locators": [
+        {
+          "start_line": 1996,
+          "end_line": 1996,
+          "locator_value": "VCFv4.5.tex:L1996"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900123",
+      "source_locators": [
+        {
+          "start_line": 404,
+          "end_line": 404,
+          "locator_value": "VCFv4.5.tex:L404"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900124",
+      "source_locators": [
+        {
+          "start_line": 610,
+          "end_line": 610,
+          "locator_value": "VCFv4.5.tex:L610"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900125",
+      "source_locators": [
+        {
+          "start_line": 610,
+          "end_line": 610,
+          "locator_value": "VCFv4.5.tex:L610"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900126",
+      "source_locators": [
+        {
+          "start_line": 273,
+          "end_line": 273,
+          "locator_value": "VCFv4.5.tex:L273"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900127",
+      "source_locators": [
+        {
+          "start_line": 274,
+          "end_line": 274,
+          "locator_value": "VCFv4.5.tex:L274"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900128",
+      "source_locators": [
+        {
+          "start_line": 275,
+          "end_line": 275,
+          "locator_value": "VCFv4.5.tex:L275"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900129",
+      "source_locators": [
+        {
+          "start_line": 276,
+          "end_line": 276,
+          "locator_value": "VCFv4.5.tex:L276"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900130",
+      "source_locators": [
+        {
+          "start_line": 825,
+          "end_line": 825,
+          "locator_value": "VCFv4.5.tex:L825"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900131",
+      "source_locators": [
+        {
+          "start_line": 827,
+          "end_line": 827,
+          "locator_value": "VCFv4.5.tex:L827"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900132",
+      "source_locators": [
+        {
+          "start_line": 828,
+          "end_line": 828,
+          "locator_value": "VCFv4.5.tex:L828"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "CORRECTED_OR_REFINED_AFTER_CONTEXT_REVIEW",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900133",
+      "source_locators": [
+        {
+          "start_line": 829,
+          "end_line": 829,
+          "locator_value": "VCFv4.5.tex:L829"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900134",
+      "source_locators": [
+        {
+          "start_line": 831,
+          "end_line": 831,
+          "locator_value": "VCFv4.5.tex:L831"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900135",
+      "source_locators": [
+        {
+          "start_line": 833,
+          "end_line": 833,
+          "locator_value": "VCFv4.5.tex:L833"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900136",
+      "source_locators": [
+        {
+          "start_line": 833,
+          "end_line": 833,
+          "locator_value": "VCFv4.5.tex:L833"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900137",
+      "source_locators": [
+        {
+          "start_line": 835,
+          "end_line": 835,
+          "locator_value": "VCFv4.5.tex:L835"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900138",
+      "source_locators": [
+        {
+          "start_line": 1914,
+          "end_line": 1914,
+          "locator_value": "VCFv4.5.tex:L1914"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900139",
+      "source_locators": [
+        {
+          "start_line": 1914,
+          "end_line": 1914,
+          "locator_value": "VCFv4.5.tex:L1914"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900140",
+      "source_locators": [
+        {
+          "start_line": 1998,
+          "end_line": 1998,
+          "locator_value": "VCFv4.5.tex:L1998"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900141",
+      "source_locators": [
+        {
+          "start_line": 1998,
+          "end_line": 1998,
+          "locator_value": "VCFv4.5.tex:L1998"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900142",
+      "source_locators": [
+        {
+          "start_line": 409,
+          "end_line": 409,
+          "locator_value": "VCFv4.5.tex:L409"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900143",
+      "source_locators": [
+        {
+          "start_line": 409,
+          "end_line": 409,
+          "locator_value": "VCFv4.5.tex:L409"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900144",
+      "source_locators": [
+        {
+          "start_line": 416,
+          "end_line": 416,
+          "locator_value": "VCFv4.5.tex:L416"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900145",
+      "source_locators": [
+        {
+          "start_line": 392,
+          "end_line": 392,
+          "locator_value": "VCFv4.5.tex:L392"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900146",
+      "source_locators": [
+        {
+          "start_line": 392,
+          "end_line": 392,
+          "locator_value": "VCFv4.5.tex:L392"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900147",
+      "source_locators": [
+        {
+          "start_line": 397,
+          "end_line": 397,
+          "locator_value": "VCFv4.5.tex:L397"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900148",
+      "source_locators": [
+        {
+          "start_line": 422,
+          "end_line": 422,
+          "locator_value": "VCFv4.5.tex:L422"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900149",
+      "source_locators": [
+        {
+          "start_line": 420,
+          "end_line": 420,
+          "locator_value": "VCFv4.5.tex:L420"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900150",
+      "source_locators": [
+        {
+          "start_line": 421,
+          "end_line": 421,
+          "locator_value": "VCFv4.5.tex:L421"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900151",
+      "source_locators": [
+        {
+          "start_line": 421,
+          "end_line": 421,
+          "locator_value": "VCFv4.5.tex:L421"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900152",
+      "source_locators": [
+        {
+          "start_line": 408,
+          "end_line": 408,
+          "locator_value": "VCFv4.5.tex:L408"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900156",
+      "source_locators": [
+        {
+          "start_line": 427,
+          "end_line": 427,
+          "locator_value": "VCFv4.5.tex:L427"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900157",
+      "source_locators": [
+        {
+          "start_line": 427,
+          "end_line": 427,
+          "locator_value": "VCFv4.5.tex:L427"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900158",
+      "source_locators": [
+        {
+          "start_line": 427,
+          "end_line": 427,
+          "locator_value": "VCFv4.5.tex:L427"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900159",
+      "source_locators": [
+        {
+          "start_line": 427,
+          "end_line": 427,
+          "locator_value": "VCFv4.5.tex:L427"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900160",
+      "source_locators": [
+        {
+          "start_line": 434,
+          "end_line": 434,
+          "locator_value": "VCFv4.5.tex:L434"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900161",
+      "source_locators": [
+        {
+          "start_line": 137,
+          "end_line": 137,
+          "locator_value": "VCFv4.5.tex:L137"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900162",
+      "source_locators": [
+        {
+          "start_line": 1989,
+          "end_line": 1989,
+          "locator_value": "VCFv4.5.tex:L1989"
+        },
+        {
+          "start_line": 1887,
+          "end_line": 1887,
+          "locator_value": "VCFv4.5.tex:L1887"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900163",
+      "source_locators": [
+        {
+          "start_line": 1989,
+          "end_line": 1989,
+          "locator_value": "VCFv4.5.tex:L1989"
+        },
+        {
+          "start_line": 1887,
+          "end_line": 1887,
+          "locator_value": "VCFv4.5.tex:L1887"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900165",
+      "source_locators": [
+        {
+          "start_line": 847,
+          "end_line": 847,
+          "locator_value": "VCFv4.5.tex:L847"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "SUBSUMED_BY_CANONICAL",
+      "pass2_outcome": "CANONICAL_COVERAGE_IDENTIFIED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900166",
+      "source_locators": [
+        {
+          "start_line": 848,
+          "end_line": 848,
+          "locator_value": "VCFv4.5.tex:L848"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "SUBSUMED_BY_CANONICAL",
+      "pass2_outcome": "CANONICAL_COVERAGE_IDENTIFIED",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900167",
+      "source_locators": [
+        {
+          "start_line": 174,
+          "end_line": 174,
+          "locator_value": "VCFv4.5.tex:L174"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "ONE_BEHAVIOR_OR_ONE_CONDITIONAL_OBLIGATION",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    },
+    {
+      "requirement_id": "VCF-REQ-900168",
+      "source_locators": [
+        {
+          "start_line": 828,
+          "end_line": 828,
+          "locator_value": "VCFv4.5.tex:L828"
+        }
+      ],
+      "source_pin_and_locator_valid": true,
+      "source_context_review_status": "AUTHOR_CONTEXT_REVIEWED_PASS2",
+      "modality_review_status": "REVIEWED",
+      "atomicity_review_status": "REVIEWED",
+      "atomicity_disposition": "INFORMATIVE_OR_DEFINITIONAL",
+      "pass2_outcome": "AUTHOR_CONTEXT_REVIEWED_NO_CHANGE",
+      "independent_second_review": "NOT_STARTED",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_CREATED"
+    }
+  ]
+}
