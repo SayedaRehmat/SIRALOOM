@@ -1899,6 +1899,7 @@ def validate_vcf_strict(
     unresolved_breakend_coordinate_links: list[dict[str, object]] = []
     breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
     phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
+    reciprocal_breakend_phase_endpoints: set[frozenset[tuple[int, int]]] = set()
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -2389,10 +2390,21 @@ def validate_vcf_strict(
                                 if 0 < allele_number <= len(alts):
                                     allele_text = alts[allele_number - 1]
                                     allele_is_sv_or_breakend = _is_vcf44_plus_sv_or_breakend_alt(allele_text)
+                            allele_number = int(allele_token) if allele_token != "." else None
+                            allele_value = (
+                                fields[3] if allele_number == 0
+                                else alts[allele_number - 1] if allele_number is not None and 0 < allele_number <= len(alts)
+                                else "."
+                            )
                             phase_set_observations.setdefault((sample_name, phase_set), []).append({
                                 "line_number": line_no,
                                 "record_index": records + 1,
+                                "record_id": fields[2],
+                                "chrom": _chrom,
+                                "pos": _pos,
                                 "allele_position": allele_position,
+                                "allele_index": allele_number,
+                                "allele": allele_value,
                                 "pso": pso_entries[allele_position] if allele_position < len(pso_entries) else ".",
                                 "requires_pso": allele_is_sv_or_breakend,
                             })
@@ -2905,6 +2917,13 @@ def validate_vcf_strict(
             )
 
         mate_alt_index = reciprocal_alt_indexes[0]
+        if fileformat in {"VCFv4.4", "VCFv4.5"}:
+            # The two reciprocal BND records describe one breakpoint event and
+            # are required by the specification to share one PSO ordinal.
+            reciprocal_breakend_phase_endpoints.add(frozenset((
+                (source_record["line_no"], source_alt_index),
+                (mate["line_no"], mate_alt_index),
+            )))
         unresolved_ends = []
         if source_record["cipos_by_alt"].get(source_alt_index) is None:
             unresolved_ends.append("source")
@@ -2961,6 +2980,60 @@ def validate_vcf_strict(
                         f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
                         code="VCF_BREAKEND_PHASE_SET_MISMATCH",
                     )
+    phase_set_traversal_orders: list[dict[str, object]] = []
+    if fileformat in {"VCFv4.4", "VCFv4.5"}:
+        for (sample_name, phase_set), observations in phase_set_observations.items():
+            by_ordinal: dict[int, list[dict[str, object]]] = {}
+            for observation in observations:
+                raw_ordinal = observation["pso"]
+                if raw_ordinal in {"", "."}:
+                    continue
+                ordinal = int(str(raw_ordinal))
+                by_ordinal.setdefault(ordinal, []).append(observation)
+            ordered_occurrences = []
+            for ordinal, ordinal_observations in sorted(by_ordinal.items()):
+                lines = {int(item["line_number"]) for item in ordinal_observations}
+                if len(lines) > 1:
+                    endpoints = {
+                        (int(item["line_number"]), int(item["allele_index"]))
+                        for item in ordinal_observations
+                        if item["allele_index"] is not None
+                    }
+                    if not all(
+                        any(
+                            endpoint != other
+                            and frozenset((endpoint, other)) in reciprocal_breakend_phase_endpoints
+                            for other in endpoints
+                        )
+                        for endpoint in endpoints
+                    ):
+                        first = ordinal_observations[0]
+                        raise StrictVCFValidationError(
+                            f"FORMAT/PSO ordinal {ordinal} is reused by distinct variant records in sample {sample_name!r}, phase set {phase_set!r}; each ordinal must identify one traversal event (reciprocal BND records are one event) at line {first['line_number']}",
+                            code="VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE",
+                        )
+                ordered_occurrences.append({
+                    "ordinal": ordinal,
+                    "occurrences": [
+                        {
+                            "record_index": item["record_index"],
+                            "record_id": item["record_id"],
+                            "line_number": item["line_number"],
+                            "chrom": item["chrom"],
+                            "pos": item["pos"],
+                            "allele_index": item["allele_index"],
+                            "allele": item["allele"],
+                        }
+                        for item in ordinal_observations
+                    ],
+                })
+            if ordered_occurrences:
+                phase_set_traversal_orders.append({
+                    "sample": sample_name,
+                    "phase_set": phase_set,
+                    "ordered_events": ordered_occurrences,
+                })
+
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
@@ -2997,6 +3070,7 @@ def validate_vcf_strict(
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,
+        "phase_set_traversal_orders": phase_set_traversal_orders,
         "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
         "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
