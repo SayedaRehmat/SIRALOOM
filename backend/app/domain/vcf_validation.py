@@ -154,6 +154,15 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
         "PSL": ("P", "String"),
         "PSO": ("P", "Integer"),
         "PSQ": ("P", "Integer"),
+        # VCFv4.5 structural-variant FORMAT keys (section sv-format-keys).
+        "CN": ("1", "Float"),
+        "CICN": ("2", "Float"),
+        "CNQ": ("1", "Float"),
+        "CNL": ("G", "Float"),
+        "CNP": ("G", "Float"),
+        "NQ": ("1", "Integer"),
+        "HAP": ("1", "Integer"),
+        "AHAP": ("1", "Integer"),
     }
     definition = reserved.get(field_id)
     if definition is not None:
