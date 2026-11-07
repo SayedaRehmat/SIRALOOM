@@ -119,14 +119,22 @@ def test_family_matrix_fingerprint_is_independent_of_sample_input_order():
     assert first["matrix_fingerprint"] == second["matrix_fingerprint"]
 
 
-def test_family_matrix_rejects_multiple_bindings_for_one_member():
+def test_family_matrix_preserves_multiple_specimens_and_assays_for_one_member():
     case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
-    a = _sample(member_id, "MEMBER", {})
-    b = _sample(member_id, "MEMBER", {})
-    with pytest.raises(ValueError, match="at most one"):
-        build_family_genotype_matrix(
-            case_id=case_id, variant_ids=[variant_id], samples=[a, b], relationships=[],
-        )
+    first = _sample(member_id, "MEMBER", {variant_id: {"sample_name": "ASSAY-A", "genotype": "0/1"}})
+    second = _sample(member_id, "MEMBER", {variant_id: {"sample_name": "ASSAY-B", "genotype": "0/0"}})
+    first["sample_name"] = "ASSAY-A"
+    second["sample_name"] = "ASSAY-B"
+    first["specimen_id"] = uuid4()
+    second["specimen_id"] = uuid4()
+    first["analysis_id"] = uuid4()
+    second["analysis_id"] = uuid4()
+    matrix = build_family_genotype_matrix(
+        case_id=case_id, variant_ids=[variant_id], samples=[second, first], relationships=[],
+    )
+    assert len(matrix["samples"]) == 2
+    assert {sample["vcf_sample_name"] for sample in matrix["samples"]} == {"ASSAY-A", "ASSAY-B"}
+    assert all(sample["member_id"] == str(member_id) for sample in matrix["samples"])
 
 
 class _Rows:
