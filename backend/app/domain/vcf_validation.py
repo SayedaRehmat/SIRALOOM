@@ -2999,13 +2999,16 @@ def validate_vcf_strict(
                         for item in ordinal_observations
                         if item["allele_index"] is not None
                     }
-                    if not all(
-                        any(
-                            endpoint != other
-                            and frozenset((endpoint, other)) in reciprocal_breakend_phase_endpoints
-                            for other in endpoints
-                        )
+                    matching_reciprocal_pairs = {
+                        frozenset((endpoint, other))
                         for endpoint in endpoints
+                        for other in endpoints
+                        if endpoint != other
+                        and frozenset((endpoint, other)) in reciprocal_breakend_phase_endpoints
+                    }
+                    if (
+                        len(matching_reciprocal_pairs) != 1
+                        or endpoints != set(next(iter(matching_reciprocal_pairs), ()))
                     ):
                         first = ordinal_observations[0]
                         raise StrictVCFValidationError(
