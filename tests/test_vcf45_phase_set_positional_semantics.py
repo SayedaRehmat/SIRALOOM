@@ -301,13 +301,13 @@ def test_vcf45_pso_phase_sets_are_isolated_when_sample_name_is_format(
     # named FORMAT to expose accidental cross-sample phase-set collisions.
     path = tmp_path / "pso-sample-name-format-collision.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tFORMAT\\n"
-        "1\\t5\\tdel1\\tA\\t<DEL>\\t.\\tPASS\\tEND=8\\tGT:PSL:PSO\\t0|1:alpha,alpha:3,4\\t0|0:alpha,alpha:.,.\\n"
-        "1\\t9\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|0:alpha,alpha:5,6\\t0|1:alpha,alpha:.,.\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\tFORMAT\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:alpha,alpha:3,4\t0|0:alpha,alpha:.,.\n"
+        "1\t9\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|0:alpha,alpha:5,6\t0|1:alpha,alpha:.,.\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 2
