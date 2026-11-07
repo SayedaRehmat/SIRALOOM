@@ -109,6 +109,8 @@ The standard WES/WGS profiles currently make HPO, HPOA, gene-disease validity an
 - Candidate relevance is not variant pathogenicity. Keep disease match, gene-disease validity, variant consequence, genotype/inheritance compatibility, and ACMG classification as separate axes.
 - If the selected method or its required resource is unavailable, return an explicit incomplete/review state and do not claim a full phenotype-driven ranking.
 
+**External algorithm candidate — Exomiser (evaluation only, not adopted).** Exomiser is a relevant comparator because its official project documents VCF/HPO-driven variant and gene prioritisation using phenotype, frequency, pathogenicity and inheritance. However, the software is licensed AGPL-3.0, its workflow includes its own Jannovar annotation and external data resources, and its documentation describes large versioned data packages. dbNSFP's academic branch is CC BY-NC-ND 4.0 and is explicitly non-commercial; its commercial branch requires a paid license and excludes some upstream scores unless separately licensed. Therefore SIRALOOM must not embed, redistribute, or deploy Exomiser/data packages as a production dependency without a legal and resource-license review. If assessed, it should initially be an isolated, version-pinned comparator in a qualification environment, with no authority to overwrite SIRALOOM annotation or clinical decisions.
+
 ## 5. Inheritance, pedigree and consanguinity requirements
 
 - Use only explicit pedigree relationships, subject-attributed genotypes, sample/specimen linkage, sex/ploidy context, phase and parental/relative observations.
