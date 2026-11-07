@@ -1668,6 +1668,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         reference_resource_id = analysis.configuration.get("reference_resource_id")
         profile_bound_analysis = bool((analysis.configuration or {}).get("resource_profile_id"))
         partition_size = min(max(1, int(analysis.configuration.get("partition_size", 500) or 500)), 1000)
+        validated_reference_package: dict | None = None
 
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
@@ -1675,7 +1676,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             routing: dict = {}
             routed_artifacts: list[Artifact] = []
             exclusion_manifest_artifacts: list[Artifact] = []
-            validated_reference_package: dict | None = None
             routing_contig_lengths_resolved = False
 
             def persist_exclusion_manifest(*, contig_lengths_resolved: bool) -> None:
@@ -2543,6 +2543,57 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     temp_path.unlink()
         elif normalized_artifact is None:
             raise RuntimeError("Normalization step is marked complete but normalized artifact is missing")
+
+        # Rehydrate the exact reference package on workflow replay. The normalized
+        # artifact pins the package identity and execution-contract hash used by
+        # normalization; annotation must not resolve a newer or fallback package.
+        if validated_reference_package is None:
+            normalized_metadata = dict(normalized_artifact.metadata_json or {})
+            pinned_reference_id = normalized_metadata.get("reference_package_id")
+            if not pinned_reference_id:
+                raise RuntimeError("Normalized artifact is missing its pinned reference package identity.")
+            try:
+                pinned_reference_uuid = UUID(str(pinned_reference_id))
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError("Normalized artifact reference package identity is invalid.") from exc
+            pinned_reference_resource = db.get(Resource, pinned_reference_uuid)
+            if pinned_reference_resource is None:
+                raise RuntimeError("The reference package used for normalization is no longer registered.")
+            validated_reference_package = load_reference_package(
+                db,
+                resource_id=pinned_reference_uuid,
+                expected_genome_build=reference_build,
+                allow_approved_qualified=True,
+            )
+            for package_key, metadata_key in (
+                ("version", "reference_package_version"),
+                ("package_checksum", "reference_package_checksum"),
+                ("fasta_sha256", "reference_fasta_sha256"),
+                ("fai_sha256", "reference_fai_sha256"),
+                ("gzi_sha256", "reference_gzi_sha256"),
+                ("contigs_sha256", "reference_contigs_sha256"),
+            ):
+                if validated_reference_package.get(package_key) != normalized_metadata.get(metadata_key):
+                    raise RuntimeError(
+                        f"Reference package {package_key} no longer matches the normalized artifact provenance."
+                    )
+            pinned_reference_execution = resolve_resource_execution(
+                db,
+                resource=pinned_reference_resource,
+            )
+            if pinned_reference_execution.contract_hash != normalized_metadata.get("execution_contract_hash"):
+                raise ResourceExecutionError(
+                    "Reference execution contract changed after normalization; annotation cannot silently substitute it."
+                )
+            contract_location = pinned_reference_execution.contract.location or ""
+            if pinned_reference_execution.contract.access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+                normalized_contract_location = str(
+                    local_path_from_uri(contract_location) or Path(contract_location).resolve()
+                )
+                if normalized_contract_location != str(Path(validated_reference_package["fasta_path"]).resolve()):
+                    raise ResourceExecutionError(
+                        "Pinned reference execution location differs from the normalization reference FASTA."
+                    )
 
         normalized_path = _materialize_artifact_for_worker(
             db, normalized_artifact, temporary_artifact_paths
