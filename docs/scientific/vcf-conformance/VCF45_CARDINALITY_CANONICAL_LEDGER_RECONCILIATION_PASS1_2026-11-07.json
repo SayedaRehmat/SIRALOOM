@@ -1,0 +1,429 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-cardinality-canonical-ledger-reconciliation-pass1",
+  "status": "AUTHOR_RECONCILIATION_COMPLETE_INDEPENDENT_REVIEW_AND_SOURCE_SCOPE_ADJUDICATION_PENDING",
+  "generated_at_utc": "2026-11-07",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "scope": {
+    "supplemental_registry": "docs/scientific/vcf-conformance/vcf4.5-cardinality-local-allele-atomic-addendum.v1.json",
+    "supplemental_requirement_range": "VCF-REQ-000227..VCF-REQ-000268",
+    "canonical_registry": "docs/scientific/vcf-conformance/atomic-requirements.v1.json",
+    "canonical_requirement_count": 226,
+    "GT_FORMAT_candidate_registry": "docs/scientific/vcf-conformance/genotype-format-atomic-candidates.v1.json",
+    "GT_FORMAT_candidate_count": 61,
+    "purpose": "Reconcile the 42 provisional VCFv4.5 cardinality/local-allele/Number=M/Number=P supplemental records against the complete canonical 226-record ledger. This is a source-grounded author crosswalk, not canonical promotion."
+  },
+  "source_artifacts": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-cardinality-local-allele-atomic-addendum.v1.json",
+      "blob_sha1": "fa5a686346904299a4425837d9e2ffc8ebe9e60b"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/atomic-requirements.v1.json",
+      "blob_sha1": "ba7d1bb0544f5d1105a4bd62f757decae13caee8"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-cardinality-atomic-candidate-reconciliation.v1.json",
+      "blob_sha1": "41a33dc78eba59097e2b8377d470479af8e28076"
+    }
+  ],
+  "method": [
+    "Loaded and inspected all 226 canonical requirement records from the complete repository blob.",
+    "Compared each supplemental record's atomic statement, normative force, actor, condition and source locator against canonical records.",
+    "Classified direct semantic duplicates, partial/combined overlaps, source-scope conflicts, modality conflicts and records with no canonical match identified.",
+    "Used lexical similarity only to identify candidate matches; final relationship classifications are author-reviewed against the stored atomic statements and pinned VCFv4.4/4.5 source passages."
+  ],
+  "counts": {
+    "supplemental_records": 42,
+    "direct_matches": 24,
+    "partial_or_combined": 6,
+    "modality_conflicts": 2,
+    "source_scope_conflicts": 1,
+    "no_canonical_match_identified": 9,
+    "related_to_existing_canonical_records": 33,
+    "unique_canonical_requirement_ids_touched": 32,
+    "canonical_records_modified": 0,
+    "canonical_ids_allocated": 0
+  },
+  "mappings": [
+    {
+      "supplemental_requirement_id": "VCF-REQ-000227",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000072"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical VCF-REQ-000072 combines Number=LA and Number=LR in one statement; this addendum separates LA cardinality.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000228",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000072"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical VCF-REQ-000072 combines Number=LA and Number=LR in one statement; this addendum separates LR cardinality.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000229",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000073"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same Number=LG semantics over the LAA-selected allele set.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000230",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000051"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same LAA distinct one-based ALT-index definition.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000231",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000052"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same rule that LAA order defines local-allele interpretation order.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000232",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000053"
+      ],
+      "relationship": "SOURCE_SCOPE_CONFLICT_RETAINED",
+      "notes": "Canonical VCF-REQ-000053 uses the detailed non-omitted/non-MISSING condition; the earlier FORMAT sentence at VCFv4.5 line 502 states 'if any local-allele field is present'. Retain both readings under VCF45-AMB-007.",
+      "disposition": "BLOCK_PROMOTION_PENDING_SOURCE_SCOPE_ADJUDICATION"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000233",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000054"
+      ],
+      "relationship": "MODALITY_CONFLICT_RETAINED",
+      "notes": "Same BCF zero-length LAA/REF-only semantics, but the pinned source says 'should be treated'; canonical VCF-REQ-000054 currently records DESCRIPTIVE force. Do not merge the force discrepancy silently.",
+      "disposition": "BLOCK_PROMOTION_PENDING_MODALITY_ADJUDICATION"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000234",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "GQ remains genotype quality when GT is represented against local alleles; no separate canonical statement found. The reserved GQ table row is not equivalent.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000235",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000055"
+      ],
+      "relationship": "MODALITY_CONFLICT_RETAINED",
+      "notes": "Same local/global A/R/G equivalence semantics, but the pinned source says these equivalents 'should be interpreted' accordingly; canonical VCF-REQ-000055 records DESCRIPTIVE force.",
+      "disposition": "BLOCK_PROMOTION_PENDING_MODALITY_ADJUDICATION"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000236",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "Recommendation for a VCF library API to abstract local-allele encoding; no canonical API recommendation found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000237",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000075"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same Number=M one-value-per-possible-base-modification definition.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000238",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000059"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same requirement that GT be defined for a sample when a base-modification key is present.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000239",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000058"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same U/T synonymy for base-modification suffix interpretation.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000240",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000061"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical VCF-REQ-000061 combines per-allele eligible-base cardinality and sequence ordering; this addendum separates the count.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000241",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000061"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical VCF-REQ-000061 combines per-allele eligible-base cardinality and sequence ordering; this addendum separates the ordering.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000242",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000062"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same positive/negative strand adjacency for N base modifications.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000243",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000063"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same GT allele order and phasing relationship for base-modification value ordering.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000244",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000064"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same aggregation of unphased allele values at the first occurrence.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000245",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000065"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same handling of MISSING and symbolic alleles as contributing no base-modification values.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000246",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000066"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same lowest-POS storage convention for unstranded base modifications.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000247",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000067"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same positive-strand/MISSING-negative-strand convention for unstranded N modifications.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000248",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000074"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same Number=P cardinality: one value for each allele value defined in GT.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000249",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000043"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same PSL list cardinality: one phase-set value for each GT allele value.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000250",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000044"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same MISSING value requirement for unphased GT allele positions in PSL.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000251",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000041"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same prohibition on PS and PSL values coexisting in one sample genotype.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000252",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000046"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same PSO derivative-chromosome traversal ordinal semantics.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000253",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000047"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same SHOULD rule for defining PSO when a phase-set contains symbolic SV or breakpoint alleles.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000254",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000048",
+        "VCF-REQ-000142",
+        "VCF-REQ-000113"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical records combine PSL and PSO equality across paired breakend records; this addendum splits PSL equality from PSO equality. VCF-REQ-000113 is related coverage; VCF-REQ-000048 and 000142 carry the combined source-level obligation.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000255",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000050"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same SHOULD missing-value behavior for PSQ when PSL is missing or phasing quality is unknown.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000256",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "M base-modification fraction values must be in the inclusive 0..1 range; no canonical value-domain requirement found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000257",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000068"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same M-family reserved-key behavior for ChEBI IDs that are not valid base modifications.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000258",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "Named M aliases should be used instead of ChEBI-keyed names; canonical table rows describe aliases but do not capture the SHOULD recommendation.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000259",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000130"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same propagation of base-modification annotations across applicable bases in a reference block.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000260",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "ADFM non-reservation is explicitly stated in VCFv4.5 prose; no canonical non-reservation requirement found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000261",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "LAA ordering before all FORMAT fields other than GT is not represented as a separate canonical requirement.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000262",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000060"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same genotype-dependent Number=M cardinality rule.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000263",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000048",
+        "VCF-REQ-000142",
+        "VCF-REQ-000113"
+      ],
+      "relationship": "PARTIAL_OR_COMBINED",
+      "notes": "Canonical records combine PSL and PSO equality across paired breakend records; this addendum isolates PSO equality.",
+      "disposition": "RETAIN_SPLIT_CHILD_RELATIONSHIP"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000264",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "Named DPM aliases should be used instead of ChEBI-keyed names; no canonical recommendation found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000265",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "Named ADM aliases should be used instead of ChEBI-keyed names; no canonical recommendation found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000266",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000069"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same DPM-family reserved-key behavior for invalid/unrecognized ChEBI IDs.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000267",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000070"
+      ],
+      "relationship": "DIRECT",
+      "notes": "Same ADM-family reserved-key behavior for invalid/unrecognized ChEBI IDs.",
+      "disposition": "SUBSUMED_BY_EXISTING_CANONICAL_REQUIREMENT"
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-000268",
+      "canonical_requirement_ids": [],
+      "relationship": "NO_MATCH_IDENTIFIED",
+      "notes": "ADRM non-reservation is explicitly stated in VCFv4.5 prose; no canonical non-reservation requirement found.",
+      "disposition": "PROVISIONAL_CANDIDATE_REQUIRES_REVIEW"
+    }
+  ],
+  "unresolved_gates": [
+    "Independent standards review has not started.",
+    "VCF-REQ-000054 and VCF-REQ-000055 in the canonical ledger have normative-force discrepancies against the pinned VCFv4.5 prose (SHOULD vs DESCRIPTIVE); do not silently rewrite canonical records before adjudication.",
+    "VCF-REQ-000232 retains the line-502 versus lines-692-696 LAA-presence scope discrepancy (VCF45-AMB-007).",
+    "Partial overlaps require a decision whether canonical parent requirements should be split into linked child requirements; no canonical ID changes are authorized by this crosswalk.",
+    "The nine records with no canonical match are not yet confirmed net-new requirements; check source context, canonical scope and the existing 61 GT/FORMAT candidates before promotion."
+  ],
+  "controls": [
+    "Do not modify atomic-requirements.v1.json from this author crosswalk.",
+    "Do not allocate canonical IDs.",
+    "A direct match is a deduplication relationship, not independent approval.",
+    "A no-match result is provisional and is not proof of novelty.",
+    "Preserve all source locators and version applicability; do not project VCFv4.5 semantics backward.",
+    "No implementation mapping, executable test or laboratory qualification is claimed."
+  ]
+}
