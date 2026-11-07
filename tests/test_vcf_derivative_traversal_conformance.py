@@ -308,6 +308,21 @@ def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
     assert len(result["breakend_adjacencies"]) == 2
     assert len(result["breakend_partner_links"]) == 2
     assert len(result["unresolved_breakend_partner_links"]) == 0
+    orientations = {
+        (
+            endpoint["orientation"]["remote_piece_direction"],
+            endpoint["orientation"]["remote_piece_reverse_complemented"],
+            endpoint["orientation"]["joined_side"],
+        )
+        for link in result["breakend_partner_links"]
+        for endpoint in (link["source"], link["partner"])
+    }
+    assert orientations == {
+        ("LEFT", "true", "AFTER_LOCAL_REPLACEMENT"),
+        ("RIGHT", "false", "AFTER_LOCAL_REPLACEMENT"),
+        ("RIGHT", "true", "BEFORE_LOCAL_REPLACEMENT"),
+        ("LEFT", "false", "BEFORE_LOCAL_REPLACEMENT"),
+    }
     event_group = result["breakend_event_groups"][0]
     assert event_group["event_id"] == "TRA1"
     assert len(event_group["adjacency_ids"]) == 2
