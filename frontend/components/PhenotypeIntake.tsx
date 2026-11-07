@@ -77,6 +77,8 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
   const [severity, setSeverity] = useState("");
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("YEARS");
+  const [ageAtAssessmentValue, setAgeAtAssessmentValue] = useState("");
+  const [ageAtAssessmentUnit, setAgeAtAssessmentUnit] = useState("YEARS");
   const [resolutionAgeValue, setResolutionAgeValue] = useState("");
   const [resolutionAgeUnit, setResolutionAgeUnit] = useState("YEARS");
   const [severityHpoId, setSeverityHpoId] = useState("");
@@ -176,6 +178,8 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setOnset("");
     setSeverity("");
     setAgeValue("");
+    setAgeAtAssessmentValue("");
+    setAgeAtAssessmentUnit("YEARS");
     setResolutionAgeValue("");
     setResolutionAgeUnit("YEARS");
     setSeverityHpoId("");
@@ -216,8 +220,16 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setSeverity(row.severity ?? "");
     setAgeValue("");
     setAgeUnit("YEARS");
+    setAgeAtAssessmentValue("");
+    setAgeAtAssessmentUnit("YEARS");
     setResolutionAgeValue("");
     setResolutionAgeUnit("YEARS");
+    const assessmentAge = parseIso8601Duration(attributes.age_at_assessment_iso8601);
+    if (assessmentAge) {
+      setAgeAtAssessmentValue(assessmentAge.value);
+      setAgeAtAssessmentUnit(assessmentAge.unit);
+      delete attributes.age_at_assessment_iso8601;
+    }
     const onsetAge = parseIso8601Duration(attributes.onset_age_iso8601);
     if (onsetAge) {
       setAgeValue(onsetAge.value);
@@ -291,6 +303,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
         temporal_pattern: temporalPattern,
       };
       if (ageValue.trim()) clinicalAttributes.onset_age_iso8601 = toIso8601Duration(ageValue, ageUnit);
+      if (ageAtAssessmentValue.trim()) clinicalAttributes.age_at_assessment_iso8601 = toIso8601Duration(ageAtAssessmentValue, ageAtAssessmentUnit);
       if (resolutionAgeValue.trim()) clinicalAttributes.resolution_age_iso8601 = toIso8601Duration(resolutionAgeValue, resolutionAgeUnit);
       if (severityHpoId.trim()) clinicalAttributes.severity_hpo_id = severityHpoId.trim();
       if (courseHpoId.trim()) clinicalAttributes.clinical_course_hpo_id = courseHpoId.trim();
@@ -416,6 +429,12 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           </label>
           <label>Age unit
             <select value={ageUnit} onChange={event => setAgeUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
+          </label>
+          <label>{t("phenotype.ageAtAssessment")}
+            <input type="number" min="0" step="any" value={ageAtAssessmentValue} onChange={event => setAgeAtAssessmentValue(event.target.value)} />
+          </label>
+          <label>{t("phenotype.ageAtAssessmentUnit")}
+            <select value={ageAtAssessmentUnit} onChange={event => setAgeAtAssessmentUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
           </label>
           <label>Resolution age value (if resolved)
             <input type="number" min="0" step="any" value={resolutionAgeValue} onChange={event => setResolutionAgeValue(event.target.value)} placeholder="Age when feature resolved" />
