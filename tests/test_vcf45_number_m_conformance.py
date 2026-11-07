@@ -198,3 +198,97 @@ def test_number_m_requires_gt_format_key(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_BASE_MODIFICATION_GT_MISSING"
+
+def test_production_validator_maps_each_number_m_value_to_its_biological_slot(
+    tmp_path: Path,
+):
+    path = tmp_path / "number-m-biological-slot-mapping.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="CGA",
+        alternate=".",
+        genotype="0/0",
+        field_id="M5mC",
+        values="0.25,0.75",
+    )
+    result = validate_vcf_strict(
+        path, include_base_modification_slot_assignments=True
+    )
+    assert result["base_modification_slot_assignment_count"] == 2
+    assert result["base_modification_slot_assignments"] == [
+        {
+            "record_index": 1,
+            "line_number": 4,
+            "chrom": "1",
+            "pos": 2,
+            "sample_index": 1,
+            "sample_name": "SAMPLE1",
+            "field_id": "M5mC",
+            "value_index": 0,
+            "allele_index": 0,
+            "allele_sequence_position": 0,
+            "sequence_base": "C",
+            "strand": "+",
+            "value": "0.25",
+        },
+        {
+            "record_index": 1,
+            "line_number": 4,
+            "chrom": "1",
+            "pos": 2,
+            "sample_index": 1,
+            "sample_name": "SAMPLE1",
+            "field_id": "M5mC",
+            "value_index": 1,
+            "allele_index": 0,
+            "allele_sequence_position": 1,
+            "sequence_base": "G",
+            "strand": "-",
+            "value": "0.75",
+        },
+    ]
+
+
+def test_production_validator_maps_number_m_slots_in_gt_allele_order(
+    tmp_path: Path,
+):
+    path = tmp_path / "number-m-gt-order-mapping.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="C",
+        alternate="G",
+        genotype="1|0",
+        field_id="M5mC",
+        values="0.2,0.8",
+    )
+    result = validate_vcf_strict(
+        path, include_base_modification_slot_assignments=True
+    )
+    slots = result["base_modification_slot_assignments"]
+    assert [(slot["allele_index"], slot["sequence_base"], slot["strand"], slot["value"])
+            for slot in slots] == [
+        (1, "G", "-", "0.2"),
+        (0, "C", "+", "0.8"),
+    ]
+
+
+def test_production_validator_maps_missing_vector_entries_to_slots(
+    tmp_path: Path,
+):
+    path = tmp_path / "number-m-slot-missing-entry.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="CGA",
+        alternate=".",
+        genotype="0",
+        field_id="M5mC",
+        values=".,0.75",
+    )
+    result = validate_vcf_strict(
+        path, include_base_modification_slot_assignments=True
+    )
+    assert [slot["value"] for slot in result["base_modification_slot_assignments"]] == [
+        None,
+        "0.75",
+    ]
+
