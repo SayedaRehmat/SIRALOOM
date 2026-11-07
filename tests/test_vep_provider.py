@@ -515,7 +515,7 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
                     "seq_region_name": "1",
                     "allele_string": "A/G",
                     "transcript_consequences": [],
-                }) + "\\n",
+                }) + "\n",
                 encoding="utf-8",
             )
             output_sha = hashlib.sha256(output_path.read_bytes()).hexdigest()
