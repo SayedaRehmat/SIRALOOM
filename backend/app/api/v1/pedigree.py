@@ -289,8 +289,8 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     if artifact is None or artifact.case_id != case_id or artifact.artifact_type not in {"VCF", "SOURCE_VCF"}:
         raise HTTPException(404, "Source VCF artifact not found in this case")
     configured_sample = (analysis.configuration or {}).get("vcf_sample_name")
-    if configured_sample and configured_sample != body.sample_name.strip():
-        raise HTTPException(409, "Sample name differs from the analysis-selected VCF sample")
+    if not configured_sample or configured_sample != body.sample_name.strip():
+        raise HTTPException(409, "Sample name must exactly match the analysis-selected VCF sample")
     if (analysis.configuration or {}).get("input_artifact_id") != str(artifact.id):
         raise HTTPException(409, "Artifact is not the immutable source VCF selected for this analysis")
     specimen_sample = (specimen.metadata_json or {}).get("vcf_sample_name")
