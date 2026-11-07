@@ -735,3 +735,63 @@ def test_inheritance_assessment_rejects_matrix_without_target_proband_binding(mo
         )
     assert exc.value.status_code == 409
     assert "exactly one verified proband binding" in exc.value.detail
+
+
+def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_assessment(monkeypatch):
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    organization = Organization(id=uuid4(), name="Matrix Replay Lab")
+    reviewer = User(
+        id=uuid4(), organization_id=organization.id, display_name="Reviewer",
+        email="matrix-reviewer@example.org", role="lab_director", status="ACTIVE",
+    )
+    case = Case(
+        id=uuid4(), organization_id=organization.id, case_identifier="PED-MATRIX-REPLAY",
+        status="ACTIVE", clinical_context={}, language="en", created_by=reviewer.id,
+    )
+    analysis = Analysis(
+        id=uuid4(), case_id=case.id, analysis_type="VARIANT_INTERPRETATION",
+        workflow_id="variant-v1", workflow_version="1", status="REQUIRES_REVIEW",
+        reference_build="GRCh38", configuration={}, created_by=reviewer.id,
+    )
+    variant = Variant(
+        id=uuid4(), genome_build="GRCh38", chromosome="1", position=20,
+        reference="C", alternate="T", normalization_status="NORMALIZED",
+        canonical_key=f"GRCh38:1:20:C:T:{uuid4()}", identifiers={},
+    )
+    db.add_all([organization, reviewer, case, analysis, variant])
+    db.commit()
+
+    fingerprint_value = {"value": "a" * 64}
+    binding_id = uuid4()
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: variant)
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(
+        pedigree,
+        "get_family_genotype_matrix",
+        lambda *_args: {
+            "matrix_fingerprint": fingerprint_value["value"],
+            "samples": [{
+                "member_id": str(uuid4()),
+                "is_proband": True,
+                "analysis_id": str(analysis.id),
+            }],
+        },
+    )
+
+    request = AssessmentInput(models=["AR"], binding_ids=[binding_id], reviewer_note="review")
+    principal = SimpleNamespace(user_id=reviewer.id)
+    first = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
+    replay = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
+    assert first["results"][0]["id"] == replay["results"][0]["id"]
+    assert first["family_matrix_fingerprint"] == replay["family_matrix_fingerprint"]
+
+    fingerprint_value["value"] = "b" * 64
+    revised = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
+    assert revised["results"][0]["id"] != first["results"][0]["id"]
+    assert revised["family_matrix_fingerprint"] == "b" * 64
+    assert db.scalar(select(func.count(InheritanceAssessment.id))) == 2
+    db.close()
