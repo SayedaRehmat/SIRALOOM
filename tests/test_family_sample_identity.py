@@ -198,7 +198,7 @@ def test_sample_binding_review_appends_verified_revision_only_after_normalizatio
         source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
         binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
         evidence_reference="LIMS-ACCESSION-1", version=1,
-        binding_fingerprint="d" * 64, recorded_by=principal.user_id,
+        binding_fingerprint="d" * 64, recorded_by=uuid4(),
     )
     workflow = SimpleNamespace(
         status="SUCCEEDED", input_artifacts=[str(artifact.id)],
@@ -426,7 +426,7 @@ def test_identity_evidence_review_appends_immutable_acceptance_revision(monkeypa
         evidence_reference="LIMS-ACCESSION-1", source_artifact_id=None,
         metrics_json={}, review_status="PENDING", review_reason=None, version=1,
         supersedes_evidence_id=None, evidence_fingerprint="a" * 64,
-        recorded_by=principal.user_id, reviewed_by=None, reviewed_at=None,
+        recorded_by=uuid4(), reviewed_by=None, reviewed_at=None,
     )
     db = _BindingDB(
         case=case, member=member, specimen=specimen, analysis=analysis,
@@ -457,7 +457,7 @@ def test_binding_verification_requires_both_accepted_identity_evidence_types(mon
         source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
         binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
         evidence_reference="LIMS-ACCESSION-1", version=1,
-        binding_fingerprint="e" * 64, recorded_by=principal.user_id,
+        binding_fingerprint="e" * 64, recorded_by=uuid4(),
     )
     workflow = SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifact.id)])
     db = _BindingDB(
