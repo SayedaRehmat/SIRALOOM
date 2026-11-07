@@ -29,7 +29,7 @@ def test_vcf45_local_format_field_requires_laa_key(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
 
 
 def test_vcf45_laa_must_precede_every_format_key_except_gt(tmp_path: Path):
@@ -45,7 +45,7 @@ def test_vcf45_laa_must_precede_every_format_key_except_gt(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
 
 
 def test_vcf45_custom_local_cardinality_field_also_requires_laa(tmp_path: Path):
@@ -58,7 +58,7 @@ def test_vcf45_custom_local_cardinality_field_also_requires_laa(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_LOCAL_ALLELE_INVALID"
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
 
 
 def test_vcf45_missing_laa_value_is_ref_only_when_local_field_is_populated(
