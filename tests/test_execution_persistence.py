@@ -13,6 +13,7 @@ from backend.app.domain.execution_environments import ExecutionCapacity, Executi
 from backend.app.domain.execution_persistence import (
     ExecutionPersistenceError,
     canonical_fingerprint,
+    execution_request_fingerprint,
     claim_tool_execution,
     complete_tool_execution,
     fail_tool_execution,
@@ -136,7 +137,16 @@ def _register(db, organization, analysis):
         analysis_id=analysis.id,
         execution_id="execution-001",
         idempotency_key="idem-001",
-        request_fingerprint=canonical_fingerprint(snapshot),
+        request_fingerprint=execution_request_fingerprint(
+            organization_id=organization.id,
+            analysis_id=analysis.id,
+            execution_id="execution-001",
+            environment_registration_id=environment.id,
+            tool=tool,
+            operation="normalize",
+            request_snapshot=snapshot,
+            input_manifest=[{"name": "input.vcf.gz", "sha256": "b" * 64}],
+        ),
         environment_registration_id=environment.id,
         tool=tool,
         operation="normalize",
@@ -182,7 +192,16 @@ def test_execution_registration_is_tenant_scoped_and_idempotent(db):
         analysis_id=analysis.id,
         execution_id="execution-001",
         idempotency_key="idem-001",
-        request_fingerprint=canonical_fingerprint(snapshot),
+        request_fingerprint=execution_request_fingerprint(
+            organization_id=organization.id,
+            analysis_id=analysis.id,
+            execution_id="execution-001",
+            environment_registration_id=record.environment_registration_id,
+            tool=_tool(),
+            operation="normalize",
+            request_snapshot=snapshot,
+            input_manifest=[{"name": "input.vcf.gz", "sha256": "b" * 64}],
+        ),
         environment_registration_id=record.environment_registration_id,
         tool=_tool(),
         operation="normalize",
@@ -191,6 +210,17 @@ def test_execution_registration_is_tenant_scoped_and_idempotent(db):
     )
     assert replay.id == record.id
 
+    changed_snapshot = {**snapshot, "argv": ["bcftools", "norm", "--threads", "4"]}
+    changed_fingerprint = execution_request_fingerprint(
+        organization_id=organization.id,
+        analysis_id=analysis.id,
+        execution_id="execution-001",
+        environment_registration_id=record.environment_registration_id,
+        tool=_tool(),
+        operation="normalize",
+        request_snapshot=changed_snapshot,
+        input_manifest=[{"name": "input.vcf.gz", "sha256": "b" * 64}],
+    )
     with pytest.raises(ExecutionPersistenceError, match="different execution request"):
         register_tool_execution(
             db,
@@ -198,11 +228,11 @@ def test_execution_registration_is_tenant_scoped_and_idempotent(db):
             analysis_id=analysis.id,
             execution_id="execution-001",
             idempotency_key="idem-001",
-            request_fingerprint="c" * 64,
+            request_fingerprint=changed_fingerprint,
             environment_registration_id=record.environment_registration_id,
             tool=_tool(),
             operation="normalize",
-            request_snapshot=snapshot,
+            request_snapshot=changed_snapshot,
             input_manifest=[{"name": "input.vcf.gz", "sha256": "b" * 64}],
         )
 
