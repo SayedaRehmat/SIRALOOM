@@ -1133,7 +1133,7 @@ def _validate_declared_value(
         elif field_type == "Numeric":
             valid = bool(
                 re.fullmatch(
-                    r"[-+]?(?:[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)",
+                    r"[-+]?(?:[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)",
                     item,
                     flags=re.IGNORECASE,
                 )
