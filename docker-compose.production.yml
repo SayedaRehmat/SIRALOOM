@@ -42,13 +42,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: docker/backend.Dockerfile
-      args:
-        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
-        BCFTOOLS_PLATFORM: ${BCFTOOLS_PLATFORM:-linux-64}
-        BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
-        BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
-        HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
+      dockerfile: docker/backend-api.Dockerfile
     restart: unless-stopped
     env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
     environment:
@@ -239,12 +233,7 @@ services:
   beat:
     build:
       context: .
-      dockerfile: docker/backend.Dockerfile
-      args:
-        BCFTOOLS_LOCK_FILE: ${BCFTOOLS_LOCK_FILE:-configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock}
-        BCFTOOLS_PROFILE_ID: ${BCFTOOLS_PROFILE_ID:-bcftools-1.25-htslib-1.25-linux-64}
-        BCFTOOLS_VERSION: ${BCFTOOLS_VERSION:-1.25}
-        HTSLIB_VERSION: ${HTSLIB_VERSION:-1.25}
+      dockerfile: docker/backend-api.Dockerfile
     restart: unless-stopped
     env_file: ${SIRALOOM_RUNTIME_ENV_FILE:-.env}
     environment:
