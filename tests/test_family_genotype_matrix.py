@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
+
 from fastapi import HTTPException
 
 from backend.app.domain.family_genotype_matrix import build_family_genotype_matrix
