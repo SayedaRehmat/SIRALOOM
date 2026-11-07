@@ -42,7 +42,7 @@ def _base_toolchain(*, vep_binary="/opt/vep/vep"):
         "qualification_status": "SOFTWARE_QUALIFIED",
         "runtime_image_digest": "sha256:" + "d" * 64,
         "runtime_path": [str(Path(sys.executable).parent), "/usr/bin", "/bin"],
-        "runtime_environment": {"PERL5LIB": "/opt/vep/modules"},
+        "runtime_environment": {"PERL5LIB": "/opt/vep/modules", "PERL_HASH_SEED": "0", "PERL_PERTURB_KEYS": "0"},
         "execution_timeout_seconds": 1800,
         "max_output_bytes": 65536,
         "scratch_root": str(settings.worker_scratch_root),
