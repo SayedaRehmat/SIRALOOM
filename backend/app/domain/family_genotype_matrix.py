@@ -163,6 +163,7 @@ def build_family_genotype_matrix(
             "identity_interpretation": "CHAIN_OF_CUSTODY_AND_SAMPLE_IDENTITY_QC_ACCEPTED; BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED",
             "identity_evidence": sample["identity_evidence"],
             "normalization_step_status": sample["normalization_step_status"],
+            "normalization_step_provenance": sample.get("normalization_step_provenance") or {},
             "normalized_partition_count": sample["normalized_partition_count"],
             "analysis_reference_build": sample.get("analysis_reference_build"),
             "ploidy_evidence": ploidy_evidence or {
