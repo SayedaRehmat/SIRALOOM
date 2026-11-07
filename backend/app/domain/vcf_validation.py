@@ -2989,10 +2989,9 @@ def validate_vcf_strict(
                 source_pso = source_sample.get("pso", [])
                 mate_psl = mate_sample.get("psl", [])
                 mate_pso = mate_sample.get("pso", [])
-                # The paired BND records are two representations of one
-                # adjacency. Preserve positional correspondences for every
-                # matching PSL/PSO entry, including reference GT alleles
-                # carrying a phase-set name and ordinal.
+                # Reference-allele PSL/PSO positions are also meaningful
+                # traversal annotations; pair matching positions when the
+                # reciprocal records carry identical values there.
                 for position in range(min(len(source_psl), len(source_pso), len(mate_psl), len(mate_pso))):
                     if (
                         source_psl[position] == mate_psl[position]
@@ -3009,12 +3008,12 @@ def validate_vcf_strict(
                             (source_record["line_no"], source_number),
                             (mate["line_no"], mate_number),
                         )))
-                # GT positions encode the ordered chromosome copies. Preserve
-                # that order: sorting would conceal PSL/PSO swaps between
-                # haplotypes in polyploid or repeated-allele genotypes.
+                # The specification requires the corresponding BND ALT
+                # alleles to carry the same PSL/PSO values. Compare their
+                # ordered value vectors without sorting; the ALT indexes and
+                # GT positions can legitimately differ between mate records.
                 source_signature = [
                     (
-                        position,
                         source_psl[position] if position < len(source_psl) else ".",
                         source_pso[position] if position < len(source_pso) else ".",
                     )
@@ -3023,13 +3022,17 @@ def validate_vcf_strict(
                 ]
                 mate_signature = [
                     (
-                        position,
                         mate_psl[position] if position < len(mate_psl) else ".",
                         mate_pso[position] if position < len(mate_pso) else ".",
                     )
                     for position, allele in enumerate(mate_sample.get("alleles", []))
                     if allele == mate_allele_number
                 ]
+                if source_signature == mate_signature:
+                    reciprocal_breakend_phase_endpoints.add(frozenset((
+                        (source_record["line_no"], source_alt_index + 1),
+                        (mate["line_no"], mate_alt_index + 1),
+                    )))
                 if source_signature != mate_signature:
                     raise StrictVCFValidationError(
                         f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
