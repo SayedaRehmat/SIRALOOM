@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf4.1-4.5-info-reserved-field-clause-mapping",
-  "status": "AUTHOR_FIELD_ROW_SEMANTICS_AND_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_AND_ATOMIC_MAPPING_PENDING",
+  "status": "AUTHOR_RESERVED_ROW_TO_CANONICAL_MAPPING_COMPLETE_FIELD_SPECIFIC_PROSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
   "inputs": [
@@ -85,7 +85,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000143"
+      ]
     },
     {
       "field_id": "AC",
@@ -151,7 +154,10 @@
       "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000144"
+      ]
     },
     {
       "field_id": "AD",
@@ -197,7 +203,10 @@
       "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000145"
+      ]
     },
     {
       "field_id": "ADF",
@@ -243,7 +252,10 @@
       "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000146"
+      ]
     },
     {
       "field_id": "ADR",
@@ -289,7 +301,10 @@
       "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000147"
+      ]
     },
     {
       "field_id": "AF",
@@ -366,7 +381,10 @@
       "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000148"
+      ]
     },
     {
       "field_id": "AN",
@@ -432,7 +450,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000149"
+      ]
     },
     {
       "field_id": "BQ",
@@ -509,7 +530,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000150"
+      ]
     },
     {
       "field_id": "CIGAR",
@@ -575,7 +599,10 @@
       "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000151"
+      ]
     },
     {
       "field_id": "DB",
@@ -641,7 +668,10 @@
       "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000152"
+      ]
     },
     {
       "field_id": "DP",
@@ -718,7 +748,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000153"
+      ]
     },
     {
       "field_id": "END",
@@ -806,7 +839,10 @@
       "vcf45_semantic_note": "Deprecated compatibility field; separate prose defines it as a computed maximum endpoint across REF, symbolic SVLEN and <NON_REF> LEN-derived intervals; it feeds BCF rlen and indexing. Do not treat it as a primary source of variant span when recomputation is required.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000154"
+      ]
     },
     {
       "field_id": "H2",
@@ -883,7 +919,10 @@
       "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000155"
+      ]
     },
     {
       "field_id": "H3",
@@ -960,7 +999,10 @@
       "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000156"
+      ]
     },
     {
       "field_id": "MQ",
@@ -1037,7 +1079,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000157"
+      ]
     },
     {
       "field_id": "MQ0",
@@ -1114,7 +1159,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000158"
+      ]
     },
     {
       "field_id": "NS",
@@ -1180,7 +1228,10 @@
       "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000159"
+      ]
     },
     {
       "field_id": "SB",
@@ -1257,7 +1308,10 @@
       "vcf45_semantic_note": "Number=4 is a fixed four-integer vector; retain exact cardinality rather than treating it as a scalar.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000160"
+      ]
     },
     {
       "field_id": "SOMATIC",
@@ -1334,7 +1388,10 @@
       "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000161"
+      ]
     },
     {
       "field_id": "VALIDATED",
@@ -1400,7 +1457,10 @@
       "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000162"
+      ]
     },
     {
       "field_id": "1000G",
@@ -1477,7 +1537,10 @@
       "vcf45_semantic_note": "Reserved legacy membership flag in VCF core; its name does not import the 1000 Genomes project's producer conventions or imply cohort-specific semantics.",
       "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
       "independent_review_status": "NOT_STARTED",
-      "atomic_requirement_mapping_status": "NOT_MAPPED"
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000163"
+      ]
     }
   ],
   "summary": {
@@ -1493,7 +1556,8 @@
     ],
     "author_row_context_reviewed": 21,
     "independent_reviewed": 0,
-    "atomic_requirement_mapped": 0
+    "atomic_requirement_mapped": 21,
+    "canonical_row_records_mapped": 21
   },
   "cross_table_semantics": [
     {
