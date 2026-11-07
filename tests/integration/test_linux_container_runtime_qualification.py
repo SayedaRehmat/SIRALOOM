@@ -211,9 +211,58 @@ def test_real_cgroup_cpu_memory_and_pid_limits_are_applied(tmp_path):
     executor, environment, _, python_tool = _build_context(tmp_path)
     workspace = _workspace(tmp_path)
     output = workspace / "cgroup.json"
-    script = """import json, pathlib, sys
+    script = """import json, os, pathlib, signal, sys, time
 root = pathlib.Path("/sys/fs/cgroup")
-data = {key: (root / key).read_text().strip() for key in ("cpu.max", "memory.max", "pids.max")}
+def read(name):
+    return (root / name).read_text().strip()
+data = {key: read(key) for key in ("cpu.max", "memory.max", "pids.max")}
+# Two busy children demonstrate the quota limits aggregate CPU time to about
+# one CPU-second per wall-clock second, rather than allowing two full cores.
+before = int(dict(line.split() for line in read("cpu.stat").splitlines())["usage_usec"])
+children = []
+for _ in range(2):
+    pid = os.fork()
+    if pid == 0:
+        deadline = time.monotonic() + 2.0
+        value = 1
+        while time.monotonic() < deadline:
+            value = (value * 3 + 1) % 1000003
+        os._exit(value % 2)
+    children.append(pid)
+for pid in children:
+    os.waitpid(pid, 0)
+after = int(dict(line.split() for line in read("cpu.stat").splitlines())["usage_usec"])
+data["cpu_usage_delta_usec"] = after - before
+# Fill the PID cgroup until fork is denied. A successful unbounded fork loop
+# means the runtime did not apply the requested pids.max.
+children = []
+for _ in range(128):
+    try:
+        pid = os.fork()
+    except OSError:
+        break
+    if pid == 0:
+        time.sleep(0.2)
+        os._exit(0)
+    children.append(pid)
+for pid in children:
+    os.waitpid(pid, 0)
+data["forked_children"] = len(children)
+# A child touches more than the memory.max allocation. The cgroup OOM killer
+# must kill the child while leaving this small parent alive to record evidence.
+pid = os.fork()
+if pid == 0:
+    blocks = []
+    for _ in range(768):
+        block = bytearray(1024 * 1024)
+        for offset in range(0, len(block), 4096):
+            block[offset] = 1
+        blocks.append(block)
+    os._exit(0)
+_, status = os.waitpid(pid, 0)
+data["memory_child_oom_killed"] = os.WIFSIGNALED(status) and os.WTERMSIG(status) == signal.SIGKILL
+events = dict(line.split() for line in read("memory.events").splitlines())
+data["memory_oom_kill_events"] = int(events.get("oom_kill", "0"))
 pathlib.Path(sys.argv[1]).write_text(json.dumps(data))
 """
     request = _request(
@@ -224,8 +273,12 @@ pathlib.Path(sys.argv[1]).write_text(json.dumps(data))
     observed = json.loads(output.read_text(encoding="utf-8"))
     quota, period = (int(value) for value in observed["cpu.max"].split())
     assert quota / period <= 1.0
+    assert observed["cpu_usage_delta_usec"] <= 3_000_000
     assert int(observed["memory.max"]) == executor.limits.memory_bytes
+    assert observed["memory_child_oom_killed"] is True
+    assert observed["memory_oom_kill_events"] >= 1
     assert int(observed["pids.max"]) == executor.limits.pids_limit
+    assert observed["forked_children"] < 128
     assert result.provenance.exit_code == 0
 
 
