@@ -175,6 +175,8 @@ class LinuxContainerToolExecutor:
             "--security-opt", "no-new-privileges",
             "--cap-drop", "ALL",
             "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,size=1g",
+            "--tmpfs", "/inputs:rw,noexec,nosuid,nodev,size=64m",
+            "--tmpfs", "/resources:rw,noexec,nosuid,nodev,size=64m",
             "--workdir", "/workspace",
             *mounts,
         ]
@@ -307,3 +309,40 @@ class LinuxContainerToolExecutor:
         if missing:
             raise ToolExecutionError("Expected container output(s) were not produced: " + ", ".join(missing), provenance=provenance)
         return ToolExecutionResult(provenance=provenance, stdout=stdout, stderr=stderr)
+
+
+
+class EnvironmentAwareToolExecutor:
+    """Select the existing local executor or the Linux OCI adapter by profile.
+
+    Unsupported schedulers and remote-agent dispatch are rejected explicitly;
+    they must not silently fall back to local execution.
+    """
+
+    def __init__(
+        self,
+        environment: ExecutionEnvironmentProfile,
+        *,
+        container_limits: ContainerResourceLimits | None = None,
+        runtime_path: str | None = None,
+    ) -> None:
+        self.environment = environment
+        self.container_limits = container_limits
+        self.runtime_path = runtime_path
+
+    def execute(self, profile: ToolIdentity, request: ToolExecutionRequest) -> ToolExecutionResult:
+        self.environment.assert_tool_compatible(profile)
+        if self.environment.executor_kind == "LOCAL_PROCESS":
+            from backend.app.domain.tool_execution import LocalProcessToolExecutor
+            if self.environment.runtime_kind != "HOST":
+                raise ExecutionEnvironmentError("Local-process execution requires a HOST runtime profile.")
+            return LocalProcessToolExecutor().execute(profile, request)
+        if self.environment.executor_kind == "CONTAINER":
+            if self.container_limits is None:
+                raise ToolExecutionContractError("Container execution requires explicit per-job CPU, memory and PID limits.")
+            return LinuxContainerToolExecutor(
+                self.environment, self.container_limits, runtime_path=self.runtime_path
+            ).execute(profile, request)
+        raise ExecutionEnvironmentError(
+            f"Executor kind {self.environment.executor_kind!r} is not implemented; refusing local fallback."
+        )
