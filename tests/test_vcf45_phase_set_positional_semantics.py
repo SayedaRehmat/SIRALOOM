@@ -273,7 +273,7 @@ def test_vcf45_pso_obligations_are_tracked_for_multiple_sets_in_one_sample(
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         "1\t5\tdel1\tA\t<DEL>,<DUP>\t.\tPASS\tEND=8\tGT:PSL:PSO\t1|2|0:alpha,beta,gamma:3,4,5\n"
-        "1\t9\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t1|2|0:alpha,beta,gamma:6,.,8\n",
+        "1\t9\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t1|0|0:alpha,beta,gamma:6,.,8\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
