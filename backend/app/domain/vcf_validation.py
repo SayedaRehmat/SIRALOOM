@@ -3012,68 +3012,142 @@ def validate_vcf_strict(
                 "unresolved_cipos_ends": unresolved_ends,
             })
 
+        adjacency_key = tuple(sorted((
+            (int(source_record["line_no"]), source_alt_index),
+            (int(mate["line_no"]), mate_alt_index),
+        )))
+        adjacency = next(
+            (item for item in breakend_adjacencies if item["key"] == adjacency_key),
+            None,
+        )
+        if adjacency is None:
+            source_orientation = source_record["orientation_by_alt"].get(source_alt_index)
+            mate_orientation = mate["orientation_by_alt"].get(mate_alt_index)
+            adjacency = {
+                "key": adjacency_key,
+                "adjacency_id": (
+                    f"{source_record['line_no']}:{source_alt_index + 1}"
+                    f"<->{mate['line_no']}:{mate_alt_index + 1}"
+                ),
+                "source": {
+                    "record_id": source_id,
+                    "line_number": source_record["line_no"],
+                    "chrom": chrom,
+                    "pos": pos,
+                    "alt_index": source_alt_index + 1,
+                    "alt": source_record["alts"][source_alt_index],
+                    "orientation": source_orientation,
+                },
+                "mate": {
+                    "record_id": mate_id,
+                    "line_number": mate["line_no"],
+                    "chrom": mate["chrom"],
+                    "pos": mate["pos"],
+                    "alt_index": mate_alt_index + 1,
+                    "alt": mate["alts"][mate_alt_index],
+                    "orientation": mate_orientation,
+                },
+                "coordinate_status": (
+                    "UNRESOLVED_CIPOS" if unresolved_ends else "WITHIN_CIPOS_INTERVALS"
+                ),
+                "sample_phase_correspondence": {},
+            }
+            breakend_adjacencies.append(adjacency)
         if fileformat in {"VCFv4.4", "VCFv4.5"}:
             source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
             mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
-            mate_alt_index = reciprocal_alt_indexes[0]
+            source_allele_number = str(source_alt_index + 1)
+            mate_allele_number = str(mate_alt_index + 1)
             for sample_name in set(source_vectors) | set(mate_vectors):
                 source_sample = source_vectors.get(sample_name, {})
                 mate_sample = mate_vectors.get(sample_name, {})
-                source_allele_number = str(source_alt_index + 1)
-                mate_allele_number = str(mate_alt_index + 1)
                 source_psl = source_sample.get("psl", [])
                 source_pso = source_sample.get("pso", [])
                 mate_psl = mate_sample.get("psl", [])
                 mate_pso = mate_sample.get("pso", [])
-                # Reference-allele PSL/PSO positions are also meaningful
-                # traversal annotations; pair matching positions when the
-                # reciprocal records carry identical values there.
-                for position in range(min(len(source_psl), len(source_pso), len(mate_psl), len(mate_pso))):
-                    if (
-                        source_psl[position] == mate_psl[position]
-                        and source_pso[position] == mate_pso[position]
-                        and source_psl[position] not in {"", "."}
-                        and source_pso[position] not in {"", "."}
-                    ):
-                        try:
-                            source_number = int(source_sample.get("alleles", [])[position])
-                            mate_number = int(mate_sample.get("alleles", [])[position])
-                        except (IndexError, TypeError, ValueError):
-                            continue
-                        reciprocal_breakend_phase_endpoints.add(frozenset((
-                            (source_record["line_no"], source_number),
-                            (mate["line_no"], mate_number),
-                        )))
-                # The specification requires the corresponding BND ALT
-                # alleles to carry the same PSL/PSO values. Compare their
-                # ordered value vectors without sorting; the ALT indexes and
-                # GT positions can legitimately differ between mate records.
-                source_signature = [
+                source_positions = [
+                    position
+                    for position, allele in enumerate(source_sample.get("alleles", []))
+                    if allele == source_allele_number
+                ]
+                mate_positions = [
+                    position
+                    for position, allele in enumerate(mate_sample.get("alleles", []))
+                    if allele == mate_allele_number
+                ]
+                source_signature = sorted(
                     (
                         source_psl[position] if position < len(source_psl) else ".",
                         source_pso[position] if position < len(source_pso) else ".",
                     )
-                    for position, allele in enumerate(source_sample.get("alleles", []))
-                    if allele == source_allele_number
-                ]
-                mate_signature = [
+                    for position in source_positions
+                )
+                mate_signature = sorted(
                     (
                         mate_psl[position] if position < len(mate_psl) else ".",
                         mate_pso[position] if position < len(mate_pso) else ".",
                     )
-                    for position, allele in enumerate(mate_sample.get("alleles", []))
-                    if allele == mate_allele_number
-                ]
-                if source_signature == mate_signature:
-                    reciprocal_breakend_phase_endpoints.add(frozenset((
-                        (source_record["line_no"], source_alt_index + 1),
-                        (mate["line_no"], mate_alt_index + 1),
-                    )))
+                    for position in mate_positions
+                )
                 if source_signature != mate_signature:
                     raise StrictVCFValidationError(
-                        f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
+                        f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching FORMAT/PSL and FORMAT/PSO value pairs for sample {sample_name!r}",
                         code="VCF_BREAKEND_PHASE_SET_MISMATCH",
                     )
+                source_by_signature: dict[tuple[str, str], list[int]] = {}
+                mate_by_signature: dict[tuple[str, str], list[int]] = {}
+                for position in source_positions:
+                    signature = (
+                        source_psl[position] if position < len(source_psl) else ".",
+                        source_pso[position] if position < len(source_pso) else ".",
+                    )
+                    source_by_signature.setdefault(signature, []).append(position)
+                for position in mate_positions:
+                    signature = (
+                        mate_psl[position] if position < len(mate_psl) else ".",
+                        mate_pso[position] if position < len(mate_pso) else ".",
+                    )
+                    mate_by_signature.setdefault(signature, []).append(position)
+                paired_copy_count = 0
+                ambiguous_copy_signatures = []
+                for signature, source_signature_positions in source_by_signature.items():
+                    mate_signature_positions = mate_by_signature.get(signature, [])
+                    # A unique PSL/PSO pair identifies a corresponding phased
+                    # copy even if it occupies a different GT vector position
+                    # in the reciprocal record. Repeated identical pairs do
+                    # not identify copy correspondence and remain unresolved.
+                    if signature[0] in {"", "."} or signature[1] in {"", "."}:
+                        continue
+                    if len(source_signature_positions) != 1 or len(mate_signature_positions) != 1:
+                        ambiguous_copy_signatures.append(signature)
+                        continue
+                    source_position = source_signature_positions[0]
+                    mate_position = mate_signature_positions[0]
+                    reciprocal_breakend_phase_endpoints.add(frozenset((
+                        (
+                            int(source_record["line_no"]),
+                            source_position,
+                            int(source_allele_number),
+                        ),
+                        (
+                            int(mate["line_no"]),
+                            mate_position,
+                            int(mate_allele_number),
+                        ),
+                    )))
+                    paired_copy_count += 1
+                adjacency["sample_phase_correspondence"][sample_name] = {
+                    "status": (
+                        "UNRESOLVED_DUPLICATE_PHASE_COPY_IDENTIFIERS"
+                        if ambiguous_copy_signatures
+                        else "MATCHED"
+                    ),
+                    "paired_copy_count": paired_copy_count,
+                    "ambiguous_phase_pairs": [
+                        {"psl": item[0], "pso": item[1]}
+                        for item in ambiguous_copy_signatures
+                    ],
+                }
     phase_set_traversal_orders: list[dict[str, object]] = []
     phase_set_traversal_warnings: list[dict[str, object]] = []
     if fileformat in {"VCFv4.4", "VCFv4.5"}:
@@ -3092,7 +3166,11 @@ def validate_vcf_strict(
             unresolved_ordinal_tie_count = 0
             for ordinal, ordinal_observations in sorted(by_ordinal.items()):
                 endpoints = {
-                    (int(item["line_number"]), int(item["allele_index"]))
+                    (
+                        int(item["line_number"]),
+                        int(item["allele_position"]),
+                        int(item["allele_index"]),
+                    )
                     for item in ordinal_observations
                     if item["allele_index"] is not None
                 }
@@ -3136,6 +3214,9 @@ def validate_vcf_strict(
                             "allele_position": item["allele_position"],
                             "allele_index": item["allele_index"],
                             "allele": item["allele"],
+                            "phase_set": phase_set,
+                            "pso": item["pso"],
+                            "requires_pso": bool(item["requires_pso"]),
                         }
                         for item in ordinal_observations
                     ],
