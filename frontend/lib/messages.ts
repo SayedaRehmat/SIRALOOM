@@ -1048,6 +1048,7 @@ export type TranslationKey =
   | "familyIdentity.inheritanceReviewRecorded"
   | "familyIdentity.inheritanceRequiresProbandBinding"
   | "familyIdentity.matrixSelectionChanged"
+  | "familyIdentity.qualityAssessment"
   | "phenotype.timelineTitle"
   | "phenotype.timelineDescription"
   | "phenotype.observedAt"
@@ -2106,6 +2107,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.inheritanceReviewRecorded": "Inheritance review recorded; status remains REQUIRES_REVIEW",
     "familyIdentity.inheritanceRequiresProbandBinding": "Select exactly one active, verified proband binding from the analysis under review.",
     "familyIdentity.matrixSelectionChanged": "The selected bindings changed. Reload the matrix before submitting inheritance review.",
+    "familyIdentity.qualityAssessment": "Quality assessment",
     "phenotype.timelineTitle": "Longitudinal phenotype timeline",
     "phenotype.timelineDescription": "Chronological member-specific observations. Missing observation dates remain undated; onset descriptions are shown as reported.",
     "phenotype.observedAt": "Observed at",
@@ -3160,6 +3162,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.inheritanceReviewRecorded": "تم تسجيل مراجعة الوراثة؛ وتظل الحالة REQUIRES_REVIEW",
     "familyIdentity.inheritanceRequiresProbandBinding": "حدد رابطًا نشطًا وموثقًا واحدًا فقط لعينة الحالة الأساسية من التحليل قيد المراجعة.",
     "familyIdentity.matrixSelectionChanged": "تغيرت روابط العينات المحددة. أعد تحميل المصفوفة قبل إرسال مراجعة الوراثة.",
+    "familyIdentity.qualityAssessment": "تقييم الجودة",
     "phenotype.timelineTitle": "الخط الزمني الطولي للأنماط الظاهرية",
     "phenotype.timelineDescription": "ملاحظات سريرية مرتبة زمنيًا لكل فرد. تبقى الملاحظات دون تاريخ غير مؤرخة، ويُعرض وصف بداية الأعراض كما ورد.",
     "phenotype.observedAt": "وقت الملاحظة",
