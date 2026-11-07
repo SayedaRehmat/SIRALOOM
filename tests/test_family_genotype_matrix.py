@@ -215,12 +215,17 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
 
 
 def test_matrix_endpoint_rejects_superseded_binding(monkeypatch):
-    case_id, binding_id = uuid4(), uuid4()
+    case_id, binding_id, variant_id = uuid4(), uuid4(), uuid4()
     case = SimpleNamespace(id=case_id)
     binding = SimpleNamespace(id=binding_id, case_id=case_id, binding_status="VERIFIED")
+    variant = SimpleNamespace(id=variant_id, genome_build="GRCh38")
     successor = SimpleNamespace(id=uuid4())
     db = _MatrixDB(
-        {(Case, case_id): case, (PedigreeSampleBinding, binding_id): binding},
+        {
+            (Case, case_id): case,
+            (PedigreeSampleBinding, binding_id): binding,
+            (Variant, variant_id): variant,
+        },
         scalar_rows=[successor],
         query_rows=[],
     )
@@ -229,7 +234,7 @@ def test_matrix_endpoint_rejects_superseded_binding(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         pedigree.get_family_genotype_matrix(
             case_id,
-            pedigree.GenotypeMatrixInput(binding_ids=[binding_id], variant_ids=[uuid4()]),
+            pedigree.GenotypeMatrixInput(binding_ids=[binding_id], variant_ids=[variant_id]),
             db,
             SimpleNamespace(user_id=uuid4()),
         )
