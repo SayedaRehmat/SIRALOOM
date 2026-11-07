@@ -31,6 +31,7 @@ from backend.app.infrastructure.db.models import (
     PedigreeMember,
     PedigreeRelationship,
     PedigreeSampleBinding,
+    PedigreeSampleIdentityEvidence,
     SegregationObservation,
     Specimen,
     SpecimenPloidyEvidenceRevision,
@@ -83,6 +84,21 @@ class SampleBindingInput(BaseModel):
     sample_name: str = Field(min_length=1, max_length=200)
     binding_method: str = Field(min_length=1, max_length=100)
     evidence_reference: str | None = Field(default=None, max_length=1000)
+
+
+class SampleIdentityEvidenceInput(BaseModel):
+    evidence_type: str = Field(pattern=r"^(CHAIN_OF_CUSTODY|SAMPLE_IDENTITY_QC)$")
+    result: str = Field(pattern=r"^(PASS|FAIL|INDETERMINATE)$")
+    method: str = Field(min_length=1, max_length=200)
+    method_version: str = Field(min_length=1, max_length=100)
+    evidence_reference: str = Field(min_length=1, max_length=1000)
+    source_artifact_id: UUID | None = None
+    metrics: dict = Field(default_factory=dict)
+
+
+class SampleIdentityEvidenceReviewInput(BaseModel):
+    decision: str = Field(pattern=r"^(ACCEPTED|REJECTED)$")
+    reason: str = Field(min_length=1, max_length=5000)
 
 
 class SampleBindingReviewInput(BaseModel):
