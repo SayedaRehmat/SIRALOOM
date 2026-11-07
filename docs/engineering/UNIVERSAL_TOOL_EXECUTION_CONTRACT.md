@@ -28,6 +28,7 @@ Tool-specific adapters remain responsible for constructing scientifically correc
 - Output paths must be inside the execution workspace; symlink outputs are rejected.
 - No shell is invoked; arguments are passed as an argv array.
 - Execution time is bounded; timeout kills the complete process group.
+- Process output is spooled to disk to avoid unbounded pipe buffering; complete stdout/stderr streams are hashed while only a bounded diagnostic tail is returned.
 - Protected process environment variables cannot be overridden by request data.
 - A non-zero exit or missing declared output is never returned as success.
 - Provenance binds the organization/workflow/execution identifiers to exact tool and resource identities and artifact hashes.
