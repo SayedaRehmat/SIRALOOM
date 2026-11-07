@@ -211,7 +211,7 @@ def test_docker_executor_builds_isolated_command_and_returns_common_provenance(t
     assert result.provenance.runtime_image_digest == environment.runtime_image_digest
     assert result.provenance.exit_code == 0
     assert result.provenance.output_sha256[0]["name"] == "validated"
-    assert result.stdout == "container stdout\\n"
+    assert result.stdout == "container stdout\n"
     assert len(executed_commands) == 1
     command = executed_commands[0]
     assert "--pull=never" in command
