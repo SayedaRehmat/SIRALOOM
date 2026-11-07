@@ -202,28 +202,29 @@ Use the following status labels consistently:
 - **LAB-QUALIFIED/VALIDATED:** the responsible laboratory approved the intended use under its quality system.
 - **NOT RUN / PARTIAL / BLOCKED / REQUIRES REVIEW:** evidence is incomplete or capability is unsupported.
 
-A1 is implemented in PR #302 but remains **NOT VERIFIED** until its focused and full CI tests pass. All later milestones remain open until their stated evidence is produced.
+A1 is implemented in PR #302. Its CI qualification is evaluated against the latest PR head and must not be marked UNIT-TESTED or INTEGRATION-TESTED until all four current checks complete successfully. A2 real-data qualification remains open.
 
 
 ## 11. A2 — VEP production execution qualification
 
-**Status: BLOCKED ON SHARED EXECUTOR STACK; REAL-DATA QUALIFICATION NOT RUN.** This is an acceptance contract, not evidence of successful VEP execution.
+**Status: VEP adapter integrated with the shared executor in PR #302; dependency stack remains unmerged; REAL-DATA QUALIFICATION NOT RUN.** The adapter routes cache preflight and annotation through `ToolExecutor`, but this PR alone does not make the stack deployable or establish real-data accuracy.
 
 ### Dependency gate
 
-The current dependency chain is represented by open draft PRs: #297 durable artifact-validation workers; #300 separation of tool-neutral API and scientific workers (based on #297); #301 universal scientific tool execution contract (based on #300); #302 annotation payload contract (currently based on main, not #301). Do not import an unmerged executor or duplicate its process lifecycle in the VEP adapter. After #297–#301 are integrated and their CI baseline is green, stack/rebase VEP integration on the qualified executor. The six VCF validator failures in the latest #302 CI run remain a separate blocker for the shared backend baseline and must be fixed in the VCF workstream.
+The current PR dependency chain is #297 durable artifact-validation workers → #300 tool-neutral API/scientific-worker image boundary → #301 universal tool execution contract → #302 VEP adapter integration. PR #302 is based on the #301 branch, not on `main`; its recorded base commit must be refreshed against the latest #301 head before final qualification. PR #299 is a separate VCF 4.0/4.5 conformance change that overlaps `backend/app/domain/vcf_validation.py` with #297. It must be integrated first, then #297 reconciled without losing its durable dispatch/outbox behavior. No stack PR should be merged out of dependency order.
 
 ### Shared executor audit findings
 
 Inspection of the current #301 executor contract identified additional A2 requirements:
 
-1. ScientificResourceBinding validates digest syntax and records a supplied digest, but does not resolve a governed resource path and hash the actual cache/FASTA/manifest bytes. A caller-supplied digest is not resource attestation.
-2. ToolIdentity records platform but the inspected executor does not compare it with the running platform/architecture. Enforce this or bind execution to an immutable platform-specific image and attest its digest.
-3. The request enforces timeout and bounded returned logs, but no CPU, memory, process-count or scratch-disk limits. These must be enforced by worker/container/cgroup policy.
-4. Output hashes are computed after execution, but atomic publication and durable artifact registration/recovery must be guaranteed by the worker/artifact lifecycle.
-5. The current VEP adapter launches subprocess.Popen directly. Remove this independent lifecycle when shared-executor integration is qualified; no nested subprocess fallback.
+1. `ScientificResourceBinding.validate()` now requires an absolute local path and computes the resource digest from actual bytes (including deterministic directory-tree hashing); it rejects mismatches. VEP additionally verifies every cache-manifest entry and its file size/digest before execution.
+2. `ToolIdentity.validate()` compares the declared platform with the running platform identifier. The VEP adapter separately checks the approved runtime image digest exposed by the worker environment.
+3. The executor enforces a wall-clock timeout and bounded diagnostic tail, but does not itself enforce CPU, memory, process-count or scratch-disk quotas. Those remain container/cgroup or scheduler responsibilities.
+4. The executor computes output hashes, but PR #301 currently returns in-memory provenance; durable `ToolRun`/artifact registration, atomic publication and crash/replay recovery are not yet demonstrated by this adapter integration.
+5. The VEP adapter in PR #302 now routes `verify_cache` and `annotate` through `ToolExecutor`; it no longer owns a separate subprocess lifecycle. VEP-specific command construction, cache policy and response semantics remain in the adapter.
+6. The VEP adapter checks that `--show_cache_info` returns non-empty output, but does not yet parse that output and independently assert the reported runtime cache species/release/assembly. The cache manifest itself does pin species, release and assembly and verifies all cache file bytes; runtime metadata cross-check should be added or evidenced with real output before A2 completion.
 
-These are integration acceptance items, not reasons to bypass the shared executor.
+These are remaining integration/qualification requirements, not reasons to bypass the shared executor.
 
 ### Governed tool and resource identity
 
