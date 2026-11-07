@@ -54,7 +54,7 @@ def test_vcf44_mateid_number_a_requires_one_entry_per_alt(tmp_path: Path):
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_INFO_CARDINALITY_INVALID"
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
 
 
 def test_vcf44_format_number_p_requires_gt_to_establish_ploidy(tmp_path: Path):
@@ -93,12 +93,12 @@ def test_vcf44_psq_values_remain_positionally_aligned_for_repeated_psl_names(
 ):
     path = tmp_path / "vcf44-psq-repeated-phase-set-positions.vcf"
     path.write_text(
-        "##fileformat=VCFv4.4\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:PSL:PSQ\\t|0|1:shared,shared:12,37\\n",
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC,G\t.\tPASS\t.\tGT:PSL:PSQ\t|0|1:shared,shared:12,37\n",
         encoding="utf-8",
     )
 
@@ -108,12 +108,12 @@ def test_vcf44_psq_values_remain_positionally_aligned_for_repeated_psl_names(
 def test_vcf44_psq_missing_value_must_follow_missing_psl_position(tmp_path: Path):
     path = tmp_path / "vcf44-psq-missing-phase-set-position.vcf"
     path.write_text(
-        "##fileformat=VCFv4.4\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:PSL:PSQ\\t0/1|2:.,set,set:5,.,7\\n",
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC,G\t.\tPASS\t.\tGT:PSL:PSQ\t0/1|2:.,set,set:5,.,7\n",
         encoding="utf-8",
     )
 
