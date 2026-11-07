@@ -46,12 +46,14 @@ def test_every_registered_application_task_has_an_explicit_scope_classification(
     workload_tasks = {
         "backend.app.infrastructure.queue.celery_app.run_analysis_task",
         "backend.app.infrastructure.queue.celery_app.run_case_export_task",
+        "siraloom.run_artifact_validation",
         "siraloom.stage_resource_release",
     }
     system_tasks = {
         "siraloom.discover_scientific_resources",
         "siraloom.scan_reanalysis_resources",
         "siraloom.dispatch_pending_analysis_outbox",
+        "siraloom.dispatch_pending_artifact_validation_outbox",
         "siraloom.recover_orphaned_analysis_dispatches",
         "siraloom.dispatch_pending_case_export_outbox",
         "siraloom.recover_orphaned_case_export_dispatches",
