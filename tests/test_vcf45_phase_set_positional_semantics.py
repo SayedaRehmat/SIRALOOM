@@ -357,6 +357,20 @@ def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
     assert result["unresolved_breakend_coordinate_count"] == 2
     assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
 
+def test_vcf45_telomeric_breakend_remote_position_zero_is_valid(tmp_path: Path):
+    path = tmp_path / "breakend-telomere-zero.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tSVTYPE=BND;MATEID=bndV\n"
+        "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tSVTYPE=BND;MATEID=bndX\n",
+        encoding="utf-8",
+    )
+    result = validate_vcf_strict(path)
+    assert result["records"] == 2
+    assert result["breakend_records"] == 2
+
+
 def test_vcf45_imprecise_breakend_without_cipos_is_unresolved_not_exact(
     tmp_path: Path,
 ):
