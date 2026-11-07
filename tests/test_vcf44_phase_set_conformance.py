@@ -41,3 +41,17 @@ def test_vcf44_phase_set_accepts_complete_pso_across_sv_and_sequence_records(tmp
 
     result = validate_vcf_strict(path)
     assert result["records"] == 2
+
+
+def test_vcf44_mateid_number_a_requires_one_entry_per_alt(tmp_path: Path):
+    path = tmp_path / "vcf44-mateid-number-a-cardinality.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t100\tbnd1\tA\tA]2:200],A]3:300]\t.\tPASS\tMATEID=bnd2\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_INFO_CARDINALITY_INVALID"
