@@ -327,19 +327,25 @@ def test_vep_qualification_blocks_manifest_artifact_digest_mismatch(monkeypatch,
     resource, _binary = _vep_resource(tmp_path)
     execution = resource.metadata_json["execution"]
     execution["toolchain"]["cache_artifact_sha256"] = "0" * 64
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    monkeypatch.setattr(settings, "worker_scratch_root", str(scratch))
+    monkeypatch.setenv(
+        "SIRALOOM_RUNTIME_IMAGE_DIGEST",
+        execution["toolchain"]["runtime_image_digest"],
+    )
     monkeypatch.setattr(
-        "backend.app.adapters.annotation.vep.subprocess.run",
-        lambda command, **_kwargs: SimpleNamespace(
-            returncode=0,
-            stdout="ensembl-vep 115.2" if command[-1] == "--version" else "cache info",
-            stderr="",
-        ),
+        VEPProvider,
+        "_require_read_only_mount",
+        staticmethod(lambda *_args, **_kwargs: None),
     )
 
     result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is False
     assert "VEP_CACHE_ARTIFACT_DIGEST_MISMATCH" in result.blockers
+    assert "VEP_RUNTIME_PREFLIGHT_FAILED" in result.blockers
+    assert "manifest does not identify the governed cache artifact digest" in result.checks["vep_runtime"]["error"]
 
 
 def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
