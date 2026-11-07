@@ -2050,6 +2050,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                     code="VCF_LOCAL_ALLELE_INVALID",
                                 )
                 for key, value in zip(format_keys, sample_values):
+                    if fileformat == "VCFv4.5" and key == "LAA" and value == "":
+                        # VCFv4.5's REF-only local-allele example uses an
+                        # empty text value; BCF represents this as MISSING.
+                        continue
                     definition = format_definitions.get(key)
                     if definition is None and fileformat == "VCFv4.0":
                         definition = _reserved_vcf40_format_definition(key)
