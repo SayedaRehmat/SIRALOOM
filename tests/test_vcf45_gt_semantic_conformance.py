@@ -32,6 +32,7 @@ def _write_gt_vcf(
     [
         ("1", "0,1,2", 3),
         ("0/1", "0,1,2,3,4,5", 6),
+        ("/0/1", "0,1,2,3,4,5", 6),
         ("0/1/2", "0,1,2,3,4,5,6,7,8,9", 10),
         ("0/1/2/2", "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14", 15),
         ("./.", "0,1,2,3,4,5", 6),
@@ -102,7 +103,7 @@ def test_vcf45_first_and_mixed_phasing_separators_control_allele_aggregation(
     assert validate_vcf_strict(path)["records"] == 1
 
 
-@pytest.mark.parametrize("genotype", ["0/", "/0", "0||1", "|/0", "0/1/"])
+@pytest.mark.parametrize("genotype", ["0/", "0||1", "|/0", "0/1/", "//0"])
 def test_vcf45_malformed_gt_separator_structures_are_rejected(
     tmp_path: Path, genotype: str
 ):
