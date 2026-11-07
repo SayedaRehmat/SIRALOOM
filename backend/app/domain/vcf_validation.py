@@ -29,7 +29,7 @@ def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
     # VCFv4.5 single breakends use a leading or trailing dot (for example
     # .A, A., .TGCA, or TCC.). They are breakpoint-notation alleles too:
     # a phase set containing one still has the PSO obligation.
-    if re.fullmatch(r"(?:\\.[ACGTNacgtn]+|[ACGTNacgtn]+\\.)", allele):
+    if re.fullmatch(r"(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)", allele):
         return True
     match = re.fullmatch(r"<([A-Z]+)(?::[^<>]+)?>", allele)
     return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
