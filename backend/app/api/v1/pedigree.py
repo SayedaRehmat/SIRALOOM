@@ -228,7 +228,7 @@ def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
                     "relationship_to_proband": member.relationship_to_proband,
                     "sex": member.sex,
                     "affected_status": member.affected_status,
-                    "is_proband": bool(getattr(member, "is_proband", False)),
+                    "is_proband": member.is_proband,
                     "sampled": member.sampled,
                     "specimen_identifier": (
                         specimens[member.specimen_id].specimen_identifier
@@ -1099,7 +1099,7 @@ def get_family_genotype_matrix(
                 "region_copy_number": latest.region_copy_number,
                 "source_type": latest.source_type,
                 "evidence_reference": latest.evidence_reference,
-                "recorded_by": str(latest.recorded_by) if getattr(latest, "recorded_by", None) else None,
+                "recorded_by": str(latest.recorded_by),
                 "recorded_at": latest.recorded_at.isoformat() if latest.recorded_at else None,
                 "reviewed_by": str(latest.reviewed_by) if latest.reviewed_by else None,
                 "reviewed_at": latest.reviewed_at.isoformat() if latest.reviewed_at else None,
