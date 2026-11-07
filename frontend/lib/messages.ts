@@ -742,6 +742,14 @@ export type TranslationKey =
   | "review.recordObservation"
   | "review.inheritanceAssessment"
   | "review.inheritanceHelp"
+  | "review.manualSegregationLabel"
+  | "review.manualSegregationDescription"
+  | "review.manualTag"
+  | "review.inheritanceBlockedLabel"
+  | "review.inheritanceBlockedDescription"
+  | "review.inheritanceTrialScope"
+  | "review.historicalInheritanceRecords"
+  | "review.legacyInheritanceContext"
   | "review.assessModels"
   | "review.noModel"
   | "review.context"
@@ -1335,6 +1343,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.recordObservation": "Record observation",
     "review.inheritanceAssessment": "Inheritance review status",
     "review.inheritanceHelp": "Family observations are recorded for qualified review. SIRALOOM does not calculate inheritance compatibility or an ACMG/ClinGen criterion from this information.",
+    "review.manualSegregationLabel": "MANUALLY REPORTED — NOT SOURCE-VERIFIED.",
+    "review.manualSegregationDescription": "These entries preserve reviewer-reported observations only. They are not normalized VCF calls and must not be treated as verified segregation evidence.",
+    "review.manualTag": "MANUAL",
+    "review.inheritanceBlockedLabel": "NOT ENABLED — SOURCE-BOUND FAMILY EVIDENCE REQUIRED.",
+    "review.inheritanceBlockedDescription": "Interpretation remains blocked until the family genotype matrix, member identity-QC evidence, relationship review, genotype provenance, phase and callability gates are qualified. Manual observations above are excluded.",
+    "review.inheritanceTrialScope": "Trial model context: autosomal dominant, autosomal recessive, X-linked and de novo. Mitochondrial interpretation is outside the qualified SNV/INDEL trial scope.",
+    "review.historicalInheritanceRecords": "Historical review records — not a current automated conclusion",
+    "review.legacyInheritanceContext": "Existing case inheritance context",
     "review.assessModels": "Record for review",
     "review.noModel": "No model assessment has been recorded.",
     "review.context": "VARIANT, POPULATION & TECHNICAL CONTEXT",
@@ -2374,6 +2390,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.recordObservation": "تسجيل الملاحظة",
     "review.inheritanceAssessment": "حالة مراجعة الوراثة",
     "review.inheritanceHelp": "تُسجَّل ملاحظات الأسرة للمراجعة المختصة. لا يحسب سيرالوم توافق الوراثة أو معيار ACMG/ClinGen من هذه المعلومات.",
+    "review.manualSegregationLabel": "مُبلَّغ عنها يدويًا — لم يتم التحقق منها من المصدر.",
+    "review.manualSegregationDescription": "تحفظ هذه الإدخالات الملاحظات التي أبلغ عنها المراجع فقط. وهي ليست استدعاءات VCF مطبّعة ولا يجوز اعتبارها دليلًا موثقًا على التوارث.",
+    "review.manualTag": "يدوي",
+    "review.inheritanceBlockedLabel": "غير مفعّل — يلزم توفر أدلة عائلية مرتبطة بالمصدر.",
+    "review.inheritanceBlockedDescription": "يظل التفسير محجوبًا حتى يتم تأهيل مصفوفة الأنماط الجينية العائلية وأدلة التحقق من هوية العينات ومراجعة العلاقات ونسب الأنماط الجينية والطور وقابلية الاستدعاء. تُستبعد الملاحظات اليدوية أعلاه.",
+    "review.inheritanceTrialScope": "نماذج سياق التجربة: جسمي سائد، جسمي متنحٍ، مرتبط بالكروموسوم X، وحدوث جديد. تفسير الوراثة الميتوكوندرية خارج نطاق تجربة SNV/INDEL المؤهلة.",
+    "review.historicalInheritanceRecords": "سجلات مراجعة تاريخية — وليست استنتاجًا آليًا حاليًا",
+    "review.legacyInheritanceContext": "سياق الوراثة المسجل سابقًا للحالة",
     "review.assessModels": "تسجيل للمراجعة",
     "review.noModel": "لم يتم تسجيل تقييم للنموذج.",
     "review.context": "سياق المتغير والسكان والجوانب التقنية",
