@@ -316,6 +316,7 @@ def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch)
     member = SimpleNamespace(
         id=member_id, case_id=case_id, member_identifier="PROBAND",
         relationship_to_proband="PROBAND", sex="UNKNOWN", affected_status="AFFECTED",
+        is_proband=True,
     )
     specimens = [SimpleNamespace(id=uuid4(), case_id=case_id) for _ in range(2)]
     artifacts = [
