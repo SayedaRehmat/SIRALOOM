@@ -386,10 +386,11 @@ def test_vcf41_to_vcf45_telomeric_breakend_remote_position_zero_is_valid(
     tmp_path: Path, version: str
 ):
     path = tmp_path / f"breakend-telomere-zero-{version}.vcf"
+    mate_number = "." if version in {"VCFv4.1", "VCFv4.2", "VCFv4.3"} else "A"
     path.write_text(
         f"##fileformat={version}\n"
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
-        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="ID of mate breakend">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tSVTYPE=BND;MATEID=bndV\n"
         "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tSVTYPE=BND;MATEID=bndX\n",
