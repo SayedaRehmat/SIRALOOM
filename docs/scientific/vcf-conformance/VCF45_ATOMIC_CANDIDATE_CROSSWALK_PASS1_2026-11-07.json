@@ -13,7 +13,8 @@
         "VCF-REQ-900001",
         "VCF-REQ-900002"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-002",
@@ -23,7 +24,8 @@
         "VCF-REQ-900003",
         "VCF-REQ-900004"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-003",
@@ -34,7 +36,8 @@
         "VCF-REQ-900006",
         "VCF-REQ-900007"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-004",
@@ -44,7 +47,8 @@
         "VCF-REQ-900008",
         "VCF-REQ-900009"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-005",
@@ -53,7 +57,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900010"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-006",
@@ -62,7 +67,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900011"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-007",
@@ -72,7 +78,8 @@
         "VCF-REQ-900012",
         "VCF-REQ-900013"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-008",
@@ -82,7 +89,8 @@
         "VCF-REQ-900014",
         "VCF-REQ-900015"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-009",
@@ -91,7 +99,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900016"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-010",
@@ -101,7 +110,8 @@
         "VCF-REQ-900017",
         "VCF-REQ-900018"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-011",
@@ -111,7 +121,8 @@
         "VCF-REQ-900019",
         "VCF-REQ-900020"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-012",
@@ -120,7 +131,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900021"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-013",
@@ -129,7 +141,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900022"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-014",
@@ -143,7 +156,8 @@
         "VCF-REQ-900027",
         "VCF-REQ-900028"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-015",
@@ -152,7 +166,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900029"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-016",
@@ -162,7 +177,8 @@
         "VCF-REQ-900030",
         "VCF-REQ-900031"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-017",
@@ -172,7 +188,8 @@
         "VCF-REQ-900032",
         "VCF-REQ-900033"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-018",
@@ -182,7 +199,8 @@
         "VCF-REQ-900034",
         "VCF-REQ-900035"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-019",
@@ -191,7 +209,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900036"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-020",
@@ -200,7 +219,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900037"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-021",
@@ -212,7 +232,8 @@
         "VCF-REQ-900040",
         "VCF-REQ-900041"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-022",
@@ -222,7 +243,8 @@
         "VCF-REQ-900042",
         "VCF-REQ-900043"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-023",
@@ -234,7 +256,8 @@
         "VCF-REQ-900046",
         "VCF-REQ-900047"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-024",
@@ -246,7 +269,8 @@
         "VCF-REQ-900050",
         "VCF-REQ-900051"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-025",
@@ -255,7 +279,15 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900052"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": [
+        260,
+        261,
+        262,
+        263,
+        264,
+        265
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-026",
@@ -264,16 +296,21 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900053"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-027",
       "source_line": 272,
       "source_text": "The following subtypes are recommended:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900054"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "derived_candidate_requirement_ids": [],
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": [
+        273,
+        274,
+        275,
+        276
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-028",
@@ -282,7 +319,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900055"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-029",
@@ -292,7 +330,8 @@
         "VCF-REQ-900056",
         "VCF-REQ-900057"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-030",
@@ -302,7 +341,8 @@
         "VCF-REQ-900058",
         "VCF-REQ-900059"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-031",
@@ -313,7 +353,8 @@
         "VCF-REQ-900120",
         "VCF-REQ-900121"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-032",
@@ -322,7 +363,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900063"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-033",
@@ -331,7 +373,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900064"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-034",
@@ -340,7 +383,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900065"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-035",
@@ -349,7 +393,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900066"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-036",
@@ -358,7 +403,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900067"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-037",
@@ -367,16 +413,21 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900068"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-038",
       "source_line": 403,
       "source_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900069"
+        "VCF-REQ-900069",
+        "VCF-REQ-900137"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        404
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-039",
@@ -387,7 +438,8 @@
         "VCF-REQ-900123",
         "VCF-REQ-900124"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-040",
@@ -397,7 +449,8 @@
         "VCF-REQ-900073",
         "VCF-REQ-900074"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-041",
@@ -406,7 +459,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900075"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-042",
@@ -415,7 +469,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900076"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-043",
@@ -429,7 +484,8 @@
         "VCF-REQ-900081",
         "VCF-REQ-900082"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-044",
@@ -438,7 +494,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900083"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-045",
@@ -448,7 +505,8 @@
         "VCF-REQ-900084",
         "VCF-REQ-900085"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-046",
@@ -457,7 +515,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900086"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-047",
@@ -466,7 +525,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900087"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-048",
@@ -475,7 +535,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900088"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-049",
@@ -484,7 +545,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900089"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-050",
@@ -494,7 +556,8 @@
         "VCF-REQ-900125",
         "VCF-REQ-900126"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-051",
@@ -504,7 +567,8 @@
         "VCF-REQ-900127",
         "VCF-REQ-900128"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-052",
@@ -513,7 +577,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900092"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-053",
@@ -522,7 +587,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900093"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-054",
@@ -531,25 +597,37 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900129"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-055",
       "source_line": 609,
       "source_text": "  These values should be described in the meta-information in the same way as FILTERs.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900095"
+        "VCF-REQ-900095",
+        "VCF-REQ-900138",
+        "VCF-REQ-900139"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        610
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-056",
       "source_line": 825,
       "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900096"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "derived_candidate_requirement_ids": [],
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": [
+        827,
+        828,
+        829,
+        831,
+        833,
+        835
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-057",
@@ -560,7 +638,10 @@
         "VCF-REQ-900131",
         "VCF-REQ-900148"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        846
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-058",
@@ -569,7 +650,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900098"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-059",
@@ -578,7 +660,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900099"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-060",
@@ -588,7 +671,8 @@
         "VCF-REQ-900132",
         "VCF-REQ-900133"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-061",
@@ -597,7 +681,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900101"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-062",
@@ -607,7 +692,8 @@
         "VCF-REQ-900134",
         "VCF-REQ-900135"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-063",
@@ -617,7 +703,8 @@
         "VCF-REQ-900136",
         "VCF-REQ-900137"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-064",
@@ -626,7 +713,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900104"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-065",
@@ -635,7 +723,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900138"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-066",
@@ -644,7 +733,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900106"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-067",
@@ -653,7 +743,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900107"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-068",
@@ -662,7 +753,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900108"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-069",
@@ -672,7 +764,8 @@
         "VCF-REQ-900139",
         "VCF-REQ-900140"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-070",
@@ -682,7 +775,8 @@
         "VCF-REQ-900141",
         "VCF-REQ-900142"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-071",
@@ -692,7 +786,8 @@
         "VCF-REQ-900143",
         "VCF-REQ-900144"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-072",
@@ -702,7 +797,8 @@
         "VCF-REQ-900145",
         "VCF-REQ-900146"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-073",
@@ -711,7 +807,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900147"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-074",
@@ -720,7 +817,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900117"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-075",
@@ -729,7 +827,8 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900118"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
+      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "context_source_lines": []
     }
   ]
 }
