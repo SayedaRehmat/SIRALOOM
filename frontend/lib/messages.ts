@@ -1032,6 +1032,15 @@ export type TranslationKey =
   | "familyIdentity.ploidyEvidence"
   | "familyIdentity.identityQcStatus"
   | "familyIdentity.assay";
+  | "phenotype.timelineTitle"
+  | "phenotype.timelineDescription"
+  | "phenotype.observedAt"
+  | "phenotype.onsetAge"
+  | "phenotype.ageAtAssessment"
+  | "phenotype.course"
+  | "phenotype.sourceReference"
+  | "phenotype.noTimeline"
+  | "phenotype.timelineUnknownTime"
   | "familyIdentity.interpretationNotPerformed";
   | "familyIdentity.noEvidenceArtifact";
 
@@ -2064,6 +2073,15 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.ploidyEvidence": "Ploidy evidence",
     "familyIdentity.identityQcStatus": "Identity QC",
     "familyIdentity.assay": "Assay",
+    "phenotype.timelineTitle": "Longitudinal phenotype timeline",
+    "phenotype.timelineDescription": "Chronological member-specific observations. Missing observation dates remain undated; onset descriptions are shown as reported.",
+    "phenotype.observedAt": "Observed at",
+    "phenotype.onsetAge": "Age at onset",
+    "phenotype.ageAtAssessment": "Age at assessment",
+    "phenotype.course": "Clinical course",
+    "phenotype.sourceReference": "Source document / reference",
+    "phenotype.noTimeline": "No phenotype observations are available for the timeline.",
+    "phenotype.timelineUnknownTime": "Observation time not recorded",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3092,5 +3110,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.ploidyEvidence": "دليل الصيغة الصبغية",
     "familyIdentity.identityQcStatus": "فحص هوية العينة",
     "familyIdentity.assay": "الفحص المخبري",
+    "phenotype.timelineTitle": "الخط الزمني الطولي للأنماط الظاهرية",
+    "phenotype.timelineDescription": "ملاحظات سريرية مرتبة زمنيًا لكل فرد. تبقى الملاحظات دون تاريخ غير مؤرخة، ويُعرض وصف بداية الأعراض كما ورد.",
+    "phenotype.observedAt": "وقت الملاحظة",
+    "phenotype.onsetAge": "العمر عند بداية العرض",
+    "phenotype.ageAtAssessment": "العمر عند التقييم",
+    "phenotype.course": "المسار السريري",
+    "phenotype.sourceReference": "المستند المصدر / المرجع",
+    "phenotype.noTimeline": "لا توجد ملاحظات أنماط ظاهرية للخط الزمني.",
+    "phenotype.timelineUnknownTime": "لم يتم تسجيل وقت الملاحظة",
   },
 };
