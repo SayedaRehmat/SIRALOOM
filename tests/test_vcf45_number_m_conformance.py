@@ -470,3 +470,34 @@ def test_number_m_unstranded_cross_record_validation_supports_called_multialleli
         encoding="utf-8",
     )
     assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 2
+
+def test_number_m_unstranded_N_requires_negative_value_missing(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-N-negative-missing.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=M18107N,Number=M,Type=Float,Description="Xanthosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\t.\\t.\\tPASS\\t.\\tGT:M18107N\\t0|.:0.5,0.2\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
+
+
+def test_number_m_unstranded_N_accepts_positive_value_and_missing_negative(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-N-positive-only.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=M18107N,Number=M,Type=Float,Description="Xanthosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\t.\\t.\\tPASS\\t.\\tGT:M18107N\\t0|.:0.5,.\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 1
