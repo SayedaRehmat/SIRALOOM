@@ -47,3 +47,51 @@ def test_number_m_values_follow_the_ordered_biological_slots():
         ((0, "+"), 0.25),
         ((1, "-"), 0.75),
     )
+
+from backend.app.domain.vcf45_base_modification import genotype_base_modification_slots
+
+
+def test_number_m_slots_follow_gt_allele_order_then_sequence_and_strand_order():
+    assert genotype_base_modification_slots(
+        "0/1", "CGA", ("TCC",), "C"
+    ) == (
+        (0, 0, "+"),
+        (0, 1, "-"),
+        (1, 1, "+"),
+        (1, 2, "+"),
+    )
+
+
+def test_number_m_unphased_duplicate_alleles_are_emitted_once():
+    assert genotype_base_modification_slots(
+        "0/0", "CGA", (), "C"
+    ) == ((0, 0, "+"), (0, 1, "-"))
+
+
+def test_number_m_phased_duplicate_alleles_keep_distinct_slots():
+    assert genotype_base_modification_slots(
+        "0|0", "CGA", (), "C"
+    ) == (
+        (0, 0, "+"),
+        (0, 1, "-"),
+        (0, 0, "+"),
+        (0, 1, "-"),
+    )
+
+
+def test_number_m_missing_and_symbolic_gt_alleles_add_no_slots():
+    assert genotype_base_modification_slots(
+        "./1", "CGA", ("<*>",), "C"
+    ) == ((0, 0, "+"), (0, 1, "-"))
+
+
+def test_number_m_N_slots_preserve_positive_then_negative_within_gt_order():
+    assert genotype_base_modification_slots(
+        "0", "AC", (), "N"
+    ) == (
+        (0, 0, "+"),
+        (0, 0, "-"),
+        (0, 1, "+"),
+        (0, 1, "-"),
+    )
+
