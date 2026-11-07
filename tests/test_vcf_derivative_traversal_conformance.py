@@ -44,7 +44,7 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
         if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
     )
     assert traversal["event_order_status"] == "RECONSTRUCTED"
-    assert traversal["adjacency_status"] == "COMPLETE_FOR_OBSERVED_PAIRED_BREAKENDS"
+    assert traversal["adjacency_status"] == "COMPLETE_FOR_OBSERVED_BREAKEND_RELATIONSHIPS"
     assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 3]
     assert [event["event_kind"] for event in traversal["ordered_events"]] == [
         "RECIPROCAL_BREAKEND_EVENT",
@@ -151,16 +151,25 @@ def test_single_breakend_returns_unresolved_adjacency_without_fabricating_mate(
 def test_reciprocal_bnd_event_group_and_orientation_are_supported_across_versions(
     tmp_path: Path, version: str
 ):
+    legacy_cardinality = version in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}
+    mate_number = "." if legacy_cardinality else "A"
+    event_number = "1" if legacy_cardinality else "A"
     path = tmp_path / f"{version}-reciprocal-bnd-event.vcf"
-    path.write_text(
+    header = (
         f"##fileformat={version}\n"
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
-        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
-        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;EVENT=E1;EVENTTYPE=TRA:BALANCED\n"
-        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1;EVENT=E1;EVENTTYPE=TRA:BALANCED\n",
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="ID of mate breakend">\n'
+        f'##INFO=<ID=EVENT,Number={event_number},Type=String,Description="ID of associated event">\n'
+    )
+    event_type = ""
+    if not legacy_cardinality:
+        header += '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        event_type = ";EVENTTYPE=TRA:BALANCED"
+    header += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+    path.write_text(
+        header
+        + f"1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;EVENT=E1{event_type}\n"
+        + f"2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1;EVENT=E1{event_type}\n",
         encoding="utf-8",
     )
 
@@ -182,16 +191,23 @@ def test_reciprocal_bnd_event_group_and_orientation_are_supported_across_version
 def test_multiple_alt_breakend_mates_are_resolved_by_alt_index_across_versions(
     tmp_path: Path, version: str
 ):
+    legacy_cardinality = version in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}
+    mate_number = "." if legacy_cardinality else "A"
+    event_number = "1" if legacy_cardinality else "A"
     path = tmp_path / f"{version}-multi-alt-bnd-mates.vcf"
+    if legacy_cardinality:
+        event_values = ("E1", "E1", "E1")
+    else:
+        event_values = ("E1,E2", "E1", "E2")
     path.write_text(
         f"##fileformat={version}\n"
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
-        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="ID of mate breakend">\n'
+        f'##INFO=<ID=EVENT,Number={event_number},Type=String,Description="ID of associated event">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t5\tbndU\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bndV,bndZ;EVENT=E1,E2\n"
-        "2\t10\tbndV\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT=E1\n"
-        "3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT=E2\n",
+        f"1\t5\tbndU\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bndV,bndZ;EVENT={event_values[0]}\n"
+        f"2\t10\tbndV\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT={event_values[1]}\n"
+        f"3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT={event_values[2]}\n",
         encoding="utf-8",
     )
 
@@ -202,8 +218,12 @@ def test_multiple_alt_breakend_mates_are_resolved_by_alt_index_across_versions(
     assert {
         item["source"]["alt_index"] for item in result["breakend_adjacencies"]
     } == {1, 2}
-    assert {item["event_id"] for item in result["breakend_adjacencies"]} == {"E1", "E2"}
-    assert len(result["breakend_event_groups"]) == 2
+    if legacy_cardinality:
+        assert {item["event_id"] for item in result["breakend_adjacencies"]} == {"E1"}
+        assert len(result["breakend_event_groups"]) == 1
+    else:
+        assert {item["event_id"] for item in result["breakend_adjacencies"]} == {"E1", "E2"}
+        assert len(result["breakend_event_groups"]) == 2
 
 
 @pytest.mark.parametrize(
@@ -237,17 +257,21 @@ def test_single_breakend_is_preserved_as_unresolved_without_mate_across_versions
 def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
     tmp_path: Path, version: str
 ):
+    legacy_cardinality = version in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}
+    mate_number = "." if legacy_cardinality else "A"
+    partner_number = "1" if legacy_cardinality else "A"
+    event_number = "1" if legacy_cardinality else "A"
     path = tmp_path / f"{version}-parid-partner-graph.vcf"
     header = (
         f"##fileformat={version}\n"
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
-        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
-        '##INFO=<ID=PARID,Number=A,Type=String,Description="ID of partner breakend">\n'
-        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
-        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        f'##INFO=<ID=MATEID,Number={mate_number},Type=String,Description="ID of mate breakend">\n'
+        f'##INFO=<ID=PARID,Number={partner_number},Type=String,Description="ID of partner breakend">\n'
+        f'##INFO=<ID=EVENT,Number={event_number},Type=String,Description="ID of associated event">\n'
     )
     if version in {"VCFv4.4", "VCFv4.5"}:
         header += (
+            '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
             '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
             '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
             '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
@@ -261,17 +285,18 @@ def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
         header += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         sample_v = sample_u = sample_x = sample_y = ""
 
-    common = ";EVENT=TRA1;EVENTTYPE=TRA:BALANCED"
+    common = ";EVENT=TRA1"
+    event_type = ";EVENTTYPE=TRA:BALANCED" if not legacy_cardinality else ""
     path.write_text(
         header
-        + "2\t321682\tbndV\tT\tT]13:123456]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;PARID=bndX"
-        + common + sample_v + "\n"
-        + "13\t123456\tbndU\tC\tC[2:321682[\t.\tPASS\tSVTYPE=BND;MATEID=bndV;PARID=bndY"
-        + common + sample_u + "\n"
         + "2\t321681\tbndX\tG\tG[13:123457[\t.\tPASS\tSVTYPE=BND;MATEID=bndY;PARID=bndV"
-        + common + sample_x + "\n"
+        + common + event_type + sample_x + "\n"
+        + "2\t321682\tbndV\tT\tT]13:123456]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;PARID=bndX"
+        + common + event_type + sample_v + "\n"
+        + "13\t123456\tbndU\tC\tC[2:321682[\t.\tPASS\tSVTYPE=BND;MATEID=bndV;PARID=bndY"
+        + common + event_type + sample_u + "\n"
         + "13\t123457\tbndY\tA\t]2:321681]A\t.\tPASS\tSVTYPE=BND;MATEID=bndX;PARID=bndU"
-        + common + sample_y + "\n",
+        + common + event_type + sample_y + "\n",
         encoding="utf-8",
     )
 
