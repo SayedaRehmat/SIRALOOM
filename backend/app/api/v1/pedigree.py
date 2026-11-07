@@ -771,14 +771,16 @@ def supersede_sample_identity_evidence(
     binding = db.get(PedigreeSampleBinding, binding_id)
     if binding is None or binding.case_id != case_id:
         raise HTTPException(404, "Sample binding not found")
+    if binding.binding_status != "UNVERIFIED":
+        raise HTTPException(409, "Identity evidence correction requires an unverified active binding")
+    binding_successor = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == binding.id,
+    ))
+    if binding_successor is not None:
+        raise HTTPException(409, "Cannot correct evidence attached to a superseded binding")
     previous = db.get(PedigreeSampleIdentityEvidence, evidence_id)
     if previous is None or previous.case_id != case_id or previous.binding_id != binding_id:
         raise HTTPException(404, "Identity evidence not found for this binding")
-    successor = db.scalar(select(PedigreeSampleIdentityEvidence).where(
-        PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous.id,
-    ))
-    if successor is not None:
-        raise HTTPException(409, "This identity evidence already has a successor revision")
     if body.evidence_type != previous.evidence_type:
         raise HTTPException(422, "An identity evidence revision must retain its original evidence type")
     if body.source_artifact_id is not None:
@@ -802,6 +804,11 @@ def supersede_sample_identity_evidence(
     ))
     if existing is not None:
         return _sample_identity_evidence_payload(existing)
+    successor = db.scalar(select(PedigreeSampleIdentityEvidence).where(
+        PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous.id,
+    ))
+    if successor is not None:
+        raise HTTPException(409, "This identity evidence already has a conflicting successor revision")
     row = PedigreeSampleIdentityEvidence(
         id=uuid4(), case_id=case_id, binding_id=binding.id,
         evidence_type=body.evidence_type, result=body.result,
