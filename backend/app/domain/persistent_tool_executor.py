@@ -197,6 +197,14 @@ class PersistentToolExecutionService:
                     "Executor output checksums do not cover every declared output."
                 )
             output_manifest = []
+            if set(published) - {item.name for item in request.outputs}:
+                raise ExecutionPersistenceError(
+                    "Artifact publisher returned an ID for an undeclared tool output."
+                )
+            if publisher is not None and set(published) != {item.name for item in request.outputs}:
+                raise ExecutionPersistenceError(
+                    "Artifact publisher did not persist every declared tool output."
+                )
             for output in request.outputs:
                 item = {
                     "name": output.name,
