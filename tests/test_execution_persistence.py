@@ -541,10 +541,19 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
     from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools
     from backend.app.infrastructure.db.models import ToolExecutionRecord
 
-    executable_text = shutil.which(settings.bcftools_executable) or shutil.which("bcftools")
+    conda_prefix = Path(os.getenv("CONDA_PREFIX", ""))
+    conda_bcftools = conda_prefix / "bin" / "bcftools"
+    executable_text = (
+        shutil.which(settings.bcftools_executable)
+        or shutil.which("bcftools")
+        or (str(conda_bcftools) if conda_bcftools.is_file() else None)
+    )
     if not executable_text:
-        message = f"Pinned BCFtools is not discoverable on PATH={os.getenv('PATH', '')!r}."
-        if os.getenv("CI") == "true":
+        message = (
+            "Pinned BCFtools is not discoverable; "
+            f"PATH={os.getenv('PATH', '')!r}, CONDA_PREFIX={os.getenv('CONDA_PREFIX')!r}."
+        )
+        if os.getenv("GITHUB_ACTIONS") == "true":
             pytest.fail(message)
         pytest.skip(message)
     executable = Path(executable_text).resolve()
@@ -566,7 +575,7 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
             f"expected bcftools={settings.bcftools_version}, htslib={settings.htslib_version}, "
             f"observed output={version_output!r}."
         )
-        if os.getenv("CI") == "true":
+        if os.getenv("GITHUB_ACTIONS") == "true":
             pytest.fail(message)
         pytest.skip(message)
 
