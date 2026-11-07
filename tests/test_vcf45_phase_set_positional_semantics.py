@@ -291,3 +291,41 @@ def test_vcf45_psq_distinct_phase_set_identifiers_remain_positionally_aligned(
         sample="|0|1:phaseA,phaseB:11,29",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_multiallelic_breakend_mate_ids_preserve_alt_order(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-mateid-alt-order.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbndU\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bndZ,bndV\tGT:PSL:PSO\t1|2:alpha,beta:3,4\n"
+        "2\t10\tbndV\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU\tGT:PSL:PSO\t0|1:.,alpha:.,3\n"
+        "3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU\tGT:PSL:PSO\t0|1:.,beta:.,4\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_MATE_COORDINATE_MISMATCH"
+
+
+def test_vcf45_multiallelic_breakend_mates_compare_only_corresponding_alt_phase_values(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-per-alt-phase-vectors.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbndU\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bndV,bndZ\tGT:PSL:PSO\t1|2:alpha,beta:3,4\n"
+        "2\t10\tbndV\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU\tGT:PSL:PSO\t0|1:.,alpha:.,3\n"
+        "3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU\tGT:PSL:PSO\t0|1:.,beta:.,4\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 3
