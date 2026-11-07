@@ -300,8 +300,16 @@ def _reserved_vcf44_info_definition(field_id: str) -> dict[str, str] | None:
         "MEINFO": (".", "String"), "METRANS": (".", "String"),
         "DGVID": ("A", "String"), "DBVARID": ("A", "String"), "DBRIPID": ("A", "String"),
         "MATEID": ("A", "String"), "PARID": ("A", "String"), "EVENT": ("A", "String"),
-        "EVENTTYPE": ("A", "String"), "CILEN": (".", "Integer"),
+        "EVENTTYPE": ("A", "String"),
+        "CILEN": (".", "Integer"),
         "CN": ("A", "Float"), "CICN": (".", "Float"), "SVCLAIM": ("A", "String"),
+        "RN": ("A", "Integer"), "RUS": (".", "String"), "RUL": (".", "Integer"),
+        "RUC": (".", "Float"), "RB": (".", "Integer"), "CIRUC": (".", "Float"),
+        "CIRB": (".", "Integer"), "RUB": (".", "Integer"), "CILEN": (".", "Integer"),
+                "CN": ("A", "Float"), "CICN": (".", "Float"), "SVCLAIM": ("A", "String"),
+        "RN": ("A", "Integer"), "RUS": (".", "String"), "RUL": (".", "Integer"),
+        "RUC": (".", "Float"), "RB": (".", "Integer"), "CIRUC": (".", "Float"),
+        "CIRB": (".", "Integer"),
     }
     definition = reserved.get(field_id)
     return {"Number": definition[0], "Type": definition[1]} if definition else None
