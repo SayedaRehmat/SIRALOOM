@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from backend.app.domain.vcf45_base_modification import base_modification_positions
+from backend.app.domain.vcf45_base_modification import (
+    base_modification_positions,
+    genotype_base_modification_slots,
+)
 
 
 @pytest.mark.parametrize(
@@ -47,8 +50,6 @@ def test_number_m_values_follow_the_ordered_biological_slots():
         ((0, "+"), 0.25),
         ((1, "-"), 0.75),
     )
-
-from backend.app.domain.vcf45_base_modification import genotype_base_modification_slots
 
 
 def test_number_m_slots_follow_gt_allele_order_then_sequence_and_strand_order():
