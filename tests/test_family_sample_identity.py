@@ -349,6 +349,43 @@ def test_sample_binding_migration_is_append_only_and_refuses_data_loss(tmp_path,
 
 
 
+
+
+def test_reviewed_sample_binding_correction_appends_new_unverified_successor(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    previous = PedigreeSampleBinding(
+        id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256="b" * 64, sample_name="OLD-SAMPLE",
+        binding_status="VERIFIED", binding_method="LAB_SAMPLE_SHEET",
+        evidence_reference="OLD-ACCESSION", version=2,
+        binding_fingerprint="a" * 64, recorded_by=principal.user_id,
+        reviewed_by=principal.user_id,
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=previous,
+    )
+    db.scalar_results = [None, None]
+
+    result = pedigree.supersede_sample_binding(
+        case.id, previous.id,
+        pedigree.SampleBindingInput(
+            member_id=member.id, specimen_id=specimen.id, analysis_id=analysis.id,
+            artifact_id=artifact.id, sample_name="FAM-01",
+            binding_method="LAB_SAMPLE_SHEET", evidence_reference="NEW-ACCESSION",
+        ),
+        db, principal,
+    )
+    revision = next(item for item in db.added if isinstance(item, PedigreeSampleBinding))
+    assert result["binding_status"] == "UNVERIFIED"
+    assert revision.version == 3
+    assert revision.supersedes_binding_id == previous.id
+    assert revision.source_artifact_sha256 == artifact.sha256
+    assert db.commits == 1
+
+
 def test_identity_evidence_is_recorded_pending_with_method_and_provenance(monkeypatch):
     _patch_auth(monkeypatch)
     case, member, specimen, analysis, artifact, principal = _context()
