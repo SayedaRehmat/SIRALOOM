@@ -50,6 +50,8 @@ def _environment(*, runtime_kind: str = "DOCKER", executor_kind: str = "CONTAINE
         network_policy="OFFLINE",
         runtime_image_reference="registry.example.org/siraloom/bcftools@" + digest,
         tool_executable_sha256=(("bcftools-pinned", "b" * 64),),
+        agent_id="agent-a" if executor_kind == "REMOTE_AGENT" else None,
+        agent_version="1.0.0" if executor_kind == "REMOTE_AGENT" else None,
         qualification_status="ENVIRONMENT_QUALIFIED",
     )
 
