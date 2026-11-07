@@ -341,6 +341,24 @@ def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
     assert exc.value.code == "VCF_BREAKEND_MATE_COORDINATE_MISMATCH"
 
 
+def test_vcf45_reciprocal_breakend_phase_vectors_preserve_haplotype_order(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-phase-haplotype-order.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT:PSL:PSO\t1|1|1:alpha,beta,gamma:1,2,3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t1|1|1:beta,alpha,gamma:2,1,3\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
+
 def test_vcf45_multiallelic_breakend_mate_ids_preserve_alt_order(
     tmp_path: Path,
 ):
