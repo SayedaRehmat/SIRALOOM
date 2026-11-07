@@ -88,6 +88,8 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError("Unknown execution environment network policy.")
         if self.executor_kind == "CONTAINER" and self.runtime_kind == "HOST":
             raise ExecutionEnvironmentError("Container execution requires a container runtime.")
+        if self.executor_kind == "LOCAL_PROCESS" and self.runtime_kind != "HOST":
+            raise ExecutionEnvironmentError("Local-process execution requires a HOST runtime profile.")
         required = {
             "environment_id": self.environment_id,
             "profile_version": self.profile_version,
