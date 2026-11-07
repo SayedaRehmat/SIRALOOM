@@ -292,3 +292,49 @@ def test_timeout_failure_retains_execution_provenance(tmp_path: Path) -> None:
     assert exc.value.retryable is True
     assert exc.value.provenance is not None
     assert exc.value.provenance.exit_code in {-9, 137}
+
+
+def test_approved_profile_environment_is_used_and_fingerprinted(tmp_path: Path) -> None:
+    profile = _profile()
+    profile = ToolIdentity(**{
+        **profile.__dict__,
+        "runtime_environment": {"SIRALOOM_EXECUTOR_TEST": "approved"},
+    })
+    output = tmp_path / "environment.txt"
+    request = ToolExecutionRequest(
+        execution_id="execution-profile-environment",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=(
+            "-c",
+            "import os; from pathlib import Path; Path('environment.txt').write_text(os.environ['SIRALOOM_EXECUTOR_TEST'], encoding='utf-8')",
+        ),
+        workspace=str(tmp_path),
+        outputs=(OutputArtifact("environment", str(output)),),
+    )
+
+    result = LocalProcessToolExecutor().execute(profile, request)
+
+    assert output.read_text(encoding="utf-8") == "approved"
+    assert len(result.provenance.environment_sha256) == 64
+
+
+def test_request_cannot_override_profile_pinned_environment(tmp_path: Path) -> None:
+    profile = _profile()
+    profile = ToolIdentity(**{
+        **profile.__dict__,
+        "runtime_environment": {"PERL5LIB": "/opt/vep/modules"},
+    })
+    request = ToolExecutionRequest(
+        execution_id="execution-profile-environment-override",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=("--version",),
+        workspace=str(tmp_path),
+        environment={"PERL5LIB": "/tmp/untrusted"},
+    )
+
+    with pytest.raises(ToolExecutionContractError, match="cannot override approved tool-profile"):
+        request.validate(profile)
