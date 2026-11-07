@@ -307,3 +307,51 @@ def test_real_tool_failure_returns_provenance_and_removes_container(tmp_path):
     assert caught.value.provenance is not None
     assert caught.value.provenance.exit_code != 0
     _assert_container_removed(executor, _container_name(caught.value.provenance))
+
+
+
+def test_runtime_image_inspection_failure_fails_closed_before_launch(tmp_path):
+    executor, environment, _, python_tool = _build_context(tmp_path)
+    real_runtime = executor.runtime_path
+    wrapper = tmp_path / "runtime-with-inspect-failure"
+    wrapper.write_text(
+        "#!/bin/sh\\n"
+        "if [ \\"$1\\" = \\"image\\" ] && [ \\"$2\\" = \\"inspect\\" ]; then\\n"
+        "  echo 'injected image inspection failure' >&2; exit 42;\\n"
+        "fi\\n"
+        f"exec {real_runtime} \\"$@\\"\\n",
+        encoding="utf-8",
+    )
+    wrapper.chmod(0o755)
+    executor.runtime_path = str(wrapper)
+    workspace = _workspace(tmp_path)
+    request = _request(
+        environment, workspace, ("-c", "print('must-not-run')"),
+        operation="validate",
+    )
+    with pytest.raises(ToolExecutionContractError, match="runtime verification failed"):
+        executor.execute(python_tool, request)
+
+
+def test_timeout_uses_force_remove_when_runtime_kill_command_fails(tmp_path):
+    executor, environment, _, python_tool = _build_context(tmp_path)
+    workspace = _workspace(tmp_path)
+    real_runner = executor.runner
+    injected = []
+
+    def fail_kill(command, **kwargs):
+        if command[1:2] == ["kill"]:
+            injected.append(command)
+            return subprocess.CompletedProcess(command, 42, "", "injected kill failure")
+        return real_runner(command, **kwargs)
+
+    executor.runner = fail_kill
+    request = _request(
+        environment, workspace, ("-c", "import time; time.sleep(60)"),
+        operation="timeout", timeout=2,
+    )
+    with pytest.raises(ToolExecutionError, match="timeout") as caught:
+        executor.execute(python_tool, request)
+    assert injected
+    assert caught.value.provenance is not None
+    _assert_container_removed(executor, _container_name(caught.value.provenance))
