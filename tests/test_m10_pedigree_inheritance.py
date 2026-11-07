@@ -432,7 +432,7 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
     assessment = next(row for row in db.added if hasattr(row, "observation_fingerprint"))
     evidence = next(row for row in db.added if getattr(row, "evidence_type", None) == "SEGREGATION")
     assert assessment.score is None
-    assert evidence.source_version == "M11_OBSERVATIONS_ONLY"
+    assert evidence.source_version == "M12_FAMILY_MATRIX_REVIEW_CONTEXT"
     assert "score" not in evidence.payload
     assert evidence.payload["status"] == "REQUIRES_REVIEW"
 
@@ -463,9 +463,11 @@ def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplica
     payload = {
         "model": "AD", "status": "REQUIRES_REVIEW", "observations_available": 0,
         "observation_fingerprint": observation_fingerprint,
-        "family_matrix_fingerprint": None, "family_matrix_binding_ids": [],
-        "reviewer_note": "review context", "interpretation": "REQUIRES_HUMAN_REVIEW",
+        "family_matrix_fingerprint": None, "family_matrix_snapshot_id": None,
+        "family_matrix_binding_ids": [], "reviewer_note": "review context",
+        "interpretation": "REQUIRES_HUMAN_REVIEW",
         "manual_segregation_rows_excluded": True,
+        "manual_segregation_observation_ids": [str(observation.id)],
     }
     import hashlib
     import json
