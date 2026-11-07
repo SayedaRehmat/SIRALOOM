@@ -3443,6 +3443,28 @@ def validate_vcf_strict(
             )
             breakend_adjacencies_by_endpoint.setdefault(endpoint_key, []).append(adjacency)
 
+    breakend_partner_links_by_endpoint: dict[tuple[int, int], list[dict[str, object]]] = {}
+    for partner_link in breakend_partner_links:
+        for endpoint in (partner_link["source"], partner_link["partner"]):
+            endpoint_key = (
+                int(endpoint["line_number"]),
+                int(endpoint["alt_index"]),
+            )
+            breakend_partner_links_by_endpoint.setdefault(endpoint_key, []).append(partner_link)
+
+    unresolved_breakend_partner_links_by_endpoint: dict[tuple[int, int], list[dict[str, object]]] = {}
+    for unresolved_partner_link in unresolved_breakend_partner_links:
+        endpoint = unresolved_partner_link.get("source", {})
+        if endpoint.get("line_number") is None or endpoint.get("alt_index") is None:
+            continue
+        endpoint_key = (
+            int(endpoint["line_number"]),
+            int(endpoint["alt_index"]),
+        )
+        unresolved_breakend_partner_links_by_endpoint.setdefault(
+            endpoint_key, []
+        ).append(unresolved_partner_link)
+
     breakend_event_groups_by_id: dict[str, dict[str, object]] = {}
     for adjacency in breakend_adjacencies:
         event_id = adjacency.get("event_id") or adjacency.get("mate_event_id")
@@ -3452,10 +3474,25 @@ def validate_vcf_strict(
             "event_id": str(event_id),
             "event_type": adjacency.get("event_type") or adjacency.get("mate_event_type"),
             "adjacency_ids": [],
+            "partner_link_ids": [],
             "status": "MATCHED",
         })
         group["adjacency_ids"].append(str(adjacency["adjacency_id"]))
         if adjacency["event_group_status"] != "MATCHED":
+            group["status"] = "UNRESOLVED"
+    for partner_link in breakend_partner_links:
+        event_id = partner_link.get("event_id") or partner_link.get("partner_event_id")
+        if not event_id:
+            continue
+        group = breakend_event_groups_by_id.setdefault(str(event_id), {
+            "event_id": str(event_id),
+            "event_type": None,
+            "adjacency_ids": [],
+            "partner_link_ids": [],
+            "status": "MATCHED",
+        })
+        group["partner_link_ids"].append(str(partner_link["partner_link_id"]))
+        if partner_link["event_group_status"] != "MATCHED":
             group["status"] = "UNRESOLVED"
 
     derivative_chromosome_traversals: list[dict[str, object]] = []
@@ -3463,7 +3500,9 @@ def validate_vcf_strict(
         ordered_events = []
         unresolved_reason_codes: set[str] = set()
         unresolved_adjacency_count = 0
+        unresolved_partner_count = 0
         observed_adjacency_ids: set[str] = set()
+        observed_partner_link_ids: set[str] = set()
         for event in traversal["ordered_events"]:
             event_occurrences = []
             for occurrence in event["occurrences"]:
@@ -3471,6 +3510,22 @@ def validate_vcf_strict(
                 allele = str(occurrence["allele"])
                 matched_adjacencies = (
                     breakend_adjacencies_by_endpoint.get(
+                        (int(occurrence["line_number"]), int(allele_index)),
+                        [],
+                    )
+                    if allele_index is not None and int(allele_index) > 0
+                    else []
+                )
+                matched_partner_links = (
+                    breakend_partner_links_by_endpoint.get(
+                        (int(occurrence["line_number"]), int(allele_index)),
+                        [],
+                    )
+                    if allele_index is not None and int(allele_index) > 0
+                    else []
+                )
+                unresolved_partner_entries = (
+                    unresolved_breakend_partner_links_by_endpoint.get(
                         (int(occurrence["line_number"]), int(allele_index)),
                         [],
                     )
@@ -3495,11 +3550,20 @@ def validate_vcf_strict(
                             unresolved_reason_codes.add(
                                 "VCF_DERIVATIVE_BREAKEND_ADJACENCY_UNRESOLVED"
                             )
+                for partner_link in matched_partner_links:
+                    observed_partner_link_ids.add(str(partner_link["partner_link_id"]))
+                if unresolved_partner_entries:
+                    unresolved_partner_count += len(unresolved_partner_entries)
+                    unresolved_reason_codes.add("VCF_BREAKEND_PARID_PARTNER_UNRESOLVED")
                 event_occurrences.append({
                     **occurrence,
                     "breakend_adjacency_ids": [
                         str(adjacency["adjacency_id"])
                         for adjacency in matched_adjacencies
+                    ],
+                    "breakend_partner_link_ids": [
+                        str(partner_link["partner_link_id"])
+                        for partner_link in matched_partner_links
                     ],
                 })
             ordered_events.append({
@@ -3526,32 +3590,143 @@ def validate_vcf_strict(
         related_adjacency_ids = {
             str(item["adjacency_id"]) for item in related_adjacencies
         }
+        related_partner_links = [
+            {
+                key: value
+                for key, value in partner_link.items()
+                if key != "key"
+            }
+            for partner_link in breakend_partner_links
+            if str(partner_link["partner_link_id"]) in observed_partner_link_ids
+        ]
+        related_partner_link_ids = {
+            str(item["partner_link_id"]) for item in related_partner_links
+        }
+        if any(item["event_group_status"] == "UNRESOLVED_PARTIAL_OR_MISMATCHED" for item in related_partner_links):
+            unresolved_reason_codes.add("VCF_DERIVATIVE_EVENT_GROUP_INCONSISTENT")
         related_event_groups = [
             group
             for group in breakend_event_groups_by_id.values()
-            if any(adjacency_id in related_adjacency_ids for adjacency_id in group["adjacency_ids"])
+            if (
+                any(adjacency_id in related_adjacency_ids for adjacency_id in group["adjacency_ids"])
+                or any(partner_id in related_partner_link_ids for partner_id in group["partner_link_ids"])
+            )
         ]
         event_order_status = (
             "RECONSTRUCTED"
             if traversal["traversal_status"] == "ORDERED"
             else "UNRESOLVED"
         )
+        graph_nodes_by_id: dict[str, dict[str, object]] = {}
+        graph_edges: list[dict[str, object]] = []
+        for adjacency in related_adjacencies:
+            source_endpoint = adjacency["source"]
+            mate_endpoint = adjacency["mate"]
+            source_node_id = f"{source_endpoint['line_number']}:{source_endpoint['alt_index']}"
+            mate_node_id = f"{mate_endpoint['line_number']}:{mate_endpoint['alt_index']}"
+            graph_nodes_by_id[source_node_id] = {
+                key: source_endpoint[key]
+                for key in ("line_number", "record_id", "chrom", "pos", "alt_index", "alt", "orientation")
+            }
+            graph_nodes_by_id[mate_node_id] = {
+                key: mate_endpoint[key]
+                for key in ("line_number", "record_id", "chrom", "pos", "alt_index", "alt", "orientation")
+            }
+            graph_edges.append({
+                "edge_type": "MATEID_ADJACENCY",
+                "edge_id": adjacency["adjacency_id"],
+                "source_node": source_node_id,
+                "target_node": mate_node_id,
+            })
+        for partner_link in related_partner_links:
+            source_endpoint = partner_link["source"]
+            partner_endpoint = partner_link["partner"]
+            source_node_id = f"{source_endpoint['line_number']}:{source_endpoint['alt_index']}"
+            partner_node_id = f"{partner_endpoint['line_number']}:{partner_endpoint['alt_index']}"
+            graph_nodes_by_id[source_node_id] = {
+                key: source_endpoint[key]
+                for key in ("line_number", "record_id", "chrom", "pos", "alt_index", "alt", "orientation")
+            }
+            graph_nodes_by_id[partner_node_id] = {
+                key: partner_endpoint[key]
+                for key in ("line_number", "record_id", "chrom", "pos", "alt_index", "alt", "orientation")
+            }
+            graph_edges.append({
+                "edge_type": "PARID_PARTNER",
+                "edge_id": partner_link["partner_link_id"],
+                "source_node": source_node_id,
+                "target_node": partner_node_id,
+            })
+        graph_neighbors = {node_id: set() for node_id in graph_nodes_by_id}
+        for edge in graph_edges:
+            graph_neighbors[edge["source_node"]].add(edge["target_node"])
+            graph_neighbors[edge["target_node"]].add(edge["source_node"])
+        graph_components = []
+        unseen_nodes = set(graph_neighbors)
+        while unseen_nodes:
+            start_node = min(unseen_nodes)
+            stack = [start_node]
+            component_nodes = set()
+            while stack:
+                node_id = stack.pop()
+                if node_id in component_nodes:
+                    continue
+                component_nodes.add(node_id)
+                unseen_nodes.discard(node_id)
+                stack.extend(graph_neighbors[node_id] - component_nodes)
+            component_edge_ids = [
+                edge["edge_id"]
+                for edge in graph_edges
+                if edge["source_node"] in component_nodes
+                and edge["target_node"] in component_nodes
+            ]
+            graph_components.append({
+                "node_ids": sorted(component_nodes),
+                "edge_ids": sorted(component_edge_ids),
+            })
+        unresolved_event_group_count = sum(
+            1
+            for item in related_adjacencies + related_partner_links
+            if item["event_group_status"] == "UNRESOLVED_PARTIAL_OR_MISMATCHED"
+        )
+        if unresolved_event_group_count:
+            unresolved_reason_codes.add("VCF_DERIVATIVE_EVENT_GROUP_INCONSISTENT")
+        graph_is_connected = len(graph_components) <= 1 and bool(graph_nodes_by_id)
+        if unresolved_partner_count:
+            derivative_graph_status = "UNRESOLVED_PARID_PARTNER_GRAPH"
+        elif graph_is_connected and related_partner_links:
+            derivative_graph_status = "CONNECTED_MATEID_PARID_GRAPH"
+        elif graph_is_connected and related_adjacencies:
+            derivative_graph_status = "CONNECTED_MATEID_ADJACENCY_GRAPH"
+        elif graph_components:
+            derivative_graph_status = "DISCONNECTED_DERIVATIVE_GRAPH"
+        else:
+            derivative_graph_status = "NO_DERIVATIVE_GRAPH_EVIDENCE"
+
         derivative_chromosome_traversals.append({
             "sample": traversal["sample"],
             "phase_set": traversal["phase_set"],
             "event_order_status": event_order_status,
             "adjacency_status": (
-                "COMPLETE_FOR_OBSERVED_PAIRED_BREAKENDS"
+                "COMPLETE_FOR_OBSERVED_BREAKEND_RELATIONSHIPS"
                 if unresolved_adjacency_count == 0
+                and unresolved_partner_count == 0
+                and unresolved_event_group_count == 0
                 else "PARTIAL_OR_UNRESOLVED"
             ),
+            "derivative_graph_status": derivative_graph_status,
             "sequence_status": "UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE",
             "unresolved_reason_codes": sorted(unresolved_reason_codes | {
                 "VCF_DERIVATIVE_SEQUENCE_REQUIRES_REFERENCE_SEGMENT_AND_COPY_NUMBER_RECONSTRUCTION"
             }),
             "unresolved_adjacency_count": unresolved_adjacency_count,
+            "unresolved_partner_count": unresolved_partner_count,
             "ordered_events": ordered_events,
             "observed_breakend_adjacencies": related_adjacencies,
+            "observed_breakend_partner_links": related_partner_links,
+            "derivative_graph_nodes": list(graph_nodes_by_id.values()),
+            "derivative_graph_edges": graph_edges,
+            "derivative_graph_components": graph_components,
             "breakend_event_groups": related_event_groups,
         })
 
