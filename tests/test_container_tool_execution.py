@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
+import math
 
 import pytest
 
@@ -101,3 +102,16 @@ def test_container_tool_path_is_not_resolved_against_host_filesystem():
         }
     )
     tool.validate()
+
+
+
+def test_container_limits_reject_nan_cpu_value():
+    environment = _environment()
+    limits = ContainerResourceLimits(
+        cpu_cores=math.nan,
+        memory_bytes=1024**3,
+        pids_limit=256,
+        container_user="1000:1000",
+    )
+    with pytest.raises(ToolExecutionContractError, match="CPU limit"):
+        limits.validate(environment)
