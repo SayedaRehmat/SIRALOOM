@@ -67,6 +67,7 @@ class ExecutionEnvironmentProfile:
     storage_profile_ids: tuple[str, ...]
     supported_tool_profile_ids: tuple[str, ...]
     network_policy: NetworkPolicy
+    tool_executable_sha256: tuple[tuple[str, str], ...] = ()
     allowed_egress_hosts: tuple[str, ...] = ()
     agent_id: str | None = None
     agent_version: str | None = None
@@ -134,6 +135,20 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError("At least one explicitly supported tool profile is required.")
         if len(set(self.supported_tool_profile_ids)) != len(self.supported_tool_profile_ids):
             raise ExecutionEnvironmentError("Supported tool profile IDs must be unique.")
+        executable_digests = dict(self.tool_executable_sha256)
+        if len(executable_digests) != len(self.tool_executable_sha256):
+            raise ExecutionEnvironmentError("Tool executable digest bindings must have unique profile IDs.")
+        if set(executable_digests) - set(self.supported_tool_profile_ids):
+            raise ExecutionEnvironmentError("Executable digests may only be declared for allowlisted tool profiles.")
+        for profile_id, digest in executable_digests.items():
+            if not re.fullmatch(r"[0-9a-f]{64}", digest.lower()):
+                raise ExecutionEnvironmentError(
+                    f"Tool executable digest for profile {profile_id!r} must be SHA-256."
+                )
+        if self.qualification_status == "ENVIRONMENT_QUALIFIED" and set(executable_digests) != set(self.supported_tool_profile_ids):
+            raise ExecutionEnvironmentError(
+                "An environment cannot be qualified until every allowlisted tool profile has an approved executable SHA-256."
+            )
         if self.network_policy == "OFFLINE" and self.allowed_egress_hosts:
             raise ExecutionEnvironmentError("Offline environments cannot declare egress hosts.")
         if self.network_policy == "ALLOWLISTED_EGRESS":
@@ -181,6 +196,11 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError(
                 "Tool runtime image digest does not exactly match the qualified environment runtime."
             )
+        approved_executable_digest = dict(self.tool_executable_sha256).get(tool.profile_id)
+        if approved_executable_digest != tool.executable_sha256.lower():
+            raise ExecutionEnvironmentError(
+                "Tool executable SHA-256 does not match the environment's approved executable digest."
+            )
 
     def snapshot(self) -> dict:
         """Return deterministic environment identity for an analysis snapshot."""
@@ -209,6 +229,7 @@ class ExecutionEnvironmentProfile:
             "workspace_root": self.workspace_root,
             "storage_profile_ids": list(self.storage_profile_ids),
             "supported_tool_profile_ids": list(self.supported_tool_profile_ids),
+            "tool_executable_sha256": dict(self.tool_executable_sha256),
             "network_policy": self.network_policy,
             "allowed_egress_hosts": list(self.allowed_egress_hosts),
             "agent_id": self.agent_id,

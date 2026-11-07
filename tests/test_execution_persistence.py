@@ -3,7 +3,10 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 import hashlib
+import shutil
+import subprocess
 from uuid import uuid4
+from pathlib import Path
 
 import pytest
 from sqlalchemy import create_engine
@@ -19,7 +22,18 @@ from backend.app.domain.execution_persistence import (
     register_environment_profile,
     register_tool_execution,
 )
-from backend.app.domain.tool_execution import ToolIdentity
+from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    OutputArtifact,
+    ToolExecutionProvenance,
+    ToolExecutionRequest,
+    ToolExecutionResult,
+    ToolIdentity,
+    LocalProcessToolExecutor,
+    current_platform_id,
+    sha256_file,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Organization, User
 
@@ -98,6 +112,7 @@ def _profile(organization_id):
         storage_profile_ids=("lab-artifacts-v1",),
         supported_tool_profile_ids=("bcftools-1.25-htslib-1.25-linux-amd64",),
         network_policy="OFFLINE",
+        tool_executable_sha256=(("bcftools-1.25-htslib-1.25-linux-amd64", "a" * 64),),
         qualification_status="ENVIRONMENT_QUALIFIED",
     )
 
@@ -411,3 +426,226 @@ def test_success_rejects_output_artifact_from_another_analysis(db):
                 "sha256": "c" * 64,
             }],
         )
+
+
+def test_persistent_executor_records_real_process_result_and_published_output(db, tmp_path):
+    organization, user, case, analysis = _lab(db)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    executable = tmp_path / "fake-bcftools"
+    executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
+    executable.chmod(0o755)
+    input_path = workspace / "input.vcf"
+    input_path.write_text("##fileformat=VCFv4.2\\n", encoding="utf-8")
+    output_path = workspace / "normalized.vcf.gz"
+
+    executable_digest = sha256_file(executable)
+    profile = ToolIdentity(
+        tool_id="bcftools",
+        version="1.25",
+        profile_id="bcftools-1.25-htslib-1.25-linux-amd64",
+        executable=str(executable),
+        executable_sha256=executable_digest,
+        platform=current_platform_id(),
+        qualification_status="SOFTWARE_QUALIFIED",
+        version_args=("--version",),
+        version_output_contains="bcftools 1.25",
+        supported_operations=("normalize",),
+        runtime_path=(str(tmp_path),),
+    )
+    environment_profile = replace(
+        _profile(organization.id),
+        tool_executable_sha256=((profile.profile_id, executable_digest),),
+        workspace_root=str(workspace),
+    )
+    environment = register_environment_profile(
+        db, environment_profile, organization_id=organization.id
+    )
+    db.commit()
+
+    class FakeExecutor:
+        def execute(self, supplied_profile, request):
+            output_path.write_bytes(b"normalized VCF bytes")
+            output_digest = hashlib.sha256(output_path.read_bytes()).hexdigest()
+            provenance = ToolExecutionProvenance(
+                execution_id=request.execution_id,
+                organization_id=request.organization_id,
+                workflow_id=request.workflow_id,
+                operation=request.operation,
+                tool_id=supplied_profile.tool_id,
+                tool_version=supplied_profile.version,
+                profile_id=supplied_profile.profile_id,
+                executable_sha256=supplied_profile.executable_sha256,
+                resource_bindings=(),
+                input_sha256=({"name": "input.vcf", "sha256": sha256_file(input_path)},),
+                output_sha256=({"name": "normalized.vcf.gz", "sha256": output_digest},),
+                argv=(supplied_profile.executable, *request.argv),
+                exit_code=0,
+                started_at=datetime.now(timezone.utc).isoformat(),
+                completed_at=datetime.now(timezone.utc).isoformat(),
+                duration_seconds=0.01,
+                stdout_sha256="e" * 64,
+                stderr_sha256="f" * 64,
+                platform=supplied_profile.platform,
+                runtime_image_digest=supplied_profile.runtime_image_digest,
+                environment_sha256="d" * 64,
+            )
+            return ToolExecutionResult(provenance=provenance, stdout="", stderr="")
+
+    def publish(request, result, execution_record_id):
+        artifact = Artifact(
+            id=uuid4(),
+            analysis_id=analysis.id,
+            case_id=case.id,
+            artifact_type="NORMALIZED_VCF",
+            filename="normalized.vcf.gz",
+            media_type="application/gzip",
+            size_bytes=output_path.stat().st_size,
+            sha256=sha256_file(output_path),
+            storage_uri="file:///durable/normalized.vcf.gz",
+        )
+        db.add(artifact)
+        db.flush()
+        return {"normalized.vcf.gz": artifact.id}
+
+    service = PersistentToolExecutionService(
+        db,
+        organization_id=organization.id,
+        analysis_id=analysis.id,
+        environment_registration_id=environment.id,
+        worker_id="worker-test",
+        executor=FakeExecutor(),
+    )
+    request = ToolExecutionRequest(
+        execution_id="normalization-execution-001",
+        organization_id=str(organization.id),
+        workflow_id="normalize",
+        operation="normalize",
+        argv=("norm", "-f", str(input_path), "-o", str(output_path)),
+        workspace=str(workspace),
+        inputs=(InputArtifact("input.vcf", str(input_path), sha256_file(input_path)),),
+        outputs=(OutputArtifact("normalized.vcf.gz", str(output_path)),),
+    )
+
+    result = service.execute(profile, request, artifact_publisher=publish)
+
+    assert result.record_id in service.execution_record_ids
+    persisted = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["ToolExecutionRecord"]).ToolExecutionRecord, result.record_id)
+    assert persisted.status == "SUCCEEDED"
+    assert persisted.output_manifest[0]["artifact_id"]
+    assert persisted.provenance["tool_id"] == "bcftools"
+
+
+def test_persistent_executor_runs_real_pinned_bcftools_process_and_persists_output(db, tmp_path):
+    executable_text = shutil.which("bcftools")
+    if not executable_text:
+        pytest.skip("Pinned BCFtools is not installed in this test environment.")
+    executable = Path(executable_text).resolve()
+    version = subprocess.run(
+        [str(executable), "--version"],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=10,
+    )
+    if version.returncode != 0 or "bcftools 1.25" not in (version.stdout + version.stderr):
+        pytest.skip("This real-process qualification test requires BCFtools 1.25.")
+
+    organization, _user, case, analysis = _lab(db)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    input_path = workspace / "input.vcf"
+    input_path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t100\t.\tA\tG,T\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    output_path = workspace / "normalized.vcf"
+    executable_digest = sha256_file(executable)
+    profile_id = "bcftools-1.25-htslib-1.25-linux-amd64"
+    tool = ToolIdentity(
+        tool_id="bcftools",
+        version="1.25",
+        profile_id=profile_id,
+        executable=str(executable),
+        executable_sha256=executable_digest,
+        platform=current_platform_id(),
+        qualification_status="SOFTWARE_QUALIFIED",
+        version_args=("--version",),
+        version_output_contains="bcftools 1.25",
+        supported_operations=("normalize",),
+        runtime_path=(str(executable.parent),),
+    )
+    environment_profile = replace(
+        _profile(organization.id),
+        workspace_root=str(workspace),
+        tool_executable_sha256=((profile_id, executable_digest),),
+    )
+    environment = register_environment_profile(
+        db, environment_profile, organization_id=organization.id
+    )
+    db.commit()
+
+    def publish(request, result, execution_record_id):
+        output = Path(request.outputs[0].path)
+        artifact = Artifact(
+            id=uuid4(),
+            analysis_id=analysis.id,
+            case_id=case.id,
+            artifact_type="NORMALIZED_VCF",
+            filename=output.name,
+            media_type="text/vcf",
+            size_bytes=output.stat().st_size,
+            sha256=sha256_file(output),
+            storage_uri=f"file:///qualified-artifacts/{output.name}",
+        )
+        db.add(artifact)
+        db.flush()
+        return {request.outputs[0].name: artifact.id}
+
+    service = PersistentToolExecutionService(
+        db,
+        organization_id=organization.id,
+        analysis_id=analysis.id,
+        environment_registration_id=environment.id,
+        worker_id="real-bcftools-qualification-worker",
+        executor=LocalProcessToolExecutor(),
+    )
+    request = ToolExecutionRequest(
+        execution_id="real-bcftools-normalization-001",
+        organization_id=str(organization.id),
+        workflow_id="normalize",
+        operation="normalize",
+        argv=(
+            "norm", "-m", "-any", "-Ov",
+            "-o", str(output_path), str(input_path),
+        ),
+        workspace=str(workspace),
+        inputs=(
+            InputArtifact(
+                name="source-vcf",
+                path=str(input_path),
+                sha256=sha256_file(input_path),
+            ),
+        ),
+        outputs=(OutputArtifact(name="normalized-vcf", path=str(output_path)),),
+        timeout_seconds=60,
+    )
+
+    completed = service.execute(tool, request, artifact_publisher=publish)
+
+    persisted = db.get(
+        __import__("backend.app.infrastructure.db.models", fromlist=["ToolExecutionRecord"]).ToolExecutionRecord,
+        completed.record_id,
+    )
+    assert persisted.status == "SUCCEEDED"
+    assert persisted.provenance["tool_id"] == "bcftools"
+    assert persisted.provenance["tool_version"] == "1.25"
+    assert persisted.output_manifest[0]["artifact_id"]
+    normalized_records = [
+        line for line in output_path.read_text(encoding="utf-8").splitlines()
+        if line and not line.startswith("#")
+    ]
+    assert len(normalized_records) == 2

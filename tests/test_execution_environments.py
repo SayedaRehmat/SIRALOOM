@@ -64,6 +64,7 @@ def _environment(
         storage_profile_ids=("lab-a-artifacts",),
         supported_tool_profile_ids=("bcftools-1.25-htslib-1.25-linux-amd64",),
         network_policy="OFFLINE",
+        tool_executable_sha256=(("bcftools-1.25-htslib-1.25-linux-amd64", "a" * 64),),
         agent_id="agent-a" if executor_kind == "REMOTE_AGENT" else None,
         agent_version="1.0.0" if executor_kind == "REMOTE_AGENT" else None,
         agent_last_seen_at=agent_last_seen_at,
@@ -108,6 +109,26 @@ def test_registry_rejects_environment_without_qualification():
 
     with pytest.raises(ExecutionEnvironmentError, match="environment-qualified"):
         profile.assert_tool_compatible(_tool())
+
+
+def test_qualified_environment_requires_and_enforces_executable_digest():
+    profile = _environment(uuid4())
+    with pytest.raises(ExecutionEnvironmentError, match="approved executable SHA-256"):
+        ExecutionEnvironmentProfile(
+            **{
+                **profile.__dict__,
+                "tool_executable_sha256": (),
+            }
+        ).validate()
+
+    changed_tool = ToolIdentity(
+        **{
+            **_tool().__dict__,
+            "executable_sha256": "b" * 64,
+        }
+    )
+    with pytest.raises(ExecutionEnvironmentError, match="approved executable digest"):
+        profile.assert_tool_compatible(changed_tool)
 
 
 def test_registry_rejects_tool_profile_not_explicitly_approved():

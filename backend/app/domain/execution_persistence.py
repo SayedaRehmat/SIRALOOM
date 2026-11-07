@@ -217,6 +217,26 @@ def register_tool_execution(
         raise ExecutionPersistenceError("Tool and environment platforms do not match.")
     if tool.runtime_image_digest != env_snapshot.get("runtime_image_digest"):
         raise ExecutionPersistenceError("Tool and environment runtime image digests do not match.")
+    approved_executable_digest = env_snapshot.get("tool_executable_sha256", {}).get(tool.profile_id)
+    if approved_executable_digest != tool.executable_sha256.lower():
+        raise ExecutionPersistenceError(
+            "Tool executable SHA-256 does not match the environment's approved executable digest."
+        )
+
+    expected_fingerprint = execution_request_fingerprint(
+        organization_id=organization_id,
+        analysis_id=analysis_id,
+        execution_id=execution_id,
+        environment_registration_id=environment_registration_id,
+        tool=tool,
+        operation=operation,
+        request_snapshot=request_snapshot,
+        input_manifest=input_manifest,
+    )
+    if request_fingerprint != expected_fingerprint:
+        raise ExecutionPersistenceError(
+            "Request fingerprint does not match the immutable execution request contents."
+        )
 
     existing = db.scalar(
         select(ToolExecutionRecord).where(
@@ -247,21 +267,6 @@ def register_tool_execution(
     )
     if duplicate_execution is not None:
         raise ExecutionPersistenceError("Execution ID is already registered under another idempotency key.")
-
-    expected_fingerprint = execution_request_fingerprint(
-        organization_id=organization_id,
-        analysis_id=analysis_id,
-        execution_id=execution_id,
-        environment_registration_id=environment_registration_id,
-        tool=tool,
-        operation=operation,
-        request_snapshot=request_snapshot,
-        input_manifest=input_manifest,
-    )
-    if request_fingerprint != expected_fingerprint:
-        raise ExecutionPersistenceError(
-            "Request fingerprint does not match the immutable execution request contents."
-        )
 
     safe_inputs = _json_safe(input_manifest)
     if not isinstance(safe_inputs, list):
@@ -432,18 +437,23 @@ def complete_tool_execution(
     artifact_ids: list[UUID] = []
     expected_hashes: dict[str, str] = {}
     for item in safe_outputs:
-        if not isinstance(item, dict) or not item.get("name") or not item.get("artifact_id"):
-            raise ExecutionPersistenceError("Each output must identify its name, persisted artifact_id and SHA-256.")
+        if not isinstance(item, dict) or not item.get("name"):
+            raise ExecutionPersistenceError("Each output must identify its name and SHA-256.")
+        if not item.get("artifact_id") and item.get("retention") != "EPHEMERAL_INTERMEDIATE":
+            raise ExecutionPersistenceError(
+                "An output without a persisted artifact_id must be explicitly classified as an ephemeral intermediate."
+            )
         name = item["name"]
         if name in output_names:
             raise ExecutionPersistenceError("Output manifest names must be unique.")
         output_names.add(name)
         _require_sha256(item.get("sha256"), f"Output {name} SHA-256")
-        try:
-            artifact_id = UUID(str(item["artifact_id"]))
-        except (ValueError, TypeError) as exc:
-            raise ExecutionPersistenceError(f"Output {name} has an invalid artifact ID.") from exc
-        artifact_ids.append(artifact_id)
+        if item.get("artifact_id"):
+            try:
+                artifact_id = UUID(str(item["artifact_id"]))
+            except (ValueError, TypeError) as exc:
+                raise ExecutionPersistenceError(f"Output {name} has an invalid artifact ID.") from exc
+            artifact_ids.append(artifact_id)
         expected_hashes[name] = item["sha256"].lower()
 
     artifacts = db.scalars(select(Artifact).where(Artifact.id.in_(artifact_ids))).all() if artifact_ids else []
@@ -452,6 +462,8 @@ def complete_tool_execution(
         raise ExecutionPersistenceError("One or more declared output artifacts are not durably registered.")
     analysis_case_id = db.scalar(select(Analysis.case_id).where(Analysis.id == row.analysis_id))
     for item in safe_outputs:
+        if not item.get("artifact_id"):
+            continue
         artifact = by_id[UUID(str(item["artifact_id"]))]
         if artifact.analysis_id != row.analysis_id or artifact.case_id != analysis_case_id:
             raise ExecutionPersistenceError("Output artifact is not attached to this analysis and case.")
@@ -510,8 +522,17 @@ def fail_tool_execution(
             or payload.get("tool_id") != row.tool_id
             or payload.get("tool_version") != row.tool_version
             or payload.get("profile_id") != row.tool_profile_id
+            or payload.get("executable_sha256") != row.executable_sha256
+            or payload.get("platform") != row.platform
+            or payload.get("operation") != row.operation
+            or payload.get("runtime_image_digest") != row.environment_snapshot.get("runtime_image_digest")
         ):
             raise ExecutionPersistenceError("Failure provenance identity does not match the registered execution.")
+        _require_sha256(payload.get("environment_sha256"), "Environment SHA-256")
+        if payload.get("stdout_sha256") is not None:
+            _require_sha256(payload.get("stdout_sha256"), "stdout SHA-256")
+        if payload.get("stderr_sha256") is not None:
+            _require_sha256(payload.get("stderr_sha256"), "stderr SHA-256")
     row.status = "INTERRUPTED" if retryable else "FAILED"
     row.error_code = error_code[:128]
     row.error_message = error_message[:2000]

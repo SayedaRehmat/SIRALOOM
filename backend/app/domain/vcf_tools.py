@@ -708,6 +708,98 @@ def bcftools_available(executable: str = "bcftools") -> bool:
     return shutil.which(executable) is not None
 
 
+def _run_bcftools_command(
+    command: list[str],
+    *,
+    persistent_execution,
+    workflow_id: str,
+    operation: str,
+    workspace: Path,
+    input_paths: list[Path],
+    output_paths: list[Path],
+    timeout_seconds: int,
+):
+    """Run one BCFtools command through the durable common executor when configured."""
+    if persistent_execution is None:
+        return subprocess.run(command, capture_output=True, text=True, timeout=timeout_seconds, check=False)
+
+    from backend.app.config import settings
+    from backend.app.domain.tool_execution import (
+        InputArtifact, OutputArtifact, ToolExecutionRequest, ToolIdentity,
+        current_platform_id, sha256_file,
+    )
+    from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+
+    executable = Path(shutil.which(command[0]) or command[0]).resolve(strict=True)
+    environment = persistent_execution.db.get(
+        ExecutionEnvironmentRegistration, persistent_execution.environment_registration_id
+    )
+    if environment is None:
+        raise VCFToolError("Persistent BCFtools execution environment registration is missing.")
+    profile = ToolIdentity(
+        tool_id="bcftools",
+        version=settings.bcftools_version,
+        profile_id=settings.bcftools_profile_id,
+        executable=str(executable),
+        executable_sha256=sha256_file(executable),
+        platform=current_platform_id(),
+        qualification_status="SOFTWARE_QUALIFIED",
+        version_args=("--version",),
+        version_output_contains=f"bcftools {settings.bcftools_version}",
+        supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
+        runtime_image_digest=environment.profile_json.get("runtime_image_digest"),
+        runtime_path=tuple(
+            item for item in dict.fromkeys((str(executable.parent), "/usr/bin", "/bin"))
+            if Path(item).is_dir()
+        ),
+    )
+    inputs = tuple(
+        InputArtifact(
+            name=f"input-{index}:{path.name}",
+            path=str(path.resolve(strict=True)),
+            sha256=sha256_file(path),
+        )
+        for index, path in enumerate(input_paths)
+    )
+    outputs = tuple(
+        OutputArtifact(name=path.name, path=str(path.absolute()))
+        for path in output_paths
+    )
+    stable_argv = list(command[1:])
+    replacements = [(str(workspace), "$WORKSPACE")]
+    replacements.extend((str(path), f"$INPUT:{path.name}") for path in input_paths)
+    replacements.extend((str(path), f"$OUTPUT:{path.name}") for path in output_paths)
+    for source, target in sorted(replacements, key=lambda item: len(item[0]), reverse=True):
+        stable_argv = [value.replace(source, target) for value in stable_argv]
+    canonical_material = {
+        "analysis_id": str(persistent_execution.analysis_id),
+        "workflow_id": workflow_id,
+        "operation": operation,
+        "argv": stable_argv,
+        "inputs": [(item.name, item.sha256) for item in inputs],
+        "outputs": [item.name for item in outputs],
+    }
+    execution_id = hashlib.sha256(
+        json.dumps(canonical_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:32]
+    request = ToolExecutionRequest(
+        execution_id=execution_id,
+        organization_id=str(persistent_execution.organization_id),
+        workflow_id=workflow_id,
+        operation=operation,
+        argv=tuple(command[1:]),
+        workspace=str(workspace.resolve(strict=True)),
+        inputs=inputs,
+        outputs=outputs,
+        timeout_seconds=timeout_seconds,
+    )
+    result = persistent_execution.execute(profile, request)
+    return subprocess.CompletedProcess(
+        args=command, returncode=result.result.provenance.exit_code,
+        stdout=result.result.stdout, stderr=result.result.stderr,
+    )
+
+
 def has_multiallelic_records(path: str | Path) -> bool:
     import gzip
 
@@ -781,6 +873,9 @@ def _validate_vcf_index_record_counts(
     *,
     bcftools_executable: str,
     timeout_seconds: int,
+    persistent_execution=None,
+    workflow_id: str = "normalize",
+    workspace: Path | None = None,
 ) -> dict:
     """Verify indexed per-contig record streams against the staged BGZF file.
 
@@ -790,13 +885,17 @@ def _validate_vcf_index_record_counts(
     sequential BGZF scans. Query output is streamed to temporary files so
     WES/WGS-scale VCFs are not accumulated in process memory.
     """
+    execution_workspace = workspace or vcf_path.parent
     try:
-        stats = subprocess.run(
+        stats = _run_bcftools_command(
             [bcftools_executable, "index", "--stats", str(vcf_path)],
-            capture_output=True,
-            text=True,
-            timeout=max(1, int(timeout_seconds)),
-            check=False,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=execution_workspace,
+            input_paths=[vcf_path],
+            output_paths=[],
+            timeout_seconds=max(1, int(timeout_seconds)),
         )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolUnavailable("Timed out while validating VCF index record counts.") from exc
@@ -852,65 +951,108 @@ def _validate_vcf_index_record_counts(
 
     indexed_digests: dict[str, str] = {}
     for contig in sorted(sequential):
-        with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
-            try:
-                queried = subprocess.run(
-                    [
-                        bcftools_executable,
-                        "view",
-                        "--no-header",
-                        "--regions-overlap",
-                        "0",
-                        "--regions",
-                        contig,
-                        str(vcf_path),
-                    ],
-                    stdout=query_output,
-                    stderr=query_error,
-                    timeout=max(1, int(timeout_seconds)),
-                    check=False,
-                )
-            except subprocess.TimeoutExpired as exc:
-                raise VCFToolError(
-                    f"Timed out while querying index-backed records for contig {contig!r}."
-                ) from exc
-            except OSError as exc:
-                raise VCFToolUnavailable(
-                    f"Unable to execute index-backed query for contig {contig!r}: {exc}"
-                ) from exc
-            if queried.returncode != 0:
-                query_error.seek(0)
-                detail = query_error.read().decode("utf-8", errors="replace").strip()
-                raise VCFToolError(
-                    f"index-backed record query failed for contig {contig!r}: "
-                    f"{detail or 'unknown bcftools view error'}"
-                )
-
-            query_output.seek(0)
-            digest = hashlib.sha256()
-            count = 0
-            for raw_line in query_output:
-                if not raw_line or raw_line.startswith(b"#"):
-                    continue
-                fields = raw_line.split(b"\t", 1)
-                if not fields or fields[0].decode("utf-8", errors="replace") != contig:
-                    raise VCFToolError(
-                        f"index-backed query for contig {contig!r} returned a record from another contig."
+        digest = hashlib.sha256()
+        count = 0
+        if persistent_execution is None:
+            # Preserve the original streaming stdout path for callers without a
+            # registered execution environment.
+            with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
+                try:
+                    queried = subprocess.run(
+                        [
+                            bcftools_executable, "view", "--no-header",
+                            "--regions-overlap", "0", "--regions", contig, str(vcf_path),
+                        ],
+                        stdout=query_output,
+                        stderr=query_error,
+                        timeout=max(1, int(timeout_seconds)),
+                        check=False,
                     )
-                digest.update(raw_line)
-                count += 1
-            if count != sequential_counts[contig]:
-                raise VCFToolError(
-                    f"index-backed query count mismatch for contig {contig!r}: "
-                    f"indexed={count}, sequential={sequential_counts[contig]}."
-                )
-            expected_digest = sequential[contig]["digest"].hexdigest()
-            actual_digest = digest.hexdigest()
-            if actual_digest != expected_digest:
-                raise VCFToolError(
-                    f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
-                )
-            indexed_digests[contig] = actual_digest
+                except subprocess.TimeoutExpired as exc:
+                    raise VCFToolError(
+                        f"Timed out while querying index-backed records for contig {contig!r}."
+                    ) from exc
+                except OSError as exc:
+                    raise VCFToolUnavailable(
+                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
+                    ) from exc
+                if queried.returncode != 0:
+                    query_error.seek(0)
+                    detail = query_error.read().decode("utf-8", errors="replace").strip()
+                    raise VCFToolError(
+                        f"index-backed record query failed for contig {contig!r}: "
+                        f"{detail or 'unknown bcftools view error'}"
+                    )
+                query_output.seek(0)
+                query_lines = query_output
+                for raw_line in query_lines:
+                    if not raw_line or raw_line.startswith(b"#"):
+                        continue
+                    fields = raw_line.split(b"\t", 1)
+                    if not fields or fields[0].decode("utf-8", errors="replace") != contig:
+                        raise VCFToolError(
+                            f"index-backed query for contig {contig!r} returned a record from another contig."
+                        )
+                    digest.update(raw_line)
+                    count += 1
+        else:
+            with tempfile.TemporaryDirectory(
+                prefix=f".siraloom-index-query-{contig}-",
+                dir=str(execution_workspace),
+            ) as query_dir:
+                query_path = Path(query_dir) / "indexed-query.vcf"
+                query_command = [
+                    bcftools_executable, "view", "--no-header",
+                    "--regions-overlap", "0", "--regions", contig,
+                    "-o", str(query_path), str(vcf_path),
+                ]
+                try:
+                    queried = _run_bcftools_command(
+                        query_command,
+                        persistent_execution=persistent_execution,
+                        workflow_id=workflow_id,
+                        operation="validate",
+                        workspace=Path(query_dir),
+                        input_paths=[vcf_path],
+                        output_paths=[query_path],
+                        timeout_seconds=max(1, int(timeout_seconds)),
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise VCFToolError(
+                        f"Timed out while querying index-backed records for contig {contig!r}."
+                    ) from exc
+                except OSError as exc:
+                    raise VCFToolUnavailable(
+                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
+                    ) from exc
+                if queried.returncode != 0:
+                    detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
+                    raise VCFToolError(
+                        f"index-backed record query failed for contig {contig!r}: {detail}"
+                    )
+                with query_path.open("rb") as query_output:
+                    for raw_line in query_output:
+                        if not raw_line or raw_line.startswith(b"#"):
+                            continue
+                        fields = raw_line.split(b"\t", 1)
+                        if not fields or fields[0].decode("utf-8", errors="replace") != contig:
+                            raise VCFToolError(
+                                f"index-backed query for contig {contig!r} returned a record from another contig."
+                            )
+                        digest.update(raw_line)
+                        count += 1
+        if count != sequential_counts[contig]:
+            raise VCFToolError(
+                f"index-backed query count mismatch for contig {contig!r}: "
+                f"indexed={count}, sequential={sequential_counts[contig]}."
+            )
+        expected_digest = sequential[contig]["digest"].hexdigest()
+        actual_digest = digest.hexdigest()
+        if actual_digest != expected_digest:
+            raise VCFToolError(
+                f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
+            )
+        indexed_digests[contig] = actual_digest
 
     return {
         "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
@@ -1475,6 +1617,8 @@ def normalize_vcf_with_bcftools(
     output_path: str | Path,
     *,
     reference_fasta: str | Path,
+    persistent_execution=None,
+    workflow_id: str = "normalize",
     expected_bcftools_version: str | None = None,
     source_only_format_fields: list[str] | None = None,
     timeout_seconds: int = 1800,
@@ -1564,9 +1708,10 @@ def normalize_vcf_with_bcftools(
             "-o", str(prepared_path), str(input_path),
         ]
         try:
-            viewed = subprocess.run(
-                view_command, capture_output=True, text=True, timeout=timeout,
-                check=False,
+            viewed = _run_bcftools_command(
+                view_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="normalize", workspace=work,
+                input_paths=[input_path], output_paths=[prepared_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
@@ -1592,12 +1737,11 @@ def normalize_vcf_with_bcftools(
             "-Oz", "-o", str(normalized_path), str(provenance_input),
         ]
         try:
-            completed = subprocess.run(
-                normalize_command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+            completed = _run_bcftools_command(
+                normalize_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="normalize", workspace=work,
+                input_paths=[provenance_input, reference_fasta],
+                output_paths=[normalized_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
@@ -1615,12 +1759,10 @@ def normalize_vcf_with_bcftools(
             str(normalized_path),
         ]
         try:
-            sorted_result = subprocess.run(
-                sort_command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+            sorted_result = _run_bcftools_command(
+                sort_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="sort", workspace=work,
+                input_paths=[normalized_path], output_paths=[sorted_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools sorting timed out after {timeout}s.") from exc
@@ -1654,12 +1796,11 @@ def normalize_vcf_with_bcftools(
                 str(source_only_plain_path),
             ]
             try:
-                source_only_result = subprocess.run(
-                    source_only_command,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout,
-                    check=False,
+                source_only_result = _run_bcftools_command(
+                    source_only_command, persistent_execution=persistent_execution,
+                    workflow_id=workflow_id, operation="convert", workspace=work,
+                    input_paths=[source_only_plain_path],
+                    output_paths=[source_only_compressed_path], timeout_seconds=timeout,
                 )
             except subprocess.TimeoutExpired as exc:
                 raise VCFToolError(
@@ -1697,12 +1838,10 @@ def normalize_vcf_with_bcftools(
 
         index_command = [bcftools_executable, "index", "--csi", "--force", str(sorted_path)]
         try:
-            indexed_result = subprocess.run(
-                index_command,
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=False,
+            indexed_result = _run_bcftools_command(
+                index_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="index", workspace=work,
+                input_paths=[sorted_path], output_paths=[staged_index_path], timeout_seconds=120,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError("bcftools VCF indexing timed out after 120s.") from exc
@@ -1719,6 +1858,9 @@ def normalize_vcf_with_bcftools(
             sorted_path,
             bcftools_executable=bcftools_executable,
             timeout_seconds=120,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            workspace=work,
         )
 
         # Flush staged files before publication. The private directory is on the
@@ -1759,6 +1901,10 @@ def normalize_vcf_with_bcftools(
         return {
             "tool": "bcftools",
             "tool_version": version_line,
+            "tool_execution_record_ids": (
+                [str(item) for item in persistent_execution.execution_record_ids]
+                if persistent_execution is not None else []
+            ),
             "expected_tool_version": expected_bcftools_version,
             "htslib_version": detected_htslib_version,
             "expected_htslib_version": expected_htslib_version,
