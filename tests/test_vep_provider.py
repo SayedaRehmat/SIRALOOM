@@ -222,6 +222,7 @@ def _manifested_toolchain(tmp_path, binary, *, vep_version=None, assembly="GRCh3
     })
     if vep_version:
         toolchain["vep_version"] = vep_version
+    toolchain["tool_profile_id"] = f"vep-{toolchain['vep_version']}-{toolchain['platform']}"
     return toolchain, cache_file
 
 
@@ -280,17 +281,11 @@ def test_vep_provider_requires_explicit_cache_version():
     ],
 )
 def test_vep_provider_rejects_extra_args_that_override_governed_paths(argument):
-    toolchain = {
-        "vep_binary": "/opt/vep/vep",
-        "cache_dir": "/resources/vep/115",
-        "cache_version": "115",
-        "assembly": "GRCh38",
+    toolchain = _base_toolchain()
+    toolchain.update({
         "cache_manifest": "/resources/vep/115.manifest.json",
-        "cache_manifest_sha256": "a" * 64,
-        "cache_artifact_sha256": "b" * 64,
-        "vep_binary_sha256": "c" * 64,
         "extra_args": [argument],
-    }
+    })
     with pytest.raises(VEPProviderError, match="may not override governed"):
         VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
 
@@ -304,16 +299,10 @@ def test_vep_provider_rejects_extra_args_that_override_governed_paths(argument):
     ],
 )
 def test_vep_requires_absolute_paths_and_explicit_assembly(field, value, message):
-    toolchain = {
-        "vep_binary": "/opt/vep/vep",
-        "cache_dir": "/resources/vep/115",
-        "cache_version": "115",
-        "assembly": "GRCh38",
+    toolchain = _base_toolchain()
+    toolchain.update({
         "cache_manifest": "/resources/vep/115.manifest.json",
-        "cache_manifest_sha256": "a" * 64,
-        "cache_artifact_sha256": "b" * 64,
-        "vep_binary_sha256": "c" * 64,
-    }
+    })
     toolchain[field] = value
 
     with pytest.raises(VEPProviderError, match=message):
