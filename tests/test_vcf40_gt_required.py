@@ -40,15 +40,15 @@ def test_vcf40_missing_gt_alleles_are_explicitly_represented(tmp_path: Path):
 def test_vcf40_explicit_reserved_format_definitions_accept_versioned_types(tmp_path: Path):
     path = tmp_path / "vcf40-reserved-format-explicit.vcf"
     path.write_text(
-        "##fileformat=VCFv4.0\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\\n'
-        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\\n'
-        '##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype quality">\\n'
-        '##FORMAT=<ID=GL,Number=3,Type=Float,Description="Genotype likelihoods">\\n'
-        '##FORMAT=<ID=FT,Number=1,Type=String,Description="Genotype filter">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t2\\t.\\tA\\tC\\t.\\tPASS\\t.\\tGT:GQ:DP:HQ:GL:FT\\t0/1:20:20:21,22:-1,-2,-3:PASS\\n",
+        "##fileformat=VCFv4.0\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+        '##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype quality">\n'
+        '##FORMAT=<ID=GL,Number=3,Type=Float,Description="Genotype likelihoods">\n'
+        '##FORMAT=<ID=FT,Number=1,Type=String,Description="Genotype filter">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:GQ:DP:HQ:GL:FT\t0/1:20:20:21,22:-1,-2,-3:PASS\n",
         encoding="utf-8",
     )
 
