@@ -337,6 +337,11 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     ))
     if existing is not None:
         return _sample_binding_payload(existing)
+    successor = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == previous.id,
+    ))
+    if successor is not None:
+        raise HTTPException(409, "This sample binding already has a conflicting successor revision")
     row = PedigreeSampleBinding(
         id=uuid4(), case_id=case_id, pedigree_member_id=member.id,
         specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
@@ -379,12 +384,6 @@ def supersede_sample_binding(
     previous = db.get(PedigreeSampleBinding, binding_id)
     if previous is None or previous.case_id != case_id:
         raise HTTPException(404, "Sample binding not found")
-    successor = db.scalar(select(PedigreeSampleBinding).where(
-        PedigreeSampleBinding.supersedes_binding_id == previous.id,
-    ))
-    if successor is not None:
-        raise HTTPException(409, "This sample binding already has a successor revision")
-
     member = db.get(PedigreeMember, body.member_id)
     specimen = db.get(Specimen, body.specimen_id)
     analysis = db.get(Analysis, body.analysis_id)
