@@ -139,3 +139,25 @@ def test_vcf44_pso_ordinal_tie_is_preserved_as_unresolved(
     assert traversal["unresolved_ordinal_tie_count"] == 1
     assert traversal["ordered_events"][0]["event_kind"] == "ORDINAL_TIE_UNRESOLVED"
     assert result["phase_set_traversal_unresolved_count"] == 1
+
+
+def test_vcf44_psl_phase_set_is_global_across_chromosomes(tmp_path: Path):
+    path = tmp_path / "vcf44-psl-global-across-chromosomes.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t5\\tdel1\\tA\\t<DEL>\\t.\\tPASS\\tEND=8;SVTYPE=DEL\\tGT:PSL:PSO\\t0|1:.,shared:.,3\\n"
+        "2\\t10\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,shared:.,4\\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "shared"
+    )
+    assert [event["ordinal"] for event in traversal["ordered_events"]] == [3, 4]
+    assert [event["occurrences"][0]["chrom"] for event in traversal["ordered_events"]] == ["1", "2"]
