@@ -306,12 +306,19 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
         "evidence_reference": body.evidence_reference, "version": 1,
         "supersedes_binding_id": None,
     }
+    binding_fingerprint = _sample_binding_fingerprint(payload)
+    existing = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.case_id == case_id,
+        PedigreeSampleBinding.binding_fingerprint == binding_fingerprint,
+    ))
+    if existing is not None:
+        return _sample_binding_payload(existing)
     row = PedigreeSampleBinding(
         id=uuid4(), case_id=case_id, pedigree_member_id=member.id,
         specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
         source_artifact_sha256=artifact.sha256, sample_name=body.sample_name.strip(), binding_status="UNVERIFIED",
         binding_method=body.binding_method.strip(), evidence_reference=body.evidence_reference,
-        version=1, binding_fingerprint=_sample_binding_fingerprint(payload),
+        version=1, binding_fingerprint=binding_fingerprint,
         recorded_by=principal.user_id,
     )
     db.add(row)
@@ -344,6 +351,13 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         raise HTTPException(404, "Sample binding not found")
     if previous.binding_status != "UNVERIFIED":
         raise HTTPException(409, "Only an unverified binding can be reviewed")
+    prior_revision = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == previous.id,
+    ))
+    if prior_revision is not None:
+        if prior_revision.binding_status == body.decision and prior_revision.review_reason == body.reason.strip():
+            return _sample_binding_payload(prior_revision)
+        raise HTTPException(409, "This binding already has a conflicting review revision")
     if body.decision == "VERIFIED":
         analysis = db.get(Analysis, previous.analysis_id)
         if analysis is None or (analysis.configuration or {}).get("input_artifact_id") != str(previous.artifact_id):
