@@ -568,9 +568,10 @@ def _sample_binding_evidence_owner(db: Session, binding: PedigreeSampleBinding) 
     direct = _active_sample_identity_evidence(db, binding.id)
     if direct:
         return binding.id
-    if binding.binding_status != "VERIFIED" or binding.supersedes_binding_id is None:
+    supersedes_binding_id = getattr(binding, "supersedes_binding_id", None)
+    if binding.binding_status != "VERIFIED" or supersedes_binding_id is None:
         return binding.id
-    predecessor = db.get(PedigreeSampleBinding, binding.supersedes_binding_id)
+    predecessor = db.get(PedigreeSampleBinding, supersedes_binding_id)
     if predecessor is None or predecessor.binding_status != "UNVERIFIED":
         return binding.id
     same_claim = (
@@ -587,11 +588,23 @@ def _sample_binding_evidence_owner(db: Session, binding: PedigreeSampleBinding) 
 
 def _require_sample_identity_evidence(db: Session, binding_id: UUID) -> list[dict]:
     binding = db.get(PedigreeSampleBinding, binding_id)
-    evidence_owner_id = (
-        _sample_binding_evidence_owner(db, binding)
-        if binding is not None else binding_id
-    )
-    active = _active_sample_identity_evidence(db, evidence_owner_id)
+    active = _active_sample_identity_evidence(db, binding_id)
+    if not active and binding is not None:
+        supersedes_binding_id = getattr(binding, "supersedes_binding_id", None)
+        if binding.binding_status == "VERIFIED" and supersedes_binding_id is not None:
+            predecessor = db.get(PedigreeSampleBinding, supersedes_binding_id)
+            if predecessor is not None and predecessor.binding_status == "UNVERIFIED":
+                same_claim = (
+                    predecessor.case_id == binding.case_id
+                    and predecessor.pedigree_member_id == binding.pedigree_member_id
+                    and predecessor.specimen_id == binding.specimen_id
+                    and predecessor.analysis_id == binding.analysis_id
+                    and predecessor.artifact_id == binding.artifact_id
+                    and predecessor.source_artifact_sha256 == binding.source_artifact_sha256
+                    and predecessor.sample_name == binding.sample_name
+                )
+                if same_claim:
+                    active = _active_sample_identity_evidence(db, predecessor.id)
     summary = []
     for evidence_type in ("CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC"):
         matching = [row for row in active if row.evidence_type == evidence_type]
