@@ -1410,6 +1410,40 @@ def _expected_base_modification_slots(
     return slots
 
 
+def _expected_base_modification_slots_with_haplotype(
+    genotype: str,
+    reference: str,
+    alternates: list[str],
+    field_id: str,
+    fileformat: str | None,
+    line_no: int,
+) -> list[tuple[int, int, int, str, str]]:
+    """Return (global allele, GT copy index, sequence offset, strand, base)."""
+    seen_unphased_alleles: set[int] = set()
+    slots: list[tuple[int, int, int, str, str]] = []
+    modified_base = field_id[-1].upper()
+    for copy_index, (allele_token, phase_separator) in enumerate(
+        _gt_alleles_with_phase(genotype, fileformat, line_no)
+    ):
+        if allele_token == ".":
+            continue
+        allele_index = int(allele_token)
+        if phase_separator == "/":
+            if allele_index in seen_unphased_alleles:
+                continue
+            seen_unphased_alleles.add(allele_index)
+        allele_sequence = reference if allele_index == 0 else alternates[allele_index - 1]
+        if not DNA_RE.fullmatch(allele_sequence):
+            continue
+        slots.extend(
+            (allele_index, copy_index, position, strand, sequence_base)
+            for position, strand, sequence_base in _base_modification_allele_slots(
+                allele_sequence, modified_base
+            )
+        )
+    return slots
+
+
 def _expected_base_modification_cardinality(
     genotype: str,
     reference: str,
@@ -1650,7 +1684,12 @@ def validate_vcf_strict(
     *,
     reference_contigs: set[str] | None = None,
     include_base_modification_slot_assignments: bool = False,
+    base_modification_strandedness: str | None = None,
 ) -> dict:
+    if base_modification_strandedness not in {None, "stranded", "unstranded"}:
+        raise ValueError(
+            "base_modification_strandedness must be None, 'stranded', or 'unstranded'"
+        )
     source = Path(path)
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
@@ -1671,6 +1710,7 @@ def validate_vcf_strict(
     base_modification_format_fields: set[str] = set()
     base_modification_slot_assignment_count = 0
     base_modification_slot_assignments: list[dict[str, object]] = []
+    unstranded_base_modification_observations: list[dict[str, object]] = []
     vcf45_reference_span_records = 0
     vcf45_max_reference_end = 0
     vcf45_reference_block_sample_count = 0
@@ -2190,6 +2230,80 @@ def validate_vcf_strict(
                         if definition["Number"] == "M" and value not in {None, "."}:
                             observed_modification_values = value.split(",")
                             base_modification_slot_assignment_count += len(base_modification_slots)
+                        elif definition["Number"] == "M":
+                            observed_modification_values = ["."] * len(base_modification_slots)
+                        if (
+                            definition["Number"] == "M"
+                            and base_modification_strandedness == "unstranded"
+                        ):
+                            gt_for_modification = sample_values[gt_index]
+                            gt_phase = _gt_alleles_with_phase(
+                                gt_for_modification, fileformat, line_no
+                            )
+                            psl_for_modification = (
+                                sample_values[format_keys.index("PSL")]
+                                if "PSL" in format_keys and format_keys.index("PSL") < len(sample_values)
+                                else None
+                            )
+                            ps_for_modification = (
+                                sample_values[format_keys.index("PS")]
+                                if "PS" in format_keys and format_keys.index("PS") < len(sample_values)
+                                else None
+                            )
+                            psl_positions = (
+                                psl_for_modification.split(",")
+                                if psl_for_modification not in {None, "", "."}
+                                else []
+                            )
+                            haplotype_slots = _expected_base_modification_slots_with_haplotype(
+                                gt_for_modification,
+                                fields[3].upper(),
+                                alts,
+                                key,
+                                fileformat,
+                                line_no,
+                            )
+                            for slot_index, (allele_index, copy_index, sequence_position, strand, sequence_base) in enumerate(haplotype_slots):
+                                _allele_token, phase_separator = gt_phase[copy_index]
+                                if phase_separator != "|":
+                                    phase_set = None
+                                elif psl_positions:
+                                    phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else None
+                                    if phase_set == ".":
+                                        phase_set = None
+                                elif ps_for_modification not in {None, "", "."}:
+                                    phase_set = f"PS:{ps_for_modification}"
+                                else:
+                                    phase_set = "__implicit_phased_set__"
+                                allele_sequence = (
+                                    fields[3].upper()
+                                    if allele_index == 0
+                                    else alts[allele_index - 1]
+                                )
+                                if len(allele_sequence) != len(fields[3]):
+                                    raise StrictVCFValidationError(
+                                        f"Unstranded Number=M cross-record placement cannot be coordinate-mapped for length-changing allele {allele_index} at line {line_no}",
+                                        code="VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED",
+                                    )
+                                observed_value = (
+                                    observed_modification_values[slot_index]
+                                    if slot_index < len(observed_modification_values)
+                                    else "."
+                                )
+                                unstranded_base_modification_observations.append({
+                                    "sample": chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index),
+                                    "chrom": _chrom,
+                                    "field_id": key,
+                                    "coordinate": _pos + sequence_position,
+                                    "record_index": records + 1,
+                                    "line_number": line_no,
+                                    "copy_index": copy_index,
+                                    "phase_set": phase_set,
+                                    "phase_known": phase_set is not None,
+                                    "strand": strand,
+                                    "base": sequence_base,
+                                    "value": None if observed_value == "." else observed_value,
+                                })
                             if include_base_modification_slot_assignments:
                                 sample_name = (
                                     chrom_header[8 + sample_index]
@@ -2323,6 +2437,57 @@ def validate_vcf_strict(
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
+    if fileformat == "VCFv4.5" and base_modification_strandedness == "unstranded":
+        # Compare only observations on the same sample, phase set and phased
+        # GT copy. Unphased alleles cannot be safely joined across records.
+        phased_groups: dict[tuple[str, str, str, str, int], dict[int, list[dict[str, object]]]] = {}
+        for observation in unstranded_base_modification_observations:
+            if not observation["phase_known"]:
+                continue
+            group_key = (
+                str(observation["sample"]),
+                str(observation["chrom"]),
+                str(observation["field_id"]),
+                str(observation["phase_set"]),
+                int(observation["copy_index"]),
+            )
+            phased_groups.setdefault(group_key, {}).setdefault(
+                int(observation["coordinate"]), []
+            ).append(observation)
+        for group_key, by_coordinate in phased_groups.items():
+            field_id = group_key[2]
+            modified_base = field_id[-1].upper()
+            if modified_base == "U":
+                modified_base = "T"
+            if modified_base == "N":
+                for coordinate, observations in by_coordinate.items():
+                    for observation in observations:
+                        if observation["strand"] == "-" and observation["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded N base-modification values must be MISSING on the negative strand at {group_key[1]}:{coordinate}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+                continue
+            complement = {"A": "T", "T": "A", "C": "G", "G": "C"}[modified_base]
+            for coordinate, observations in by_coordinate.items():
+                next_observations = by_coordinate.get(coordinate + 1, [])
+                for lower in observations:
+                    for upper in next_observations:
+                        lower_positive = lower["base"] == modified_base and lower["strand"] == "+"
+                        upper_negative = upper["base"] == complement and upper["strand"] == "-"
+                        lower_negative = lower["base"] == complement and lower["strand"] == "-"
+                        upper_positive = upper["base"] == modified_base and upper["strand"] == "+"
+                        if lower_positive and upper_negative and upper["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded complementary base-modification value must be MISSING at higher POS {group_key[1]}:{coordinate + 1}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+                        if lower_negative and upper_positive and upper["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded complementary base-modification value must be MISSING at higher POS {group_key[1]}:{coordinate + 1}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+
     if fileformat == "VCFv4.5":
         for (sample_name, phase_set), observations in phase_set_observations.items():
             phase_set_requires_pso = any(bool(item["requires_pso"]) for item in observations)
@@ -2426,6 +2591,8 @@ def validate_vcf_strict(
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
         "base_modification_slot_assignment_count": base_modification_slot_assignment_count,
+        "base_modification_strandedness_policy": base_modification_strandedness,
+        "unstranded_base_modification_observation_count": len(unstranded_base_modification_observations),
         **({"base_modification_slot_assignments": base_modification_slot_assignments} if include_base_modification_slot_assignments else {}),
         "vcf45_reference_span_records": vcf45_reference_span_records,
         "vcf45_max_reference_end": vcf45_max_reference_end,
