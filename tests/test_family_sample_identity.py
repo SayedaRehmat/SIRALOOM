@@ -401,6 +401,7 @@ def test_identity_evidence_is_recorded_pending_with_method_and_provenance(monkey
         artifact=artifact, previous=binding,
     )
     db.scalar_results = [None, None]
+    db.query_rows = [[]]
 
     result = pedigree.create_sample_identity_evidence(
         case.id, binding.id,
@@ -760,6 +761,7 @@ def test_verified_binding_resolves_identity_evidence_from_exact_unverified_prede
     evidence = [
         SimpleNamespace(
             id=uuid4(), evidence_type=evidence_type, result="PASS",
+            supersedes_evidence_id=None,
             method="LAB_QC", method_version="1", evidence_reference=f"{evidence_type}-REF",
             evidence_fingerprint=("b" if evidence_type == "CHAIN_OF_CUSTODY" else "c") * 64,
             review_status="ACCEPTED", reviewed_by=uuid4(), reviewed_at=None,
