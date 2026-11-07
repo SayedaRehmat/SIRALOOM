@@ -245,3 +245,17 @@ def test_container_workspace_rejects_hardlink_alias(tmp_path):
     (workspace / "alias.txt").hardlink_to(source)
     with pytest.raises(ToolExecutionContractError, match="hard-linked"):
         LinuxContainerToolExecutor._validate_workspace_contents(workspace)
+
+
+
+@pytest.mark.parametrize("container_user", ["0:1000", "1000:0", "0:0"])
+def test_container_limits_reject_root_uid_or_gid(container_user):
+    environment = _environment()
+    limits = ContainerResourceLimits(
+        cpu_cores=1,
+        memory_bytes=1024**3,
+        pids_limit=64,
+        container_user=container_user,
+    )
+    with pytest.raises(ToolExecutionContractError, match="non-root"):
+        limits.validate(environment)
