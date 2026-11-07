@@ -2339,8 +2339,8 @@ def test_vcf41_gle_accepts_explicit_header_definition(tmp_path: Path):
         path,
         ['##FORMAT=<ID=GLE,Number=1,Type=String,Description="Explicit GLE declaration">'],
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:GLE\t0/1:opaque\n",
+        sample=True,
         version="VCFv4.1",
-        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
     )
     result = validate_vcf_strict(path)
     assert result["records"] == 1
