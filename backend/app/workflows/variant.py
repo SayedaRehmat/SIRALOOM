@@ -51,6 +51,7 @@ from backend.app.domain.normalization import (
     UnsupportedVariantError,
     iter_normalized_vcf,
 )
+from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
 from backend.app.domain.profile_runtime_resources import (
     ProfileRuntimeResourceError,
     resolve_profile_runtime_resource,
@@ -109,6 +110,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Classification,
     Evidence,
+    ExecutionEnvironmentRegistration,
     PopulationObservation,
     Report,
     ReportabilityDecision,
@@ -147,6 +149,62 @@ class WorkflowContext:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _persistent_tool_execution_service(
+    db: Session,
+    *,
+    analysis: Analysis,
+    organization_id: UUID,
+    worker_id: str,
+) -> PersistentToolExecutionService | None:
+    """Resolve an explicitly assigned qualified environment for this analysis.
+
+    No environment is auto-created or auto-qualified. A laboratory may opt into
+    mandatory common-executor execution by setting
+    configuration.require_persistent_tool_execution=true; that mode fails closed
+    if the analysis has no explicit environment registration.
+    """
+    configuration = dict(analysis.configuration or {})
+    registration_id = configuration.get("execution_environment_registration_id")
+    required = bool(configuration.get("require_persistent_tool_execution"))
+    if not registration_id:
+        if required:
+            raise ResourceConsumptionError(
+                "EXECUTION_ENVIRONMENT_REGISTRATION_REQUIRED",
+                "This analysis requires persistent tool execution but has no assigned environment registration.",
+            )
+        return None
+    try:
+        environment_id = UUID(str(registration_id))
+    except (ValueError, TypeError) as exc:
+        raise ResourceConsumptionError(
+            "EXECUTION_ENVIRONMENT_REGISTRATION_INVALID",
+            "The assigned execution environment registration ID is invalid.",
+        ) from exc
+    registration = db.get(ExecutionEnvironmentRegistration, environment_id)
+    if registration is None:
+        raise ResourceConsumptionError(
+            "EXECUTION_ENVIRONMENT_REGISTRATION_MISSING",
+            "The assigned execution environment registration does not exist.",
+        )
+    if registration.owner_scope == "LABORATORY" and registration.organization_id != organization_id:
+        raise ResourceConsumptionError(
+            "EXECUTION_ENVIRONMENT_TENANT_MISMATCH",
+            "The assigned execution environment belongs to another laboratory.",
+        )
+    if registration.qualification_status != "ENVIRONMENT_QUALIFIED":
+        raise ResourceConsumptionError(
+            "EXECUTION_ENVIRONMENT_NOT_QUALIFIED",
+            "The assigned execution environment has not passed its qualification gate.",
+        )
+    return PersistentToolExecutionService(
+        db,
+        organization_id=organization_id,
+        analysis_id=analysis.id,
+        environment_registration_id=registration.id,
+        worker_id=worker_id,
+    )
 
 
 class TransientWorkflowError(RuntimeError):
