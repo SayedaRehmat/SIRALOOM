@@ -761,11 +761,17 @@ def _run_bcftools_command(
         OutputArtifact(name=path.name, path=str(path.absolute()))
         for path in output_paths
     )
+    stable_argv = list(command[1:])
+    replacements = [(str(workspace), "$WORKSPACE")]
+    replacements.extend((str(path), f"$INPUT:{path.name}") for path in input_paths)
+    replacements.extend((str(path), f"$OUTPUT:{path.name}") for path in output_paths)
+    for source, target in sorted(replacements, key=lambda item: len(item[0]), reverse=True):
+        stable_argv = [value.replace(source, target) for value in stable_argv]
     canonical_material = {
         "analysis_id": str(persistent_execution.analysis_id),
         "workflow_id": workflow_id,
         "operation": operation,
-        "argv": command[1:],
+        "argv": stable_argv,
         "inputs": [(item.name, item.sha256) for item in inputs],
         "outputs": [item.name for item in outputs],
     }
