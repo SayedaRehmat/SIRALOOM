@@ -2977,7 +2977,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db, annotation_step, start, end, status="RUNNING", attempt=attempt,
                         metadata={"provider": provider.provider_id, "variant_count": len(batch)},
                     )
-                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
+                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={
+                        "provider": provider.provider_id,
+                        "genome": genome,
+                        "reference_package_id": validated_reference_package.get("resource_id"),
+                        "reference_package_version": validated_reference_package.get("version"),
+                        "reference_package_checksum": validated_reference_package.get("package_checksum"),
+                    })
                     db.commit()
                     try:
                         scheduler.heartbeat(partition.id, worker_id, lease_token)
@@ -3009,7 +3015,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 provider_id=provider.provider_id,
                                 provider_version=provider.provider_version,
                             )
-                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                             _persist_annotation_response_checkpoint(
                                 db,
                                 artifacts,
