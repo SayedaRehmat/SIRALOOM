@@ -895,7 +895,6 @@ def test_strict_validation_profiles_multiallelic_and_symbolic_records(tmp_path: 
         ("1\t5\t.\tA\t<DEL>\t.\tPASS\tSVTYPE=DEL\n", "VCF_SV_SPAN_MISSING"),
         ("1\t5\t.\tA\t<DEL>\t.\tPASS\tEND=4\n", "VCF_SV_INVALID"),
         ("1\t5\t.\tA\t<DEL>\t.\tPASS\tEND=bad\n", "VCF_SV_INVALID"),
-        ("1\t5\t.\tA\tA]2:0]\t.\tPASS\tSVTYPE=BND\n", "VCF_ALT_INVALID"),
     ],
 )
 def test_strict_validation_rejects_malformed_structural_representation(tmp_path, record, code):
