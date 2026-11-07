@@ -111,3 +111,14 @@ The adjudication above is grounded in the archived source and can be checked aga
 - [VCFv4.5 PSL, PSO and PSQ definitions and examples, lines 755–810](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L755-L810)
 
 The current upstream source is also accessible at [samtools/hts-specs VCFv4.5.tex](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex). The current upstream table/narrative spelling discrepancy is visible in the reserved table and base-modification narrative; it has not been silently resolved by this branch.
+
+
+## Additional source reconciliation: implicit phase sets and VCFv4.4 applicability
+
+The pinned VCFv4.4 and VCFv4.5 source text states that phased genotypes without a populated PS subfield belong to the same implicit phased set. The unstranded Number=M cross-record validator therefore uses one implicit phase-set identity for fully phased GT values when neither PSL nor PS is populated. It does not infer a cross-record haplotype for unphased or partially phased genotypes; those contexts remain record-local and are surfaced as unresolved.
+
+PSL, PSO and PSQ semantics were introduced in VCFv4.4. The phase-set-wide PSO obligation, reciprocal BND PSL/PSO comparison, MATEID Number=A association and per-ALT CIPOS handling are consequently applied to both VCFv4.4 and VCFv4.5. The VCFv4.4-specific regression suites now exercise these rules separately from VCFv4.5 local-allele and Number=M behavior.
+
+The pinned VCFv4.4 change log also deprecates SVTYPE. Accordingly, VCFv4.4/4.5 BND records may use breakpoint notation and MATEID without requiring SVTYPE; if a deprecated SVTYPE is supplied, it must not contradict the breakpoint notation. Earlier VCF versions retain their prior SVTYPE requirement.
+
+External assembly mate-contig identifiers such as <ctg1> are valid source syntax but are not resolvable through the configured reference package. The validator reports VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED, preserving the distinction between syntax validity and current reference-package capability.
