@@ -136,7 +136,6 @@ export default function FamilySampleIdentityWorkbench({
     () => new Set(bindings.map((binding) => binding.supersedes_binding_id).filter(Boolean)),
     [bindings],
   );
-  const activeBindings = bindings.filter((binding) => !supersededBindingIds.has(binding.binding_id));
 
   const resetBindingForm = () => {
     setMemberId("");
@@ -287,7 +286,7 @@ export default function FamilySampleIdentityWorkbench({
 
   return (
     <section className="clinical-section" aria-labelledby="family-sample-identity-title">
-      <div className="section-kicker">{t("familyIdentity.title")}</div>
+      <div className="section-kicker" id="family-sample-identity-title">{t("familyIdentity.title")}</div>
       <div className="clinical-card">
         <p className="quiet">{t("familyIdentity.description")}</p>
         <p className="quiet"><strong>{t("familyIdentity.biologicalWarning")}</strong></p>
@@ -302,13 +301,12 @@ export default function FamilySampleIdentityWorkbench({
         {loading && <p className="quiet">{t("familyIdentity.loading")}</p>}
         {!loading && bindings.length === 0 && <p className="quiet">{t("familyIdentity.noBindings")}</p>}
         <div className="pedigree-member-list">
-          {activeBindings.map((binding) => {
+          {bindings.map((binding) => {
             const member = members.find((row) => row.id === binding.member_id);
             const specimen = specimens.find((row) => row.specimen_id === binding.specimen_id);
             const analysis = analyses.find((row) => row.analysis_id === binding.analysis_id);
             const evidence = evidenceByBinding[binding.binding_id] ?? [];
             const supersededEvidenceIds = new Set(evidence.map((row) => row.supersedes_evidence_id).filter(Boolean));
-            const activeEvidence = evidence.filter((row) => !supersededEvidenceIds.has(row.evidence_id));
             const isActive = !supersededBindingIds.has(binding.binding_id);
             return (
               <article className="clinical-card" key={binding.binding_id}>
@@ -321,18 +319,18 @@ export default function FamilySampleIdentityWorkbench({
                 </div>
                 <div className="context-row"><span>{t("familyIdentity.sourceVcf")}</span><strong>{analysis?.source_vcf?.filename ?? binding.artifact_id}</strong></div>
                 <div className="context-row"><span>{t("familyIdentity.sourceDigest")}</span><strong>{binding.source_artifact_sha256}</strong></div>
-                <div className="context-row"><span>{t("familyIdentity.normalizationStatus")}</span><strong>{analysis?.analysis_status ?? "—"}</strong></div>
+                <div className="context-row"><span>{t("familyIdentity.analysisStatus")}</span><strong>{analysis?.analysis_status ?? "—"}</strong></div>
                 <div className="context-row"><span>{t("familyIdentity.evidenceReference")}</span><strong>{binding.evidence_reference || "—"}</strong></div>
                 <h5>{t("familyIdentity.identityEvidence")}</h5>
-                {activeEvidence.length === 0 && <p className="quiet">{t("familyIdentity.noEvidence")}</p>}
-                {activeEvidence.map((row) => (
+                {evidence.length === 0 && <p className="quiet">{t("familyIdentity.noEvidence")}</p>}
+                {evidence.map((row) => (
                   <div className="context-row" key={row.evidence_id}>
                     <div>
                       <strong>{row.evidence_type} · {row.result}</strong>
                       <small>{row.method} v{row.method_version} · {row.evidence_reference} · {t("familyIdentity.revision")} {row.version}</small>
                     </div>
-                    <span className="badge neutral">{row.review_status}</span>
-                    {canReview && row.review_status === "PENDING" && (
+                    <span className="badge neutral">{row.review_status}{supersededEvidenceIds.has(row.evidence_id) ? ` · ${t("familyIdentity.superseded")}` : ""}</span>
+                    {canReview && row.review_status === "PENDING" && !supersededEvidenceIds.has(row.evidence_id) && (
                       <div className="m10-form-grid">
                         <button className="secondary" type="button" disabled={saving || !reviewReason.trim()} onClick={() => void reviewEvidence(binding, row, "ACCEPTED")}>{t("familyIdentity.accept")}</button>
                         <button className="secondary" type="button" disabled={saving || !reviewReason.trim()} onClick={() => void reviewEvidence(binding, row, "REJECTED")}>{t("familyIdentity.reject")}</button>
@@ -431,7 +429,7 @@ export default function FamilySampleIdentityWorkbench({
           <h4>{correctingEvidenceId ? t("familyIdentity.correctEvidence") : t("familyIdentity.addEvidence")}</h4>
           <div className="m10-form-grid">
             <label>{t("familyIdentity.evidenceType")}
-              <select value={evidenceType} onChange={(event) => setEvidenceType(event.target.value)}>
+              <select value={evidenceType} disabled={Boolean(correctingEvidenceId)} onChange={(event) => setEvidenceType(event.target.value)}>
                 <option value="CHAIN_OF_CUSTODY">{t("familyIdentity.chainOfCustody")}</option>
                 <option value="SAMPLE_IDENTITY_QC">{t("familyIdentity.sampleIdentityQc")}</option>
               </select>
