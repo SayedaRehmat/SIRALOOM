@@ -1085,6 +1085,8 @@ def validate_vcf_index_concordance(
     expected_bcftools_version: str | None = None,
     timeout_seconds: int = 120,
     bcftools_executable: str | None = None,
+    persistent_execution=None,
+    workflow_id: str = "artifact-validation",
 ) -> dict:
     """Validate an uploaded TBI/CSI index against the exact adjacent BGZF VCF.
 
@@ -1122,13 +1124,26 @@ def validate_vcf_index_concordance(
     if executable is None:
         raise VCFToolUnavailable("bcftools is required to verify an uploaded VCF index.")
     try:
-        version_result = subprocess.run(
-            [executable, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
+        if persistent_execution is None:
+            version_result = subprocess.run(
+                [executable, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+        else:
+            version_result = _run_bcftools_command(
+                [executable, "--version"],
+                persistent_execution=persistent_execution,
+                workflow_id=workflow_id,
+                operation="validate",
+                workspace=path.parent,
+                input_paths=[],
+                output_paths=[],
+                timeout_seconds=30,
+                execution_id_override=f"bcftools-index-version-{uuid4().hex}",
+            )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolUnavailable("Timed out while checking the bcftools version for index validation.") from exc
     except OSError as exc:
@@ -1169,6 +1184,9 @@ def validate_vcf_index_concordance(
         path,
         bcftools_executable=executable,
         timeout_seconds=timeout_seconds,
+        persistent_execution=persistent_execution,
+        workflow_id=workflow_id,
+        workspace=path.parent,
     )
     return {
         "status": "VALIDATED",
@@ -1674,13 +1692,26 @@ def normalize_vcf_with_bcftools(
     index_path = Path(str(output_path) + ".csi")
 
     try:
-        version_result = subprocess.run(
-            [bcftools_executable, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
+        if persistent_execution is None:
+            version_result = subprocess.run(
+                [bcftools_executable, "--version"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+        else:
+            version_result = _run_bcftools_command(
+                [bcftools_executable, "--version"],
+                persistent_execution=persistent_execution,
+                workflow_id=workflow_id,
+                operation="validate",
+                workspace=output_path.parent,
+                input_paths=[],
+                output_paths=[],
+                timeout_seconds=30,
+                execution_id_override=f"bcftools-normalize-version-{uuid4().hex}",
+            )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolError("Timed out while checking the bcftools version.") from exc
     except OSError as exc:
