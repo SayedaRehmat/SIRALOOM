@@ -114,7 +114,16 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                 "status": artifact.validation_status,
                 "idempotent": True,
             }
-        case = db.get(Case, artifact.case_id)
+        # Serialize case-level intake recomputation with concurrent VCF
+        # uploads and validation workers. Match the upload path's NO KEY UPDATE
+        # lock (SQLAlchemy key_share=True) and refresh an identity-map instance
+        # that may have been loaded before waiting for the row lock.
+        case = db.scalar(
+            select(Case)
+            .where(Case.id == artifact.case_id)
+            .with_for_update(key_share=True)
+            .execution_options(populate_existing=True)
+        )
         if case is None or case.organization_id is None:
             raise RuntimeError("Artifact case/tenant identity is unavailable for validation.")
         metadata = dict(artifact.metadata_json or {})
