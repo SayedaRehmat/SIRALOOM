@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../lib/i18n";
 
 type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
@@ -61,6 +62,7 @@ function toIso8601Duration(value: string, unit: string): string {
 
 
 export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
+  const { language, t } = useLanguage();
   const [rows, setRows] = useState<PhenotypeRow[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [termQuery, setTermQuery] = useState("");
@@ -75,6 +77,8 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
   const [severity, setSeverity] = useState("");
   const [ageValue, setAgeValue] = useState("");
   const [ageUnit, setAgeUnit] = useState("YEARS");
+  const [ageAtAssessmentValue, setAgeAtAssessmentValue] = useState("");
+  const [ageAtAssessmentUnit, setAgeAtAssessmentUnit] = useState("YEARS");
   const [resolutionAgeValue, setResolutionAgeValue] = useState("");
   const [resolutionAgeUnit, setResolutionAgeUnit] = useState("YEARS");
   const [severityHpoId, setSeverityHpoId] = useState("");
@@ -147,6 +151,12 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     };
   }, [apiFetch, caseId, termQuery]);
 
+  const timelineRows = useMemo(() => [...rows].sort((left, right) => {
+    const leftTime = left.observed_at ? new Date(left.observed_at).getTime() : Number.MAX_SAFE_INTEGER;
+    const rightTime = right.observed_at ? new Date(right.observed_at).getTime() : Number.MAX_SAFE_INTEGER;
+    return leftTime - rightTime;
+  }), [rows]);
+
   const selectedMember = useMemo(
     () => members.find(member => member.id === subjectMemberId),
     [members, subjectMemberId],
@@ -168,6 +178,8 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setOnset("");
     setSeverity("");
     setAgeValue("");
+    setAgeAtAssessmentValue("");
+    setAgeAtAssessmentUnit("YEARS");
     setResolutionAgeValue("");
     setResolutionAgeUnit("YEARS");
     setSeverityHpoId("");
@@ -208,8 +220,16 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
     setSeverity(row.severity ?? "");
     setAgeValue("");
     setAgeUnit("YEARS");
+    setAgeAtAssessmentValue("");
+    setAgeAtAssessmentUnit("YEARS");
     setResolutionAgeValue("");
     setResolutionAgeUnit("YEARS");
+    const assessmentAge = parseIso8601Duration(attributes.age_at_assessment_iso8601);
+    if (assessmentAge) {
+      setAgeAtAssessmentValue(assessmentAge.value);
+      setAgeAtAssessmentUnit(assessmentAge.unit);
+      delete attributes.age_at_assessment_iso8601;
+    }
     const onsetAge = parseIso8601Duration(attributes.onset_age_iso8601);
     if (onsetAge) {
       setAgeValue(onsetAge.value);
@@ -283,6 +303,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
         temporal_pattern: temporalPattern,
       };
       if (ageValue.trim()) clinicalAttributes.onset_age_iso8601 = toIso8601Duration(ageValue, ageUnit);
+      if (ageAtAssessmentValue.trim()) clinicalAttributes.age_at_assessment_iso8601 = toIso8601Duration(ageAtAssessmentValue, ageAtAssessmentUnit);
       if (resolutionAgeValue.trim()) clinicalAttributes.resolution_age_iso8601 = toIso8601Duration(resolutionAgeValue, resolutionAgeUnit);
       if (severityHpoId.trim()) clinicalAttributes.severity_hpo_id = severityHpoId.trim();
       if (courseHpoId.trim()) clinicalAttributes.clinical_course_hpo_id = courseHpoId.trim();
@@ -409,6 +430,12 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           <label>Age unit
             <select value={ageUnit} onChange={event => setAgeUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
           </label>
+          <label>{t("phenotype.ageAtAssessment")}
+            <input type="number" min="0" step="any" value={ageAtAssessmentValue} onChange={event => setAgeAtAssessmentValue(event.target.value)} />
+          </label>
+          <label>{t("phenotype.ageAtAssessmentUnit")}
+            <select value={ageAtAssessmentUnit} onChange={event => setAgeAtAssessmentUnit(event.target.value)}>{AGE_UNITS.map(unit => <option key={unit}>{unit}</option>)}</select>
+          </label>
           <label>Resolution age value (if resolved)
             <input type="number" min="0" step="any" value={resolutionAgeValue} onChange={event => setResolutionAgeValue(event.target.value)} placeholder="Age when feature resolved" />
           </label>
@@ -486,6 +513,44 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           <button type="button" className="secondary" onClick={resetForm} disabled={saving}>Clear form</button>
           <button type="button" className="secondary" onClick={() => void refresh()} disabled={loading}>{loading ? "Refreshing…" : "Refresh observations"}</button>
         </div>
+      </div>
+
+      <div className="clinical-card">
+        <h4>{t("phenotype.timelineTitle")}</h4>
+        <p className="quiet">{t("phenotype.timelineDescription")}</p>
+        {timelineRows.length === 0 ? <p className="quiet">{t("phenotype.noTimeline")}</p> : (
+          <ol className="phenotype-timeline" aria-label={t("phenotype.timelineTitle")}>
+            {timelineRows.map((row) => {
+              const member = members.find(item => item.id === row.subject_member_id);
+              const attributes = row.clinical_attributes ?? {};
+              const sourceReference = row.evidence?.source_reference ?? row.evidence?.source_document_id ?? null;
+              const observedAt = row.observed_at
+                ? new Date(row.observed_at).toLocaleString(language === "ar" ? "ar" : "en")
+                : t("phenotype.timelineUnknownTime");
+              const onsetAge = attributes.onset_age_iso8601 ?? row.onset ?? "—";
+              const assessmentAge = attributes.age_at_assessment_iso8601 ?? attributes.age_at_assessment ?? "—";
+              const course = attributes.clinical_course_hpo_id ?? attributes.temporal_pattern ?? "—";
+              return (
+                <li className="phenotype-timeline-item" key={row.phenotype_id}>
+                  <div className="phenotype-timeline-marker" aria-hidden="true" />
+                  <div className="phenotype-timeline-content">
+                    <div className="panel-head">
+                      <strong>{row.canonical_hpo_id || row.hpo_id} · {row.label || row.ontology_resolution?.primary_term?.label || "Unresolved term"}</strong>
+                      <span className="badge neutral">{row.phenotype_status}</span>
+                    </div>
+                    <small>{member?.member_identifier ?? "Proband / primary patient"} · {t("phenotype.observedAt")}: {observedAt}</small>
+                    <div className="context-row"><span>{t("phenotype.onsetAge")}</span><strong>{onsetAge}</strong></div>
+                    <div className="context-row"><span>{t("phenotype.ageAtAssessment")}</span><strong>{assessmentAge}</strong></div>
+                    <div className="context-row"><span>{t("phenotype.course")}</span><strong>{course}</strong></div>
+                    {row.severity && <div className="context-row"><span>{t("phenotype.severity")}</span><strong>{row.severity}</strong></div>}
+                    {sourceReference && <div className="context-row"><span>{t("phenotype.sourceReference")}</span><strong>{String(sourceReference)}</strong></div>}
+                    <small>{row.record_lifecycle_status ?? "ACTIVE"} · {row.source ?? "SOURCE_NOT_RECORDED"}</small>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </div>
 
       <div className="clinical-card">

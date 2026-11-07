@@ -643,6 +643,7 @@ export type TranslationKey =
   | "reports.reportHelp"
   | "reports.pdf"
   | "reports.signout"
+  | "reports.validationDisclaimer"
   | "reports.authorizationChecking"
   | "reports.authorizationUnavailable"
   | "reports.writeRoleHelp"
@@ -741,6 +742,14 @@ export type TranslationKey =
   | "review.recordObservation"
   | "review.inheritanceAssessment"
   | "review.inheritanceHelp"
+  | "review.manualSegregationLabel"
+  | "review.manualSegregationDescription"
+  | "review.manualTag"
+  | "review.inheritanceBlockedLabel"
+  | "review.inheritanceBlockedDescription"
+  | "review.inheritanceTrialScope"
+  | "review.historicalInheritanceRecords"
+  | "review.legacyInheritanceContext"
   | "review.assessModels"
   | "review.noModel"
   | "review.context"
@@ -962,7 +971,97 @@ export type TranslationKey =
   | "review.reviewDisposition"
   | "review.doNotReport"
   | "review.notDetermined"
-  | "reports.validationDisclaimer";
+  | "familyIdentity.title"
+  | "familyIdentity.description"
+  | "familyIdentity.biologicalWarning"
+  | "familyIdentity.member"
+  | "familyIdentity.specimen"
+  | "familyIdentity.analysis"
+  | "familyIdentity.sampleColumn"
+  | "familyIdentity.sourceVcf"
+  | "familyIdentity.sourceDigest"
+  | "familyIdentity.bindingMethod"
+  | "familyIdentity.evidenceReference"
+  | "familyIdentity.createBinding"
+  | "familyIdentity.createSuccessor"
+  | "familyIdentity.bindings"
+  | "familyIdentity.noBindings"
+  | "familyIdentity.identityEvidence"
+  | "familyIdentity.evidenceType"
+  | "familyIdentity.chainOfCustody"
+  | "familyIdentity.sampleIdentityQc"
+  | "familyIdentity.result"
+  | "familyIdentity.method"
+  | "familyIdentity.methodVersion"
+  | "familyIdentity.evidenceRef"
+  | "familyIdentity.addEvidence"
+  | "familyIdentity.reviewReason"
+  | "familyIdentity.accept"
+  | "familyIdentity.reject"
+  | "familyIdentity.verify"
+  | "familyIdentity.rejectBinding"
+  | "familyIdentity.refresh"
+  | "familyIdentity.loading"
+  | "familyIdentity.saving"
+  | "familyIdentity.unverified"
+  | "familyIdentity.noEvidence"
+  | "familyIdentity.bindingRecorded"
+  | "familyIdentity.evidenceRecorded"
+  | "familyIdentity.errorLoad"
+  | "familyIdentity.errorAction"
+  | "familyIdentity.readOnlyRole"
+  | "familyIdentity.pendingReview"
+  | "familyIdentity.correctEvidence"
+  | "familyIdentity.normalizationStatus"
+  | "familyIdentity.revision"
+  | "familyIdentity.bindingStatus"
+  | "familyIdentity.evidenceStatus"
+  | "familyIdentity.noAnalysisCandidates"
+  | "familyIdentity.selectedSampleMissing"
+  | "familyIdentity.independentReviewer"
+  | "familyIdentity.analysisStatus"
+  | "familyIdentity.superseded"
+  | "familyIdentity.evidenceArtifact"
+  | "familyIdentity.genotypeMatrix"
+  | "familyIdentity.selectVerifiedBindings"
+  | "familyIdentity.loadMatrix"
+  | "familyIdentity.noVerifiedBindings"
+  | "familyIdentity.matrixVariant"
+  | "familyIdentity.callState"
+  | "familyIdentity.genotype"
+  | "familyIdentity.zygosity"
+  | "familyIdentity.phase"
+  | "familyIdentity.phaseSet"
+  | "familyIdentity.depth"
+  | "familyIdentity.genotypeQuality"
+  | "familyIdentity.alleleDepth"
+  | "familyIdentity.callability"
+  | "familyIdentity.matrixFingerprint"
+  | "familyIdentity.sourceGenotype"
+  | "familyIdentity.selectedAltDosage"
+  | "familyIdentity.normalizationStep"
+  | "familyIdentity.ploidyEvidence"
+  | "familyIdentity.identityQcStatus"
+  | "familyIdentity.assay"
+  | "familyIdentity.attachInheritanceReview"
+  | "familyIdentity.inheritanceReviewSaving"
+  | "familyIdentity.inheritanceReviewRecorded"
+  | "familyIdentity.inheritanceRequiresProbandBinding"
+  | "familyIdentity.matrixSelectionChanged"
+  | "familyIdentity.qualityAssessment"
+  | "phenotype.timelineTitle"
+  | "phenotype.timelineDescription"
+  | "phenotype.observedAt"
+  | "phenotype.onsetAge"
+  | "phenotype.ageAtAssessment"
+  | "phenotype.course"
+  | "phenotype.sourceReference"
+  | "phenotype.noTimeline"
+  | "phenotype.timelineUnknownTime"
+  | "familyIdentity.interpretationNotPerformed"
+  | "familyIdentity.noEvidenceArtifact"
+  | "phenotype.severity"
+  | "phenotype.ageAtAssessmentUnit";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -1252,6 +1351,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.recordObservation": "Record observation",
     "review.inheritanceAssessment": "Inheritance review status",
     "review.inheritanceHelp": "Family observations are recorded for qualified review. SIRALOOM does not calculate inheritance compatibility or an ACMG/ClinGen criterion from this information.",
+    "review.manualSegregationLabel": "MANUALLY REPORTED — NOT SOURCE-VERIFIED.",
+    "review.manualSegregationDescription": "These entries preserve reviewer-reported observations only. They are not normalized VCF calls and must not be treated as verified segregation evidence.",
+    "review.manualTag": "MANUAL",
+    "review.inheritanceBlockedLabel": "NOT ENABLED — SOURCE-BOUND FAMILY EVIDENCE REQUIRED.",
+    "review.inheritanceBlockedDescription": "Interpretation remains blocked until the family genotype matrix, member identity-QC evidence, relationship review, genotype provenance, phase and callability gates are qualified. Manual observations above are excluded.",
+    "review.inheritanceTrialScope": "Trial model context: autosomal dominant, autosomal recessive, X-linked and de novo. Mitochondrial interpretation is outside the qualified SNV/INDEL trial scope.",
+    "review.historicalInheritanceRecords": "Historical review records — not a current automated conclusion",
+    "review.legacyInheritanceContext": "Existing case inheritance context",
     "review.assessModels": "Record for review",
     "review.noModel": "No model assessment has been recorded.",
     "review.context": "VARIANT, POPULATION & TECHNICAL CONTEXT",
@@ -1921,6 +2028,97 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.usedStorage": "Used",
     "resources.freeStorage": "Free",
     "resources.storageWritable": "Writable",
+    "familyIdentity.title": "Family sample identity",
+    "familyIdentity.description": "Record and review the exact family-member, specimen, analysis, source VCF and VCF sample-column association. Identity evidence is separately reviewed.",
+    "familyIdentity.biologicalWarning": "An accepted sample-column association is not proof of biological identity, parentage or relatedness. Do not infer family relationships from names, ethnicity or the sample label.",
+    "familyIdentity.member": "Family member",
+    "familyIdentity.specimen": "Specimen",
+    "familyIdentity.analysis": "Analysis",
+    "familyIdentity.sampleColumn": "Exact VCF sample column",
+    "familyIdentity.sourceVcf": "Source VCF",
+    "familyIdentity.sourceDigest": "Source VCF SHA-256",
+    "familyIdentity.bindingMethod": "Binding method",
+    "familyIdentity.evidenceReference": "Laboratory accession / evidence reference",
+    "familyIdentity.createBinding": "Record unverified binding",
+    "familyIdentity.createSuccessor": "Append corrected binding revision",
+    "familyIdentity.bindings": "Sample bindings",
+    "familyIdentity.noBindings": "No sample bindings recorded.",
+    "familyIdentity.identityEvidence": "Identity and chain-of-custody evidence",
+    "familyIdentity.evidenceType": "Evidence type",
+    "familyIdentity.chainOfCustody": "Chain of custody",
+    "familyIdentity.sampleIdentityQc": "Sample identity QC",
+    "familyIdentity.result": "Result",
+    "familyIdentity.method": "Method",
+    "familyIdentity.methodVersion": "Method version",
+    "familyIdentity.evidenceRef": "Evidence reference",
+    "familyIdentity.addEvidence": "Record evidence",
+    "familyIdentity.reviewReason": "Reviewer reason",
+    "familyIdentity.accept": "Accept",
+    "familyIdentity.reject": "Reject",
+    "familyIdentity.verify": "Verify binding",
+    "familyIdentity.rejectBinding": "Reject binding",
+    "familyIdentity.refresh": "Refresh",
+    "familyIdentity.loading": "Loading…",
+    "familyIdentity.saving": "Saving…",
+    "familyIdentity.unverified": "Unverified",
+    "familyIdentity.noEvidence": "No identity evidence recorded.",
+    "familyIdentity.errorLoad": "Unable to load family sample identity records.",
+    "familyIdentity.errorAction": "Unable to complete the identity action.",
+    "familyIdentity.readOnlyRole": "Your role is read-only for identity records.",
+    "familyIdentity.pendingReview": "Pending independent review",
+    "familyIdentity.correctEvidence": "Correct evidence (new revision)",
+    "familyIdentity.normalizationStatus": "Normalization provenance",
+    "familyIdentity.revision": "Revision",
+    "familyIdentity.bindingStatus": "Binding status",
+    "familyIdentity.bindingRecorded": "Family sample binding recorded as unverified.",
+    "familyIdentity.evidenceRecorded": "Identity evidence recorded and awaiting independent review.",
+    "familyIdentity.evidenceStatus": "Evidence status",
+    "familyIdentity.noAnalysisCandidates": "No analysis has a selected source VCF and exact sample column.",
+    "familyIdentity.selectedSampleMissing": "The selected analysis has no exact VCF sample-column selection.",
+    "familyIdentity.independentReviewer": "An independent reviewer must review evidence and binding claims.",
+    "familyIdentity.analysisStatus": "Analysis status",
+    "familyIdentity.superseded": "Superseded",
+    "familyIdentity.evidenceArtifact": "Evidence source artifact",
+    "familyIdentity.noEvidenceArtifact": "No attached artifact",
+    "familyIdentity.genotypeMatrix": "Family genotype matrix",
+    "familyIdentity.selectVerifiedBindings": "Select verified family sample bindings",
+    "familyIdentity.loadMatrix": "Load matrix for current variant",
+    "familyIdentity.noVerifiedBindings": "No active verified sample bindings are available.",
+    "familyIdentity.matrixVariant": "Variant under review",
+    "familyIdentity.callState": "Call state",
+    "familyIdentity.genotype": "Genotype",
+    "familyIdentity.zygosity": "Zygosity",
+    "familyIdentity.phase": "Phase",
+    "familyIdentity.phaseSet": "Phase set",
+    "familyIdentity.depth": "Read depth (DP)",
+    "familyIdentity.genotypeQuality": "Genotype quality (GQ)",
+    "familyIdentity.alleleDepth": "Allele depths (AD)",
+    "familyIdentity.callability": "Callability",
+    "familyIdentity.matrixFingerprint": "Matrix fingerprint",
+    "familyIdentity.interpretationNotPerformed": "No inheritance or clinical interpretation is performed by this matrix.",
+    "familyIdentity.sourceGenotype": "Source GT",
+    "familyIdentity.selectedAltDosage": "Selected ALT dosage",
+    "familyIdentity.normalizationStep": "Normalization step",
+    "familyIdentity.ploidyEvidence": "Ploidy evidence",
+    "familyIdentity.identityQcStatus": "Identity QC",
+    "familyIdentity.assay": "Assay",
+    "familyIdentity.attachInheritanceReview": "Attach verified matrix to inheritance review",
+    "familyIdentity.inheritanceReviewSaving": "Submitting family evidence…",
+    "familyIdentity.inheritanceReviewRecorded": "Inheritance review recorded; status remains REQUIRES_REVIEW",
+    "familyIdentity.inheritanceRequiresProbandBinding": "Select exactly one active, verified proband binding from the analysis under review.",
+    "familyIdentity.matrixSelectionChanged": "The selected bindings changed. Reload the matrix before submitting inheritance review.",
+    "familyIdentity.qualityAssessment": "Quality assessment",
+    "phenotype.timelineTitle": "Longitudinal phenotype timeline",
+    "phenotype.timelineDescription": "Chronological member-specific observations. Missing observation dates remain undated; onset descriptions are shown as reported.",
+    "phenotype.observedAt": "Observed at",
+    "phenotype.onsetAge": "Age at onset",
+    "phenotype.ageAtAssessment": "Age at assessment",
+    "phenotype.course": "Clinical course",
+    "phenotype.sourceReference": "Source document / reference",
+    "phenotype.noTimeline": "No phenotype observations are available for the timeline.",
+    "phenotype.timelineUnknownTime": "Observation time not recorded",
+    "phenotype.severity": "Severity",
+    "phenotype.ageAtAssessmentUnit": "Age-at-assessment unit",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2208,6 +2406,14 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.recordObservation": "تسجيل الملاحظة",
     "review.inheritanceAssessment": "حالة مراجعة الوراثة",
     "review.inheritanceHelp": "تُسجَّل ملاحظات الأسرة للمراجعة المختصة. لا يحسب سيرالوم توافق الوراثة أو معيار ACMG/ClinGen من هذه المعلومات.",
+    "review.manualSegregationLabel": "مُبلَّغ عنها يدويًا — لم يتم التحقق منها من المصدر.",
+    "review.manualSegregationDescription": "تحفظ هذه الإدخالات الملاحظات التي أبلغ عنها المراجع فقط. وهي ليست استدعاءات VCF مطبّعة ولا يجوز اعتبارها دليلًا موثقًا على التوارث.",
+    "review.manualTag": "يدوي",
+    "review.inheritanceBlockedLabel": "غير مفعّل — يلزم توفر أدلة عائلية مرتبطة بالمصدر.",
+    "review.inheritanceBlockedDescription": "يظل التفسير محجوبًا حتى يتم تأهيل مصفوفة الأنماط الجينية العائلية وأدلة التحقق من هوية العينات ومراجعة العلاقات ونسب الأنماط الجينية والطور وقابلية الاستدعاء. تُستبعد الملاحظات اليدوية أعلاه.",
+    "review.inheritanceTrialScope": "نماذج سياق التجربة: جسمي سائد، جسمي متنحٍ، مرتبط بالكروموسوم X، وحدوث جديد. تفسير الوراثة الميتوكوندرية خارج نطاق تجربة SNV/INDEL المؤهلة.",
+    "review.historicalInheritanceRecords": "سجلات مراجعة تاريخية — وليست استنتاجًا آليًا حاليًا",
+    "review.legacyInheritanceContext": "سياق الوراثة المسجل سابقًا للحالة",
     "review.assessModels": "تسجيل للمراجعة",
     "review.noModel": "لم يتم تسجيل تقييم للنموذج.",
     "review.context": "سياق المتغير والسكان والجوانب التقنية",
@@ -2877,5 +3083,96 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.usedStorage": "المستخدم",
     "resources.freeStorage": "المتاح",
     "resources.storageWritable": "قابل للكتابة",
+    "familyIdentity.title": "هوية عينة الأسرة",
+    "familyIdentity.description": "سجّل وراجع الارتباط الدقيق بين فرد الأسرة والعينة والتحليل وملف VCF المصدر وعمود العينة. تتم مراجعة أدلة الهوية بشكل مستقل.",
+    "familyIdentity.biologicalWarning": "قبول ارتباط عمود العينة لا يثبت الهوية البيولوجية أو النسب أو القرابة. لا تستنتج العلاقات الأسرية من الأسماء أو الأصل أو اسم العينة.",
+    "familyIdentity.member": "فرد الأسرة",
+    "familyIdentity.specimen": "العينة",
+    "familyIdentity.analysis": "التحليل",
+    "familyIdentity.sampleColumn": "عمود عينة VCF المطابق تمامًا",
+    "familyIdentity.sourceVcf": "ملف VCF المصدر",
+    "familyIdentity.sourceDigest": "بصمة SHA-256 لملف VCF",
+    "familyIdentity.bindingMethod": "طريقة الربط",
+    "familyIdentity.evidenceReference": "رقم العينة / مرجع الدليل المخبري",
+    "familyIdentity.createBinding": "تسجيل ربط غير موثّق",
+    "familyIdentity.createSuccessor": "إضافة مراجعة تصحيحية",
+    "familyIdentity.bindings": "روابط العينات",
+    "familyIdentity.noBindings": "لم يتم تسجيل روابط عينات.",
+    "familyIdentity.identityEvidence": "أدلة الهوية وسلسلة الحيازة",
+    "familyIdentity.evidenceType": "نوع الدليل",
+    "familyIdentity.chainOfCustody": "سلسلة الحيازة",
+    "familyIdentity.sampleIdentityQc": "فحص هوية العينة",
+    "familyIdentity.result": "النتيجة",
+    "familyIdentity.method": "الطريقة",
+    "familyIdentity.methodVersion": "إصدار الطريقة",
+    "familyIdentity.evidenceRef": "مرجع الدليل",
+    "familyIdentity.addEvidence": "تسجيل الدليل",
+    "familyIdentity.reviewReason": "سبب المراجع",
+    "familyIdentity.accept": "قبول",
+    "familyIdentity.reject": "رفض",
+    "familyIdentity.verify": "توثيق الربط",
+    "familyIdentity.rejectBinding": "رفض الربط",
+    "familyIdentity.refresh": "تحديث",
+    "familyIdentity.loading": "جارٍ التحميل…",
+    "familyIdentity.saving": "جارٍ الحفظ…",
+    "familyIdentity.unverified": "غير موثّق",
+    "familyIdentity.noEvidence": "لم يتم تسجيل أدلة الهوية.",
+    "familyIdentity.errorLoad": "تعذر تحميل سجلات هوية عينات الأسرة.",
+    "familyIdentity.errorAction": "تعذر تنفيذ إجراء الهوية.",
+    "familyIdentity.readOnlyRole": "دورك للقراءة فقط في سجلات الهوية.",
+    "familyIdentity.pendingReview": "بانتظار مراجعة مستقلة",
+    "familyIdentity.correctEvidence": "تصحيح الدليل (إصدار جديد)",
+    "familyIdentity.normalizationStatus": "مصدر التطبيع",
+    "familyIdentity.revision": "الإصدار",
+    "familyIdentity.bindingStatus": "حالة الربط",
+    "familyIdentity.bindingRecorded": "تم تسجيل ربط عينة الأسرة كادعاء غير موثق.",
+    "familyIdentity.evidenceRecorded": "تم تسجيل دليل الهوية وبانتظار المراجعة المستقلة.",
+    "familyIdentity.evidenceStatus": "حالة الدليل",
+    "familyIdentity.noAnalysisCandidates": "لا يوجد تحليل يحدد ملف VCF المصدر وعمود العينة المطابق.",
+    "familyIdentity.selectedSampleMissing": "لا يحتوي التحليل المحدد على اختيار دقيق لعمود عينة VCF.",
+    "familyIdentity.independentReviewer": "يجب أن يراجع شخص مستقل أدلة الهوية وادعاءات الربط.",
+    "familyIdentity.analysisStatus": "حالة التحليل",
+    "familyIdentity.superseded": "مستبدل بإصدار أحدث",
+    "familyIdentity.evidenceArtifact": "ملف مصدر الدليل",
+    "familyIdentity.noEvidenceArtifact": "لا يوجد ملف مرفق",
+    "familyIdentity.genotypeMatrix": "مصفوفة الأنماط الجينية للأسرة",
+    "familyIdentity.selectVerifiedBindings": "حدد روابط عينات الأسرة الموثقة",
+    "familyIdentity.loadMatrix": "تحميل المصفوفة للمتغير الحالي",
+    "familyIdentity.noVerifiedBindings": "لا توجد روابط عينات موثقة ونشطة.",
+    "familyIdentity.matrixVariant": "المتغير قيد المراجعة",
+    "familyIdentity.callState": "حالة الاستدعاء",
+    "familyIdentity.genotype": "النمط الجيني",
+    "familyIdentity.zygosity": "حالة الزيجوت",
+    "familyIdentity.phase": "الطور",
+    "familyIdentity.phaseSet": "مجموعة الطور",
+    "familyIdentity.depth": "عمق القراءة (DP)",
+    "familyIdentity.genotypeQuality": "جودة النمط الجيني (GQ)",
+    "familyIdentity.alleleDepth": "أعماق الأليلات (AD)",
+    "familyIdentity.callability": "قابلية الاستدعاء",
+    "familyIdentity.matrixFingerprint": "بصمة المصفوفة",
+    "familyIdentity.interpretationNotPerformed": "لا تنفذ هذه المصفوفة أي تفسير وراثي أو سريري.",
+    "familyIdentity.sourceGenotype": "النمط الجيني المصدر",
+    "familyIdentity.selectedAltDosage": "جرعة الأليل البديل المحدد",
+    "familyIdentity.normalizationStep": "خطوة التطبيع",
+    "familyIdentity.ploidyEvidence": "دليل الصيغة الصبغية",
+    "familyIdentity.identityQcStatus": "فحص هوية العينة",
+    "familyIdentity.assay": "الفحص المخبري",
+    "familyIdentity.attachInheritanceReview": "إرفاق المصفوفة الموثقة بمراجعة الوراثة",
+    "familyIdentity.inheritanceReviewSaving": "جارٍ إرسال أدلة الأسرة…",
+    "familyIdentity.inheritanceReviewRecorded": "تم تسجيل مراجعة الوراثة؛ وتظل الحالة REQUIRES_REVIEW",
+    "familyIdentity.inheritanceRequiresProbandBinding": "حدد رابطًا نشطًا وموثقًا واحدًا فقط لعينة الحالة الأساسية من التحليل قيد المراجعة.",
+    "familyIdentity.matrixSelectionChanged": "تغيرت روابط العينات المحددة. أعد تحميل المصفوفة قبل إرسال مراجعة الوراثة.",
+    "familyIdentity.qualityAssessment": "تقييم الجودة",
+    "phenotype.timelineTitle": "الخط الزمني الطولي للأنماط الظاهرية",
+    "phenotype.timelineDescription": "ملاحظات سريرية مرتبة زمنيًا لكل فرد. تبقى الملاحظات دون تاريخ غير مؤرخة، ويُعرض وصف بداية الأعراض كما ورد.",
+    "phenotype.observedAt": "وقت الملاحظة",
+    "phenotype.onsetAge": "العمر عند بداية العرض",
+    "phenotype.ageAtAssessment": "العمر عند التقييم",
+    "phenotype.course": "المسار السريري",
+    "phenotype.sourceReference": "المستند المصدر / المرجع",
+    "phenotype.noTimeline": "لا توجد ملاحظات أنماط ظاهرية للخط الزمني.",
+    "phenotype.timelineUnknownTime": "لم يتم تسجيل وقت الملاحظة",
+    "phenotype.severity": "الشدة",
+    "phenotype.ageAtAssessmentUnit": "وحدة العمر عند التقييم",
   },
 };

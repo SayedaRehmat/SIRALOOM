@@ -1,0 +1,245 @@
+"""Deterministic, provenance-preserving family genotype matrix projection.
+
+This module deliberately does not infer reference genotypes, callability, relatedness,
+segregation, inheritance compatibility, or clinical pathogenicity.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+from typing import Any, Sequence
+from uuid import UUID
+
+
+def _canonical_fingerprint(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _call_state(call: dict[str, Any] | None) -> str:
+    if call is None:
+        # Absence from a variant-only VCF is not a reference genotype.
+        return "NO_RECORD"
+
+    projection_status = call.get("projection_status") or call.get("projected_status")
+    projection_states = {
+        "GENOTYPE_UNAVAILABLE": "GENOTYPE_UNAVAILABLE",
+        "CONTAINS_OTHER_ALT": "OTHER_ALT_PRESENT",
+        "CONTAINS_OTHER_ALT_AND_MISSING": "OTHER_ALT_AND_MISSING",
+        "INVALID_SOURCE_GT": "INVALID_CALL",
+        "INVALID_SOURCE_ALT_MAPPING": "INVALID_CALL",
+        "SOURCE_NORMALIZED_PLOIDY_MISMATCH": "INVALID_CALL",
+    }
+    if projection_status in projection_states:
+        return projection_states[projection_status]
+
+    genotype = call.get("projected_genotype") or call.get("normalized_genotype") or call.get("genotype")
+    if not isinstance(genotype, str) or not genotype:
+        return "GENOTYPE_UNAVAILABLE"
+
+    # VCFv4.4+ permits a leading phase indicator before the first allele.
+    genotype_body = genotype[1:] if genotype[:1] in {"/", "|"} else genotype
+    if not re.fullmatch(r"(?:\d+|\.)(?:[/|](?:\d+|\.))*", genotype_body):
+        return "INVALID_CALL"
+    alleles = re.split(r"[/|]", genotype_body)
+    observed_missing = sum(allele == "." for allele in alleles)
+    raw_missing = call.get("missing_allele_count")
+    if raw_missing is None:
+        missing_alleles = observed_missing
+    else:
+        try:
+            missing_alleles = int(raw_missing)
+        except (TypeError, ValueError):
+            return "INVALID_CALL"
+        if missing_alleles < 0 or missing_alleles != observed_missing:
+            return "INVALID_CALL"
+
+    if missing_alleles > 0:
+        return "NO_CALL" if missing_alleles == len(alleles) else "PARTIAL_NO_CALL"
+    return "CALL_PRESENT"
+
+def _quality_metrics(format_values: Any) -> dict[str, Any]:
+    if not isinstance(format_values, dict):
+        return {}
+    # Preserve source values exactly. Lab-specific thresholds are applied by a
+    # separately versioned QC policy, never by this projection.
+    return {
+        key: format_values[key]
+        for key in ("DP", "GQ", "AD", "PL", "GL", "FT")
+        if key in format_values
+    }
+
+
+def build_family_genotype_matrix(
+    *,
+    case_id: UUID,
+    variant_ids: Sequence[UUID],
+    samples: Sequence[dict[str, Any]],
+    relationships: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a deterministic matrix from validated sample-call snapshots."""
+    if not variant_ids:
+        raise ValueError("At least one canonical variant ID is required")
+    if len(set(variant_ids)) != len(variant_ids):
+        raise ValueError("Variant IDs must be unique")
+    if not samples:
+        raise ValueError("At least one verified sample binding is required")
+
+    ordered_variants = [str(value) for value in variant_ids]
+    matrix_samples = []
+    for sample in sorted(samples, key=lambda item: (item["member_identifier"], str(item["member_id"]), str(item["specimen_id"]), str(item["analysis_id"]), str(item["binding_id"]))):
+        calls = sample["calls"]
+        for call in calls.values():
+            observed_sample_name = call.get("sample_name")
+            if observed_sample_name is not None and observed_sample_name != sample["sample_name"]:
+                raise ValueError(
+                    "Normalized genotype call sample name does not match the reviewed binding sample column"
+                )
+        rows = []
+        for variant_id in ordered_variants:
+            call = calls.get(UUID(variant_id))
+            state = _call_state(call)
+            call = call or {}
+            source_record_sha256 = call.get("source_record_sha256")
+            if source_record_sha256 is None:
+                source_record_sha256_status = "NOT_AVAILABLE"
+            elif isinstance(source_record_sha256, str) and re.fullmatch(r"[0-9a-fA-F]{64}", source_record_sha256):
+                source_record_sha256_status = "PRESENT_VALID_SHA256"
+            else:
+                source_record_sha256_status = "INVALID_SHA256"
+                state = "INVALID_CALL"
+            rows.append({
+                "variant_id": variant_id,
+                "call_state": state,
+                "source_record_sha256_status": source_record_sha256_status,
+                "quality_assessment_status": "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY",
+                "callability": "NOT_ASSESSED",
+                "source_genotype": call.get("source_genotype"),
+                "normalized_genotype": call.get("normalized_genotype"),
+                "projected_genotype": call.get("projected_genotype"),
+                "zygosity": call.get("projected_zygosity") or call.get("normalized_zygosity") or call.get("zygosity", "UNKNOWN"),
+                "reference_allele_dosage": call.get("reference_allele_dosage"),
+                "selected_alt_dosage": call.get("selected_alt_dosage"),
+                "other_alt_dosage": call.get("other_alt_dosage"),
+                "missing_allele_count": call.get("missing_allele_count"),
+                "phase": call.get("projected_phase") or call.get("normalized_phase") or call.get("phase", "UNSPECIFIED"),
+                "phase_set": call.get("phase_set"),
+                "quality_metrics": _quality_metrics(call.get("format_values")),
+                "format_values": call.get("format_values", {}),
+                "source_record_sha256": call.get("source_record_sha256"),
+                "source_record_index": call.get("source_record_index"),
+                "projection_status": call.get("projection_status", "GENOTYPE_UNAVAILABLE"),
+                "projected_zygosity": call.get("projected_zygosity"),
+                "projected_phase": call.get("projected_phase"),
+                "sample_call_status": call.get("status", "GENOTYPE_UNAVAILABLE"),
+            })
+        source_artifact_sha256 = sample.get("artifact_sha256")
+        source_artifact_sha256_status = (
+            "PRESENT_VALID_SHA256"
+            if isinstance(source_artifact_sha256, str)
+            and re.fullmatch(r"[0-9a-fA-F]{64}", source_artifact_sha256)
+            else "INVALID_OR_MISSING_SHA256"
+        )
+        normalization_provenance = sample.get("normalization_step_provenance") or {}
+        input_artifacts = {str(value) for value in normalization_provenance.get("input_artifacts", [])}
+        output_artifacts = {str(value) for value in normalization_provenance.get("output_artifacts", [])}
+        partition_artifacts = {
+            str(value) for value in sample.get("normalized_partition_input_artifact_ids", [])
+        }
+        normalization_provenance_status = (
+            "COMPLETE"
+            if sample.get("normalization_step_status") == "SUCCEEDED"
+            and int(sample.get("normalized_partition_count") or 0) > 0
+            and str(sample.get("artifact_id")) in input_artifacts
+            and bool(partition_artifacts)
+            and partition_artifacts.issubset(output_artifacts)
+            and int(normalization_provenance.get("attempt") or 0) > 0
+            else "INCOMPLETE_REQUIRES_REVIEW"
+        )
+        ploidy_evidence = sample.get("ploidy_evidence")
+        if not ploidy_evidence:
+            ploidy_status = "NOT_ASSESSED"
+        elif ploidy_evidence.get("status") != "VERIFIED":
+            ploidy_status = "UNVERIFIED_OR_CONFLICTED"
+        elif ploidy_evidence.get("reference_build") != sample.get("analysis_reference_build"):
+            ploidy_status = "REFERENCE_BUILD_MISMATCH"
+        else:
+            ploidy_status = "VERIFIED_RECORDED_LOCUS_POLICY_REQUIRED"
+
+        matrix_samples.append({
+            "member_id": str(sample["member_id"]),
+            "member_identifier": sample["member_identifier"],
+            "relationship_to_proband": sample.get("relationship_to_proband"),
+            "sex": sample.get("sex") or "UNKNOWN",
+            "affected_status": sample.get("affected_status", "UNKNOWN"),
+            "is_proband": bool(sample.get("is_proband", False)),
+            "specimen_id": str(sample["specimen_id"]),
+            "analysis_id": str(sample["analysis_id"]),
+            "analysis_version": sample["analysis_version"],
+            "source_artifact_id": str(sample["artifact_id"]),
+            "source_artifact_sha256": source_artifact_sha256,
+            "source_artifact_sha256_status": source_artifact_sha256_status,
+            "normalization_provenance_status": normalization_provenance_status,
+            "vcf_sample_name": sample["sample_name"],
+            "binding_id": str(sample["binding_id"]),
+            "binding_fingerprint": sample["binding_fingerprint"],
+            "binding_status": "VERIFIED",
+            "identity_interpretation": "CHAIN_OF_CUSTODY_AND_SAMPLE_IDENTITY_QC_ACCEPTED; BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED",
+            "identity_evidence": sample["identity_evidence"],
+            "normalization_step_status": sample["normalization_step_status"],
+            "normalization_step_provenance": sample.get("normalization_step_provenance") or {},
+            "normalized_partition_count": sample["normalized_partition_count"],
+            "analysis_reference_build": sample.get("analysis_reference_build"),
+            "ploidy_evidence": ploidy_evidence or {
+                "status": "NOT_ASSESSED",
+                "reason": "No specimen-scoped ploidy evidence revision was available.",
+            },
+            "ploidy_evidence_status": ploidy_status,
+            "ploidy_interpretation_status": "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY",
+            "calls": rows,
+        })
+
+    relationship_snapshot = sorted(
+        [dict(item) for item in relationships],
+        key=lambda item: (
+            item.get("parent_member_identifier", ""),
+            item.get("child_member_identifier", ""),
+            item.get("relationship_type", ""),
+        ),
+    )
+    provenance_complete = all(
+        sample["source_artifact_sha256_status"] == "PRESENT_VALID_SHA256"
+        and sample["normalization_provenance_status"] == "COMPLETE"
+        and all(
+            row["call_state"] == "NO_RECORD"
+            or row["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
+            for row in sample["calls"]
+        )
+        for sample in matrix_samples
+    )
+    provenance_completeness_status = (
+        "COMPLETE" if provenance_complete else "INCOMPLETE_REQUIRES_REVIEW"
+    )
+    fingerprint_payload = {
+        "schema_version": 1,
+        "case_id": str(case_id),
+        "variant_ids": ordered_variants,
+        "samples": matrix_samples,
+        "relationships": relationship_snapshot,
+        "provenance_completeness_status": provenance_completeness_status,
+    }
+    return {
+        "schema_version": 1,
+        "case_id": str(case_id),
+        "variant_ids": ordered_variants,
+        "samples": matrix_samples,
+        "relationships_as_recorded": relationship_snapshot,
+        "interpretation_status": "NOT_PERFORMED",
+        "provenance_completeness_status": provenance_completeness_status,
+        "callability_status": "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY",
+        "ploidy_status": "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED",
+        "qualification_status": "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED",
+        "biological_relatedness_status": "NOT_ESTABLISHED",
+        "matrix_fingerprint": _canonical_fingerprint(fingerprint_payload),
+    }

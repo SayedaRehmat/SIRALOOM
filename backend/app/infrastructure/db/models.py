@@ -824,6 +824,88 @@ class PedigreeMember(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("case_id", "member_identifier"),)
 
+class PedigreeSampleBinding(Base):
+    """Immutable, versioned claim linking a family member to a specimen and VCF sample."""
+    __tablename__ = "pedigree_sample_bindings"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    pedigree_member_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_members.id"), nullable=False)
+    specimen_id: Mapped[UUID] = mapped_column(ForeignKey("specimens.id"), nullable=False)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"), nullable=False)
+    source_artifact_sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    sample_name: Mapped[str] = mapped_column(Text, nullable=False)
+    binding_status: Mapped[str] = mapped_column(Text, nullable=False, default="UNVERIFIED")
+    binding_method: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text)
+    review_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    supersedes_binding_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_sample_bindings.id"))
+    binding_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "binding_fingerprint", name="uq_pedigree_sample_binding_fingerprint"),
+        UniqueConstraint("supersedes_binding_id", name="uq_pedigree_sample_binding_successor"),
+        UniqueConstraint("case_id", "pedigree_member_id", "specimen_id", "analysis_id", "artifact_id", "sample_name", "version", name="uq_pedigree_sample_binding_version"),
+        CheckConstraint("binding_status IN ('UNVERIFIED', 'VERIFIED', 'REJECTED')", name="ck_pedigree_sample_binding_status"),
+        CheckConstraint("version > 0", name="ck_pedigree_sample_binding_version_positive"),
+        CheckConstraint("length(source_artifact_sha256) = 64", name="ck_pedigree_sample_binding_source_sha256_length"),
+        CheckConstraint(
+            "(binding_status = 'UNVERIFIED' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
+            "(binding_status IN ('VERIFIED', 'REJECTED') AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND review_reason IS NOT NULL)",
+            name="ck_pedigree_sample_binding_review_provenance",
+        ),
+        Index("ix_pedigree_sample_bindings_member_specimen", "case_id", "pedigree_member_id", "specimen_id"),
+        Index("ix_pedigree_sample_bindings_analysis_artifact", "analysis_id", "artifact_id"),
+    )
+
+
+class PedigreeSampleIdentityEvidence(Base):
+    """Append-only laboratory chain-of-custody and sample-identity QC evidence."""
+    __tablename__ = "pedigree_sample_identity_evidence"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    binding_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_sample_bindings.id"), nullable=False)
+    evidence_type: Mapped[str] = mapped_column(Text, nullable=False)
+    result: Mapped[str] = mapped_column(Text, nullable=False)
+    method: Mapped[str] = mapped_column(Text, nullable=False)
+    method_version: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    source_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    metrics_json: Mapped[dict] = mapped_column("metrics", JSON, nullable=False, default=dict)
+    review_status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    review_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    supersedes_evidence_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_sample_identity_evidence.id"))
+    evidence_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "evidence_fingerprint", name="uq_pedigree_sample_identity_evidence_fingerprint"),
+        UniqueConstraint("supersedes_evidence_id", name="uq_pedigree_sample_identity_evidence_successor"),
+        UniqueConstraint("binding_id", "evidence_type", "version", name="uq_pedigree_sample_identity_evidence_version"),
+        CheckConstraint(
+            "evidence_type IN ('CHAIN_OF_CUSTODY', 'SAMPLE_IDENTITY_QC')",
+            name="ck_pedigree_sample_identity_evidence_type",
+        ),
+        CheckConstraint("result IN ('PASS', 'FAIL', 'INDETERMINATE')", name="ck_pedigree_sample_identity_evidence_result"),
+        CheckConstraint("review_status IN ('PENDING', 'ACCEPTED', 'REJECTED')", name="ck_pedigree_sample_identity_evidence_review_status"),
+        CheckConstraint("version > 0", name="ck_pedigree_sample_identity_evidence_positive_version"),
+        CheckConstraint(
+            "(review_status = 'PENDING' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
+            "(review_status IN ('ACCEPTED', 'REJECTED') AND reviewed_by IS NOT NULL "
+            "AND reviewed_at IS NOT NULL AND review_reason IS NOT NULL)",
+            name="ck_pedigree_sample_identity_evidence_review_provenance",
+        ),
+        Index("ix_pedigree_sample_identity_evidence_binding_type", "case_id", "binding_id", "evidence_type", "version"),
+    )
+
+
 class PedigreeRelationship(Base):
     __tablename__ = "pedigree_relationships"
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -852,6 +934,52 @@ class SegregationObservation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("analysis_id", "variant_id", "pedigree_member_id"),)
 
+
+class SegregationObservationRevision(Base):
+    """Immutable successor revisions for a manually reported segregation observation."""
+    __tablename__ = "segregation_observation_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    root_observation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("segregation_observations.id"), nullable=False,
+    )
+    supersedes_revision_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("segregation_observation_revisions.id"), nullable=True,
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    revision_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    observation_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        CheckConstraint("version >= 2", name="ck_segregation_observation_revision_version"),
+        CheckConstraint("length(trim(revision_reason)) > 0", name="ck_segregation_observation_revision_reason"),
+        CheckConstraint("length(observation_fingerprint) = 64", name="ck_segregation_observation_revision_fingerprint_length"),
+        UniqueConstraint("root_observation_id", "version", name="uq_segregation_observation_revision_version"),
+        UniqueConstraint("supersedes_revision_id", name="uq_segregation_observation_revision_successor"),
+        Index("ix_segregation_observation_revision_root", "root_observation_id", "version"),
+    )
+
+class FamilyGenotypeMatrixSnapshot(Base):
+    """Immutable, reproducible snapshot of source-bound family genotype evidence."""
+    __tablename__ = "family_genotype_matrix_snapshots"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    variant_id: Mapped[UUID] = mapped_column(ForeignKey("variants.id"), nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    matrix_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    matrix_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "matrix_fingerprint", name="uq_family_genotype_matrix_snapshot_fingerprint"),
+        CheckConstraint("schema_version = 1", name="ck_family_genotype_matrix_snapshot_schema"),
+        CheckConstraint("length(matrix_fingerprint) = 64", name="ck_family_genotype_matrix_snapshot_fingerprint_length"),
+        Index("ix_family_genotype_matrix_snapshot_analysis_variant", "analysis_id", "variant_id"),
+    )
+
+
 class InheritanceAssessment(Base):
     __tablename__ = "inheritance_assessments"
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -864,6 +992,12 @@ class InheritanceAssessment(Base):
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rationale: Mapped[str] = mapped_column(Text)
     observation_fingerprint: Mapped[str] = mapped_column(Text)
+    # Fingerprint of the exact verified family genotype matrix used as context.
+    # Nullable only for legacy assessments recorded before matrix binding existed.
+    family_matrix_fingerprint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    family_matrix_snapshot_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("family_genotype_matrix_snapshots.id"), nullable=True,
+    )
     reviewer_note: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
