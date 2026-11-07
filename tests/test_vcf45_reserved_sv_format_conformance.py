@@ -93,3 +93,27 @@ def test_vcf45_xanthosine_alias_spellings_remain_recognized_pending_source_adjud
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+@pytest.mark.parametrize(
+    ("field_id", "number", "field_type", "values"),
+    [
+        ("CNP", "G", "Float", "1.1,0.0,0.0"),
+        ("CNP", "G", "Float", "-0.1,0.5,0.6"),
+        ("CNQ", "1", "Float", "-1.0"),
+        ("NQ", "1", "Integer", "-1"),
+    ],
+)
+def test_vcf45_sv_probability_and_phred_quality_fields_reject_out_of_range_values(
+    tmp_path: Path, field_id: str, number: str, field_type: str, values: str
+):
+    definition = (
+        f'##FORMAT=<ID={field_id},Number={number},Type={field_type},'
+        'Description="SV FORMAT value range">\n'
+    )
+    path = tmp_path / f"vcf45-{field_id}-out-of-range.vcf"
+    _write_vcf(path, definition, field_id, values)
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
