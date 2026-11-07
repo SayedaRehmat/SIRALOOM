@@ -40,7 +40,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Source:** Pinned samtools/hts-specs revision 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.1.tex; SHA-256 7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa.
 
-**Implemented:** Strict parser accepts VCFv4.1 and applies shared fixed-record, INFO/FORMAT, GT and cardinality validation. Version-delta research identifies VCFv4.1 GT/GL and structural-variant source sections.
+**Implemented:** Strict parser accepts VCFv4.1. Version-specific reserved FORMAT definitions are enforced for GT, DP, FT, GL, PL, GP, GQ, HQ, PS, PQ, EC and MQ. The VCFv4.1/4.2 GLE field is recognized as reserved but requires an explicit header definition because the source prose does not establish a reliable Number cardinality. The VCFv4.1/4.2 INFO prose does not provide the Number/Type table later versions provide; those declarations remain header-driven.
 
 **Tested:** Shared cross-version acceptance and cardinality tests in tests/test_vcf_validation.py exercise VCFv4.1. These are shared tests, not a complete VCFv4.1 conformance suite.
 
@@ -52,7 +52,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Source:** Pinned samtools/hts-specs revision 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.2.tex; SHA-256 66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc.
 
-**Implemented:** Strict parser accepts VCFv4.2 and applies shared fixed-record, INFO/FORMAT, GT and cardinality validation. The version-delta register records the VCFv4.2-to-4.3 removal of GLE from the reserved set.
+**Implemented:** Strict parser accepts VCFv4.2 and enforces the same version-specific reserved FORMAT definitions as VCFv4.1, including explicit unresolved handling for GLE. The VCFv4.1/4.2 INFO prose does not provide the Number/Type table later versions provide; those declarations remain header-driven. The version-delta register records the VCFv4.2-to-4.3 removal of GLE from the reserved set.
 
 **Tested:** Shared cross-version acceptance and cardinality tests in tests/test_vcf_validation.py exercise VCFv4.2. No complete VCFv4.2-specific conformance corpus is evidenced.
 
@@ -64,7 +64,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Source:** Pinned samtools/hts-specs revision 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.3.tex; SHA-256 332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde.
 
-**Implemented:** Strict parser applies the VCFv4.3+ SAM reference-name grammar to CHROM and breakend remote-contig names. Shared record, genotype, structural-variant and breakend validation is present.
+**Implemented:** Version-specific VCFv4.3 reserved INFO and FORMAT definitions are now enforced, including structural-variant fields. Header Number/Type declarations that contradict the pinned definitions are rejected. VCFv4.3 copy-number FORMAT/CN is Integer (tested against the VCFv4.4 Float transition). The parser applies the VCFv4.3+ SAM reference-name grammar to CHROM and breakend remote-contig names.
 
 **Tested:** tests/test_vcf_validation.py includes VCFv4.3+ contig grammar, external-contig capability and breakend tests. Shared cross-version tests include VCFv4.3.
 
@@ -76,9 +76,9 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Source:** Pinned samtools/hts-specs revision 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.4.tex; SHA-256 4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a.
 
-**Implemented:** Parser accepts VCFv4.4. Tests cover VCFv4.4 leading GT phase separator behavior and reject VCFv4.5-only local-allele semantics when presented as VCFv4.4. The source delta register identifies PSL/PSO/PSQ and Number=P as additions in the VCFv4.3-to-4.4 transition.
+**Implemented:** Version-specific VCFv4.4 reserved INFO and FORMAT definitions are now enforced, including structural-variant and tandem-repeat wire definitions. CN changes to Float; MATEID and SVLEN use Number=A; CIPOS/CIEND use Number=.; PSL/PSO/PSQ and Number=P are enforced. Cross-record PSO obligations and reciprocal BND PSL/PSO comparisons are applied to VCFv4.4 and VCFv4.5. SVTYPE is deprecated and is not required for VCFv4.4/4.5 breakpoint-notation records. Tests cover leading GT phase separators, Number=P/GT dependency, PSO obligations, reciprocal BND phase vectors, per-ALT MATEID, and telomeric coordinate zero.
 
-**Tested:** Shared cross-version tests and targeted VCFv4.4 GT/local-allele boundary tests exist in tests/test_vcf_validation.py.
+**Tested:** Shared cross-version tests and targeted VCFv4.4 reserved INFO/FORMAT mismatch, GT/local-allele boundary, PSO and BND tests exist in tests/test_vcf_validation.py, tests/test_vcf44_phase_set_conformance.py and tests/test_vcf44_breakend_phase_conformance.py.
 
 **Unsupported / blocked:** VCFv4.5-only Number=M base-modification semantics and the VCFv4.5 local-allele model must not be back-applied to VCFv4.4. External assembly contigs remain a reference-package capability limitation for VCFv4.3+.
 
@@ -89,7 +89,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 **Source:** Pinned samtools/hts-specs revision 510c107ba89aa13113818c9e4fa3071283cb7f7b; VCFv4.5.tex; SHA-256 37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5.
 
 **Implemented:**
-- Reserved FORMAT definitions include M, P, LA, LR and LG cardinality handling, local-allele fields and VCFv4.5 structural-variant fields.
+- Reserved INFO/FORMAT definitions include M, P, LA, LR and LG cardinality handling, local-allele fields, structural-variant fields and tandem-repeat wire definitions RN, RUS, RUL, RUC, RB, CIRUC, CIRB and RUB. Reserved header Number/Type mismatches are rejected.
 - GT allele values remain global ALT indexes; LAA controls local A/R/G vectors.
 - Number=M slot mapping preserves GT allele order and exposes per-value biological slot assignments.
 - An explicit analysis-creation field, base_modification_strandedness, is persisted in Analysis.configuration and passed to both VCF validation passes. None means unknown/not asserted; values are never inferred from VCF observations.
@@ -141,3 +141,6 @@ The next cross-version implementation gate is to reconcile VCFv4.4 phase-set sem
 **VCF stage remains incomplete and not laboratory-qualified.** VCFv4.5 implementation has materially advanced, including production validator changes and explicit assay-policy wiring. VCFv4.0 source pinning, VCFv4.1–4.4 semantic reconciliation, complete 226-record requirement traceability, independent review, and full CI on the latest exact commit remain open release gates.
 
 This report is a status/evidence register. It does not convert candidate requirements into approved requirements, and it does not represent the presence of tests as proof that all source requirements are implemented.
+
+
+**Additional unresolved VCFv4.5/4.4 structural semantics:** the reserved wire definitions for tandem-repeat INFO fields are now enforced, but the nested list-of-list cardinality rules across RN/RUS/RUL/RUC/RB/CIRUC/CIRB/RUB, confidence-interval consistency, repeat-sequence IUPAC constraints, and cross-field consistency are not yet implemented. Phase 1 does not claim repeat-expansion analysis support. These fields must be explicitly rejected/routed as unsupported or fully validated before any clinical use.
