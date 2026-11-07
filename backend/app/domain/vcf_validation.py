@@ -2233,8 +2233,6 @@ def validate_vcf_strict(
                     "alt": alts[alt_index],
                     "status": "UNRESOLVED",
                     "reason_code": "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE",
-                    "event_id": event_by_alt.get(alt_index),
-                    "event_type": event_type_by_alt.get(alt_index),
                 })
             if breakend_alts or single_breakend_alt_indexes:
                 # Resolve remote loci and classify external assembly contigs before
