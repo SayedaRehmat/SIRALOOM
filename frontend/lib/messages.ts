@@ -1030,7 +1030,8 @@ export type TranslationKey =
   | "familyIdentity.selectedAltDosage"
   | "familyIdentity.normalizationStep"
   | "familyIdentity.ploidyEvidence"
-  | "familyIdentity.identityQcStatus";
+  | "familyIdentity.identityQcStatus"
+  | "familyIdentity.assay";
   | "familyIdentity.interpretationNotPerformed";
   | "familyIdentity.noEvidenceArtifact";
 
@@ -2062,6 +2063,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.normalizationStep": "Normalization step",
     "familyIdentity.ploidyEvidence": "Ploidy evidence",
     "familyIdentity.identityQcStatus": "Identity QC",
+    "familyIdentity.assay": "Assay",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3089,5 +3091,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.normalizationStep": "خطوة التطبيع",
     "familyIdentity.ploidyEvidence": "دليل الصيغة الصبغية",
     "familyIdentity.identityQcStatus": "فحص هوية العينة",
+    "familyIdentity.assay": "الفحص المخبري",
   },
 };
