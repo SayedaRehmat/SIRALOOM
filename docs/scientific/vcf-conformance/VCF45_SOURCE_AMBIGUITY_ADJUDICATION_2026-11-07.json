@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.5-three-source-internal-semantic-ambiguities",
+  "status": "AUTHOR_ADJUDICATION_WITH_PROVISIONAL_INTERPRETATIONS_INDEPENDENT_REVIEW_REQUIRED",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source": {
+    "file": "VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "issues": [
+    {
+      "id": "VCF45-AMB-001",
+      "topic": "Local-allele example GT mismatch",
+      "source_ranges": [
+        {
+          "start_line": 613,
+          "end_line": 624,
+          "role": "global GT allele-index definition"
+        },
+        {
+          "start_line": 686,
+          "end_line": 697,
+          "role": "LAA/local allele definitions and example"
+        },
+        {
+          "start_line": 701,
+          "end_line": 710,
+          "role": "paired local/global examples"
+        }
+      ],
+      "observations": [
+        "The general GT definition at line 615 defines 0 as REF and positive values as one-based indices into ALT.",
+        "The local-allele prose defines LAA as one-based indices into ALT and says it defines the local allele set and interpretation order; it does not explicitly redefine GT indices as local ordinals.",
+        "At POS=1, ALT=A,C,T,<*>, LAA=2,4 and the local representation has GT=2/4. This is consistent with GT retaining global ALT indices while LAA selects the local allele subset.",
+        "The paired global representation at the same POS has GT=2/2, which is inconsistent with the local representation and with the allele subset [REF,C,<*>].",
+        "The corresponding LAD/LPL values map to global AD/PL positions for REF, ALT 2 and ALT 4, supporting the interpretation that GT=2/4 is the intended genotype and the paired global GT=2/2 is likely a source example error."
+      ],
+      "provisional_interpretation": "GT allele indices remain global ALT indices in local-allele records; LAA selects and orders the subset used by local-allele fields such as LAD/LPL. The POS=1 global example GT=2/2 is inconsistent; GT=2/4 appears to be the internally consistent counterpart.",
+      "disposition": "SOURCE_EXAMPLE_INCONSISTENCY_IDENTIFIED_NOT_FORMALLY_CORRECTED",
+      "implementation_guard": "Do not remap GT values through LAA. Preserve raw GT and LAA independently. Local-field projections may use the LAA-selected local allele order. Do not use the inconsistent POS=1 paired example as a conformance oracle until corrected by source maintainer or independent standards reviewer.",
+      "required_confirmation": "Independent standards review or upstream erratum confirming global GT indexing and correcting the paired global example."
+    },
+    {
+      "id": "VCF45-AMB-002",
+      "topic": "Number=P versus PSQ cardinality",
+      "source_ranges": [
+        {
+          "start_line": 192,
+          "end_line": 200,
+          "role": "general Number definitions"
+        },
+        {
+          "start_line": 765,
+          "end_line": 776,
+          "role": "PS and PSL semantics"
+        },
+        {
+          "start_line": 788,
+          "end_line": 792,
+          "role": "PSO semantics"
+        },
+        {
+          "start_line": 808,
+          "end_line": 809,
+          "role": "PSQ definition and missingness"
+        },
+        {
+          "start_line": 594,
+          "end_line": 596,
+          "role": "reserved PSQ Number/Type row"
+        }
+      ],
+      "observations": [
+        "The general Number=P definition at line 198 says one value for each allele value defined in GT.",
+        "PSL is defined at line 771 as a list with one phase-set value for each allele value in GT; unphased positions use MISSING at line 772.",
+        "PSQ is defined at line 808 as one PQ value for each phase set in PSL, and line 809 requires MISSING when the corresponding PSL value is missing or phasing quality is unknown.",
+        "The reserved FORMAT table declares PSQ Number=P, so the general Number=P rule applies to PSQ.",
+        "The phrase 'one for each phase set in PSL' is ambiguous if read as one per distinct phase-set identifier, but the Number=P definition and corresponding-position missingness establish a positional list interpretation."
+      ],
+      "provisional_interpretation": "PSQ is positional with PSL: one PSQ element for each PSL list position, hence one per GT allele value, including positions where PSL is MISSING. Repeated phase-set identifiers do not collapse multiple allele positions into one PSQ element. A MISSING PSL position requires a MISSING PSQ value.",
+      "disposition": "SEMANTICALLY_RESOLVED_BY_CROSS_REFERENCE_PENDING_INDEPENDENT_CONFIRMATION",
+      "implementation_guard": "Validate len(PSL)=len(PSQ)=number of GT allele values when these fields are present; validate positional missingness. Do not deduplicate repeated phase-set identifiers before cardinality validation. Keep this rule scoped to PSQ Number=P, not a general claim that every phase-set name is unique per allele.",
+      "required_confirmation": "Independent standards reviewer should confirm that 'phase set in PSL' means a PSL list element/position, not a distinct unique phase-set identifier."
+    },
+    {
+      "id": "VCF45-AMB-003",
+      "topic": "Xanthosine alias capitalization mismatch",
+      "source_ranges": [
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "role": "ID case sensitivity"
+        },
+        {
+          "start_line": 556,
+          "end_line": 588,
+          "role": "reserved FORMAT table alias spellings"
+        },
+        {
+          "start_line": 720,
+          "end_line": 742,
+          "role": "base-modification prose alias spellings"
+        }
+      ],
+      "observations": [
+        "The reserved table spells the xanthosine aliases MXaoN, DPMXaoN and ADMXaoN (lines 586-588).",
+        "The prose recommends MxaoN, DPMxaoN and ADMxaoN (lines 724, 734 and 740).",
+        "The specification states that IDs are case sensitive (line 258), so the spellings are not interchangeable by case-folding.",
+        "The inconsistency affects all three alias families: M, DPM and ADM."
+      ],
+      "provisional_interpretation": "No canonical spelling can be selected from the source alone. Preserve the exact table and prose spellings as conflicting source evidence. Do not silently case-fold, rewrite, or treat the two forms as equivalent in a strict conformance validator.",
+      "disposition": "SOURCE_INTERNAL_CASE_CONFLICT_UNRESOLVED",
+      "implementation_guard": "Preserve literal IDs. A non-blocking diagnostic may report the conflicting documented alias spellings; acceptance/rejection policy for either spelling must remain a versioned lab decision until upstream clarification.",
+      "required_confirmation": "Upstream specification maintainer or independent standards reviewer must identify the intended case-sensitive alias spelling and issue a source correction."
+    }
+  ],
+  "cross_cutting_controls": [
+    "These are source interpretation findings, not independent approval.",
+    "No production parser/validator behavior is changed by this artifact.",
+    "No canonical ledger records are added or edited.",
+    "All implementation consequences remain provisional until independent review and conformance tests."
+  ]
+}
