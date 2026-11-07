@@ -194,10 +194,12 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
     partition = SimpleNamespace(ordinal=0)
     ploidy_evidence = SimpleNamespace(
         version=4,
-        status="ACCEPTED",
+        status="VERIFIED",
         reference_build="GRCh38",
         revision_fingerprint="d" * 64,
-        region_copy_number=2,
+        region_copy_number={"chrX": 2},
+        reviewed_by=uuid4(),
+        reviewed_at="2026-11-07T00:00:00Z",
         source_type="LAB_VALIDATED",
         evidence_reference="PLOIDY-QC-001",
     )
@@ -256,10 +258,10 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
     assert result["samples"][0]["vcf_sample_name"] == "FAM-01"
     assert result["samples"][0]["ploidy_evidence"] == {
         "version": 4,
-        "status": "ACCEPTED",
+        "status": "VERIFIED",
         "reference_build": "GRCh38",
         "revision_fingerprint": "d" * 64,
-        "region_copy_number": 2,
+        "region_copy_number": {"chrX": 2},
         "source_type": "LAB_VALIDATED",
         "evidence_reference": "PLOIDY-QC-001",
     }
