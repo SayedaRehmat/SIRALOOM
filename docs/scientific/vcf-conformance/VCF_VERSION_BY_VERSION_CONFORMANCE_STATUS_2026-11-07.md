@@ -3,7 +3,7 @@
 **Report date:** 2026-11-07  
 **Repository:** SayedaRehmat/SIRALOOM  
 **Branch:** research/vcf-conformance-phase-a-20261105  
-**Implementation baseline reviewed:** 6a8d3cf6ade5612b54f7de5b76846d496027f53a  
+**Implementation baseline reviewed:** 57c181ecab4d948e02d9bb88799727fb10315d09  
 **Disposition:** NOT READY FOR LABORATORY QUALIFICATION
 
 This report separates parser behavior, executable test evidence, explicit capability limits, source-reconciliation status, and laboratory qualification. A parser accepting a version header is not proof of full conformance. A test existing in the repository is not proof it passed on the current commit. No independent standards approval or laboratory qualification is claimed.
@@ -129,10 +129,11 @@ The next cross-version implementation gate is to reconcile VCFv4.4 phase-set sem
 
 ## 4. Exact verification evidence and limitation
 
-- Full CI and ledger-schema validation passed on exact commit d69d351b44f631f82ae754049063820efdd9a159.
-- CI on bde6e63957b39a5f8167ea30d3d852aa35d2a4c1 failed with three test failures. Those failures exposed an invalid test assumption about IMPRECISE on BND, an expected-error-code mismatch for the shared CIPOS validator, and an obsolete test that rejected remote BND coordinate zero.
-- The code/tests were corrected after that run. The current implementation baseline 965be03d56fe2d05c4dca9a9c6837333ca80d4fc has no associated GitHub Actions run in the retrieved workflow-run records. Therefore, the current baseline is not CI-verified.
-- Do not infer success from the previous green commit. The final exact commit must have a full successful run of backend tests, VCFv4.5 conformance tests, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
+- Full SIRALOOM CI passed on the historical exact commit d69d351b44f631f82ae754049063820efdd9a159. This is not evidence for the implementation baseline reviewed above.
+- CI on bde6e63957b39a5f8167ea30d3d852aa35d2a4c1 failed with three backend test failures. Subsequent commits corrected the BND/CIPOS diagnostics and telomeric coordinate handling, and added VCFv4.4 phase-set and Number=M regressions.
+- VCF research-ledger schema validation passed on f685a22754431187bcc061933da101610d8f9c87. No full SIRALOOM CI run is associated with the implementation baseline 57c181ecab4d948e02d9bb88799727fb10315d09 in the retrieved workflow-run records. Therefore, this baseline is not CI-verified.
+- The new same-record unstranded Number=M negative regression is present in tests/test_vcf45_number_m_conformance.py at the reviewed baseline. It has not yet been executed by GitHub Actions.
+- Do not infer success from the previous green commit or from schema validation. The final exact commit must have a full successful run of backend tests, VCFv4.5 conformance tests, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
 
 ## 5. Release decision
 
