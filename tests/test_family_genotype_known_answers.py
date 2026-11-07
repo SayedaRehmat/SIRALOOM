@@ -134,8 +134,19 @@ def test_known_answer_three_member_family_preserves_genotypes_quality_phase_and_
     selected_alt = call("PROBAND", ("1", 400, "C", "T"))
     assert selected_alt["call_state"] == "CALL_PRESENT"
     assert selected_alt["selected_alt_dosage"] == 1
+    assert low_quality["quality_assessment_status"] == "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY"
     assert matrix["interpretation_status"] == "NOT_PERFORMED"
     assert matrix["callability_status"] == "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY"
+    assert matrix["ploidy_status"] == "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED"
+    assert matrix["qualification_status"] == "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED"
+    assert all(
+        sample["identity_interpretation"].endswith("BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED")
+        for sample in matrix["samples"]
+    )
+    assert all(
+        relationship["relationship_status"] == "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED"
+        for relationship in matrix["relationships_as_recorded"]
+    )
 
 
 def test_family_sample_selection_rejects_sample_swap_and_unselected_multisample_vcf(tmp_path):
