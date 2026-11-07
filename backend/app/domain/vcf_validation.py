@@ -1564,6 +1564,10 @@ def _validate_record(
                             f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
                             code="VCF_GENOTYPE_INVALID",
                         )
+                    if fileformat == "VCFv4.5" and field_key == "LAA":
+                        # VCFv4.5's REF-only local-allele example uses an
+                        # empty text value; BCF represents this as MISSING.
+                        continue
                     raise StrictVCFValidationError(
                         f"Sample {sample_index} has an empty FORMAT/{field_key or 'value'} field at line {line_no}; use '.' for a missing value",
                         code="VCF_SAMPLE_INVALID",
@@ -1899,28 +1903,6 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
-            if fileformat == "VCFv4.5":
-                local_format_keys = []
-                for format_key in format_keys:
-                    if format_key == "LAA":
-                        continue
-                    format_definition = format_definitions.get(format_key)
-                    if format_definition is None:
-                        format_definition = _reserved_vcf45_format_definition(format_key)
-                    if format_definition is not None and format_definition["Number"] in {"LA", "LR", "LG"}:
-                        local_format_keys.append(format_key)
-                if local_format_keys:
-                    if "LAA" not in format_keys:
-                        raise StrictVCFValidationError(
-                            f"VCFv4.5 local-allele FORMAT fields require FORMAT/LAA at line {line_no}",
-                            code="VCF_LOCAL_ALLELE_INVALID",
-                        )
-                    expected_laa_index = 1 if gt_index is not None else 0
-                    if format_keys.index("LAA") != expected_laa_index:
-                        raise StrictVCFValidationError(
-                            f"VCFv4.5 FORMAT/LAA must precede every FORMAT field other than GT at line {line_no}",
-                            code="VCF_LOCAL_ALLELE_INVALID",
-                        )
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
                 if "PSL" in format_keys:
