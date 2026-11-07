@@ -688,9 +688,6 @@ def create_sample_identity_evidence(
         raise HTTPException(409, "Identity evidence can only be attached to an unverified binding")
     if not body.method.strip() or not body.method_version.strip() or not body.evidence_reference.strip():
         raise HTTPException(422, "Identity evidence method, version and reference must be non-empty")
-    active_evidence = _active_sample_identity_evidence(db, binding.id)
-    if any(row.evidence_type == body.evidence_type for row in active_evidence):
-        raise HTTPException(409, "An active evidence revision of this type already exists; append a correction instead")
     successor = db.scalar(select(PedigreeSampleBinding).where(
         PedigreeSampleBinding.supersedes_binding_id == binding.id,
     ))
@@ -719,6 +716,9 @@ def create_sample_identity_evidence(
     ))
     if existing is not None:
         return _sample_identity_evidence_payload(existing)
+    active_evidence = _active_sample_identity_evidence(db, binding.id)
+    if any(row.evidence_type == body.evidence_type for row in active_evidence):
+        raise HTTPException(409, "An active evidence revision of this type already exists; append a correction instead")
     row = PedigreeSampleIdentityEvidence(
         id=uuid4(), case_id=case_id, binding_id=binding.id,
         evidence_type=body.evidence_type, result=body.result,
