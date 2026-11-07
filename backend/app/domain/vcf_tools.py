@@ -708,6 +708,88 @@ def bcftools_available(executable: str = "bcftools") -> bool:
     return shutil.which(executable) is not None
 
 
+def _run_bcftools_command(
+    command: list[str],
+    *,
+    persistent_execution,
+    workflow_id: str,
+    operation: str,
+    workspace: Path,
+    input_paths: list[Path],
+    output_paths: list[Path],
+    timeout_seconds: int,
+):
+    """Run one BCFtools command through the durable common executor when configured."""
+    if persistent_execution is None:
+        return subprocess.run(command, capture_output=True, text=True, timeout=timeout_seconds, check=False)
+
+    from backend.app.config import settings
+    from backend.app.domain.tool_execution import (
+        InputArtifact, OutputArtifact, ToolExecutionRequest, ToolIdentity,
+        current_platform_id, sha256_file,
+    )
+    from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+
+    executable = Path(shutil.which(command[0]) or command[0]).resolve(strict=True)
+    environment = persistent_execution.db.get(
+        ExecutionEnvironmentRegistration, persistent_execution.environment_registration_id
+    )
+    if environment is None:
+        raise VCFToolError("Persistent BCFtools execution environment registration is missing.")
+    profile = ToolIdentity(
+        tool_id="bcftools",
+        version=settings.bcftools_version,
+        profile_id=settings.bcftools_profile_id,
+        executable=str(executable),
+        executable_sha256=sha256_file(executable),
+        platform=current_platform_id(),
+        qualification_status="SOFTWARE_QUALIFIED",
+        version_args=("--version",),
+        version_output_contains=f"bcftools {settings.bcftools_version}",
+        supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
+        runtime_image_digest=environment.profile_json.get("runtime_image_digest"),
+        runtime_path=tuple(
+            item for item in dict.fromkeys((str(executable.parent), "/usr/bin", "/bin"))
+            if Path(item).is_dir()
+        ),
+    )
+    inputs = tuple(
+        InputArtifact(name=path.name, path=str(path.resolve(strict=True)), sha256=sha256_file(path))
+        for path in input_paths
+    )
+    outputs = tuple(
+        OutputArtifact(name=path.name, path=str(path.absolute()))
+        for path in output_paths
+    )
+    canonical_material = {
+        "analysis_id": str(persistent_execution.analysis_id),
+        "workflow_id": workflow_id,
+        "operation": operation,
+        "argv": command[1:],
+        "inputs": [(item.name, item.sha256) for item in inputs],
+        "outputs": [item.name for item in outputs],
+    }
+    execution_id = hashlib.sha256(
+        json.dumps(canonical_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:32]
+    request = ToolExecutionRequest(
+        execution_id=execution_id,
+        organization_id=str(persistent_execution.organization_id),
+        workflow_id=workflow_id,
+        operation=operation,
+        argv=tuple(command[1:]),
+        workspace=str(workspace.resolve(strict=True)),
+        inputs=inputs,
+        outputs=outputs,
+        timeout_seconds=timeout_seconds,
+    )
+    result = persistent_execution.execute(profile, request)
+    return subprocess.CompletedProcess(
+        args=command, returncode=result.result.provenance.exit_code,
+        stdout=result.result.stdout, stderr=result.result.stderr,
+    )
+
+
 def has_multiallelic_records(path: str | Path) -> bool:
     import gzip
 
@@ -1475,6 +1557,8 @@ def normalize_vcf_with_bcftools(
     output_path: str | Path,
     *,
     reference_fasta: str | Path,
+    persistent_execution=None,
+    workflow_id: str = "normalize",
     expected_bcftools_version: str | None = None,
     source_only_format_fields: list[str] | None = None,
     timeout_seconds: int = 1800,
@@ -1564,9 +1648,10 @@ def normalize_vcf_with_bcftools(
             "-o", str(prepared_path), str(input_path),
         ]
         try:
-            viewed = subprocess.run(
-                view_command, capture_output=True, text=True, timeout=timeout,
-                check=False,
+            viewed = _run_bcftools_command(
+                view_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="normalize", workspace=work,
+                input_paths=[input_path], output_paths=[prepared_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools GVCF wildcard preparation timed out after {timeout}s.") from exc
@@ -1592,12 +1677,11 @@ def normalize_vcf_with_bcftools(
             "-Oz", "-o", str(normalized_path), str(provenance_input),
         ]
         try:
-            completed = subprocess.run(
-                normalize_command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+            completed = _run_bcftools_command(
+                normalize_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="normalize", workspace=work,
+                input_paths=[provenance_input, reference_fasta],
+                output_paths=[normalized_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools reference-aware normalization timed out after {timeout}s.") from exc
@@ -1615,12 +1699,10 @@ def normalize_vcf_with_bcftools(
             str(normalized_path),
         ]
         try:
-            sorted_result = subprocess.run(
-                sort_command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
+            sorted_result = _run_bcftools_command(
+                sort_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="sort", workspace=work,
+                input_paths=[normalized_path], output_paths=[sorted_path], timeout_seconds=timeout,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError(f"bcftools sorting timed out after {timeout}s.") from exc
@@ -1654,12 +1736,11 @@ def normalize_vcf_with_bcftools(
                 str(source_only_plain_path),
             ]
             try:
-                source_only_result = subprocess.run(
-                    source_only_command,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout,
-                    check=False,
+                source_only_result = _run_bcftools_command(
+                    source_only_command, persistent_execution=persistent_execution,
+                    workflow_id=workflow_id, operation="convert", workspace=work,
+                    input_paths=[source_only_plain_path],
+                    output_paths=[source_only_compressed_path], timeout_seconds=timeout,
                 )
             except subprocess.TimeoutExpired as exc:
                 raise VCFToolError(
@@ -1697,12 +1778,10 @@ def normalize_vcf_with_bcftools(
 
         index_command = [bcftools_executable, "index", "--csi", "--force", str(sorted_path)]
         try:
-            indexed_result = subprocess.run(
-                index_command,
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=False,
+            indexed_result = _run_bcftools_command(
+                index_command, persistent_execution=persistent_execution,
+                workflow_id=workflow_id, operation="index", workspace=work,
+                input_paths=[sorted_path], output_paths=[staged_index_path], timeout_seconds=120,
             )
         except subprocess.TimeoutExpired as exc:
             raise VCFToolError("bcftools VCF indexing timed out after 120s.") from exc
@@ -1759,6 +1838,10 @@ def normalize_vcf_with_bcftools(
         return {
             "tool": "bcftools",
             "tool_version": version_line,
+            "tool_execution_record_ids": (
+                [str(item) for item in persistent_execution.execution_record_ids]
+                if persistent_execution is not None else []
+            ),
             "expected_tool_version": expected_bcftools_version,
             "htslib_version": detected_htslib_version,
             "expected_htslib_version": expected_htslib_version,
