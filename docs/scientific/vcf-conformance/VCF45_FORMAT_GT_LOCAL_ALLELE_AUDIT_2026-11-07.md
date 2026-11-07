@@ -107,9 +107,11 @@ The source's text example also uses an empty LAA sample value in `GT:LAA:LAD:LPL
 
 Local/non-local pairs are required by the source to encode identical information, or one representation must be MISSING/omitted. The current equivalence checker projects the standard A/R/G vector through the ordered local allele list and checks the local representation. New tests exercise LAD/LADF/LADR, LEC, LGP and LPP in addition to PL/LPL and GL/LGL, including reversed LAA order and mismatch errors.
 
-### Retained source ambiguity: example GT mismatch
+### Local GT example: likely local-row typo, pending standards-owner confirmation
 
-The source's local-allele equivalence example at lines 703–704 shows the local record with `GT=2/4`, `LAA=2,4`, but its paired expanded record with `GT=2/2`. These genotypes do not encode the same allele pair under the source's earlier global allele-index definition. This contradiction remains unresolved. The implementation and tests do not reinterpret GT indices as local indexes or silently correct the source example. Independent standards adjudication is required.
+The source's local-allele equivalence example at lines 703–704 shows local `GT=2/4`, `LAA=2,4`, and expanded `GT=2/2`. GT allele values remain global ALT indexes; LAA controls only the local A/R/G FORMAT vectors. With local alleles [REF G, ALT2 C, ALT4 <*>], the diploid LPL order is 00,01,11,02,12,22. The LPL vector `90,80,0,100,110,120` has its minimum at local 1/1, mapping to global 2/2. The expanded PL vector also has its minimum at global 2/2. Thus the local-row `GT=2/4` is inconsistent with the paired likelihoods and expanded representation; the likely correction is local-row `GT=2/2`.
+
+An independent comment on upstream [samtools/hts-specs issue #871](https://github.com/samtools/hts-specs/issues/871#issuecomment-5637479778) identifies the same inconsistency and proposed correction. The issue remains open, so standards-owner confirmation is still outstanding. The regression test now uses `GT=2/2`, `LAA=2,4`, and verifies local/global LAD/AD and LPL/PL projection equivalence.
 
 ## 5. GT and Number=G reconciliation
 
