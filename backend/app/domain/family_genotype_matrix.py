@@ -40,7 +40,7 @@ def _call_state(call: dict[str, Any] | None) -> str:
     genotype = call.get("projected_genotype") or call.get("normalized_genotype") or call.get("genotype")
     if not isinstance(genotype, str) or not genotype:
         return "GENOTYPE_UNAVAILABLE"
-    if not re.fullmatch(r"(?:\\d+|\\.)(?:[/|](?:\\d+|\\.))*", genotype):
+    if not re.fullmatch(r"(?:\d+|\.)(?:[/|](?:\d+|\.))*", genotype):
         return "INVALID_CALL"
     alleles = re.split(r"[/|]", genotype)
     try:
