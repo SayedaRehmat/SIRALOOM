@@ -507,13 +507,13 @@ def test_number_m_unstranded_cross_record_treats_omitted_trailing_value_as_missi
 ):
     path = tmp_path / "unstranded-cpg-omitted-trailing-value.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tC\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:set,.:0.5\\n"
-        "1\\t11\\t.\\tG\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:set,.\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tC\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:set,.:0.5\n"
+        "1\t11\t.\tG\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:set,.\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 2
