@@ -29,6 +29,7 @@ from backend.app.domain.tool_execution import (
     ToolExecutionRequest,
     ToolIdentity,
     current_platform_id,
+    sha256_resource_path,
 )
 
 
@@ -227,7 +228,7 @@ class VEPProvider(ScientificResourceProvider):
                     runtime_path=runtime_path,
                 )
                 input_digest = tool_sha256_file(input_vcf)
-                cache_tree_digest = str((self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or "")
+                cache_tree_digest = sha256_resource_path(Path(self.cache_dir))
                 resource_bindings = (
                     ScientificResourceBinding(
                         resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{build}",
