@@ -15,7 +15,7 @@ from backend.app.domain.vcf45_base_modification import base_modification_positio
         ("ACGT", "A", ((0, "+"), (3, "-"))),
         ("ACGT", "T", ((0, "-"), (3, "+"))),
         # U is explicitly synonymous with T.
-        ("TCC", "U", ((0, "-"),)),
+        ("TCC", "U", ((0, "+"),)),
     ],
 )
 def test_number_m_specific_base_slots_follow_sequence_order_and_strand(
