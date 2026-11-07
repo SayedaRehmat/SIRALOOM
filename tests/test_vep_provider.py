@@ -394,6 +394,33 @@ def test_vep_rejects_malformed_transcript_consequence_response():
         provider.validate_response(result)
 
 
+def test_vep_rejects_response_assembly_mismatch():
+    provider = VEPProvider.from_execution_contract(_contract())
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="G",
+    )
+    result = ProviderRawResult(
+        "annotate",
+        [{
+            "input": "1 100 SIRALOOM_0 A G . PASS .",
+            "assembly_name": "GRCh37",
+            "transcript_consequences": [],
+        }],
+        "fixture-sha256",
+        {},
+    )
+
+    with pytest.raises(VEPProviderError, match="does not match input assembly"):
+        provider.normalize_result(
+            result,
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
 def _build_runtime_provider(
     monkeypatch,
     tmp_path,
@@ -441,6 +468,8 @@ def test_vep_annotation_verifies_pinned_runtime_and_uses_shared_executor(monkeyp
     assert "--show_cache_info" in executor.requests[0].argv
     assert "--offline" in executor.requests[1].argv
     assert "--cache" in executor.requests[1].argv
+    bound_resources = {item.resource_id for item in executor.requests[1].resources}
+    assert {"reference-grch38:FASTA", "reference-grch38:FAI"} <= bound_resources
     provenance = output[0]["_siraloom_annotation_provenance"]
     assert provenance["runtime_check"]["status"] == "VERIFIED"
     assert provenance["runtime_check"]["vep_version"] == "115.2"
