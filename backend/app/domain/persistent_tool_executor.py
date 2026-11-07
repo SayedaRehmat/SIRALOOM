@@ -15,6 +15,13 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from backend.app.domain.container_tool_execution import (
+    ContainerResourceLimits,
+    EnvironmentAwareToolExecutor,
+)
+from backend.app.domain.execution_environments import execution_environment_profile_from_snapshot
+from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+
 from backend.app.domain.execution_persistence import (
     ExecutionPersistenceError,
     execution_request_fingerprint,
@@ -24,11 +31,11 @@ from backend.app.domain.execution_persistence import (
     complete_tool_execution,
 )
 from backend.app.domain.tool_execution import (
-    LocalProcessToolExecutor,
     ToolExecutionError,
     ToolExecutionRequest,
     ToolExecutionResult,
     ToolIdentity,
+    ToolExecutor,
 )
 
 
@@ -56,7 +63,8 @@ class PersistentToolExecutionService:
         case_id: UUID | None = None,
         environment_registration_id: UUID,
         worker_id: str,
-        executor: LocalProcessToolExecutor | None = None,
+        executor: ToolExecutor | None = None,
+        container_limits: ContainerResourceLimits | None = None,
         artifact_publisher: ArtifactPublisher | None = None,
     ) -> None:
         if not worker_id.strip():
@@ -69,7 +77,8 @@ class PersistentToolExecutionService:
         self.case_id = case_id
         self.environment_registration_id = environment_registration_id
         self.worker_id = worker_id
-        self.executor = executor or LocalProcessToolExecutor()
+        self.executor = executor
+        self.container_limits = container_limits
         self.artifact_publisher = artifact_publisher
         self.execution_record_ids: list[UUID] = []
 
@@ -110,6 +119,18 @@ class PersistentToolExecutionService:
         request.validate(profile)
         if request.organization_id != str(self.organization_id):
             raise ExecutionPersistenceError("Tool request organization does not match its persistence context.")
+
+        executor = self.executor
+        if executor is None:
+            registration = self.db.get(ExecutionEnvironmentRegistration, self.environment_registration_id)
+            if registration is None:
+                raise ExecutionPersistenceError("Execution environment registration does not exist.")
+            environment = execution_environment_profile_from_snapshot(registration.profile_json)
+            environment.assert_tenant_access(self.organization_id)
+            executor = EnvironmentAwareToolExecutor(
+                environment,
+                container_limits=self.container_limits,
+            )
 
         input_manifest = [
             {"name": item.name, "sha256": item.sha256.lower()}
@@ -170,7 +191,7 @@ class PersistentToolExecutionService:
         self.db.commit()
 
         try:
-            result = self.executor.execute(profile, request)
+            result = executor.execute(profile, request)
         except Exception as exc:
             provenance = exc.provenance if isinstance(exc, ToolExecutionError) else None
             retryable = bool(getattr(exc, "retryable", False))

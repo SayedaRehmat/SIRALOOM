@@ -11,6 +11,7 @@ from backend.app.domain.execution_environments import (
     ExecutionEnvironmentProfile,
     ExecutionEnvironmentRegistry,
     require_fresh_agent_heartbeat,
+    execution_environment_profile_from_snapshot,
 )
 from backend.app.domain.tool_execution import ToolIdentity
 
@@ -37,6 +38,7 @@ def _environment(
     owner_scope: str = "LABORATORY",
     runtime_kind: str = "HOST",
     image_digest: str | None = None,
+    image_reference: str | None = None,
     executor_kind: str = "LOCAL_PROCESS",
     agent_last_seen_at=None,
 ) -> ExecutionEnvironmentProfile:
@@ -53,6 +55,7 @@ def _environment(
         runtime_kind=runtime_kind,
         runtime_version="1",
         runtime_image_digest=image_digest,
+        runtime_image_reference=image_reference,
         scheduler="DOCKER_COMPOSE",
         capacity=ExecutionCapacity(
             cpu_cores=8,
@@ -145,7 +148,7 @@ def test_registry_rejects_tool_profile_not_explicitly_approved():
 
 
 def test_container_environment_requires_pinned_image_digest():
-    profile = _environment(uuid4(), runtime_kind="DOCKER")
+    profile = _environment(uuid4(), runtime_kind="DOCKER", executor_kind="CONTAINER")
 
     with pytest.raises(ExecutionEnvironmentError, match="pinned sha256 image digest"):
         profile.validate()
@@ -177,3 +180,66 @@ def test_offline_environment_cannot_allow_egress():
 
     with pytest.raises(ExecutionEnvironmentError, match="Offline environments"):
         unsafe.validate()
+
+
+
+def test_container_environment_requires_repository_digest_reference():
+    digest = "sha256:" + "b" * 64
+    profile = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+    )
+    with pytest.raises(ExecutionEnvironmentError, match="immutable repository"):
+        profile.validate()
+
+
+def test_container_environment_rejects_reference_digest_mismatch():
+    digest = "sha256:" + "b" * 64
+    profile = _environment(
+        uuid4(),
+        runtime_kind="PODMAN",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference="registry.example.org/siraloom/bcftools@sha256:" + "c" * 64,
+    )
+    with pytest.raises(ExecutionEnvironmentError, match="exactly match"):
+        profile.validate()
+
+
+def test_container_environment_snapshot_records_immutable_image_reference():
+    digest = "sha256:" + "b" * 64
+    reference = "registry.example.org/siraloom/bcftools@" + digest
+    profile = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference=reference,
+    )
+    assert profile.snapshot()["runtime_image_reference"] == reference
+
+
+
+def test_persisted_environment_snapshot_round_trips_runtime_contract():
+    original = _environment(uuid4())
+    restored = execution_environment_profile_from_snapshot(original.snapshot())
+    assert restored.snapshot() == original.snapshot()
+
+
+
+def test_container_environment_snapshot_round_trips_immutable_image_identity():
+    digest = "sha256:" + "d" * 64
+    reference = "registry.example.org/siraloom/bcftools@" + digest
+    original = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference=reference,
+    )
+    restored = execution_environment_profile_from_snapshot(original.snapshot())
+    assert restored.runtime_image_digest == digest
+    assert restored.runtime_image_reference == reference
+    assert restored.snapshot() == original.snapshot()

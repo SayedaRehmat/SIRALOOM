@@ -67,6 +67,7 @@ class ExecutionEnvironmentProfile:
     storage_profile_ids: tuple[str, ...]
     supported_tool_profile_ids: tuple[str, ...]
     network_policy: NetworkPolicy
+    runtime_image_reference: str | None = None
     tool_executable_sha256: tuple[tuple[str, str], ...] = ()
     allowed_egress_hosts: tuple[str, ...] = ()
     agent_id: str | None = None
@@ -87,6 +88,8 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError("Unknown execution environment network policy.")
         if self.executor_kind == "CONTAINER" and self.runtime_kind == "HOST":
             raise ExecutionEnvironmentError("Container execution requires a container runtime.")
+        if self.executor_kind == "LOCAL_PROCESS" and self.runtime_kind != "HOST":
+            raise ExecutionEnvironmentError("Local-process execution requires a HOST runtime profile.")
         required = {
             "environment_id": self.environment_id,
             "profile_version": self.profile_version,
@@ -114,14 +117,23 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError("Remote-agent environments require an agent identity.")
         if self.executor_kind != "REMOTE_AGENT" and self.agent_id is not None:
             raise ExecutionEnvironmentError("Only remote-agent environments may declare agent_id.")
-        if self.runtime_kind == "HOST" and self.runtime_image_digest is not None:
-            raise ExecutionEnvironmentError("Host runtime profiles cannot declare a container image digest.")
-        if self.runtime_kind != "HOST" and not re.fullmatch(
-            r"sha256:[0-9a-f]{64}", (self.runtime_image_digest or "").lower()
-        ):
-            raise ExecutionEnvironmentError(
-                "Container runtime profiles require a pinned sha256 image digest."
-            )
+        if self.runtime_kind == "HOST":
+            if self.runtime_image_digest is not None or self.runtime_image_reference is not None:
+                raise ExecutionEnvironmentError("Host runtime profiles cannot declare a container image.")
+        else:
+            digest = (self.runtime_image_digest or "").lower()
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                raise ExecutionEnvironmentError("Non-host runtime profiles require a pinned sha256 image digest.")
+            if self.executor_kind == "CONTAINER":
+                reference = self.runtime_image_reference or ""
+                if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@-]*@sha256:[0-9a-f]{64}", reference):
+                    raise ExecutionEnvironmentError("Container image reference must be an immutable repository@sha256:<digest> reference.")
+                if not reference.endswith("@" + digest):
+                    raise ExecutionEnvironmentError("Container image reference digest must exactly match runtime_image_digest.")
+                if self.runtime_kind not in {"DOCKER", "PODMAN"}:
+                    raise ExecutionEnvironmentError("Only Docker and Podman runtimes are supported for container execution.")
+            elif self.runtime_image_reference is not None and not self.runtime_image_reference.endswith("@" + digest):
+                raise ExecutionEnvironmentError("Runtime image reference digest must match runtime_image_digest.")
         if not self.workspace_root.startswith("/") or "\\x00" in self.workspace_root:
             raise ExecutionEnvironmentError("Environment workspace_root must be an absolute POSIX path.")
         self.capacity.validate()
@@ -218,6 +230,7 @@ class ExecutionEnvironmentProfile:
             "runtime_kind": self.runtime_kind,
             "runtime_version": self.runtime_version,
             "runtime_image_digest": self.runtime_image_digest,
+            "runtime_image_reference": self.runtime_image_reference,
             "scheduler": self.scheduler,
             "capacity": {
                 "cpu_cores": self.capacity.cpu_cores,
@@ -240,6 +253,44 @@ class ExecutionEnvironmentProfile:
             ),
             "qualification_status": self.qualification_status,
         }
+
+
+def execution_environment_profile_from_snapshot(snapshot: dict) -> ExecutionEnvironmentProfile:
+    """Rehydrate and validate an immutable persisted environment snapshot."""
+    try:
+        capacity_data = snapshot["capacity"]
+        heartbeat = snapshot.get("agent_last_seen_at")
+        profile = ExecutionEnvironmentProfile(
+            environment_id=snapshot["environment_id"],
+            profile_version=snapshot["profile_version"],
+            owner_scope=snapshot["owner_scope"],
+            organization_id=UUID(snapshot["organization_id"]) if snapshot.get("organization_id") else None,
+            executor_kind=snapshot["executor_kind"],
+            platform=snapshot["platform"],
+            operating_system=snapshot["operating_system"],
+            architecture=snapshot["architecture"],
+            kernel_release=snapshot["kernel_release"],
+            runtime_kind=snapshot["runtime_kind"],
+            runtime_version=snapshot["runtime_version"],
+            runtime_image_digest=snapshot.get("runtime_image_digest"),
+            scheduler=snapshot["scheduler"],
+            capacity=ExecutionCapacity(**capacity_data),
+            workspace_root=snapshot["workspace_root"],
+            storage_profile_ids=tuple(snapshot["storage_profile_ids"]),
+            supported_tool_profile_ids=tuple(snapshot["supported_tool_profile_ids"]),
+            network_policy=snapshot["network_policy"],
+            runtime_image_reference=snapshot.get("runtime_image_reference"),
+            tool_executable_sha256=tuple(sorted(snapshot.get("tool_executable_sha256", {}).items())),
+            allowed_egress_hosts=tuple(snapshot.get("allowed_egress_hosts", [])),
+            agent_id=snapshot.get("agent_id"),
+            agent_version=snapshot.get("agent_version"),
+            agent_last_seen_at=datetime.fromisoformat(heartbeat) if heartbeat else None,
+            qualification_status=snapshot["qualification_status"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ExecutionEnvironmentError("Persisted execution environment snapshot is incomplete or malformed.") from exc
+    profile.validate()
+    return profile
 
 
 @dataclass(frozen=True)
