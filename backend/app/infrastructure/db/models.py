@@ -1377,6 +1377,10 @@ class ToolExecutionRecord(Base):
     output_manifest: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
     provenance: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    lease_owner: Mapped[str | None] = mapped_column(Text)
+    lease_token: Mapped[str | None] = mapped_column(Text)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     exit_code: Mapped[int | None] = mapped_column(Integer)
     stdout_sha256: Mapped[str | None] = mapped_column(Text)
     stderr_sha256: Mapped[str | None] = mapped_column(Text)
@@ -1396,6 +1400,16 @@ class ToolExecutionRecord(Base):
         CheckConstraint(
             "length(executable_sha256) = 64",
             name="ck_tool_execution_executable_sha256_length",
+        ),
+        CheckConstraint(
+            "(status = 'RUNNING' AND lease_owner IS NOT NULL AND lease_token IS NOT NULL "
+            "AND lease_expires_at IS NOT NULL) OR status != 'RUNNING'",
+            name="ck_tool_execution_running_lease",
+        ),
+        CheckConstraint(
+            "status != 'SUCCEEDED' OR "
+            "(provenance IS NOT NULL AND exit_code = 0 AND completed_at IS NOT NULL)",
+            name="ck_tool_execution_success_has_provenance",
         ),
         Index("ix_tool_execution_analysis_created", "analysis_id", "created_at"),
         Index("ix_tool_execution_org_status_created", "organization_id", "status", "created_at"),
