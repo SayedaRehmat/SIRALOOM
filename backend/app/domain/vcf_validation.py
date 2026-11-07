@@ -1241,14 +1241,22 @@ def _validate_vcf45_structural_info(
                 if lower != upper:
                     raise StrictVCFValidationError(
                         f"INFO/{key} interval must provide both offsets or both missing values at line {line_no}",
-                        code="VCF_SV_INFO_INTERVAL_INVALID",
+                        code=(
+                            "VCF_BREAKEND_CIPOS_INVALID"
+                            if key == "CIPOS" and _is_vcf45_breakend_alt(alternate)
+                            else "VCF_SV_INFO_INTERVAL_INVALID"
+                        ),
                     )
                 continue
             lower_offset, upper_offset = int(lower), int(upper)
             if key == "CIPOS" and (lower_offset > 0 or upper_offset < 0):
                 raise StrictVCFValidationError(
                     f"INFO/CIPOS interval must span zero at line {line_no}",
-                    code="VCF_SV_INFO_INTERVAL_INVALID",
+                    code=(
+                        "VCF_BREAKEND_CIPOS_INVALID"
+                        if _is_vcf45_breakend_alt(alternate)
+                        else "VCF_SV_INFO_INTERVAL_INVALID"
+                    ),
                 )
             if key == "CIEND":
                 symbolic_sv = bool(SYMBOLIC_RE.fullmatch(alternate)) and alternate not in {"<*>", "<NON_REF>"}
@@ -1276,6 +1284,7 @@ def _validate_vcf45_structural_info(
             for index, alternate in enumerate(alts)
             if alternate not in {".", "*", "<*>", "<NON_REF>"}
             and not SYMBOLIC_RE.fullmatch(alternate)
+            and not _is_vcf45_breakend_alt(alternate)
         ]
         for alt_index in precise_alt_indexes:
             pair = (
