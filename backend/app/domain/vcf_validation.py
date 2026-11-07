@@ -2339,6 +2339,15 @@ def validate_vcf_strict(
                     for alt_index, parid in parid_by_alt.items():
                         if alt_index in all_breakend_alt_indexes:
                             unresolved_breakend_partner_links.append({
+                                "source": {
+                                    "record_id": fields[2],
+                                    "line_number": line_no,
+                                    "chrom": _chrom,
+                                    "pos": _pos,
+                                    "alt_index": alt_index + 1,
+                                    "alt": alts[alt_index],
+                                    "parid": parid,
+                                },
                                 "record_id": fields[2],
                                 "line_number": line_no,
                                 "chrom": _chrom,
