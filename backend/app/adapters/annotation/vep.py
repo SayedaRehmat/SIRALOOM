@@ -277,11 +277,17 @@ class VEPProvider(ScientificResourceProvider):
                     resources=resource_bindings,
                     timeout_seconds=300,
                 )
-                persistent_result = self.persistent_execution_service.execute(
-                    profile,
-                    tool_request,
-                    artifact_publisher=self.persistent_artifact_publisher,
-                )
+                try:
+                    persistent_result = self.persistent_execution_service.execute(
+                        profile,
+                        tool_request,
+                        artifact_publisher=self.persistent_artifact_publisher,
+                    )
+                except Exception as exc:
+                    raise VEPProviderError(
+                        f"Persistent VEP execution failed: {exc}",
+                        retryable=bool(getattr(exc, "retryable", False)),
+                    ) from exc
                 stdout = persistent_result.result.stdout
                 stderr = persistent_result.result.stderr
                 execution_record_id = str(persistent_result.record_id)
