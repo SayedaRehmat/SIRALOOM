@@ -12,6 +12,8 @@ dependencies = [
   "uvicorn[standard]>=0.30,<1",
   "pydantic>=2.8,<3",
   "pydantic-settings>=2.4,<3",
+  "phenopackets==2.0.2.post5",
+  "fhir.resources==8.3.0",
   "sqlalchemy>=2.0,<3",
   "psycopg[binary]>=3.2,<4",
   "alembic>=1.13,<2",

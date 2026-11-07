@@ -2,11 +2,12 @@ import hashlib
 import json
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -20,14 +21,18 @@ from backend.app.auth.authorization import (
 )
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.case_change import create_case_change_candidates
+from backend.app.domain.clinical_input_snapshot import validate_case_clinical_input_snapshot
 from backend.app.domain.provider_registry import ProviderRegistryError, register_builtin_providers
 from backend.app.domain.resource_capabilities import CapabilityRequirement, ResourceCapability
 from backend.app.domain.resource_execution import ResourceExecutionError, resolve_resource_execution
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
+from backend.app.adapters.phenotype.phenopackets_v2 import PhenopacketExportError, build_phenopackets_v2
+from backend.app.adapters.phenotype.fhir_r5 import FHIRExportError, build_fhir_r5_bundle
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, PedigreeMember, PhenotypeObservation, WorkflowStep,
+    Analysis, Case, ClinicalIntakeRevision, PedigreeMember, PedigreeRelationship,
+    PhenotypeObservation, PhenotypeObservationAmendment, WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.phenotype import normalize_hpo_id
@@ -137,6 +142,8 @@ class PhenotypeInput(BaseModel):
     clinical_attributes: dict[str, Any] = Field(default_factory=dict)
     source: str = Field(default="CLINICAL_INPUT", min_length=1, max_length=100)
     evidence: dict = Field(default_factory=dict)
+    supersedes_observation_id: UUID | None = None
+    amendment_reason: str | None = Field(default=None, max_length=2000)
 
     @model_validator(mode="before")
     @classmethod
@@ -160,6 +167,23 @@ class PhenotypeInput(BaseModel):
         if self.present is not None and self.present != (self.phenotype_status == "PRESENT"):
             raise ValueError("phenotype_status conflicts with legacy present flag")
         self.clinical_attributes = _validate_clinical_attributes(self.clinical_attributes)
+        if self.amendment_reason is not None:
+            self.amendment_reason = self.amendment_reason.strip() or None
+        if self.supersedes_observation_id is not None and not self.amendment_reason:
+            raise ValueError("Superseding a phenotype observation requires a documented correction reason")
+        if self.supersedes_observation_id is None and self.amendment_reason:
+            raise ValueError("amendment_reason is valid only when supersedes_observation_id is supplied")
+        return self
+
+
+class PhenotypeRetractionInput(BaseModel):
+    reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def normalize_reason(self):
+        self.reason = self.reason.strip()
+        if not self.reason:
+            raise ValueError("A clinical retraction reason is required")
         return self
 
 
@@ -209,6 +233,8 @@ def _phenotype_record_fingerprint(body: PhenotypeInput) -> str:
         "clinical_attributes": body.clinical_attributes,
         "source": body.source,
         "evidence": body.evidence,
+        "supersedes_observation_id": str(body.supersedes_observation_id) if body.supersedes_observation_id else None,
+        "amendment_reason": body.amendment_reason,
     }
     canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -267,7 +293,38 @@ def _resolution_bundle(db: Session, case: Case, body: PhenotypeInput):
     }
 
 
-def _payload(row):
+
+
+def _amendment_fingerprint(
+    case_id: UUID, observation_id: UUID, replacement_observation_id: UUID | None,
+    amendment_type: str, reason: str, recorded_by: UUID,
+) -> str:
+    material = {
+        "case_id": str(case_id),
+        "observation_id": str(observation_id),
+        "replacement_observation_id": str(replacement_observation_id) if replacement_observation_id else None,
+        "amendment_type": amendment_type,
+        "reason": reason,
+        "recorded_by": str(recorded_by),
+    }
+    canonical = json.dumps(material, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _amendment_payload(row: PhenotypeObservationAmendment) -> dict[str, Any]:
+    return {
+        "amendment_id": str(row.id),
+        "case_id": str(row.case_id),
+        "observation_id": str(row.observation_id),
+        "replacement_observation_id": str(row.replacement_observation_id) if row.replacement_observation_id else None,
+        "amendment_type": row.amendment_type,
+        "reason": row.reason,
+        "recorded_by": str(row.recorded_by),
+        "recorded_at": row.recorded_at.isoformat(),
+    }
+
+
+def _payload(row, amendment: PhenotypeObservationAmendment | None = None):
     legacy_present = (
         True if row.phenotype_status == "PRESENT"
         else False if row.phenotype_status in {"ABSENT", "EXCLUDED"}
@@ -291,6 +348,12 @@ def _payload(row):
         "source": row.source,
         "evidence": row.evidence or {},
         "created_at": row.created_at.isoformat(),
+        "record_lifecycle_status": amendment.amendment_type if amendment else "ACTIVE",
+        "amendment_id": str(amendment.id) if amendment else None,
+        "amendment_reason": amendment.reason if amendment else None,
+        "replacement_observation_id": str(amendment.replacement_observation_id) if amendment and amendment.replacement_observation_id else None,
+        "amendment_recorded_by": str(amendment.recorded_by) if amendment else None,
+        "amendment_recorded_at": amendment.recorded_at.isoformat() if amendment else None,
     }
 
 
@@ -354,7 +417,17 @@ def list_case_phenotypes(
             member = db.get(PedigreeMember, row.subject_member_id)
             if member is None or member.case_id != case.id:
                 raise HTTPException(409, "Phenotype subject does not match its case")
-    return {"case_id": str(case_id), "count": len(rows), "phenotypes": [_payload(r) for r in rows]}
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in rows])
+        )
+    ).all() if rows else []
+    amendment_by_observation = {item.observation_id: item for item in amendments}
+    return {
+        "case_id": str(case_id),
+        "count": len(rows),
+        "phenotypes": [_payload(row, amendment_by_observation.get(row.id)) for row in rows],
+    }
 
 
 @router.post("/cases/{case_id}/phenotypes", status_code=201)
@@ -364,7 +437,6 @@ def add_case_phenotype(
     db: Session = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    # Serialize phenotype changes against report sign-out and snapshot capture.
     case = db.get(Case, case_id, with_for_update=True)
     if not case:
         raise HTTPException(404, "Case not found")
@@ -388,92 +460,197 @@ def add_case_phenotype(
             )
         )
         if evidence_step is not None and (evidence_step.metadata_json or {}).get("clinical_input_snapshot") is not None:
-            raise HTTPException(
-                409,
-                "Clinical phenotype input is frozen for an active analysis because its evidence-stage snapshot has already been persisted. Wait for the analysis to reach a terminal state, then record the new observation and request reanalysis.",
-            )
+            raise HTTPException(409, "Clinical phenotype input is frozen for an active analysis snapshot")
     if body.subject_member_id is not None:
         member = db.get(PedigreeMember, body.subject_member_id)
         if member is None or member.case_id != case.id:
             raise HTTPException(400, "Phenotype subject must be a pedigree member in this case")
-    canonical_hpo_id, ontology_resolution = _resolution_bundle(db, case, body)
+
     record_fingerprint = _phenotype_record_fingerprint(body)
-    row = db.scalar(
+    existing_record = db.scalar(
         select(PhenotypeObservation).where(
             PhenotypeObservation.case_id == case_id,
             PhenotypeObservation.analysis_id.is_(None),
             PhenotypeObservation.record_fingerprint == record_fingerprint,
         )
     )
-    if row:
-        return _payload(row)
-    present = body.phenotype_status == "PRESENT"
+    if existing_record is not None:
+        return _payload(existing_record)
+
+    superseded_row = None
+    if body.supersedes_observation_id is not None:
+        superseded_row = db.get(
+            PhenotypeObservation, body.supersedes_observation_id, with_for_update=True
+        )
+        if superseded_row is None or superseded_row.case_id != case.id:
+            raise HTTPException(404, "Phenotype observation to supersede was not found in this case")
+        if superseded_row.analysis_id is not None:
+            raise HTTPException(409, "Analysis-scoped phenotype observations are immutable")
+        if superseded_row.subject_member_id != body.subject_member_id:
+            raise HTTPException(409, "A phenotype correction must retain the original observation subject")
+        existing_amendment = db.scalar(
+            select(PhenotypeObservationAmendment).where(
+                PhenotypeObservationAmendment.observation_id == superseded_row.id
+            )
+        )
+        if existing_amendment is not None:
+            raise HTTPException(409, "This phenotype observation has already been superseded or retracted")
+
+    canonical_hpo_id, ontology_resolution = _resolution_bundle(db, case, body)
     row = PhenotypeObservation(
-        id=uuid4(),
-        case_id=case_id,
-        analysis_id=None,
-        subject_member_id=body.subject_member_id,
-        hpo_id=body.hpo_id,
-        canonical_hpo_id=canonical_hpo_id,
-        record_fingerprint=record_fingerprint,
-        label=body.label,
-        present=present,
-        phenotype_status=body.phenotype_status,
-        onset=body.onset,
-        severity=body.severity,
-        observed_at=body.observed_at,
-        clinical_attributes=body.clinical_attributes,
-        ontology_resolution=ontology_resolution,
-        source=body.source,
-        evidence=body.evidence,
+        id=uuid4(), case_id=case_id, analysis_id=None,
+        subject_member_id=body.subject_member_id, hpo_id=body.hpo_id,
+        canonical_hpo_id=canonical_hpo_id, record_fingerprint=record_fingerprint,
+        label=body.label, present=body.phenotype_status == "PRESENT",
+        phenotype_status=body.phenotype_status, onset=body.onset, severity=body.severity,
+        observed_at=body.observed_at, clinical_attributes=body.clinical_attributes,
+        ontology_resolution=ontology_resolution, source=body.source, evidence=body.evidence,
     )
+    amendment = None
     try:
         with db.begin_nested():
             db.add(row)
             db.flush()
+            if superseded_row is not None:
+                amendment = PhenotypeObservationAmendment(
+                    id=uuid4(), case_id=case.id, observation_id=superseded_row.id,
+                    replacement_observation_id=row.id, amendment_type="SUPERSEDED",
+                    reason=body.amendment_reason,
+                    amendment_fingerprint=_amendment_fingerprint(
+                        case.id, superseded_row.id, row.id, "SUPERSEDED",
+                        body.amendment_reason, principal.user_id,
+                    ),
+                    recorded_by=principal.user_id,
+                )
+                db.add(amendment)
+                db.flush()
     except IntegrityError:
-        existing = db.scalar(
+        existing_record = db.scalar(
             select(PhenotypeObservation).where(
                 PhenotypeObservation.case_id == case_id,
                 PhenotypeObservation.analysis_id.is_(None),
                 PhenotypeObservation.record_fingerprint == record_fingerprint,
             )
         )
-        if existing is not None:
-            return _payload(existing)
-        raise
+        if existing_record is not None:
+            return _payload(existing_record)
+        raise HTTPException(409, "Phenotype observation was concurrently amended; refresh the case and retry")
+
     AuditService(db).record(
-        event_type="PHENOTYPE_ADDED",
-        case_id=case_id,
-        analysis_id=None,
-        actor_type="HUMAN",
-        actor_id=str(principal.user_id),
-        subject_type="PHENOTYPE",
-        subject_id=str(row.id),
-        operation="CREATE",
+        event_type="PHENOTYPE_SUPERSEDED" if superseded_row is not None else "PHENOTYPE_ADDED",
+        case_id=case_id, analysis_id=None, actor_type="HUMAN",
+        actor_id=str(principal.user_id), subject_type="PHENOTYPE",
+        subject_id=str(superseded_row.id if superseded_row is not None else row.id),
+        operation="SUPERSEDE" if superseded_row is not None else "CREATE",
         after_state={
-            "hpo_id": body.hpo_id,
-            "canonical_hpo_id": canonical_hpo_id,
+            "hpo_id": body.hpo_id, "canonical_hpo_id": canonical_hpo_id,
             "phenotype_status": body.phenotype_status,
             "subject_member_id": str(body.subject_member_id) if body.subject_member_id else None,
+            "replacement_observation_id": str(row.id) if superseded_row is not None else None,
+            "amendment_fingerprint": amendment.amendment_fingerprint if amendment is not None else None,
             "ontology_resolution": ontology_resolution,
         },
     )
     create_case_change_candidates(
-        db,
-        case=case,
-        trigger_type="PHENOTYPE_UPDATE",
-        reason=f"Phenotype {body.hpo_id} was added to case {case.case_identifier}; completed analyses may require reanalysis.",
+        db, case=case, trigger_type="PHENOTYPE_UPDATE",
+        reason=(
+            f"Phenotype observation {superseded_row.id} was superseded by {row.id}; completed analyses may require reanalysis."
+            if superseded_row is not None
+            else f"Phenotype {body.hpo_id} was added to case {case.case_identifier}; completed analyses may require reanalysis."
+        ),
         metadata={
-            "hpo_id": body.hpo_id,
-            "canonical_hpo_id": canonical_hpo_id,
-            "phenotype_status": body.phenotype_status,
-            "phenotype_id": str(row.id),
+            "hpo_id": body.hpo_id, "canonical_hpo_id": canonical_hpo_id,
+            "phenotype_status": body.phenotype_status, "phenotype_id": str(row.id),
+            "supersedes_observation_id": str(superseded_row.id) if superseded_row is not None else None,
+            "amendment_id": str(amendment.id) if amendment is not None else None,
             "subject_member_id": str(body.subject_member_id) if body.subject_member_id else None,
         },
     )
     db.commit()
     return _payload(row)
+
+
+@router.post("/cases/{case_id}/phenotypes/{phenotype_id}/retractions", status_code=201)
+def retract_case_phenotype(
+    case_id: UUID, phenotype_id: UUID, body: PhenotypeRetractionInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    active_analyses = db.scalars(
+        select(Analysis).where(
+            Analysis.case_id == case_id,
+            Analysis.status.in_((
+                "CREATED", "QUEUED", "PENDING", "RUNNING", "RETRYING",
+                "REQUIRES_REVIEW", "BLOCKED", "RESOURCE_FAILURE", "CANCEL_REQUESTED",
+            )),
+        )
+    ).all()
+    for active_analysis in active_analyses:
+        evidence_step = db.scalar(
+            select(WorkflowStep).where(
+                WorkflowStep.analysis_id == active_analysis.id,
+                WorkflowStep.step_id == "build_evidence",
+            )
+        )
+        if evidence_step is not None and (evidence_step.metadata_json or {}).get("clinical_input_snapshot") is not None:
+            raise HTTPException(409, "Clinical phenotype input is frozen for an active analysis snapshot")
+    observation = db.get(PhenotypeObservation, phenotype_id, with_for_update=True)
+    if observation is None or observation.case_id != case.id:
+        raise HTTPException(404, "Phenotype observation not found in this case")
+    if observation.analysis_id is not None:
+        raise HTTPException(409, "Analysis-scoped phenotype observations are immutable")
+    fingerprint = _amendment_fingerprint(
+        case.id, observation.id, None, "RETRACTED", body.reason, principal.user_id
+    )
+    existing = db.scalar(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id == observation.id
+        )
+    )
+    if existing is not None:
+        if existing.amendment_fingerprint == fingerprint:
+            return _amendment_payload(existing)
+        raise HTTPException(409, "This phenotype observation has already been superseded or retracted")
+    amendment = PhenotypeObservationAmendment(
+        id=uuid4(), case_id=case.id, observation_id=observation.id,
+        replacement_observation_id=None, amendment_type="RETRACTED",
+        reason=body.reason, amendment_fingerprint=fingerprint,
+        recorded_by=principal.user_id,
+    )
+    try:
+        with db.begin_nested():
+            db.add(amendment)
+            db.flush()
+    except IntegrityError:
+        existing = db.scalar(
+            select(PhenotypeObservationAmendment).where(
+                PhenotypeObservationAmendment.observation_id == observation.id
+            )
+        )
+        if existing is not None and existing.amendment_fingerprint == fingerprint:
+            return _amendment_payload(existing)
+        raise HTTPException(409, "Phenotype observation was concurrently amended; refresh the case and retry")
+    AuditService(db).record(
+        event_type="PHENOTYPE_RETRACTED", case_id=case.id, analysis_id=None,
+        actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PHENOTYPE", subject_id=str(observation.id), operation="RETRACT",
+        after_state={"phenotype_id": str(observation.id), "hpo_id": observation.hpo_id,
+                     "amendment_id": str(amendment.id), "amendment_fingerprint": fingerprint},
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PHENOTYPE_UPDATE",
+        reason=f"Phenotype observation {observation.id} was retracted; completed analyses may require reanalysis.",
+        metadata={"phenotype_id": str(observation.id), "amendment_id": str(amendment.id),
+                  "amendment_type": "RETRACTED"},
+    )
+    db.commit()
+    return _amendment_payload(amendment)
 
 
 @router.get("/analyses/{analysis_id}/phenotypes")
@@ -490,8 +667,387 @@ def list_analysis_phenotypes(
             | (PhenotypeObservation.analysis_id.is_(None)),
         ).order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
     ).all()
+    evidence_step = db.scalar(
+        select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis.id,
+            WorkflowStep.step_id == "build_evidence",
+        )
+    )
+    snapshot = (evidence_step.metadata_json or {}).get("clinical_input_snapshot") if evidence_step else None
+    if snapshot is not None:
+        validated = validate_case_clinical_input_snapshot(snapshot)
+        snapshot_rows = validated["phenotype_observations"]
+        return {
+            "analysis_id": str(analysis_id),
+            "count": len(snapshot_rows),
+            "phenotypes": snapshot_rows,
+            "snapshot_sha256": (evidence_step.metadata_json or {}).get("clinical_input_snapshot_sha256"),
+        }
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in rows])
+        )
+    ).all() if rows else []
+    amendment_by_observation = {item.observation_id: item for item in amendments}
     return {
         "analysis_id": str(analysis_id),
         "count": len(rows),
-        "phenotypes": [_payload(r) for r in rows],
+        "phenotypes": [_payload(row, amendment_by_observation.get(row.id)) for row in rows],
     }
+
+
+
+_INTERNAL_EXPORT_KEYS = {
+    "case_id", "analysis_id", "member_id", "parent_member_id", "child_member_id",
+    "specimen_id", "artifact_id", "user_id", "recorded_by", "created_by",
+    "revision_id", "resource_id", "qualification_id", "execution_id", "provider_id",
+}
+
+
+def _sanitize_export_sidecar(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_export_sidecar(item)
+            for key, item in value.items()
+            if key not in _INTERNAL_EXPORT_KEYS
+        }
+    if isinstance(value, list):
+        return [_sanitize_export_sidecar(item) for item in value]
+    return value
+
+
+def _server_utc_iso(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None or value.utcoffset() is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _clinical_intake_export_payload(row: ClinicalIntakeRevision | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    context = dict(row.context or {})
+    prior_testing = []
+    for item in context.get("prior_testing", []) or []:
+        if not isinstance(item, dict):
+            continue
+        exported = _sanitize_export_sidecar(item)
+        if item.get("artifact_id"):
+            exported["artifact_reference_present"] = True
+        prior_testing.append(exported)
+    if "prior_testing" in context:
+        context["prior_testing"] = prior_testing
+    return {
+        "version": row.version,
+        "schema_version": row.schema_version,
+        "revision_fingerprint": row.revision_fingerprint,
+        "intake_status": row.intake_status,
+        "phenotype_review_status": row.phenotype_review_status,
+        "family_history_review_status": row.family_history_review_status,
+        "context": context,
+        "phenotype_review_note": row.phenotype_review_note,
+        "family_history_review_note": row.family_history_review_note,
+        "completion_note": row.completion_note,
+        "recorded_at": _server_utc_iso(row.recorded_at),
+    }
+
+
+
+
+
+def _active_export_observations(
+    observations: list[PhenotypeObservation],
+    amendments_by_observation: dict[UUID, PhenotypeObservationAmendment],
+) -> list[PhenotypeObservation]:
+    """Only current, non-amended clinical assertions enter standards documents."""
+    return [row for row in observations if row.id not in amendments_by_observation]
+
+
+def _phenotype_export_sidecar(
+    observations: list[PhenotypeObservation],
+    members: list[PedigreeMember],
+    amendments_by_observation: dict[UUID, PhenotypeObservationAmendment] | None = None,
+) -> list[dict[str, Any]]:
+    member_identifiers = {str(member.id): member.member_identifier for member in members}
+    amendments = amendments_by_observation or {}
+    observation_by_id = {row.id: row for row in observations}
+    exported = []
+    for row in observations:
+        subject_member_id = (
+            member_identifiers.get(str(row.subject_member_id))
+            if row.subject_member_id is not None else None
+        )
+        if row.subject_member_id is not None and subject_member_id is None:
+            raise HTTPException(409, "Phenotype observation references a family member outside this case")
+        amendment = amendments.get(row.id)
+        replacement = (
+            observation_by_id.get(amendment.replacement_observation_id)
+            if amendment is not None and amendment.replacement_observation_id is not None
+            else None
+        )
+        exported.append({
+            "record_fingerprint": row.record_fingerprint,
+            "subject_member_identifier": subject_member_id,
+            "hpo_id": row.hpo_id,
+            "canonical_hpo_id": row.canonical_hpo_id,
+            "label": row.label,
+            "phenotype_status": row.phenotype_status,
+            "present": row.present,
+            "onset": row.onset,
+            "severity": row.severity,
+            "observed_at": row.observed_at.isoformat() if row.observed_at else None,
+            "created_at": _server_utc_iso(row.created_at),
+            "clinical_attributes": _sanitize_export_sidecar(row.clinical_attributes or {}),
+            "ontology_resolution": _sanitize_export_sidecar(row.ontology_resolution or {}),
+            "source": row.source,
+            "evidence": _sanitize_export_sidecar(row.evidence or {}),
+            "record_lifecycle_status": amendment.amendment_type if amendment else "ACTIVE",
+            "amendment_reason": amendment.reason if amendment else None,
+            "amendment_recorded_at": _server_utc_iso(amendment.recorded_at) if amendment else None,
+            "replacement_record_fingerprint": replacement.record_fingerprint if replacement else None,
+        })
+    return exported
+
+def _pedigree_export_sidecar(
+    case: Case,
+    members: list[PedigreeMember],
+    relationships: list[PedigreeRelationship],
+    clinical_intake_revision: ClinicalIntakeRevision | None,
+) -> dict[str, Any]:
+    identifiers = {str(member.id): member.member_identifier for member in members}
+    consanguinity_values = []
+    sources = [getattr(case, "clinical_context", None) or {}]
+    sources.extend(member.metadata_json or {} for member in members)
+    sources.extend(relationship.metadata_json or {} for relationship in relationships)
+    if clinical_intake_revision is not None:
+        sources.append(clinical_intake_revision.context or {})
+    for source in sources:
+        if isinstance(source, dict) and "consanguinous_parents" in source:
+            consanguinity_values.append(source["consanguinous_parents"])
+    consanguinous_parents = consanguinity_values[0] if consanguinity_values else None
+    return {
+        "consanguinous_parents": (
+            consanguinous_parents if consanguinous_parents is not None else "NOT_RECORDED"
+        ),
+        "members": [
+            {
+                "member_identifier": member.member_identifier,
+                "phenopacket_subject_id": (
+                    f"SIRALOOM:{uuid5(NAMESPACE_URL, f'siraloom:pedigree-member:{member.id}')}"
+                ),
+                "relationship_to_proband": member.relationship_to_proband,
+                "sex": member.sex,
+                "affected_status": member.affected_status,
+                "is_proband": member.is_proband,
+                "sampled": member.sampled,
+                "specimen_reference_present": member.specimen_id is not None,
+                "metadata": _sanitize_export_sidecar(member.metadata_json or {}),
+            }
+            for member in members
+        ],
+        "relationships": [
+            {
+                "parent_member_identifier": identifiers.get(str(row.parent_member_id)),
+                "child_member_identifier": identifiers.get(str(row.child_member_id)),
+                "relationship_type": row.relationship_type,
+                "metadata": _sanitize_export_sidecar(row.metadata_json or {}),
+            }
+            for row in relationships
+        ],
+    } if members else {"members": [], "relationships": []}
+
+@router.get("/cases/{case_id}/phenopackets-v2")
+def export_case_phenopackets_v2(
+    case_id: UUID,
+    allow_lossy: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export the case as a GA4GH Phenopacket v2 or Family document.
+
+    The response envelope carries the schema-validated GA4GH document and
+    explicit loss warnings. Strict export is the default.
+    """
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in observations])
+        )
+    ).all() if observations else []
+    amendments_by_observation = {row.observation_id: row for row in amendments}
+    active_observations = _active_export_observations(observations, amendments_by_observation)
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
+
+    try:
+        document, warnings = build_phenopackets_v2(
+            case=case,
+            phenotype_observations=active_observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
+            allow_lossy=allow_lossy,
+        )
+    except PhenopacketExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "GA4GH_PHENOPACKETS",
+            "schema_version": "2.0",
+            "lossy": bool(warnings),
+            "warning_count": len(warnings),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
+        },
+        payload={
+            "allow_lossy": allow_lossy,
+            "warning_fields": sorted({item["field"] for item in warnings}),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+        },
+    )
+    db.commit()
+    return {
+        "format": "GA4GH_PHENOPACKETS",
+        "schema_version": "2.0",
+        "lossy": bool(warnings),
+        "warnings": warnings,
+        "clinical_intake_revision": _clinical_intake_export_payload(clinical_intake_revision),
+        "phenotype_observation_sidecar": _phenotype_export_sidecar(observations, members, amendments_by_observation),
+        "pedigree_sidecar": _pedigree_export_sidecar(
+            case, members, relationships, clinical_intake_revision
+        ),
+        "document": document,
+    }
+
+
+@router.get("/cases/{case_id}/fhir-r5/phenotypes")
+def export_case_phenotypes_fhir_r5(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Export phenotype and family context as a validated HL7 FHIR R5 Bundle."""
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_case_permission(case, principal, db, "read")
+
+    observations = list(db.scalars(
+        select(PhenotypeObservation)
+        .where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.analysis_id.is_(None),
+        )
+        .order_by(PhenotypeObservation.created_at, PhenotypeObservation.id)
+    ))
+    amendments = db.scalars(
+        select(PhenotypeObservationAmendment).where(
+            PhenotypeObservationAmendment.observation_id.in_([row.id for row in observations])
+        )
+    ).all() if observations else []
+    amendments_by_observation = {row.observation_id: row for row in amendments}
+    active_observations = _active_export_observations(observations, amendments_by_observation)
+    members = list(db.scalars(
+        select(PedigreeMember)
+        .where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship)
+        .where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at, PedigreeRelationship.id)
+    ))
+    clinical_intake_revision = db.scalar(
+        select(ClinicalIntakeRevision)
+        .where(ClinicalIntakeRevision.case_id == case_id)
+        .order_by(ClinicalIntakeRevision.version.desc())
+        .limit(1)
+    )
+
+    try:
+        bundle = build_fhir_r5_bundle(
+            case=case,
+            phenotype_observations=active_observations,
+            pedigree_members=members,
+            pedigree_relationships=relationships,
+            clinical_intake_revision=clinical_intake_revision,
+        )
+    except FHIRExportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    AuditService(db).record(
+        event_type="CLINICAL_INTEROPERABILITY_EXPORT",
+        case_id=case_id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case_id),
+        operation="EXPORT",
+        after_state={
+            "format": "HL7_FHIR_R5",
+            "fhir_version": "5.0.0",
+            "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+            "clinical_intake_revision_version": (
+                clinical_intake_revision.version if clinical_intake_revision is not None else None
+            ),
+        },
+        payload={
+            "format": "HL7_FHIR_R5",
+            "resource_count": len(bundle.get("entry", [])),
+            "clinical_intake_revision_id": (
+                str(clinical_intake_revision.id) if clinical_intake_revision is not None else None
+            ),
+        },
+    )
+    db.commit()
+    return JSONResponse(content=bundle, media_type="application/fhir+json")
