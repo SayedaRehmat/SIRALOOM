@@ -310,6 +310,7 @@ def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
     assert len(result["unresolved_breakend_partner_links"]) == 0
     orientations = {
         (
+            endpoint["orientation"]["local_replacement"],
             endpoint["orientation"]["remote_piece_direction"],
             endpoint["orientation"]["remote_piece_reverse_complemented"],
             endpoint["orientation"]["joined_side"],
@@ -318,10 +319,10 @@ def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
         for endpoint in (link["source"], link["partner"])
     }
     assert orientations == {
-        ("LEFT", "true", "AFTER_LOCAL_REPLACEMENT"),
-        ("RIGHT", "false", "AFTER_LOCAL_REPLACEMENT"),
-        ("RIGHT", "true", "BEFORE_LOCAL_REPLACEMENT"),
-        ("LEFT", "false", "BEFORE_LOCAL_REPLACEMENT"),
+        ("T", "LEFT", "true", "AFTER_LOCAL_REPLACEMENT"),
+        ("G", "RIGHT", "false", "AFTER_LOCAL_REPLACEMENT"),
+        ("C", "RIGHT", "true", "BEFORE_LOCAL_REPLACEMENT"),
+        ("A", "LEFT", "false", "BEFORE_LOCAL_REPLACEMENT"),
     }
     event_group = result["breakend_event_groups"][0]
     assert event_group["event_id"] == "TRA1"
