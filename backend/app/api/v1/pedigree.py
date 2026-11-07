@@ -1381,7 +1381,7 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
         # Store only neutral pointers to the immutable matrix snapshot and the
         # separately labeled manual review notes; neither is a calculated
         # segregation or inheritance criterion.
-        payload={"model":model,"status":"REQUIRES_REVIEW","observations_available":result["observations_available"],"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_snapshot_id":str(family_matrix_snapshot_id) if family_matrix_snapshot_id else None,"family_matrix_binding_ids":[str(value) for value in body.binding_ids],"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW","manual_segregation_rows_excluded":True,"manual_segregation_observation_ids":[str(r.id) for r in rows]}
+        payload={"model":model,"status":"REQUIRES_REVIEW","observations_available":result["observations_available"],"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_snapshot_id":str(family_matrix_snapshot_id) if family_matrix_snapshot_id else None,"family_matrix_binding_ids":sorted(str(value) for value in body.binding_ids),"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW","manual_segregation_rows_excluded":True,"manual_segregation_observation_ids":[str(r.id) for r in rows]}
         evidence_fingerprint=hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==evidence_fingerprint)
         if not db.scalar(stmt):
