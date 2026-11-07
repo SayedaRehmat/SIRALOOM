@@ -37,6 +37,7 @@ class _BindingDB:
         self.added = []
         self.commits = 0
         self.refresh_calls = []
+        self.query_rows = []
 
     def get(self, model, _identifier, **_kwargs):
         return self.objects.get(model)
@@ -52,6 +53,9 @@ class _BindingDB:
             result, self.workflow = self.workflow, None
             return result
         return None
+
+    def scalars(self, _statement):
+        return _Rows(self.query_rows.pop(0))
 
     def add(self, row):
         self.added.append(row)
@@ -194,6 +198,22 @@ def test_sample_binding_review_appends_verified_revision_only_after_normalizatio
         artifact=artifact, previous=previous, workflow=workflow,
     )
     db.scalar_results = [None]
+    db.query_rows = [[
+        SimpleNamespace(
+            id=uuid4(), evidence_type="CHAIN_OF_CUSTODY", result="PASS",
+            method="LIMS_CHAIN_OF_CUSTODY", method_version="1",
+            evidence_reference="LIMS-ACCESSION-1", evidence_fingerprint="e" * 64,
+            review_status="ACCEPTED", reviewed_by=principal.user_id, reviewed_at=None,
+            supersedes_evidence_id=None,
+        ),
+        SimpleNamespace(
+            id=uuid4(), evidence_type="SAMPLE_IDENTITY_QC", result="PASS",
+            method="SNP_FINGERPRINT_CONCORDANCE", method_version="2",
+            evidence_reference="IDENTITY-QC-REPORT-1", evidence_fingerprint="f" * 64,
+            review_status="ACCEPTED", reviewed_by=principal.user_id, reviewed_at=None,
+            supersedes_evidence_id=None,
+        ),
+    ]]
     monkeypatch.setattr(
         pedigree, "get_analysis_sample_calls",
         lambda *_args: {uuid4(): {"sample_name": "FAM-01", "genotype": "./."}},
