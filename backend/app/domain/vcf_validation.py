@@ -2986,7 +2986,10 @@ def validate_vcf_strict(
             by_ordinal: dict[int, list[dict[str, object]]] = {}
             for observation in observations:
                 raw_ordinal = observation["pso"]
-                if raw_ordinal in {"", "."}:
+                # PSO orders variant alleles encountered on the derivative
+                # chromosome; reference GT alleles are not traversal events.
+                allele_index = observation["allele_index"]
+                if raw_ordinal in {"", "."} or allele_index is None or int(allele_index) == 0:
                     continue
                 ordinal = int(str(raw_ordinal))
                 by_ordinal.setdefault(ordinal, []).append(observation)
