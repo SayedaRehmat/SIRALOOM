@@ -12,6 +12,7 @@ type Props = {
 };
 type Member = { id: string; member_identifier: string; is_proband?: boolean };
 type Specimen = { specimen_id: string; specimen_identifier: string; specimen_type: string };
+type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; sha256: string; validation_status?: string | null };
 type SourceVcf = {
   artifact_id: string;
   filename: string;
@@ -73,6 +74,7 @@ export default function FamilySampleIdentityWorkbench({
   const [members, setMembers] = useState<Member[]>([]);
   const [specimens, setSpecimens] = useState<Specimen[]>([]);
   const [analyses, setAnalyses] = useState<AnalysisCandidate[]>([]);
+  const [artifacts, setArtifacts] = useState<CaseArtifact[]>([]);
   const [bindings, setBindings] = useState<Binding[]>([]);
   const [evidenceByBinding, setEvidenceByBinding] = useState<Record<string, IdentityEvidence[]>>({});
   const [memberId, setMemberId] = useState("");
@@ -87,6 +89,7 @@ export default function FamilySampleIdentityWorkbench({
   const [evidenceMethod, setEvidenceMethod] = useState("");
   const [evidenceMethodVersion, setEvidenceMethodVersion] = useState("");
   const [evidenceReference, setEvidenceReference] = useState("");
+  const [evidenceArtifactId, setEvidenceArtifactId] = useState("");
   const [correctingEvidenceId, setCorrectingEvidenceId] = useState("");
   const [reviewReason, setReviewReason] = useState("");
   const [loading, setLoading] = useState(false);
@@ -99,11 +102,12 @@ export default function FamilySampleIdentityWorkbench({
     setLoading(true);
     setError("");
     try {
-      const [bindingResult, contextResult, pedigreeResult, caseResult] = await Promise.all([
+      const [bindingResult, contextResult, pedigreeResult, caseResult, artifactResult] = await Promise.all([
         apiFetch(`/cases/${caseId}/pedigree/sample-bindings`),
         apiFetch(`/cases/${caseId}/pedigree/sample-binding-context`),
         apiFetch(`/cases/${caseId}/pedigree`),
         apiFetch(`/cases/${caseId}`),
+        apiFetch(`/cases/${caseId}/artifacts`),
       ]);
       const nextBindings: Binding[] = bindingResult.bindings ?? [];
       const evidenceEntries = await Promise.all(nextBindings.map(async (binding) => {
@@ -117,6 +121,7 @@ export default function FamilySampleIdentityWorkbench({
       setAnalyses(contextResult.analyses ?? []);
       setMembers(pedigreeResult.members ?? []);
       setSpecimens(caseResult.specimens ?? []);
+      setArtifacts(Array.isArray(artifactResult) ? artifactResult : artifactResult.items ?? []);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("familyIdentity.errorLoad"));
     } finally {
@@ -197,6 +202,7 @@ export default function FamilySampleIdentityWorkbench({
     setEvidenceMethod(previous?.method ?? "");
     setEvidenceMethodVersion(previous?.method_version ?? "");
     setEvidenceReference(previous?.evidence_reference ?? "");
+    setEvidenceArtifactId(previous?.source_artifact_id ?? "");
     setNotice("");
   };
 
@@ -212,6 +218,7 @@ export default function FamilySampleIdentityWorkbench({
         method: evidenceMethod.trim(),
         method_version: evidenceMethodVersion.trim(),
         evidence_reference: evidenceReference.trim(),
+        source_artifact_id: evidenceArtifactId || null,
         metrics: {},
       };
       const path = correctingEvidenceId
@@ -227,6 +234,7 @@ export default function FamilySampleIdentityWorkbench({
       setEvidenceMethod("");
       setEvidenceMethodVersion("");
       setEvidenceReference("");
+      setEvidenceArtifactId("");
       setNotice(t("familyIdentity.evidenceRecorded"));
       await refresh();
     } catch (cause) {
@@ -444,6 +452,12 @@ export default function FamilySampleIdentityWorkbench({
             <label>{t("familyIdentity.method")}<input value={evidenceMethod} onChange={(event) => setEvidenceMethod(event.target.value)} maxLength={200} /></label>
             <label>{t("familyIdentity.methodVersion")}<input value={evidenceMethodVersion} onChange={(event) => setEvidenceMethodVersion(event.target.value)} maxLength={100} /></label>
             <label>{t("familyIdentity.evidenceRef")}<input value={evidenceReference} onChange={(event) => setEvidenceReference(event.target.value)} maxLength={1000} /></label>
+            <label>{t("familyIdentity.evidenceArtifact")}
+              <select value={evidenceArtifactId} onChange={(event) => setEvidenceArtifactId(event.target.value)}>
+                <option value="">{t("familyIdentity.noEvidenceArtifact")}</option>
+                {artifacts.map((artifact) => <option key={artifact.artifact_id} value={artifact.artifact_id}>{artifact.filename} · {artifact.artifact_type} · {artifact.sha256.slice(0, 12)}</option>)}
+              </select>
+            </label>
           </div>
           <div className="m10-form-grid">
             <button className="primary" type="button" disabled={saving || !evidenceMethod.trim() || !evidenceMethodVersion.trim() || !evidenceReference.trim()} onClick={() => void saveEvidence()}>
