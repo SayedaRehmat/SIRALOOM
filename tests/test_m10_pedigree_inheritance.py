@@ -689,9 +689,14 @@ def test_inheritance_assessment_binds_verified_family_matrix_fingerprint_and_sta
 
     assessment = next(row for row in db.added if isinstance(row, InheritanceAssessment))
     evidence = next(row for row in db.added if isinstance(row, Evidence))
+    snapshot = next(row for row in db.added if hasattr(row, "matrix_payload"))
     assert assessment.family_matrix_fingerprint == matrix_fingerprint
+    assert assessment.family_matrix_snapshot_id == snapshot.id
     assert assessment.status == "REQUIRES_REVIEW"
+    assert snapshot.matrix_fingerprint == matrix_fingerprint
+    assert snapshot.matrix_payload == family_matrix
     assert evidence.payload["family_matrix_fingerprint"] == matrix_fingerprint
+    assert evidence.payload["family_matrix_snapshot_id"] == str(snapshot.id)
     assert evidence.payload["family_matrix_binding_ids"] == [str(binding_id)]
     assert evidence.payload["manual_segregation_rows_excluded"] is True
     assert db.committed is True
@@ -765,6 +770,7 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
 
     fingerprint_value = {"value": "a" * 64}
     binding_id = uuid4()
+    stable_member_id = uuid4()
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
     monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
     monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: variant)
@@ -775,7 +781,7 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
         lambda *_args: {
             "matrix_fingerprint": fingerprint_value["value"],
             "samples": [{
-                "member_id": str(uuid4()),
+                "member_id": str(stable_member_id),
                 "is_proband": True,
                 "analysis_id": str(analysis.id),
             }],
@@ -794,4 +800,5 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
     assert revised["results"][0]["id"] != first["results"][0]["id"]
     assert revised["family_matrix_fingerprint"] == "b" * 64
     assert db.scalar(select(func.count(InheritanceAssessment.id))) == 2
+    assert db.scalar(select(func.count(FamilyGenotypeMatrixSnapshot.id))) == 2
     db.close()
