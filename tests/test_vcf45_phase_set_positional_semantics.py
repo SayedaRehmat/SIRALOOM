@@ -538,3 +538,106 @@ def test_vcf45_pso_order_is_not_inferred_from_vcf_coordinate_order(
     assert [event["occurrences"][0]["pos"] for event in traversal["ordered_events"]] == [20, 10]
 
 
+
+
+def test_vcf45_tandem_duplication_source_example_retains_reference_allele_pso(
+    tmp_path: Path,
+):
+    path = tmp_path / "vcf45-tandem-duplication-pso-source-example.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##ALT=<ID=DUP,Description="Duplication">\n'
+        '##INFO=<ID=SVCLAIM,Number=A,Type=String,Description="Structural variant claim">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "chr1\t10\tdup1\tT\t<DUP>\t.\tPASS\tSVCLAIM=DJ\tGT:PSL:PSO\t/0/0|1:.,.,chr1*10*3:.,.,3\n"
+        "chr1\t20\tsnv1\tA\tG\t.\tPASS\t.\tGT:PSL:PSO\t/0/0|0|1:.,.,chr1*10*1,chr1*10*3:.,.,4,1\n"
+        "chr1\t30\tsnv2\tG\tT\t.\tPASS\t.\tGT:PSL:PSO\t/0/0|0|1:.,.,chr1*10*1,chr1*10*3:.,.,2,5\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    assert result["records"] == 3
+    copy_one = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "chr1*10*1"
+    )
+    copy_two = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "chr1*10*3"
+    )
+    assert [event["ordinal"] for event in copy_one["ordered_events"]] == [2, 4]
+    assert [event["ordinal"] for event in copy_two["ordered_events"]] == [1, 3, 5]
+    assert any(
+        occurrence["allele_index"] == 0
+        for event in copy_one["ordered_events"]
+        for occurrence in event["occurrences"]
+    )
+
+
+def test_vcf45_psl_phase_set_is_global_across_chromosomes_for_pso_obligations(
+    tmp_path: Path,
+):
+    path = tmp_path / "psl-global-across-chromosomes.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:.,shared:.,3\n"
+        "2\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,shared:.,4\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "shared"
+    )
+    assert [event["ordinal"] for event in traversal["ordered_events"]] == [3, 4]
+    assert [event["occurrences"][0]["chrom"] for event in traversal["ordered_events"]] == ["1", "2"]
+
+
+def test_vcf45_psl_phase_set_pso_obligation_crosses_chromosomes(
+    tmp_path: Path,
+):
+    path = tmp_path / "psl-global-pso-required-across-chromosomes.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:.,shared:.,3\n"
+        "2\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,shared:.,.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_PSO_REQUIRED"
+
+
+def test_vcf45_reciprocal_breakend_phase_must_match_same_gt_copy_position(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-phase-different-gt-copy.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT:PSL:PSO\t0|1:.,shared:.,3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t1|0:shared,.:3,.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
