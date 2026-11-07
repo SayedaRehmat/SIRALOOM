@@ -89,7 +89,7 @@ The new test suite covers:
 - U/T equivalence.
 - cardinality mismatch rejection.
 
-**Validation boundary:** the current validator computes and checks Number=M cardinality. It cannot determine whether an arbitrary submitted numeric value is biologically assigned to the correct base/strand position: VCF values carry no per-value base label. The required value order is therefore source-defined, but value-to-position semantic verification is not claimed by these tests. Likewise, unstranded placement across adjacent records is not established by a single-record cardinality check.
+**Production implementation:** the validator now derives the ordered biological slot map for every populated Number=M FORMAT vector and binds each value to a global GT allele index, zero-based sequence offset, observed base and strand. It exposes a slot-assignment count by default and the complete auditable mapping when called with `include_base_modification_slot_assignments=True`. The mapping is generated in GT allele order and source-defined sequence/strand order; type and range validation remains applied to every value. It does not claim to verify experimental truth of the reported values without read-level/assay evidence. Unstranded placement across adjacent records is not inferred from one record; that requires multi-record context and is not part of the per-record Number=M vector semantics.
 
 ## 4. Local-allele semantics and validator correction
 
@@ -148,7 +148,7 @@ Changes on this research branch:
 - Added VCFv4.5 reserved SV FORMAT definitions to `_reserved_vcf45_format_definition`, with probability/quality range checks for CNP, CNQ and NQ.
 - Added the omitted implicit reserved local key LEC to the LAA prevalidation key set.
 - Accepted the source's empty-text LAA REF-only vector example, while retaining `.` as the BCF/MISSING representation.
-- Added Number=M tests for strand-complement cardinality, N two-strand cardinality, repeated phased/unphased alleles, missing and symbolic alleles, U/T equivalence, GT presence and numeric ranges.
+- Added Number=M production slot mapping and tests for per-value allele/offset/base/strand assignment, GT allele order, strand-complement cardinality, N two-strand cardinality, repeated phased/unphased alleles, missing and symbolic alleles, U/T equivalence, GT presence and numeric ranges.
 - Added GT/Number=G/Number=P tests for ploidy, missing alleles, leading and mixed phasing separators, and malformed separator structures.
 - Expanded local projection tests across AD/LAD, ADF/LADF, ADR/LADR, EC/LEC, GP/LGP and PP/LPP, in addition to PL/LPL and GL/LGL.
 - Added xanthosine alias spelling tests for both source spellings.
