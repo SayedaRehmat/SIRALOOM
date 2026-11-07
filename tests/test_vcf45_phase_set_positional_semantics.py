@@ -485,7 +485,103 @@ def test_vcf45_multiallelic_breakend_mates_compare_only_corresponding_alt_phase_
         "3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU\tGT:PSL:PSO\t0|1:.,beta:.,4\n",
         encoding="utf-8",
     )
-    assert validate_vcf_strict(path)["records"] == 3
+    result = validate_vcf_strict(path)
+    assert result["records"] == 3
+    assert len(result["breakend_adjacencies"]) == 2
+    assert {
+        item["source"]["alt_index"] for item in result["breakend_adjacencies"]
+    } == {1, 2}
+    assert all(
+        item["source"]["orientation"]["remote_piece_direction"] == "LEFT"
+        for item in result["breakend_adjacencies"]
+    )
+
+
+def test_vcf45_reciprocal_multicopy_bnd_phase_pairs_follow_psl_pso_identity(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-multicopy-phase-copy-order.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\tGT:PSL:PSO\t1|1:alpha,beta:3,4\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\tGT:PSL:PSO\t1|1:beta,alpha:4,3\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    assert result["records"] == 2
+    assert {
+        item["status"]
+        for item in result["breakend_adjacencies"][0]["sample_phase_correspondence"].values()
+    } == {"MATCHED"}
+    for phase_set, ordinal in (("alpha", 3), ("beta", 4)):
+        traversal = next(
+            item for item in result["derivative_chromosome_traversals"]
+            if item["sample"] == "SAMPLE1" and item["phase_set"] == phase_set
+        )
+        assert traversal["event_order_status"] == "RECONSTRUCTED"
+        assert traversal["ordered_events"][0]["ordinal"] == ordinal
+
+
+def test_vcf45_duplicate_bnd_phase_copy_identifiers_remain_unresolved(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-duplicate-phase-copy-identifiers.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\tGT:PSL:PSO\t1|1:alpha,alpha:3,3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\tGT:PSL:PSO\t1|1:alpha,alpha:3,3\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    adjacency = result["breakend_adjacencies"][0]
+    assert adjacency["sample_phase_correspondence"]["SAMPLE1"]["status"] == (
+        "UNRESOLVED_DUPLICATE_PHASE_COPY_IDENTIFIERS"
+    )
+    traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "alpha"
+    )
+    assert traversal["event_order_status"] == "UNRESOLVED"
+    assert "VCF_PHASE_SET_PSO_ORDINAL_TIE_UNRESOLVED" in traversal["unresolved_reason_codes"]
+
+
+def test_vcf45_reference_phase_positions_are_not_misclassified_as_bnd_alt_pairs(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-reference-and-alt-phase-positions.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\tGT:PSL:PSO\t0|1:refset,altset:9,3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\tGT:PSL:PSO\t1|0:altset,refset:3,9\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    alt_traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "altset"
+    )
+    ref_traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "refset"
+    )
+    assert alt_traversal["ordered_events"][0]["event_kind"] == "RECIPROCAL_BREAKEND_EVENT"
+    assert ref_traversal["ordered_events"][0]["event_kind"] == "ORDINAL_TIE_UNRESOLVED"
+    assert ref_traversal["event_order_status"] == "UNRESOLVED"
 
 
 def test_vcf45_pso_ordinal_tie_is_preserved_as_unresolved(
@@ -575,6 +671,13 @@ def test_vcf45_tandem_duplication_source_example_retains_reference_allele_pso(
         for event in copy_one["ordered_events"]
         for occurrence in event["occurrences"]
     )
+    traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "chr1*10*1"
+    )
+    assert traversal["event_order_status"] == "RECONSTRUCTED"
+    assert traversal["sequence_status"] == "UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE"
+    assert "VCF_DERIVATIVE_SEQUENCE_REQUIRES_REFERENCE_SEGMENT_AND_COPY_NUMBER_RECONSTRUCTION" in traversal["unresolved_reason_codes"]
 
 
 def test_vcf45_psl_phase_set_is_global_across_chromosomes_for_pso_obligations(
