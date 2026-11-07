@@ -421,14 +421,23 @@ class VEPProvider(ScientificResourceProvider):
         for record in result.payload:
             if not isinstance(record, dict):
                 raise VEPProviderError("VEP JSON response contains a non-object record.")
-            transcript_consequences = record.get("transcript_consequences")
-            if transcript_consequences is not None and (
-                not isinstance(transcript_consequences, list)
-                or any(not isinstance(item, dict) for item in transcript_consequences)
+            for field in (
+                "transcript_consequences",
+                "intergenic_consequences",
+                "regulatory_feature_consequences",
+                "motif_feature_consequences",
+                "colocated_variants",
             ):
-                raise VEPProviderError(
-                    "VEP transcript_consequences must be a list of objects when present."
-                )
+                values = record.get(field)
+                if values is not None and (
+                    not isinstance(values, list)
+                    or any(not isinstance(item, dict) for item in values)
+                ):
+                    raise VEPProviderError(
+                        f"VEP {field} must be a list of objects when present."
+                    )
+            if record.get("assembly_name") is not None and not isinstance(record["assembly_name"], str):
+                raise VEPProviderError("VEP assembly_name must be a string when present.")
 
     def normalize_result(
         self,
