@@ -1099,6 +1099,10 @@ def get_family_genotype_matrix(
                 "region_copy_number": latest.region_copy_number,
                 "source_type": latest.source_type,
                 "evidence_reference": latest.evidence_reference,
+                "recorded_by": str(latest.recorded_by),
+                "recorded_at": latest.recorded_at.isoformat() if latest.recorded_at else None,
+                "reviewed_by": str(latest.reviewed_by) if latest.reviewed_by else None,
+                "reviewed_at": latest.reviewed_at.isoformat() if latest.reviewed_at else None,
             }
 
         samples.append({
@@ -1118,6 +1122,15 @@ def get_family_genotype_matrix(
             "binding_id": binding.id,
             "binding_fingerprint": binding.binding_fingerprint,
             "normalization_step_status": normalization_step.status,
+            "normalization_step_provenance": {
+                "step_id": normalization_step.step_id,
+                "attempt": normalization_step.attempt,
+                "input_artifacts": normalization_step.input_artifacts or [],
+                "output_artifacts": normalization_step.output_artifacts or [],
+                "metadata": normalization_step.metadata_json or {},
+                "started_at": normalization_step.started_at.isoformat() if normalization_step.started_at else None,
+                "completed_at": normalization_step.completed_at.isoformat() if normalization_step.completed_at else None,
+            },
             "normalized_partition_count": len(partitions),
             "ploidy_evidence": ploidy_evidence,
             "identity_evidence": identity_evidence,
