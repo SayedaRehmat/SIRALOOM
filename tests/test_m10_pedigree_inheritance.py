@@ -678,15 +678,23 @@ def test_inheritance_assessment_binds_verified_family_matrix_fingerprint_and_sta
         else pytest.fail("Unexpected family matrix request"),
     )
 
+    db = FakeDb()
     result = pedigree.assess_inheritance(
         analysis_id,
         variant_id,
         AssessmentInput(models=["AR"], binding_ids=[binding_id]),
-        FakeDb(),
+        db,
         principal,
     )
 
-    assessment = next(row for row in FakeDb.__mro__ if False) if False else None
+    assessment = next(row for row in db.added if isinstance(row, InheritanceAssessment))
+    evidence = next(row for row in db.added if isinstance(row, Evidence))
+    assert assessment.family_matrix_fingerprint == matrix_fingerprint
+    assert assessment.status == "REQUIRES_REVIEW"
+    assert evidence.payload["family_matrix_fingerprint"] == matrix_fingerprint
+    assert evidence.payload["family_matrix_binding_ids"] == [str(binding_id)]
+    assert evidence.payload["manual_segregation_rows_excluded"] is True
+    assert db.committed is True
     assert result["family_matrix_attached"] is True
     assert result["family_matrix_fingerprint"] == matrix_fingerprint
     assert result["results"][0]["status"] == "REQUIRES_REVIEW"
