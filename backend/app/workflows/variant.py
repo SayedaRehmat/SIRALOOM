@@ -480,6 +480,135 @@ def _ensure_annotation_request_fingerprint(
     return fingerprint
 
 
+def _record_annotation_tool_execution(
+    execution_record: ResourceExecutionRecord,
+    provenance: dict | None,
+) -> None:
+    """Bind executor and raw-response artifact provenance to the resource execution."""
+    if not isinstance(provenance, dict) or not provenance.get("tool_execution_provenance"):
+        return
+    metadata = dict(execution_record.metadata_json or {})
+    metadata["tool_execution_provenance"] = provenance["tool_execution_provenance"]
+    metadata["runtime_check"] = provenance.get("runtime_check")
+    metadata["raw_response_artifact_id"] = provenance.get("raw_response_artifact_id")
+    metadata["raw_response_artifact_sha256"] = provenance.get("raw_response_artifact_sha256")
+    metadata["reference_package_checksum"] = provenance.get("reference_package_checksum")
+    execution_record.metadata_json = metadata
+
+
+def _persist_raw_vep_provider_response(
+    db: Session,
+    artifacts: ArtifactStore,
+    *,
+    analysis: Analysis,
+    start: int,
+    end: int,
+    payloads: list[dict],
+    genome_build: str,
+    temporary_paths: list[Path],
+) -> Artifact | None:
+    """Persist the exact VEP NDJSON response as an immutable, replay-safe artifact."""
+    provenances = [
+        item.get("_siraloom_annotation_provenance")
+        for item in payloads
+        if isinstance(item, dict)
+    ]
+    if not provenances:
+        return None
+    provenance = provenances[0]
+    raw_path_value = provenance.get("raw_response_path")
+    workspace_value = provenance.get("workspace_path")
+    if not raw_path_value:
+        return None
+
+    raw_path = Path(str(raw_path_value))
+    workspace = Path(str(workspace_value or raw_path.parent))
+    scratch_root = Path(settings.worker_scratch_root).resolve(strict=True)
+    resolved_workspace = workspace.resolve(strict=True)
+    if resolved_workspace != scratch_root and scratch_root not in resolved_workspace.parents:
+        raise RuntimeError("VEP raw response workspace is outside the governed worker scratch root.")
+    if not raw_path.is_file() or raw_path.is_symlink() or raw_path.parent.resolve(strict=True) != resolved_workspace:
+        raise RuntimeError("VEP raw response is missing or outside its execution workspace.")
+
+    response_sha256 = str(provenance.get("response_sha256") or "").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", response_sha256):
+        raise RuntimeError("VEP raw response is missing a valid SHA-256 digest.")
+    actual_sha256 = sha256_file(raw_path)
+    if actual_sha256 != response_sha256:
+        raise RuntimeError("VEP raw response bytes do not match the executor response digest.")
+
+    tool_execution = provenance.get("tool_execution_provenance")
+    if not isinstance(tool_execution, dict):
+        raise RuntimeError("VEP raw response is missing shared-executor provenance.")
+    declared_outputs = tool_execution.get("output_sha256") or []
+    if not any(
+        item.get("name") == "vep-json-response" and item.get("sha256") == response_sha256
+        for item in declared_outputs if isinstance(item, dict)
+    ):
+        raise RuntimeError("VEP raw response digest is not bound to the executor output record.")
+
+    artifact_id = uuid5(
+        analysis.id,
+        f"siraloom:annotation:raw-vep-response:{_batch_key(start, end)}",
+    )
+    existing = db.get(Artifact, artifact_id)
+    if existing is not None:
+        if (
+            existing.analysis_id != analysis.id
+            or existing.case_id != analysis.case_id
+            or existing.artifact_type != "RAW_VEP_PROVIDER_RESPONSE"
+            or existing.sha256 != response_sha256
+        ):
+            raise RuntimeError("Existing VEP raw response artifact identity conflicts with this replay.")
+        existing_path = _materialize_artifact_for_worker(db, existing, temporary_paths)
+        verify_artifact_file(
+            existing_path,
+            sha256=existing.sha256,
+            size_bytes=existing.size_bytes,
+        )
+        artifact = existing
+    else:
+        artifact = artifacts.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=raw_path,
+            filename=f"vep-raw-response-{start}-{end}.jsonl",
+            artifact_type="RAW_VEP_PROVIDER_RESPONSE",
+            media_type="application/x-ndjson",
+            genome_build=genome_build,
+            validation_status="VALIDATED",
+            artifact_id=artifact_id,
+            metadata={
+                "step_id": "annotate",
+                "artifact_role": "RAW_PROVIDER_RESPONSE",
+                "provider_id": provenance.get("provider"),
+                "provider_version": provenance.get("provider_version"),
+                "batch_key": _batch_key(start, end),
+                "assembly": genome_build,
+                "reference_package_checksum": provenance.get("reference_package_checksum"),
+                "runtime_check": provenance.get("runtime_check"),
+                "response_sha256": response_sha256,
+                "tool_execution_provenance": tool_execution,
+            },
+        )
+        if artifact.sha256 != response_sha256:
+            raise RuntimeError("Persisted VEP raw response artifact digest differs from executor output digest.")
+
+    for item in payloads:
+        item_provenance = dict(item.get("_siraloom_annotation_provenance") or {})
+        item_provenance.pop("raw_response_path", None)
+        item_provenance.pop("workspace_path", None)
+        item_provenance["raw_response_artifact_id"] = str(artifact.id)
+        item_provenance["raw_response_artifact_sha256"] = artifact.sha256
+        item["_siraloom_annotation_provenance"] = item_provenance
+
+    # The immutable artifact is now the durable copy; remove the worker-local
+    # staging directory only after storage and digest verification succeed.
+    shutil.rmtree(resolved_workspace)
+    return artifact
+
+
 def _persist_annotation_response_checkpoint(
     db: Session,
     artifacts: ArtifactStore,
@@ -492,6 +621,7 @@ def _persist_annotation_response_checkpoint(
     resource: Resource,
     provider_id: str,
     provider_version: str,
+    temporary_paths: list[Path] | None = None,
 ) -> Artifact:
     """Durably store a provider response before attempting annotation-row persistence.
 
@@ -508,6 +638,19 @@ def _persist_annotation_response_checkpoint(
     if any(not isinstance(item, dict) for item in provenances):
         raise ValueError("Annotation response record is missing provider provenance.")
     provenance = provenances[0]
+    raw_response_artifact = _persist_raw_vep_provider_response(
+        db,
+        artifacts,
+        analysis=analysis,
+        start=start,
+        end=end,
+        payloads=payloads,
+        genome_build=analysis.reference_build,
+        temporary_paths=temporary_paths if temporary_paths is not None else [],
+    )
+    # The raw provider bytes and normalized replay checkpoint are separate
+    # immutable artifacts with independent digests.
+    provenance = payloads[0].get("_siraloom_annotation_provenance") or provenance
     request_fingerprint = provenance.get("request_fingerprint")
     response_sha256 = provenance.get("response_sha256")
     if any(
@@ -578,6 +721,8 @@ def _persist_annotation_response_checkpoint(
                 "response_sha256": provenance["response_sha256"],
                 "response_artifact_id": str(artifact.id),
                 "response_artifact_sha256": artifact.sha256,
+                "raw_response_artifact_id": str(raw_response_artifact.id) if raw_response_artifact else None,
+                "raw_response_artifact_sha256": raw_response_artifact.sha256 if raw_response_artifact else None,
             },
             commit=False,
         )
@@ -1540,6 +1685,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         reference_resource_id = analysis.configuration.get("reference_resource_id")
         profile_bound_analysis = bool((analysis.configuration or {}).get("resource_profile_id"))
         partition_size = min(max(1, int(analysis.configuration.get("partition_size", 500) or 500)), 1000)
+        validated_reference_package: dict | None = None
 
         if normalization_step.status != StepStatus.SUCCEEDED:
             mark_step(db, normalization_step, StepStatus.RUNNING)
@@ -1547,7 +1693,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
             routing: dict = {}
             routed_artifacts: list[Artifact] = []
             exclusion_manifest_artifacts: list[Artifact] = []
-            validated_reference_package: dict | None = None
             routing_contig_lengths_resolved = False
 
             def persist_exclusion_manifest(*, contig_lengths_resolved: bool) -> None:
@@ -2571,6 +2716,61 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 )
                 provider = implementation.factory(annotation_execution.contract)
 
+                if provider.provider_id == "VEP" and validated_reference_package is None:
+                    # VEP must use the exact reference package and execution
+                    # contract bound to normalization. Trial providers do not
+                    # require a local reference package for annotation.
+                    # artifact pins the package identity and execution-contract hash used by
+                    # normalization; annotation must not resolve a newer or fallback package.
+                    if validated_reference_package is None:
+                        normalized_metadata = dict(normalized_artifact.metadata_json or {})
+                        pinned_reference_id = normalized_metadata.get("reference_package_id")
+                        if not pinned_reference_id:
+                            raise RuntimeError("Normalized artifact is missing its pinned reference package identity.")
+                        try:
+                            pinned_reference_uuid = UUID(str(pinned_reference_id))
+                        except (TypeError, ValueError) as exc:
+                            raise RuntimeError("Normalized artifact reference package identity is invalid.") from exc
+                        pinned_reference_resource = db.get(Resource, pinned_reference_uuid)
+                        if pinned_reference_resource is None:
+                            raise RuntimeError("The reference package used for normalization is no longer registered.")
+                        validated_reference_package = load_reference_package(
+                            db,
+                            resource_id=pinned_reference_uuid,
+                            expected_genome_build=reference_build,
+                            allow_approved_qualified=True,
+                        )
+                        for package_key, metadata_key in (
+                            ("version", "reference_package_version"),
+                            ("package_checksum", "reference_package_checksum"),
+                            ("fasta_sha256", "reference_fasta_sha256"),
+                            ("fai_sha256", "reference_fai_sha256"),
+                            ("gzi_sha256", "reference_gzi_sha256"),
+                            ("contigs_sha256", "reference_contigs_sha256"),
+                        ):
+                            if validated_reference_package.get(package_key) != normalized_metadata.get(metadata_key):
+                                raise RuntimeError(
+                                    f"Reference package {package_key} no longer matches the normalized artifact provenance."
+                                )
+                        pinned_reference_execution = resolve_resource_execution(
+                            db,
+                            resource=pinned_reference_resource,
+                        )
+                        if pinned_reference_execution.contract_hash != normalized_metadata.get("execution_contract_hash"):
+                            raise ResourceExecutionError(
+                                "Reference execution contract changed after normalization; annotation cannot silently substitute it."
+                            )
+                        contract_location = pinned_reference_execution.contract.location or ""
+                        if pinned_reference_execution.contract.access_method in {"LOCAL", "FILE", "LOCAL_ONLY"}:
+                            normalized_contract_location = str(
+                                local_path_from_uri(contract_location) or Path(contract_location).resolve()
+                            )
+                            if normalized_contract_location != str(Path(validated_reference_package["fasta_path"]).resolve()):
+                                raise ResourceExecutionError(
+                                    "Pinned reference execution location differs from the normalization reference FASTA."
+                                )
+            
+            
                 if not hasattr(provider, "annotate"):
                     raise ResourceConsumptionError(
                         "ANNOTATION_PROVIDER_NOT_EXECUTABLE",
@@ -2783,7 +2983,15 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         db, annotation_step, start, end, status="RUNNING", attempt=attempt,
                         metadata={"provider": provider.provider_id, "variant_count": len(batch)},
                     )
-                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={"provider": provider.provider_id, "genome": genome})
+                    execution_record = start_resource_execution(db, analysis_id=analysis.id, step_id="annotate", attempt=attempt, resolved=annotation_execution, requested_resource_id=resolution.requested_resource_id, fallback_resource_id=resolution.fallback_resource_id, batch_key=key, metadata={
+                        "provider": provider.provider_id,
+                        "genome": genome,
+                        **({
+                            "reference_package_id": validated_reference_package.get("resource_id"),
+                            "reference_package_version": validated_reference_package.get("version"),
+                            "reference_package_checksum": validated_reference_package.get("package_checksum"),
+                        } if isinstance(validated_reference_package, dict) else {}),
+                    })
                     db.commit()
                     try:
                         scheduler.heartbeat(partition.id, worker_id, lease_token)
@@ -2799,7 +3007,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             temporary_paths=temporary_artifact_paths,
                         )
                         if payloads is None:
-                            payloads = provider.annotate(batch, {"genome": genome})
+                            payloads = provider.annotate(batch, {
+                                "genome": genome,
+                                "reference_package": validated_reference_package,
+                                "organization_id": str(case.organization_id),
+                                "workflow_id": str(analysis.id),
+                            })
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                             _ensure_annotation_request_fingerprint(
                                 payloads,
@@ -2810,7 +3023,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 provider_id=provider.provider_id,
                                 provider_version=provider.provider_version,
                             )
-                            sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
                             _persist_annotation_response_checkpoint(
                                 db,
                                 artifacts,
@@ -2822,7 +3034,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 resource=annotation_resource,
                                 provider_id=provider.provider_id,
                                 provider_version=provider.provider_version,
+                                temporary_paths=temporary_artifact_paths,
                             )
+                            sample = next(
+                                (item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)),
+                                {},
+                            )
+                            _record_annotation_tool_execution(execution_record, sample)
                             # The response artifact and replay checkpoint are the
                             # durable evidence that the provider execution completed.
                             # Do not mark the execution successful before both exist.
@@ -2830,10 +3048,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.commit()
                         else:
                             sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            _record_annotation_tool_execution(execution_record, sample)
                             complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                             db.commit()
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                     except (GeneBeError, VEPProviderError) as exc:
+                        failure_provenance = getattr(exc, "execution_provenance", None)
+                        if isinstance(failure_provenance, dict):
+                            execution_metadata = dict(execution_record.metadata_json or {})
+                            execution_metadata["tool_execution_failure"] = failure_provenance
+                            execution_record.metadata_json = execution_metadata
+                            db.add(execution_record)
                         complete_resource_execution(
                             db,
                             execution_record,

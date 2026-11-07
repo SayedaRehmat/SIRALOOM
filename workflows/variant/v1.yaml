@@ -1,5 +1,5 @@
 id: variant-v1
-version: "2.1"
+version: "2.2"
 input:
   type: VCF
 steps:
@@ -12,7 +12,14 @@ steps:
     mode: validated-reference-package-boundary
   - id: annotate
     type: provider
-    providers: [genebe]
+    capability: ANNOTATION_ENGINE
+    providers: [VEP, GeneBe]
+    provider_selection:
+      source: organization-approved-analysis-resource-profile
+      deployment_policy:
+        LABORATORY: [VEP]
+        TRIAL_PUBLIC: [GeneBe]
+      fallback: none
     provenance_required: true
   - id: population
     type: population-engine

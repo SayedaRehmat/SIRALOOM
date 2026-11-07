@@ -4,13 +4,14 @@ import hashlib
 import json
 import os
 import re
-import signal
 import stat
-import subprocess
 import tempfile
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 from typing import Any
+from uuid import uuid4
 
 from backend.app.domain.provider_contract import (
     ProviderEvidenceResult,
@@ -22,12 +23,31 @@ from backend.app.domain.provider_contract import (
 from backend.app.domain.resource_capabilities import ResourceCapability
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    LocalProcessToolExecutor,
+    OutputArtifact,
+    ScientificResourceBinding,
+    ToolExecutionContractError,
+    ToolExecutionError,
+    ToolExecutionRequest,
+    ToolExecutor,
+    ToolIdentity,
+)
+from backend.app.config import settings
 
 
 class VEPProviderError(RuntimeError):
-    def __init__(self, message: str, *, retryable: bool = False):
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool = False,
+        execution_provenance: dict[str, Any] | None = None,
+    ):
         super().__init__(message)
         self.retryable = retryable
+        self.execution_provenance = execution_provenance
 
 
 class VEPProvider(ScientificResourceProvider):
@@ -46,8 +66,14 @@ class VEPProvider(ScientificResourceProvider):
     capabilities = frozenset({ResourceCapability.ANNOTATION})
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
-    def __init__(self, contract: ResourceExecutionContract):
+    def __init__(
+        self,
+        contract: ResourceExecutionContract,
+        *,
+        executor: ToolExecutor | None = None,
+    ):
         self.contract = contract
+        self.executor = executor or LocalProcessToolExecutor()
         toolchain = dict(contract.toolchain or {})
         self.binary = str(toolchain.get("vep_binary") or contract.location or "vep")
         self.cache_dir = str(toolchain.get("cache_dir") or "").strip()
@@ -59,12 +85,35 @@ class VEPProvider(ScientificResourceProvider):
         self.cache_manifest_sha256 = str(toolchain.get("cache_manifest_sha256") or "").strip().lower()
         self.cache_artifact_sha256 = str(toolchain.get("cache_artifact_sha256") or "").strip().lower()
         self.expected_binary_sha256 = str(toolchain.get("vep_binary_sha256") or "").strip().lower()
+        self.toolchain_fasta_sha256 = str(toolchain.get("fasta_sha256") or "").strip().lower()
+        self.vep_version = str(toolchain.get("vep_version") or "").strip()
+        self.tool_profile_id = str(toolchain.get("tool_profile_id") or "").strip()
+        self.platform = str(toolchain.get("platform") or "").strip()
+        self.qualification_status = str(toolchain.get("qualification_status") or "").strip()
+        self.runtime_image_digest = str(toolchain.get("runtime_image_digest") or "").strip().lower()
+        self.runtime_path = tuple(str(x) for x in (toolchain.get("runtime_path") or ()))
+        self.runtime_environment = {
+            str(key): str(value)
+            for key, value in (toolchain.get("runtime_environment") or {}).items()
+        }
+        self.execution_timeout_seconds = int(toolchain.get("execution_timeout_seconds") or 1800)
+        self.max_output_bytes = int(toolchain.get("max_output_bytes") or 65536)
+        self.scratch_root = str(settings.worker_scratch_root)
+        configured_scratch_root = str(toolchain.get("scratch_root") or self.scratch_root)
+        if Path(configured_scratch_root).resolve(strict=False) != Path(self.scratch_root).resolve(strict=False):
+            raise VEPProviderError("VEP tool profile scratch_root must match the governed worker scratch root.")
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
         self._runtime_checks: dict[str, dict[str, Any]] = {}
+        self._tool_identity_cache: ToolIdentity | None = None
         self._validate_toolchain()
 
     @classmethod
-    def from_execution_contract(cls, contract: ResourceExecutionContract) -> "VEPProvider":
+    def from_execution_contract(
+        cls,
+        contract: ResourceExecutionContract,
+        *,
+        executor: ToolExecutor | None = None,
+    ) -> "VEPProvider":
         if contract.provider_id != cls.provider_id:
             raise VEPProviderError(
                 f"Execution provider {contract.provider_id!r} does not match VEP."
@@ -73,7 +122,7 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError(
                 f"VEP laboratory execution requires LOCAL/FILE/LOCAL_ONLY access, got {contract.access_method!r}."
             )
-        return cls(contract)
+        return cls(contract, executor=executor)
 
     def _validate_toolchain(self) -> None:
         if not self.cache_dir:
@@ -90,6 +139,36 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError("VEP execution contract must pin assembly to GRCh37 or GRCh38.")
         if not Path(self.cache_manifest).is_absolute():
             raise VEPProviderError("VEP execution contract must declare an absolute cache_manifest path.")
+        if not self.fasta or not Path(self.fasta).is_absolute():
+            raise VEPProviderError("VEP execution contract must pin an absolute assembly-matched FASTA path.")
+        if not re.fullmatch(r"[0-9a-f]{64}", self.toolchain_fasta_sha256):
+            raise VEPProviderError("VEP execution contract must pin the FASTA SHA-256 digest.")
+        if not re.fullmatch(r"\d+\.\d+", self.vep_version):
+            raise VEPProviderError("VEP execution contract must pin the exact VEP release, e.g. 115.2.")
+        if not self.tool_profile_id:
+            raise VEPProviderError("VEP execution contract must declare tool_profile_id.")
+        if not self.platform:
+            raise VEPProviderError("VEP execution contract must pin the worker platform.")
+        if self.qualification_status != "SOFTWARE_QUALIFIED":
+            raise VEPProviderError("VEP execution requires a SOFTWARE_QUALIFIED tool profile.")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", self.runtime_image_digest):
+            raise VEPProviderError("VEP execution contract must pin the runtime image SHA-256 digest.")
+        if not self.runtime_path or any(not Path(item).is_absolute() for item in self.runtime_path):
+            raise VEPProviderError("VEP execution contract must pin absolute runtime PATH directories.")
+        if "PERL5LIB" not in self.runtime_environment:
+            raise VEPProviderError("VEP runtime environment must explicitly pin PERL5LIB.")
+        if self.runtime_environment.get("PERL_HASH_SEED") != "0" or self.runtime_environment.get("PERL_PERTURB_KEYS") != "0":
+            raise VEPProviderError(
+                "VEP runtime must pin PERL_HASH_SEED=0 and PERL_PERTURB_KEYS=0 for deterministic annotation ordering."
+            )
+        if not 1 <= self.execution_timeout_seconds <= 86400:
+            raise VEPProviderError("VEP execution timeout must be between 1 and 86400 seconds.")
+        if not 1024 <= self.max_output_bytes <= 10485760:
+            raise VEPProviderError("VEP diagnostic output limit must be between 1 KiB and 10 MiB.")
+        if not Path(self.scratch_root).is_absolute():
+            raise VEPProviderError("VEP scratch_root must be an absolute path.")
+        if _version_release(self.vep_version) != self.cache_version:
+            raise VEPProviderError("VEP executable release and cache_version must match exactly.")
         for name, digest in (
             ("cache_manifest_sha256", self.cache_manifest_sha256),
             ("cache_artifact_sha256", self.cache_artifact_sha256),
@@ -125,122 +204,216 @@ class VEPProvider(ScientificResourceProvider):
         variants = inputs.get("variants")
         if not isinstance(variants, list) or not variants:
             raise VEPProviderError("VEP annotate requires a non-empty variants list.")
+        reference_package = inputs.get("reference_package")
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP annotate requires the validated normalization reference package.")
         return ProviderRequest(
             operation="annotate",
-            payload={"variants": variants, "genome_build": inputs.get("genome_build")},
-            metadata={"provider": self.provider_id, "provider_version": self.contract.provider_version},
+            payload={
+                "variants": variants,
+                "genome_build": inputs.get("genome_build"),
+                "reference_package": reference_package,
+                "organization_id": inputs.get("organization_id"),
+                "workflow_id": inputs.get("workflow_id"),
+                "execution_id": inputs.get("execution_id"),
+                "workspace": inputs.get("workspace"),
+            },
+            metadata={
+                "provider": self.provider_id,
+                "provider_version": self.provider_version,
+                "tool_profile_id": self.tool_profile_id,
+                "reference_package_checksum": reference_package.get("package_checksum"),
+            },
         )
 
     def execute(self, request: ProviderRequest) -> ProviderRawResult:
         variants = request.payload["variants"]
         build = _canonical_assembly(request.payload.get("genome_build") or self.assembly)
+        reference_package = request.payload.get("reference_package")
         if not build:
             raise VEPProviderError("VEP execution requires an explicit GRCh37/GRCh38 assembly.")
-        with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
-            input_vcf = Path(tmp) / "input.vcf"
-            output_json = Path(tmp) / "output.json"
-            lines = [
-                "##fileformat=VCFv4.2",
-                f"##reference={build}",
-                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
-            ]
-            for index, variant in enumerate(variants):
-                lines.append(
-                    f"{variant.chromosome}\t{variant.position}\tSIRALOOM_{index}\t"
-                    f"{variant.reference}\t{variant.alternate}\t.\tPASS\t."
-                )
-            input_vcf.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP execution requires the validated reference package.")
 
-            cmd = [
-                self.binary,
-                "--offline",
-                "--cache",
-                "--format", "vcf",
-                "--json",
-                "--force_overwrite",
-                "--species", self.species,
-                "--cache_version", self.cache_version,
-                "--dir_cache", self.cache_dir,
-                "--input_file", str(input_vcf),
-                "--output_file", str(output_json),
-                "--canonical",
-                "--symbol",
-                "--transcript_version",
-            ]
-            cmd.extend(["--assembly", build])
-            annotation_options = ["--canonical", "--symbol", "--transcript_version"]
-            if build == "GRCh38":
-                # Ensembl documents MANE annotations for human GRCh38 only.
-                cmd.append("--mane")
-                annotation_options.append("--mane")
-            if self.fasta:
-                cmd.extend(["--fasta", self.fasta, "--hgvs", "--hgvsg"])
-                annotation_options.extend(["--hgvs", "--hgvsg"])
-            cmd.extend(self.extra_args)
+        scratch_root = Path(self.scratch_root).resolve(strict=True)
+        workspace_value = request.payload.get("workspace")
+        if workspace_value:
+            workspace = Path(str(workspace_value))
+            if not workspace.is_absolute():
+                raise VEPProviderError("VEP execution workspace must be an absolute path.")
+            resolved_workspace = workspace.resolve(strict=False)
+            if resolved_workspace != scratch_root and scratch_root not in resolved_workspace.parents:
+                raise VEPProviderError("VEP execution workspace must be contained within the governed scratch root.")
+            workspace.mkdir(parents=True, exist_ok=True)
+        else:
+            workspace = Path(tempfile.mkdtemp(prefix="siraloom-vep-", dir=scratch_root))
+        if workspace.is_symlink() or not workspace.is_dir():
+            raise VEPProviderError("VEP execution workspace must be a regular directory.")
+        input_vcf = workspace / "input.vcf"
+        output_json = workspace / "output.json"
+        input_vcf.unlink(missing_ok=True)
+        output_json.unlink(missing_ok=True)
 
-            try:
-                # Start VEP in its own process group so a timeout can terminate
-                # the entire local toolchain, not merely the immediate process.
-                # This prevents an expired workflow lease from leaving a child VEP
-                # process running indefinitely after SIRALOOM has abandoned it.
-                completed = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
-                )
-                try:
-                    stdout, stderr = completed.communicate(timeout=300)
-                except subprocess.TimeoutExpired as exc:
-                    try:
-                        os.killpg(completed.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    completed.wait()
-                    raise VEPProviderError("VEP execution timed out and its process group was terminated.", retryable=True) from exc
-            except FileNotFoundError as exc:
-                raise VEPProviderError(
-                    f"VEP executable was not found: {self.binary}",
-                    retryable=False,
-                ) from exc
-            except subprocess.TimeoutExpired as exc:
-                raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
+        lines = [
+            "##fileformat=VCFv4.2",
+            f"##reference={build}",
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+        ]
+        for index, variant in enumerate(variants):
+            lines.append(
+                f"{variant.chromosome}\t{variant.position}\tSIRALOOM_{index}\t"
+                f"{variant.reference}\t{variant.alternate}\t.\tPASS\t."
+            )
+        input_vcf.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        input_sha256 = _sha256_file(input_vcf)
 
-            if completed.returncode != 0:
-                message = (stderr or stdout or "VEP failed").strip()[-4000:]
-                raise VEPProviderError(
-                    f"VEP exited with code {completed.returncode}: {message}",
-                    retryable=completed.returncode in {137, 143},
-                )
+        fasta_path = str(reference_package["fasta_path"])
+        argv = [
+            "--offline",
+            "--cache",
+            "--format", "vcf",
+            "--json",
+            "--force_overwrite",
+            "--species", self.species,
+            "--cache_version", self.cache_version,
+            "--dir_cache", self.cache_dir,
+            "--input_file", str(input_vcf),
+            "--output_file", str(output_json),
+            "--assembly", build,
+            "--fasta", fasta_path,
+            "--check_ref",
+            "--hgvs",
+            "--hgvsg",
+            "--canonical",
+            "--symbol",
+            "--transcript_version",
+        ]
+        annotation_options = [
+            "--offline", "--cache", "--format", "vcf", "--json",
+            "--check_ref", "--hgvs", "--hgvsg",
+            "--canonical", "--symbol", "--transcript_version",
+        ]
+        if build == "GRCh38":
+            # Ensembl documents MANE annotations for human GRCh38 only.
+            argv.append("--mane")
+            annotation_options.append("--mane")
+        argv.extend(self.extra_args)
 
-            if not output_json.exists():
-                raise VEPProviderError("VEP completed without producing its governed JSON output.")
+        execution_id = str(request.payload.get("execution_id") or uuid4())
+        organization_id = str(request.payload.get("organization_id") or "").strip()
+        workflow_id = str(request.payload.get("workflow_id") or "").strip()
+        if not organization_id or not workflow_id:
+            raise VEPProviderError("VEP execution requires organization and workflow identity for provenance.")
 
+        # Re-bind the exact normalization reference at execution time. The
+        # preflight result is not a substitute for checking the bytes used by
+        # this specific annotation process.
+        reference_bindings = self._reference_resource_bindings(reference_package, build)
+        execution_request = ToolExecutionRequest(
+            execution_id=execution_id,
+            organization_id=organization_id,
+            workflow_id=workflow_id,
+            operation="annotate",
+            argv=tuple(argv),
+            workspace=str(workspace),
+            inputs=(
+                InputArtifact(
+                    name="normalized-variant-batch",
+                    path=str(input_vcf),
+                    sha256=input_sha256,
+                ),
+            ),
+            outputs=(OutputArtifact(name="vep-json-response", path=str(output_json)),),
+            timeout_seconds=self.execution_timeout_seconds,
+            max_output_bytes=self.max_output_bytes,
+            resources=(
+                ScientificResourceBinding(
+                    resource_id=f"vep-cache-manifest:{self.species}",
+                    version=self.cache_version,
+                    sha256=self.cache_manifest_sha256,
+                    assembly=build,
+                    path=self.cache_manifest,
+                ),
+                *reference_bindings,
+            ),
+        )
+        try:
+            execution_result = self.executor.execute(self._tool_identity(), execution_request)
+        except ToolExecutionError as exc:
+            failure_provenance = asdict(exc.provenance) if exc.provenance else {}
+            failure_provenance.update({
+                "workspace_path": str(workspace),
+                "raw_response_path": str(output_json) if output_json.is_file() and not output_json.is_symlink() else None,
+                "raw_response_sha256": _sha256_file(output_json) if output_json.is_file() and not output_json.is_symlink() else None,
+            })
+            raise VEPProviderError(
+                f"VEP execution failed: {exc}",
+                retryable=exc.retryable,
+                execution_provenance=failure_provenance,
+            ) from exc
+        except ToolExecutionContractError as exc:
+            raise VEPProviderError(
+                f"VEP execution contract rejected the request: {exc}",
+                execution_provenance={
+                    "tool_profile_id": self.tool_profile_id,
+                    "vep_version": self.vep_version,
+                    "vep_binary_sha256": self.expected_binary_sha256,
+                    "runtime_image_digest": self.runtime_image_digest,
+                    "platform": self.platform,
+                    "workspace_path": str(workspace),
+                    "preflight_error": str(exc),
+                },
+            ) from exc
+
+        try:
             raw_text = output_json.read_text(encoding="utf-8")
-            response_sha256 = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
-            records: list[dict[str, Any]] = []
+        except (OSError, UnicodeError) as exc:
+            raise VEPProviderError(
+                "VEP output artifact could not be read after successful process execution.",
+                execution_provenance=asdict(execution_result.provenance),
+            ) from exc
+        response_sha256 = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+        declared_output = next(
+            (item["sha256"] for item in execution_result.provenance.output_sha256
+             if item["name"] == "vep-json-response"),
+            None,
+        )
+        if declared_output != response_sha256:
+            raise VEPProviderError(
+                "VEP response bytes changed after executor output verification.",
+                execution_provenance=asdict(execution_result.provenance),
+            )
+
+        records: list[dict[str, Any]] = []
+        try:
             for line in raw_text.splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError as exc:
-                    raise VEPProviderError("VEP returned a non-JSON record in JSON mode.") from exc
+                records.append(json.loads(line))
+        except json.JSONDecodeError as exc:
+            raise VEPProviderError(
+                "VEP returned a non-JSON record in JSON mode.",
+                execution_provenance=asdict(execution_result.provenance),
+            ) from exc
 
-            return ProviderRawResult(
-                operation="annotate",
-                payload=records,
-                response_sha256=response_sha256,
-                metadata={
-                    "observed_at": datetime.now(timezone.utc).isoformat(),
-                    "command_provider": self.provider_id,
-                    "assembly": build,
-                    "cache_version": self.cache_version,
-                    "annotation_options": annotation_options,
-                },
-            )
+        return ProviderRawResult(
+            operation="annotate",
+            payload=records,
+            response_sha256=response_sha256,
+            metadata={
+                "observed_at": datetime.now(timezone.utc).isoformat(),
+                "command_provider": self.provider_id,
+                "assembly": build,
+                "cache_version": self.cache_version,
+                "annotation_options": annotation_options,
+                "input_sha256": input_sha256,
+                "raw_response_path": str(output_json),
+                "workspace_path": str(workspace),
+                "tool_execution_provenance": asdict(execution_result.provenance),
+                "reference_package_checksum": reference_package.get("package_checksum"),
+            },
+        )
 
     def validate_response(self, result: ProviderRawResult) -> None:
         if not isinstance(result.payload, list):
@@ -248,14 +421,23 @@ class VEPProvider(ScientificResourceProvider):
         for record in result.payload:
             if not isinstance(record, dict):
                 raise VEPProviderError("VEP JSON response contains a non-object record.")
-            transcript_consequences = record.get("transcript_consequences")
-            if transcript_consequences is not None and (
-                not isinstance(transcript_consequences, list)
-                or any(not isinstance(item, dict) for item in transcript_consequences)
+            for field in (
+                "transcript_consequences",
+                "intergenic_consequences",
+                "regulatory_feature_consequences",
+                "motif_feature_consequences",
+                "colocated_variants",
             ):
-                raise VEPProviderError(
-                    "VEP transcript_consequences must be a list of objects when present."
-                )
+                values = record.get(field)
+                if values is not None and (
+                    not isinstance(values, list)
+                    or any(not isinstance(item, dict) for item in values)
+                ):
+                    raise VEPProviderError(
+                        f"VEP {field} must be a list of objects when present."
+                    )
+            if record.get("assembly_name") is not None and not isinstance(record["assembly_name"], str):
+                raise VEPProviderError("VEP assembly_name must be a string when present.")
 
     def normalize_result(
         self,
@@ -270,16 +452,45 @@ class VEPProvider(ScientificResourceProvider):
             f"{v.chromosome}:{v.position}:{v.reference}:{v.alternate}": v
             for v in variants
         }
+        if len(by_key) != len(variants):
+            raise VEPProviderError(
+                "VEP input batch contains duplicate normalized allele identities."
+            )
+
+        seen_keys: set[str] = set()
         for record in result.payload:
-            start = record.get("start")
-            seq_region = record.get("seq_region_name")
-            allele_string = str(record.get("allele_string") or "")
-            ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
-            alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
-            key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
-            original = by_key.get(key) if key else None
-            if original is None:
-                continue
+            # VEP may render an indel's consequence coordinates differently from
+            # the submitted VCF representation. Reconcile against the original
+            # VCF input string, not VEP's consequence start/allele_string fields.
+            input_record = record.get("input")
+            if not isinstance(input_record, str):
+                raise VEPProviderError(
+                    "VEP JSON response is missing the original input allele identity."
+                )
+            input_fields = input_record.split()
+            if len(input_fields) < 5:
+                raise VEPProviderError("VEP JSON input identity is malformed.")
+            input_chromosome, input_position, _input_id, input_ref, input_alt = input_fields[:5]
+            try:
+                input_position_int = int(input_position)
+            except (TypeError, ValueError) as exc:
+                raise VEPProviderError("VEP JSON input position is invalid.") from exc
+            key = f"{input_chromosome}:{input_position_int}:{input_ref}:{input_alt}"
+            if key not in by_key:
+                raise VEPProviderError(
+                    "VEP returned an annotation for an allele outside the requested batch."
+                )
+            if key in seen_keys:
+                raise VEPProviderError(
+                    f"VEP returned more than one annotation record for allele {key}."
+                )
+            seen_keys.add(key)
+            original = by_key[key]
+            response_assembly = record.get("assembly_name")
+            if response_assembly is not None and _canonical_assembly(str(response_assembly)) != _canonical_assembly(original.genome_build):
+                raise VEPProviderError(
+                    f"VEP response assembly {response_assembly!r} does not match input assembly {original.genome_build!r}."
+                )
 
             transcripts = record.get("transcript_consequences") or []
             selected, selection_status = self._select_display_transcript(transcripts)
@@ -293,7 +504,17 @@ class VEPProvider(ScientificResourceProvider):
                 "gene": selected.get("gene_id"),
                 "transcript": selected.get("transcript_id"),
                 "effect": ",".join(selected.get("consequence_terms") or []),
+                "most_severe_consequence": record.get("most_severe_consequence"),
+                "transcript_consequences": transcripts,
+                "hgvs_consequences": transcripts,
                 "consequences": transcripts,
+                "intergenic_consequences": record.get("intergenic_consequences") or [],
+                "regulatory_feature_consequences": record.get("regulatory_feature_consequences") or [],
+                "motif_feature_consequences": record.get("motif_feature_consequences") or [],
+                "colocated_variants": record.get("colocated_variants") or [],
+                "variant_class": record.get("variant_class"),
+                "assembly_name": record.get("assembly_name"),
+                "selected_transcript": selected or None,
                 "hgvsc": selected.get("hgvsc"),
                 "hgvsp": selected.get("hgvsp"),
                 "canonical": bool(selected.get("canonical")),
@@ -305,13 +526,18 @@ class VEPProvider(ScientificResourceProvider):
                 },
                 "_siraloom_annotation_provenance": {
                     "provider": self.provider_id,
-                    "provider_version": self.contract.provider_version,
+                    "provider_version": self.provider_version,
                     "observed_at": result.metadata.get("observed_at"),
                     "response_sha256": result.response_sha256,
+                    "raw_response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
                     "annotation_options": result.metadata.get("annotation_options", []),
                     "runtime_check": result.metadata.get("runtime_check"),
+                    "tool_execution_provenance": result.metadata.get("tool_execution_provenance"),
+                    "raw_response_path": result.metadata.get("raw_response_path"),
+                    "workspace_path": result.metadata.get("workspace_path"),
+                    "reference_package_checksum": result.metadata.get("reference_package_checksum"),
                 },
             })
 
@@ -360,26 +586,166 @@ class VEPProvider(ScientificResourceProvider):
             } for item in normalized.observations),
         )
 
+    def _tool_identity(self) -> ToolIdentity:
+        if self._tool_identity_cache is None:
+            self._tool_identity_cache = ToolIdentity(
+                tool_id="ensembl-vep",
+                version=self.vep_version,
+                profile_id=self.tool_profile_id,
+                executable=self.binary,
+                executable_sha256=self.expected_binary_sha256,
+                platform=self.platform,
+                qualification_status=self.qualification_status,
+                version_args=("--version",),
+                version_output_contains=f"ensembl-vep {self.vep_version}",
+                supported_operations=("annotate", "verify_cache"),
+                runtime_image_digest=self.runtime_image_digest,
+                runtime_path=self.runtime_path,
+                runtime_environment=self.runtime_environment,
+            )
+        return self._tool_identity_cache
+
+    def _verify_runtime_image(self) -> None:
+        observed = os.environ.get("SIRALOOM_RUNTIME_IMAGE_DIGEST", "").strip().lower()
+        if observed != self.runtime_image_digest:
+            raise VEPProviderError(
+                "Running worker image digest does not match the organization-approved VEP tool profile.",
+                execution_provenance={
+                    "tool_profile_id": self.tool_profile_id,
+                    "expected_runtime_image_digest": self.runtime_image_digest,
+                    "observed_runtime_image_digest": observed or None,
+                    "platform": self.platform,
+                },
+            )
+
+    @staticmethod
+    def _require_read_only_mount(path: Path, *, label: str) -> None:
+        try:
+            flags = os.statvfs(path).f_flag
+        except OSError as exc:
+            raise VEPProviderError(f"{label} resource mount cannot be inspected.") from exc
+        read_only_flag = getattr(os, "ST_RDONLY", 1)
+        if not flags & read_only_flag:
+            raise VEPProviderError(
+                f"{label} resource must be mounted read-only for reproducible VEP execution."
+            )
+
+    def _reference_resource_bindings(
+        self,
+        reference_package: dict[str, Any],
+        assembly: str,
+    ) -> tuple[ScientificResourceBinding, ...]:
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP requires the validated reference package from the normalization stage.")
+        package_assembly = _canonical_assembly(str(reference_package.get("assembly_name") or ""))
+        if package_assembly != assembly:
+            raise VEPProviderError(
+                "VEP reference package assembly does not match the normalized analysis assembly."
+            )
+        package_checksum = str(reference_package.get("package_checksum") or "").lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", package_checksum):
+            raise VEPProviderError("Validated reference package is missing its SHA-256 package checksum.")
+
+        resource_id = str(reference_package.get("resource_id") or "").strip()
+        resource_version = str(reference_package.get("version") or "").strip()
+        if not resource_id or not resource_version:
+            raise VEPProviderError("Validated reference package identity is incomplete.")
+
+        fasta_path = Path(str(reference_package.get("fasta_path") or ""))
+        fai_path = Path(str(reference_package.get("fai_path") or ""))
+        fasta_sha256 = str(reference_package.get("fasta_sha256") or "").lower()
+        fai_sha256 = str(reference_package.get("fai_sha256") or "").lower()
+        if (
+            not fasta_path.is_absolute()
+            or not fai_path.is_absolute()
+            or not re.fullmatch(r"[0-9a-f]{64}", fasta_sha256)
+            or not re.fullmatch(r"[0-9a-f]{64}", fai_sha256)
+        ):
+            raise VEPProviderError("Validated reference package must pin absolute FASTA/FAI paths and SHA-256 digests.")
+
+        if self.fasta and Path(self.fasta).resolve(strict=False) != fasta_path.resolve(strict=False):
+            raise VEPProviderError("VEP FASTA path differs from the reference package used by normalization.")
+        if self.toolchain_fasta_sha256 and self.toolchain_fasta_sha256 != fasta_sha256:
+            raise VEPProviderError("VEP FASTA digest differs from the organization-approved reference package.")
+
+        self._require_read_only_mount(fasta_path, label="Reference FASTA")
+        self._require_read_only_mount(fai_path, label="Reference FAI")
+        bindings = [
+            ScientificResourceBinding(
+                resource_id=f"{resource_id}:FASTA",
+                version=resource_version,
+                sha256=fasta_sha256,
+                assembly=assembly,
+                path=str(fasta_path),
+            ),
+            ScientificResourceBinding(
+                resource_id=f"{resource_id}:FAI",
+                version=resource_version,
+                sha256=fai_sha256,
+                assembly=assembly,
+                path=str(fai_path),
+            ),
+        ]
+        gzi_path_value = reference_package.get("gzi_path")
+        gzi_sha256 = str(reference_package.get("gzi_sha256") or "").lower()
+        if gzi_path_value:
+            gzi_path = Path(str(gzi_path_value))
+            if not gzi_path.is_absolute() or not re.fullmatch(r"[0-9a-f]{64}", gzi_sha256):
+                raise VEPProviderError("Reference GZI index path or digest is invalid.")
+            self._require_read_only_mount(gzi_path, label="Reference GZI")
+            bindings.append(ScientificResourceBinding(
+                resource_id=f"{resource_id}:GZI",
+                version=resource_version,
+                sha256=gzi_sha256,
+                assembly=assembly,
+                path=str(gzi_path),
+            ))
+        return tuple(bindings)
+
     def annotate(self, variants: list[CanonicalVariant], context: dict[str, Any]) -> list[dict[str, Any]]:
         genome_build = _canonical_assembly(context.get("genome_build") or context.get("genome"))
         if not genome_build:
             raise VEPProviderError("VEP annotation requires an explicit GRCh37/GRCh38 assembly.")
-        runtime_check = self.verify_local_runtime(genome_build)
+        reference_package = context.get("reference_package")
+        runtime_check = self.verify_local_runtime(
+            genome_build,
+            reference_package=reference_package,
+            context=context,
+        )
         request = self.prepare_request(
             "annotate",
-            {"variants": variants, "genome_build": context.get("genome_build") or context.get("genome")},
+            {
+                "variants": variants,
+                "genome_build": genome_build,
+                "reference_package": reference_package,
+                "organization_id": context.get("organization_id"),
+                "workflow_id": context.get("workflow_id"),
+            },
         )
         raw = self.execute(request)
         raw.metadata["runtime_check"] = runtime_check
-        normalized = self.normalize_result(raw, inputs=request.payload)
+        try:
+            normalized = self.normalize_result(raw, inputs=request.payload)
+        except VEPProviderError as exc:
+            failure_provenance = dict(exc.execution_provenance or {})
+            failure_provenance.update({
+                "raw_response_path": raw.metadata.get("raw_response_path"),
+                "workspace_path": raw.metadata.get("workspace_path"),
+                "raw_response_sha256": raw.response_sha256,
+                "tool_execution_provenance": raw.metadata.get("tool_execution_provenance"),
+            })
+            exc.execution_provenance = failure_provenance
+            raise
         return list(normalized.observations)
 
-    def verify_local_runtime(self, genome_build: str | None) -> dict[str, Any]:
-        """Verify the configured VEP binary and cache before scientific execution.
-
-        This check is intentionally performed by the real annotation entry point,
-        not inferred from a registered path or a resource's declared version.
-        """
+    def verify_local_runtime(
+        self,
+        genome_build: str | None,
+        *,
+        reference_package: dict[str, Any] | None,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Verify the exact VEP executable, offline cache and normalization reference."""
         assembly = _canonical_assembly(genome_build or self.assembly)
         if not assembly:
             raise VEPProviderError("VEP runtime verification requires an explicit GRCh37/GRCh38 assembly.")
@@ -390,113 +756,106 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError(
                 f"VEP resource assembly {configured_assembly} does not match analysis assembly {assembly}."
             )
-        if assembly in self._runtime_checks:
-            return dict(self._runtime_checks[assembly])
+        package_checksum = str((reference_package or {}).get("package_checksum") or "").lower()
+        runtime_key = f"{assembly}:{package_checksum}"
+        if runtime_key in self._runtime_checks:
+            return dict(self._runtime_checks[runtime_key])
 
+        self._verify_runtime_image()
+        reference_bindings = self._reference_resource_bindings(reference_package or {}, assembly)
         cache_manifest_check = self._verify_cache_manifest(assembly)
-        try:
-            binary_sha256_before = _sha256_file(Path(self.binary))
-        except OSError as exc:
-            raise VEPProviderError(f"VEP executable is unavailable for checksum verification: {self.binary}") from exc
-        if binary_sha256_before != self.expected_binary_sha256:
-            raise VEPProviderError("VEP binary SHA-256 does not match the governed execution contract.")
-
-        try:
-            version_result = subprocess.run(
-                [self.binary, "--version"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise VEPProviderError("VEP version check timed out.", retryable=True) from exc
-        except OSError as exc:
-            raise VEPProviderError(f"VEP executable is unavailable: {self.binary}") from exc
-        if version_result.returncode != 0:
-            raise VEPProviderError(
-                "VEP version check failed: "
-                + (version_result.stderr or version_result.stdout or "no diagnostic").strip()[-2000:]
-            )
-        version_output = "\n".join((version_result.stdout or "", version_result.stderr or "")).strip()
-        actual_version = _extract_vep_version(version_output)
-        expected_version = str(
-            (self.contract.toolchain or {}).get("vep_version")
-            or self.contract.provider_version
-        ).strip()
-        expected_release = _version_release(expected_version)
-        if expected_release is None:
-            raise VEPProviderError(
-                "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
-            )
-        if actual_version is None:
-            raise VEPProviderError("VEP --version returned output without a parseable release version.")
-        expected_full_version = _extract_vep_version(expected_version)
-        version_matches = (
-            actual_version == expected_full_version
-            if expected_full_version and "." in expected_full_version
-            else _version_release(actual_version) == expected_release
+        self._require_read_only_mount(Path(self.cache_dir), label="VEP cache")
+        self._require_read_only_mount(Path(self.cache_manifest), label="VEP cache manifest")
+        cache_binding = ScientificResourceBinding(
+            resource_id=f"vep-cache-manifest:{self.species}",
+            version=self.cache_version,
+            sha256=self.cache_manifest_sha256,
+            assembly=assembly,
+            path=self.cache_manifest,
         )
-        if not version_matches:
-            raise VEPProviderError(
-                f"VEP binary release {actual_version} does not match governed release {expected_version}."
-            )
+        scratch_root = Path(self.scratch_root).resolve(strict=True)
+        if not scratch_root.is_dir():
+            raise VEPProviderError("VEP scratch root is not a directory.")
 
-        cache_command = [
-            self.binary,
-            "--offline",
-            "--cache",
-            "--species",
-            self.species,
-            "--cache_version",
-            self.cache_version,
-            "--dir_cache",
-            self.cache_dir,
-            "--assembly",
-            assembly,
-            "--show_cache_info",
-        ]
-        try:
-            cache_result = subprocess.run(
-                cache_command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
+        organization_id = str(context.get("organization_id") or "").strip()
+        workflow_id = str(context.get("workflow_id") or "").strip()
+        if not organization_id or not workflow_id:
+            raise VEPProviderError("VEP execution requires organization and workflow identity for provenance.")
+
+        with TemporaryDirectory(prefix="siraloom-vep-preflight-", dir=scratch_root) as workspace:
+            request = ToolExecutionRequest(
+                execution_id=str(uuid4()),
+                organization_id=organization_id,
+                workflow_id=workflow_id,
+                operation="verify_cache",
+                argv=(
+                    "--offline", "--cache",
+                    "--species", self.species,
+                    "--cache_version", self.cache_version,
+                    "--dir_cache", self.cache_dir,
+                    "--assembly", assembly,
+                    "--show_cache_info",
+                ),
+                workspace=workspace,
+                timeout_seconds=120,
+                max_output_bytes=self.max_output_bytes,
+                resources=(cache_binding, *reference_bindings),
             )
-        except subprocess.TimeoutExpired as exc:
+            try:
+                result = self.executor.execute(self._tool_identity(), request)
+            except ToolExecutionError as exc:
+                raise VEPProviderError(
+                    f"VEP offline cache verification failed: {exc}",
+                    retryable=exc.retryable,
+                    execution_provenance=asdict(exc.provenance) if exc.provenance else None,
+                ) from exc
+            except ToolExecutionContractError as exc:
+                raise VEPProviderError(
+                    f"VEP execution preflight contract failed: {exc}",
+                    execution_provenance={
+                        "tool_profile_id": self.tool_profile_id,
+                        "vep_version": self.vep_version,
+                        "vep_binary_sha256": self.expected_binary_sha256,
+                        "runtime_image_digest": self.runtime_image_digest,
+                        "platform": self.platform,
+                        "preflight_error": str(exc),
+                    },
+                ) from exc
+
+        cache_output = "\n".join((result.stdout or "", result.stderr or "")).strip()
+        if not cache_output:
             raise VEPProviderError(
-                "VEP offline cache verification timed out.", retryable=True
-            ) from exc
-        except OSError as exc:
-            raise VEPProviderError(f"VEP cache verification could not start: {self.binary}") from exc
-        cache_output = "\n".join((cache_result.stdout or "", cache_result.stderr or "")).strip()
-        if cache_result.returncode != 0 or not cache_output:
-            raise VEPProviderError(
-                "VEP could not load the governed cache offline: "
-                + (cache_output or "no cache information was returned")[-2000:]
+                "VEP offline cache verification returned no cache information.",
+                execution_provenance=asdict(result.provenance),
             )
-        try:
-            binary_sha256_after = _sha256_file(Path(self.binary))
-        except OSError as exc:
-            raise VEPProviderError("VEP binary could not be checksummed after runtime verification.") from exc
-        if binary_sha256_after != binary_sha256_before:
-            raise VEPProviderError("VEP executable changed during runtime verification.")
 
         runtime_check = {
             "status": "VERIFIED",
             "assembly": assembly,
-            "vep_version": actual_version,
-            "expected_vep_version": expected_version,
+            "vep_version": self.vep_version,
+            "expected_vep_version": self.vep_version,
+            "tool_profile_id": self.tool_profile_id,
+            "platform": self.platform,
+            "runtime_image_digest": self.runtime_image_digest,
+            "vep_binary_sha256": self.expected_binary_sha256,
             "cache_version": self.cache_version,
-            "vep_binary_sha256": binary_sha256_after,
             "cache_manifest_sha256": cache_manifest_check["manifest_sha256"],
             "cache_tree_sha256": cache_manifest_check["tree_sha256"],
             "cache_artifact_sha256": cache_manifest_check["source_artifact_sha256"],
             "cache_info_sha256": hashlib.sha256(cache_output.encode("utf-8")).hexdigest(),
+            "reference_package": {
+                "resource_id": reference_package["resource_id"],
+                "version": reference_package["version"],
+                "package_checksum": package_checksum,
+                "assembly_name": reference_package["assembly_name"],
+                "fasta_sha256": reference_package["fasta_sha256"],
+                "fai_sha256": reference_package["fai_sha256"],
+                "gzi_sha256": reference_package.get("gzi_sha256"),
+            },
+            "tool_execution_provenance": asdict(result.provenance),
             "verified_at": datetime.now(timezone.utc).isoformat(),
         }
-        self._runtime_checks[assembly] = runtime_check
+        self._runtime_checks[runtime_key] = runtime_check
         return dict(runtime_check)
 
     def _verify_cache_manifest(self, assembly: str) -> dict[str, str]:
