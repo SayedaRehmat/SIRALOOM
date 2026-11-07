@@ -372,7 +372,12 @@ export default function FamilySampleIdentityWorkbench({
                   <th>{t("familyIdentity.sampleColumn")}</th>
                   <th>{t("familyIdentity.callState")}</th>
                   <th>{t("familyIdentity.genotype")}</th>
+                  <th>{t("familyIdentity.sourceGenotype")}</th>
                   <th>{t("familyIdentity.zygosity")}</th>
+                  <th>{t("familyIdentity.selectedAltDosage")}</th>
+                  <th>{t("familyIdentity.normalizationStep")}</th>
+                  <th>{t("familyIdentity.identityQcStatus")}</th>
+                  <th>{t("familyIdentity.ploidyEvidence")}</th>
                   <th>{t("familyIdentity.phase")}</th>
                   <th>{t("familyIdentity.phaseSet")}</th>
                   <th>{t("familyIdentity.depth")}</th>
@@ -387,8 +392,13 @@ export default function FamilySampleIdentityWorkbench({
                       <td>{specimens.find((specimen) => specimen.specimen_id === sample.specimen_id)?.specimen_identifier ?? sample.specimen_id}</td>
                       <td>{sample.vcf_sample_name}</td>
                       <td><span className="badge neutral">{call.call_state}</span></td>
-                      <td>{call.normalized_genotype ?? call.source_genotype ?? call.call_state}</td>
+                      <td>{call.projected_genotype ?? call.normalized_genotype ?? call.source_genotype ?? call.call_state}</td>
+                      <td>{call.source_genotype ?? "—"}</td>
                       <td>{call.zygosity ?? "UNKNOWN"}</td>
+                      <td>{call.selected_alt_dosage ?? "—"}</td>
+                      <td>{sample.normalization_step_status ?? "—"}</td>
+                      <td>{(sample.identity_evidence ?? []).map((item: any) => `${item.evidence_type}: ${item.review_status}/${item.result}`).join(" · ") || "—"}</td>
+                      <td>{sample.ploidy_evidence?.status ?? "NOT_ASSESSED"}</td>
                       <td>{call.phase ?? "UNSPECIFIED"}</td>
                       <td>{call.phase_set ?? "—"}</td>
                       <td>{call.quality_metrics?.DP ?? "—"}</td>
