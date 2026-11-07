@@ -422,7 +422,7 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
         principal,
     )
 
-    assert result["results"][0]["status"] == "INSUFFICIENT_DATA"
+    assert result["results"][0]["status"] == "REQUIRES_REVIEW"
     assert result["results"][0]["observations_available"] == 0
     assert lock_permissions == ["review"]
     assert "score" not in result["results"][0]
@@ -433,7 +433,7 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
     assert assessment.score is None
     assert evidence.source_version == "M11_OBSERVATIONS_ONLY"
     assert "score" not in evidence.payload
-    assert evidence.payload["status"] == "INSUFFICIENT_DATA"
+    assert evidence.payload["status"] == "REQUIRES_REVIEW"
 
 
 def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplicate_audit(monkeypatch):
@@ -460,9 +460,11 @@ def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplica
         created_by=str(principal.user_id),
     )
     payload = {
-        "model": "AD", "status": "INSUFFICIENT_DATA", "observations_available": 0,
+        "model": "AD", "status": "REQUIRES_REVIEW", "observations_available": 0,
         "observation_fingerprint": observation_fingerprint,
+        "family_matrix_fingerprint": None, "family_matrix_binding_ids": [],
         "reviewer_note": "review context", "interpretation": "REQUIRES_HUMAN_REVIEW",
+        "manual_segregation_rows_excluded": True,
     }
     import hashlib
     import json
