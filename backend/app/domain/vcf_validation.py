@@ -2005,7 +2005,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         if (
                             definition["Number"] == "P"
                             and value not in {None, "."}
-                            and (gt_index is None or genotype_ploidy is None)
+                            and gt_index is None
                         ):
                             raise StrictVCFValidationError(
                                 f"Populated FORMAT/{key} with Number=P requires a sample GT at line {line_no}, sample {sample_index}",
