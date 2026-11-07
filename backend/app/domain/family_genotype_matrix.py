@@ -134,6 +134,29 @@ def build_family_genotype_matrix(
                 "projected_phase": call.get("projected_phase"),
                 "sample_call_status": call.get("status", "GENOTYPE_UNAVAILABLE"),
             })
+        source_artifact_sha256 = sample.get("artifact_sha256")
+        source_artifact_sha256_status = (
+            "PRESENT_VALID_SHA256"
+            if isinstance(source_artifact_sha256, str)
+            and re.fullmatch(r"[0-9a-fA-F]{64}", source_artifact_sha256)
+            else "INVALID_OR_MISSING_SHA256"
+        )
+        normalization_provenance = sample.get("normalization_step_provenance") or {}
+        input_artifacts = {str(value) for value in normalization_provenance.get("input_artifacts", [])}
+        output_artifacts = {str(value) for value in normalization_provenance.get("output_artifacts", [])}
+        partition_artifacts = {
+            str(value) for value in sample.get("normalized_partition_input_artifact_ids", [])
+        }
+        normalization_provenance_status = (
+            "COMPLETE"
+            if sample.get("normalization_step_status") == "SUCCEEDED"
+            and int(sample.get("normalized_partition_count") or 0) > 0
+            and str(sample.get("artifact_id")) in input_artifacts
+            and bool(partition_artifacts)
+            and partition_artifacts.issubset(output_artifacts)
+            and int(normalization_provenance.get("attempt") or 0) > 0
+            else "INCOMPLETE_REQUIRES_REVIEW"
+        )
         ploidy_evidence = sample.get("ploidy_evidence")
         if not ploidy_evidence:
             ploidy_status = "NOT_ASSESSED"
@@ -155,7 +178,9 @@ def build_family_genotype_matrix(
             "analysis_id": str(sample["analysis_id"]),
             "analysis_version": sample["analysis_version"],
             "source_artifact_id": str(sample["artifact_id"]),
-            "source_artifact_sha256": sample["artifact_sha256"],
+            "source_artifact_sha256": source_artifact_sha256,
+            "source_artifact_sha256_status": source_artifact_sha256_status,
+            "normalization_provenance_status": normalization_provenance_status,
             "vcf_sample_name": sample["sample_name"],
             "binding_id": str(sample["binding_id"]),
             "binding_fingerprint": sample["binding_fingerprint"],
@@ -183,12 +208,26 @@ def build_family_genotype_matrix(
             item.get("relationship_type", ""),
         ),
     )
+    provenance_complete = all(
+        sample["source_artifact_sha256_status"] == "PRESENT_VALID_SHA256"
+        and sample["normalization_provenance_status"] == "COMPLETE"
+        and all(
+            row["call_state"] == "NO_RECORD"
+            or row["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
+            for row in sample["calls"]
+        )
+        for sample in matrix_samples
+    )
+    provenance_completeness_status = (
+        "COMPLETE" if provenance_complete else "INCOMPLETE_REQUIRES_REVIEW"
+    )
     fingerprint_payload = {
         "schema_version": 1,
         "case_id": str(case_id),
         "variant_ids": ordered_variants,
         "samples": matrix_samples,
         "relationships": relationship_snapshot,
+        "provenance_completeness_status": provenance_completeness_status,
     }
     return {
         "schema_version": 1,
@@ -197,6 +236,7 @@ def build_family_genotype_matrix(
         "samples": matrix_samples,
         "relationships_as_recorded": relationship_snapshot,
         "interpretation_status": "NOT_PERFORMED",
+        "provenance_completeness_status": provenance_completeness_status,
         "callability_status": "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY",
         "ploidy_status": "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED",
         "qualification_status": "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED",
