@@ -92,6 +92,37 @@ def _require_sha256(value: str, label: str) -> None:
         raise ExecutionPersistenceError(f"{label} must be a 64-character SHA-256 digest.")
 
 
+def execution_request_fingerprint(
+    *,
+    organization_id: UUID,
+    analysis_id: UUID,
+    execution_id: str,
+    environment_registration_id: UUID,
+    tool: ToolIdentity,
+    operation: str,
+    request_snapshot: Mapping[str, Any],
+    input_manifest: list[Mapping[str, Any]],
+) -> str:
+    """Derive the idempotency fingerprint from all immutable execution inputs."""
+    return canonical_fingerprint({
+        "organization_id": str(organization_id),
+        "analysis_id": str(analysis_id),
+        "execution_id": execution_id,
+        "environment_registration_id": str(environment_registration_id),
+        "tool": {
+            "tool_id": tool.tool_id,
+            "version": tool.version,
+            "profile_id": tool.profile_id,
+            "executable_sha256": tool.executable_sha256.lower(),
+            "platform": tool.platform,
+            "runtime_image_digest": tool.runtime_image_digest,
+        },
+        "operation": operation,
+        "request_snapshot": _json_safe(request_snapshot),
+        "input_manifest": _json_safe(input_manifest),
+    })
+
+
 def register_environment_profile(
     db: Session,
     profile: ExecutionEnvironmentProfile,
@@ -217,6 +248,21 @@ def register_tool_execution(
     if duplicate_execution is not None:
         raise ExecutionPersistenceError("Execution ID is already registered under another idempotency key.")
 
+    expected_fingerprint = execution_request_fingerprint(
+        organization_id=organization_id,
+        analysis_id=analysis_id,
+        execution_id=execution_id,
+        environment_registration_id=environment_registration_id,
+        tool=tool,
+        operation=operation,
+        request_snapshot=request_snapshot,
+        input_manifest=input_manifest,
+    )
+    if request_fingerprint != expected_fingerprint:
+        raise ExecutionPersistenceError(
+            "Request fingerprint does not match the immutable execution request contents."
+        )
+
     safe_inputs = _json_safe(input_manifest)
     if not isinstance(safe_inputs, list):
         raise ExecutionPersistenceError("Input manifest must be a list.")
@@ -282,7 +328,11 @@ def claim_tool_execution(
         raise ExecutionPersistenceError("Execution record was not found for this organization.")
     if row.status in {"SUCCEEDED", "FAILED"}:
         raise ExecutionPersistenceError("Terminal executions cannot be claimed.")
-    if row.status == "RUNNING" and row.lease_expires_at and row.lease_expires_at > observed_now:
+    lease_expires_at = row.lease_expires_at
+    if lease_expires_at is not None and lease_expires_at.tzinfo is None:
+        # SQLite does not round-trip timezone metadata for DateTime columns.
+        lease_expires_at = lease_expires_at.replace(tzinfo=timezone.utc)
+    if row.status == "RUNNING" and lease_expires_at and lease_expires_at > observed_now:
         raise ExecutionPersistenceError("Execution is already leased by another worker.")
     if row.status not in {"PENDING", "RUNNING", "INTERRUPTED"}:
         raise ExecutionPersistenceError(f"Execution cannot be claimed from status {row.status!r}.")
