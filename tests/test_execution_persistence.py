@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 import hashlib
+import os
 import shutil
 import subprocess
 from uuid import uuid4
@@ -536,10 +537,26 @@ def test_persistent_executor_records_real_process_result_and_published_output(db
     assert persisted.provenance["tool_id"] == "bcftools"
 
 
-def test_persistent_executor_runs_real_pinned_bcftools_process_and_persists_output(db, tmp_path):
-    executable_text = shutil.which("bcftools")
+def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycle(db, tmp_path):
+    from backend.app.config import settings
+    from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools
+    from backend.app.infrastructure.db.models import ToolExecutionRecord
+
+    conda_prefix = Path(os.getenv("CONDA_PREFIX", ""))
+    conda_bcftools = conda_prefix / "bin" / "bcftools"
+    executable_text = (
+        shutil.which(settings.bcftools_executable)
+        or shutil.which("bcftools")
+        or (str(conda_bcftools) if conda_bcftools.is_file() else None)
+    )
     if not executable_text:
-        pytest.skip("Pinned BCFtools is not installed in this test environment.")
+        message = (
+            "Pinned BCFtools is not discoverable; "
+            f"PATH={os.getenv('PATH', '')!r}, CONDA_PREFIX={os.getenv('CONDA_PREFIX')!r}."
+        )
+        if os.getenv("GITHUB_ACTIONS") == "true":
+            pytest.fail(message)
+        pytest.skip(message)
     executable = Path(executable_text).resolve()
     version = subprocess.run(
         [str(executable), "--version"],
@@ -548,8 +565,20 @@ def test_persistent_executor_runs_real_pinned_bcftools_process_and_persists_outp
         check=False,
         timeout=10,
     )
-    if version.returncode != 0 or "bcftools 1.25" not in (version.stdout + version.stderr):
-        pytest.skip("This real-process qualification test requires BCFtools 1.25.")
+    version_output = version.stdout + version.stderr
+    if (
+        version.returncode != 0
+        or f"bcftools {settings.bcftools_version}" not in version_output
+        or f"Using htslib {settings.htslib_version}" not in version_output
+    ):
+        message = (
+            "Real BCFtools qualification requires the configured pinned pair; "
+            f"expected bcftools={settings.bcftools_version}, htslib={settings.htslib_version}, "
+            f"observed output={version_output!r}."
+        )
+        if os.getenv("GITHUB_ACTIONS") == "true":
+            pytest.fail(message)
+        pytest.skip(message)
 
     organization, _user, case, analysis = _lab(db)
     workspace = tmp_path / "workspace"
@@ -562,90 +591,84 @@ def test_persistent_executor_runs_real_pinned_bcftools_process_and_persists_outp
         "1\t100\t.\tA\tG,T\t.\tPASS\t.\n",
         encoding="utf-8",
     )
-    output_path = workspace / "normalized.vcf"
+    reference_path = workspace / "reference.fa"
+    reference_path.write_text(">1\n" + ("A" * 1000) + "\n", encoding="ascii")
+    Path(str(reference_path) + ".fai").write_text("1\t1000\t3\t1000\t1001\n", encoding="ascii")
+    output_path = workspace / "normalized.vcf.gz"
+
     executable_digest = sha256_file(executable)
-    profile_id = "bcftools-1.25-htslib-1.25-linux-amd64"
-    tool = ToolIdentity(
-        tool_id="bcftools",
-        version="1.25",
-        profile_id=profile_id,
-        executable=str(executable),
-        executable_sha256=executable_digest,
-        platform=current_platform_id(),
-        qualification_status="SOFTWARE_QUALIFIED",
-        version_args=("--version",),
-        version_output_contains="bcftools 1.25",
-        supported_operations=("normalize",),
-        runtime_path=(str(executable.parent),),
-    )
     environment_profile = replace(
         _profile(organization.id),
         workspace_root=str(workspace),
-        tool_executable_sha256=((profile_id, executable_digest),),
+        supported_tool_profile_ids=(settings.bcftools_profile_id,),
+        tool_executable_sha256=((settings.bcftools_profile_id, executable_digest),),
     )
     environment = register_environment_profile(
         db, environment_profile, organization_id=organization.id
     )
     db.commit()
 
-    def publish(request, result, execution_record_id):
-        output = Path(request.outputs[0].path)
-        artifact = Artifact(
-            id=uuid4(),
-            analysis_id=analysis.id,
-            case_id=case.id,
-            artifact_type="NORMALIZED_VCF",
-            filename=output.name,
-            media_type="text/vcf",
-            size_bytes=output.stat().st_size,
-            sha256=sha256_file(output),
-            storage_uri=f"file:///qualified-artifacts/{output.name}",
-        )
-        db.add(artifact)
-        db.flush()
-        return {request.outputs[0].name: artifact.id}
-
     service = PersistentToolExecutionService(
         db,
         organization_id=organization.id,
         analysis_id=analysis.id,
         environment_registration_id=environment.id,
-        worker_id="real-bcftools-qualification-worker",
+        worker_id="real-bcftools-normalization-qualification",
         executor=LocalProcessToolExecutor(),
     )
-    request = ToolExecutionRequest(
-        execution_id="real-bcftools-normalization-001",
-        organization_id=str(organization.id),
+
+    result = normalize_vcf_with_bcftools(
+        input_path,
+        output_path,
+        reference_fasta=reference_path,
+        persistent_execution=service,
         workflow_id="normalize",
-        operation="normalize",
-        argv=(
-            "norm", "-m", "-any", "-Ov",
-            "-o", str(output_path), str(input_path),
-        ),
-        workspace=str(workspace),
-        inputs=(
-            InputArtifact(
-                name="source-vcf",
-                path=str(input_path),
-                sha256=sha256_file(input_path),
-            ),
-        ),
-        outputs=(OutputArtifact(name="normalized-vcf", path=str(output_path)),),
-        timeout_seconds=60,
+        expected_bcftools_version=settings.bcftools_version,
+        timeout_seconds=120,
+        bcftools_executable=str(executable),
     )
 
-    completed = service.execute(tool, request, artifact_publisher=publish)
+    assert output_path.is_file() and output_path.stat().st_size > 0
+    index_path = Path(str(output_path) + ".csi")
+    assert index_path.is_file() and index_path.stat().st_size > 0
+    assert result["index_validation"]["method"] == "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN"
+    assert len(result["tool_execution_record_ids"]) >= 7
 
-    persisted = db.get(
-        __import__("backend.app.infrastructure.db.models", fromlist=["ToolExecutionRecord"]).ToolExecutionRecord,
-        completed.record_id,
+    vcf_artifact = Artifact(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        case_id=case.id,
+        artifact_type="NORMALIZED_VCF",
+        filename=output_path.name,
+        media_type="application/gzip",
+        size_bytes=output_path.stat().st_size,
+        sha256=sha256_file(output_path),
+        storage_uri=f"file:///qualified-artifacts/{analysis.id}/{output_path.name}",
+        metadata_json={"tool_execution_record_ids": result["tool_execution_record_ids"]},
     )
-    assert persisted.status == "SUCCEEDED"
-    assert persisted.provenance["tool_id"] == "bcftools"
-    assert persisted.provenance["tool_version"] == "1.25"
-    assert persisted.output_manifest[0]["artifact_id"]
-    normalized_records = [
-        line for line in output_path.read_text(encoding="utf-8").splitlines()
-        if line and not line.startswith("#")
-    ]
-    assert len(normalized_records) == 2
+    index_artifact = Artifact(
+        id=uuid4(),
+        analysis_id=analysis.id,
+        case_id=case.id,
+        artifact_type="VCF_INDEX",
+        filename=index_path.name,
+        media_type="application/octet-stream",
+        size_bytes=index_path.stat().st_size,
+        sha256=sha256_file(index_path),
+        storage_uri=f"file:///qualified-artifacts/{analysis.id}/{index_path.name}",
+        metadata_json={"tool_execution_record_ids": result["tool_execution_record_ids"]},
+    )
+    db.add_all([vcf_artifact, index_artifact])
+    db.commit()
+
+    records = db.query(ToolExecutionRecord).filter(
+        ToolExecutionRecord.analysis_id == analysis.id
+    ).all()
+    assert len(records) == len(result["tool_execution_record_ids"])
+    assert all(record.status == "SUCCEEDED" for record in records)
+    assert any(record.operation == "index" for record in records)
+    assert any(record.operation == "sort" for record in records)
+    assert all(
+        artifact.metadata_json["tool_execution_record_ids"] == result["tool_execution_record_ids"]
+        for artifact in (vcf_artifact, index_artifact)
+    )
