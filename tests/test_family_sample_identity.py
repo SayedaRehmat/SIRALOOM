@@ -165,6 +165,9 @@ def test_sample_binding_rejects_sample_name_or_source_artifact_mismatch(monkeypa
 def test_sample_binding_verification_requires_source_hash_and_successful_normalization(monkeypatch):
     _patch_auth(monkeypatch)
     case, member, specimen, analysis, artifact, principal = _context()
+    # The reviewer must be independent of the binding recorder; exercise the
+    # source-hash gate rather than the earlier self-review authorization gate.
+    principal.user_id = uuid4()
     previous = PedigreeSampleBinding(
         id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
         specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
