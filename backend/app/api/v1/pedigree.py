@@ -770,7 +770,6 @@ def get_family_genotype_matrix(
         variants[variant_id] = variant
 
     samples = []
-    selected_member_ids = set()
     for binding_id in body.binding_ids:
         binding = db.get(PedigreeSampleBinding, binding_id)
         if binding is None or binding.case_id != case_id:
@@ -782,10 +781,6 @@ def get_family_genotype_matrix(
         ))
         if successor is not None:
             raise HTTPException(409, "A superseded sample binding cannot be used in a current genotype matrix")
-        if binding.pedigree_member_id in selected_member_ids:
-            raise HTTPException(422, "Select at most one specimen/analysis binding per family member")
-        selected_member_ids.add(binding.pedigree_member_id)
-
         member = db.get(PedigreeMember, binding.pedigree_member_id)
         specimen = db.get(Specimen, binding.specimen_id)
         analysis = db.get(Analysis, binding.analysis_id)
