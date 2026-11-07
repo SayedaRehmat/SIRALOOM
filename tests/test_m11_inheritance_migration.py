@@ -64,6 +64,8 @@ def test_unvalidated_inheritance_results_are_retired_by_migration(tmp_path, monk
         )
         assert score_column["nullable"] is True
         assert "segregation_observation_revisions" in inspect(connection).get_table_names()
+        revision_columns = {column["name"] for column in inspect(connection).get_columns("segregation_observation_revisions")}
+        assert "revision_reason" in revision_columns
         trigger_names = {
             row[0]
             for row in connection.execute(
