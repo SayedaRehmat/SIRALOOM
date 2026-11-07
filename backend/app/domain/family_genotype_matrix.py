@@ -124,6 +124,7 @@ def build_family_genotype_matrix(
             "relationship_to_proband": sample.get("relationship_to_proband"),
             "sex": sample.get("sex") or "UNKNOWN",
             "affected_status": sample.get("affected_status", "UNKNOWN"),
+            "is_proband": bool(sample.get("is_proband", False)),
             "specimen_id": str(sample["specimen_id"]),
             "analysis_id": str(sample["analysis_id"]),
             "analysis_version": sample["analysis_version"],
