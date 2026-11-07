@@ -36,11 +36,13 @@ class _BindingDB:
         self.scalar_results = []
         self.added = []
         self.commits = 0
+        self.refresh_calls = []
 
     def get(self, model, _identifier, **_kwargs):
         return self.objects.get(model)
 
-    def refresh(self, *_args, **_kwargs):
+    def refresh(self, *args, **kwargs):
+        self.refresh_calls.append((args, kwargs))
         return None
 
     def scalar(self, _statement):
@@ -253,3 +255,115 @@ def test_sample_binding_migration_is_append_only_and_refuses_data_loss(tmp_path,
     with pytest.raises(RuntimeError, match="Refusing to downgrade"):
         command.downgrade(config, "0062_phenotype_observation_amendments")
     engine.dispose()
+
+
+def test_sample_binding_write_requires_case_write_authorization(monkeypatch):
+    case, member, specimen, analysis, artifact, principal = _context()
+    db = _BindingDB(case=case, member=member, specimen=specimen, analysis=analysis, artifact=artifact)
+
+    def deny(*_args):
+        raise HTTPException(403, "write permission required")
+
+    monkeypatch.setattr(pedigree, "require_case_permission", deny)
+    with pytest.raises(HTTPException) as exc:
+        pedigree.create_sample_binding(
+            case.id,
+            pedigree.SampleBindingInput(
+                member_id=member.id, specimen_id=specimen.id, analysis_id=analysis.id,
+                artifact_id=artifact.id, sample_name="FAM-01", binding_method="LAB_SAMPLE_SHEET",
+            ),
+            db, principal,
+        )
+    assert exc.value.status_code == 403
+    assert db.added == []
+
+
+def test_sample_binding_create_retry_returns_existing_binding_without_duplicate_audit(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    existing = SimpleNamespace(
+        id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
+        binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
+        evidence_reference=None, review_reason=None, version=1,
+        supersedes_binding_id=None, recorded_by=principal.user_id,
+        reviewed_by=None, reviewed_at=None,
+    )
+    db = _BindingDB(case=case, member=member, specimen=specimen, analysis=analysis, artifact=artifact)
+    db.scalar_results = [existing]
+
+    result = pedigree.create_sample_binding(
+        case.id,
+        pedigree.SampleBindingInput(
+            member_id=member.id, specimen_id=specimen.id, analysis_id=analysis.id,
+            artifact_id=artifact.id, sample_name="FAM-01", binding_method="LAB_SAMPLE_SHEET",
+        ),
+        db, principal,
+    )
+    assert result["binding_id"] == str(existing.id)
+    assert db.added == []
+    assert db.commits == 0
+
+
+def test_sample_binding_review_retry_is_idempotent_and_conflicts_are_rejected(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    previous = SimpleNamespace(
+        id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
+        binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
+        evidence_reference=None, review_reason=None, version=1,
+        supersedes_binding_id=None, recorded_by=principal.user_id,
+        reviewed_by=None, reviewed_at=None,
+    )
+    revision = SimpleNamespace(
+        id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
+        binding_status="VERIFIED", binding_method="LAB_SAMPLE_SHEET",
+        evidence_reference=None, review_reason="Confirmed against LIMS",
+        version=2, supersedes_binding_id=previous.id, recorded_by=principal.user_id,
+        reviewed_by=principal.user_id, reviewed_at=None,
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=previous,
+    )
+    db.scalar_results = [revision]
+    result = pedigree.review_sample_binding(
+        case.id, previous.id,
+        pedigree.SampleBindingReviewInput(decision="VERIFIED", reason="Confirmed against LIMS"),
+        db, principal,
+    )
+    assert result["binding_id"] == str(revision.id)
+    assert db.added == []
+
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=previous,
+    )
+    db.scalar_results = [revision]
+    with pytest.raises(HTTPException) as exc:
+        pedigree.review_sample_binding(
+            case.id, previous.id,
+            pedigree.SampleBindingReviewInput(decision="REJECTED", reason="Conflicting review"),
+            db, principal,
+        )
+    assert exc.value.status_code == 409
+
+
+def test_sample_binding_revision_serializes_case_mutation(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    db = _BindingDB(case=case, member=member, specimen=specimen, analysis=analysis, artifact=artifact)
+    pedigree.create_sample_binding(
+        case.id,
+        pedigree.SampleBindingInput(
+            member_id=member.id, specimen_id=specimen.id, analysis_id=analysis.id,
+            artifact_id=artifact.id, sample_name="FAM-01", binding_method="LAB_SAMPLE_SHEET",
+        ),
+        db, principal,
+    )
+    assert any(kwargs.get("with_for_update") is True for _args, kwargs in db.refresh_calls)
