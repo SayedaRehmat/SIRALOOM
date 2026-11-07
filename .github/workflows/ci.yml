@@ -49,37 +49,49 @@ jobs:
           FIREBASE_AUTH_REQUIRED: "false"
         run: uv run --locked pytest -q
       - name: Validate process startup scripts
-        run: sh -n scripts/start_worker.sh scripts/start_beat.sh
+        run: sh -n scripts/start_api.sh scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python
         run: uv run --locked python -m compileall backend scripts
-      - name: Build laboratory backend image
+  container-image-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build tool-neutral API and scheduler image
+        run: docker build --file docker/backend-api.Dockerfile --tag siraloom-api:ci .
+      - name: Verify API image is non-root and contains no scientific executable
+        run: |
+          test "$(docker run --rm --entrypoint id siraloom-api:ci -u)" = "10001"
+          test "$(docker run --rm --entrypoint id siraloom-api:ci -g)" = "10001"
+          docker run --rm --entrypoint sh siraloom-api:ci -c \
+            'test -w /data/siraloom/artifacts && test -w /data/siraloom/resource-cache && test -w /data/siraloom/scratch && test -w /data/siraloom/beat'
+          docker run --rm --entrypoint sh siraloom-api:ci -c '! command -v bcftools && ! command -v vep && ! command -v samtools && ! command -v gatk'
+      - name: Build scientific worker image
         run: >-
           docker build
           --build-arg BCFTOOLS_LOCK_FILE=configs/bioinformatics/profiles/bcftools-1.25-linux-64.lock --build-arg BCFTOOLS_PLATFORM=linux-64
           --build-arg BCFTOOLS_PROFILE_ID=bcftools-1.25-htslib-1.25-linux-64
           --build-arg BCFTOOLS_VERSION=1.25
           --build-arg HTSLIB_VERSION=1.25
-          --file docker/backend.Dockerfile --tag siraloom-backend:ci .
-      - name: Verify backend image runs without root privileges
+          --file docker/backend.Dockerfile --tag siraloom-worker:ci .
+      - name: Verify worker image runs without root privileges and retains exact BCFtools/HTSlib
         run: |
-          test "$(docker run --rm --entrypoint id siraloom-backend:ci -u)" = "10001"
-          test "$(docker run --rm --entrypoint id siraloom-backend:ci -g)" = "10001"
-          docker run --rm --entrypoint sh siraloom-backend:ci -c \
+          test "$(docker run --rm --entrypoint id siraloom-worker:ci -u)" = "10001"
+          test "$(docker run --rm --entrypoint id siraloom-worker:ci -g)" = "10001"
+          docker run --rm --entrypoint sh siraloom-worker:ci -c \
             'test -w /data/siraloom/artifacts && test -w /data/siraloom/resource-cache && test -w /data/siraloom/scratch && test -w /data/siraloom/beat'
-      - name: Verify writable ownership of fresh backend named volumes
+          test "$(docker run --rm --entrypoint bcftools siraloom-worker:ci --version | sed -n '1p')" = "bcftools 1.25"
+          test "$(docker run --rm --entrypoint bcftools siraloom-worker:ci --version | sed -n '2p')" = "Using htslib 1.25"
+      - name: Verify writable ownership of fresh API image named volumes
         run: |
           set -eu
           for directory in artifacts resource-cache scratch beat; do
-            volume="siraloom-ci-${directory}"
+            volume="siraloom-api-ci-${directory}"
             docker volume create "$volume"
             docker run --rm -v "$volume:/data/siraloom/$directory" \
-              --entrypoint sh siraloom-backend:ci -c "test -w /data/siraloom/$directory"
+              --entrypoint sh siraloom-api:ci -c "test -w /data/siraloom/$directory"
             docker volume rm "$volume"
           done
-      - name: Verify container BCFtools version
-        run: |
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '1p')" = "bcftools 1.25"
-          test "$(docker run --rm --entrypoint bcftools siraloom-backend:ci --version | sed -n '2p')" = "Using htslib 1.25"
+
   postgres-integration:
     runs-on: ubuntu-latest
     defaults:
@@ -195,7 +207,12 @@ jobs:
         run: |
           cp .env.production.example .env
           touch /tmp/siraloom-firebase-admin.json
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml config --format json > /tmp/siraloom-compose-dev.json
+          python -c 'import json; c=json.load(open("/tmp/siraloom-compose-dev.json")); assert c["services"]["api"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["beat"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["worker"]["build"]["dockerfile"] == "docker/backend.Dockerfile"'
           docker compose -f docker-compose.production.yml config --quiet
+          docker compose -f docker-compose.production.yml config --format json > /tmp/siraloom-compose.json
+          python -c 'import json; c=json.load(open("/tmp/siraloom-compose.json")); assert c["services"]["api"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["beat"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["worker"]["build"]["dockerfile"] == "docker/backend.Dockerfile"; print("API/Beat are tool-neutral; scientific worker retains BCFtools")'
           SIRALOOM_LAB_A_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-a-artifacts \
             SIRALOOM_LAB_B_ARTIFACT_HOST_PATH=/tmp/siraloom-lab-b-artifacts \
             docker compose -f docker-compose.production.yml \
