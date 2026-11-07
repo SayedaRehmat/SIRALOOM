@@ -953,8 +953,12 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
         )
     number = parsed["Number"]
     allowed_cardinality = {"A", "R", "G", "."}
+    if fileformat in {"VCFv4.4", "VCFv4.5"} and kind == "FORMAT":
+        # VCFv4.4 errata introduced Number=P for PSL/PSO/PSQ; VCFv4.5
+        # retains it and adds local-allele and base-modification cardinalities.
+        allowed_cardinality.add("P")
     if fileformat == "VCFv4.5" and kind == "FORMAT":
-        allowed_cardinality.update({"LA", "LR", "LG", "P", "M"})
+        allowed_cardinality.update({"LA", "LR", "LG", "M"})
     if number not in allowed_cardinality and not re.fullmatch(r"[0-9]+", number):
         raise StrictVCFValidationError(
             f"Invalid {kind} field Number at line {line_no}: {number!r}",
@@ -981,6 +985,33 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
                 f"FORMAT/Number=M fields require Integer or Float Type at line {line_no}",
                 code="VCF_HEADER_DEFINITION_INVALID",
             )
+    # Validate typed declarations against version-specific reserved tables
+    # at header-read time. This prevents an earlier record-level error from
+    # masking a contradictory reserved-field declaration later in the file.
+    if fileformat != "VCFv4.5":
+        reserved_definition = (
+            _reserved_info_definition_for_version(fileformat, identifier)
+            if kind == "INFO"
+            else _reserved_format_definition_for_version(fileformat, identifier)
+        )
+        if reserved_definition is not None:
+            expected_type = reserved_definition["Type"]
+            allowed_types = (
+                {"Integer", "Float"}
+                if expected_type == "Numeric"
+                else {expected_type}
+            )
+            if number != reserved_definition["Number"] or parsed["Type"] not in allowed_types:
+                expected_type_text = "Integer or Float" if expected_type == "Numeric" else expected_type
+                raise StrictVCFValidationError(
+                    f"Reserved {fileformat} {kind} field {identifier!r} requires "
+                    f"Number={reserved_definition['Number']} and Type={expected_type_text} at line {line_no}",
+                    code=(
+                        "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+                        if kind == "INFO"
+                        else "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+                    ),
+                )
     reserved_vcf45_definition = None
     if fileformat == "VCFv4.5":
         if kind == "FORMAT":
