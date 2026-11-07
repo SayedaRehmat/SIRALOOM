@@ -217,6 +217,11 @@ def register_tool_execution(
         raise ExecutionPersistenceError("Tool and environment platforms do not match.")
     if tool.runtime_image_digest != env_snapshot.get("runtime_image_digest"):
         raise ExecutionPersistenceError("Tool and environment runtime image digests do not match.")
+    approved_executable_digest = env_snapshot.get("tool_executable_sha256", {}).get(tool.profile_id)
+    if approved_executable_digest != tool.executable_sha256.lower():
+        raise ExecutionPersistenceError(
+            "Tool executable SHA-256 does not match the environment's approved executable digest."
+        )
 
     existing = db.scalar(
         select(ToolExecutionRecord).where(
