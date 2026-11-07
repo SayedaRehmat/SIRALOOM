@@ -34,6 +34,7 @@ from backend.app.infrastructure.db.models import (
     PedigreeSampleBinding,
     PedigreeSampleIdentityEvidence,
     SegregationObservation,
+    SegregationObservationRevision,
     Specimen,
     SpecimenPloidyEvidenceRevision,
     Variant,
@@ -1254,39 +1255,274 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     db.commit(); return _relationship(row)
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")
-def get_segregation(analysis_id: UUID,variant_id: UUID,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal)
+def get_segregation(
+    analysis_id: UUID,
+    variant_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    analysis = get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, READ_ROLES)
-    get_analysis_variant(analysis,variant_id,db)
-    rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id).order_by(SegregationObservation.created_at)))
-    members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
-    _validate_observation_members(rows, members)
-    assessments=list(db.scalars(select(InheritanceAssessment).where(InheritanceAssessment.analysis_id==analysis_id,InheritanceAssessment.variant_id==variant_id).order_by(InheritanceAssessment.created_at.desc())))
-    return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observations":[_seg(x,members.get(x.pedigree_member_id)) for x in rows],"assessments":[{"id":str(a.id),"model":a.model,"status":a.status,"rationale":a.rationale,"fingerprint":a.observation_fingerprint,"reviewer_note":a.reviewer_note,"created_by":a.created_by,"created_at":a.created_at.isoformat()} for a in assessments]}
+    get_analysis_variant(analysis, variant_id, db)
+    roots = list(db.scalars(
+        select(SegregationObservation)
+        .where(
+            SegregationObservation.analysis_id == analysis_id,
+            SegregationObservation.variant_id == variant_id,
+        )
+        .order_by(SegregationObservation.created_at)
+    ))
+    members = {
+        member.id: member
+        for member in db.scalars(
+            select(PedigreeMember).where(PedigreeMember.case_id == analysis.case_id)
+        )
+    }
+    _validate_observation_members(roots, members)
+    root_ids = [row.id for row in roots]
+    revisions = (
+        list(db.scalars(
+            select(SegregationObservationRevision)
+            .where(SegregationObservationRevision.root_observation_id.in_(root_ids))
+            .order_by(
+                SegregationObservationRevision.root_observation_id,
+                SegregationObservationRevision.version,
+            )
+        ))
+        if root_ids else []
+    )
+    revisions_by_root = {}
+    for revision in revisions:
+        revisions_by_root.setdefault(revision.root_observation_id, []).append(revision)
 
-@router.post("/analyses/{analysis_id}/variants/{variant_id}/segregation",status_code=201)
-def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
-    analysis=get_accessible_analysis(analysis_id,db,principal)
+    current_observations = []
+    observation_history = []
+    for root in roots:
+        member = members.get(root.pedigree_member_id)
+        root_payload = _seg(root, member)
+        root_payload.update({
+            "revision_id": None,
+            "revision_version": 1,
+            "observation_fingerprint": (root.metadata_json or {}).get("observation_fingerprint"),
+        })
+        history = [root_payload]
+        for revision in revisions_by_root.get(root.id, []):
+            history.append(_segregation_revision_payload(root, revision, member))
+        observation_history.extend(history)
+        current_observations.append(history[-1])
+
+    assessments = list(db.scalars(
+        select(InheritanceAssessment)
+        .where(
+            InheritanceAssessment.analysis_id == analysis_id,
+            InheritanceAssessment.variant_id == variant_id,
+        )
+        .order_by(InheritanceAssessment.created_at.desc())
+    ))
+    return {
+        "analysis_id": str(analysis_id),
+        "variant_id": str(variant_id),
+        "observations": current_observations,
+        "observation_history": observation_history,
+        "assessments": [
+            {
+                "id": str(item.id),
+                "model": item.model,
+                "status": item.status,
+                "rationale": item.rationale,
+                "fingerprint": item.observation_fingerprint,
+                "reviewer_note": item.reviewer_note,
+                "created_by": item.created_by,
+                "created_at": item.created_at.isoformat(),
+                "family_matrix_fingerprint": item.family_matrix_fingerprint,
+                "family_matrix_snapshot_id": (
+                    str(item.family_matrix_snapshot_id)
+                    if item.family_matrix_snapshot_id else None
+                ),
+            }
+            for item in assessments
+        ],
+    }
+
+
+def _segregation_observation_fingerprint(payload: dict) -> str:
+    canonical = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _segregation_revision_payload(root, revision, member) -> dict:
+    payload = revision.payload or {}
+    return {
+        "id": str(root.id),
+        "revision_id": str(revision.id),
+        "revision_version": revision.version,
+        "supersedes_revision_id": (
+            str(revision.supersedes_revision_id)
+            if revision.supersedes_revision_id else None
+        ),
+        "observation_fingerprint": revision.observation_fingerprint,
+        "pedigree_member_id": str(root.pedigree_member_id),
+        "member_identifier": member.member_identifier if member else None,
+        "genotype": payload.get("genotype"),
+        "zygosity": payload.get("zygosity"),
+        "phase": payload.get("phase"),
+        "allele_observed": payload.get("allele_observed"),
+        "phenotype_status": payload.get("phenotype_status"),
+        "source": "MANUALLY_REPORTED",
+        "notes": payload.get("notes"),
+        "metadata": payload.get("metadata") or {},
+    }
+
+
+@router.post("/analyses/{analysis_id}/variants/{variant_id}/segregation", status_code=201)
+def add_segregation(
+    analysis_id: UUID,
+    variant_id: UUID,
+    body: SegregationInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    analysis = get_accessible_analysis(analysis_id, db, principal)
     require_role(principal, CASE_WRITE_ROLES)
     analysis = _lock_analysis_for_pedigree(db, analysis_id, principal, "write")
-    get_analysis_variant(analysis,variant_id,db)
-    member=db.get(PedigreeMember,body.pedigree_member_id)
-    if not member or member.case_id!=analysis.case_id: raise HTTPException(400,"Variant and pedigree member must belong to this analysis/case")
-    metadata_json = {
-        **body.metadata,
-        "pedigree_context_snapshot": _pedigree_context_snapshot(db, analysis.case_id),
+    get_analysis_variant(analysis, variant_id, db)
+    member = db.get(PedigreeMember, body.pedigree_member_id)
+    if not member or member.case_id != analysis.case_id:
+        raise HTTPException(
+            400,
+            "Variant and pedigree member must belong to this analysis/case",
+        )
+
+    payload = {
+        "genotype": body.genotype,
+        "zygosity": body.zygosity,
+        "phase": body.phase,
+        "allele_observed": body.allele_observed,
+        "phenotype_status": body.phenotype_status,
+        "source": "MANUALLY_REPORTED",
+        "notes": body.notes,
+        "metadata": {
+            **body.metadata,
+            "pedigree_context_snapshot": _pedigree_context_snapshot(db, analysis.case_id),
+        },
     }
-    existing=db.scalar(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id,SegregationObservation.pedigree_member_id==member.id))
-    if existing:
-        existing.genotype=body.genotype; existing.zygosity=body.zygosity; existing.phase=body.phase; existing.allele_observed=body.allele_observed; existing.phenotype_status=body.phenotype_status; existing.source=body.source; existing.notes=body.notes; existing.metadata_json=metadata_json
-        row=existing; action="UPDATE"
-    else:
-        row=SegregationObservation(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,pedigree_member_id=member.id,genotype=body.genotype,zygosity=body.zygosity,phase=body.phase,allele_observed=body.allele_observed,phenotype_status=body.phenotype_status,source="MANUALLY_REPORTED",notes=body.notes,metadata_json=metadata_json); db.add(row); action="CREATE"
-    # This endpoint records a human-reported observation only. The client may
-    # not assert that a genotype came from a normalized VCF or a verified sample.
-    row.source = "MANUALLY_REPORTED"
-    AuditService(db).record(event_type="SEGREGATION_OBSERVATION_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="SEGREGATION_OBSERVATION",subject_id=str(row.id),operation=action,after_state=_seg(row,member))
-    db.commit(); return _seg(row,member)
+    observation_fingerprint = _segregation_observation_fingerprint(payload)
+    root = db.scalar(
+        select(SegregationObservation).where(
+            SegregationObservation.analysis_id == analysis_id,
+            SegregationObservation.variant_id == variant_id,
+            SegregationObservation.pedigree_member_id == member.id,
+        )
+    )
+
+    if root is None:
+        root_metadata = {
+            **payload["metadata"],
+            "observation_fingerprint": observation_fingerprint,
+        }
+        row = SegregationObservation(
+            id=uuid4(),
+            analysis_id=analysis_id,
+            variant_id=variant_id,
+            pedigree_member_id=member.id,
+            genotype=payload["genotype"],
+            zygosity=payload["zygosity"],
+            phase=payload["phase"],
+            allele_observed=payload["allele_observed"],
+            phenotype_status=payload["phenotype_status"],
+            source="MANUALLY_REPORTED",
+            notes=payload["notes"],
+            metadata_json=root_metadata,
+        )
+        db.add(row)
+        AuditService(db).record(
+            event_type="SEGREGATION_OBSERVATION_RECORDED",
+            case_id=analysis.case_id,
+            analysis_id=analysis_id,
+            actor_type="HUMAN",
+            actor_id=str(principal.user_id),
+            subject_type="SEGREGATION_OBSERVATION",
+            subject_id=str(row.id),
+            operation="CREATE_VERSION_1",
+            after_state={
+                **_seg(row, member),
+                "revision_version": 1,
+                "observation_fingerprint": observation_fingerprint,
+            },
+        )
+        db.commit()
+        return {
+            **_seg(row, member),
+            "revision_id": None,
+            "revision_version": 1,
+            "observation_fingerprint": observation_fingerprint,
+        }
+
+    revisions = list(db.scalars(
+        select(SegregationObservationRevision)
+        .where(SegregationObservationRevision.root_observation_id == root.id)
+        .order_by(SegregationObservationRevision.version.desc())
+    ))
+    latest = revisions[0] if revisions else None
+    current_fingerprint = (
+        latest.observation_fingerprint
+        if latest is not None
+        else (root.metadata_json or {}).get("observation_fingerprint")
+    )
+    if current_fingerprint is None:
+        current_payload = {
+            "genotype": root.genotype,
+            "zygosity": root.zygosity,
+            "phase": root.phase,
+            "allele_observed": root.allele_observed,
+            "phenotype_status": root.phenotype_status,
+            "source": "MANUALLY_REPORTED",
+            "notes": root.notes,
+            "metadata": root.metadata_json or {},
+        }
+        current_fingerprint = _segregation_observation_fingerprint(current_payload)
+    if current_fingerprint == observation_fingerprint:
+        if latest is not None:
+            return _segregation_revision_payload(root, latest, member)
+        return {
+            **_seg(root, member),
+            "revision_id": None,
+            "revision_version": 1,
+            "observation_fingerprint": current_fingerprint,
+        }
+
+    revision = SegregationObservationRevision(
+        id=uuid4(),
+        root_observation_id=root.id,
+        supersedes_revision_id=latest.id if latest is not None else None,
+        version=(latest.version + 1) if latest is not None else 2,
+        payload=payload,
+        observation_fingerprint=observation_fingerprint,
+        recorded_by=principal.user_id,
+    )
+    db.add(revision)
+    AuditService(db).record(
+        event_type="SEGREGATION_OBSERVATION_SUPERSEDED",
+        case_id=analysis.case_id,
+        analysis_id=analysis_id,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="SEGREGATION_OBSERVATION",
+        subject_id=str(root.id),
+        operation=f"CREATE_VERSION_{revision.version}",
+        before_state=(
+            _segregation_revision_payload(root, latest, member)
+            if latest is not None else _seg(root, member)
+        ),
+        after_state=_segregation_revision_payload(root, revision, member),
+    )
+    db.commit()
+    return _segregation_revision_payload(root, revision, member)
 
 @router.post("/analyses/{analysis_id}/variants/{variant_id}/inheritance/assess")
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
