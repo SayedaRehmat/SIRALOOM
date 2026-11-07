@@ -323,6 +323,25 @@ def test_sample_binding_migration_is_append_only_and_refuses_data_loss(tmp_path,
                 "UPDATE pedigree_sample_bindings SET binding_status='VERIFIED' "
                 "WHERE id='10000000-0000-0000-0000-000000000001'"
             ))
+        connection.execute(text("""
+            INSERT INTO pedigree_sample_identity_evidence (
+                id, case_id, binding_id, evidence_type, result, method, method_version,
+                evidence_reference, metrics, review_status, version, evidence_fingerprint,
+                recorded_by, created_at
+            ) VALUES (
+                '80000000-0000-0000-0000-000000000001',
+                '20000000-0000-0000-0000-000000000001',
+                '10000000-0000-0000-0000-000000000001',
+                'CHAIN_OF_CUSTODY', 'PASS', 'LIMS_CHAIN_OF_CUSTODY', '1',
+                'LIMS-ACCESSION-1', '{}', 'PENDING', 1, :fingerprint,
+                '70000000-0000-0000-0000-000000000001', CURRENT_TIMESTAMP
+            )
+        """), {"fingerprint": "e" * 64})
+        with pytest.raises(Exception):
+            connection.execute(text(
+                "UPDATE pedigree_sample_identity_evidence SET review_status='ACCEPTED' "
+                "WHERE evidence_reference='LIMS-ACCESSION-1'"
+            ))
     with pytest.raises(RuntimeError, match="Refusing to downgrade"):
         command.downgrade(config, "0062_phenotype_observation_amendments")
     engine.dispose()
