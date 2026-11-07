@@ -68,7 +68,7 @@ def test_multiallelic_mate_record_with_indistinguishable_reciprocal_alts_is_unre
         '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n"
-        "2\t10\tbnd2\tA\tA]1:5],A]1:5]\t.\tPASS\tMATEID=bnd1,bnd1\n",
+        "2\t10\tbnd2\tA\tA]1:5],C]1:5]\t.\tPASS\tMATEID=bnd1,bnd1\n",
         encoding="utf-8",
     )
 
