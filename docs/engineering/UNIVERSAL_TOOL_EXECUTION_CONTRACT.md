@@ -57,3 +57,22 @@ This change does not yet:
 - establish scientific workflow or clinical qualification.
 
 Do not advertise universal execution or independent lab execution as complete until the adapters, durable records, isolation and remote agent are implemented and qualified.
+
+
+## Runtime and resource attestation hardening
+
+The executor contract now additionally enforces:
+
+- `ToolIdentity.platform` must equal the actual worker platform/architecture (`linux-64`, `linux-aarch64`, `osx-64`, `osx-arm64`, or `win-64` as supported). A mismatched profile is rejected before process start.
+- The tool profile owns the runtime `PATH` and approved environment variables. Request data cannot replace protected variables or override profile-pinned values. `HOME` and temporary directories are scoped to the execution workspace.
+- Every `ScientificResourceBinding` must name an absolute local path. The executor hashes the actual file bytes or, for a directory, a deterministic sorted manifest of every regular file's relative path, byte size and SHA-256. Symlink entries, special files, empty resource directories and digest mismatches are rejected.
+- `ToolExecutionProvenance` records the actual platform, optional declared runtime image digest, and a digest of the effective execution environment. A declared image digest is format-validated and recorded; the executor does not itself attest the container runtime's image identity.
+- Runtime failures after process start (timeout, non-zero exit, missing outputs) carry execution provenance, including exit code, timing, stream hashes and any produced output hashes. Partial output hashes are diagnostic only and are never a successful artifact publication.
+
+For VEP, the VEP adapter must retain its release-specific cache-manifest verification: the cache manifest is verified against every file in the cache tree and against the pinned cache release/species/assembly. The shared executor's resource binding can verify the manifest file itself and FASTA/index bytes; it must not claim that hashing the manifest alone verifies the cache tree.
+
+## A2-specific integration constraints
+
+The VEP adapter must construct `ToolIdentity` from the organization-approved VEP execution contract, including the exact executable digest, expected version output, worker platform, approved Perl/module search path and (for container execution) runtime image digest. It must construct input/output/resource bindings from staged, verified artifacts. All VEP process invocations—including version and offline-cache preflight—must use the shared executor; no direct `subprocess` fallback remains.
+
+The current executor does not impose per-process CPU, memory, PID or scratch quotas. Those limits must be enforced by the worker container/cgroup and selected resource class, then measured in the WES/WGS batch qualification. `runtime_image_digest` is a recorded declaration until the worker/container launch layer supplies independent image attestation.
