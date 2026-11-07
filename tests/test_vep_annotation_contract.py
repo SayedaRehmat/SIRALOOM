@@ -68,6 +68,7 @@ def test_vep_normalization_preserves_transcript_and_variant_level_consequences()
         "protein_id": "ENSP000001.1",
     }
     record = {
+        "input": "1 100 SIRALOOM_0 A G . PASS .",
         "start": 100,
         "seq_region_name": "1",
         "allele_string": "A/G",
@@ -166,6 +167,7 @@ def test_vep_rejects_duplicate_annotation_records_for_one_requested_allele():
         alternate="G",
     )
     record = {
+        "input": "1 100 SIRALOOM_0 A G . PASS .",
         "start": 100,
         "seq_region_name": "1",
         "allele_string": "A/G",
@@ -188,12 +190,14 @@ def test_vep_rejects_unrequested_annotation_records_instead_of_dropping_them():
         alternate="G",
     )
     requested_record = {
+        "input": "1 100 SIRALOOM_0 A G . PASS .",
         "start": 100,
         "seq_region_name": "1",
         "allele_string": "A/G",
         "transcript_consequences": [],
     }
     unrequested_record = {
+        "input": "1 200 SIRALOOM_1 C T . PASS .",
         "start": 200,
         "seq_region_name": "1",
         "allele_string": "C/T",
