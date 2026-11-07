@@ -613,14 +613,26 @@ def test_vep_blocks_unlisted_cache_file(monkeypatch, tmp_path):
 def test_vep_rejects_symlinked_cache_root(monkeypatch, tmp_path):
     binary = tmp_path / "vep"
     binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    binary.chmod(0o755)
     toolchain, cache_file = _manifested_toolchain(tmp_path, binary)
     actual_cache = cache_file.parent
     cache_link = tmp_path / "cache-link"
     cache_link.symlink_to(actual_cache, target_is_directory=True)
     toolchain["cache_dir"] = str(cache_link)
+    context = _runtime_context(monkeypatch, tmp_path, toolchain)
+    executor = _FakeToolExecutor()
+    provider = VEPProvider.from_execution_contract(
+        _contract(toolchain=toolchain),
+        executor=executor,
+    )
 
     with pytest.raises(VEPProviderError, match="cache directory cannot be a symlink"):
-        VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+        provider.verify_local_runtime(
+            "GRCh38",
+            reference_package=context["reference_package"],
+            context=context,
+        )
+    assert executor.requests == []
 
 
 def test_vep_rejects_analysis_assembly_different_from_resource_assembly(monkeypatch, tmp_path):
