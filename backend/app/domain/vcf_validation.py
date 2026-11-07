@@ -17,8 +17,8 @@ VCF_CONTIG_NAME_RE = re.compile(
 )
 SYMBOLIC_RE = re.compile(r"^<[^<>,\s]+>$")
 BREAKEND_RE = re.compile(
-    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
-    r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[0-9]+(?P=left)|"
+    r"(?P<right>[\[\]])[^:\[\]\s]+:[0-9]+(?P=right)[ACGTNacgtn.]+)$"
 )
 SINGLE_BREAKEND_RE = re.compile(r"^(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)$")
 
@@ -2012,7 +2012,7 @@ def validate_vcf_strict(
                 # the remote coordinate are paired by ALT position.
                 remote_loci_by_alt: dict[int, tuple[str, int]] = {}
                 for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
-                    match = re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)
+                    match = re.search(r"([\[\]])([^:\[\]]+):([0-9]+)\1", alt)
                     if match is not None:
                         remote_loci_by_alt[alt_index] = (
                             match.group(2), int(match.group(3))
