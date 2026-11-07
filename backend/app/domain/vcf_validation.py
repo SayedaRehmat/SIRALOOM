@@ -3075,20 +3075,20 @@ def validate_vcf_strict(
                     for position, allele in enumerate(mate_sample.get("alleles", []))
                     if allele == mate_allele_number
                 ]
-                source_signature = sorted(
+                source_signature = [
                     (
                         source_psl[position] if position < len(source_psl) else ".",
                         source_pso[position] if position < len(source_pso) else ".",
                     )
                     for position in source_positions
-                )
-                mate_signature = sorted(
+                ]
+                mate_signature = [
                     (
                         mate_psl[position] if position < len(mate_psl) else ".",
                         mate_pso[position] if position < len(mate_pso) else ".",
                     )
                     for position in mate_positions
-                )
+                ]
                 if source_signature != mate_signature:
                     raise StrictVCFValidationError(
                         f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching FORMAT/PSL and FORMAT/PSO value pairs for sample {sample_name!r}",
