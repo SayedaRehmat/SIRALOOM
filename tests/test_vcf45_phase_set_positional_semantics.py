@@ -508,8 +508,8 @@ def test_vcf45_reciprocal_multicopy_bnd_phase_pairs_follow_psl_pso_identity(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\tGT:PSL:PSO\t1|1:alpha,beta:3,4\n"
-        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\tGT:PSL:PSO\t1|1:beta,alpha:4,3\n",
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\tGT:PSL:PSO\t1|1|0:alpha,beta,.:3,4,.\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tMATEID=bnd1\tGT:PSL:PSO\t0|1|1:.,alpha,beta:.,3,4\n",
         encoding="utf-8",
     )
 
