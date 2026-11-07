@@ -371,14 +371,20 @@ def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
     assert result["unresolved_breakend_coordinate_count"] == 2
     assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
 
-@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
-def test_vcf44_and_vcf45_telomeric_breakend_remote_position_zero_is_valid(tmp_path: Path, version: str):
+@pytest.mark.parametrize(
+    "version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_vcf41_to_vcf45_telomeric_breakend_remote_position_zero_is_valid(
+    tmp_path: Path, version: str
+):
     path = tmp_path / f"breakend-telomere-zero-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tMATEID=bndV\n"
-        "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tMATEID=bndX\n",
+        "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tSVTYPE=BND;MATEID=bndV\n"
+        "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tSVTYPE=BND;MATEID=bndX\n",
         encoding="utf-8",
     )
     result = validate_vcf_strict(path)
