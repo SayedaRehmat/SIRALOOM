@@ -996,17 +996,16 @@ def _validate_vcf_index_record_counts(
             digest = hashlib.sha256()
             count = 0
             with query_path.open("rb") as query_output:
-                query_lines = query_output
-                for raw_line in query_lines:
-                if not raw_line or raw_line.startswith(b"#"):
-                    continue
-                fields = raw_line.split(b"\t", 1)
-                if not fields or fields[0].decode("utf-8", errors="replace") != contig:
-                    raise VCFToolError(
-                        f"index-backed query for contig {contig!r} returned a record from another contig."
-                    )
-                digest.update(raw_line)
-                count += 1
+                for raw_line in query_output:
+                    if not raw_line or raw_line.startswith(b"#"):
+                        continue
+                    fields = raw_line.split(b"\\t", 1)
+                    if not fields or fields[0].decode("utf-8", errors="replace") != contig:
+                        raise VCFToolError(
+                            f"index-backed query for contig {contig!r} returned a record from another contig."
+                        )
+                    digest.update(raw_line)
+                    count += 1
             if count != sequential_counts[contig]:
                 raise VCFToolError(
                     f"index-backed query count mismatch for contig {contig!r}: "
@@ -1014,11 +1013,11 @@ def _validate_vcf_index_record_counts(
                 )
             expected_digest = sequential[contig]["digest"].hexdigest()
             actual_digest = digest.hexdigest()
-                if actual_digest != expected_digest:
-                    raise VCFToolError(
-                        f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
-                    )
-                indexed_digests[contig] = actual_digest
+            if actual_digest != expected_digest:
+                raise VCFToolError(
+                    f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
+                )
+            indexed_digests[contig] = actual_digest
 
     return {
         "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
