@@ -636,3 +636,39 @@ def test_identity_evidence_history_endpoint_returns_all_immutable_revisions(monk
     assert result["binding_id"] == str(binding_id)
     assert [item["version"] for item in result["evidence"]] == [1, 2]
     assert result["evidence"][1]["review_status"] == "ACCEPTED"
+
+
+def test_identity_evidence_correction_appends_pending_successor(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id)
+    previous = SimpleNamespace(
+        id=uuid4(), case_id=case.id, binding_id=binding.id,
+        evidence_type="SAMPLE_IDENTITY_QC", result="PASS", method="OLD_METHOD",
+        method_version="1", evidence_reference="OLD-REPORT", source_artifact_id=None,
+        metrics_json={}, review_status="ACCEPTED", review_reason="Accepted", version=2,
+        supersedes_evidence_id=uuid4(), evidence_fingerprint="a" * 64,
+        recorded_by=principal.user_id, reviewed_by=principal.user_id, reviewed_at=None,
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=binding, evidence=previous,
+    )
+    db.scalar_results = [None, None]
+
+    result = pedigree.supersede_sample_identity_evidence(
+        case.id, binding.id, previous.id,
+        pedigree.SampleIdentityEvidenceInput(
+            evidence_type="SAMPLE_IDENTITY_QC", result="INDETERMINATE",
+            method="UPDATED_METHOD", method_version="2",
+            evidence_reference="UPDATED-REPORT", metrics={"concordance": None},
+        ),
+        db, principal,
+    )
+    revision = next(item for item in db.added if isinstance(item, PedigreeSampleIdentityEvidence))
+    assert result["review_status"] == "PENDING"
+    assert result["version"] == 3
+    assert revision.supersedes_evidence_id == previous.id
+    assert revision.review_status == "PENDING"
+    assert revision.method == "UPDATED_METHOD"
+    assert db.commits == 1
