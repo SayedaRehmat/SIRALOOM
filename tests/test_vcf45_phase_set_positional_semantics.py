@@ -262,6 +262,24 @@ def test_vcf45_multi_alt_breakend_mates_check_each_reciprocal_phase_vector(
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
 
+@pytest.mark.parametrize("single_breakend_alt", [".A", "A.", ".TGCA", "TCC."])
+def test_vcf45_single_breakend_requires_pso_for_its_phase_set(
+    tmp_path: Path, single_breakend_alt: str
+):
+    path = tmp_path / "single-breakend-pso-required.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t5\tbnd_single\tA\t{single_breakend_alt}\t.\tPASS\t.\tGT:PSL:PSO\t0|1:set,set:3,.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_PHASE_SET_PSO_REQUIRED"
+
 def test_vcf45_pso_obligations_are_tracked_for_multiple_sets_in_one_sample(
     tmp_path: Path,
 ):
