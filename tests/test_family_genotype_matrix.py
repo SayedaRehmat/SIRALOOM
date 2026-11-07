@@ -547,3 +547,31 @@ def test_matrix_rejects_calls_from_a_different_vcf_sample_column():
             samples=[sample],
             relationships=[],
         )
+
+
+def test_verified_specimen_ploidy_is_recorded_without_claiming_locus_interpretation():
+    member_id, variant_id = uuid4(), uuid4()
+    sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "sample_name": "PROBAND",
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+            "source_record_sha256": "c" * 64,
+        },
+    })
+    sample["is_proband"] = True
+    sample["ploidy_evidence"] = {
+        "version": 3,
+        "status": "VERIFIED",
+        "reference_build": "GRCh38",
+        "revision_fingerprint": "d" * 64,
+        "region_copy_number": {"chr1:1-1000000": 2},
+        "source_type": "LAB_VALIDATED",
+        "evidence_reference": "PLOIDY-QC-003",
+    }
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    assert matrix["samples"][0]["ploidy_evidence_status"] == "VERIFIED_RECORDED_LOCUS_POLICY_REQUIRED"
+    assert matrix["samples"][0]["ploidy_interpretation_status"] == "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY"
+    assert matrix["samples"][0]["calls"][0]["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
