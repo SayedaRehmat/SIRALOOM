@@ -197,7 +197,7 @@ class LinuxContainerToolExecutor:
             *mounts,
         ]
         env = {
-            "PATH": "/usr/bin:/bin",
+            "PATH": os.pathsep.join(profile.runtime_path),
             "HOME": "/tmp",
             "TMPDIR": "/tmp",
             "LANG": "C",
@@ -206,8 +206,7 @@ class LinuxContainerToolExecutor:
         env.update({str(k): str(v) for k, v in profile.runtime_environment.items()})
         env.update({str(k): str(v) for k, v in request.environment.items()})
         for key, value in sorted(env.items()):
-            if key not in {"PATH", "HOME", "TMPDIR", "LANG", "LC_ALL"}:
-                base.extend(["--env", f"{key}={value}"])
+            base.extend(["--env", f"{key}={value}"])
 
         # Verify executable bytes and the declared version inside the exact
         # immutable image before invoking the requested scientific operation.
