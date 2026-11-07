@@ -2306,12 +2306,26 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db.commit()
 
                 try:
+                    analysis_case = db.get(Case, analysis.case_id)
+                    if analysis_case is None:
+                        raise ResourceConsumptionError(
+                            "CASE_NOT_FOUND",
+                            "Analysis case was not found before normalization execution.",
+                        )
+                    persistent_execution = _persistent_tool_execution_service(
+                        db,
+                        analysis=analysis,
+                        organization_id=analysis_case.organization_id,
+                        worker_id=f"workflow:{analysis.id}:normalize",
+                    )
                     normalization_stats = normalize_vcf_with_bcftools(
                         routing["sequence_path"],
                         temp_path,
                         reference_fasta=reference_fasta_path,
                         expected_bcftools_version=settings.bcftools_version,
                         source_only_format_fields=package_profile.get("base_modification_format_fields", []),
+                        persistent_execution=persistent_execution,
+                        workflow_id="normalize",
                     )
                     response_sha256 = sha256_file(temp_path)
                     complete_resource_execution(
@@ -2366,6 +2380,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "normalization_tool_version": normalization_stats["tool_version"],
                         "normalization_expected_tool_version": normalization_stats["expected_tool_version"],
                         "normalization_command": normalization_stats["command"],
+                        "tool_execution_record_ids": normalization_stats.get("tool_execution_record_ids", []),
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "compression": normalization_stats["compression"],
@@ -2391,6 +2406,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         "source_only_format_fields": normalization_stats.get("source_only_format_fields", []),
                         "source_only_format_fields_policy": normalization_stats.get("source_only_format_fields_policy"),
                         "reference_package_checksum": reference_package["package_checksum"],
+                        "tool_execution_record_ids": normalization_stats.get("tool_execution_record_ids", []),
                     },
                 )
                 normalized_artifact.paired_artifact_id = index_artifact.id
