@@ -740,3 +740,49 @@ def test_identity_evidence_rejects_duplicate_active_evidence_type(monkeypatch):
     assert exc.value.status_code == 409
     assert "append a correction" in exc.value.detail
     assert db.added == []
+
+
+def test_verified_binding_resolves_identity_evidence_from_exact_unverified_predecessor():
+    case_id, member_id, specimen_id, analysis_id, artifact_id = (uuid4() for _ in range(5))
+    previous_id, verified_id = uuid4(), uuid4()
+    previous = SimpleNamespace(
+        id=previous_id, case_id=case_id, pedigree_member_id=member_id,
+        specimen_id=specimen_id, analysis_id=analysis_id, artifact_id=artifact_id,
+        source_artifact_sha256="a" * 64, sample_name="FAM-01",
+        binding_status="UNVERIFIED",
+    )
+    verified = SimpleNamespace(
+        id=verified_id, case_id=case_id, pedigree_member_id=member_id,
+        specimen_id=specimen_id, analysis_id=analysis_id, artifact_id=artifact_id,
+        source_artifact_sha256="a" * 64, sample_name="FAM-01",
+        binding_status="VERIFIED", supersedes_binding_id=previous_id,
+    )
+    evidence = [
+        SimpleNamespace(
+            id=uuid4(), evidence_type=evidence_type, result="PASS",
+            method="LAB_QC", method_version="1", evidence_reference=f"{evidence_type}-REF",
+            evidence_fingerprint=("b" if evidence_type == "CHAIN_OF_CUSTODY" else "c") * 64,
+            review_status="ACCEPTED", reviewed_by=uuid4(), reviewed_at=None,
+        )
+        for evidence_type in ("CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC")
+    ]
+
+    class EvidenceDB:
+        def __init__(self):
+            self.rows = [[], evidence]
+
+        def get(self, model, identifier, **_kwargs):
+            if model is PedigreeSampleBinding and identifier == verified_id:
+                return verified
+            if model is PedigreeSampleBinding and identifier == previous_id:
+                return previous
+            return None
+
+        def scalars(self, _statement):
+            return _Rows(self.rows.pop(0))
+
+    result = pedigree._require_sample_identity_evidence(EvidenceDB(), verified_id)
+    assert {item["evidence_type"] for item in result} == {
+        "CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC",
+    }
+    assert all(item["review_status"] == "ACCEPTED" for item in result)
