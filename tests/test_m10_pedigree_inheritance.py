@@ -15,6 +15,7 @@ from backend.app.infrastructure.db.models import (
     AuditEvent,
     Case,
     Evidence,
+    FamilyGenotypeMatrixSnapshot,
     InheritanceAssessment,
     Organization,
     PedigreeMember,
