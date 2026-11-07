@@ -67,6 +67,32 @@ class PersistentToolExecutionService:
         self.worker_id = worker_id
         self.executor = executor or LocalProcessToolExecutor()
         self.artifact_publisher = artifact_publisher
+        self.execution_record_ids: list[UUID] = []
+
+    def _canonical_request_snapshot(self, request: ToolExecutionRequest) -> dict:
+        argv = list(request.argv)
+        replacements = [(request.workspace, "$WORKSPACE")]
+        replacements.extend((item.path, f"$INPUT:{item.name}") for item in request.inputs)
+        replacements.extend((item.path, f"$OUTPUT:{item.name}") for item in request.outputs)
+        for source, target in sorted(replacements, key=lambda item: len(item[0]), reverse=True):
+            argv = [value.replace(source, target) for value in argv]
+        return {
+            "workflow_id": request.workflow_id,
+            "operation": request.operation,
+            "argv": argv,
+            "workspace": "$WORKSPACE",
+            "timeout_seconds": request.timeout_seconds,
+            "max_output_bytes": request.max_output_bytes,
+            "resource_bindings": [
+                {
+                    "resource_id": item.resource_id,
+                    "version": item.version,
+                    "sha256": item.sha256,
+                    "assembly": item.assembly,
+                }
+                for item in request.resources
+            ],
+        }
 
     def execute(
         self,
@@ -84,23 +110,7 @@ class PersistentToolExecutionService:
             {"name": item.name, "sha256": item.sha256.lower()}
             for item in request.inputs
         ]
-        request_snapshot = {
-            "workflow_id": request.workflow_id,
-            "operation": request.operation,
-            "argv": list(request.argv),
-            "workspace": request.workspace,
-            "timeout_seconds": request.timeout_seconds,
-            "max_output_bytes": request.max_output_bytes,
-            "resource_bindings": [
-                {
-                    "resource_id": item.resource_id,
-                    "version": item.version,
-                    "sha256": item.sha256,
-                    "assembly": item.assembly,
-                }
-                for item in request.resources
-            ],
-        }
+        request_snapshot = self._canonical_request_snapshot(request)
         fingerprint = execution_request_fingerprint(
             organization_id=self.organization_id,
             analysis_id=self.analysis_id,
@@ -129,6 +139,8 @@ class PersistentToolExecutionService:
             input_manifest=input_manifest,
         )
         self.db.commit()
+        if record.id not in self.execution_record_ids:
+            self.execution_record_ids.append(record.id)
         if record.status == "SUCCEEDED":
             raise ExecutionPersistenceError(
                 "This execution already succeeded; resume from its persisted workflow output checkpoint."
