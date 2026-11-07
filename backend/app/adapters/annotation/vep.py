@@ -497,6 +497,82 @@ class VEPProvider(ScientificResourceProvider):
         normalized = self.normalize_result(raw, inputs=request.payload)
         return list(normalized.observations)
 
+    def _run_runtime_check_command(
+        self,
+        command: list[str],
+        *,
+        assembly: str,
+        operation_label: str,
+        timeout_seconds: int,
+        resources: tuple[ScientificResourceBinding, ...] = (),
+    ):
+        """Run VEP runtime/cache attestation through the durable executor when assigned."""
+        if self.persistent_execution_service is None:
+            return subprocess.run(
+                command, check=False, capture_output=True, text=True, timeout=timeout_seconds
+            )
+
+        from uuid import uuid4
+        from backend.app.infrastructure.db.models import ExecutionEnvironmentRegistration
+
+        toolchain = self.contract.toolchain or {}
+        expected_version = str(toolchain.get("vep_version") or self.contract.provider_version)
+        expected_version_match = _extract_vep_version(expected_version)
+        execution_profile_id = str(toolchain.get("execution_profile_id") or "")
+        if not expected_version_match or not execution_profile_id:
+            raise VEPProviderError(
+                "Persistent VEP runtime checks require pinned vep_version and execution_profile_id."
+            )
+        registration = self.persistent_execution_service.db.get(
+            ExecutionEnvironmentRegistration,
+            self.persistent_execution_service.environment_registration_id,
+        )
+        if registration is None:
+            raise VEPProviderError("Persistent VEP execution environment registration is missing.")
+        runtime_path = tuple(
+            item for item in dict.fromkeys((str(Path(self.binary).parent), "/usr/bin", "/bin"))
+            if Path(item).is_dir()
+        )
+        profile = ToolIdentity(
+            tool_id="ensembl-vep",
+            version=expected_version_match,
+            profile_id=execution_profile_id,
+            executable=self.binary,
+            executable_sha256=self.expected_binary_sha256,
+            platform=current_platform_id(),
+            qualification_status="SOFTWARE_QUALIFIED",
+            version_args=("--version",),
+            version_output_contains=expected_version_match,
+            supported_operations=("validate", "annotate"),
+            runtime_image_digest=registration.profile_json.get("runtime_image_digest"),
+            runtime_path=runtime_path,
+        )
+        with tempfile.TemporaryDirectory(prefix="siraloom-vep-preflight-") as workspace:
+            request = ToolExecutionRequest(
+                execution_id=f"vep-{operation_label}-{uuid4().hex}",
+                organization_id=str(self.persistent_execution_service.organization_id),
+                workflow_id="annotate",
+                operation="validate",
+                argv=tuple(command[1:]),
+                workspace=workspace,
+                resources=resources,
+                timeout_seconds=timeout_seconds,
+            )
+            try:
+                persistent = self.persistent_execution_service.execute(profile, request)
+            except Exception as exc:
+                raise VEPProviderError(
+                    f"Persistent VEP {operation_label} check failed: {exc}",
+                    retryable=bool(getattr(exc, "retryable", False)),
+                ) from exc
+        provenance = persistent.result.provenance
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=provenance.exit_code,
+            stdout=persistent.result.stdout,
+            stderr=persistent.result.stderr,
+        )
+
     def verify_local_runtime(self, genome_build: str | None) -> dict[str, Any]:
         """Verify the configured VEP binary and cache before scientific execution.
 
@@ -524,13 +600,21 @@ class VEPProvider(ScientificResourceProvider):
         if binary_sha256_before != self.expected_binary_sha256:
             raise VEPProviderError("VEP binary SHA-256 does not match the governed execution contract.")
 
+        expected_version = str(
+            (self.contract.toolchain or {}).get("vep_version")
+            or self.contract.provider_version
+        ).strip()
+        expected_full_version = _extract_vep_version(expected_version)
+        if not expected_full_version:
+            raise VEPProviderError(
+                "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
+            )
         try:
-            version_result = subprocess.run(
+            version_result = self._run_runtime_check_command(
                 [self.binary, "--version"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,
+                assembly=assembly,
+                operation_label="version",
+                timeout_seconds=30,
             )
         except subprocess.TimeoutExpired as exc:
             raise VEPProviderError("VEP version check timed out.", retryable=True) from exc
@@ -543,10 +627,6 @@ class VEPProvider(ScientificResourceProvider):
             )
         version_output = "\n".join((version_result.stdout or "", version_result.stderr or "")).strip()
         actual_version = _extract_vep_version(version_output)
-        expected_version = str(
-            (self.contract.toolchain or {}).get("vep_version")
-            or self.contract.provider_version
-        ).strip()
         expected_release = _version_release(expected_version)
         if expected_release is None:
             raise VEPProviderError(
@@ -579,13 +659,22 @@ class VEPProvider(ScientificResourceProvider):
             assembly,
             "--show_cache_info",
         ]
+        cache_resources = (
+            ScientificResourceBinding(
+                resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{assembly}",
+                version=self.cache_version,
+                sha256=self.cache_manifest_sha256,
+                assembly=assembly,
+                path=self.cache_manifest,
+            ),
+        )
         try:
-            cache_result = subprocess.run(
+            cache_result = self._run_runtime_check_command(
                 cache_command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
+                assembly=assembly,
+                operation_label="cache",
+                timeout_seconds=120,
+                resources=cache_resources,
             )
         except subprocess.TimeoutExpired as exc:
             raise VEPProviderError(
