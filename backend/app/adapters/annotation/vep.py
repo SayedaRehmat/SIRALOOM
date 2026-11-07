@@ -445,13 +445,24 @@ class VEPProvider(ScientificResourceProvider):
 
         seen_keys: set[str] = set()
         for record in result.payload:
-            start = record.get("start")
-            seq_region = record.get("seq_region_name")
-            allele_string = str(record.get("allele_string") or "")
-            ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
-            alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
-            key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
-            if key is None or key not in by_key:
+            # VEP may render an indel's consequence coordinates differently from
+            # the submitted VCF representation. Reconcile against the original
+            # VCF input string, not VEP's consequence start/allele_string fields.
+            input_record = record.get("input")
+            if not isinstance(input_record, str):
+                raise VEPProviderError(
+                    "VEP JSON response is missing the original input allele identity."
+                )
+            input_fields = input_record.split()
+            if len(input_fields) < 5:
+                raise VEPProviderError("VEP JSON input identity is malformed.")
+            input_chromosome, input_position, _input_id, input_ref, input_alt = input_fields[:5]
+            try:
+                input_position_int = int(input_position)
+            except (TypeError, ValueError) as exc:
+                raise VEPProviderError("VEP JSON input position is invalid.") from exc
+            key = f"{input_chromosome}:{input_position_int}:{input_ref}:{input_alt}"
+            if key not in by_key:
                 raise VEPProviderError(
                     "VEP returned an annotation for an allele outside the requested batch."
                 )
