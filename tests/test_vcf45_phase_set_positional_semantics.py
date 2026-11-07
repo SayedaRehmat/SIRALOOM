@@ -552,7 +552,7 @@ def test_vcf45_tandem_duplication_source_example_retains_reference_allele_pso(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "chr1\t10\tdup1\tT\t<DUP>\t.\tPASS\tSVCLAIM=DJ\tGT:PSL:PSO\t/0/0|1:.,.,chr1*10*3:.,.,3\n"
+        "chr1\t10\tdup1\tT\t<DUP>\t.\tPASS\tEND=20;SVCLAIM=DJ\tGT:PSL:PSO\t/0/0|1:.,.,chr1*10*3:.,.,3\n"
         "chr1\t20\tsnv1\tA\tG\t.\tPASS\t.\tGT:PSL:PSO\t/0/0|0|1:.,.,chr1*10*1,chr1*10*3:.,.,4,1\n"
         "chr1\t30\tsnv2\tG\tT\t.\tPASS\t.\tGT:PSL:PSO\t/0/0|0|1:.,.,chr1*10*1,chr1*10*3:.,.,2,5\n",
         encoding="utf-8",
