@@ -129,6 +129,9 @@ class AssessmentInput(BaseModel):
         min_length=1,
         max_length=6,
     )
+    # Explicitly selected, reviewed family bindings. Empty preserves the legacy
+    # review-only path; it never promotes manually entered genotypes to evidence.
+    binding_ids: list[UUID] = Field(default_factory=list, max_length=50)
     reviewer_note: str | None = Field(default=None, max_length=5000)
 
 
@@ -1103,6 +1106,7 @@ def get_family_genotype_matrix(
             "relationship_to_proband": member.relationship_to_proband,
             "sex": member.sex,
             "affected_status": member.affected_status,
+            "is_proband": member.is_proband,
             "specimen_id": specimen.id,
             "analysis_id": analysis.id,
             "analysis_version": analysis.analysis_version,
@@ -1268,15 +1272,54 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)
-    # No normalized family-call snapshot is currently wired into this route.
-    # SegregationObservation is a reviewer-entered record, so its genotype,
-    # zygosity and phase fields must never be treated as source-derived calls.
-    # Keep the endpoint conservative until a qualified family matrix is bound
-    # to the interpretation request.
+
+    family_matrix = None
+    if body.binding_ids:
+        if len(set(body.binding_ids)) != len(body.binding_ids):
+            raise HTTPException(422, "Family binding IDs must be unique")
+        family_matrix = get_family_genotype_matrix(
+            analysis.case_id,
+            GenotypeMatrixInput(binding_ids=body.binding_ids, variant_ids=[variant_id]),
+            db,
+            principal,
+        )
+        proband_samples = [
+            sample for sample in family_matrix["samples"]
+            if sample["is_proband"] and sample["analysis_id"] == str(analysis_id)
+        ]
+        if len(proband_samples) != 1:
+            raise HTTPException(
+                409,
+                "Inheritance review requires exactly one verified proband binding from the target analysis",
+            )
+
+    # Manually entered SegregationObservation rows remain reviewer notes only.
+    # They are never converted into normalized calls or inheritance evidence.
     obs=[]
-    fp=fingerprint(obs); results=[]; audit_changes=[]
+    observation_fp=fingerprint(obs)
+    family_matrix_fp=family_matrix["matrix_fingerprint"] if family_matrix else None
+    fp=hashlib.sha256(json.dumps({
+        "schema_version": 2,
+        "manual_observation_fingerprint": observation_fp,
+        "family_matrix_fingerprint": family_matrix_fp,
+    },sort_keys=True,separators=(",",":")).encode()).hexdigest()
+    results=[]; audit_changes=[]
     for model in models:
         result=assess_model(model,obs)
+        # The matrix is source-bound context, not a qualified inheritance model.
+        # Do not issue compatibility conclusions even when calls are present.
+        result = {
+            **result,
+            "status": "REQUIRES_REVIEW",
+            "rationale": (
+                "A verified family genotype matrix is attached as reproducible evidence context. "
+                "Automated inheritance compatibility is not qualified; review disease mechanism, "
+                "penetrance, age, pedigree relationship confidence, phase, ploidy and callability."
+                if family_matrix else
+                "No verified family genotype matrix was supplied. Manually reported genotype fields "
+                "are not source evidence; review the missing identity, genotype and disease-specific evidence."
+            ),
+        }
         row=db.scalar(select(InheritanceAssessment).where(
             InheritanceAssessment.analysis_id==analysis_id,
             InheritanceAssessment.variant_id==variant_id,
@@ -1284,9 +1327,9 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
             InheritanceAssessment.observation_fingerprint==fp,
         ))
         if row is None:
-            row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
+            row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,family_matrix_fingerprint=family_matrix_fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
             db.add(row)
-            audit_changes.append({"operation":"CREATE","assessment_id":str(row.id),"after_state":{"model":model,"status":result["status"],"reviewer_note":body.reviewer_note,"observation_fingerprint":fp}})
+            audit_changes.append({"operation":"CREATE","assessment_id":str(row.id),"after_state":{"model":model,"status":result["status"],"reviewer_note":body.reviewer_note,"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp}})
         elif row.reviewer_note != body.reviewer_note:
             before_state={"model":row.model,"status":row.status,"reviewer_note":row.reviewer_note,"observation_fingerprint":row.observation_fingerprint}
             row.reviewer_note=body.reviewer_note
@@ -1294,11 +1337,11 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
         results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":row.reviewer_note})
         # Store only a neutral pointer to the recorded observations. This is
         # not a calculated segregation or inheritance criterion.
-        payload={"model":model,"status":result["status"],"observations_available":result["observations_available"],"observation_fingerprint":fp,"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW"}
+        payload={"model":model,"status":"REQUIRES_REVIEW","observations_available":result["observations_available"],"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_binding_ids":[str(value) for value in body.binding_ids],"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW","manual_segregation_rows_excluded":True}
         evidence_fingerprint=hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==evidence_fingerprint)
         if not db.scalar(stmt):
             db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Family observations recorded for {model}; disease-specific interpretation requires human review.",direction="CONTEXTUAL",source_name="SIRALOOM Pedigree Observation Workflow",source_version="M11_OBSERVATIONS_ONLY",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=evidence_fingerprint))
     if audit_changes:
         AuditService(db).record(event_type="INHERITANCE_ASSESSMENT_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="VARIANT_INHERITANCE",subject_id=str(variant_id),operation="UPSERT",after_state={"changes":audit_changes,"observation_fingerprint":fp},reason=body.reviewer_note)
-    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"results":results,"important_note":"No automated inheritance compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, phase, pedigree and required family evidence."}
+    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_attached":family_matrix is not None,"results":results,"important_note":"Inheritance remains REQUIRES_REVIEW. The family matrix is provenance-bearing context only; no automated compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, age, relationship confidence, phase, ploidy and callability."}
