@@ -76,3 +76,61 @@ def test_multiallelic_mate_record_with_indistinguishable_reciprocal_alts_is_unre
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_BREAKEND_MATE_AMBIGUOUS"
+
+
+def test_paired_breakend_without_mateid_returns_durable_unresolved_adjacency(
+    tmp_path: Path,
+):
+    path = tmp_path / "paired-breakend-without-mateid.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,phase:.,1\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["unresolved_breakend_adjacency_count"] == 1
+    unresolved = result["unresolved_breakend_adjacencies"][0]
+    assert unresolved["status"] == "UNRESOLVED"
+    assert unresolved["reason_code"] == "VCF_BREAKEND_MATE_ID_MISSING"
+    traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
+    )
+    assert traversal["event_order_status"] == "RECONSTRUCTED"
+    assert traversal["adjacency_status"] == "PARTIAL_OR_UNRESOLVED"
+    assert "VCF_BREAKEND_MATE_ID_MISSING" in traversal["unresolved_reason_codes"]
+
+
+def test_single_breakend_returns_unresolved_adjacency_without_fabricating_mate(
+    tmp_path: Path,
+):
+    path = tmp_path / "single-breakend-unresolved-mate.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tsingle1\tA\t.A\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,phase:.,1\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["unresolved_breakend_adjacency_count"] == 1
+    unresolved = result["unresolved_breakend_adjacencies"][0]
+    assert unresolved["status"] == "UNRESOLVED"
+    assert unresolved["reason_code"] == "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE"
+    assert result["breakend_adjacencies"] == []
+    traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
+    )
+    assert traversal["event_order_status"] == "RECONSTRUCTED"
+    assert traversal["adjacency_status"] == "PARTIAL_OR_UNRESOLVED"
