@@ -103,6 +103,7 @@ A narrowly scoped validator patch has been committed on this research branch:
 - VCFv4.0 implicit reserved FORMAT definitions for GT, DP, FT, GL, GQ and HQ;
 - VCFv4.0 header Number/Type checks for those reserved fields;
 - VCFv4.0 rejection of populated GL on non-biallelic records;
+- VCFv4.0 requirement for FORMAT/GT whenever sample genotype columns are present, with explicit missing-allele tokens accepted;
 - VCFv4.5 rejection of populated Number=P values when GT is absent, while allowing a missing Number=P value to remain unresolved.
 
-The implementation change is provisional until the historical VCFv4.0 source bytes are captured and hashed, the full test run passes, and independent standards review is completed. It does not change the source qualification status or claim VCFv4.0 laboratory conformance.
+The implementation change is provisional until the historical VCFv4.0 source bytes are captured and hashed, the full test run passes, and independent standards review is completed. A dedicated branch test now covers mandatory GT presence and explicit missing-allele representation. It does not change the source qualification status or claim VCFv4.0 laboratory conformance.
