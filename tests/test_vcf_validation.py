@@ -2320,6 +2320,32 @@ def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
     assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
 
 
+def test_vcf43_gle_is_no_longer_reserved_and_requires_custom_header(tmp_path: Path):
+    path = tmp_path / "vcf43-gle-no-longer-reserved.vcf"
+    write_vcf(
+        path,
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:GLE\t0/1:opaque\n",
+        version="VCFv4.3",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FORMAT_UNDECLARED"
+
+
+def test_vcf41_gle_accepts_explicit_header_definition(tmp_path: Path):
+    path = tmp_path / "vcf41-gle-explicit-header.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##FORMAT=<ID=GLE,Number=1,Type=String,Description="Explicit GLE declaration">'],
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:GLE\t0/1:opaque\n",
+        version="VCFv4.1",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+    )
+    result = validate_vcf_strict(path)
+    assert result["records"] == 1
+
+
 def test_vcf41_gle_requires_header_definition_when_number_is_not_source_specified(tmp_path: Path):
     path = tmp_path / "vcf41-gle-unresolved-number.vcf"
     write_vcf(
