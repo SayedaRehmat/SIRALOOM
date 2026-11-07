@@ -2212,6 +2212,20 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
     assert exc.value.code == "VCF_CONTIG_HEADER_INVALID"
 
 
+def test_vcf43_plus_external_breakend_mate_contig_is_valid_syntax_but_unsupported(tmp_path: Path):
+    path = tmp_path / "vcf45-external-breakend-mate-contig.vcf"
+    write_vcf(
+        path,
+        "1\t100\tbnd1\tA\tA]<ctg1>:123]\t.\tPASS\tMATEID=bnd2\n",
+        version="VCFv4.5",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED"
+
+
 def test_vcf43_plus_breakend_mate_contig_must_follow_sam_reference_name_grammar(tmp_path: Path):
     path = tmp_path / "vcf45-invalid-breakend-contig.vcf"
     write_vcf(
