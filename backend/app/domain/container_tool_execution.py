@@ -117,7 +117,12 @@ class LinuxContainerToolExecutor:
         return safe
 
     def _verify_runtime_and_image(self, runtime: str) -> str:
-        version = self._run_checked([runtime, "--version"])
+        if self.environment.runtime_kind == "DOCKER":
+            # Docker CLI presence is not enough: require a reachable daemon and
+            # attest the server version that will actually create the container.
+            version = self._run_checked([runtime, "version", "--format", "{{.Server.Version}}"])
+        else:
+            version = self._run_checked([runtime, "--version"])
         if self.environment.runtime_version not in version:
             raise ToolExecutionContractError("Installed container runtime version does not match the qualified environment.")
         image_ref = self.environment.runtime_image_reference
