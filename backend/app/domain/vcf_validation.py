@@ -3013,14 +3013,20 @@ def validate_vcf_strict(
                 # that order: sorting would conceal PSL/PSO swaps between
                 # haplotypes in polyploid or repeated-allele genotypes.
                 source_signature = [
-                    (source_psl[position] if position < len(source_psl) else ".",
-                     source_pso[position] if position < len(source_pso) else ".")
+                    (
+                        position,
+                        source_psl[position] if position < len(source_psl) else ".",
+                        source_pso[position] if position < len(source_pso) else ".",
+                    )
                     for position, allele in enumerate(source_sample.get("alleles", []))
                     if allele == source_allele_number
                 ]
                 mate_signature = [
-                    (mate_psl[position] if position < len(mate_psl) else ".",
-                     mate_pso[position] if position < len(mate_pso) else ".")
+                    (
+                        position,
+                        mate_psl[position] if position < len(mate_psl) else ".",
+                        mate_pso[position] if position < len(mate_pso) else ".",
+                    )
                     for position, allele in enumerate(mate_sample.get("alleles", []))
                     if allele == mate_allele_number
                 ]
