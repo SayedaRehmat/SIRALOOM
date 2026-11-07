@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
     Analysis, Artifact, Case, Organization, PedigreeMember, PedigreeSampleBinding,
-    Specimen, User,
+    PedigreeSampleIdentityEvidence, Specimen, User,
 )
 
 
@@ -82,6 +82,24 @@ def test_postgres_family_sample_binding_is_immutable_and_has_single_successor():
                 version=1, binding_fingerprint="b" * 64, recorded_by=user_id,
             ))
             db.flush()
+            evidence_id = uuid4()
+            db.add(PedigreeSampleIdentityEvidence(
+                id=evidence_id, case_id=case_id, binding_id=binding_id,
+                evidence_type="CHAIN_OF_CUSTODY", result="PASS",
+                method="LIMS_CHAIN_OF_CUSTODY", method_version="1",
+                evidence_reference="LIMS-ACCESSION-1", source_artifact_id=None,
+                metrics_json={}, review_status="PENDING", version=1,
+                evidence_fingerprint="e" * 64, recorded_by=user_id,
+            ))
+            db.flush()
+
+            with pytest.raises(DBAPIError):
+                with db.begin_nested():
+                    db.execute(
+                        update(PedigreeSampleIdentityEvidence)
+                        .where(PedigreeSampleIdentityEvidence.id == evidence_id)
+                        .values(review_status="ACCEPTED")
+                    )
 
             with pytest.raises(DBAPIError):
                 with db.begin_nested():
