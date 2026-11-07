@@ -167,6 +167,7 @@ def test_sample_binding_verification_requires_source_hash_and_successful_normali
     case, member, specimen, analysis, artifact, principal = _context()
     # The reviewer must be independent of the binding recorder; exercise the
     # source-hash gate rather than the earlier self-review authorization gate.
+    recorder_id = principal.user_id
     principal.user_id = uuid4()
     previous = PedigreeSampleBinding(
         id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
@@ -174,7 +175,7 @@ def test_sample_binding_verification_requires_source_hash_and_successful_normali
         source_artifact_sha256="b" * 64, sample_name="FAM-01",
         binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
         evidence_reference="LIMS-ACCESSION-1", version=1,
-        binding_fingerprint="c" * 64, recorded_by=principal.user_id,
+        binding_fingerprint="c" * 64, recorded_by=recorder_id,
     )
     db = _BindingDB(
         case=case, member=member, specimen=specimen, analysis=analysis,
