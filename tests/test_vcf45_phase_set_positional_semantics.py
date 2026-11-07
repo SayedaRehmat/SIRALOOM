@@ -475,3 +475,50 @@ def test_vcf45_multiallelic_breakend_mates_compare_only_corresponding_alt_phase_
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 3
+
+
+def test_vcf45_pso_ordinal_cannot_be_reused_by_distinct_variant_events(
+    tmp_path: Path,
+):
+    path = tmp_path / "pso-duplicate-ordinal-across-events.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n"
+        "1\\t20\\tsnv2\\tG\\tT\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE"
+
+
+def test_vcf45_pso_order_is_not_inferred_from_vcf_coordinate_order(
+    tmp_path: Path,
+):
+    path = tmp_path / "pso-derivative-order-differs-from-coordinate-order.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,4\\n"
+        "1\\t20\\tsnv2\\tG\\tT\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "set"
+    )
+    assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 4]
+    assert [event["occurrences"][0]["pos"] for event in traversal["ordered_events"]] == [20, 10]
+
+
