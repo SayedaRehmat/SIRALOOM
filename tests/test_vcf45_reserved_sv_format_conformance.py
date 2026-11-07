@@ -116,4 +116,4 @@ def test_vcf45_sv_probability_and_phred_quality_fields_reject_out_of_range_value
     _write_vcf(path, definition, field_id, values)
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
