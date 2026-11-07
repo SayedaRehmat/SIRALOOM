@@ -1708,7 +1708,7 @@ def validate_vcf_strict(
     include_base_modification_slot_assignments: bool = False,
     base_modification_strandedness: str | None = None,
 ) -> dict:
-    if base_modification_strandedness not in {None, "stranded", "unstranded"}:
+    if base_modification_strandedness not in (None, "stranded", "unstranded"):
         raise ValueError(
             "base_modification_strandedness must be None, 'stranded', or 'unstranded'"
         )
