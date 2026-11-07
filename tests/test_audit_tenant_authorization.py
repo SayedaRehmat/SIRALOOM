@@ -698,6 +698,12 @@ def test_segregation_lineage_rejects_member_from_another_case(monkeypatch, opera
         def __init__(self):
             self.results = [[observation], []]
 
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
         def scalars(self, _query):
             return self.results.pop(0)
 
