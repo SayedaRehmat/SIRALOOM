@@ -355,8 +355,8 @@ class EnvironmentAwareToolExecutor:
         self.environment.assert_tool_compatible(profile)
         if self.environment.executor_kind == "LOCAL_PROCESS":
             from backend.app.domain.tool_execution import LocalProcessToolExecutor
-            if self.environment.runtime_kind != "HOST":
-                raise ExecutionEnvironmentError("Local-process execution requires a HOST runtime profile.")
+            if self.environment.runtime_kind != "HOST" or self.environment.scheduler != "NONE":
+                raise ExecutionEnvironmentError("Local-process execution requires an unscheduled HOST runtime profile.")
             return LocalProcessToolExecutor().execute(profile, request)
         if self.environment.executor_kind == "CONTAINER":
             if self.container_limits is None:
