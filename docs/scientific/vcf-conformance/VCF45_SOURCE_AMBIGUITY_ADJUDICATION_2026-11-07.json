@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "artifact_id": "vcf4.5-three-source-internal-semantic-ambiguities",
+  "artifact_id": "vcf4.5-source-ambiguity-adjudication",
   "status": "AUTHOR_PASS2_ADJUDICATION_WITH_OPEN_SOURCE_AMBIGUITIES_INDEPENDENT_REVIEW_REQUIRED",
   "branch": "research/vcf-conformance-phase-a-20261105",
   "source": {
@@ -186,6 +186,32 @@
       "disposition": "SOURCE_TERM_SCOPE_AMBIGUITY_RETAINED",
       "implementation_guard": "Do not enforce an inferred POS-to-catalog-coordinate or SVLEN-to-catalog-length schema until the catalog semantics are confirmed. Preserve the original combined source wording.",
       "required_confirmation": "Independent standards reviewer or catalog maintainer must specify the intended POS and SVLEN catalog comparators."
+    },
+    {
+      "id": "VCF45-AMB-007",
+      "topic": "LAA presence condition differs between FORMAT ordering and detailed local-allele definition",
+      "source_ranges": [
+        {
+          "start_line": 501,
+          "end_line": 502,
+          "role": "FORMAT field order and conditional LAA presence"
+        },
+        {
+          "start_line": 686,
+          "end_line": 696,
+          "role": "LAA definition, use and detailed non-omitted/non-MISSING presence condition"
+        }
+      ],
+      "observations": [
+        "The FORMAT ordering passage says that if any local-allele field is present, LAA must also be present and precede all fields other than GT (VCFv4.5.tex:502).",
+        "The detailed LAA definition says LAA is required when interpreting local-allele fields and must be present if any local-allele fields are neither omitted nor MISSING (VCFv4.5.tex:692-696).",
+        "The two passages differ in the stated condition. The source does not explicitly define whether 'field is present' in the earlier sentence means that the FORMAT key exists or that its value is neither omitted nor MISSING.",
+        "The FORMAT ordering obligation is independently testable from the LAA-presence obligation and should not remain combined in one atomic candidate."
+      ],
+      "provisional_interpretation": "Retain both literal source clauses and separate the ordering obligation from LAA presence. Do not silently broaden or narrow the presence condition; represent the discrepancy as unresolved until independent standards review or upstream clarification.",
+      "disposition": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not collapse field-key presence, omitted values, MISSING values and FORMAT ordering into one validator predicate. Keep the presence condition unresolved and do not select a broad or narrow acceptance rule from author interpretation alone.",
+      "required_confirmation": "Independent VCFv4.5 standards reviewer or upstream specification maintainer should clarify the intended relationship between the FORMAT ordering sentence and the detailed LAA definition."
     }
   ],
   "cross_cutting_controls": [
@@ -195,6 +221,7 @@
     "All implementation consequences remain provisional until independent review and conformance tests.",
     "Pass-2 context review does not correct upstream source text; all unresolved source conflicts remain literal and version-pinned.",
     "The 900-series supplemental registry may contain covered/subsumed records and must not be promoted wholesale.",
-    "No independent reviewer has approved the provisional interpretations."
+    "No independent reviewer has approved the provisional interpretations.",
+    "The LAA presence-scope discrepancy between VCFv4.5 lines 502 and 692-696 is retained as VCF45-AMB-007."
   ]
 }
