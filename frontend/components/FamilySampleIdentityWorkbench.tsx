@@ -444,13 +444,13 @@ export default function FamilySampleIdentityWorkbench({
                       <small>{row.method} v{row.method_version} · {row.evidence_reference} · {t("familyIdentity.revision")} {row.version}</small>
                     </div>
                     <span className="badge neutral">{row.review_status}{supersededEvidenceIds.has(row.evidence_id) ? ` · ${t("familyIdentity.superseded")}` : ""}</span>
-                    {canReview && row.review_status === "PENDING" && !supersededEvidenceIds.has(row.evidence_id) && (
+                    {canReview && isActive && binding.binding_status === "UNVERIFIED" && row.review_status === "PENDING" && !supersededEvidenceIds.has(row.evidence_id) && (
                       <div className="m10-form-grid">
                         <button className="secondary" type="button" disabled={saving || !reviewReason.trim()} onClick={() => void reviewEvidence(binding, row, "ACCEPTED")}>{t("familyIdentity.accept")}</button>
                         <button className="secondary" type="button" disabled={saving || !reviewReason.trim()} onClick={() => void reviewEvidence(binding, row, "REJECTED")}>{t("familyIdentity.reject")}</button>
                       </div>
                     )}
-                    {canWrite && binding.binding_status === "UNVERIFIED" && !supersededEvidenceIds.has(row.evidence_id) && (
+                    {canWrite && isActive && binding.binding_status === "UNVERIFIED" && !supersededEvidenceIds.has(row.evidence_id) && (
                       <button className="secondary" type="button" onClick={() => beginEvidence(binding, row)}>{t("familyIdentity.correctEvidence")}</button>
                     )}
                   </div>
