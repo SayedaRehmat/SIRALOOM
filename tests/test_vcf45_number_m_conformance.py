@@ -369,6 +369,19 @@ def test_number_m_stranded_policy_does_not_apply_unstranded_cpg_omission_rule(
     assert validate_vcf_strict(path, base_modification_strandedness="stranded")["records"] == 2
 
 
+def test_number_m_assay_policy_is_rejected_for_pre_vcf45_files(tmp_path: Path):
+    path = tmp_path / "vcf44-no-vcf45-assay-policy.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_POLICY_UNSUPPORTED"
+
+
 def test_number_m_default_policy_does_not_infer_unstranded_assay(
     tmp_path: Path,
 ):
