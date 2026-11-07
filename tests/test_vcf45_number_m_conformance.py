@@ -424,13 +424,13 @@ def test_number_m_unstranded_cross_record_validation_is_sample_scoped(
 ):
     path = tmp_path / "unstranded-cpg-two-samples.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2\\n"
-        "1\\t10\\t.\\tC\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:alpha,.:0.5\\t0|.:beta,.:0.4\\n"
-        "1\\t11\\t.\\tG\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:alpha,.:.\\t0|.:beta,.:0.2\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\tSAMPLE2\n"
+        "1\t10\t.\tC\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:alpha,.:0.5\t0|.:beta,.:0.4\n"
+        "1\t11\t.\tG\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:alpha,.:.\t0|.:beta,.:0.2\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -443,13 +443,13 @@ def test_number_m_unstranded_cross_record_validation_respects_distinct_phase_set
 ):
     path = tmp_path / "unstranded-cpg-distinct-phase-sets.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tC\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:alpha,.:0.5\\n"
-        "1\\t11\\t.\\tG\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:beta,.:0.2\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tC\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:alpha,.:0.5\n"
+        "1\t11\t.\tG\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:beta,.:0.2\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 2
@@ -460,13 +460,13 @@ def test_number_m_unstranded_cross_record_validation_supports_called_multialleli
 ):
     path = tmp_path / "unstranded-cpg-multiallelic.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tA\\tC,T\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t1|.:alpha,.:0.5\\n"
-        "1\\t11\\t.\\tA\\tG,T\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t1|.:alpha,.:.\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC,T\t.\tPASS\t.\tGT:PSL:M5mC\t1|.:alpha,.:0.5\n"
+        "1\t11\t.\tA\tG,T\t.\tPASS\t.\tGT:PSL:M5mC\t1|.:alpha,.:.\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 2
