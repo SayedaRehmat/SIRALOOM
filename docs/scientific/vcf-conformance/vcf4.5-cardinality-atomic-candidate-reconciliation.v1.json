@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "artifact_id": "vcf45-cardinality-local-allele-atomic-candidate-reconciliation",
   "status": "PROVISIONAL_CANDIDATE_OVERLAP_MAPPED_CANONICAL_LEDGER_DEDUP_PENDING",
-  "scope": "Crosswalk between supplemental VCF-REQ-000227..000260 records and the existing genotype-format-atomic-candidates.v1.json candidate IDs. This is a deduplication control, not a declaration that the mapped candidates are approved or that the canonical ledger has been updated.",
+  "scope": "Crosswalk between supplemental VCF-REQ-000227..000268 records and the existing genotype-format-atomic-candidates.v1.json candidate IDs. This is a deduplication control, not a declaration that the mapped candidates are approved or that the canonical ledger has been updated.",
   "source_artifacts": [
     "vcf4.5-cardinality-local-allele-atomic-addendum.v1.json",
     "genotype-format-atomic-candidates.v1.json",
@@ -55,8 +55,8 @@
         "FMT-GT-017",
         "FMT-GT-039"
       ],
-      "status": "NARROWED_AND_EXPANDED",
-      "notes": "Use the narrower non-omitted/non-MISSING condition in FMT-GT-039; FORMAT ordering rule is retained from FMT-GT-017."
+      "status": "SOURCE_SCOPE_CONFLICT_RETAINED",
+      "notes": "Presence obligation from VCFv4.5 line 502 conflicts in scope with the detailed LAA definition at lines 692-696; FMT-GT-017 is the compound parent and FMT-GT-039 carries the narrower non-omitted/non-MISSING condition."
     },
     {
       "requirement_id": "VCF-REQ-000233",
@@ -89,11 +89,10 @@
     {
       "requirement_id": "VCF-REQ-000237",
       "candidate_ids": [
-        "FMT-GT-046",
         "FMT-GT-061"
       ],
-      "status": "DIRECT_OVERLAP",
-      "notes": "Number=M general cardinality and genotype-dependent cardinality."
+      "status": "DIRECT",
+      "notes": "The one-value-per-possible-base-modification definition is separated from genotype-dependent total cardinality, which is mapped to VCF-REQ-000262."
     },
     {
       "requirement_id": "VCF-REQ-000238",
@@ -228,8 +227,8 @@
       "candidate_ids": [
         "FMT-GT-034"
       ],
-      "status": "DIRECT",
-      "notes": "Breakend mate records must have matching PSL and PSO."
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "PSL equality on paired breakend records is separated from the PSO equality obligation in VCF-REQ-000263; FMT-GT-034 combines both."
     },
     {
       "requirement_id": "VCF-REQ-000255",
@@ -248,18 +247,16 @@
     {
       "requirement_id": "VCF-REQ-000257",
       "candidate_ids": [
-        "FMT-GT-054",
-        "FMT-GT-055",
-        "FMT-GT-056"
+        "FMT-GT-054"
       ],
       "status": "DIRECT",
-      "notes": "M/DPM/ADM reserved key families even for unrecognized ChEBI IDs."
+      "notes": "M[0-9]+[ACGTUN] reserved-key behavior; DPM and ADM families are separate records 266 and 267."
     },
     {
       "requirement_id": "VCF-REQ-000258",
       "candidate_ids": [],
       "status": "NO_MATCH_IDENTIFIED",
-      "notes": "Recommendation to use named aliases instead of ChEBI-keyed names."
+      "notes": "M-family named-alias recommendation; DPM and ADM alias recommendations are separate records 264 and 265."
     },
     {
       "requirement_id": "VCF-REQ-000259",
@@ -271,15 +268,73 @@
       "requirement_id": "VCF-REQ-000260",
       "candidate_ids": [],
       "status": "NO_MATCH_IDENTIFIED",
-      "notes": "ADFM/ADRM forms are not reserved FORMAT key families."
+      "notes": "ADFM family only; ADRM non-reservation is separate record 268."
+    },
+    {
+      "requirement_id": "VCF-REQ-000261",
+      "candidate_ids": [
+        "FMT-GT-017"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "FORMAT ordering obligation split from LAA presence in the compound FMT-GT-017 parent candidate."
+    },
+    {
+      "requirement_id": "VCF-REQ-000262",
+      "candidate_ids": [
+        "FMT-GT-046"
+      ],
+      "status": "DIRECT",
+      "notes": "Genotype-dependent Number=M cardinality, separated from the one-value-per-possible-modification definition in VCF-REQ-000237."
+    },
+    {
+      "requirement_id": "VCF-REQ-000263",
+      "candidate_ids": [
+        "FMT-GT-034"
+      ],
+      "status": "PARTIAL_OR_COMBINED",
+      "notes": "PSO equality on paired breakend records, separated from PSL equality in VCF-REQ-000254."
+    },
+    {
+      "requirement_id": "VCF-REQ-000264",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "DPM-family named-alias recommendation."
+    },
+    {
+      "requirement_id": "VCF-REQ-000265",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "ADM-family named-alias recommendation."
+    },
+    {
+      "requirement_id": "VCF-REQ-000266",
+      "candidate_ids": [
+        "FMT-GT-055"
+      ],
+      "status": "DIRECT",
+      "notes": "DPM[0-9]+[ACGTUN] reserved-key behavior."
+    },
+    {
+      "requirement_id": "VCF-REQ-000267",
+      "candidate_ids": [
+        "FMT-GT-056"
+      ],
+      "status": "DIRECT",
+      "notes": "ADM[0-9]+[ACGTUN] reserved-key behavior."
+    },
+    {
+      "requirement_id": "VCF-REQ-000268",
+      "candidate_ids": [],
+      "status": "NO_MATCH_IDENTIFIED",
+      "notes": "ADRM[0-9]+[ACGTUN] non-reservation behavior."
     }
   ],
   "counts": {
-    "supplemental_requirement_records": 34,
-    "mapped_to_existing_candidate_ids": 28,
-    "no_existing_candidate_match_identified": 6,
-    "direct_overlaps": 23,
-    "partial_or_combined": 5
+    "supplemental_requirement_records": 42,
+    "mapped_to_existing_candidate_ids": 33,
+    "no_existing_candidate_match_identified": 9,
+    "direct_overlaps": 25,
+    "partial_or_combined": 8
   },
   "controls": [
     "Do not merge the supplemental records into atomic-requirements.v1.json until every mapped candidate is compared against the full canonical ledger.",
