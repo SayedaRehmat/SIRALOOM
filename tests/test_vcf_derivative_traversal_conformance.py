@@ -308,11 +308,14 @@ def test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence(
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
         '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
         '##INFO=<ID=PARID,Number=A,Type=String,Description="ID of partner breakend">\n'
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;PARID=bnd3\n"
-        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n"
-        "1\t6\tbnd3\tA\tA]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd4\n"
-        "3\t20\tbnd4\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3\n",
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;PARID=bnd3\tGT:PSL:PSO\t0|1:.,phase:.,2\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t0|1:.,phase:.,2\n"
+        "1\t6\tbnd3\tA\tA]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd4\tGT:PSL:PSO\t0|1:.,phase:.,3\n"
+        "3\t20\tbnd4\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3\tGT:PSL:PSO\t0|1:.,phase:.,3\n",
         encoding="utf-8",
     )
 
