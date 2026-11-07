@@ -2,12 +2,13 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 
 from backend.app.domain.family_genotype_matrix import build_family_genotype_matrix
 from backend.app.api.v1 import pedigree
 from backend.app.infrastructure.db.models import (
-    Analysis, AnalysisPartition, Artifact, Case, PedigreeMember,
-    PedigreeRelationship, PedigreeSampleBinding, Specimen, Variant, WorkflowStep,
+    Analysis, Artifact, Case, PedigreeMember, PedigreeSampleBinding,
+    Specimen, Variant,
 )
 
 
@@ -225,7 +226,7 @@ def test_matrix_endpoint_rejects_superseded_binding(monkeypatch):
     )
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(HTTPException) as exc:
         pedigree.get_family_genotype_matrix(
             case_id,
             pedigree.GenotypeMatrixInput(binding_ids=[binding_id], variant_ids=[uuid4()]),
