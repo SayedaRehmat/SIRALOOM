@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "artifact_id": "vcf4.5-three-source-internal-semantic-ambiguities",
-  "status": "AUTHOR_ADJUDICATION_WITH_PROVISIONAL_INTERPRETATIONS_INDEPENDENT_REVIEW_REQUIRED",
+  "status": "AUTHOR_PASS2_ADJUDICATION_WITH_OPEN_SOURCE_AMBIGUITIES_INDEPENDENT_REVIEW_REQUIRED",
   "branch": "research/vcf-conformance-phase-a-20261105",
   "source": {
     "file": "VCFv4.5.tex",
@@ -114,12 +114,87 @@
       "disposition": "SOURCE_INTERNAL_CASE_CONFLICT_UNRESOLVED",
       "implementation_guard": "Preserve literal IDs. A non-blocking diagnostic may report the conflicting documented alias spellings; acceptance/rejection policy for either spelling must remain a versioned lab decision until upstream clarification.",
       "required_confirmation": "Upstream specification maintainer or independent standards reviewer must identify the intended case-sensitive alias spelling and issue a source correction."
+    },
+    {
+      "id": "VCF45-AMB-004",
+      "topic": "RUL omission parenthetical uses RS instead of RUS",
+      "source_ranges": [
+        {
+          "start_line": 1994,
+          "end_line": 1996,
+          "role": "RUS/RUL recommendations and omission rule"
+        }
+      ],
+      "observations": [
+        "Line 1994 recommends RUS for STRs and RUL for VNTRs.",
+        "Line 1995 says RUL should be omitted when RUS is present.",
+        "The parenthetical explanation on the same line says RUL is redundant when RS is present, not RUS.",
+        "The source does not define RS as an alias for RUS in this local context; silently replacing RS would alter the literal source."
+      ],
+      "provisional_interpretation": "The main clause is recorded as the SHOULD recommendation to omit RUL when RUS is present. The parenthetical RS token remains a separate unresolved source inconsistency; no correction is inferred.",
+      "disposition": "SOURCE_INTERNAL_REFERENCE_MISMATCH_UNRESOLVED",
+      "implementation_guard": "Do not rewrite RS to RUS, treat RS as a defined alias, or derive additional validator behavior from the parenthetical until an upstream correction or independent standards decision is available.",
+      "required_confirmation": "Independent reviewer or specification maintainer must confirm whether RS is a typographical error or a distinct identifier."
+    },
+    {
+      "id": "VCF45-AMB-005",
+      "topic": "Reference/contig header-tag presence versus optional SQ-derived attributes",
+      "source_ranges": [
+        {
+          "start_line": 129,
+          "end_line": 130,
+          "role": "VCF recommendation, BCF requirement and SQ-derived tag optionality"
+        },
+        {
+          "start_line": 135,
+          "end_line": 137,
+          "role": "VCF meta-information optionality and BCF all-entries statement"
+        },
+        {
+          "start_line": 301,
+          "end_line": 303,
+          "role": "contig header-tag presence and contig ID/optional attributes"
+        }
+      ],
+      "observations": [
+        "Line 129 recommends VCF headers include tags describing the reference and contigs and says BCF requires such tags.",
+        "Line 130 says these SQ-based tags are all optional, but does not unambiguously state whether optionality applies to individual SQ attributes or to presence of the header tags themselves.",
+        "Line 135 says VCF meta-information lines are optional if absent but must be well-formed when present; line 137 says BCF requires all entries to be present, without a fully explicit referent for 'all entries'.",
+        "Line 301 repeats the VCF recommendation and BCF requirement for contig-description tags.",
+        "Line 302 explicitly requires ID in a structured contig declaration and permits additional optional attributes; this clarifies attributes once a contig declaration exists, but does not unambiguously resolve the global presence scope in lines 129-130 and 301."
+      ],
+      "provisional_interpretation": "Keep separate versioned statements for VCF recommendation and BCF requirement to include reference/contig description tags; when a ##contig declaration exists, its ID attribute is required and its additional attributes are optional. Do not infer that all SQ-derived tags are mandatory or that all are optional as a group. The scope of 'all tags are optional' and BCF 'all entries' remains unresolved.",
+      "disposition": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not enforce a VCF contig-header presence MUST from these passages alone. Do not drop the BCF requirement or the required ID attribute of a present ##contig declaration. Preserve the lab's versioned decision separately from source interpretation.",
+      "required_confirmation": "Independent VCF/BCF standards reviewer or upstream maintainer must resolve the referents of 'these tags' and 'all entries' and distinguish tag presence from optional SQ/contig attributes."
+    },
+    {
+      "id": "VCF45-AMB-006",
+      "topic": "CNV:TR reference-catalog POS/SVLEN mapping",
+      "source_ranges": [
+        {
+          "start_line": 1997,
+          "end_line": 1998,
+          "role": "repeat nesting and reference-catalog coordinate/size recommendation"
+        }
+      ],
+      "observations": [
+        "Line 1998 says POS and SVLEN of <CNV:TR> records should match STR/VNTR reference catalog sizes for catalog-based callers.",
+        "POS is a genomic coordinate while SVLEN is a length; the phrase 'reference catalog sizes' does not separately identify the catalog field corresponding to each VCF field."
+      ],
+      "provisional_interpretation": "The candidate decomposition records separate POS and SVLEN recommendations to keep the fields independently testable, but the precise catalog-field mapping is not asserted as source fact.",
+      "disposition": "SOURCE_TERM_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not enforce an inferred POS-to-catalog-coordinate or SVLEN-to-catalog-length schema until the catalog semantics are confirmed. Preserve the original combined source wording.",
+      "required_confirmation": "Independent standards reviewer or catalog maintainer must specify the intended POS and SVLEN catalog comparators."
     }
   ],
   "cross_cutting_controls": [
     "These are source interpretation findings, not independent approval.",
     "No production parser/validator behavior is changed by this artifact.",
     "No canonical ledger records are added or edited.",
-    "All implementation consequences remain provisional until independent review and conformance tests."
+    "All implementation consequences remain provisional until independent review and conformance tests.",
+    "Pass-2 context review does not correct upstream source text; all unresolved source conflicts remain literal and version-pinned.",
+    "The 900-series supplemental registry may contain covered/subsumed records and must not be promoted wholesale.",
+    "No independent reviewer has approved the provisional interpretations."
   ]
 }
