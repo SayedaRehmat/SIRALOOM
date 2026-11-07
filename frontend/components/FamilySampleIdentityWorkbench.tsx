@@ -217,6 +217,8 @@ export default function FamilySampleIdentityWorkbench({
   const targetProbandBindingCount = (matrix?.samples ?? []).filter(
     (sample: any) => sample.is_proband && sample.analysis_id === probandAnalysisId,
   ).length;
+  const matrixMatchesSelection = matrixBindingIds.length === selectedBindingIds.length
+    && [...selectedBindingIds].sort().every((bindingId, index) => bindingId === matrixBindingIds[index]);
 
   const resetBindingForm = () => {
     setMemberId("");
@@ -422,7 +424,7 @@ export default function FamilySampleIdentityWorkbench({
                   className="secondary"
                   type="button"
                   onClick={() => void attachMatrixToInheritanceReview()}
-                  disabled={inheritanceReviewSaving || matrixLoading || targetProbandBindingCount !== 1}
+                  disabled={inheritanceReviewSaving || matrixLoading || targetProbandBindingCount !== 1 || !matrixMatchesSelection}
                 >
                   {inheritanceReviewSaving
                     ? t("familyIdentity.inheritanceReviewSaving")
