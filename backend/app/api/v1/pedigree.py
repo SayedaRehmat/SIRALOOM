@@ -1304,6 +1304,7 @@ def get_segregation(
         root_payload.update({
             "revision_id": None,
             "revision_version": 1,
+            "revision_reason": None,
             "observation_fingerprint": (root.metadata_json or {}).get("observation_fingerprint"),
         })
         history = [root_payload]
@@ -1462,6 +1463,7 @@ def add_segregation(
             **_seg(row, member),
             "revision_id": None,
             "revision_version": 1,
+            "revision_reason": None,
             "observation_fingerprint": observation_fingerprint,
         }
 
