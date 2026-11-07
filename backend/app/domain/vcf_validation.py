@@ -40,6 +40,34 @@ def _is_vcf44_plus_sv_or_breakend_alt(allele: str) -> bool:
     return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
 
 
+def _breakend_orientation_details(allele: str) -> dict[str, str] | None:
+    """Describe the four VCF breakend replacement orientations without inferring sequence."""
+    match = BREAKEND_RE.fullmatch(allele)
+    if match is None:
+        return None
+    bracket = match.group("left") or match.group("right")
+    if allele[0] in "[]":
+        closing = allele.find(bracket, 1)
+        local_replacement = allele[closing + 1 :]
+        joined_side = "BEFORE_LOCAL_REPLACEMENT"
+    else:
+        opening = allele.find(bracket)
+        local_replacement = allele[:opening]
+        joined_side = "AFTER_LOCAL_REPLACEMENT"
+    return {
+        "remote_piece_direction": "RIGHT" if bracket == "[" else "LEFT",
+        "remote_piece_reverse_complemented": (
+            "true"
+            if (bracket == "]" and joined_side == "AFTER_LOCAL_REPLACEMENT")
+            or (bracket == "[" and joined_side == "BEFORE_LOCAL_REPLACEMENT")
+            else "false"
+        ),
+        "joined_side": joined_side,
+        "local_replacement": local_replacement,
+        "bracket": bracket,
+    }
+
+
 def _breakend_remote_coordinate_within_cipos(
     remote_locus: tuple[str, int], target_record: dict, target_alt_index: int
 ) -> bool:
@@ -1941,9 +1969,11 @@ def validate_vcf_strict(
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, int, str, tuple[str, int], int]] = []
     unresolved_breakend_coordinate_links: list[dict[str, object]] = []
+    breakend_adjacencies: list[dict[str, object]] = []
+    breakend_adjacency_keys: set[tuple[tuple[int, int], tuple[int, int]]] = set()
     breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
     phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
-    reciprocal_breakend_phase_endpoints: set[frozenset[tuple[int, int]]] = set()
+    reciprocal_breakend_phase_endpoints: set[frozenset[tuple[int, int, int]]] = set()
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -2186,10 +2216,14 @@ def validate_vcf_strict(
                 # legacy SVTYPE checks so valid-but-unresolvable syntax is not
                 # misreported as an invalid BND record.
                 remote_loci_by_alt: dict[int, tuple[str, int]] = {}
+                orientation_by_alt: dict[int, dict[str, str]] = {}
                 for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
                     match = re.search(r"([\[\]])([^:\[\]]+):([0-9]+)\1", alt)
                     if match is not None:
                         remote_loci_by_alt[alt_index] = (match.group(2), int(match.group(3)))
+                        orientation = _breakend_orientation_details(alt)
+                        if orientation is not None:
+                            orientation_by_alt[alt_index] = orientation
                 if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
                     for remote_contig, _remote_position in remote_loci_by_alt.values():
                         if re.fullmatch(r"<[^<>,\s]+>", remote_contig):
@@ -2312,6 +2346,8 @@ def validate_vcf_strict(
                     breakend_records_by_id[record_id] = {
                         "chrom": _chrom,
                         "pos": _pos,
+                        "alts": alts,
+                        "orientation_by_alt": orientation_by_alt,
                         "breakend_alt_indexes": breakend_alt_indexes,
                         "remote_loci_by_alt": remote_loci_by_alt,
                         "mate_entries_by_alt": mate_entries_by_alt,
