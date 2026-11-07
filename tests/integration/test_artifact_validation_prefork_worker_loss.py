@@ -127,7 +127,7 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
                 metadata={"ingestion": {"file_kind": "VCF"}},
                 validation_status="PENDING",
             )
-            assert artifact.id == artifact_id or artifact.id is not None
+            assert artifact.id is not None
             artifact_id = artifact.id
             db.commit()
 
