@@ -587,3 +587,49 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 - No VCFv4.1–4.4 expanded reconciliation was performed in this update.
 - No new VCFv4.0 immutable source bytes or digest were acquired in this update; VCFv4.0 remains `SOURCE_NOT_PINNED`.
 - No production parser, validator, normalizer or CI code was changed. No tests were run in this update.
+
+
+## 17. VCFv4.5 75-line candidate atomization pass 1 (2026-11-07)
+
+### 17.1 Artifacts committed
+
+- Supplemental atomic candidate registry: `docs/scientific/vcf-conformance/VCF45_ATOMIC_CANDIDATE_REGISTRY_PASS1_2026-11-07.json`
+- Source-candidate crosswalk: `docs/scientific/vcf-conformance/VCF45_ATOMIC_CANDIDATE_CROSSWALK_PASS1_2026-11-07.json`
+- Input worklist: `docs/scientific/vcf-conformance/VCF45_NEW_ATOMIC_CANDIDATE_WORKLIST_2026-11-07.json`
+- Schema contract: `docs/scientific/vcf-conformance/atomic-requirement-ledger.schema.json`
+- Pinned source: `VCFv4.5.tex` at HTS-specs revision `510c107ba89aa13113818c9e4fa3071283cb7f7`, blob SHA-1 `307950e7eeafc33d524969ff906343f756adb7d7`, SHA-256 `37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5`.
+
+### 17.2 Output and decomposition
+
+- All 75 input source-line candidates have at least one mapped provisional requirement record in the crosswalk.
+- The supplemental registry contains 139 requirement records, each with a provisional ID in the `VCF-REQ-900001`–`VCF-REQ-900139` range. These identifiers are not canonical allocations.
+- Clearly compound clauses were split by independently verifiable behavior and/or distinct modality. Examples include:
+  - unstructured metadata grammar and value constraints;
+  - structured metadata ID presence and uniqueness;
+  - VCF recommendation versus BCF requirement for reference/contig header descriptors;
+  - INFO/FORMAT/FILTER declaration attributes;
+  - Number=A and Number=R cardinality versus value ordering;
+  - REF/ALT padding conditions and symbolic-allele exceptions;
+  - symbolic SV type/subtype enumerations and tag suffix conventions;
+  - computed END as the maximum across the REF, symbolic-SV/SVLEN, and <*>/FORMAT-LEN endpoints;
+  - conditional CNV and tandem-repeat recommendations and requirements.
+- Adjacent source clauses needed to preserve full semantics were explicitly included where identified, including lines 404, 610, 846 and the source continuation ranges for symbolic SV types, subtype recommendations, tag suffix conventions and END.
+- Every record has a VCFv4.5 pinned-source reference with line-range locator, source revision, blob SHA-1 and SHA-256. VCFv4.0–4.4 applicability remains UNRESOLVED rather than inferred from VCFv4.5.
+
+### 17.3 Validation boundary
+
+- A structural contract check against the fetched ledger schema found 139 unique requirement IDs, all schema-required requirement fields present, no unexpected root/requirement properties, valid enumerated values, six version-applicability entries per record, valid source digest formats and ordered integer source line locators.
+- All 75 worklist candidates are mapped; zero are unmapped.
+- This was a programmatic structural/schema-contract check, not execution of a full JSON Schema 2020-12 validator. Formal JSON Schema validation remains required before promotion.
+- The records remain IN_REVIEW; independent second review has not occurred. No duplicate reconciliation against the 226 canonical requirements or the 61 GT/FORMAT candidates has yet been completed.
+- No implementation mapping, conformance tests, test execution or production-code changes were made in this pass.
+- The canonical `atomic-requirements.v1.json` remains unchanged. No canonical requirement IDs were allocated.
+
+### 17.4 Remaining adjudication and quality gates
+
+- Re-read all 139 statements against complete paragraph/table/footnote/example context to identify any residual multi-obligation records, over-splitting, incorrect actor/condition, or modality drift.
+- Run a real JSON Schema 2020-12 validator against the supplemental registry and fix any failures.
+- Reconcile all provisional records against the full 226-record canonical ledger and 61 GT/FORMAT candidates; retain only net-new semantics and add crosswalk dispositions for duplicates/overlaps.
+- Resolve the VCF/BCF header-tag optionality scope at lines 129–130 and 301–302; preserve the RUS/RS inconsistency at line 1995; keep the previously recorded local-GT, Number=P/PSQ and xanthosine capitalization questions open pending independent/source-author review.
+- Obtain independent standards review before any candidate is promoted to the canonical ledger.
+- This pass does not establish complete VCFv4.5 coverage, complete VCF-stage qualification, or laboratory approval.
