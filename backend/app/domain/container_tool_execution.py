@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import tempfile
 import time
@@ -123,6 +124,24 @@ class LinuxContainerToolExecutor:
             raise ToolExecutionContractError("Input/resource mount identity is invalid.")
         return safe
 
+    @staticmethod
+    def _validate_workspace_contents(workspace: Path) -> None:
+        """Prevent symlink/special-file and hard-link aliases from escaping isolation."""
+        try:
+            for child in workspace.rglob("*"):
+                metadata = child.lstat()
+                mode = metadata.st_mode
+                if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)):
+                    raise ToolExecutionContractError(
+                        "Container workspace may contain only regular files and directories; symlinks and special files are forbidden."
+                    )
+                if stat.S_ISREG(mode) and metadata.st_nlink != 1:
+                    raise ToolExecutionContractError(
+                        "Container workspace cannot contain hard-linked files."
+                    )
+        except OSError as exc:
+            raise ToolExecutionContractError("Container workspace could not be safely inspected.") from exc
+
     def _verify_runtime_and_image(self, runtime: str) -> str:
         if self.environment.runtime_kind == "DOCKER":
             # Docker CLI presence is not enough: require a reachable daemon and
@@ -162,6 +181,7 @@ class LinuxContainerToolExecutor:
         image_ref = self._verify_runtime_and_image(runtime)
 
         workspace = Path(request.workspace).resolve(strict=True)
+        self._validate_workspace_contents(workspace)
         executable = profile.executable
         if not executable.startswith("/") or "\x00" in executable:
             raise ToolExecutionContractError("Container tool executable must be an absolute in-image path.")
