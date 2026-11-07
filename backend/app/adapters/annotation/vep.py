@@ -505,6 +505,8 @@ class VEPProvider(ScientificResourceProvider):
                 "transcript": selected.get("transcript_id"),
                 "effect": ",".join(selected.get("consequence_terms") or []),
                 "most_severe_consequence": record.get("most_severe_consequence"),
+                "transcript_consequences": transcripts,
+                "hgvs_consequences": transcripts,
                 "consequences": transcripts,
                 "intergenic_consequences": record.get("intergenic_consequences") or [],
                 "regulatory_feature_consequences": record.get("regulatory_feature_consequences") or [],
