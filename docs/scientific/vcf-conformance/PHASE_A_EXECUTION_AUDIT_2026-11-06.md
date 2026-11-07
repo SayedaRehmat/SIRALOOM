@@ -470,3 +470,61 @@ The review maps the existing FMT-GT candidate IDs and keeps examples distinct fr
 The commit for this GT/GL review is `9ac60ba09abb779bd997f9a16254ffdf135b7a34`. GitHub Actions run `42199179587` was returned as pending for that commit at the time of inspection. It has not been observed passing; no CI pass is claimed.
 
 At the latest branch comparison, the research branch is 280 commits ahead and 3 behind `main`. No merge or rebase was performed.
+
+
+## 15. Execution update — 2026-11-07
+
+### 15.1 Canonical ledger recovery and VCFv4.5 addendum reconciliation
+
+- The canonical `atomic-requirements.v1.json` file returned an empty content payload through the Contents API despite a valid Git blob SHA. The exact canonical content was recovered through the Git blob endpoint using blob SHA `ba7d1bb0544f5d1105a4bd62f757decae13caee8`.
+- Recovered baseline: 226 unique canonical requirement records, IDs `VCF-REQ-000001` through `VCF-REQ-000226`.
+- The separate GT/FORMAT candidate artifact contains 61 candidates (`FMT-GT-001` through `FMT-GT-061`).
+- All 34 supplemental VCFv4.5 cardinality/local-allele candidates (`VCF-REQ-000227`–`VCF-REQ-000260`) were reconciled against the recovered canonical ledger and GT/FORMAT candidate artifact in `vcf4.5-canonical-ledger-reconciliation.v1.json`.
+- Reconciliation disposition: 29 candidates have existing canonical-ledger overlap/matches; four remain unmatched semantic candidates (`000234`, `000256`, `000258`, `000260`); one (`000236`) is retained as library API implementation guidance rather than a file-validation rule.
+- The canonical ledger was intentionally not modified. No duplicate candidate was appended, and no new candidate was marked independently approved, implemented or tested.
+- Four malformed source locators in the addendum were repaired against the pinned VCFv4.5 source: M fraction range line 726; named aliases lines 724–740; reference-block propagation line 728; ADFM/ADRM non-reservation line 742.
+
+### 15.2 VCFv4.5 reserved INFO/FORMAT row traceability
+
+- Added `vcf4.5-reserved-info-format-row-ledger-traceability.v1.json`.
+- Exact source-line mapping covers 21 reserved INFO rows and 63 reserved FORMAT rows: 84/84 map to exactly one canonical ledger record.
+- Ten key-only ambiguities caused by INFO/FORMAT repeated names (AD, ADF, ADR, DP and MQ) are resolved using namespace and exact source line.
+- Number and Type values in all 84 table rows match the corresponding canonical ledger titles; zero Number mismatches and zero Type mismatches.
+- This closes the table-row-to-ledger locator mapping only. It does not close the surrounding prose, footnote, exception, example, or cross-reference review; independent review, implementation mapping and executable tests remain zero.
+
+### 15.3 VCFv4.5 modal source-line traceability gap register
+
+- The two VCFv4.5 primary-context review artifacts contain 185 unique modal-language candidate lines. All have primary context dispositions.
+- A conservative exact-source-line overlap audit against the canonical ledger found 91 candidate lines with at least one ledger source-locator overlap and 94 without an exact overlap.
+- The 94-line gap register is stored in `VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json`: 50 potential normative/mixed obligations, 37 recommendation/permission/implementation-guidance candidates, six informative/explanatory candidates and one ambiguous-scope candidate.
+- Exact non-overlap is a traceability warning, not proof that no semantic coverage exists. Every gap requires manual semantic adjudication; no automatic ledger promotion was performed.
+
+### 15.4 Modal candidate intake/context reconciliation
+
+- The seven VCFv4.1–4.5 primary-context review artifacts contain exactly 510 unique candidate IDs, matching all 510 entries in `normative-candidate-intake.v1.json`; there are no missing or extra IDs.
+- Updated the intake's `review_status` and `reviewer_notes` for all 510 candidates to reflect `SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY` and the exact context artifact/disposition.
+- Preserved `atomicity_status=NOT_ASSESSED`, `traceability_status=UNMAPPED`, and empty requirement ID arrays. All 510 therefore remain unatomized/unmapped; immediate-neighbour context review is not expanded semantic review or ledger traceability.
+- Audit record: `MODAL_CANDIDATE_CONTEXT_RECONCILIATION_2026-11-07.json`.
+
+### 15.5 VCFv4.0 source acquisition research
+
+- New research artifact: `VCF4_0_SOURCE_ACQUISITION_RESEARCH_2026-11-07.md`.
+- The IGSR/1000 Genomes core VCFv4.0 page is corroborated by the VCFtools historical specification index as the historical location for the older VCFv4.0 document. An alternate descriptive route and a test-site copy expose matching rendered content.
+- A contemporaneous VCFtools poster provides contextual examples only. The separate 1000 Genomes SV conventions page remains a producer/project-specific extension source.
+- No original immutable VCFv4.0 source bytes, revision identifier, or SHA-256 were captured. VCFv4.0 remains `SOURCE_NOT_PINNED`; no requirement applicability was promoted.
+
+### 15.6 CI and branch state
+
+- Workflow run `42199248747` for commit `6eeb2d1fdb6bb5d34f43c1d459b8ecf7b1da5b86` completed with failure: frontend passed; PostgreSQL integration passed; backend tests failed (6 failed, 2,241 passed, 49 skipped). The six failures concern VCFv4.0 reserved FORMAT semantics and populated VCFv4.5 Number=P without GT. This research branch did not change production parser/validator code to address them.
+- Latest branch commit after the documentation-only updates is `f3cd652723407f39591b379d1e0dc21c22adb6c1`. No GitHub Actions workflow run was returned for that exact commit; its combined commit status reports Vercel pending. Do not claim CI pass for the latest head.
+- Branch comparison against `main`: 288 commits ahead, 3 behind. No merge, rebase, reset, or force-push was performed.
+- All changes in this update remain under `docs/scientific/vcf-conformance/`; no production parser, validator, normalizer, toolchain, or CI code was modified.
+
+### 15.7 Remaining execution gates
+
+1. Manually adjudicate the 94 VCFv4.5 source-line gaps and reconcile each normative statement to an existing requirement, a new atomic requirement, or an explicit non-requirement disposition.
+2. Complete full VCFv4.5 prose/grammar/definitions/footnotes/examples/cross-reference traceability, including the local-GT example inconsistency, Number=P versus PSQ repeated phase-set cardinality, and xanthosine alias capitalization discrepancy.
+3. Complete independent review; author-level reviews remain non-independent.
+4. After the VCFv4.5 source-to-ledger gate, perform expanded row-by-row semantic reconciliation and atomization for VCFv4.1–4.4, preserving version deltas.
+5. Continue original VCFv4.0 source-byte acquisition and provenance qualification in parallel.
+6. Resolve the six backend CI failures in their owning implementation workstream; do not mix implementation changes into this documentation-only research branch.
