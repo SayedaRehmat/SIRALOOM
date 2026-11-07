@@ -2569,6 +2569,11 @@ def validate_vcf_strict(
             f"Unsupported or missing ##fileformat header: {fileformat!r}; supported standardized VCF versions are VCFv4.0 through VCFv4.5",
             code="VCF_FILEFORMAT_UNSUPPORTED",
         )
+    if base_modification_strandedness is not None and fileformat != "VCFv4.5":
+        raise StrictVCFValidationError(
+            "The base-modification strandedness policy is defined here only for VCFv4.5 Number=M fields.",
+            code="VCF_BASE_MODIFICATION_POLICY_UNSUPPORTED",
+        )
     if not found_header or chrom_header is None:
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
