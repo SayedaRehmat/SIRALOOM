@@ -21,6 +21,15 @@ BREAKEND_RE = re.compile(
     r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
 
+
+def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
+    """Identify VCFv4.5 structural-variant alleles, excluding <*> and <NON_REF>."""
+    if "[" in allele or "]" in allele:
+        return True
+    match = re.fullmatch(r"<([A-Z]+)(?::[^<>]+)?>", allele)
+    return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
+
+
 def _alt_identity_key(allele: str) -> tuple[str, ...]:
     """Return VCF allele identity while respecting sequence and contig case rules."""
     if DNA_RE.fullmatch(allele):
@@ -2065,11 +2074,7 @@ def validate_vcf_strict(
                                 allele_number = int(allele_token)
                                 if 0 < allele_number <= len(alts):
                                     allele_text = alts[allele_number - 1]
-                                    allele_is_sv_or_breakend = (
-                                        SYMBOLIC_RE.fullmatch(allele_text) is not None
-                                        or "[" in allele_text
-                                        or "]" in allele_text
-                                    )
+                                    allele_is_sv_or_breakend = _is_vcf45_sv_or_breakend_alt(allele_text)
                             phase_set_observations.setdefault((sample_name, phase_set), []).append({
                                 "line_number": line_no,
                                 "record_index": records + 1,
