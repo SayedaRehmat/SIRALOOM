@@ -3,7 +3,7 @@
   "registry_id": "siraloom-vcf-atomic-requirements",
   "registry_status": "IN_PROGRESS",
   "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
-  "scope": "Supplemental atomic requirement batch for the VCFv4.5 local-allele, Number=M base-modification and Number=P/phase-set semantics. IDs 000227–000255 extend the 226-record candidate set. This addendum is not yet merged into atomic-requirements.v1.json; duplicate-ID and source-manifest reconciliation is a required integration gate.",
+  "scope": "Supplemental atomic requirement batch for the VCFv4.5 local-allele, Number=M base-modification and Number=P/phase-set semantics. IDs 000227–000268 extend the 226-record candidate set. This addendum is not yet merged into atomic-requirements.v1.json; duplicate-ID and source-manifest reconciliation is a required integration gate.",
   "generated_at_utc": "2026-11-06T00:00:00Z",
   "coverage_summary": {
     "source_documents_reviewed": [
@@ -11,7 +11,7 @@
       "VCFv4.5.tex"
     ],
     "candidate_lines_reviewed": 213,
-    "atomic_requirements_created": 34,
+    "atomic_requirements_created": 42,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
@@ -517,10 +517,10 @@
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "If any local-allele field is present, LAA must also be present and must precede all FORMAT fields other than GT.",
+      "atomic_statement": "If any local-allele field is present, LAA must also be present.",
       "actor": "VCF producer",
-      "condition": "At least one local-allele FORMAT field is present.",
-      "required_or_prohibited_behavior": "If any local-allele field is present, LAA must also be present and must precede all FORMAT fields other than GT.",
+      "condition": "A local-allele FORMAT field is present.",
+      "required_or_prohibited_behavior": "If any local-allele field is present, LAA must also be present.",
       "exceptions": [],
       "observable_acceptance_condition": "A record with a local-allele field but no LAA, or with LAA after a local field other than GT, is rejected.",
       "source_references": [
@@ -600,7 +600,9 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
-      "open_questions": []
+      "open_questions": [
+        "VCFv4.5.tex:502 states that LAA must be present if any local-allele field is present, while VCFv4.5.tex:692-696 says LAA must be present if any local-allele fields are neither omitted nor MISSING. Preserve this source-scope discrepancy; do not silently select the broad or narrow interpretation."
+      ]
     },
     {
       "requirement_id": "VCF-REQ-000233",
@@ -608,11 +610,11 @@
       "requirement_domain": "MISSINGNESS",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST",
-      "atomic_statement": "When local-allele fields are neither omitted nor MISSING and BCF represents zero-length LAA as MISSING, the MISSING LAA value is interpreted as an empty vector, representing a REF-only local allele set.",
+      "normative_force": "SHOULD",
+      "atomic_statement": "When local-allele fields are neither omitted nor MISSING and BCF represents a zero-length LAA vector as MISSING, the MISSING LAA value should be treated as an empty vector representing a REF-only local-allele set.",
       "actor": "VCF/BCF consumer",
       "condition": "The BCF zero-length-vector representation is encountered with local-allele payload present.",
-      "required_or_prohibited_behavior": "When local-allele fields are neither omitted nor MISSING and BCF represents zero-length LAA as MISSING, the MISSING LAA value is interpreted as an empty vector, representing a REF-only local allele set.",
+      "required_or_prohibited_behavior": "When local-allele fields are neither omitted nor MISSING and BCF represents a zero-length LAA vector as MISSING, the MISSING LAA value should be treated as an empty vector representing a REF-only local-allele set.",
       "exceptions": [],
       "observable_acceptance_condition": "The decoded LAA is an empty vector and local allele domain contains REF only.",
       "source_references": [
@@ -700,11 +702,11 @@
       "requirement_domain": "GENOTYPE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST",
-      "atomic_statement": "GQ continues to represent genotype quality when genotype data are given against local alleles.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "GQ remains the genotype quality when genotype data are represented against local alleles.",
       "actor": "VCF producer or consumer",
       "condition": "GT is interpreted using local-allele encoding.",
-      "required_or_prohibited_behavior": "GQ continues to represent genotype quality when genotype data are given against local alleles.",
+      "required_or_prohibited_behavior": "GQ remains the genotype quality when genotype data are represented against local alleles.",
       "exceptions": [],
       "observable_acceptance_condition": "GQ is not reinterpreted as a local-allele-indexed likelihood vector.",
       "source_references": [
@@ -792,11 +794,11 @@
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "DESCRIPTIVE",
-      "atomic_statement": "A specification-defined local-allele equivalent of an A, R, or G FORMAT field is interpreted like its corresponding global field, restricted to the local ALT alleles and their LAA-defined order.",
+      "normative_force": "SHOULD",
+      "atomic_statement": "A specification-defined FORMAT field with Number A, R, or G should be interpreted like its corresponding global field, restricted to the ALT alleles selected by LAA and their LAA-defined order.",
       "actor": "VCF producer or consumer",
       "condition": "A local equivalent and its corresponding global FORMAT field are interpreted.",
-      "required_or_prohibited_behavior": "A specification-defined local-allele equivalent of an A, R, or G FORMAT field is interpreted like its corresponding global field, restricted to the local ALT alleles and their LAA-defined order.",
+      "required_or_prohibited_behavior": "A specification-defined FORMAT field with Number A, R, or G should be interpreted like its corresponding global field, restricted to the ALT alleles selected by LAA and their LAA-defined order.",
       "exceptions": [],
       "observable_acceptance_condition": "Decoded local and global representations resolve to the same semantic values over the selected allele domain.",
       "source_references": [
@@ -993,10 +995,10 @@
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
-      "atomic_statement": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID, with cardinality determined by genotype and possible modifications for the corresponding alleles.",
+      "atomic_statement": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID.",
       "actor": "VCF producer or consumer",
       "condition": "A FORMAT field declares Number=M.",
-      "required_or_prohibited_behavior": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID, with cardinality determined by genotype and possible modifications for the corresponding alleles.",
+      "required_or_prohibited_behavior": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID.",
       "exceptions": [],
       "observable_acceptance_condition": "Expected value count is derived from genotype alleles and eligible modification sites rather than a fixed or generic list length.",
       "source_references": [
@@ -1545,10 +1547,10 @@
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
-      "atomic_statement": "The number and order of base-modification alleles follow the allele order and phasing represented by GT.",
+      "atomic_statement": "The order of base-modification alleles and their values follows the allele order and phasing represented by GT.",
       "actor": "VCF producer or consumer",
       "condition": "Base-modification values are encoded for a sample genotype.",
-      "required_or_prohibited_behavior": "The number and order of base-modification alleles follow the allele order and phasing represented by GT.",
+      "required_or_prohibited_behavior": "The order of base-modification alleles and their values follows the allele order and phasing represented by GT.",
       "exceptions": [],
       "observable_acceptance_condition": "The values can be partitioned and interpreted in GT allele order with phase state preserved.",
       "source_references": [
@@ -2692,15 +2694,15 @@
     },
     {
       "requirement_id": "VCF-REQ-000254",
-      "title": "Breakend records share PSL and PSO on both mates",
+      "title": "Breakend records share PSL values on both mates",
       "requirement_domain": "BREAKEND",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "Variants in breakend notation have the same PSL and PSO values on both records.",
+      "atomic_statement": "Variants in breakpoint notation must have the same PSL value on both records.",
       "actor": "VCF producer",
-      "condition": "A breakend is represented by its paired records.",
-      "required_or_prohibited_behavior": "Variants in breakend notation have the same PSL and PSO values on both records.",
+      "condition": "A variant is represented in breakpoint notation using paired records.",
+      "required_or_prohibited_behavior": "Variants in breakpoint notation must have the same PSL value on both records.",
       "exceptions": [],
       "observable_acceptance_condition": "The paired records carry matching PSL and PSO values.",
       "source_references": [
@@ -2986,15 +2988,15 @@
     },
     {
       "requirement_id": "VCF-REQ-000257",
-      "title": "Base-modification key families reserved for unknown ChEBI IDs",
+      "title": "M base-modification key family reserved for unknown ChEBI IDs",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
-      "atomic_statement": "FORMAT keys matching the M, DPM or ADM base-modification key patterns are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "atomic_statement": "FORMAT keys matching the M[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
       "actor": "VCF producer or consumer",
-      "condition": "A FORMAT key matches one of the specification-defined base-modification key patterns.",
-      "required_or_prohibited_behavior": "FORMAT keys matching the M, DPM or ADM base-modification key patterns are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "condition": "A FORMAT key matches the M[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the M[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
       "exceptions": [],
       "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
       "source_references": [
@@ -3009,9 +3011,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:7-2",
-            "start_line": "7",
-            "end_line": "2"
+            "locator_value": "VCFv4.5.tex:722",
+            "start_line": 722,
+            "end_line": 722
           }
         }
       ],
@@ -3078,15 +3080,15 @@
     },
     {
       "requirement_id": "VCF-REQ-000258",
-      "title": "Named base-modification aliases preferred",
+      "title": "M base-modification named aliases preferred",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "The specified named aliases should be used instead of their corresponding ChEBI-keyed base-modification field names.",
+      "atomic_statement": "The specified M aliases should be used instead of their corresponding ChEBI-keyed M field names.",
       "actor": "VCF producer",
-      "condition": "A base-modification field has a named alias defined by the specification.",
-      "required_or_prohibited_behavior": "The specified named aliases should be used instead of their corresponding ChEBI-keyed base-modification field names.",
+      "condition": "An M base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified M aliases should be used instead of their corresponding ChEBI-keyed M field names.",
       "exceptions": [],
       "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
       "source_references": [
@@ -3101,9 +3103,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex lines 724, 734 and 740; named aliases for M, DPM and ADM families",
+            "locator_value": "VCFv4.5.tex:724",
             "start_line": 724,
-            "end_line": 740
+            "end_line": 724
           }
         }
       ],
@@ -3262,15 +3264,15 @@
     },
     {
       "requirement_id": "VCF-REQ-000260",
-      "title": "ADFM and ADRM base-modification key families are not reserved",
+      "title": "ADFM base-modification key family is not reserved",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "DESCRIPTIVE",
-      "atomic_statement": "FORMAT keys matching the ADFM or ADRM base-modification key families are not reserved by VCFv4.5.",
+      "atomic_statement": "The ADFM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
       "actor": "VCF producer or consumer",
-      "condition": "A FORMAT key begins with ADFM or ADRM and otherwise resembles a base-modification key.",
-      "required_or_prohibited_behavior": "FORMAT keys matching the ADFM or ADRM base-modification key families are not reserved by VCFv4.5.",
+      "condition": "A FORMAT key matches the ADFM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "The ADFM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
       "exceptions": [],
       "observable_acceptance_condition": "The validator does not classify these forms as specification-reserved base-modification keys solely by pattern.",
       "source_references": [
@@ -3286,6 +3288,760 @@
           "locator": {
             "locator_type": "LINE_RANGE",
             "locator_value": "VCFv4.5.tex line 742; ADFM and ADRM are not reserved fields",
+            "start_line": 742,
+            "end_line": 742
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000261",
+      "title": "LAA precedes all FORMAT fields other than GT",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "If any local-allele field is present, LAA must precede all FORMAT fields other than GT.",
+      "actor": "VCF producer",
+      "condition": "At least one local-allele FORMAT field is present.",
+      "required_or_prohibited_behavior": "If any local-allele field is present, LAA must precede all FORMAT fields other than GT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A record with a local-allele field but no LAA, or with LAA after a local field other than GT, is rejected.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:502",
+            "start_line": 502,
+            "end_line": 502
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000262",
+      "title": "Number M cardinality depends on genotype and possible modifications",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The cardinality of Number=M FORMAT fields is determined by genotype and the number of possible base modifications for the corresponding alleles.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=M.",
+      "required_or_prohibited_behavior": "The cardinality of Number=M FORMAT fields is determined by genotype and the number of possible base modifications for the corresponding alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Expected value count is derived from genotype alleles and eligible modification sites rather than a fixed or generic list length.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:202",
+            "start_line": 202,
+            "end_line": 202
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000263",
+      "title": "Breakend records share PSO values on both mates",
+      "requirement_domain": "BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Variants in breakpoint notation must have the same PSO value on both records.",
+      "actor": "VCF producer",
+      "condition": "A variant is represented in breakpoint notation using paired records.",
+      "required_or_prohibited_behavior": "Variants in breakpoint notation must have the same PSO value on both records.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The paired records carry matching PSL and PSO values.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:619",
+            "start_line": 619,
+            "end_line": 619
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:792",
+            "start_line": 792,
+            "end_line": 792
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000264",
+      "title": "DPM base-modification named aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified DPM aliases should be used instead of their corresponding ChEBI-keyed DPM field names.",
+      "actor": "VCF producer",
+      "condition": "A DPM base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified DPM aliases should be used instead of their corresponding ChEBI-keyed DPM field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:734",
+            "start_line": 734,
+            "end_line": 734
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000265",
+      "title": "ADM base-modification named aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified ADM aliases should be used instead of their corresponding ChEBI-keyed ADM field names.",
+      "actor": "VCF producer",
+      "condition": "An ADM base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified ADM aliases should be used instead of their corresponding ChEBI-keyed ADM field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:740",
+            "start_line": 740,
+            "end_line": 740
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000266",
+      "title": "DPM base-modification key family reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the DPM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the DPM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the DPM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:732",
+            "start_line": 732,
+            "end_line": 732
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000267",
+      "title": "ADM base-modification key family reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the ADM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the ADM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the ADM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:738",
+            "start_line": 738,
+            "end_line": 738
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000268",
+      "title": "ADRM base-modification key family is not reserved",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The ADRM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the ADRM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "The ADRM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The validator does not classify these forms as specification-reserved base-modification keys solely by pattern.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:742",
             "start_line": 742,
             "end_line": 742
           }
