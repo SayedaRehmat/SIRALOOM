@@ -123,6 +123,7 @@ class SegregationInput(BaseModel):
     phenotype_status: str | None = Field(default=None, max_length=30)
     source: str = Field(default="HUMAN_REVIEW", max_length=50)
     notes: str | None = Field(default=None, max_length=5000)
+    revision_reason: str | None = Field(default=None, max_length=5000)
     metadata: dict = Field(default_factory=dict)
 
 class AssessmentInput(BaseModel):
@@ -1361,6 +1362,7 @@ def _segregation_revision_payload(root, revision, member) -> dict:
         "id": str(root.id),
         "revision_id": str(revision.id),
         "revision_version": revision.version,
+        "revision_reason": revision.revision_reason,
         "supersedes_revision_id": (
             str(revision.supersedes_revision_id)
             if revision.supersedes_revision_id else None
@@ -1493,14 +1495,22 @@ def add_segregation(
             **_seg(root, member),
             "revision_id": None,
             "revision_version": 1,
+            "revision_reason": None,
             "observation_fingerprint": current_fingerprint,
         }
+
+    if not body.revision_reason or not body.revision_reason.strip():
+        raise HTTPException(
+            422,
+            "A non-empty correction reason is required to supersede a segregation observation",
+        )
 
     revision = SegregationObservationRevision(
         id=uuid4(),
         root_observation_id=root.id,
         supersedes_revision_id=latest.id if latest is not None else None,
         version=(latest.version + 1) if latest is not None else 2,
+        revision_reason=body.revision_reason.strip(),
         payload=payload,
         observation_fingerprint=observation_fingerprint,
         recorded_by=principal.user_id,
@@ -1520,6 +1530,7 @@ def add_segregation(
             if latest is not None else _seg(root, member)
         ),
         after_state=_segregation_revision_payload(root, revision, member),
+        reason=revision.revision_reason,
     )
     db.commit()
     return _segregation_revision_payload(root, revision, member)
