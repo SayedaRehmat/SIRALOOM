@@ -139,6 +139,10 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError("VEP execution contract must pin assembly to GRCh37 or GRCh38.")
         if not Path(self.cache_manifest).is_absolute():
             raise VEPProviderError("VEP execution contract must declare an absolute cache_manifest path.")
+        if not self.fasta or not Path(self.fasta).is_absolute():
+            raise VEPProviderError("VEP execution contract must pin an absolute assembly-matched FASTA path.")
+        if not re.fullmatch(r"[0-9a-f]{64}", self.toolchain_fasta_sha256):
+            raise VEPProviderError("VEP execution contract must pin the FASTA SHA-256 digest.")
         if not re.fullmatch(r"\d+\.\d+", self.vep_version):
             raise VEPProviderError("VEP execution contract must pin the exact VEP release, e.g. 115.2.")
         if not self.tool_profile_id:
@@ -330,8 +334,8 @@ class VEPProvider(ScientificResourceProvider):
             failure_provenance = asdict(exc.provenance) if exc.provenance else {}
             failure_provenance.update({
                 "workspace_path": str(workspace),
-                "raw_response_path": str(output_json) if output_json.is_file() else None,
-                "raw_response_sha256": _sha256_file(output_json) if output_json.is_file() else None,
+                "raw_response_path": str(output_json) if output_json.is_file() and not output_json.is_symlink() else None,
+                "raw_response_sha256": _sha256_file(output_json) if output_json.is_file() and not output_json.is_symlink() else None,
             })
             raise VEPProviderError(
                 f"VEP execution failed: {exc}",
