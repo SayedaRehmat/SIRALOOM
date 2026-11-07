@@ -1043,6 +1043,11 @@ export type TranslationKey =
   | "familyIdentity.ploidyEvidence"
   | "familyIdentity.identityQcStatus"
   | "familyIdentity.assay"
+  | "familyIdentity.attachInheritanceReview"
+  | "familyIdentity.inheritanceReviewSaving"
+  | "familyIdentity.inheritanceReviewRecorded"
+  | "familyIdentity.inheritanceRequiresProbandBinding"
+  | "familyIdentity.matrixSelectionChanged"
   | "phenotype.timelineTitle"
   | "phenotype.timelineDescription"
   | "phenotype.observedAt"
@@ -2096,6 +2101,11 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.ploidyEvidence": "Ploidy evidence",
     "familyIdentity.identityQcStatus": "Identity QC",
     "familyIdentity.assay": "Assay",
+    "familyIdentity.attachInheritanceReview": "Attach verified matrix to inheritance review",
+    "familyIdentity.inheritanceReviewSaving": "Submitting family evidence…",
+    "familyIdentity.inheritanceReviewRecorded": "Inheritance review recorded; status remains REQUIRES_REVIEW",
+    "familyIdentity.inheritanceRequiresProbandBinding": "Select exactly one active, verified proband binding from the analysis under review.",
+    "familyIdentity.matrixSelectionChanged": "The selected bindings changed. Reload the matrix before submitting inheritance review.",
     "phenotype.timelineTitle": "Longitudinal phenotype timeline",
     "phenotype.timelineDescription": "Chronological member-specific observations. Missing observation dates remain undated; onset descriptions are shown as reported.",
     "phenotype.observedAt": "Observed at",
@@ -3145,6 +3155,11 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.ploidyEvidence": "دليل الصيغة الصبغية",
     "familyIdentity.identityQcStatus": "فحص هوية العينة",
     "familyIdentity.assay": "الفحص المخبري",
+    "familyIdentity.attachInheritanceReview": "إرفاق المصفوفة الموثقة بمراجعة الوراثة",
+    "familyIdentity.inheritanceReviewSaving": "جارٍ إرسال أدلة الأسرة…",
+    "familyIdentity.inheritanceReviewRecorded": "تم تسجيل مراجعة الوراثة؛ وتظل الحالة REQUIRES_REVIEW",
+    "familyIdentity.inheritanceRequiresProbandBinding": "حدد رابطًا نشطًا وموثقًا واحدًا فقط لعينة الحالة الأساسية من التحليل قيد المراجعة.",
+    "familyIdentity.matrixSelectionChanged": "تغيرت روابط العينات المحددة. أعد تحميل المصفوفة قبل إرسال مراجعة الوراثة.",
     "phenotype.timelineTitle": "الخط الزمني الطولي للأنماط الظاهرية",
     "phenotype.timelineDescription": "ملاحظات سريرية مرتبة زمنيًا لكل فرد. تبقى الملاحظات دون تاريخ غير مؤرخة، ويُعرض وصف بداية الأعراض كما ورد.",
     "phenotype.observedAt": "وقت الملاحظة",
