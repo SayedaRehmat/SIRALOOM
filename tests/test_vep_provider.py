@@ -151,6 +151,7 @@ class _FakeToolExecutor:
                 continue
             fields = line.split("\\t")
             records.append({
+                "input": line,
                 "start": int(fields[1]),
                 "seq_region_name": fields[0],
                 "allele_string": f"{fields[3]}/{fields[4]}",
