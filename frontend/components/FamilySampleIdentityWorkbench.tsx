@@ -137,10 +137,10 @@ export default function FamilySampleIdentityWorkbench({
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  useEffect(() => {
-    setSelectedBindingIds(bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).map((binding) => binding.binding_id));
-    setMatrix(null);
-  }, [bindings, supersededBindingIds, variantId]);
+  const supersededBindingIds = useMemo(
+    () => new Set(bindings.map((binding) => binding.supersedes_binding_id).filter(Boolean)),
+    [bindings],
+  );
 
   const selectedAnalysis = useMemo(
     () => analyses.find((analysis) => analysis.analysis_id === analysisId) ?? null,
@@ -148,10 +148,11 @@ export default function FamilySampleIdentityWorkbench({
   );
   const selectedSampleName = selectedAnalysis?.selected_sample_name ?? "";
   const selectedSourceVcf = selectedAnalysis?.source_vcf ?? null;
-  const supersededBindingIds = useMemo(
-    () => new Set(bindings.map((binding) => binding.supersedes_binding_id).filter(Boolean)),
-    [bindings],
-  );
+
+  useEffect(() => {
+    setSelectedBindingIds(bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).map((binding) => binding.binding_id));
+    setMatrix(null);
+  }, [bindings, supersededBindingIds, variantId]);
 
   const loadMatrix = async () => {
     if (!variantId || selectedBindingIds.length === 0) return;
