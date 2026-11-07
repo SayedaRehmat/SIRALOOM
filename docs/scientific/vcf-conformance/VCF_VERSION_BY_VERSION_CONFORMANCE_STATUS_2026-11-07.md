@@ -148,3 +148,61 @@ This report is a status/evidence register. It does not convert candidate require
 
 
 **Additional version-specific FORMAT evidence:** VCFv4.3 CN is Number=1, Type=Integer; VCFv4.4 changes CN to Number=1, Type=Float. This transition is now encoded in the reserved FORMAT registry and has a negative declaration-mismatch regression test. VCFv4.1/4.2 GLE remains explicitly unresolved at the Number level: it requires a header declaration rather than inventing a cardinality from prose.
+
+
+ 
+## 6. Superseding implementation, execution and traceability update (2026-11-07)
+
+**This section supersedes the earlier baseline and CI-status statements in Sections 1, 4 and 5.** It records the final PSO/BND implementation and exact-head verification completed for this workstream.
+
+### Exact commits and full verification
+
+- Production implementation commit: `f4c9ec0e3ba700fe2293f7759aa46d68771080f1`.
+- Exact test execution commit: `f7636dfa0b83886f3a52e6f317657c5f8c63433c`.
+- Full GitHub Actions run: [42370069178](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42370069178) — **success**.
+- Backend, frontend and PostgreSQL integration jobs all completed successfully.
+- Backend verification included the full backend test suite, targeted PSO/BND and derivative-traversal regressions, dedicated VCFv4.0, VCFv4.1/4.2, VCFv4.3, VCFv4.4 and VCFv4.5 suites, laboratory backend image build, non-root runtime, fresh named-volume ownership, BCFtools identity, startup-script validation and Python compilation.
+- Frontend verification included behavior tests, localization architecture guard, production build, production container build and Compose validation.
+- PostgreSQL migration/integration verification passed.
+
+### PSO/BND and derivative graph implementation
+
+The production validator now handles the version-specific structural-variant cardinalities and semantics:
+
+| Field | VCFv4.1–4.3 | VCFv4.4–4.5 |
+|---|---|---|
+| MATEID | Number=. | Number=A |
+| PARID | Number=1 | Number=A |
+| EVENT | Number=1 | Number=A |
+| EVENTTYPE | Not defined in these versions | Number=A |
+
+For VCFv4.1–4.3, record-level EVENT and PARID values are applied as record-level semantics. A legacy multi-ALT breakend record with one PARID value cannot be mapped to individual ALT partners without additional evidence; the validator reports that relationship as `UNRESOLVED`. VCFv4.4/4.5 use ALT-indexed PARID and EVENT mappings.
+
+MATEID adjacency and PARID partner relationships are modeled as distinct graph edges. The validation profile now exposes reciprocal partner links, unresolved partner links, graph nodes, graph edges, connected components, EVENT groups and PSO-ordered traversal events. Tests cover reciprocal multi-ALT MATEID matching, all four breakend orientations and local replacement sequences, cross-chromosome PSL scope, reference and alternate GT positions, ordinal ties, reciprocal phase vectors, legacy record-level PARID ambiguity, nonreciprocal PARID and missing source IDs.
+
+The validator reconstructs the evidence-supported derivative graph and event order. It does **not** claim nucleotide-level derivative chromosome reconstruction: `sequence_status` remains `UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE` when reference-segment and copy-number evidence are insufficient. Tied PSO ordinals, missing/ambiguous PARID, missing MATEID and single breakends without a mate remain explicit unresolved outcomes rather than fabricated structures.
+
+### Version-specific execution matrix and traceability
+
+The complete 226-requirement, six-version matrix is recorded in [VCF_VERSION_EXECUTION_MATRIX_2026-11-07.json](VCF_VERSION_EXECUTION_MATRIX_2026-11-07.json). It records, for every requirement/version pair, source locations, implementation symbols, test identifiers, test outcomes, and exact execution commit. Outcomes are PASS, FAIL, UNSUPPORTED or UNRESOLVED; not-applicable cells are separately identified and excluded from coverage counts.
+
+| VCF version | Dedicated suite | Atomic PASS | Atomic FAIL | Atomic UNSUPPORTED | Atomic UNRESOLVED | Not applicable |
+|---|---:|---:|---:|---:|---:|---:|
+| VCFv4.0 | PASS | 0 | 0 | 0 | 226 | 0 |
+| VCFv4.1 | PASS | 7 | 0 | 0 | 158 | 61 |
+| VCFv4.2 | PASS | 7 | 0 | 0 | 158 | 61 |
+| VCFv4.3 | PASS | 7 | 0 | 0 | 164 | 55 |
+| VCFv4.4 | PASS | 21 | 0 | 0 | 169 | 36 |
+| VCFv4.5 | PASS | 26 | 0 | 0 | 191 | 9 |
+
+The requirement registry now records **226 total records**, including 142 behavior requirements and 84 descriptive reserved-field candidates. **26 requirements have production code mappings and executed passing test evidence; 200 do not yet have complete code/test mappings.** Zero requirements have independent standards review, and 49 source questions remain unresolved. The registry is not a laboratory approval record.
+
+### Remaining release gates
+
+1. Capture and hash the authoritative historical VCFv4.0 source bytes. The VCFv4.0 test suite passed, but source provenance remains unresolved; test success does not qualify the source.
+2. Reconcile the remaining VCFv4.1–4.5 atomic requirements against complete source context and map each applicable requirement to production code and an executed test.
+3. Complete the reserved INFO/FORMAT and tandem-repeat semantic audit, including nested cardinality and cross-field consistency.
+4. Obtain independent standards review and laboratory qualification.
+5. Keep derivative sequence reconstruction unresolved whenever reference-segment and copy-number evidence is inadequate.
+
+**Release disposition remains NOT READY FOR LABORATORY QUALIFICATION.** The full verification run establishes the recorded implementation and test evidence; it does not convert the remaining unresolved requirements or source questions into PASS.
