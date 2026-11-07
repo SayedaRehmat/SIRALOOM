@@ -15,6 +15,8 @@ from backend.app.domain.tool_execution import (
     ToolExecutionError,
     ToolExecutionRequest,
     ToolIdentity,
+    current_platform_id,
+    sha256_resource_path,
 )
 
 
@@ -38,6 +40,8 @@ def test_local_executor_attests_tool_and_records_input_resource_output_provenanc
     source = tmp_path / "input.txt"
     source.write_text("governed input", encoding="utf-8")
     output = tmp_path / "result.txt"
+    reference_resource = tmp_path / "reference.fa"
+    reference_resource.write_text(">1\\nACGT\\n", encoding="utf-8")
     request = ToolExecutionRequest(
         execution_id="execution-001",
         organization_id="lab-001",
@@ -53,8 +57,9 @@ def test_local_executor_attests_tool_and_records_input_resource_output_provenanc
         resources=(ScientificResourceBinding(
             resource_id="reference-grch38",
             version="GRCh38",
-            sha256="a" * 64,
+            sha256=hashlib.sha256(reference_resource.read_bytes()).hexdigest(),
             assembly="GRCh38",
+            path=str(reference_resource),
         ),),
     )
 
@@ -68,6 +73,8 @@ def test_local_executor_attests_tool_and_records_input_resource_output_provenanc
     assert result.provenance.output_sha256 == ({"name": "annotation", "sha256": hashlib.sha256(b"annotated").hexdigest()},)
     assert result.provenance.resource_bindings[0]["assembly"] == "GRCh38"
     assert result.provenance.exit_code == 0
+    assert result.provenance.platform == current_platform_id()
+    assert result.provenance.runtime_image_digest is None
 
 
 def test_executor_rejects_executable_digest_mismatch(tmp_path: Path) -> None:
@@ -132,8 +139,11 @@ def test_nonzero_tool_exit_is_not_reported_as_success(tmp_path: Path) -> None:
         workspace=str(tmp_path),
     )
 
-    with pytest.raises(ToolExecutionError, match="exited with status 7"):
+    with pytest.raises(ToolExecutionError, match="exited with status 7") as exc:
         LocalProcessToolExecutor().execute(profile, request)
+    assert exc.value.provenance is not None
+    assert exc.value.provenance.exit_code == 7
+    assert exc.value.provenance.stdout_sha256 == hashlib.sha256(b"").hexdigest()
 
 
 
@@ -206,3 +216,79 @@ def test_request_rejects_unbounded_or_too_small_output_capture_limit(tmp_path: P
 
     with pytest.raises(ToolExecutionContractError, match="Captured process output limit"):
         request.validate(_profile())
+
+
+def test_resource_binding_rejects_digest_that_does_not_match_actual_bytes(tmp_path: Path) -> None:
+    resource = tmp_path / "reference.fa"
+    resource.write_text(">1\\nACGT\\n", encoding="utf-8")
+    binding = ScientificResourceBinding(
+        resource_id="reference-grch38",
+        version="GRCh38",
+        sha256="0" * 64,
+        assembly="GRCh38",
+        path=str(resource),
+    )
+    with pytest.raises(ToolExecutionContractError, match="does not match its governed bytes"):
+        binding.validate()
+
+
+def test_directory_resource_digest_covers_complete_file_set(tmp_path: Path) -> None:
+    resource = tmp_path / "vep-cache"
+    resource.mkdir()
+    (resource / "a.txt").write_text("alpha", encoding="utf-8")
+    (resource / "nested").mkdir()
+    (resource / "nested" / "b.txt").write_text("beta", encoding="utf-8")
+
+    first_digest = sha256_resource_path(resource)
+    binding = ScientificResourceBinding(
+        resource_id="vep-cache",
+        version="115",
+        sha256=first_digest,
+        assembly="GRCh38",
+        path=str(resource),
+    )
+    binding.validate()
+
+    (resource / "nested" / "b.txt").write_text("changed", encoding="utf-8")
+    with pytest.raises(ToolExecutionContractError, match="does not match its governed bytes"):
+        binding.validate()
+
+
+def test_resource_directory_rejects_symlink_entries(tmp_path: Path) -> None:
+    resource = tmp_path / "resource"
+    resource.mkdir()
+    target = tmp_path / "target.txt"
+    target.write_text("target", encoding="utf-8")
+    (resource / "linked.txt").symlink_to(target)
+
+    with pytest.raises(ToolExecutionContractError, match="symlinks"):
+        sha256_resource_path(resource)
+
+
+def test_tool_profile_rejects_worker_platform_mismatch() -> None:
+    profile = _profile()
+    wrong_platform = "linux-aarch64" if current_platform_id() != "linux-aarch64" else "linux-64"
+    mismatched = ToolIdentity(**{**profile.__dict__, "platform": wrong_platform})
+
+    with pytest.raises(ToolExecutionContractError, match="does not match worker platform"):
+        mismatched.validate()
+
+
+def test_timeout_failure_retains_execution_provenance(tmp_path: Path) -> None:
+    profile = _profile()
+    request = ToolExecutionRequest(
+        execution_id="execution-timeout",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=("-c", "import time; time.sleep(2)"),
+        workspace=str(tmp_path),
+        timeout_seconds=1,
+    )
+
+    with pytest.raises(ToolExecutionError, match="exceeded its 1s timeout") as exc:
+        LocalProcessToolExecutor().execute(profile, request)
+
+    assert exc.value.retryable is True
+    assert exc.value.provenance is not None
+    assert exc.value.provenance.exit_code in {-9, 137}
