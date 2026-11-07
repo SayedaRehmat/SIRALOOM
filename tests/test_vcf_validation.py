@@ -2213,6 +2213,33 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
 
 
 @pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf43_reserved_cipos_header_must_match_number_two(tmp_path: Path):
+    path = tmp_path / "vcf43-cipos-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=CIPOS,Number=.,Type=Integer,Description="Wrong CIPOS declaration">'],
+        "1\t10\t.\tA\tC\t.\tPASS\tCIPOS=0,0\n",
+        version="VCFv4.3",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+
+
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_plus_reserved_mateid_header_must_match_number_a(tmp_path: Path, version: str):
+    path = tmp_path / f"{version}-mateid-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=MATEID,Number=.,Type=String,Description="Wrong MATEID declaration">'],
+        "1\t10\tbnd1\tA\tA]2:20]\t.\tPASS\tMATEID=bnd2\n",
+        version=version,
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+
+
 def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
     path = tmp_path / "vcf43-ad-wrong-header-definition.vcf"
     write_vcf_with_metadata(
