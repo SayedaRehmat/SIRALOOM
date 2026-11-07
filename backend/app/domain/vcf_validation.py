@@ -1542,7 +1542,7 @@ def _validate_record(
             )
         if fileformat == "VCFv4.5" and (
             any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
-            or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
+            or any(key in {"LAA", "LAD", "LADF", "LADR", "LEC", "LGL", "LGP", "LPL", "LPP"} for key in keys)
         ):
             if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
                 raise StrictVCFValidationError(
