@@ -28,7 +28,7 @@ def _is_vcf45_breakend_alt(allele: str) -> bool:
     return "[" in allele or "]" in allele or bool(SINGLE_BREAKEND_RE.fullmatch(allele))
 
 
-def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
+def _is_vcf44_plus_sv_or_breakend_alt(allele: str) -> bool:
     """Identify VCFv4.5 symbolic SVs and paired or single breakend alleles."""
     if _is_vcf45_breakend_alt(allele):
         return True
@@ -1979,9 +1979,9 @@ def validate_vcf_strict(
             ]
             breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
             if breakend_alts:
-                # VCFv4.5 deprecates INFO/SVTYPE; breakpoint notation itself
+                # VCFv4.4/4.5 deprecates INFO/SVTYPE; breakpoint notation itself
                 # identifies a BND. Earlier supported versions retain the
-                # explicit SVTYPE=BND requirement used by their source contract.
+                # explicit SVTYPE=BND requirement used by earlier VCFv4.0–4.3 source contracts.
                 declared_svtype = info_values.get("SVTYPE")
                 if (
                     (fileformat not in {"VCFv4.4", "VCFv4.5"} and declared_svtype != "BND")
@@ -1994,14 +1994,14 @@ def validate_vcf_strict(
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
                 mate_value = info_values.get("MATEID")
                 mate_entries = mate_value.split(",") if mate_value not in {None, ""} else []
-                # MATEID is Number=A in VCFv4.5: preserve the positional
+                # MATEID is Number=A in VCFv4.4/4.5: preserve the positional
                 # association between each ALT allele and its mate record ID.
                 # Earlier VCF versions used other cardinality conventions, so
                 # retain the legacy compact BND-only list interpretation there.
                 if fileformat in {"VCFv4.4", "VCFv4.5"}:
                     if mate_entries and len(mate_entries) != len(alts):
                         raise StrictVCFValidationError(
-                            f"VCFv4.5 MATEID cardinality must match all ALT alleles at line {line_no}",
+                            f"VCFv4.4/4.5 MATEID cardinality must match all ALT alleles at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
                     mate_entries_by_alt = {
@@ -2230,7 +2230,7 @@ def validate_vcf_strict(
                                 allele_number = int(allele_token)
                                 if 0 < allele_number <= len(alts):
                                     allele_text = alts[allele_number - 1]
-                                    allele_is_sv_or_breakend = _is_vcf45_sv_or_breakend_alt(allele_text)
+                                    allele_is_sv_or_breakend = _is_vcf44_plus_sv_or_breakend_alt(allele_text)
                             phase_set_observations.setdefault((sample_name, phase_set), []).append({
                                 "line_number": line_no,
                                 "record_index": records + 1,
