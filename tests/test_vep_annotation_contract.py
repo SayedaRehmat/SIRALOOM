@@ -7,6 +7,8 @@ from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import current_platform_id
+from backend.app.config import settings
 
 
 def _provider() -> VEPProvider:
@@ -28,6 +30,18 @@ def _provider() -> VEPProvider:
                 "cache_manifest_sha256": "a" * 64,
                 "cache_artifact_sha256": "b" * 64,
                 "vep_binary_sha256": "c" * 64,
+                "fasta": "/resources/GRCh38.fa",
+                "fasta_sha256": "e" * 64,
+                "vep_version": "115.2",
+                "tool_profile_id": "vep-115.2-contract-test",
+                "platform": current_platform_id(),
+                "qualification_status": "SOFTWARE_QUALIFIED",
+                "runtime_image_digest": "sha256:" + "d" * 64,
+                "runtime_path": ["/usr/bin", "/bin"],
+                "runtime_environment": {"PERL5LIB": "/opt/vep/modules"},
+                "execution_timeout_seconds": 1800,
+                "max_output_bytes": 65536,
+                "scratch_root": str(settings.worker_scratch_root),
             },
         )
     )
