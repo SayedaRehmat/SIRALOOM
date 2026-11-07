@@ -292,3 +292,37 @@ def test_production_validator_maps_missing_vector_entries_to_slots(
         "0.75",
     ]
 
+@pytest.mark.parametrize(
+    ("field_id", "field_type", "values"),
+    [
+        ("MXaoN", "Float", "0.1,0.2"),
+        ("MxaoN", "Float", "0.1,0.2"),
+        ("DPMXaoN", "Integer", "10,20"),
+        ("DPMxaoN", "Integer", "10,20"),
+        ("ADMXaoN", "Integer", "4,8"),
+        ("ADMxaoN", "Integer", "4,8"),
+    ],
+)
+def test_xanthosine_alias_capitalization_variants_remain_accepted_without_normalization(
+    tmp_path: Path, field_id: str, field_type: str, values: str
+):
+    path = tmp_path / f"xanthosine-alias-{field_id}.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="A",
+        alternate=".",
+        genotype="0",
+        field_id=field_id,
+        values=values,
+        field_type=field_type,
+    )
+    result = validate_vcf_strict(path, include_base_modification_slot_assignments=True)
+    assert result["records"] == 1
+    assert result["base_modification_slot_assignment_count"] == 2
+    assert [
+        (slot["field_id"], slot["value"], slot["strand"])
+        for slot in result["base_modification_slot_assignments"]
+    ] == [
+        (field_id, values.split(",")[0], "+"),
+        (field_id, values.split(",")[1], "-"),
+    ]
