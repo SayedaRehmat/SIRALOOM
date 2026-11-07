@@ -2265,12 +2265,12 @@ def validate_vcf_strict(
                             )
                             for slot_index, (allele_index, copy_index, sequence_position, strand, sequence_base) in enumerate(haplotype_slots):
                                 _allele_token, phase_separator = gt_phase[copy_index]
-                                if phase_separator != "|":
-                                    phase_set = None
+                                if "|" not in gt_for_modification or phase_separator != "|":
+                                    phase_set = f"__record_{records + 1}_allele_{allele_index}"
                                 elif psl_positions:
-                                    phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else None
+                                    phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else "."
                                     if phase_set == ".":
-                                        phase_set = None
+                                        phase_set = f"__record_{records + 1}_allele_{allele_index}"
                                 elif ps_for_modification not in {None, "", "."}:
                                     phase_set = f"PS:{ps_for_modification}"
                                 else:
@@ -2299,7 +2299,7 @@ def validate_vcf_strict(
                                     "line_number": line_no,
                                     "copy_index": copy_index,
                                     "phase_set": phase_set,
-                                    "phase_known": phase_set is not None,
+                                    "phase_known": True,
                                     "strand": strand,
                                     "base": sequence_base,
                                     "value": None if observed_value == "." else observed_value,
