@@ -67,6 +67,7 @@ def test_container_limits_cannot_exceed_environment_capacity():
         cpu_cores=9,
         memory_bytes=1024**3,
         pids_limit=256,
+        container_user="1000:1000",
     )
     with pytest.raises(ToolExecutionContractError, match="CPU limit"):
         limits.validate(environment)
@@ -74,7 +75,7 @@ def test_container_limits_cannot_exceed_environment_capacity():
 
 def test_container_runtime_must_be_installed_and_explicit():
     environment = _environment()
-    limits = ContainerResourceLimits(2, 4 * 1024**3, 256)
+    limits = ContainerResourceLimits(2, 4 * 1024**3, 256, "1000:1000")
     executor = LinuxContainerToolExecutor(
         environment,
         limits,
