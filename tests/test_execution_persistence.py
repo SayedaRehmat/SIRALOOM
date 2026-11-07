@@ -98,6 +98,7 @@ def _profile(organization_id):
         storage_profile_ids=("lab-artifacts-v1",),
         supported_tool_profile_ids=("bcftools-1.25-htslib-1.25-linux-amd64",),
         network_policy="OFFLINE",
+        tool_executable_sha256=(("bcftools-1.25-htslib-1.25-linux-amd64", "a" * 64),),
         qualification_status="ENVIRONMENT_QUALIFIED",
     )
 
