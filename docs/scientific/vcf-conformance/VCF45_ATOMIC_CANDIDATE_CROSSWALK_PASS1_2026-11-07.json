@@ -119,10 +119,13 @@
       "source_text": "Meta-information lines are optional, but if they are present then they must be completely well-formed.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900019",
-        "VCF-REQ-900020"
+        "VCF-REQ-900020",
+        "VCF-REQ-900161"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        137
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-012",
@@ -467,10 +470,15 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900074",
         "VCF-REQ-900142",
-        "VCF-REQ-900143"
+        "VCF-REQ-900143",
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        419
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-042",
@@ -519,10 +527,15 @@
       "source_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900083",
-        "VCF-REQ-900084"
+        "VCF-REQ-900084",
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        419
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-046",
@@ -685,7 +698,6 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900097",
         "VCF-REQ-900098",
-        "VCF-REQ-900122",
         "VCF-REQ-900165",
         "VCF-REQ-900166"
       ],
@@ -754,8 +766,7 @@
       "source_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900106",
-        "VCF-REQ-900107",
-        "VCF-REQ-900164"
+        "VCF-REQ-900107"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -779,7 +790,9 @@
         "VCF-REQ-900108"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        1985
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-066",
@@ -806,10 +819,12 @@
       "source_line": 1985,
       "source_text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900111"
+        "VCF-REQ-900108"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        1946
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-069",
@@ -845,6 +860,7 @@
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
+        1887,
         1990
       ]
     },
