@@ -64,7 +64,7 @@ The VCFv4.5 source also defines these structural-variant FORMAT keys in a separa
 | HAP | 1 | Integer | Unique haplotype identifier |
 | AHAP | 1 | Integer | Ancestral haplotype identifier |
 
-The validator's VCFv4.5 reserved-definition registry now includes these eight SV FORMAT definitions in addition to the main reserved genotype table and dynamic base-modification patterns. This enforces declared Number/Type compatibility; it does not implement the structural-variant interpretation or make SVs part of the supported Phase 1 variant scope.
+The validator's VCFv4.5 reserved-definition registry now includes these eight SV FORMAT definitions in addition to the main reserved genotype table and dynamic base-modification patterns. This enforces declared Number/Type compatibility. CNP values are constrained to [0, 1], and the phred-style CNQ and NQ values are constrained to be non-negative. This does not implement structural-variant interpretation or make SVs part of the supported Phase 1 variant scope.
 
 The source explicitly says ADFM[0-9]+[ACGTUN] and ADRM[0-9]+[ACGTUN] are **not** reserved fields. They must not be added as aliases for ADF/ADR.
 
@@ -101,9 +101,9 @@ The source defines:
 - P: one value for each allele value in GT.
 - LAA: distinct, 1-based indices into ALT. Its order is meaningful and defines the local allele order.
 
-The source requires LAA to be present whenever a local-allele FORMAT field is used and to precede every FORMAT field other than GT. The validator previously checked LAA values when LAA existed, but did not enforce the FORMAT-key presence/order rule. This has now been corrected for VCFv4.5. Detection covers both reserved local fields and user-defined fields declared with Number=LA, LR or LG.
+The source requires LAA to be present whenever a local-allele FORMAT field is used and to precede every FORMAT field other than GT. The validator already enforced this for declared Number=LA/LR/LG fields and most built-in local keys. This audit found that the implicit reserved-key set omitted LEC when its header declaration was absent; LEC has now been added and covered by a regression test. Tests assert the existing header-level error code, `VCF_LOCAL_ALLELE_HEADER_INVALID`, for missing or incorrectly positioned LAA.
 
-The validator also interprets a missing LAA vector as an empty local ALT vector (REF-only) for local-field cardinality, consistent with the source's BCF zero-length-vector convention. This does not mean a missing LAA can be silently omitted from the FORMAT key list.
+The source's text example also uses an empty LAA sample value in `GT:LAA:LAD:LPL` (`0/0::30:0`) for a REF-only local vector. A general sample-value guard previously rejected this before local-allele parsing. VCFv4.5 now accepts that empty LAA encoding and interprets it as an empty local ALT vector (REF-only), consistent with the BCF zero-length-vector convention. The explicit MISSING value `.` is also interpreted as an empty local ALT vector. Neither encoding permits a called non-reference GT allele to be absent from LAA.
 
 Local/non-local pairs are required by the source to encode identical information, or one representation must be MISSING/omitted. The current equivalence checker projects the standard A/R/G vector through the ordered local allele list and checks the local representation. New tests exercise LAD/LADF/LADR, LEC, LGP and LPP in addition to PL/LPL and GL/LGL, including reversed LAA order and mismatch errors.
 
@@ -121,7 +121,7 @@ Number=G uses colexicographic genotype ordering. For sorted genotype alleles k1 
 
 `Index(k1,...,kP) = sum(m=1..P) choose(km + m - 1, m)`
 
-The validator's genotype-order generator and index mapping implement this ordering; existing and new tests cover haploid, diploid and triploid projection cases. PS and PSL are distinct phase-set representations and cannot both be populated for one sample. PSL is one entry per GT allele; unphased allele positions use MISSING. PSO and PSQ are Number=P fields associated with PSL.
+The validator's genotype-order generator and index mapping implement this ordering; existing and new tests cover haploid, diploid and triploid projection cases, including missing allele tokens. New VCFv4.5 tests cover the leading phasing separator, implicit first-separator inference, mixed phasing separators, Number=P cardinality, and malformed separator structures. PS and PSL are distinct phase-set representations and cannot both be populated for one sample. PSL is one entry per GT allele; unphased allele positions use MISSING. PSO and PSQ are Number=P fields associated with PSL.
 
 The following issues remain outside a claim of complete GT qualification:
 
@@ -142,9 +142,14 @@ Both spellings are currently recognized by the validator and have tests, but nei
 
 Changes on this research branch:
 
-- Added VCFv4.5 reserved SV FORMAT definitions to `_reserved_vcf45_format_definition`.
-- Enforced LAA key presence and placement for local-allele FORMAT fields, including custom LA/LR/LG declarations.
-- Added Number=M tests and reserved SV FORMAT / xanthosine alias tests.
-- Added LAA requirement/order tests.
+- Added VCFv4.5 reserved SV FORMAT definitions to `_reserved_vcf45_format_definition`, with probability/quality range checks for CNP, CNQ and NQ.
+- Added the omitted implicit reserved local key LEC to the LAA prevalidation key set.
+- Accepted the source's empty-text LAA REF-only vector example, while retaining `.` as the BCF/MISSING representation.
+- Added Number=M tests for strand-complement cardinality, N two-strand cardinality, repeated phased/unphased alleles, missing and symbolic alleles, U/T equivalence, GT presence and numeric ranges.
+- Added GT/Number=G/Number=P tests for ploidy, missing alleles, leading and mixed phasing separators, and malformed separator structures.
+- Expanded local projection tests across AD/LAD, ADF/LADF, ADR/LADR, EC/LEC, GP/LGP and PP/LPP, in addition to PL/LPL and GL/LGL.
+- Added xanthosine alias spelling tests for both source spellings.
 
-The changes are provisional until the full CI workflow for the latest commit passes and the source ambiguities receive independent review. They do not qualify VCFv4.5 or complete the VCF 4.0–4.5 stage.
+**Latest cumulative CI:** full workflow passed on commit `9c46b1e8657c9baf65be507b39e4ec0638dd2ec6`. Backend: 2,330 passed, 49 skipped, 1 warning. Frontend tests/build/container/Compose, backend image/runtime checks, PostgreSQL/Celery integration and VCF research registry schema validation passed. The run validates the cumulative branch state; the earlier isolated run on `c27350f` was superseded before completion, so do not label that individual run green.
+
+The changes remain provisional until the source ambiguities receive independent standards review. They do not qualify VCFv4.5 or complete the VCF 4.0–4.5 stage.
