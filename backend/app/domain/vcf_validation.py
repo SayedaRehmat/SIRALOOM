@@ -1972,6 +1972,9 @@ def validate_vcf_strict(
     unresolved_breakend_adjacencies: list[dict[str, object]] = []
     breakend_adjacencies: list[dict[str, object]] = []
     breakend_adjacency_keys: set[tuple[tuple[int, int], tuple[int, int]]] = set()
+    breakend_partner_links: list[dict[str, object]] = []
+    unresolved_breakend_partner_links: list[dict[str, object]] = []
+    breakend_partner_link_keys: set[tuple[tuple[int, int], tuple[int, int]]] = set()
     breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
     phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
     reciprocal_breakend_phase_endpoints: set[frozenset[tuple[int, int, int]]] = set()
@@ -2219,6 +2222,12 @@ def validate_vcf_strict(
                 for alt_index, value in enumerate(event_type_values)
                 if value not in {"", "."}
             }
+            parid_values = info_values.get("PARID", "").split(",")
+            parid_by_alt = {
+                alt_index: value
+                for alt_index, value in enumerate(parid_values)
+                if value not in {"", "."}
+            }
             breakend_alt_indexes = [
                 alt_index for alt_index, alt in enumerate(alts)
                 if "[" in alt or "]" in alt
@@ -2242,7 +2251,7 @@ def validate_vcf_strict(
                     "event_id": event_by_alt.get(alt_index),
                     "event_type": event_type_by_alt.get(alt_index),
                 })
-            if breakend_alts:
+            if breakend_alts or single_breakend_alt_indexes:
                 # Resolve remote loci and classify external assembly contigs before
                 # legacy SVTYPE checks so valid-but-unresolvable syntax is not
                 # misreported as an invalid BND record.
@@ -2280,6 +2289,24 @@ def validate_vcf_strict(
                         code="VCF_BREAKEND_SVTYPE_INVALID",
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
+                all_breakend_alt_indexes = [
+                    *breakend_alt_indexes,
+                    *single_breakend_alt_indexes,
+                ]
+                if parid_by_alt and not record_ids:
+                    for alt_index, parid in parid_by_alt.items():
+                        if alt_index in all_breakend_alt_indexes:
+                            unresolved_breakend_partner_links.append({
+                                "record_id": fields[2],
+                                "line_number": line_no,
+                                "chrom": _chrom,
+                                "pos": _pos,
+                                "alt_index": alt_index + 1,
+                                "alt": alts[alt_index],
+                                "parid": parid,
+                                "status": "UNRESOLVED",
+                                "reason_code": "VCF_BREAKEND_PARID_SOURCE_ID_MISSING",
+                            })
                 mate_value = info_values.get("MATEID")
                 mate_entries = mate_value.split(",") if mate_value not in {None, ""} else []
                 # MATEID is Number=A in VCFv4.4/4.5: preserve the positional
@@ -2395,10 +2422,14 @@ def validate_vcf_strict(
                         "chrom": _chrom,
                         "pos": _pos,
                         "alts": alts,
+                        "record_ids": sorted(record_ids),
                         "orientation_by_alt": orientation_by_alt,
                         "event_by_alt": event_by_alt,
                         "event_type_by_alt": event_type_by_alt,
+                        "parid_by_alt": parid_by_alt,
                         "breakend_alt_indexes": breakend_alt_indexes,
+                        "single_breakend_alt_indexes": single_breakend_alt_indexes,
+                        "all_breakend_alt_indexes": all_breakend_alt_indexes,
                         "remote_loci_by_alt": remote_loci_by_alt,
                         "mate_entries_by_alt": mate_entries_by_alt,
                         "cipos_by_alt": cipos_by_alt,
