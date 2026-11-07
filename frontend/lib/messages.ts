@@ -1031,7 +1031,7 @@ export type TranslationKey =
   | "familyIdentity.normalizationStep"
   | "familyIdentity.ploidyEvidence"
   | "familyIdentity.identityQcStatus"
-  | "familyIdentity.assay";
+  | "familyIdentity.assay"
   | "phenotype.timelineTitle"
   | "phenotype.timelineDescription"
   | "phenotype.observedAt"
@@ -1041,8 +1041,9 @@ export type TranslationKey =
   | "phenotype.sourceReference"
   | "phenotype.noTimeline"
   | "phenotype.timelineUnknownTime"
-  | "familyIdentity.interpretationNotPerformed";
-  | "familyIdentity.noEvidenceArtifact";
+  | "familyIdentity.interpretationNotPerformed"
+  | "familyIdentity.noEvidenceArtifact"
+  | "phenotype.severity";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -2082,6 +2083,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "phenotype.sourceReference": "Source document / reference",
     "phenotype.noTimeline": "No phenotype observations are available for the timeline.",
     "phenotype.timelineUnknownTime": "Observation time not recorded",
+    "phenotype.severity": "Severity",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3119,5 +3121,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "phenotype.sourceReference": "المستند المصدر / المرجع",
     "phenotype.noTimeline": "لا توجد ملاحظات أنماط ظاهرية للخط الزمني.",
     "phenotype.timelineUnknownTime": "لم يتم تسجيل وقت الملاحظة",
+    "phenotype.severity": "الشدة",
   },
 };
