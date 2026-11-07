@@ -946,6 +946,9 @@ class InheritanceAssessment(Base):
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     rationale: Mapped[str] = mapped_column(Text)
     observation_fingerprint: Mapped[str] = mapped_column(Text)
+    # Fingerprint of the exact verified family genotype matrix used as context.
+    # Nullable only for legacy assessments recorded before matrix binding existed.
+    family_matrix_fingerprint: Mapped[str | None] = mapped_column(Text, nullable=True)
     reviewer_note: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
