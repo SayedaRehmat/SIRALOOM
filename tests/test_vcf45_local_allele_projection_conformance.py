@@ -20,13 +20,13 @@ def _write_local_likelihood_vcf(
     field_type: str = "Integer",
 ) -> None:
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\\n'
-        f'##FORMAT=<ID={standard_key},Number=G,Type={field_type},Description="Standard genotype values">\\n'
-        f'##FORMAT=<ID={local_key},Number=LG,Type={field_type},Description="Local genotype values">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        f"1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:{standard_key}:{local_key}\\t{gt}:{laa}:{standard_values}:{local_values}\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        f'##FORMAT=<ID={standard_key},Number=G,Type={field_type},Description="Standard genotype values">\n'
+        f'##FORMAT=<ID={local_key},Number=LG,Type={field_type},Description="Local genotype values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:{standard_key}:{local_key}\t{gt}:{laa}:{standard_values}:{local_values}\n",
         encoding="utf-8",
     )
 
