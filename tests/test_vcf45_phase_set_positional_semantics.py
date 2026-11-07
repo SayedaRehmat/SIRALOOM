@@ -291,3 +291,23 @@ def test_vcf45_psq_distinct_phase_set_identifiers_remain_positionally_aligned(
         sample="|0|1:phaseA,phaseB:11,29",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_pso_phase_sets_are_isolated_when_sample_name_is_format(
+    tmp_path: Path,
+):
+    # The first sample must not be keyed as "FORMAT": column 8 is FORMAT,
+    # while sample columns begin at index 9. The second sample is deliberately
+    # named FORMAT to expose accidental cross-sample phase-set collisions.
+    path = tmp_path / "pso-sample-name-format-collision.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tFORMAT\\n"
+        "1\\t5\\tdel1\\tA\\t<DEL>\\t.\\tPASS\\tEND=8\\tGT:PSL:PSO\\t0|1:alpha,alpha:3,4\\t0|0:alpha,alpha:.,.\\n"
+        "1\\t9\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|0:alpha,alpha:5,6\\t0|1:alpha,alpha:.,.\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 2
