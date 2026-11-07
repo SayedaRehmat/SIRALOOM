@@ -11,6 +11,7 @@ from backend.app.domain.execution_environments import (
     ExecutionEnvironmentProfile,
     ExecutionEnvironmentRegistry,
     require_fresh_agent_heartbeat,
+    execution_environment_profile_from_snapshot,
 )
 from backend.app.domain.tool_execution import ToolIdentity
 
@@ -218,3 +219,10 @@ def test_container_environment_snapshot_records_immutable_image_reference():
         image_reference=reference,
     )
     assert profile.snapshot()["runtime_image_reference"] == reference
+
+
+
+def test_persisted_environment_snapshot_round_trips_runtime_contract():
+    original = _environment(uuid4())
+    restored = execution_environment_profile_from_snapshot(original.snapshot())
+    assert restored.snapshot() == original.snapshot()
