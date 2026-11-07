@@ -14,7 +14,7 @@ from backend.app.domain.container_tool_execution import ContainerResourceLimits,
 from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentProfile
 from backend.app.domain.tool_execution import (
     InputArtifact, OutputArtifact, ScientificResourceBinding, ToolExecutionError, ToolExecutionContractError,
-    ToolExecutionRequest, ToolIdentity, current_platform_id, sha256_file,
+    ToolExecutionRequest, ToolIdentity, current_platform_id, sha256_file, sha256_resource_path,
 )
 
 
@@ -170,7 +170,7 @@ def test_real_bcftools_execution_and_output_provenance(tmp_path):
         outputs=(OutputArtifact("bcftools-normalized-vcf", str(output)),),
         resources=(ScientificResourceBinding(
             "grch38-reference", "fixture-grch38-v1",
-            __import__("backend.app.domain.tool_execution", fromlist=["sha256_resource_path"]).sha256_resource_path(reference),
+            sha256_resource_path(reference),
             assembly="GRCh38", path=str(reference),
         ),),
     )
