@@ -2291,14 +2291,35 @@ def validate_vcf_strict(
                         if event_values and event_values[0] not in {"", "."}
                         else {}
                     )
-                    parid_by_alt = (
-                        {
-                            alt_index: parid_values[0]
-                            for alt_index in all_breakend_alt_indexes
-                        }
-                        if parid_values and parid_values[0] not in {"", "."}
-                        else {}
-                    )
+                    if (
+                        parid_values
+                        and parid_values[0] not in {"", "."}
+                        and len(all_breakend_alt_indexes) > 1
+                    ):
+                        parid_by_alt = {}
+                        for alt_index in all_breakend_alt_indexes:
+                            unresolved_breakend_partner_links.append({
+                                "source": {
+                                    "record_id": sorted(record_ids)[0] if record_ids else fields[2],
+                                    "line_number": line_no,
+                                    "chrom": _chrom,
+                                    "pos": _pos,
+                                    "alt_index": alt_index + 1,
+                                    "alt": alts[alt_index],
+                                    "parid": parid_values[0],
+                                },
+                                "status": "UNRESOLVED",
+                                "reason_code": "VCF_BREAKEND_PARID_RECORD_LEVEL_MULTIALLELIC_AMBIGUOUS",
+                            })
+                    else:
+                        parid_by_alt = (
+                            {
+                                alt_index: parid_values[0]
+                                for alt_index in all_breakend_alt_indexes
+                            }
+                            if parid_values and parid_values[0] not in {"", "."}
+                            else {}
+                        )
                     event_type_by_alt = {}
                 else:
                     event_by_alt = {
