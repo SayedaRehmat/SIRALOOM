@@ -236,3 +236,31 @@ def test_vep_rejects_duplicate_normalized_alleles_in_the_input_batch():
             ProviderRawResult("annotate", [record], "d" * 64, {}),
             inputs={"variants": [variant, variant], "genome_build": "GRCh38"},
         )
+
+
+def test_vep_reconciliation_uses_original_vcf_input_for_indel_identity():
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="AT",
+    )
+    shifted_provider_record = {
+        # VEP consequence coordinates/allele representation can differ from
+        # the exact normalized VCF input for indels; the input field is lineage.
+        "input": "1 100 SIRALOOM_0 A AT . PASS .",
+        "start": 101,
+        "seq_region_name": "1",
+        "allele_string": "-/T",
+        "transcript_consequences": [],
+    }
+
+    result = _provider().normalize_result(
+        ProviderRawResult("annotate", [shifted_provider_record], "d" * 64, {}),
+        inputs={"variants": [variant], "genome_build": "GRCh38"},
+    )
+
+    assert result.observations[0]["pos"] == 100
+    assert result.observations[0]["ref"] == "A"
+    assert result.observations[0]["alt"] == "AT"
