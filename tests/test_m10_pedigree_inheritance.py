@@ -1085,3 +1085,24 @@ def test_segregation_observation_corrections_are_append_only_and_idempotent(monk
     assert replay_db.added == []
     assert replay_db.commits == 0
 
+    revert_body = pedigree.SegregationInput(
+        pedigree_member_id=member_id,
+        genotype="0/1",
+        zygosity="HET",
+        phase="UNPHASED",
+        phenotype_status="AFFECTED",
+        notes="initial note",
+        revision_reason="Reverted after review of the source document",
+    )
+    revert_db = FakeDb(revisions=[revision])
+    reverted = pedigree.add_segregation(
+        analysis_id, variant_id, revert_body, revert_db, principal,
+    )
+    revert_revision = next(
+        item for item in revert_db.added
+        if isinstance(item, SegregationObservationRevision)
+    )
+    assert revert_revision.version == 3
+    assert revert_revision.supersedes_revision_id == revision.id
+    assert reverted["revision_version"] == 3
+
