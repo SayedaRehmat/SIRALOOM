@@ -21,6 +21,7 @@ def upgrade():
         sa.Column("specimen_id", sa.Uuid(), nullable=False),
         sa.Column("analysis_id", sa.Uuid(), nullable=False),
         sa.Column("artifact_id", sa.Uuid(), nullable=False),
+        sa.Column("source_artifact_sha256", sa.Text(), nullable=False),
         sa.Column("sample_name", sa.Text(), nullable=False),
         sa.Column("binding_status", sa.Text(), nullable=False, server_default="UNVERIFIED"),
         sa.Column("binding_method", sa.Text(), nullable=False),
