@@ -1110,6 +1110,7 @@ def get_family_genotype_matrix(
             "specimen_id": specimen.id,
             "analysis_id": analysis.id,
             "analysis_version": analysis.analysis_version,
+            "analysis_reference_build": analysis.reference_build,
             "artifact_id": artifact.id,
             "artifact_sha256": artifact.sha256,
             "sample_name": binding.sample_name,
