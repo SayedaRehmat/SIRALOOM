@@ -326,3 +326,95 @@ def test_xanthosine_alias_capitalization_variants_remain_accepted_without_normal
         (field_id, values.split(",")[0], "+"),
         (field_id, values.split(",")[1], "-"),
     ]
+
+def _write_unstranded_cpg_vcf(path: Path, *, second_value: str, reverse: bool = False) -> None:
+    first_ref, second_ref = ("G", "C") if reverse else ("C", "G")
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        f"1\\t10\\t.\\t{first_ref}\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|0:set,set:0.5\\n"
+        f"1\\t11\\t.\\t{second_ref}\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|0:set,set:{second_value}\\n",
+        encoding="utf-8",
+    )
+
+
+def test_number_m_unstranded_policy_rejects_populated_higher_position_cpg_slot(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-invalid.vcf"
+    _write_unstranded_cpg_vcf(path, second_value="0.2")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
+
+
+def test_number_m_unstranded_policy_accepts_missing_higher_position_cpg_slot(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-valid.vcf"
+    _write_unstranded_cpg_vcf(path, second_value=".")
+    result = validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert result["records"] == 2
+    assert result["base_modification_strandedness_policy"] == "unstranded"
+
+
+def test_number_m_stranded_policy_does_not_apply_unstranded_cpg_omission_rule(
+    tmp_path: Path,
+):
+    path = tmp_path / "stranded-cpg-valid.vcf"
+    _write_unstranded_cpg_vcf(path, second_value="0.2")
+    assert validate_vcf_strict(path, base_modification_strandedness="stranded")["records"] == 2
+
+
+def test_number_m_default_policy_does_not_infer_unstranded_assay(
+    tmp_path: Path,
+):
+    path = tmp_path / "default-cpg-stranded-or-unspecified.vcf"
+    _write_unstranded_cpg_vcf(path, second_value="0.2")
+    result = validate_vcf_strict(path)
+    assert result["base_modification_strandedness_policy"] is None
+
+
+def test_number_m_unstranded_policy_handles_reverse_complement_cpg_orientation(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-reverse-orientation.vcf"
+    _write_unstranded_cpg_vcf(path, second_value="0.2", reverse=True)
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
+
+
+def test_number_m_unstranded_policy_checks_cpg_slots_within_one_record(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-same-record.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tCG\\t.\\t.\\tPASS\\t.\\tGT:M5mC\\t0|0:0.5,.,0.6,.\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 1
+
+
+def test_number_m_unstranded_policy_rejects_length_changing_allele_coordinate_mapping(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-indel-unsupported.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="C",
+        alternate="CG",
+        genotype="0|1",
+        field_id="M5mC",
+        values="0.5,0.6",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED"
