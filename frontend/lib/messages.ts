@@ -1026,6 +1026,11 @@ export type TranslationKey =
   | "familyIdentity.alleleDepth"
   | "familyIdentity.callability"
   | "familyIdentity.matrixFingerprint"
+  | "familyIdentity.sourceGenotype"
+  | "familyIdentity.selectedAltDosage"
+  | "familyIdentity.normalizationStep"
+  | "familyIdentity.ploidyEvidence"
+  | "familyIdentity.identityQcStatus";
   | "familyIdentity.interpretationNotPerformed";
   | "familyIdentity.noEvidenceArtifact";
 
@@ -2052,6 +2057,11 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.callability": "Callability",
     "familyIdentity.matrixFingerprint": "Matrix fingerprint",
     "familyIdentity.interpretationNotPerformed": "No inheritance or clinical interpretation is performed by this matrix.",
+    "familyIdentity.sourceGenotype": "Source GT",
+    "familyIdentity.selectedAltDosage": "Selected ALT dosage",
+    "familyIdentity.normalizationStep": "Normalization step",
+    "familyIdentity.ploidyEvidence": "Ploidy evidence",
+    "familyIdentity.identityQcStatus": "Identity QC",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3074,5 +3084,10 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.callability": "قابلية الاستدعاء",
     "familyIdentity.matrixFingerprint": "بصمة المصفوفة",
     "familyIdentity.interpretationNotPerformed": "لا تنفذ هذه المصفوفة أي تفسير وراثي أو سريري.",
+    "familyIdentity.sourceGenotype": "النمط الجيني المصدر",
+    "familyIdentity.selectedAltDosage": "جرعة الأليل البديل المحدد",
+    "familyIdentity.normalizationStep": "خطوة التطبيع",
+    "familyIdentity.ploidyEvidence": "دليل الصيغة الصبغية",
+    "familyIdentity.identityQcStatus": "فحص هوية العينة",
   },
 };
