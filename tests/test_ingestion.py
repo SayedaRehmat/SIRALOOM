@@ -212,6 +212,7 @@ def test_vcf_intake_accepts_spec_valid_underscore_and_legacy_info_keys(tmp_path:
         "##reference=GRCh38\n"
         '##INFO=<ID=_CUSTOM,Number=1,Type=Integer,Description="custom">\n'
         '##INFO=<ID=1000G,Number=0,Type=Flag,Description="legacy membership">\n'
+        '##INFO=<ID=NOTE,Number=1,Type=String,Description="Note">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "chr1\t100\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G;NOTE=a%3Db\n",
         encoding="utf-8",
