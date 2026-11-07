@@ -158,7 +158,6 @@ def _reserved_vcf41_42_format_definition(field_id: str) -> dict[str, str] | None
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("G", "Float"),
-        "GLE": ("1", "String"),
         "PL": ("G", "Integer"),
         "GP": ("G", "Float"),
         "GQ": ("1", "Integer"),
@@ -2347,6 +2346,17 @@ def validate_vcf_strict(
                         continue
                     definition = format_definitions.get(key)
                     reserved_definition = _reserved_format_definition_for_version(fileformat, key)
+                    if fileformat in {"VCFv4.1", "VCFv4.2"} and key == "GLE":
+                        if definition is None and value not in {"", "."}:
+                            raise StrictVCFValidationError(
+                                "VCFv4.1/4.2 FORMAT/GLE is reserved, but the source prose does not specify a Number cardinality; an explicit header definition is required.",
+                                code="VCF_RESERVED_FORMAT_DEFINITION_UNRESOLVED",
+                            )
+                        if definition is not None and definition.get("Type") != "String":
+                            raise StrictVCFValidationError(
+                                "VCFv4.1/4.2 FORMAT/GLE must be declared as Type=String.",
+                                code="VCF_RESERVED_FORMAT_DEFINITION_MISMATCH",
+                            )
                     if reserved_definition is not None:
                         if definition is not None and (
                             definition.get("Number") != reserved_definition["Number"]
