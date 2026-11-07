@@ -62,13 +62,9 @@ def build_family_genotype_matrix(
     if not samples:
         raise ValueError("At least one verified sample binding is required")
 
-    member_ids = [sample["member_id"] for sample in samples]
-    if len(set(member_ids)) != len(member_ids):
-        raise ValueError("Select at most one specimen/analysis binding per family member")
-
     ordered_variants = [str(value) for value in variant_ids]
     matrix_samples = []
-    for sample in sorted(samples, key=lambda item: (item["member_identifier"], str(item["member_id"]))):
+    for sample in sorted(samples, key=lambda item: (item["member_identifier"], str(item["member_id"]), str(item["specimen_id"]), str(item["analysis_id"]), str(item["binding_id"]))):
         calls = sample["calls"]
         rows = []
         for variant_id in ordered_variants:
