@@ -357,6 +357,53 @@ def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
     assert result["unresolved_breakend_coordinate_count"] == 2
     assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
 
+def test_vcf45_imprecise_breakend_without_cipos_is_unresolved_not_exact(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-imprecise-no-cipos.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;IMPRECISE\n"
+        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;IMPRECISE\n",
+        encoding="utf-8",
+    )
+    result = validate_vcf_strict(path)
+    assert result["unresolved_breakend_coordinate_count"] == 2
+    assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
+
+
+def test_vcf45_precise_breakend_without_cipos_uses_implicit_zero_interval(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-precise-implicit-zero-cipos.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU\n"
+        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_MATE_COORDINATE_MISMATCH"
+
+
+def test_vcf45_cipos_interval_must_span_zero(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-invalid-cipos-range.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t321681\tbndV\tT\tT]2:123456]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=1,5\n"
+        "2\t123456\tbndU\tC\tC]1:321681]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=0,0\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_CIPOS_INVALID"
+
 def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
     tmp_path: Path,
 ):
