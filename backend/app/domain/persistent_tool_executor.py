@@ -29,6 +29,7 @@ from backend.app.domain.tool_execution import (
     ToolExecutionRequest,
     ToolExecutionResult,
     ToolIdentity,
+    ToolExecutor,
 )
 
 
@@ -56,7 +57,7 @@ class PersistentToolExecutionService:
         case_id: UUID | None = None,
         environment_registration_id: UUID,
         worker_id: str,
-        executor: LocalProcessToolExecutor | None = None,
+        executor: ToolExecutor | None = None,
         artifact_publisher: ArtifactPublisher | None = None,
     ) -> None:
         if not worker_id.strip():
