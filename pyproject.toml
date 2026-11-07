@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69", "wheel"]
+requires = ["setuptools==84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,11 +14,14 @@ dependencies = [
   "pydantic-settings>=2.4,<3",
   "phenopackets==2.0.2.post5",
   "fhir.resources==8.3.0",
+  "phenopackets==2.0.2.post5",
+  "fhir.resources==8.3.0",
   "sqlalchemy>=2.0,<3",
   "psycopg[binary]>=3.2,<4",
   "alembic>=1.13,<2",
   "celery>=5.4,<6",
-  "redis>=5.0,<6",
+  "redis>=6.1,<7",
+  "packaging>=24,<27",
   "httpx>=0.27,<1",
   "python-multipart>=0.0.9,<1",
   "orjson>=3.10,<4",
@@ -53,3 +56,6 @@ markers = [
 
 [project.entry-points."siraloom.resource_providers"]
 clinvar = "backend.app.infrastructure.resource_providers.clinvar:ClinVarReleaseProvider"
+
+[tool.uv]
+required-version = "==0.10.0"
