@@ -10,6 +10,10 @@ from math import comb, isnan
 from pathlib import Path
 
 SUPPORTED_VCF_VERSIONS = frozenset({f"VCFv4.{minor}" for minor in range(0, 6)})
+VCF41_42_RESERVED_INFO_IDS = frozenset({
+    "AA", "AC", "AF", "AN", "BQ", "CIGAR", "DB", "DP", "END",
+    "H2", "H3", "MQ", "MQ0", "NS", "SB", "SOMATIC", "VALIDATED", "1000G",
+})
 STANDARD_COLUMNS = ["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]
 DNA_RE = re.compile(r"^[ACGTN]+$")
 VCF_CONTIG_NAME_RE = re.compile(
@@ -2101,6 +2105,14 @@ def validate_vcf_strict(
                             code="VCF_RESERVED_INFO_DEFINITION_MISMATCH",
                         )
                     definition = reserved_definition
+                if definition is None and not (
+                    fileformat in {"VCFv4.1", "VCFv4.2"}
+                    and key in VCF41_42_RESERVED_INFO_IDS
+                ):
+                    raise StrictVCFValidationError(
+                        f"INFO/{key} is not reserved for {fileformat} and has no ##INFO declaration at line {line_no}",
+                        code="VCF_INFO_UNDECLARED",
+                    )
                 if definition is not None:
                     # INFO/Number=G has no single sample ploidy to use when a
                     # record carries multiple samples; leave it unresolved here.
@@ -2433,12 +2445,12 @@ def validate_vcf_strict(
                     definition = format_definitions.get(key)
                     reserved_definition = _reserved_format_definition_for_version(fileformat, key)
                     if fileformat in {"VCFv4.1", "VCFv4.2"} and key == "GLE":
-                        if definition is None and value not in {"", "."}:
+                        if definition is None:
                             raise StrictVCFValidationError(
                                 "VCFv4.1/4.2 FORMAT/GLE is reserved, but the source prose does not specify a Number cardinality; an explicit header definition is required.",
                                 code="VCF_RESERVED_FORMAT_DEFINITION_UNRESOLVED",
                             )
-                        if definition is not None and definition.get("Type") != "String":
+                        if definition.get("Type") != "String":
                             raise StrictVCFValidationError(
                                 "VCFv4.1/4.2 FORMAT/GLE must be declared as Type=String.",
                                 code="VCF_RESERVED_FORMAT_DEFINITION_MISMATCH",
@@ -2459,6 +2471,11 @@ def validate_vcf_strict(
                                 code="VCF_RESERVED_FORMAT_DEFINITION_MISMATCH",
                             )
                         definition = reserved_definition
+                    if definition is None:
+                        raise StrictVCFValidationError(
+                            f"FORMAT/{key} is not reserved and has no ##FORMAT declaration at line {line_no}",
+                            code="VCF_FORMAT_UNDECLARED",
+                        )
                     if definition is not None:
                         if (
                             fileformat == "VCFv4.0"
