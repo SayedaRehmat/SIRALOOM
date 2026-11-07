@@ -134,3 +134,37 @@ def test_nonzero_tool_exit_is_not_reported_as_success(tmp_path: Path) -> None:
 
     with pytest.raises(ToolExecutionError, match="exited with status 7"):
         LocalProcessToolExecutor().execute(profile, request)
+
+
+
+def test_request_rejects_profile_operation_not_declared(tmp_path: Path) -> None:
+    profile = _profile()
+    profile = ToolIdentity(
+        **{**profile.__dict__, "supported_operations": ("annotate",)}
+    )
+    request = ToolExecutionRequest(
+        execution_id="execution-006",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="call",
+        argv=("--version",),
+        workspace=str(tmp_path),
+    )
+
+    with pytest.raises(ToolExecutionContractError, match="does not support operation"):
+        request.validate(profile)
+
+
+def test_request_rejects_protected_environment_overrides(tmp_path: Path) -> None:
+    request = ToolExecutionRequest(
+        execution_id="execution-007",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=("--version",),
+        workspace=str(tmp_path),
+        environment={"LD_PRELOAD": "/tmp/untrusted.so"},
+    )
+
+    with pytest.raises(ToolExecutionContractError, match="protected variable"):
+        request.validate(_profile())
