@@ -305,6 +305,10 @@ class VEPProvider(ScientificResourceProvider):
         if not organization_id or not workflow_id:
             raise VEPProviderError("VEP execution requires organization and workflow identity for provenance.")
 
+        # Re-bind the exact normalization reference at execution time. The
+        # preflight result is not a substitute for checking the bytes used by
+        # this specific annotation process.
+        reference_bindings = self._reference_resource_bindings(reference_package, build)
         execution_request = ToolExecutionRequest(
             execution_id=execution_id,
             organization_id=organization_id,
@@ -330,6 +334,7 @@ class VEPProvider(ScientificResourceProvider):
                     assembly=build,
                     path=self.cache_manifest,
                 ),
+                *reference_bindings,
             ),
         )
         try:
@@ -472,6 +477,11 @@ class VEPProvider(ScientificResourceProvider):
                 )
             seen_keys.add(key)
             original = by_key[key]
+            response_assembly = record.get("assembly_name")
+            if response_assembly is not None and _canonical_assembly(str(response_assembly)) != _canonical_assembly(original.genome_build):
+                raise VEPProviderError(
+                    f"VEP response assembly {response_assembly!r} does not match input assembly {original.genome_build!r}."
+                )
 
             transcripts = record.get("transcript_consequences") or []
             selected, selection_status = self._select_display_transcript(transcripts)
