@@ -934,6 +934,31 @@ class SegregationObservation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("analysis_id", "variant_id", "pedigree_member_id"),)
 
+
+class SegregationObservationRevision(Base):
+    """Immutable successor revisions for a manually reported segregation observation."""
+    __tablename__ = "segregation_observation_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    root_observation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("segregation_observations.id"), nullable=False,
+    )
+    supersedes_revision_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("segregation_observation_revisions.id"), nullable=True,
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    observation_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        CheckConstraint("version >= 2", name="ck_segregation_observation_revision_version"),
+        CheckConstraint("length(observation_fingerprint) = 64", name="ck_segregation_observation_revision_fingerprint_length"),
+        UniqueConstraint("root_observation_id", "version", name="uq_segregation_observation_revision_version"),
+        UniqueConstraint("root_observation_id", "observation_fingerprint", name="uq_segregation_observation_revision_fingerprint"),
+        UniqueConstraint("supersedes_revision_id", name="uq_segregation_observation_revision_successor"),
+        Index("ix_segregation_observation_revision_root", "root_observation_id", "version"),
+    )
+
 class FamilyGenotypeMatrixSnapshot(Base):
     """Immutable, reproducible snapshot of source-bound family genotype evidence."""
     __tablename__ = "family_genotype_matrix_snapshots"
