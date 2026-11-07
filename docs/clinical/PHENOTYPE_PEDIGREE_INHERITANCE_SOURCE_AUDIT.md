@@ -133,3 +133,24 @@ This audit inspects the current-main source, model definitions, migrations, test
 - The phenotype API combines both PRs; standards exports exclude superseded/retracted observations while the Phenopackets sidecar preserves lifecycle history.
 - A dedicated regression test covers current-vs-historical phenotype export behavior.
 - **No tests have yet been executed on this combined branch.** No CI, external-validator or clinical/laboratory qualification claim is made until the new branch PR checks complete.
+
+
+## 8. Combined-branch verification evidence (PR #303)
+
+Latest fully completed validation set inspected on 2026-11-07:
+
+- Dependency lock verification: **passed** with repository-pinned uv 0.10.0; resolved 109 packages, added `fhir-core 1.1.12`, `fhir.resources 8.3.0`, `phenopackets 2.0.2.post5`, and adjusted the protobuf resolution to 6.33.6.
+- PostgreSQL integration: **passed**. Alembic applied the complete graph through `0062_phenotype_observation_amendments`; the PostgreSQL + real Celery worker-loss integration job passed.
+- Frontend: **passed**. Frontend behavior tests, localization architecture guard, production build, production frontend container build, and Compose validation passed.
+- External clinical interoperability: **passed** using GA4GH Phenopacket Tools 1.0.0 and HL7 FHIR Validator 7.0.3 against deterministic synthetic exports. GA4GH Phenopacket and Family validator CSVs contained no findings. FHIR validator reported **0 errors, 8 warnings, 19 informational notes**. Warnings include missing DomainResource narrative, missing Observation performer, and inability to validate the HPO code system from the validator's terminology package. SIRALOOM custom extensions are reported as unknown because their StructureDefinitions are not yet published. These are interoperability hardening items, not validator errors.
+- Backend full suite: **2,278 passed, 6 failed, 49 skipped** on the combined branch. All six failures are the existing VCF validator cases listed below.
+- Baseline current-main CI at `226dd645d5ac4047e3478fd67b6b550af9633b55`: **2,241 passed, the exact same 6 failed, 49 skipped**. The six identical failures are:
+  - `test_vcf40_gl_is_not_defined_for_multiallelic_records`
+  - four parameter cases in `test_vcf40_reserved_format_header_definitions_are_version_pinned`
+  - `test_vcf45_populated_number_p_requires_gt`
+- Therefore the clinical changes add 37 passing tests without introducing an additional backend failure. The backend job is still red because current main already has the six VCF failures; this branch does not change VCF validator code and those failures are kept outside this clinical PR.
+- Backend packaging/container steps after the failed backend test command were skipped. They are not claimed as passed.
+
+External validation artifact: `clinical-interop-external-validation` (run 42358331365, artifact 13568965850). The report was inspected, not just the workflow conclusion.
+
+**Release decision:** PR #303 remains draft and must not be merged while required CI is red. It is suitable for review of the reconciled clinical changes, but not a clinical/laboratory qualification claim.
