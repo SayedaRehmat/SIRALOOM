@@ -269,19 +269,7 @@ def test_postgres_binding_and_identity_evidence_successor_races_have_one_winner(
             ))
         assert sorted(evidence_results) == ["COMMITTED", "CONFLICT"]
     finally:
-        with Session(engine) as db:
-            db.execute(delete(PedigreeSampleIdentityEvidence).where(
-                PedigreeSampleIdentityEvidence.case_id == case_id
-            ))
-            db.execute(delete(PedigreeSampleBinding).where(
-                PedigreeSampleBinding.case_id == case_id
-            ))
-            db.execute(delete(PedigreeMember).where(PedigreeMember.case_id == case_id))
-            db.execute(delete(Artifact).where(Artifact.case_id == case_id))
-            db.execute(delete(Analysis).where(Analysis.case_id == case_id))
-            db.execute(delete(Specimen).where(Specimen.case_id == case_id))
-            db.execute(delete(Case).where(Case.id == case_id))
-            db.execute(delete(User).where(User.id == user_id))
-            db.execute(delete(Organization).where(Organization.id == organization_id))
-            db.commit()
+        # These records are intentionally append-only. The PostgreSQL integration
+        # workflow provisions a disposable database for this test run; deleting
+        # immutable identity evidence/bindings would invalidate the contract under test.
         engine.dispose()
