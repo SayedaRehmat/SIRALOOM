@@ -48,6 +48,9 @@ The standard WES/WGS profiles currently make HPO, HPOA, gene-disease validity an
 - Consume only the immutable normalized artifact produced by the approved normalization profile and exact reference package.
 - Preserve build, chromosome, one-based position, REF, ALT, normalized allele identity, source record/ALT lineage, sample genotype and specimen identity.
 - Require a one-to-one reconciliation between submitted normalized alleles and provider results. Missing, duplicate, extra, or allele-mismatched provider records are execution errors, not partial success.
+- Enforce one-to-one reconciliation by identity and cardinality: reject duplicate normalized input alleles, duplicate provider records, unexpected provider alleles and missing provider alleles. Set equality alone is insufficient because it hides duplicate outputs.
+- Require the VEP runtime to report the exact assembly and reference FASTA identity. The current adapter only adds `--hgvs` and `--hgvsg` when a FASTA path is configured; Ensembl documents FASTA as required for HGVS generation in offline/cache mode. A run without the governed FASTA must explicitly report HGVS as unavailable and cannot claim the complete HGVS annotation capability.
+- The current adapter enables `--mane` only on GRCh38. MANE Select transcripts are defined as exact matched Ensembl/RefSeq pairs on GRCh38; GRCh37 mapping data exists but requires explicit mapping and validation. Do not describe GRCh37 canonical fallback as MANE-equivalent. Record transcript policy and assembly-specific availability in every annotation result.
 - Preserve multi-allelic decomposition lineage and ensure every annotation is associated with the correct ALT allele.
 - Keep unsupported structural/CNV/SV/MT/repeat classes on their existing reportability-blocked route; do not infer that VEP's ability to describe an annotation makes an unsupported assay class qualified.
 
