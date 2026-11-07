@@ -189,7 +189,10 @@ def _reserved_vcf43_format_definition(field_id: str) -> dict[str, str] | None:
 
 
 def _reserved_vcf44_format_definition(field_id: str) -> dict[str, str] | None:
-    """Return VCFv4.4 Table 7 reserved FORMAT definitions."""
+    """Return VCFv4.4 Table 7 and structural FORMAT definitions."""
+    # CN changes from Integer in VCFv4.3 to Float in VCFv4.4.
+    if field_id == "CN":
+        return {"Number": "1", "Type": "Float"}
     definition = _reserved_vcf43_format_definition(field_id)
     if definition is not None:
         return definition
