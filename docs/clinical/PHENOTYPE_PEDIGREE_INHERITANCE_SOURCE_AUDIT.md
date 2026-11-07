@@ -84,7 +84,7 @@ This audit inspects the current-main source, model definitions, migrations, test
 - Current PR delta against audited main: seven files: phenotype API, clinical snapshot, reproducibility, DB model, phenotype UI, one migration and amendment tests.
 - Contribution: append-only supersession/retraction, required reason, original observation preservation, amendment audit, active-analysis snapshot freeze, lifecycle-aware snapshots and exclusion from new patient/family phenotype vectors.
 - Historical SIRALOOM CI passed at head `a9a39fa904b3a25b9c085a56b926f4469408293f`; this is historical branch evidence only.
-- Blocking integration issue: its migration is revision `0058_phenotype_observation_amendments` with down_revision `0057_clinical_intake_revisions`. Current main already has `0058_artifact_upload_intents` and `0061_analysis_toolchain_profiles`. It must be renumbered to a new revision after `0061_analysis_toolchain_profiles` and tested on a database upgraded through current head.
+- Blocking integration issue: its migration is revision `0058_phenotype_observation_amendments` with down_revision `0057_clinical_intake_revisions`. Current main has the ordered migration tail `0058_artifact_upload_intents` → `0059_specimen_ploidy_evidence` → `0060_caller_ploidy_policy_revisions` → `0061_analysis_toolchain_profiles`. It must be renumbered to `0062_phenotype_observation_amendments` after `0061_analysis_toolchain_profiles` and tested on a database upgraded through current head.
 - API file overlaps PR #245's phenotype export routes. Merge the lifecycle and export changes in one combined API file; do not overwrite either feature with the other's stale full file.
 - Review lifecycle constraints, idempotency, concurrent amendment behavior, active-analysis freeze, snapshot schema v1/v2/v3 compatibility, digest stability and UI history before merge.
 - **Action taken:** ported lifecycle API, snapshot v3, reproducibility digest behavior, phenotype amendment UI, and amendment tests. Renumbered the migration to `0062_phenotype_observation_amendments` with down_revision `0061_analysis_toolchain_profiles`. Added PostgreSQL and SQLite database triggers that reject UPDATE/DELETE of amendment events, plus migration trigger assertions. Combined the API with PR #245 export routes instead of overwriting one feature with the other.
@@ -105,7 +105,7 @@ This audit inspects the current-main source, model definitions, migrations, test
 1. PR #247 is ported on this working branch; run all relevant backend/frontend tests and compare its changed files against current main.
 2. Port PR #244 as a single atomic lifecycle feature:
    - add amendment model,
-   - add migration revision after current 0059,
+   - add migration revision 0062 after current 0061,
    - merge phenotype API lifecycle endpoints with export routes,
    - update snapshot and reproducibility semantics,
    - update UI and tests.
@@ -128,7 +128,7 @@ This audit inspects the current-main source, model definitions, migrations, test
 
 - Base: current main SHA above.
 - PR #247's three-file clinical-intake delta is committed selectively.
-- PR #244's lifecycle implementation is ported with a new migration 0060 after current main's 0059, database-level append-only triggers, schema-v3 snapshots, reproducibility handling, UI and tests.
+- PR #244's lifecycle implementation is ported with a new migration 0062 after current main's 0061, database-level append-only triggers, schema-v3 snapshots, reproducibility handling, UI and tests.
 - PR #245's clinical interoperability delta is ported selectively. Unrelated artifact upload, VCF, reportability and deployment work was excluded.
 - The phenotype API combines both PRs; standards exports exclude superseded/retracted observations while the Phenopackets sidecar preserves lifecycle history.
 - A dedicated regression test covers current-vs-historical phenotype export behavior.
