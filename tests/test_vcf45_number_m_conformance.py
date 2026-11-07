@@ -552,3 +552,34 @@ def test_number_m_unstranded_heterozygous_unphased_context_is_reported_unresolve
     result = validate_vcf_strict(path, base_modification_strandedness="unstranded")
     assert "VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED" in result["warning_codes"]
     assert result["unstranded_base_modification_unresolved_phase_observation_count"] == 2
+
+def test_number_m_unstranded_policy_does_not_pair_nonadjacent_bases(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-nonadjacent.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tC\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:set,.:0.5\\n"
+        "1\\t12\\t.\\tG\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|.:set,.:0.2\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 2
+
+
+def test_number_m_unstranded_policy_ignores_symbolic_alleles_without_sequence_slots(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-symbolic-no-slots.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="C",
+        alternate="<*>",
+        genotype="1|.",
+        field_id="M5mC",
+        values=".",
+    )
+    assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 1
