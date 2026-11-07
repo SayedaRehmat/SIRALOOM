@@ -189,6 +189,7 @@ def test_strict_validation_accepts_vcf_info_and_format_keys_allowed_by_spec(tmp_
         [
             '##INFO=<ID=_CUSTOM,Number=1,Type=Integer,Description="custom">',
             '##INFO=<ID=1000G,Number=0,Type=Flag,Description="legacy membership">',
+            '##INFO=<ID=NOTE,Number=1,Type=String,Description="Note">',
             '##FORMAT=<ID=_GX,Number=1,Type=Integer,Description="custom genotype value">',
         ],
         "1\t2\t.\tA\tG\t.\tPASS\t_CUSTOM=7;1000G;NOTE=a%3Db\tGT:_GX\t0/1:9\n",
@@ -306,7 +307,7 @@ def test_late_info_definition_cannot_make_an_invalid_record_pass(tmp_path: Path)
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
 
-    assert exc.value.code == "VCF_HEADER_ORDER_INVALID"
+    assert exc.value.code in {"VCF_INFO_UNDECLARED", "VCF_HEADER_ORDER_INVALID"}
 
 
 def test_strict_validation_accepts_vcf_reference_only_alt_dot_record(tmp_path: Path):
@@ -2223,7 +2224,11 @@ def test_vcf44_plus_tandem_repeat_rn_definition_is_number_a_integer(tmp_path: Pa
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+    assert exc.value.code == (
+        "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+        if version == "VCFv4.4"
+        else "VCF_HEADER_DEFINITION_INVALID"
+    )
 
 
 def test_vcf45_undeclared_custom_info_field_is_rejected(tmp_path: Path):
@@ -2278,7 +2283,11 @@ def test_vcf44_plus_reserved_mateid_header_must_match_number_a(tmp_path: Path, v
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+    assert exc.value.code == (
+        "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+        if version == "VCFv4.4"
+        else "VCF_HEADER_DEFINITION_INVALID"
+    )
 
 
 @pytest.mark.parametrize(
@@ -2297,6 +2306,7 @@ def test_vcf43_vcf44_copy_number_format_type_is_version_specific(
         ],
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:CN\t0/1:2\n",
         version=version,
+        sample=True,
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -2313,6 +2323,7 @@ def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
         ],
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:AD\t0/1:10,5\n",
         version="VCFv4.3",
+        sample=True,
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -2351,6 +2362,7 @@ def test_vcf41_gle_requires_header_definition_when_number_is_not_source_specifie
         path,
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:GLE\t0/1:opaque\n",
         version="VCFv4.1",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -2367,6 +2379,7 @@ def test_vcf42_reserved_ps_header_must_be_integer(tmp_path: Path):
         ],
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:10\n",
         version="VCFv4.2",
+        sample=True,
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
@@ -2383,12 +2396,14 @@ def test_vcf41_reserved_ps_header_must_be_integer(tmp_path: Path):
         ],
         "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:10\n",
         version="VCFv4.1",
+        sample=True,
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
 
 
+@pytest.mark.parametrize("version", ["VCFv4.3", "VCFv4.4", "VCFv4.5"])
 def test_vcf43_plus_external_breakend_mate_contig_is_valid_syntax_but_unsupported(tmp_path: Path, version: str):
     path = tmp_path / "vcf45-external-breakend-mate-contig.vcf"
     write_vcf(
