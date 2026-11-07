@@ -2601,16 +2601,25 @@ def validate_vcf_strict(
                 code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
             )
 
-        reciprocal_alt_indexes = [
+        reciprocal_id_alt_indexes = [
             mate_alt_index
             for mate_alt_index in mate["breakend_alt_indexes"]
             if mate["mate_entries_by_alt"].get(mate_alt_index, ".") in source_ids
-            and mate["remote_loci_by_alt"].get(mate_alt_index) == (chrom, pos)
+        ]
+        if not reciprocal_id_alt_indexes:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+            )
+        reciprocal_alt_indexes = [
+            mate_alt_index
+            for mate_alt_index in reciprocal_id_alt_indexes
+            if mate["remote_loci_by_alt"].get(mate_alt_index) == (chrom, pos)
         ]
         if not reciprocal_alt_indexes:
             raise StrictVCFValidationError(
-                f"Breakend MATEID {mate_id!r} does not have a reciprocal ALT pointing to record {source_id!r} at line {line_no}",
-                code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+                f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
+                code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
             )
         if len(reciprocal_alt_indexes) != 1:
             raise StrictVCFValidationError(
