@@ -2207,6 +2207,18 @@ def validate_vcf_strict(
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
+            event_values = info_values.get("EVENT", "").split(",")
+            event_type_values = info_values.get("EVENTTYPE", "").split(",")
+            event_by_alt = {
+                alt_index: value
+                for alt_index, value in enumerate(event_values)
+                if value not in {"", "."}
+            }
+            event_type_by_alt = {
+                alt_index: value
+                for alt_index, value in enumerate(event_type_values)
+                if value not in {"", "."}
+            }
             breakend_alt_indexes = [
                 alt_index for alt_index, alt in enumerate(alts)
                 if "[" in alt or "]" in alt
@@ -2227,6 +2239,8 @@ def validate_vcf_strict(
                     "alt": alts[alt_index],
                     "status": "UNRESOLVED",
                     "reason_code": "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE",
+                    "event_id": event_by_alt.get(alt_index),
+                    "event_type": event_type_by_alt.get(alt_index),
                 })
             if breakend_alts:
                 # Resolve remote loci and classify external assembly contigs before
@@ -2322,6 +2336,8 @@ def validate_vcf_strict(
                             "orientation": orientation_by_alt.get(alt_index),
                             "status": "UNRESOLVED",
                             "reason_code": "VCF_BREAKEND_MATE_ID_MISSING",
+                            "event_id": event_by_alt.get(alt_index),
+                            "event_type": event_type_by_alt.get(alt_index),
                         })
                         continue
                     if not record_ids:
@@ -2380,6 +2396,8 @@ def validate_vcf_strict(
                         "pos": _pos,
                         "alts": alts,
                         "orientation_by_alt": orientation_by_alt,
+                        "event_by_alt": event_by_alt,
+                        "event_type_by_alt": event_type_by_alt,
                         "breakend_alt_indexes": breakend_alt_indexes,
                         "remote_loci_by_alt": remote_loci_by_alt,
                         "mate_entries_by_alt": mate_entries_by_alt,
@@ -3082,6 +3100,22 @@ def validate_vcf_strict(
                 "coordinate_status": (
                     "UNRESOLVED_CIPOS" if unresolved_ends else "WITHIN_CIPOS_INTERVALS"
                 ),
+                "event_id": source_record["event_by_alt"].get(source_alt_index),
+                "event_type": source_record["event_type_by_alt"].get(source_alt_index),
+                "mate_event_id": mate["event_by_alt"].get(mate_alt_index),
+                "mate_event_type": mate["event_type_by_alt"].get(mate_alt_index),
+                "event_group_status": (
+                    "MATCHED"
+                    if source_record["event_by_alt"].get(source_alt_index)
+                    and source_record["event_by_alt"].get(source_alt_index)
+                    == mate["event_by_alt"].get(mate_alt_index)
+                    else (
+                        "UNRESOLVED_PARTIAL_OR_MISMATCHED"
+                        if source_record["event_by_alt"].get(source_alt_index)
+                        or mate["event_by_alt"].get(mate_alt_index)
+                        else "NOT_DECLARED"
+                    )
+                ),
                 "sample_phase_correspondence": {},
             }
             breakend_adjacencies.append(adjacency)
@@ -3285,6 +3319,21 @@ def validate_vcf_strict(
             )
             breakend_adjacencies_by_endpoint.setdefault(endpoint_key, []).append(adjacency)
 
+    breakend_event_groups_by_id: dict[str, dict[str, object]] = {}
+    for adjacency in breakend_adjacencies:
+        event_id = adjacency.get("event_id") or adjacency.get("mate_event_id")
+        if not event_id:
+            continue
+        group = breakend_event_groups_by_id.setdefault(str(event_id), {
+            "event_id": str(event_id),
+            "event_type": adjacency.get("event_type") or adjacency.get("mate_event_type"),
+            "adjacency_ids": [],
+            "status": "MATCHED",
+        })
+        group["adjacency_ids"].append(str(adjacency["adjacency_id"]))
+        if adjacency["event_group_status"] != "MATCHED":
+            group["status"] = "UNRESOLVED"
+
     derivative_chromosome_traversals: list[dict[str, object]] = []
     for traversal in phase_set_traversal_orders:
         ordered_events = []
@@ -3348,6 +3397,16 @@ def validate_vcf_strict(
         ]
         if any(item["coordinate_status"] == "UNRESOLVED_CIPOS" for item in related_adjacencies):
             unresolved_reason_codes.add("VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED")
+        if any(item["event_group_status"] == "UNRESOLVED_PARTIAL_OR_MISMATCHED" for item in related_adjacencies):
+            unresolved_reason_codes.add("VCF_DERIVATIVE_EVENT_GROUP_INCONSISTENT")
+        related_adjacency_ids = {
+            str(item["adjacency_id"]) for item in related_adjacencies
+        }
+        related_event_groups = [
+            group
+            for group in breakend_event_groups_by_id.values()
+            if any(adjacency_id in related_adjacency_ids for adjacency_id in group["adjacency_ids"])
+        ]
         event_order_status = (
             "RECONSTRUCTED"
             if traversal["traversal_status"] == "ORDERED"
@@ -3369,6 +3428,7 @@ def validate_vcf_strict(
             "unresolved_adjacency_count": unresolved_adjacency_count,
             "ordered_events": ordered_events,
             "observed_breakend_adjacencies": related_adjacencies,
+            "breakend_event_groups": related_event_groups,
         })
 
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
@@ -3417,6 +3477,7 @@ def validate_vcf_strict(
         ],
         "unresolved_breakend_adjacencies": unresolved_breakend_adjacencies,
         "unresolved_breakend_adjacency_count": len(unresolved_breakend_adjacencies),
+        "breakend_event_groups": list(breakend_event_groups_by_id.values()),
         "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
         "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
