@@ -90,3 +90,14 @@ def test_environment_aware_executor_never_falls_back_for_remote_agent():
     executor = EnvironmentAwareToolExecutor(environment)
     with pytest.raises(ExecutionEnvironmentError, match="not implemented"):
         executor.execute(_tool(), None)
+
+
+
+def test_container_tool_path_is_not_resolved_against_host_filesystem():
+    tool = ToolIdentity(
+        **{
+            **_tool().__dict__,
+            "runtime_path": ("/opt/siraloom/bin",),
+        }
+    )
+    tool.validate()
