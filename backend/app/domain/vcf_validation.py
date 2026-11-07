@@ -2301,13 +2301,13 @@ def validate_vcf_strict(
                                 code="VCF_FIELD_CARDINALITY_INVALID",
                             )
                         if (
-                            fileformat == "VCFv4.5"
+                            fileformat in {"VCFv4.4", "VCFv4.5"}
                             and definition["Number"] == "P"
                             and value not in {None, "."}
                             and gt_index is None
                         ):
                             raise StrictVCFValidationError(
-                                f"Populated VCFv4.5 FORMAT Number=P field {key!r} requires GT to establish per-allele cardinality at line {line_no}, sample {sample_index}",
+                                f"Populated VCFv4.4/4.5 FORMAT Number=P field {key!r} requires GT to establish per-allele cardinality at line {line_no}, sample {sample_index}",
                                 code="VCF_FIELD_CARDINALITY_INVALID",
                             )
                         if (
