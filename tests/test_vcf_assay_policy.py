@@ -43,9 +43,10 @@ def test_worker_reads_persisted_base_modification_assay_policy(policy: str | Non
     assert _base_modification_strandedness_policy(analysis) == policy
 
 
-def test_worker_rejects_invalid_persisted_base_modification_assay_policy():
+@pytest.mark.parametrize("invalid_policy", ["infer", [], {}])
+def test_worker_rejects_invalid_persisted_base_modification_assay_policy(invalid_policy):
     analysis = SimpleNamespace(
-        configuration={"base_modification_strandedness": "infer"}
+        configuration={"base_modification_strandedness": invalid_policy}
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         _base_modification_strandedness_policy(analysis)
