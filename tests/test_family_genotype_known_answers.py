@@ -1,10 +1,18 @@
+from pathlib import Path
+import hashlib
+import shutil
 from uuid import uuid4
 
 import pytest
 
 from backend.app.domain.family_genotype_matrix import build_family_genotype_matrix
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
-from backend.app.domain.vcf_tools import route_vcf_records
+from backend.app.domain.vcf_tools import (
+    _validate_source_child_reconciliation,
+    normalize_vcf_with_bcftools,
+    route_vcf_records,
+)
+from backend.app.config import settings
 
 
 def _write_member_vcf(path, sample_name, records):
@@ -305,3 +313,61 @@ def test_independent_low_quality_parent_known_answer_preserves_metrics_without_c
     assert call["quality_assessment_status"] == "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY"
     assert call["callability"] == "NOT_ASSESSED"
     assert matrix["interpretation_status"] == "NOT_PERFORMED"
+
+
+
+@pytest.mark.integration
+def test_family_matrix_consumes_real_bcftools_normalized_output_with_verified_source_lineage(tmp_path):
+    executable = settings.bcftools_executable
+    if not (Path(executable).is_file() or shutil.which(executable)):
+        pytest.skip("Pinned bcftools executable is unavailable in this test environment")
+
+    reference = Path(__file__).resolve().parents[1] / "fixtures" / "20k" / "GRCh38_test.fa"
+    reference_index = Path(str(reference) + ".fai")
+    if not reference.is_file() or not reference_index.is_file():
+        pytest.skip("Pinned GRCh38 test reference and FAI fixture are unavailable")
+
+    source = tmp_path / "family-source.vcf"
+    original_record = "chr1\\t10000\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1"
+    source.write_text(
+        "##fileformat=VCFv4.3\\n"
+        "##contig=<ID=chr1,length=1000000>\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tFAMILY-P\\n"
+        + original_record + "\\n",
+        encoding="utf-8",
+    )
+
+    routed_dir = tmp_path / "routed"
+    route_vcf_records(source, routed_dir)
+    sequence_input = routed_dir / "sequence-input.vcf"
+    normalized = tmp_path / "family-normalized.vcf.gz"
+    normalize_vcf_with_bcftools(
+        sequence_input,
+        normalized,
+        reference_fasta=reference,
+        expected_bcftools_version=settings.bcftools_version,
+        preserve_existing_source_mapping=True,
+        bcftools_executable=executable,
+    )
+
+    reconciliation = _validate_source_child_reconciliation(sequence_input, normalized)
+    assert reconciliation["status"] == "VALIDATED"
+    parsed = list(parse_vcf(str(normalized), sample_name="FAMILY-P"))
+    assert len(parsed) == 1
+    call = parsed[0].sample_calls["FAMILY-P"]
+    expected_source_digest = hashlib.sha256(original_record.encode("utf-8")).hexdigest()
+    assert call["source_record_sha256"] == expected_source_digest
+
+    variant_id = uuid4()
+    sample = _family_sample(
+        uuid4(), "PROBAND", uuid4(), uuid4(), uuid4(), "FAMILY-P",
+        {variant_id: call},
+    )
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    projected = matrix["samples"][0]["calls"][0]
+    assert projected["call_state"] == "CALL_PRESENT"
+    assert projected["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
+    assert projected["source_record_sha256"] == expected_source_digest
