@@ -7,6 +7,11 @@ from backend.app.api.v1 import phenotypes as phenotype_api
 from backend.app.auth.principal import Principal
 
 
+class _Rows(list):
+    def all(self):
+        return list(self)
+
+
 class _FakeDB:
     def __init__(self, case, revision):
         self.case = case
@@ -18,7 +23,7 @@ class _FakeDB:
         return self.case
 
     def scalars(self, _query):
-        return []
+        return _Rows()
 
     def scalar(self, _query):
         return self.revision
