@@ -6,6 +6,10 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 from backend.app.domain.resource_qualification import qualify_resource
+from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
+from backend.app.config import settings
+from backend.app.domain.tool_execution import current_platform_id
+import sys
 from backend.app.infrastructure.db.models import Resource, ResourceStaging
 
 
@@ -199,6 +203,22 @@ def _vep_resource(tmp_path: Path):
             "size_bytes": cache_file.stat().st_size,
         }],
     }, sort_keys=True), encoding="utf-8")
+    fasta = tmp_path / "GRCh38.fa"
+    fasta.write_text(">1\\nACGTACGT\\n", encoding="utf-8")
+    fai = tmp_path / "GRCh38.fa.fai"
+    fai.write_text("1\\t8\\t3\\t8\\t9\\n", encoding="utf-8")
+    reference_package = {
+        "resource_id": "reference-grch38",
+        "version": "reference-v1",
+        "assembly_name": "GRCh38",
+        "package_checksum": "f" * 64,
+        "fasta_path": str(fasta),
+        "fasta_sha256": sha256(fasta.read_bytes()).hexdigest(),
+        "fai_path": str(fai),
+        "fai_sha256": sha256(fai.read_bytes()).hexdigest(),
+        "gzi_path": None,
+        "gzi_sha256": None,
+    }
     resource = Resource(
         name="VEP 115 GRCh38",
         provider="VEP",
@@ -233,10 +253,27 @@ def _vep_resource(tmp_path: Path):
                     "cache_dir": str(cache_dir),
                     "cache_version": "115",
                     "assembly": "GRCh38",
+                    "fasta": str(fasta),
+                    "fasta_sha256": reference_package["fasta_sha256"],
                     "cache_manifest": str(manifest),
                     "cache_manifest_sha256": sha256(manifest.read_bytes()).hexdigest(),
                     "cache_artifact_sha256": cache_sha256,
                     "vep_binary_sha256": sha256(binary.read_bytes()).hexdigest(),
+                    "vep_version": "115.2",
+                    "tool_profile_id": "vep-115.2-" + current_platform_id(),
+                    "platform": current_platform_id(),
+                    "qualification_status": "SOFTWARE_QUALIFIED",
+                    "runtime_image_digest": "sha256:" + "d" * 64,
+                    "runtime_path": [str(Path(sys.executable).parent), "/usr/bin", "/bin"],
+                    "runtime_environment": {
+                        "PERL5LIB": "/opt/vep/modules",
+                        "PERL_HASH_SEED": "0",
+                        "PERL_PERTURB_KEYS": "0",
+                    },
+                    "execution_timeout_seconds": 1800,
+                    "max_output_bytes": 65536,
+                    "scratch_root": str(settings.worker_scratch_root),
+                    "reference_package": reference_package,
                 },
             },
         },
@@ -244,42 +281,41 @@ def _vep_resource(tmp_path: Path):
     return resource, binary
 
 
-def test_vep_qualification_executes_version_and_offline_cache_preflight(monkeypatch, tmp_path):
+def test_vep_qualification_executes_governed_preflight_with_reference_context(monkeypatch, tmp_path):
     resource, _binary = _vep_resource(tmp_path)
-    calls = []
+    captured = {}
 
-    def fake_run(command, **kwargs):
-        calls.append(command)
-        if command[-1] == "--version":
-            return SimpleNamespace(returncode=0, stdout="ensembl-vep 115.2", stderr="")
-        return SimpleNamespace(
-            returncode=0,
-            stdout="Cache version 115; species homo_sapiens; assembly GRCh38",
-            stderr="",
-        )
+    def fake_verify(self, build, *, reference_package, context):
+        captured.update({
+            "build": build,
+            "reference_package": reference_package,
+            "context": context,
+        })
+        return {
+            "status": "VERIFIED",
+            "assembly": build,
+            "cache_artifact_sha256": self.cache_artifact_sha256,
+        }
 
-    monkeypatch.setattr("backend.app.adapters.annotation.vep.subprocess.run", fake_run)
-
+    monkeypatch.setattr(VEPProvider, "verify_local_runtime", fake_verify)
     result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is True
     assert result.checks["vep_runtime"]["status"] == "VERIFIED"
     assert result.checks["vep_runtime"]["assembly"] == "GRCh38"
     assert result.checks["vep_runtime"]["cache_artifact_sha256"] == resource.checksum
-    assert len(calls) == 2
-    assert "--offline" in calls[1]
-    assert "--show_cache_info" in calls[1]
+    assert captured["reference_package"]["assembly_name"] == "GRCh38"
+    assert captured["context"]["organization_id"] == "system-resource-qualification"
+    assert captured["context"]["workflow_id"].startswith("resource-qualification:")
 
 
-def test_vep_qualification_blocks_binary_release_mismatch(monkeypatch, tmp_path):
+def test_vep_qualification_blocks_runtime_preflight_failure(monkeypatch, tmp_path):
     resource, _binary = _vep_resource(tmp_path)
-    monkeypatch.setattr(
-        "backend.app.adapters.annotation.vep.subprocess.run",
-        lambda *_args, **_kwargs: SimpleNamespace(
-            returncode=0, stdout="ensembl-vep 114.9", stderr=""
-        ),
-    )
 
+    def reject_runtime(self, build, *, reference_package, context):
+        raise VEPProviderError("Runtime executable version does not match the approved profile.")
+
+    monkeypatch.setattr(VEPProvider, "verify_local_runtime", reject_runtime)
     result = qualify_resource(resource, staging=_staging(resource))
 
     assert result.passed is False
@@ -304,7 +340,6 @@ def test_vep_qualification_blocks_manifest_artifact_digest_mismatch(monkeypatch,
 
     assert result.passed is False
     assert "VEP_CACHE_ARTIFACT_DIGEST_MISMATCH" in result.blockers
-    assert "VEP_RUNTIME_PREFLIGHT_FAILED" in result.blockers
 
 
 def test_vep_qualification_requires_staged_resource_artifact(tmp_path):
