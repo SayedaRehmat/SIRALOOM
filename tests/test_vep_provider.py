@@ -1,7 +1,10 @@
 import hashlib
 import json
+import os
+import shutil
+import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -10,6 +13,40 @@ from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import (
+    ToolExecutionContractError,
+    ToolExecutionError,
+    ToolExecutionProvenance,
+    ToolExecutionResult,
+    current_platform_id,
+    sha256_file,
+)
+from backend.app.config import settings
+
+
+def _base_toolchain(*, vep_binary="/opt/vep/vep"):
+    return {
+        "vep_binary": vep_binary,
+        "cache_dir": "/resources/vep/115",
+        "cache_version": "115",
+        "assembly": "GRCh38",
+        "fasta": "/resources/GRCh38.fa",
+        "fasta_sha256": "e" * 64,
+        "cache_manifest": "/resources/vep/115.manifest.json",
+        "cache_manifest_sha256": "a" * 64,
+        "cache_artifact_sha256": "b" * 64,
+        "vep_binary_sha256": "c" * 64,
+        "vep_version": "115.2",
+        "tool_profile_id": "vep-115.2-linux-64",
+        "platform": current_platform_id(),
+        "qualification_status": "SOFTWARE_QUALIFIED",
+        "runtime_image_digest": "sha256:" + "d" * 64,
+        "runtime_path": [str(Path(sys.executable).parent), "/usr/bin", "/bin"],
+        "runtime_environment": {"PERL5LIB": "/opt/vep/modules"},
+        "execution_timeout_seconds": 1800,
+        "max_output_bytes": 65536,
+        "scratch_root": str(settings.worker_scratch_root),
+    }
 
 
 def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep"):
@@ -21,18 +58,190 @@ def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep
         location="/resources/vep/115",
         dataset="vep-cache",
         execution_scope="ORGANIZATION_MANAGED",
-        toolchain=toolchain if toolchain is not None else {
-            "vep_binary": vep_binary,
-            "cache_dir": "/resources/vep/115",
-            "cache_version": "115",
-            "assembly": "GRCh38",
-            "fasta": "/resources/GRCh38.fa",
-            "cache_manifest": "/resources/vep/115.manifest.json",
-            "cache_manifest_sha256": "a" * 64,
-            "cache_artifact_sha256": "b" * 64,
-            "vep_binary_sha256": "c" * 64,
-        },
+        toolchain=toolchain if toolchain is not None else _base_toolchain(vep_binary=vep_binary),
     )
+
+
+def _reference_package(toolchain):
+    fasta_path = Path(toolchain["fasta"])
+    fai_path = Path(toolchain["fai"])
+    return {
+        "resource_id": "reference-grch38",
+        "version": "reference-v1",
+        "assembly_name": "GRCh38",
+        "package_checksum": "f" * 64,
+        "fasta_path": str(fasta_path),
+        "fasta_sha256": toolchain["fasta_sha256"],
+        "fai_path": str(fai_path),
+        "fai_sha256": toolchain["fai_sha256"],
+        "gzi_path": None,
+        "gzi_sha256": None,
+    }
+
+
+class _FakeToolExecutor:
+    """Contract-faithful test executor; it still validates paths and resource bytes."""
+
+    def __init__(self, *, version_output="ensembl-vep 115.2", cache_error=False):
+        self.version_output = version_output
+        self.cache_error = cache_error
+        self.requests = []
+
+    @staticmethod
+    def _provenance(profile, request, *, stdout="", stderr=""):
+        now = datetime.now(timezone.utc).isoformat()
+        return ToolExecutionProvenance(
+            execution_id=request.execution_id,
+            organization_id=request.organization_id,
+            workflow_id=request.workflow_id,
+            operation=request.operation,
+            tool_id=profile.tool_id,
+            tool_version=profile.version,
+            profile_id=profile.profile_id,
+            executable_sha256=profile.executable_sha256,
+            resource_bindings=tuple({
+                "resource_id": item.resource_id,
+                "version": item.version,
+                "sha256": item.sha256,
+                "assembly": item.assembly,
+            } for item in request.resources),
+            input_sha256=tuple({"name": item.name, "sha256": item.sha256} for item in request.inputs),
+            output_sha256=tuple({
+                "name": item.name,
+                "sha256": sha256_file(Path(item.path)),
+            } for item in request.outputs),
+            argv=(profile.executable, *request.argv),
+            exit_code=0,
+            started_at=now,
+            completed_at=now,
+            duration_seconds=0.001,
+            stdout_sha256=hashlib.sha256(stdout.encode()).hexdigest(),
+            stderr_sha256=hashlib.sha256(stderr.encode()).hexdigest(),
+            platform=profile.platform,
+            runtime_image_digest=profile.runtime_image_digest,
+            environment_sha256=hashlib.sha256(b"fixture-environment").hexdigest(),
+        )
+
+    def execute(self, profile, request):
+        profile.validate()
+        if sha256_file(Path(profile.executable)) != profile.executable_sha256:
+            raise ToolExecutionContractError("Tool executable SHA-256 does not match the approved profile.")
+        if profile.version_output_contains not in self.version_output:
+            raise ToolExecutionContractError("Runtime executable version does not match the approved tool profile.")
+        request.validate(profile)
+        self.requests.append(request)
+
+        if request.operation == "verify_cache":
+            if self.cache_error:
+                raise ToolExecutionError("VEP cache could not be loaded offline.", retryable=False)
+            stdout = "Cache version 115; species homo_sapiens; assembly GRCh38"
+            return ToolExecutionResult(
+                provenance=self._provenance(profile, request, stdout=stdout),
+                stdout=stdout,
+                stderr="",
+            )
+
+        if request.operation != "annotate":
+            raise AssertionError(f"Unexpected operation: {request.operation}")
+        input_path = Path(request.inputs[0].path)
+        output_path = Path(request.outputs[0].path)
+        records = []
+        for line in input_path.read_text(encoding="utf-8").splitlines():
+            if not line or line.startswith("#"):
+                continue
+            fields = line.split("\\t")
+            records.append({
+                "start": int(fields[1]),
+                "seq_region_name": fields[0],
+                "allele_string": f"{fields[3]}/{fields[4]}",
+                "assembly_name": next(
+                    request.argv[index + 1]
+                    for index, value in enumerate(request.argv[:-1])
+                    if value == "--assembly"
+                ),
+                "most_severe_consequence": "missense_variant",
+                "variant_class": "SNV",
+                "transcript_consequences": [{
+                    "transcript_id": "ENST00000000001.1",
+                    "gene_id": "ENSG00000000001",
+                    "gene_symbol": "GENE1",
+                    "canonical": 1,
+                    "mane_select": "NM_000001.1" if "--mane" in request.argv else None,
+                    "consequence_terms": ["missense_variant"],
+                    "hgvsc": "ENST00000000001.1:c.1A>G",
+                    "hgvsp": "ENSP00000000001.1:p.Lys1Arg",
+                }],
+            })
+        output_path.write_text(
+            "".join(json.dumps(item, separators=(",", ":")) + "\\n" for item in records),
+            encoding="utf-8",
+        )
+        return ToolExecutionResult(
+            provenance=self._provenance(profile, request),
+            stdout="",
+            stderr="",
+        )
+
+
+def _manifested_toolchain(tmp_path, binary, *, vep_version=None, assembly="GRCh38"):
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir(exist_ok=True)
+    cache_file = cache_dir / "fixture.dat"
+    cache_file.write_bytes(b"qualified fixture cache bytes")
+    cache_artifact_sha256 = "b" * 64
+    document = {
+        "schema": "siraloom.vep-cache-manifest.v1",
+        "cache_version": "115",
+        "species": "homo_sapiens",
+        "assembly": assembly,
+        "source_artifact_sha256": cache_artifact_sha256,
+        "files": [{
+            "path": "fixture.dat",
+            "sha256": hashlib.sha256(cache_file.read_bytes()).hexdigest(),
+            "size_bytes": cache_file.stat().st_size,
+        }],
+    }
+    manifest = tmp_path / "vep-cache-manifest.json"
+    manifest.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+    fasta = tmp_path / "reference.fa"
+    fasta.write_text(">1\\nACGTACGT\\n", encoding="utf-8")
+    fai = tmp_path / "reference.fa.fai"
+    fai.write_text("1\\t8\\t3\\t8\\t9\\n", encoding="utf-8")
+    toolchain = _base_toolchain(vep_binary=str(binary))
+    toolchain.update({
+        "cache_dir": str(cache_dir),
+        "assembly": assembly,
+        "cache_manifest": str(manifest),
+        "cache_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        "cache_artifact_sha256": cache_artifact_sha256,
+        "vep_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+        "fasta": str(fasta),
+        "fasta_sha256": hashlib.sha256(fasta.read_bytes()).hexdigest(),
+        "fai": str(fai),
+        "fai_sha256": hashlib.sha256(fai.read_bytes()).hexdigest(),
+    })
+    if vep_version:
+        toolchain["vep_version"] = vep_version
+    return toolchain, cache_file
+
+
+def _runtime_context(monkeypatch, tmp_path, toolchain):
+    scratch = tmp_path / "scratch"
+    scratch.mkdir(exist_ok=True)
+    monkeypatch.setattr(settings, "worker_scratch_root", str(scratch))
+    toolchain["scratch_root"] = str(scratch)
+    monkeypatch.setenv("SIRALOOM_RUNTIME_IMAGE_DIGEST", toolchain["runtime_image_digest"])
+    monkeypatch.setattr(
+        VEPProvider,
+        "_require_read_only_mount",
+        staticmethod(lambda *_args, **_kwargs: None),
+    )
+    return {
+        "genome": toolchain["assembly"],
+        "reference_package": _reference_package(toolchain),
+        "organization_id": "org-001",
+        "workflow_id": "analysis-001",
+    }
 
 
 def test_vep_provider_uses_only_the_governed_local_toolchain():
