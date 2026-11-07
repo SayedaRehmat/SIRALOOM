@@ -1264,7 +1264,6 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     if case is None:
         raise HTTPException(404, "Case not found")
     db.refresh(case, with_for_update=True)
-    require_case_permission(case, principal, db, "review")
     models = []
     for raw_model in body.models:
         try:
