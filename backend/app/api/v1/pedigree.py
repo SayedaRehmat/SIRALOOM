@@ -1167,7 +1167,10 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
         existing.genotype=body.genotype; existing.zygosity=body.zygosity; existing.phase=body.phase; existing.allele_observed=body.allele_observed; existing.phenotype_status=body.phenotype_status; existing.source=body.source; existing.notes=body.notes; existing.metadata_json=metadata_json
         row=existing; action="UPDATE"
     else:
-        row=SegregationObservation(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,pedigree_member_id=member.id,genotype=body.genotype,zygosity=body.zygosity,phase=body.phase,allele_observed=body.allele_observed,phenotype_status=body.phenotype_status,source=body.source,notes=body.notes,metadata_json=metadata_json); db.add(row); action="CREATE"
+        row=SegregationObservation(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,pedigree_member_id=member.id,genotype=body.genotype,zygosity=body.zygosity,phase=body.phase,allele_observed=body.allele_observed,phenotype_status=body.phenotype_status,source="MANUALLY_REPORTED",notes=body.notes,metadata_json=metadata_json); db.add(row); action="CREATE"
+    # This endpoint records a human-reported observation only. The client may
+    # not assert that a genotype came from a normalized VCF or a verified sample.
+    row.source = "MANUALLY_REPORTED"
     AuditService(db).record(event_type="SEGREGATION_OBSERVATION_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="SEGREGATION_OBSERVATION",subject_id=str(row.id),operation=action,after_state=_seg(row,member))
     db.commit(); return _seg(row,member)
 
@@ -1179,6 +1182,8 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     for raw_model in body.models:
         try:
             model = normalize_model(raw_model)
+            if model == "MITOCHONDRIAL":
+                raise ValueError("Mitochondrial interpretation is outside the qualified SNV/INDEL trial scope")
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
         if model in models:
@@ -1189,7 +1194,12 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
     members={m.id:m for m in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==analysis.case_id))}
     _validate_observation_members(rows, members)
-    obs=[FamilyObservation(member_id=members[r.pedigree_member_id].member_identifier,sex=members[r.pedigree_member_id].sex,affected_status=r.phenotype_status or members[r.pedigree_member_id].affected_status,genotype=r.genotype,zygosity=r.zygosity) for r in rows if r.pedigree_member_id in members]
+    # No normalized family-call snapshot is currently wired into this route.
+    # SegregationObservation is a reviewer-entered record, so its genotype,
+    # zygosity and phase fields must never be treated as source-derived calls.
+    # Keep the endpoint conservative until a qualified family matrix is bound
+    # to the interpretation request.
+    obs=[]
     fp=fingerprint(obs); results=[]; audit_changes=[]
     for model in models:
         result=assess_model(model,obs)
