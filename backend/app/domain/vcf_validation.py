@@ -2671,7 +2671,10 @@ def validate_vcf_strict(
                 mate_sample = mate_vectors.get(sample_name, {})
                 source_allele_number = str(source_alt_index + 1)
                 mate_allele_number = str(mate_alt_index + 1)
-                source_signature = sorted(
+                # GT positions encode the ordered chromosome copies. Preserve
+                # that order: sorting would conceal PSL/PSO swaps between
+                # haplotypes in polyploid or repeated-allele genotypes.
+                source_signature = [
                     (
                         source_sample.get("psl", [])[position]
                         if position < len(source_sample.get("psl", []))
@@ -2682,8 +2685,8 @@ def validate_vcf_strict(
                     )
                     for position, allele in enumerate(source_sample.get("alleles", []))
                     if allele == source_allele_number
-                )
-                mate_signature = sorted(
+                ]
+                mate_signature = [
                     (
                         mate_sample.get("psl", [])[position]
                         if position < len(mate_sample.get("psl", []))
@@ -2694,7 +2697,7 @@ def validate_vcf_strict(
                     )
                     for position, allele in enumerate(mate_sample.get("alleles", []))
                     if allele == mate_allele_number
-                )
+                ]
                 if source_signature != mate_signature:
                     raise StrictVCFValidationError(
                         f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
