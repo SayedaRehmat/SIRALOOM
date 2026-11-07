@@ -328,13 +328,13 @@ def test_family_matrix_consumes_real_bcftools_normalized_output_with_verified_so
         pytest.skip("Pinned GRCh38 test reference and FAI fixture are unavailable")
 
     source = tmp_path / "family-source.vcf"
-    original_record = "chr1\\t10000\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT\\t0/1"
+    original_record = "chr1\t10000\t.\tA\tG\t.\tPASS\t.\tGT\t0/1"
     source.write_text(
-        "##fileformat=VCFv4.3\\n"
-        "##contig=<ID=chr1,length=1000000>\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tFAMILY-P\\n"
-        + original_record + "\\n",
+        "##fileformat=VCFv4.3\n"
+        "##contig=<ID=chr1,length=1000000>\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tFAMILY-P\n"
+        + original_record + "\n",
         encoding="utf-8",
     )
 
