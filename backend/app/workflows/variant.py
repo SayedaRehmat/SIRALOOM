@@ -619,6 +619,7 @@ def _persist_annotation_response_checkpoint(
                 "resource_version": resource.version,
                 "request_fingerprint": provenance["request_fingerprint"],
                 "response_sha256": provenance["response_sha256"],
+                "tool_execution_record_id": provenance.get("tool_execution_record_id"),
             },
         )
         _save_batch_checkpoint(
@@ -2873,6 +2874,45 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             temporary_paths=temporary_artifact_paths,
                         )
                         if payloads is None:
+                            if provider.provider_id == "VEP":
+                                provider.persistent_execution_required = bool(
+                                    (analysis.configuration or {}).get("require_persistent_tool_execution")
+                                )
+                                provider.persistent_execution_service = _persistent_tool_execution_service(
+                                    db,
+                                    analysis=analysis,
+                                    organization_id=case.organization_id,
+                                    worker_id=f"workflow:{analysis.id}:annotate:{key}",
+                                )
+                                if provider.persistent_execution_service is not None:
+                                    def publish_vep_tool_outputs(request, result, execution_record_id):
+                                        published = {}
+                                        for output in request.outputs:
+                                            output_path = Path(output.path)
+                                            artifact = artifacts.put_file(
+                                                db=db,
+                                                case_id=analysis.case_id,
+                                                analysis_id=analysis.id,
+                                                source_path=output_path,
+                                                filename=f"vep-execution-{start}-{end}-{output_path.name}",
+                                                artifact_type="TOOL_EXECUTION_OUTPUT",
+                                                media_type="application/json",
+                                                genome_build=analysis.reference_build,
+                                                validation_status="VALIDATED",
+                                                metadata={
+                                                    "tool_execution_record_id": str(execution_record_id),
+                                                    "workflow_step": "annotate",
+                                                    "batch_key": key,
+                                                    "tool_id": "ensembl-vep",
+                                                    "tool_profile_id": str(
+                                                        (provider.contract.toolchain or {}).get("execution_profile_id") or ""
+                                                    ),
+                                                },
+                                            )
+                                            published[output.name] = artifact.id
+                                        return published
+
+                                    provider.persistent_artifact_publisher = publish_vep_tool_outputs
                             payloads = provider.annotate(batch, {"genome": genome})
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                             _ensure_annotation_request_fingerprint(
