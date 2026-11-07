@@ -294,6 +294,58 @@ def list_sample_bindings(case_id: UUID, db: Session = Depends(get_db), principal
     return {"case_id": str(case_id), "bindings": [_sample_binding_payload(row) for row in rows]}
 
 
+@router.get("/cases/{case_id}/pedigree/sample-binding-context")
+def get_sample_binding_context(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """List case analyses with their exact configured source VCF and selected sample."""
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    require_case_permission(case, principal, db, "read")
+    analyses = db.scalars(
+        select(Analysis).where(Analysis.case_id == case_id).order_by(Analysis.created_at.desc())
+    ).all()
+    rows = []
+    for analysis in analyses:
+        configuration = analysis.configuration or {}
+        raw_artifact_id = configuration.get("input_artifact_id")
+        sample_name = configuration.get("vcf_sample_name")
+        artifact = None
+        if raw_artifact_id:
+            try:
+                artifact = db.get(Artifact, UUID(str(raw_artifact_id)))
+            except (TypeError, ValueError):
+                artifact = None
+        valid_artifact = bool(
+            artifact is not None
+            and artifact.case_id == case_id
+            and artifact.artifact_type in {"VCF", "SOURCE_VCF"}
+        )
+        rows.append({
+            "analysis_id": str(analysis.id),
+            "analysis_status": analysis.status,
+            "reference_build": analysis.reference_build,
+            "assay_id": str(analysis.assay_id) if analysis.assay_id else None,
+            "selected_sample_name": sample_name if isinstance(sample_name, str) and sample_name.strip() else None,
+            "source_vcf": ({
+                "artifact_id": str(artifact.id),
+                "filename": artifact.filename,
+                "sha256": artifact.sha256,
+                "specimen_id": str(artifact.specimen_id) if artifact.specimen_id else None,
+                "validation_status": artifact.validation_status,
+                "genome_build": artifact.genome_build,
+            } if valid_artifact else None),
+            "binding_candidate_status": (
+                "READY" if valid_artifact and isinstance(sample_name, str) and sample_name.strip()
+                else "MISSING_SOURCE_VCF_OR_SAMPLE_SELECTION"
+            ),
+        })
+    return {"case_id": str(case_id), "analyses": rows}
+
+
 @router.post("/cases/{case_id}/pedigree/sample-bindings", status_code=201)
 def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     """Record an unverified family-member/specimen/VCF-sample identity claim."""
