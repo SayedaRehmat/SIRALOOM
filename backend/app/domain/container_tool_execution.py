@@ -62,8 +62,12 @@ class ContainerResourceLimits:
             raise ToolExecutionContractError("Container memory limit is absent or exceeds qualified environment capacity.")
         if isinstance(self.pids_limit, bool) or not isinstance(self.pids_limit, int) or self.pids_limit < 1 or self.pids_limit > 65536:
             raise ToolExecutionContractError("Container process limit must be between 1 and 65536.")
-        if not isinstance(self.container_user, str) or not re.fullmatch(r"[0-9]+:[0-9]+", self.container_user):
-            raise ToolExecutionContractError("Container user must be an explicit numeric uid:gid pair.")
+        user_match = (
+            re.fullmatch(r"([0-9]+):([0-9]+)", self.container_user)
+            if isinstance(self.container_user, str) else None
+        )
+        if user_match is None or int(user_match.group(1)) == 0 or int(user_match.group(2)) == 0:
+            raise ToolExecutionContractError("Container user must be an explicit non-root numeric uid:gid pair.")
 
 
 CommandRunner = Callable[..., subprocess.CompletedProcess[str]]
