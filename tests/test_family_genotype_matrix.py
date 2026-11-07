@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
@@ -103,6 +104,55 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
     assert proband_calls[str(observed_variant)]["source_record_sha256"] == "c" * 64
     assert matrix["interpretation_status"] == "NOT_PERFORMED"
     assert matrix["biological_relatedness_status"] == "NOT_ESTABLISHED"
+
+
+
+def test_family_matrix_fingerprint_changes_for_each_clinically_material_provenance_input():
+    case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
+    baseline_sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "sample_name": "PROBAND",
+            "source_genotype": "0|1",
+            "normalized_genotype": "0|1",
+            "projected_genotype": "0|1",
+            "phase": "PHASED",
+            "phase_set": "100",
+            "format_values": {"DP": "40", "GQ": "99", "AD": "20,20"},
+            "source_record_sha256": "c" * 64,
+            "source_record_index": 10,
+        },
+    })
+    baseline_sample["normalization_step_provenance"] = {
+        "step_id": "normalize", "attempt": 1,
+        "input_artifacts": ["source-vcf"],
+        "output_artifacts": ["normalized-vcf"],
+        "metadata": {"normalization_version": "6.0", "reference_sha256": "d" * 64},
+        "started_at": "2026-11-07T00:00:00+00:00",
+        "completed_at": "2026-11-07T00:01:00+00:00",
+    }
+    baseline_sample["ploidy_evidence"] = {
+        "version": 1, "status": "VERIFIED", "reference_build": "GRCh38",
+        "revision_fingerprint": "e" * 64, "region_copy_number": {"chr1:1-1000": 2},
+    }
+
+    def fingerprint(sample):
+        return build_family_genotype_matrix(
+            case_id=case_id, variant_ids=[variant_id], samples=[sample], relationships=[],
+        )["matrix_fingerprint"]
+
+    baseline = fingerprint(baseline_sample)
+    mutations = [
+        lambda sample: sample.update(artifact_sha256="f" * 64),
+        lambda sample: sample["calls"][variant_id].update(source_record_sha256="1" * 64),
+        lambda sample: sample["calls"][variant_id]["format_values"].update(GQ="20"),
+        lambda sample: sample["calls"][variant_id].update(phase="UNPHASED", phase_set="."),
+        lambda sample: sample["ploidy_evidence"].update(revision_fingerprint="2" * 64),
+        lambda sample: sample["normalization_step_provenance"].update(attempt=2),
+    ]
+    for mutate in mutations:
+        changed = deepcopy(baseline_sample)
+        mutate(changed)
+        assert fingerprint(changed) != baseline
 
 
 def test_family_matrix_fingerprint_is_independent_of_sample_input_order():
