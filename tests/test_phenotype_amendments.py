@@ -5,7 +5,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from pydantic import ValidationError
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 
 from backend.app.api.v1.phenotypes import PhenotypeInput, PhenotypeRetractionInput
 from backend.app.domain.clinical_input_snapshot import (
@@ -70,7 +70,7 @@ def test_phenotype_amendment_migration_creates_append_only_event_table(tmp_path,
     monkeypatch.setenv("DATABASE_URL", url)
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     config.set_main_option("sqlalchemy.url", url)
-    command.upgrade(config, "0058_phenotype_observation_amendments")
+    command.upgrade(config, "0060_phenotype_observation_amendments")
     engine = create_engine(url)
     with engine.connect() as connection:
         columns = {column["name"] for column in inspect(connection).get_columns("phenotype_observation_amendments")}
@@ -80,6 +80,14 @@ def test_phenotype_amendment_migration_creates_append_only_event_table(tmp_path,
         }.issubset(columns)
         indexes = {item["name"] for item in inspect(connection).get_indexes("phenotype_observation_amendments")}
         assert "ix_phenotype_amendments_case_recorded" in indexes
+        triggers = {
+            row[0]
+            for row in connection.execute(
+                text("SELECT name FROM sqlite_master WHERE type = 'trigger'")
+            ).all()
+        }
+        assert "trg_phenotype_observation_amendments_no_update" in triggers
+        assert "trg_phenotype_observation_amendments_no_delete" in triggers
     engine.dispose()
 
 
