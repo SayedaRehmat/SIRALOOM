@@ -90,6 +90,12 @@ def build_family_genotype_matrix(
     matrix_samples = []
     for sample in sorted(samples, key=lambda item: (item["member_identifier"], str(item["member_id"]), str(item["specimen_id"]), str(item["analysis_id"]), str(item["binding_id"]))):
         calls = sample["calls"]
+        for call in calls.values():
+            observed_sample_name = call.get("sample_name")
+            if observed_sample_name is not None and observed_sample_name != sample["sample_name"]:
+                raise ValueError(
+                    "Normalized genotype call sample name does not match the reviewed binding sample column"
+                )
         rows = []
         for variant_id in ordered_variants:
             call = calls.get(UUID(variant_id))
@@ -107,6 +113,7 @@ def build_family_genotype_matrix(
                 "variant_id": variant_id,
                 "call_state": state,
                 "source_record_sha256_status": source_record_sha256_status,
+                "quality_assessment_status": "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY",
                 "callability": "NOT_ASSESSED",
                 "source_genotype": call.get("source_genotype"),
                 "normalized_genotype": call.get("normalized_genotype"),
