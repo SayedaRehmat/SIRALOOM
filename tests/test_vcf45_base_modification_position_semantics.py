@@ -39,3 +39,11 @@ def test_number_m_position_oracle_rejects_ambiguous_or_non_sequence_symbols(
 ):
     with pytest.raises(ValueError, match="concrete A/C/G/T"):
         base_modification_positions(sequence, "C")
+
+def test_number_m_values_follow_the_ordered_biological_slots():
+    positions = base_modification_positions("CGA", "C")
+    values = (0.25, 0.75)
+    assert tuple(zip(positions, values)) == (
+        ((0, "+"), 0.25),
+        ((1, "-"), 0.75),
+    )
