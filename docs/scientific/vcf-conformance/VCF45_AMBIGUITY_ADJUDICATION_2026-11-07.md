@@ -61,3 +61,16 @@ Required external decisions:
 4. Review Number=M strand/base slot derivation and ambiguous sequence handling.
 
 Until those decisions are recorded with reviewer identity, date, source citations and disposition, VCFv4.5 remains unqualified.
+
+## 6. Pinned-source locators
+
+The adjudication above is grounded in the archived source and can be checked against the immutable upstream source revision:
+
+- [VCFv4.5 Number=M and base/strand ordering, lines 192–218](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L192-L218)
+- [VCFv4.5 global GT allele numbering, lines 613–627](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L613-L627)
+- [VCFv4.5 LAA and local-allele example, lines 686–718](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L686-L718)
+- [VCFv4.5 reserved FORMAT table, lines 534–596](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L534-L596)
+- [VCFv4.5 base-modification alias narrative, lines 720–744](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L720-L744)
+- [VCFv4.5 PSL, PSO and PSQ definitions and examples, lines 755–810](https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex#L755-L810)
+
+The current upstream source is also accessible at [samtools/hts-specs VCFv4.5.tex](https://github.com/samtools/hts-specs/blob/master/VCFv4.5.tex). The current upstream table/narrative spelling discrepancy is visible in the reserved table and base-modification narrative; it has not been silently resolved by this branch.
