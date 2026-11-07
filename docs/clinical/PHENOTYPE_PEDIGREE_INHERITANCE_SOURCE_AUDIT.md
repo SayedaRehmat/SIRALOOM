@@ -63,7 +63,7 @@ This audit inspects the current-main source, model definitions, migrations, test
 5. Review attestations exist in clinical intake revisions, but phenotype observation-level verification/sign-off is not yet part of the base observation model.
 
 ### P1 — segregation history and reproducibility
-1. `SegregationObservation` has a unique key per analysis/variant/member and the endpoint updates the existing row in place. Audit events record updates, but the current row is not an append-only clinical observation history.
+1. **Resolved on the current working branch (migration 0067; awaiting CI):** the original `SegregationObservation` is now an immutable version-1 root; corrections are stored in append-only `SegregationObservationRevision` rows with a version chain and canonical fingerprint. The API returns the current revision and a separate history. PostgreSQL/SQLite triggers reject UPDATE/DELETE. Manual observations remain review notes, not source-derived genotypes.
 2. Every segregation observation embeds a pedigree snapshot in metadata, but the inheritance assessor does not consume it or bind its fingerprint to the assessment.
 3. The clinical-input snapshot includes pedigree and phenotype context, but the inheritance assessment is a separate object and is not yet bound to disease assertion/mechanism and technical genotype evidence.
 4. Corrected/retracted phenotype records must be excluded from new active interpretation while retained in historical snapshot/provenance. PR #244 implements this; it needs migration and combined-API reconciliation.
