@@ -132,7 +132,14 @@ def create(
             workflow_id=payload.workflow_id,
             workflow_version=payload.workflow_version,
             reference_build=payload.reference_build,
-            configuration=payload.configuration,
+            configuration={
+                **payload.configuration,
+                **(
+                    {"base_modification_strandedness": payload.base_modification_strandedness}
+                    if payload.base_modification_strandedness is not None
+                    else {}
+                ),
+            },
             created_by=principal.user_id,
             resource_profile_id=payload.resource_profile_id,
             commit=False,
