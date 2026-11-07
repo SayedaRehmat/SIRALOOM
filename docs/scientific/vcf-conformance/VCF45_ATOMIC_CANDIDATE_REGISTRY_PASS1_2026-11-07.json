@@ -862,7 +862,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -1602,7 +1602,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -3626,7 +3626,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -3718,7 +3718,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -6666,7 +6666,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7586,7 +7586,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -8046,7 +8046,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -9520,7 +9520,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -10440,7 +10440,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12190,7 +12190,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12282,7 +12282,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12466,7 +12466,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12558,7 +12558,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12650,7 +12650,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -12742,7 +12742,7 @@
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
