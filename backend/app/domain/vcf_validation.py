@@ -151,6 +151,67 @@ def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
     return {"Number": definition[0], "Type": definition[1]}
 
 
+def _reserved_vcf41_42_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return VCFv4.1/4.2 prose-defined reserved FORMAT wire definitions."""
+    reserved = {
+        "GT": ("1", "String"),
+        "DP": ("1", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("G", "Float"),
+        "GLE": ("1", "String"),
+        "PL": ("G", "Integer"),
+        "GP": ("G", "Float"),
+        "GQ": ("1", "Integer"),
+        "HQ": ("2", "Integer"),
+        "PS": ("1", "Integer"),
+        "PQ": ("1", "Integer"),
+        "EC": ("A", "Integer"),
+        "MQ": ("1", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_vcf43_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return VCFv4.3 Table 6 reserved FORMAT definitions."""
+    reserved = {
+        "AD": ("R", "Integer"), "ADF": ("R", "Integer"), "ADR": ("R", "Integer"),
+        "DP": ("1", "Integer"), "EC": ("A", "Integer"), "FT": ("1", "String"),
+        "GL": ("G", "Float"), "GP": ("G", "Float"), "GQ": ("1", "Integer"),
+        "GT": ("1", "String"), "HQ": ("2", "Integer"), "MQ": ("1", "Integer"),
+        "PL": ("G", "Integer"), "PP": ("G", "Integer"), "PQ": ("1", "Integer"),
+        "PS": ("1", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_vcf44_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return VCFv4.4 Table 7 reserved FORMAT definitions."""
+    definition = _reserved_vcf43_format_definition(field_id)
+    if definition is not None:
+        return definition
+    reserved = {"PSL": ("P", "String"), "PSO": ("P", "Integer"), "PSQ": ("P", "Integer")}
+    value = reserved.get(field_id)
+    return {"Number": value[0], "Type": value[1]} if value else None
+
+
+def _reserved_format_definition_for_version(
+    fileformat: str, field_id: str
+) -> dict[str, str] | None:
+    if fileformat == "VCFv4.0":
+        return _reserved_vcf40_format_definition(field_id)
+    if fileformat in {"VCFv4.1", "VCFv4.2"}:
+        return _reserved_vcf41_42_format_definition(field_id)
+    if fileformat == "VCFv4.3":
+        return _reserved_vcf43_format_definition(field_id)
+    if fileformat == "VCFv4.4":
+        return _reserved_vcf44_format_definition(field_id)
+    if fileformat == "VCFv4.5":
+        return _reserved_vcf45_format_definition(field_id)
+    return None
+
+
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
@@ -2285,10 +2346,23 @@ def validate_vcf_strict(
                         # empty text value; BCF represents this as MISSING.
                         continue
                     definition = format_definitions.get(key)
-                    if definition is None and fileformat == "VCFv4.0":
-                        definition = _reserved_vcf40_format_definition(key)
-                    if definition is None and fileformat == "VCFv4.5":
-                        definition = _reserved_vcf45_format_definition(key)
+                    reserved_definition = _reserved_format_definition_for_version(fileformat, key)
+                    if reserved_definition is not None:
+                        if definition is not None and (
+                            definition.get("Number") != reserved_definition["Number"]
+                            or (
+                                definition.get("Type") != reserved_definition["Type"]
+                                and not (
+                                    reserved_definition["Type"] == "Numeric"
+                                    and definition.get("Type") in {"Integer", "Float", "Numeric"}
+                                )
+                            )
+                        ):
+                            raise StrictVCFValidationError(
+                                f"FORMAT/{key} declaration conflicts with the reserved {fileformat} definition at line {line_no}",
+                                code="VCF_RESERVED_FORMAT_DEFINITION_MISMATCH",
+                            )
+                        definition = reserved_definition
                     if definition is not None:
                         if (
                             fileformat == "VCFv4.0"
