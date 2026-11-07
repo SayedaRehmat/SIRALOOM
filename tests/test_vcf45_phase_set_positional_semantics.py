@@ -622,7 +622,7 @@ def test_vcf45_psl_phase_set_pso_obligation_crosses_chromosomes(
     assert exc.value.code == "VCF_PHASE_SET_PSO_REQUIRED"
 
 
-def test_vcf45_reciprocal_breakend_phase_must_match_same_gt_copy_position(
+def test_vcf45_reciprocal_breakend_phase_values_match_across_different_gt_copy_positions(
     tmp_path: Path,
 ):
     path = tmp_path / "breakend-phase-different-gt-copy.vcf"
@@ -637,7 +637,9 @@ def test_vcf45_reciprocal_breakend_phase_must_match_same_gt_copy_position(
         encoding="utf-8",
     )
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-
-    assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "shared"
+    )
+    assert traversal["ordered_events"][0]["event_kind"] == "RECIPROCAL_BREAKEND_EVENT"
