@@ -804,8 +804,7 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
     db.commit()
 
     fingerprint_value = {"value": "a" * 64}
-    binding_id = uuid4()
-    stable_member_id = uuid4()
+    binding_id, second_binding_id, stable_member_id = uuid4(), uuid4(), uuid4()
     monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
     monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
     monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: variant)
@@ -824,12 +823,18 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
         },
     )
 
-    request = AssessmentInput(models=["AR"], binding_ids=[binding_id], reviewer_note="review")
+    request = AssessmentInput(
+        models=["AR"], binding_ids=[binding_id, second_binding_id], reviewer_note="review",
+    )
+    reordered_request = AssessmentInput(
+        models=["AR"], binding_ids=[second_binding_id, binding_id], reviewer_note="review",
+    )
     principal = SimpleNamespace(user_id=reviewer.id)
     first = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
-    replay = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
+    replay = pedigree.assess_inheritance(analysis.id, variant.id, reordered_request, db, principal)
     assert first["results"][0]["id"] == replay["results"][0]["id"]
     assert first["family_matrix_fingerprint"] == replay["family_matrix_fingerprint"]
+    assert db.scalar(select(func.count(Evidence.id))) == 1
 
     fingerprint_value["value"] = "b" * 64
     revised = pedigree.assess_inheritance(analysis.id, variant.id, request, db, principal)
