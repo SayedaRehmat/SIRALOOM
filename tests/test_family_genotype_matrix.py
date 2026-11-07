@@ -410,7 +410,10 @@ def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch)
         )
         for index in range(2)
     ]
-    partitions = [[SimpleNamespace(ordinal=0)], [SimpleNamespace(ordinal=0)]]
+    partitions = [
+        [SimpleNamespace(ordinal=0, input_artifact_id="normalized-partition-1")],
+        [SimpleNamespace(ordinal=0, input_artifact_id="normalized-partition-2")],
+    ]
     identity_evidence = [
         [
             SimpleNamespace(
