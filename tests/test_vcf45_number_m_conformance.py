@@ -566,10 +566,10 @@ def test_number_m_unstranded_heterozygous_unphased_context_is_reported_unresolve
     assert "VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED" in result["warning_codes"]
     assert result["unstranded_base_modification_unresolved_phase_observation_count"] == 2
 
-def test_number_m_unstranded_phased_gt_without_ps_or_psl_is_record_local(
+def test_number_m_unstranded_fully_phased_gt_without_ps_or_psl_uses_implicit_phase_set(
     tmp_path: Path,
 ):
-    path = tmp_path / "unstranded-cpg-phased-without-phase-set.vcf"
+    path = tmp_path / "unstranded-cpg-phased-implicit-phase-set.vcf"
     path.write_text(
         "##fileformat=VCFv4.5\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
@@ -579,10 +579,9 @@ def test_number_m_unstranded_phased_gt_without_ps_or_psl_is_record_local(
         "1\t11\t.\tG\t.\t.\tPASS\t.\tGT:M5mC\t0|.:0.2\n",
         encoding="utf-8",
     )
-    result = validate_vcf_strict(path, base_modification_strandedness="unstranded")
-    assert result["records"] == 2
-    assert result["unstranded_base_modification_unresolved_phase_observation_count"] == 2
-    assert "VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED" in result["warning_codes"]
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
 
 
 def test_number_m_unstranded_policy_does_not_pair_nonadjacent_bases(
