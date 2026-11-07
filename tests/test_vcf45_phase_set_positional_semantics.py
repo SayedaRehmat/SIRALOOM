@@ -325,6 +325,21 @@ def test_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_interval
     assert validate_vcf_strict(path)["records"] == 2
 
 
+def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-missing-cipos.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=.,.\n"
+        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=.,.\n",
+        encoding="utf-8",
+    )
+    result = validate_vcf_strict(path)
+    assert result["unresolved_breakend_coordinate_count"] == 2
+    assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
+
 def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
     tmp_path: Path,
 ):
