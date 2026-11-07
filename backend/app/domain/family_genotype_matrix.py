@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Sequence
 from uuid import UUID
 
@@ -20,18 +21,36 @@ def _call_state(call: dict[str, Any] | None) -> str:
     if call is None:
         # Absence from a variant-only VCF is not a reference genotype.
         return "NO_RECORD"
-    genotype = call.get("normalized_genotype") or call.get("genotype")
+
+    projection_status = call.get("projection_status") or call.get("projected_status")
+    projection_states = {
+        "AVAILABLE": "CALL_PRESENT",
+        "NO_CALL": "NO_CALL",
+        "PARTIAL_CALL": "PARTIAL_NO_CALL",
+        "GENOTYPE_UNAVAILABLE": "GENOTYPE_UNAVAILABLE",
+        "CONTAINS_OTHER_ALT": "OTHER_ALT_PRESENT",
+        "CONTAINS_OTHER_ALT_AND_MISSING": "OTHER_ALT_AND_MISSING",
+        "INVALID_SOURCE_GT": "INVALID_CALL",
+        "INVALID_SOURCE_ALT_MAPPING": "INVALID_CALL",
+        "SOURCE_NORMALIZED_PLOIDY_MISMATCH": "INVALID_CALL",
+    }
+    if projection_status in projection_states:
+        return projection_states[projection_status]
+
+    genotype = call.get("projected_genotype") or call.get("normalized_genotype") or call.get("genotype")
     if not isinstance(genotype, str) or not genotype:
         return "GENOTYPE_UNAVAILABLE"
-    alleles = genotype.replace("|", "/").split("/")
-    if any(allele == "." for allele in alleles):
-        return "NO_CALL" if all(allele == "." for allele in alleles) else "PARTIAL_NO_CALL"
+    if not re.fullmatch(r"(?:\\d+|\\.)(?:[/|](?:\\d+|\\.))*", genotype):
+        return "INVALID_CALL"
+    alleles = re.split(r"[/|]", genotype)
     try:
         missing_alleles = int(call.get("missing_allele_count") or 0)
     except (TypeError, ValueError):
-        missing_alleles = 0
+        return "INVALID_CALL"
+    if missing_alleles < 0 or missing_alleles != sum(allele == "." for allele in alleles):
+        return "INVALID_CALL"
     if missing_alleles > 0:
-        return "PARTIAL_NO_CALL" if any(allele not in {"", "."} for allele in alleles) else "NO_CALL"
+        return "NO_CALL" if missing_alleles == len(alleles) else "PARTIAL_NO_CALL"
     return "CALL_PRESENT"
 
 
@@ -78,18 +97,20 @@ def build_family_genotype_matrix(
                 "source_genotype": call.get("source_genotype"),
                 "normalized_genotype": call.get("normalized_genotype"),
                 "projected_genotype": call.get("projected_genotype"),
-                "zygosity": call.get("normalized_zygosity") or call.get("zygosity", "UNKNOWN"),
+                "zygosity": call.get("projected_zygosity") or call.get("normalized_zygosity") or call.get("zygosity", "UNKNOWN"),
                 "reference_allele_dosage": call.get("reference_allele_dosage"),
                 "selected_alt_dosage": call.get("selected_alt_dosage"),
                 "other_alt_dosage": call.get("other_alt_dosage"),
                 "missing_allele_count": call.get("missing_allele_count"),
-                "phase": call.get("normalized_phase") or call.get("phase", "UNSPECIFIED"),
+                "phase": call.get("projected_phase") or call.get("normalized_phase") or call.get("phase", "UNSPECIFIED"),
                 "phase_set": call.get("phase_set"),
                 "quality_metrics": _quality_metrics(call.get("format_values")),
                 "format_values": call.get("format_values", {}),
                 "source_record_sha256": call.get("source_record_sha256"),
                 "source_record_index": call.get("source_record_index"),
                 "projection_status": call.get("projection_status", "GENOTYPE_UNAVAILABLE"),
+                "projected_zygosity": call.get("projected_zygosity"),
+                "projected_phase": call.get("projected_phase"),
                 "sample_call_status": call.get("status", "GENOTYPE_UNAVAILABLE"),
             })
         matrix_samples.append({
