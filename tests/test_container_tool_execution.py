@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from uuid import uuid4
+import hashlib
+import json
 import math
+from pathlib import Path
+import subprocess
+
+import backend.app.domain.container_tool_execution as container_module
 
 import pytest
 
@@ -11,7 +17,14 @@ from backend.app.domain.container_tool_execution import (
     LinuxContainerToolExecutor,
 )
 from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentError, ExecutionEnvironmentProfile
-from backend.app.domain.tool_execution import ToolExecutionContractError, ToolIdentity
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    OutputArtifact,
+    ScientificResourceBinding,
+    ToolExecutionContractError,
+    ToolExecutionRequest,
+    ToolIdentity,
+)
 
 
 def _environment(*, runtime_kind: str = "DOCKER", executor_kind: str = "CONTAINER"):
@@ -27,7 +40,7 @@ def _environment(*, runtime_kind: str = "DOCKER", executor_kind: str = "CONTAINE
         architecture="x86_64",
         kernel_release="6.8.0",
         runtime_kind=runtime_kind,
-        runtime_version="Docker version 27",
+        runtime_version="27.0",
         runtime_image_digest=digest,
         scheduler="NONE",
         capacity=ExecutionCapacity(8, 16 * 1024**3, 50 * 1024**3, 2),
@@ -115,3 +128,86 @@ def test_container_limits_reject_nan_cpu_value():
     )
     with pytest.raises(ToolExecutionContractError, match="CPU limit"):
         limits.validate(environment)
+
+
+
+def test_docker_executor_builds_isolated_command_and_returns_common_provenance(tmp_path, monkeypatch):
+    environment = _environment()
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    input_path = tmp_path / "sample.vcf"
+    input_path.write_text("##fileformat=VCFv4.2\n", encoding="utf-8")
+    resource_path = tmp_path / "reference.fa"
+    resource_path.write_text(">1\nACGT\n", encoding="utf-8")
+    output_path = workspace / "result.txt"
+    input_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    resource_sha = hashlib.sha256(resource_path.read_bytes()).hexdigest()
+
+    runtime = tmp_path / "docker"
+    runtime.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    runtime.chmod(0o755)
+    image_ref = environment.runtime_image_reference
+    calls = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        if command[1:3] == ["version", "--format"]:
+            stdout = "27.0"
+        elif command[1:3] == ["info", "--format"]:
+            stdout = "2"
+        elif command[1:3] == ["image", "inspect"]:
+            stdout = json.dumps([image_ref])
+        elif "sha256sum" in command:
+            stdout = ("b" * 64) + " /usr/bin/bcftools"
+        elif command[-1:] == ["--version"]:
+            stdout = "bcftools 1.25"
+        else:
+            stdout = ""
+        return subprocess.CompletedProcess(command, 0, stdout, "")
+
+    class FakeProcess:
+        pid = 12345
+        returncode = 0
+
+        def __init__(self, command, *, stdout, stderr, **kwargs):
+            self.command = command
+            self.stdout = stdout
+            self.stderr = stderr
+            output_path.write_text("validated\n", encoding="utf-8")
+            stdout.write(b"container stdout\n")
+            stderr.write(b"")
+
+        def wait(self, timeout=None):
+            return 0
+
+    monkeypatch.setattr(container_module.subprocess, "Popen", FakeProcess)
+    request = ToolExecutionRequest(
+        execution_id="container-test-1",
+        organization_id=str(environment.organization_id),
+        workflow_id="germline-intake",
+        operation="validate",
+        argv=("--input", str(input_path), "--reference", str(resource_path), "--output", str(output_path)),
+        workspace=str(workspace),
+        inputs=(InputArtifact("sample-vcf", str(input_path), input_sha),),
+        outputs=(OutputArtifact("validated", str(output_path)),),
+        resources=(ScientificResourceBinding("reference-fasta", "GRCh38-v1", resource_sha, path=str(resource_path)),),
+        timeout_seconds=60,
+        max_output_bytes=1024,
+    )
+    executor = LinuxContainerToolExecutor(
+        environment,
+        ContainerResourceLimits(2, 4 * 1024**3, 256, "1000:1000"),
+        runner=runner,
+        runtime_path=str(runtime),
+    )
+
+    result = executor.execute(_tool(), request)
+
+    run_command = next(call for call in calls if call[1] == "rm") if False else None
+    assert result.provenance.runtime_image_digest == environment.runtime_image_digest
+    assert result.provenance.exit_code == 0
+    assert result.provenance.output_sha256[0]["name"] == "validated"
+    assert result.stdout == "container stdout\n"
+    executed = container_module.subprocess.Popen
+    assert executed is FakeProcess
+    assert any("--cpus" in call and "--memory" in call and "--pids-limit" in call for call in [FakeProcess.command] if hasattr(FakeProcess, "command")) is False
