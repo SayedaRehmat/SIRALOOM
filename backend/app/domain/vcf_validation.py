@@ -1970,9 +1970,16 @@ def validate_vcf_strict(
             ]
             breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
             if breakend_alts:
-                if info_values.get("SVTYPE") != "BND":
+                # VCFv4.5 deprecates INFO/SVTYPE; breakpoint notation itself
+                # identifies a BND. Earlier supported versions retain the
+                # explicit SVTYPE=BND requirement used by their source contract.
+                declared_svtype = info_values.get("SVTYPE")
+                if (
+                    (fileformat != "VCFv4.5" and declared_svtype != "BND")
+                    or (fileformat == "VCFv4.5" and declared_svtype not in {None, "BND"})
+                ):
                     raise StrictVCFValidationError(
-                        f"Breakend ALT requires INFO/SVTYPE=BND at line {line_no}",
+                        f"Breakend ALT has an incompatible INFO/SVTYPE value at line {line_no}",
                         code="VCF_BREAKEND_SVTYPE_INVALID",
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
