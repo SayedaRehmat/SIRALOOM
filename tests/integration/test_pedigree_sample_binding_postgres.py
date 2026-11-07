@@ -5,7 +5,7 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, delete, update
+from sqlalchemy import create_engine, update
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.orm import Session
 
