@@ -65,7 +65,7 @@ jobs:
         shell: bash -l {0}
         run: |
           set -euo pipefail
-          pytest -q tests/test_vcf_validation.py tests/test_vcf_scale_benchmark.py
+          pytest -q tests/test_vcf_validation.py tests/test_vcf_scale_benchmark.py tests/test_reference_package.py
 
       - name: Acquire NIST assets and verify official MD5 plus local SHA-256
         shell: bash -l {0}
