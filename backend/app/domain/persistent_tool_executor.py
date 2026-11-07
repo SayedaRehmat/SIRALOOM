@@ -83,6 +83,7 @@ class PersistentToolExecutionService:
             "workspace": "$WORKSPACE",
             "timeout_seconds": request.timeout_seconds,
             "max_output_bytes": request.max_output_bytes,
+            "request_environment": dict(request.environment),
             "resource_bindings": [
                 {
                     "resource_id": item.resource_id,
