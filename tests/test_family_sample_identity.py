@@ -10,7 +10,8 @@ from sqlalchemy import create_engine, inspect, text
 
 from backend.app.api.v1 import pedigree
 from backend.app.infrastructure.db.models import (
-    Analysis, Artifact, Case, PedigreeMember, PedigreeSampleBinding, Specimen,
+    Analysis, Artifact, Case, PedigreeMember, PedigreeSampleBinding,
+    PedigreeSampleIdentityEvidence, Specimen,
 )
 
 
@@ -31,7 +32,7 @@ class _Audit:
 
 
 class _BindingDB:
-    def __init__(self, *, case, member, specimen, analysis, artifact, previous=None, workflow=None):
+    def __init__(self, *, case, member, specimen, analysis, artifact, previous=None, evidence=None, workflow=None):
         self.objects = {
             Case: case,
             PedigreeMember: member,
@@ -39,6 +40,7 @@ class _BindingDB:
             Analysis: analysis,
             Artifact: artifact,
             PedigreeSampleBinding: previous,
+            PedigreeSampleIdentityEvidence: evidence,
         }
         self.workflow = workflow
         self.scalar_results = []
@@ -324,6 +326,104 @@ def test_sample_binding_migration_is_append_only_and_refuses_data_loss(tmp_path,
     with pytest.raises(RuntimeError, match="Refusing to downgrade"):
         command.downgrade(config, "0062_phenotype_observation_amendments")
     engine.dispose()
+
+
+
+
+def test_identity_evidence_is_recorded_pending_with_method_and_provenance(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    binding = SimpleNamespace(
+        id=uuid4(), case_id=case.id, analysis_id=analysis.id, binding_status="UNVERIFIED",
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=binding,
+    )
+    db.scalar_results = [None, None]
+
+    result = pedigree.create_sample_identity_evidence(
+        case.id, binding.id,
+        pedigree.SampleIdentityEvidenceInput(
+            evidence_type="SAMPLE_IDENTITY_QC", result="PASS",
+            method="SNP_FINGERPRINT_CONCORDANCE", method_version="2.1",
+            evidence_reference="IDENTITY-QC-REPORT-1",
+            metrics={"concordance": 0.9998},
+        ),
+        db, principal,
+    )
+    row = next(item for item in db.added if isinstance(item, PedigreeSampleIdentityEvidence))
+    assert result["review_status"] == "PENDING"
+    assert result["result"] == "PASS"
+    assert row.metrics_json == {"concordance": 0.9998}
+    assert row.recorded_by == principal.user_id
+
+
+def test_identity_evidence_review_appends_immutable_acceptance_revision(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id)
+    previous = SimpleNamespace(
+        id=uuid4(), case_id=case.id, binding_id=binding.id,
+        evidence_type="CHAIN_OF_CUSTODY", result="PASS",
+        method="LIMS_CHAIN_OF_CUSTODY", method_version="1",
+        evidence_reference="LIMS-ACCESSION-1", source_artifact_id=None,
+        metrics_json={}, review_status="PENDING", review_reason=None, version=1,
+        supersedes_evidence_id=None, evidence_fingerprint="a" * 64,
+        recorded_by=principal.user_id, reviewed_by=None, reviewed_at=None,
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=binding, evidence=previous,
+    )
+    db.scalar_results = [None]
+
+    result = pedigree.review_sample_identity_evidence(
+        case.id, binding.id, previous.id,
+        pedigree.SampleIdentityEvidenceReviewInput(
+            decision="ACCEPTED", reason="Matched accession and custody log",
+        ),
+        db, principal,
+    )
+    revision = next(item for item in db.added if isinstance(item, PedigreeSampleIdentityEvidence))
+    assert result["review_status"] == "ACCEPTED"
+    assert revision.version == 2
+    assert revision.supersedes_evidence_id == previous.id
+    assert revision.reviewed_by == principal.user_id
+
+
+def test_binding_verification_requires_both_accepted_identity_evidence_types(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    previous = PedigreeSampleBinding(
+        id=uuid4(), case_id=case.id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256=artifact.sha256, sample_name="FAM-01",
+        binding_status="UNVERIFIED", binding_method="LAB_SAMPLE_SHEET",
+        evidence_reference="LIMS-ACCESSION-1", version=1,
+        binding_fingerprint="e" * 64, recorded_by=principal.user_id,
+    )
+    workflow = SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifact.id)])
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=previous, workflow=workflow,
+    )
+    db.scalar_results = [None]
+    db.query_rows = [[]]
+    monkeypatch.setattr(
+        pedigree, "get_analysis_sample_calls",
+        lambda *_args: {uuid4(): {"sample_name": "FAM-01", "genotype": "0/1"}},
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        pedigree.review_sample_binding(
+            case.id, previous.id,
+            pedigree.SampleBindingReviewInput(decision="VERIFIED", reason="Review"),
+            db, principal,
+        )
+    assert exc.value.status_code == 409
+    assert "CHAIN_OF_CUSTODY" in exc.value.detail
+    assert db.added == []
 
 
 def test_sample_binding_write_requires_case_write_authorization(monkeypatch):
