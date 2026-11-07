@@ -144,13 +144,14 @@ def test_vcf44_pso_ordinal_tie_is_preserved_as_unresolved(
 def test_vcf44_psl_phase_set_is_global_across_chromosomes(tmp_path: Path):
     path = tmp_path / "vcf44-psl-global-across-chromosomes.vcf"
     path.write_text(
-        "##fileformat=VCFv4.4\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
-        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8;SVTYPE=DEL\tGT:PSL:PSO\t0|1:.,shared:.,3\n"
-        "2\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,shared:.,4\n",
+        """##fileformat=VCFv4.4
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">
+##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1
+1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8;SVTYPE=DEL\tGT:PSL:PSO\t0|1:.,shared:.,3
+2\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,shared:.,4
+""",
         encoding="utf-8",
     )
 
