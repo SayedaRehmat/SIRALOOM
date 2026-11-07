@@ -315,6 +315,7 @@ def _normalize_consequences(transcripts):
         genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
     )
     record = {
+        "input": "1 100 SIRALOOM_0 A G . PASS .",
         "start": 100,
         "seq_region_name": "1",
         "allele_string": "A/G",
