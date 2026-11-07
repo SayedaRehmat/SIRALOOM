@@ -303,3 +303,116 @@ def test_fasta_index_consistency_accepts_multiline_crlf_fasta(tmp_path: Path):
     fai.write_text("1\t6\t16\t4\t6\n", encoding="utf-8")
     result = validate_fasta_index_consistency(fasta, fai)
     assert result == [{"name": "1", "length": 6}]
+
+
+def _write_test_bgzf(path: Path, payload: bytes, *, block_size: int = 10_000) -> None:
+    """Write valid BGZF members and a matching little-endian .gzi index."""
+    import binascii
+    import struct
+    import zlib
+
+    def make_block(data: bytes) -> bytes:
+        compressor = zlib.compressobj(level=6, wbits=-15)
+        compressed = compressor.compress(data) + compressor.flush()
+        extra = b"BC" + struct.pack("<H", 2) + b"\\x00\\x00"
+        header = (
+            b"\\x1f\\x8b\\x08\\x04"
+            + b"\\x00\\x00\\x00\\x00"
+            + b"\\x00\\xff"
+            + struct.pack("<H", len(extra))
+            + extra
+        )
+        total_size = len(header) + len(compressed) + 8
+        header = header[:-2] + struct.pack("<H", total_size - 1)
+        trailer = struct.pack(
+            "<II",
+            binascii.crc32(data) & 0xFFFFFFFF,
+            len(data) & 0xFFFFFFFF,
+        )
+        block = header + compressed + trailer
+        assert len(block) == total_size <= 65536
+        return block
+
+    compressed_offset = 0
+    uncompressed_offset = 0
+    index_entries: list[tuple[int, int]] = []
+    with path.open("wb") as handle:
+        chunks = [
+            payload[start : start + block_size]
+            for start in range(0, len(payload), block_size)
+        ]
+        for block_index, chunk in enumerate(chunks):
+            if block_index:
+                index_entries.append((compressed_offset, uncompressed_offset))
+            block = make_block(chunk)
+            handle.write(block)
+            compressed_offset += len(block)
+            uncompressed_offset += len(chunk)
+        handle.write(make_block(b""))
+
+    gzi = Path(f"{path}.gzi")
+    gzi.write_bytes(
+        struct.pack("<Q", len(index_entries))
+        + b"".join(struct.pack("<QQ", compressed, uncompressed) for compressed, uncompressed in index_entries)
+    )
+
+
+def _write_bgzf_reference(tmp_path: Path) -> tuple[Path, str]:
+    sequence = "ACGT" * 30_000
+    header = b">1 description\\n"
+    sequence_lines = [
+        sequence[start : start + 60].encode("ascii") + b"\\n"
+        for start in range(0, len(sequence), 60)
+    ]
+    fasta_bytes = header + b"".join(sequence_lines)
+    fasta = tmp_path / "reference.fa.bgz"
+    _write_test_bgzf(fasta, fasta_bytes)
+    fai = Path(f"{fasta}.fai")
+    fai.write_text(
+        f"1\\t{len(sequence)}\\t{len(header)}\\t60\\t61\\n",
+        encoding="utf-8",
+    )
+    return fasta, sequence
+
+
+def test_fasta_reference_reads_bgzf_with_uncompressed_fai_offsets_and_gzi(tmp_path: Path):
+    fasta, sequence = _write_bgzf_reference(tmp_path)
+
+    contigs = validate_fasta_index_consistency(fasta, Path(f"{fasta}.fai"))
+    assert contigs == [{"name": "1", "length": len(sequence)}]
+
+    with FastaReference(fasta) as reference:
+        assert reference.fetch("1", 9_820, 9_860) == sequence[9_820:9_860]
+        assert reference.fetch("1", 59_990, 60_030) == sequence[59_990:60_030]
+        assert reference.base("1", 120_000) == sequence[-1]
+
+
+def test_vcf_reference_validation_reads_bgzf_reference_across_block_boundary(tmp_path: Path):
+    fasta, sequence = _write_bgzf_reference(tmp_path)
+    position = 9_821
+    ref = sequence[position - 1 : position + 4]
+    alt = "T" if ref[0] != "T" else "C"
+    vcf = tmp_path / "bgzf-reference.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.3\\n"
+        f"##contig=<ID=1,length={len(sequence)}>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        f"1\\t{position}\\t.\\t{ref}\\t{alt}\\t.\\tPASS\\t.\\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_reference_alleles(vcf, fasta)
+
+    assert result["checked_record_count"] == 1
+    assert result["resolved_contig_aliases"] == {}
+
+
+def test_fasta_reference_rejects_bgzf_without_matching_gzi(tmp_path: Path):
+    fasta = tmp_path / "reference.fa.bgz"
+    fasta.write_bytes(b"not-a-bgzf-stream")
+    Path(f"{fasta}.fai").write_text("1\\t4\\t3\\t4\\t5\\n", encoding="utf-8")
+
+    with pytest.raises(ReferenceError) as exc:
+        FastaReference(fasta)
+
+    assert exc.value.code == "REFERENCE_BGZF_INDEX_MISSING"
