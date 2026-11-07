@@ -94,7 +94,6 @@ class SampleIdentityEvidenceInput(BaseModel):
     evidence_reference: str = Field(min_length=1, max_length=1000)
     source_artifact_id: UUID | None = None
     metrics: dict = Field(default_factory=dict)
-    supersedes_evidence_id: UUID | None = None
 
 
 class SampleIdentityEvidenceReviewInput(BaseModel):
@@ -600,34 +599,6 @@ def list_sample_identity_evidence(
     }
 
 
-@router.get("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence")
-def list_sample_identity_evidence(
-    case_id: UUID,
-    binding_id: UUID,
-    db: Session = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
-):
-    case = db.get(Case, case_id)
-    if case is None:
-        raise HTTPException(404, "Case not found")
-    require_case_permission(case, principal, db, "read")
-    binding = db.get(PedigreeSampleBinding, binding_id)
-    if binding is None or binding.case_id != case_id:
-        raise HTTPException(404, "Sample binding not found")
-    rows = db.scalars(select(PedigreeSampleIdentityEvidence).where(
-        PedigreeSampleIdentityEvidence.case_id == case_id,
-        PedigreeSampleIdentityEvidence.binding_id == binding_id,
-    ).order_by(
-        PedigreeSampleIdentityEvidence.evidence_type,
-        PedigreeSampleIdentityEvidence.version,
-    )).all()
-    return {
-        "case_id": str(case_id),
-        "binding_id": str(binding_id),
-        "evidence": [_sample_identity_evidence_payload(row) for row in rows],
-    }
-
-
 @router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence", status_code=201)
 def create_sample_identity_evidence(
     case_id: UUID,
@@ -658,18 +629,7 @@ def create_sample_identity_evidence(
         if evidence_artifact is None or evidence_artifact.case_id != case_id:
             raise HTTPException(404, "Identity evidence artifact not found in this case")
 
-    previous_evidence = None
     evidence_version = 1
-    if body.supersedes_evidence_id is not None:
-        previous_evidence = db.get(PedigreeSampleIdentityEvidence, body.supersedes_evidence_id)
-        if (
-            previous_evidence is None
-            or previous_evidence.case_id != case_id
-            or previous_evidence.binding_id != binding.id
-            or previous_evidence.evidence_type != body.evidence_type
-        ):
-            raise HTTPException(404, "Prior identity evidence not found for this binding and evidence type")
-        evidence_version = previous_evidence.version + 1
 
     payload = {
         "schema_version": 1, "case_id": str(case_id), "binding_id": str(binding.id),
@@ -678,7 +638,7 @@ def create_sample_identity_evidence(
         "evidence_reference": body.evidence_reference.strip(),
         "source_artifact_id": str(body.source_artifact_id) if body.source_artifact_id else None,
         "metrics": body.metrics, "review_status": "PENDING", "version": evidence_version,
-        "supersedes_evidence_id": str(previous_evidence.id) if previous_evidence else None,
+        "supersedes_evidence_id": None,
     }
     evidence_fingerprint = _sample_identity_evidence_fingerprint(payload)
     existing = db.scalar(select(PedigreeSampleIdentityEvidence).where(
@@ -687,12 +647,6 @@ def create_sample_identity_evidence(
     ))
     if existing is not None:
         return _sample_identity_evidence_payload(existing)
-    if previous_evidence is not None:
-        prior_successor = db.scalar(select(PedigreeSampleIdentityEvidence).where(
-            PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous_evidence.id,
-        ))
-        if prior_successor is not None:
-            raise HTTPException(409, "Prior identity evidence already has a conflicting successor revision")
     row = PedigreeSampleIdentityEvidence(
         id=uuid4(), case_id=case_id, binding_id=binding.id,
         evidence_type=body.evidence_type, result=body.result,
@@ -700,7 +654,6 @@ def create_sample_identity_evidence(
         evidence_reference=body.evidence_reference.strip(),
         source_artifact_id=body.source_artifact_id, metrics_json=body.metrics,
         review_status="PENDING", version=evidence_version,
-        supersedes_evidence_id=previous_evidence.id if previous_evidence else None,
         evidence_fingerprint=evidence_fingerprint, recorded_by=principal.user_id,
     )
     db.add(row)
