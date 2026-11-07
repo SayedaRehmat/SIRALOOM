@@ -34,7 +34,7 @@ def _checked(command: list[str]) -> str:
 
 
 def _build_context(tmp_path: Path):
-    runtime = shutil.which(RUNTIME.casefold())
+    runtime = os.environ.get("SIRALOOM_QUALIFICATION_RUNTIME_PATH") or shutil.which(RUNTIME.casefold())
     assert runtime and Path(runtime).is_absolute()
     if RUNTIME == "DOCKER":
         version = _checked([runtime, "version", "--format", "{{.Server.Version}}"])
