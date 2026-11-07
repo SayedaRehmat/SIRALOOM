@@ -75,7 +75,7 @@ This audit inspects the current-main source, model definitions, migrations, test
   - `backend/app/api/v1/clinical_intake.py`
   - `frontend/components/ClinicalContextIntake.tsx`
   - `tests/test_clinical_intake_revisions.py`
-- **Verification:** source port only; working-branch CI has not yet run.
+- **Verification:** source port committed; the full working-branch CI is still pending.
 
 ### PR #244 — phenotype correction/retraction lifecycle
 - Current PR delta against audited main: seven files: phenotype API, clinical snapshot, reproducibility, DB model, phenotype UI, one migration and amendment tests.
@@ -84,7 +84,8 @@ This audit inspects the current-main source, model definitions, migrations, test
 - Blocking integration issue: its migration is revision `0058_phenotype_observation_amendments` with down_revision `0057_clinical_intake_revisions`. Current main already has `0058_artifact_upload_intents` and `0059_specimen_ploidy_evidence`. It must be renumbered to a new revision after `0059_specimen_ploidy_evidence` and tested on a database upgraded through current head.
 - API file overlaps PR #245's phenotype export routes. Merge the lifecycle and export changes in one combined API file; do not overwrite either feature with the other's stale full file.
 - Review lifecycle constraints, idempotency, concurrent amendment behavior, active-analysis freeze, snapshot schema v1/v2/v3 compatibility, digest stability and UI history before merge.
-- **Action:** not yet ported; waiting for a combined phenotype API and migration-safe integration.
+- **Action taken:** ported lifecycle API, snapshot v3, reproducibility digest behavior, phenotype amendment UI, and amendment tests. Renumbered the migration to `0060_phenotype_observation_amendments` with down_revision `0059_specimen_ploidy_evidence`. Added PostgreSQL and SQLite database triggers that reject UPDATE/DELETE of amendment events, plus migration trigger assertions. Combined the API with PR #245 export routes instead of overwriting one feature with the other.
+- **Remaining verification:** run upgrade from empty database and from deployed schema, verify downgrade protection with real amendment rows, run concurrent correction/retraction tests, and test old snapshot v1/v2 replay plus new v3 digests. Full working-branch CI is pending.
 
 ### PR #245 — GA4GH Phenopackets v2 and FHIR R5 export
 - Current compare against audited main shows a 10-file remaining delta: FHIR R5 adapter, Phenopackets v2 adapter, phenotype API export routes, interoperability documentation, validator script, workflow, dependency pins and tests.
@@ -93,7 +94,8 @@ This audit inspects the current-main source, model definitions, migrations, test
 - Historical SIRALOOM CI and external interoperability workflow passed at head `99373466996cd07b03f08cd6f4754fdfa290b65c`. This does not establish current-main compatibility.
 - The PR itself acknowledges limitations: export-only, no round-trip import/reconciliation, no published FHIR StructureDefinitions/profiles, no official HL7 validator execution/receiver testing, no full FHIR Specimen resources, no consent/legal-basis workflow, and no observation-level sign-off.
 - Phenopackets strict export blocks lossy states unless explicit lossy opt-in; FHIR preserves custom status extensions. Custom extensions are not yet externally governed.
-- **Action:** not yet ported; integrate after phenotype lifecycle so both use the same active/history semantics. Keep interoperability explicitly optional and loss-aware.
+- **Action taken:** selectively ported only the 10-file current-main delta: FHIR R5 and Phenopackets v2 adapters, API routes, docs, validator script, external conformance workflow, dependency pins and tests. Excluded the historical branch's unrelated upload/VCF/reportability/deployment work. Integrated with PR #244 lifecycle semantics: standards documents receive only active phenotype rows; the Phenopackets sidecar retains amendment lifecycle and replacement fingerprints.
+- **Remaining verification:** run the official GA4GH CLI and HL7 validator on the combined working branch; verify exact release/checksum retrieval and report artifacts. Historical CI success is not current-branch qualification.
 
 ## 5. Reconciliation order
 
@@ -123,5 +125,8 @@ This audit inspects the current-main source, model definitions, migrations, test
 
 - Base: current main SHA above.
 - PR #247's three-file clinical-intake delta is committed selectively.
-- PR #244 and #245 remain unported pending the combined lifecycle/export integration.
-- No test/CI/clinical qualification claim is made for the working branch yet.
+- PR #244's lifecycle implementation is ported with a new migration 0060 after current main's 0059, database-level append-only triggers, schema-v3 snapshots, reproducibility handling, UI and tests.
+- PR #245's clinical interoperability delta is ported selectively. Unrelated artifact upload, VCF, reportability and deployment work was excluded.
+- The phenotype API combines both PRs; standards exports exclude superseded/retracted observations while the Phenopackets sidecar preserves lifecycle history.
+- A dedicated regression test covers current-vs-historical phenotype export behavior.
+- **No tests have yet been executed on this combined branch.** No CI, external-validator or clinical/laboratory qualification claim is made until the new branch PR checks complete.
