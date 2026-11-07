@@ -228,14 +228,16 @@ class VEPProvider(ScientificResourceProvider):
                     runtime_path=runtime_path,
                 )
                 input_digest = tool_sha256_file(input_vcf)
-                cache_tree_digest = sha256_resource_path(Path(self.cache_dir))
+                cache_tree_digest = str(
+                    (self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or ""
+                )
                 resource_bindings = (
                     ScientificResourceBinding(
-                        resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{build}",
+                        resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{build}",
                         version=self.cache_version,
-                        sha256=cache_tree_digest,
+                        sha256=self.cache_manifest_sha256,
                         assembly=build,
-                        path=self.cache_dir,
+                        path=self.cache_manifest,
                     ),
                 )
                 if self.fasta:
