@@ -304,10 +304,10 @@
       "source_line": 272,
       "source_text": "The following subtypes are recommended:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900149",
-        "VCF-REQ-900150",
-        "VCF-REQ-900151",
-        "VCF-REQ-900152"
+        "VCF-REQ-900128",
+        "VCF-REQ-900129",
+        "VCF-REQ-900130",
+        "VCF-REQ-900131"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -322,7 +322,7 @@
       "source_line": 292,
       "source_text": "Breakpoint assemblies for structural variations may use an external file:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900055"
+        "VCF-REQ-900054"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -332,8 +332,8 @@
       "source_line": 301,
       "source_text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900056",
-        "VCF-REQ-900057"
+        "VCF-REQ-900055",
+        "VCF-REQ-900056"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -343,8 +343,8 @@
       "source_line": 302,
       "source_text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900058",
-        "VCF-REQ-900059"
+        "VCF-REQ-900057",
+        "VCF-REQ-900058"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -354,9 +354,9 @@
       "source_line": 322,
       "source_text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900119",
-        "VCF-REQ-900120",
-        "VCF-REQ-900121"
+        "VCF-REQ-900059",
+        "VCF-REQ-900060",
+        "VCF-REQ-900061"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -366,7 +366,7 @@
       "source_line": 329,
       "source_text": "The contig names must not use a reserved symbolic allele name.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900063"
+        "VCF-REQ-900062"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -376,7 +376,7 @@
       "source_line": 391,
       "source_text": "  All entries for a specific CHROM must form a contiguous block within the VCF file.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900064"
+        "VCF-REQ-900063"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -386,7 +386,7 @@
       "source_line": 392,
       "source_text": "  (String, no whitespace permitted, Required).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900065"
+        "VCF-REQ-900064"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -396,7 +396,7 @@
       "source_line": 397,
       "source_text": "  (Integer, Required)",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900066"
+        "VCF-REQ-900065"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -406,7 +406,7 @@
       "source_line": 399,
       "source_text": "  If this is a dbSNP variant the rs number(s) should be used.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900067"
+        "VCF-REQ-900066"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -416,7 +416,7 @@
       "source_line": 400,
       "source_text": "  No identifier should be present in more than one data record.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900068"
+        "VCF-REQ-900067"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -426,8 +426,8 @@
       "source_line": 403,
       "source_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900069",
-        "VCF-REQ-900137"
+        "VCF-REQ-900068",
+        "VCF-REQ-900125"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -439,9 +439,9 @@
       "source_line": 406,
       "source_text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900122",
-        "VCF-REQ-900123",
-        "VCF-REQ-900124"
+        "VCF-REQ-900069",
+        "VCF-REQ-900070",
+        "VCF-REQ-900071"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -451,8 +451,8 @@
       "source_line": 407,
       "source_text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900073",
-        "VCF-REQ-900074"
+        "VCF-REQ-900072",
+        "VCF-REQ-900073"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -462,7 +462,7 @@
       "source_line": 409,
       "source_text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900075"
+        "VCF-REQ-900074"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -472,7 +472,7 @@
       "source_line": 411,
       "source_text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900076"
+        "VCF-REQ-900075"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -482,12 +482,12 @@
       "source_line": 416,
       "source_text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}.",
       "derived_candidate_requirement_ids": [
+        "VCF-REQ-900076",
         "VCF-REQ-900077",
         "VCF-REQ-900078",
         "VCF-REQ-900079",
         "VCF-REQ-900080",
-        "VCF-REQ-900081",
-        "VCF-REQ-900082"
+        "VCF-REQ-900081"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -497,7 +497,7 @@
       "source_line": 417,
       "source_text": "  If there are no alternative alleles, then the MISSING value must be used.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900083"
+        "VCF-REQ-900082"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -507,8 +507,8 @@
       "source_line": 418,
       "source_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900084",
-        "VCF-REQ-900085"
+        "VCF-REQ-900083",
+        "VCF-REQ-900084"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -518,7 +518,7 @@
       "source_line": 422,
       "source_text": "  If unknown, the MISSING value must be specified. (Float)",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900086"
+        "VCF-REQ-900085"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -528,7 +528,7 @@
       "source_line": 425,
       "source_text": "  `0' is reserved and must not be used as a filter String.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900087"
+        "VCF-REQ-900086"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -538,7 +538,7 @@
       "source_line": 426,
       "source_text": "  If filters have not been applied, then this field must be set to the MISSING value.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900088"
+        "VCF-REQ-900087"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -548,7 +548,7 @@
       "source_line": 429,
       "source_text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]].",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900089"
+        "VCF-REQ-900088"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -558,8 +558,8 @@
       "source_line": 433,
       "source_text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900125",
-        "VCF-REQ-900126"
+        "VCF-REQ-900089",
+        "VCF-REQ-900090"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -569,8 +569,8 @@
       "source_line": 435,
       "source_text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900127",
-        "VCF-REQ-900128"
+        "VCF-REQ-900091",
+        "VCF-REQ-900092"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -580,7 +580,7 @@
       "source_line": 437,
       "source_text": "  The exact format of each INFO key should be specified in the meta-information (as described above).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900092"
+        "VCF-REQ-900093"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -590,7 +590,7 @@
       "source_line": 439,
       "source_text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900093"
+        "VCF-REQ-900094"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -600,7 +600,7 @@
       "source_line": 488,
       "source_text": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900129"
+        "VCF-REQ-900095"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -610,9 +610,9 @@
       "source_line": 609,
       "source_text": "  These values should be described in the meta-information in the same way as FILTERs.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900095",
-        "VCF-REQ-900138",
-        "VCF-REQ-900139"
+        "VCF-REQ-900096",
+        "VCF-REQ-900126",
+        "VCF-REQ-900127"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -624,14 +624,14 @@
       "source_line": 825,
       "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900153",
-        "VCF-REQ-900154",
-        "VCF-REQ-900155",
-        "VCF-REQ-900156",
-        "VCF-REQ-900157",
-        "VCF-REQ-900158",
-        "VCF-REQ-900159",
-        "VCF-REQ-900160"
+        "VCF-REQ-900132",
+        "VCF-REQ-900133",
+        "VCF-REQ-900134",
+        "VCF-REQ-900135",
+        "VCF-REQ-900136",
+        "VCF-REQ-900137",
+        "VCF-REQ-900138",
+        "VCF-REQ-900139"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -648,9 +648,9 @@
       "source_line": 845,
       "source_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900130",
-        "VCF-REQ-900131",
-        "VCF-REQ-900148"
+        "VCF-REQ-900097",
+        "VCF-REQ-900098",
+        "VCF-REQ-900124"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -662,7 +662,7 @@
       "source_line": 1487,
       "source_text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900098"
+        "VCF-REQ-900099"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -672,7 +672,7 @@
       "source_line": 1623,
       "source_text": "Either one uses the short hand notation described previously (recommended for simple cases):",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900099"
+        "VCF-REQ-900100"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -682,8 +682,8 @@
       "source_line": 1889,
       "source_text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900132",
-        "VCF-REQ-900133"
+        "VCF-REQ-900101",
+        "VCF-REQ-900102"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -693,7 +693,7 @@
       "source_line": 1900,
       "source_text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900101"
+        "VCF-REQ-900103"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -703,8 +703,8 @@
       "source_line": 1901,
       "source_text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900134",
-        "VCF-REQ-900135"
+        "VCF-REQ-900104",
+        "VCF-REQ-900105"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -714,8 +714,8 @@
       "source_line": 1903,
       "source_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900136",
-        "VCF-REQ-900137"
+        "VCF-REQ-900106",
+        "VCF-REQ-900125"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -725,7 +725,7 @@
       "source_line": 1914,
       "source_text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900104"
+        "VCF-REQ-900108"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -735,7 +735,7 @@
       "source_line": 1946,
       "source_text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900138"
+        "VCF-REQ-900126"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -745,7 +745,7 @@
       "source_line": 1982,
       "source_text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900106"
+        "VCF-REQ-900110"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -755,7 +755,7 @@
       "source_line": 1983,
       "source_text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900107"
+        "VCF-REQ-900111"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -765,7 +765,7 @@
       "source_line": 1985,
       "source_text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900108"
+        "VCF-REQ-900112"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -775,8 +775,8 @@
       "source_line": 1986,
       "source_text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900139",
-        "VCF-REQ-900140"
+        "VCF-REQ-900127",
+        "VCF-REQ-900114"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -786,8 +786,8 @@
       "source_line": 1988,
       "source_text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900141",
-        "VCF-REQ-900142"
+        "VCF-REQ-900115",
+        "VCF-REQ-900116"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -797,8 +797,8 @@
       "source_line": 1989,
       "source_text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900143",
-        "VCF-REQ-900144"
+        "VCF-REQ-900117",
+        "VCF-REQ-900118"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -808,8 +808,8 @@
       "source_line": 1994,
       "source_text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900145",
-        "VCF-REQ-900146"
+        "VCF-REQ-900119",
+        "VCF-REQ-900120"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -819,7 +819,7 @@
       "source_line": 1995,
       "source_text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900147"
+        "VCF-REQ-900121"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -829,7 +829,7 @@
       "source_line": 1996,
       "source_text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900117"
+        "VCF-REQ-900122"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
@@ -839,7 +839,7 @@
       "source_line": 1998,
       "source_text": "    \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900118"
+        "VCF-REQ-900123"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
       "context_source_lines": []
