@@ -63,4 +63,15 @@ def test_unvalidated_inheritance_results_are_retired_by_migration(tmp_path, monk
             if column["name"] == "score"
         )
         assert score_column["nullable"] is True
+        assert "segregation_observation_revisions" in inspect(connection).get_table_names()
+        trigger_names = {
+            row[0]
+            for row in connection.execute(
+                text("SELECT name FROM sqlite_master WHERE type = 'trigger'")
+            ).all()
+        }
+        assert "trg_segregation_observation_no_update" in trigger_names
+        assert "trg_segregation_observation_no_delete" in trigger_names
+        assert "trg_segregation_observation_revision_no_update" in trigger_names
+        assert "trg_segregation_observation_revision_no_delete" in trigger_names
     engine.dispose()
