@@ -7,8 +7,11 @@ executor enforces the common runtime and provenance boundary.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+import platform as runtime_platform
 import signal
+import stat
 import subprocess
 import tempfile
 import time
@@ -37,6 +40,92 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _contains_symlink_component(path: Path) -> bool:
+    absolute = Path(os.path.abspath(path))
+    current = Path(absolute.anchor)
+    for part in absolute.parts[1:]:
+        current = current / part
+        try:
+            if current.is_symlink():
+                return True
+        except OSError:
+            return True
+    return False
+
+
+def sha256_resource_path(path: Path) -> str:
+    """Hash a governed file or a directory's complete deterministic file set."""
+    if not path.is_absolute() or _contains_symlink_component(path):
+        raise ToolExecutionContractError(
+            "Scientific resource path must be absolute and contain no symlink components."
+        )
+    if path.is_file():
+        return sha256_file(path)
+    if not path.is_dir():
+        raise ToolExecutionContractError(
+            "Scientific resource path must resolve to a regular file or directory."
+        )
+
+    entries: list[dict[str, object]] = []
+    try:
+        children = sorted(
+            path.rglob("*"),
+            key=lambda item: item.relative_to(path).as_posix(),
+        )
+        for child in children:
+            if child.is_symlink():
+                raise ToolExecutionContractError(
+                    "Scientific resource directories must not contain symlinks."
+                )
+            mode = child.stat(follow_symlinks=False).st_mode
+            if stat.S_ISDIR(mode):
+                continue
+            if not stat.S_ISREG(mode):
+                raise ToolExecutionContractError(
+                    "Scientific resource directories may contain only regular files and directories."
+                )
+            entries.append({
+                "path": child.relative_to(path).as_posix(),
+                "size_bytes": child.stat().st_size,
+                "sha256": sha256_file(child),
+            })
+    except OSError as exc:
+        raise ToolExecutionContractError(
+            "Scientific resource could not be read for byte-level verification."
+        ) from exc
+    if not entries:
+        raise ToolExecutionContractError("Scientific resource directory is empty.")
+    canonical = json.dumps(
+        entries,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def current_platform_id() -> str:
+    """Return the conda/Docker platform identifier used by approved tool profiles."""
+    system = runtime_platform.system().casefold()
+    machine = runtime_platform.machine().casefold()
+    if machine in {"x86_64", "amd64"}:
+        architecture = "64"
+    elif machine in {"aarch64", "arm64"}:
+        architecture = "aarch64" if system == "linux" else "arm64"
+    else:
+        raise ToolExecutionContractError(
+            f"Unsupported scientific worker architecture: {runtime_platform.machine()!r}."
+        )
+    if system == "linux":
+        return f"linux-{architecture}"
+    if system == "darwin":
+        return f"osx-{architecture}"
+    if system == "windows" and architecture == "64":
+        return "win-64"
+    raise ToolExecutionContractError(
+        f"Unsupported scientific worker platform: {runtime_platform.system()!r}."
+    )
+
+
 @dataclass(frozen=True)
 class ToolIdentity:
     tool_id: str
@@ -49,6 +138,7 @@ class ToolIdentity:
     version_args: tuple[str, ...] = ("--version",)
     version_output_contains: str = ""
     supported_operations: tuple[str, ...] = ("validate", "normalize", "annotate", "align", "call", "index", "convert", "benchmark")
+    runtime_image_digest: str | None = None
 
     def validate(self) -> None:
         required = {
@@ -67,6 +157,17 @@ class ToolIdentity:
             raise ToolExecutionContractError("Tool executable SHA-256 must be a 64-character hex digest.")
         if self.qualification_status != "SOFTWARE_QUALIFIED":
             raise ToolExecutionContractError("Only software-qualified tool profiles may execute.")
+        actual_platform = current_platform_id()
+        if self.platform != actual_platform:
+            raise ToolExecutionContractError(
+                f"Tool profile platform {self.platform!r} does not match worker platform {actual_platform!r}."
+            )
+        if self.runtime_image_digest is not None and not re.fullmatch(
+            r"sha256:[0-9a-f]{64}", self.runtime_image_digest.lower()
+        ):
+            raise ToolExecutionContractError(
+                "Runtime image digest must use the sha256:<64 lowercase hex> format."
+            )
         if not self.version_args:
             raise ToolExecutionContractError("Tool version attestation arguments are required.")
         if not self.version_output_contains:
@@ -81,12 +182,22 @@ class ScientificResourceBinding:
     version: str
     sha256: str
     assembly: str | None = None
+    path: str | None = None
 
     def validate(self) -> None:
         if not self.resource_id.strip() or not self.version.strip():
             raise ToolExecutionContractError("Scientific resource identity and version are required.")
         if len(self.sha256) != 64 or any(c not in "0123456789abcdef" for c in self.sha256.lower()):
             raise ToolExecutionContractError("Scientific resource SHA-256 must be a 64-character hex digest.")
+        if not self.path:
+            raise ToolExecutionContractError(
+                "Scientific resource binding must identify the local bytes to verify."
+            )
+        actual_digest = sha256_resource_path(Path(self.path))
+        if actual_digest != self.sha256.lower():
+            raise ToolExecutionContractError(
+                f"Scientific resource {self.resource_id!r} SHA-256 does not match its governed bytes."
+            )
 
 
 @dataclass(frozen=True)
@@ -129,7 +240,7 @@ class ToolExecutionRequest:
         if not 1024 <= int(self.max_output_bytes) <= 10_485_760:
             raise ToolExecutionContractError("Captured process output limit must be between 1024 bytes and 10 MiB.")
         workspace = Path(self.workspace)
-        if not workspace.is_absolute() or not workspace.is_dir() or workspace.is_symlink():
+        if not workspace.is_absolute() or not workspace.is_dir() or _contains_symlink_component(workspace):
             raise ToolExecutionContractError("Execution workspace must be an existing absolute non-symlink directory.")
         input_names: set[str] = set()
         for item in self.inputs:
@@ -137,7 +248,7 @@ class ToolExecutionRequest:
                 raise ToolExecutionContractError("Input artifact names must be present and unique.")
             input_names.add(item.name)
             path = Path(item.path)
-            if not path.is_absolute() or not path.is_file() or path.is_symlink():
+            if not path.is_absolute() or not path.is_file() or _contains_symlink_component(path):
                 raise ToolExecutionContractError(f"Input artifact {item.name!r} must be an existing regular file.")
             if sha256_file(path) != item.sha256:
                 raise ToolExecutionContractError(f"Input artifact {item.name!r} SHA-256 mismatch.")
@@ -151,8 +262,8 @@ class ToolExecutionRequest:
             path = Path(item.path)
             if not path.is_absolute():
                 raise ToolExecutionContractError(f"Output artifact {item.name!r} path must be absolute.")
-            if path.is_symlink():
-                raise ToolExecutionContractError(f"Output artifact {item.name!r} cannot be a symlink.")
+            if _contains_symlink_component(path):
+                raise ToolExecutionContractError(f"Output artifact {item.name!r} cannot contain symlink components.")
             parent = path.parent.resolve(strict=True)
             if not parent.is_relative_to(root):
                 raise ToolExecutionContractError(f"Output artifact {item.name!r} must be inside the execution workspace.")
@@ -201,6 +312,8 @@ class ToolExecutionProvenance:
     duration_seconds: float
     stdout_sha256: str
     stderr_sha256: str
+    platform: str
+    runtime_image_digest: str | None
 
 
 @dataclass(frozen=True)
@@ -222,26 +335,39 @@ class LocalProcessToolExecutor:
         profile.validate()
         request.validate(profile)
         configured_executable = Path(profile.executable)
-        if configured_executable.is_symlink():
-            raise ToolExecutionContractError("Configured tool executable cannot be a symlink.")
+        if _contains_symlink_component(configured_executable):
+            raise ToolExecutionContractError("Configured tool executable cannot contain symlink components.")
         executable = configured_executable.resolve(strict=True)
         if not executable.is_file():
-            raise ToolExecutionContractError("Configured tool executable is not a regular file.")
+            raise ToolExecutionContractError("Tool executable is not a regular file.")
         executable_digest = sha256_file(executable)
         if executable_digest != profile.executable_sha256.lower():
             raise ToolExecutionContractError("Tool executable SHA-256 does not match the approved profile.")
 
-        version_check = subprocess.run(
-            [str(executable), *profile.version_args],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-            env={"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"},
-        )
+        try:
+            version_check = subprocess.run(
+                [str(executable), *profile.version_args],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env={"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"},
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise ToolExecutionError(
+                f"{profile.tool_id} version attestation timed out.",
+                retryable=True,
+            ) from exc
+        except OSError as exc:
+            raise ToolExecutionError(
+                f"{profile.tool_id} version attestation could not start.",
+                retryable=False,
+            ) from exc
         version_text = (version_check.stdout + "\n" + version_check.stderr).strip()
         if version_check.returncode != 0 or profile.version_output_contains not in version_text:
-            raise ToolExecutionContractError("Runtime executable version does not match the approved tool profile.")
+            raise ToolExecutionContractError(
+                "Runtime executable version does not match the approved tool profile."
+            )
 
         workspace = Path(request.workspace).resolve(strict=True)
         env = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
@@ -249,30 +375,35 @@ class LocalProcessToolExecutor:
         command = [str(executable), *request.argv]
         started = datetime.now(timezone.utc)
         monotonic_start = time.monotonic()
+        timed_out = False
+
         # Spool process output to disk rather than PIPEs: a noisy scientific
-        # executable must not be able to exhaust worker memory. Hash the complete
-        # streams, but return only a bounded tail for diagnostics.
+        # executable must not exhaust worker memory. Hash complete streams while
+        # retaining only a bounded diagnostic tail.
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
-            process = subprocess.Popen(
-                command,
-                cwd=workspace,
-                env=env,
-                stdout=stdout_file,
-                stderr=stderr_file,
-                start_new_session=True,
-            )
+            try:
+                process = subprocess.Popen(
+                    command,
+                    cwd=workspace,
+                    env=env,
+                    stdout=stdout_file,
+                    stderr=stderr_file,
+                    start_new_session=True,
+                )
+            except OSError as exc:
+                raise ToolExecutionError(
+                    f"{profile.tool_id} process could not be started: {exc}",
+                    retryable=False,
+                ) from exc
             try:
                 process.communicate(timeout=request.timeout_seconds)
-            except subprocess.TimeoutExpired as exc:
+            except subprocess.TimeoutExpired:
+                timed_out = True
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
                 process.wait()
-                raise ToolExecutionError(
-                    f"{profile.tool_id} execution exceeded its {request.timeout_seconds}s timeout.",
-                    retryable=True,
-                ) from exc
 
             def capture(handle) -> tuple[str, str]:
                 handle.seek(0)
@@ -298,18 +429,15 @@ class LocalProcessToolExecutor:
 
         completed = datetime.now(timezone.utc)
         duration = time.monotonic() - monotonic_start
-        if process.returncode != 0:
-            raise ToolExecutionError(
-                f"{profile.tool_id} exited with status {process.returncode}: {(stderr or stdout)[-2000:]}",
-                retryable=process.returncode in {137, 143},
-            )
-
         output_digests: list[dict[str, str]] = []
+        missing_outputs: list[str] = []
         for item in request.outputs:
             path = Path(item.path)
-            if not path.is_file() or path.is_symlink():
-                raise ToolExecutionError(f"Expected output artifact {item.name!r} was not produced.")
+            if not path.is_file() or _contains_symlink_component(path):
+                missing_outputs.append(item.name)
+                continue
             output_digests.append({"name": item.name, "sha256": sha256_file(path)})
+
         provenance = ToolExecutionProvenance(
             execution_id=request.execution_id,
             organization_id=request.organization_id,
@@ -334,5 +462,26 @@ class LocalProcessToolExecutor:
             duration_seconds=duration,
             stdout_sha256=stdout_digest,
             stderr_sha256=stderr_digest,
+            platform=profile.platform,
+            runtime_image_digest=profile.runtime_image_digest,
         )
+
+        if timed_out:
+            raise ToolExecutionError(
+                f"{profile.tool_id} execution exceeded its {request.timeout_seconds}s timeout; process group terminated.",
+                retryable=True,
+                provenance=provenance,
+            )
+        if process.returncode != 0:
+            raise ToolExecutionError(
+                f"{profile.tool_id} exited with status {process.returncode}: {(stderr or stdout)[-2000:]}",
+                retryable=process.returncode in {137, 143, -9, -15},
+                provenance=provenance,
+            )
+        if missing_outputs:
+            raise ToolExecutionError(
+                "Expected output artifact(s) were not produced: " + ", ".join(missing_outputs),
+                retryable=False,
+                provenance=provenance,
+            )
         return ToolExecutionResult(provenance=provenance, stdout=stdout, stderr=stderr)
