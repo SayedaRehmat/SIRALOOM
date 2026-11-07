@@ -209,7 +209,7 @@ class VEPProvider(ScientificResourceProvider):
             },
             metadata={
                 "provider": self.provider_id,
-                "provider_version": self.contract.provider_version,
+                "provider_version": self.provider_version,
                 "tool_profile_id": self.tool_profile_id,
                 "reference_package_checksum": reference_package.get("package_checksum"),
             },
@@ -466,7 +466,7 @@ class VEPProvider(ScientificResourceProvider):
                 },
                 "_siraloom_annotation_provenance": {
                     "provider": self.provider_id,
-                    "provider_version": self.vep_version,
+                    "provider_version": self.provider_version,
                     "observed_at": result.metadata.get("observed_at"),
                     "response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
