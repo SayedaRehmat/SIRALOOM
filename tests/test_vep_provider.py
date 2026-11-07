@@ -329,41 +329,6 @@ def _normalize_consequences(transcripts):
     ).observations[0]
 
 
-def _manifested_toolchain(tmp_path, binary, *, vep_version=None):
-    cache_dir = tmp_path / "cache"
-    cache_dir.mkdir(exist_ok=True)
-    cache_file = cache_dir / "fixture.dat"
-    cache_file.write_bytes(b"qualified fixture cache bytes")
-    cache_artifact_sha256 = "b" * 64
-    document = {
-        "schema": "siraloom.vep-cache-manifest.v1",
-        "cache_version": "115",
-        "species": "homo_sapiens",
-        "assembly": "GRCh38",
-        "source_artifact_sha256": cache_artifact_sha256,
-        "files": [{
-            "path": "fixture.dat",
-            "sha256": hashlib.sha256(cache_file.read_bytes()).hexdigest(),
-            "size_bytes": cache_file.stat().st_size,
-        }],
-    }
-    manifest = tmp_path / "vep-cache-manifest.json"
-    manifest.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
-    toolchain = {
-        "vep_binary": str(binary),
-        "cache_dir": str(cache_dir),
-        "cache_version": "115",
-        "assembly": "GRCh38",
-        "cache_manifest": str(manifest),
-        "cache_manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
-        "cache_artifact_sha256": cache_artifact_sha256,
-        "vep_binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
-    }
-    if vep_version:
-        toolchain["vep_version"] = vep_version
-    return toolchain, cache_file
-
-
 def test_vep_prefers_one_mane_select_transcript_over_canonical():
     consequence = _normalize_consequences([
         {"transcript_id": "ENST_CANONICAL", "canonical": 1, "gene_symbol": "GENE1"},
