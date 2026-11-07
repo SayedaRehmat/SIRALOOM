@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import platform as runtime_platform
+import re
 import signal
 import stat
 import subprocess
