@@ -149,7 +149,7 @@ def _base_modification_strandedness_policy(analysis: Analysis) -> str | None:
     """Return the explicitly configured assay policy; never infer strandedness."""
     configuration = analysis.configuration if isinstance(analysis.configuration, dict) else {}
     policy = configuration.get("base_modification_strandedness")
-    if policy not in {None, "stranded", "unstranded"}:
+    if policy not in (None, "stranded", "unstranded"):
         raise StrictVCFValidationError(
             "Analysis base_modification_strandedness must be 'stranded', 'unstranded', or omitted.",
             code="VCF_BASE_MODIFICATION_POLICY_INVALID",
