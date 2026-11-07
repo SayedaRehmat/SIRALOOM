@@ -105,12 +105,9 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
 def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
     """Return VCFv4.0 reserved FORMAT definitions (the legacy biallelic GL model)."""
     reserved = {
-        "GT": ("1", "String"),
         "DP": ("1", "Integer"),
         "FT": ("1", "String"),
         "GL": ("3", "Float"),
-        "GQ": ("1", "Float"),
-        "HQ": ("2", "Float"),
     }
     definition = reserved.get(field_id)
     if definition is None:
