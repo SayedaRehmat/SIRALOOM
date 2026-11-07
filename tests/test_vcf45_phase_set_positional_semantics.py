@@ -262,6 +262,23 @@ def test_vcf45_multi_alt_breakend_mates_check_each_reciprocal_phase_vector(
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
 
+def test_vcf45_single_breakend_with_pso_is_accepted_and_counted(
+    tmp_path: Path,
+):
+    path = tmp_path / "single-breakend-pso-present.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd_single\tA\t.A\t.\tPASS\t.\tGT:PSL:PSO\t0|1:set,set:3,4\n",
+        encoding="utf-8",
+    )
+    result = validate_vcf_strict(path)
+    assert result["records"] == 1
+    assert result["breakend_records"] == 1
+
 @pytest.mark.parametrize("single_breakend_alt", [".A", "A.", ".TGCA", "TCC."])
 def test_vcf45_single_breakend_requires_pso_for_its_phase_set(
     tmp_path: Path, single_breakend_alt: str
