@@ -125,7 +125,7 @@ jobs:
         run: uv run --locked pytest -q tests/integration/test_linux_container_runtime_qualification.py
       - name: Configure a rootful Podman adapter with cgroup delegation
         run: |
-          printf '%s\\n' '#!/bin/sh' 'exec sudo /usr/bin/podman "$@"' | sudo tee /usr/local/bin/siraloom-podman-root >/dev/null
+          printf '%s\n' '#!/bin/sh' 'exec sudo /usr/bin/podman "$@"' | sudo tee /usr/local/bin/siraloom-podman-root >/dev/null
           sudo chmod 0755 /usr/local/bin/siraloom-podman-root
           /usr/local/bin/siraloom-podman-root info --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["host"]["cgroupVersion"])'
       - name: Qualify real Podman execution, mounts, cgroups, timeout and BCFtools
