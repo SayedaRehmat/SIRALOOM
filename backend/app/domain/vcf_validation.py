@@ -2052,7 +2052,7 @@ def validate_vcf_strict(
                             f"Breakend record ID {record_id!r} is not unique at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    raw_cipos = info_values.get("CIPOS")
+                    raw_cipos = info_values.get("CIPOS") if fileformat == "VCFv4.5" else None
                     cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
                     cipos_by_alt: dict[int, tuple[int, int] | None] = {}
                     for alt_index in breakend_alt_indexes:
