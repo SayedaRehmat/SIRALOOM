@@ -261,6 +261,64 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     return _reserved_base_modification_format_definition(field_id)
 
 
+def _reserved_vcf43_info_definition(field_id: str) -> dict[str, str] | None:
+    """Return VCFv4.3 reserved INFO table and structural-field definitions."""
+    reserved = {
+        "AA": ("1", "String"), "AC": ("A", "Integer"), "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"), "ADR": ("R", "Integer"), "AF": ("A", "Float"),
+        "AN": ("1", "Integer"), "BQ": ("1", "Float"), "CIGAR": ("A", "String"),
+        "DB": ("0", "Flag"), "DP": ("1", "Integer"), "END": ("1", "Integer"),
+        "H2": ("0", "Flag"), "H3": ("0", "Flag"), "MQ": ("1", "Float"),
+        "MQ0": ("1", "Integer"), "NS": ("1", "Integer"), "SB": ("4", "Integer"),
+        "SOMATIC": ("0", "Flag"), "VALIDATED": ("0", "Flag"), "1000G": ("0", "Flag"),
+        "IMPRECISE": ("0", "Flag"), "NOVEL": ("0", "Flag"), "SVTYPE": ("1", "String"),
+        "SVLEN": (".", "Integer"), "CIPOS": ("2", "Integer"), "CIEND": ("2", "Integer"),
+        "HOMLEN": (".", "Integer"), "HOMSEQ": (".", "String"), "BKPTID": (".", "String"),
+        "MEINFO": ("4", "String"), "METRANS": ("4", "String"),
+        "DGVID": ("1", "String"), "DBVARID": ("1", "String"), "DBRIPID": ("1", "String"),
+        "MATEID": (".", "String"), "PARID": ("1", "String"), "EVENT": ("1", "String"),
+        "CILEN": ("2", "Integer"), "DPADJ": (".", "Integer"), "CN": ("1", "Integer"),
+        "CNADJ": (".", "Integer"), "CICN": ("2", "Integer"), "CICNADJ": (".", "Integer"),
+    }
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_vcf44_info_definition(field_id: str) -> dict[str, str] | None:
+    """Return VCFv4.4 reserved INFO table and structural-field definitions."""
+    reserved = {
+        "AA": ("1", "String"), "AC": ("A", "Integer"), "AD": ("R", "Integer"),
+        "ADF": ("R", "Integer"), "ADR": ("R", "Integer"), "AF": ("A", "Float"),
+        "AN": ("1", "Integer"), "BQ": ("1", "Float"), "CIGAR": ("A", "String"),
+        "DB": ("0", "Flag"), "DP": ("1", "Integer"), "END": ("1", "Integer"),
+        "H2": ("0", "Flag"), "H3": ("0", "Flag"), "MQ": ("1", "Float"),
+        "MQ0": ("1", "Integer"), "NS": ("1", "Integer"), "SB": ("4", "Integer"),
+        "SOMATIC": ("0", "Flag"), "VALIDATED": ("0", "Flag"), "1000G": ("0", "Flag"),
+        "IMPRECISE": ("0", "Flag"), "NOVEL": ("0", "Flag"), "SVTYPE": ("1", "String"),
+        "SVLEN": ("A", "Integer"), "CIPOS": (".", "Integer"), "CIEND": (".", "Integer"),
+        "HOMLEN": ("A", "Integer"), "HOMSEQ": ("A", "String"), "BKPTID": ("A", "String"),
+        "MEINFO": (".", "String"), "METRANS": (".", "String"),
+        "DGVID": ("A", "String"), "DBVARID": ("A", "String"), "DBRIPID": ("A", "String"),
+        "MATEID": ("A", "String"), "PARID": ("A", "String"), "EVENT": ("A", "String"),
+        "EVENTTYPE": ("A", "String"), "CILEN": (".", "Integer"),
+        "CN": ("A", "Float"), "CICN": (".", "Float"), "SVCLAIM": ("A", "String"),
+    }
+    definition = reserved.get(field_id)
+    return {"Number": definition[0], "Type": definition[1]} if definition else None
+
+
+def _reserved_info_definition_for_version(
+    fileformat: str, field_id: str
+) -> dict[str, str] | None:
+    if fileformat == "VCFv4.3":
+        return _reserved_vcf43_info_definition(field_id)
+    if fileformat == "VCFv4.4":
+        return _reserved_vcf44_info_definition(field_id)
+    if fileformat == "VCFv4.5":
+        return _reserved_vcf45_info_definition(field_id)
+    return None
+
+
 def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved INFO keys and structural-variant definitions.
     reserved = {
@@ -2013,8 +2071,17 @@ def validate_vcf_strict(
             info_values = _info_values(fields[7])
             for key, value in info_values.items():
                 definition = info_definitions.get(key)
-                if definition is None and fileformat == "VCFv4.5":
-                    definition = _reserved_vcf45_info_definition(key)
+                reserved_definition = _reserved_info_definition_for_version(fileformat, key)
+                if reserved_definition is not None:
+                    if definition is not None and (
+                        definition.get("Number") != reserved_definition["Number"]
+                        or definition.get("Type") != reserved_definition["Type"]
+                    ):
+                        raise StrictVCFValidationError(
+                            f"INFO/{key} declaration conflicts with the reserved {fileformat} definition at line {line_no}",
+                            code="VCF_RESERVED_INFO_DEFINITION_MISMATCH",
+                        )
+                    definition = reserved_definition
                 if definition is not None:
                     # INFO/Number=G has no single sample ploidy to use when a
                     # record carries multiple samples; leave it unresolved here.
