@@ -311,6 +311,35 @@ def test_vcf45_psq_distinct_phase_set_identifiers_remain_positionally_aligned(
     assert validate_vcf_strict(path)["records"] == 1
 
 
+def test_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_intervals(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-microhomology-cipos.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=0,6\n"
+        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=0,6\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n" if False else "",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 2
+
+
+def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-outside-cipos.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        "1\t321681\tbndV\tT\tT]2:123463]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=0,6\n"
+        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=0,6\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n" if False else "",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_MATE_COORDINATE_MISMATCH"
+
 def test_vcf45_multiallelic_breakend_mate_ids_preserve_alt_order(
     tmp_path: Path,
 ):
