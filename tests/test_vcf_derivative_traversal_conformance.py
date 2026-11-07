@@ -22,10 +22,10 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "2\t321681\tbnd_W\tG\tG[13:123457[\t.\tPASS\tMATEID=bnd_X\tGT:PSL:PSO\t0|1:.,phase:.,2\n"
-        "2\t321682\tbnd_V\tT\tT]13:123456]\t.\tPASS\tMATEID=bnd_U\tGT:PSL:PSO\t0|1:.,phase:.,3\n"
-        "13\t123456\tbnd_U\tC\t[2:321682[C\t.\tPASS\tMATEID=bnd_V\tGT:PSL:PSO\t0|1:.,phase:.,3\n"
-        "13\t123457\tbnd_X\tA\t]2:321681]A\t.\tPASS\tMATEID=bnd_W\tGT:PSL:PSO\t0|1:.,phase:.,2\n",
+        "2\t321681\tbnd_W\tG\tG[13:123457[\t.\tPASS\tMATEID=bnd_X;EVENT=TRA1;EVENTTYPE=TRA:BALANCED\tGT:PSL:PSO\t0|1:.,phase:.,2\n"
+        "2\t321682\tbnd_V\tT\tT]13:123456]\t.\tPASS\tMATEID=bnd_U;EVENT=TRA1;EVENTTYPE=TRA:BALANCED\tGT:PSL:PSO\t0|1:.,phase:.,3\n"
+        "13\t123456\tbnd_U\tC\t[2:321682[C\t.\tPASS\tMATEID=bnd_V;EVENT=TRA1;EVENTTYPE=TRA:BALANCED\tGT:PSL:PSO\t0|1:.,phase:.,3\n"
+        "13\t123457\tbnd_X\tA\t]2:321681]A\t.\tPASS\tMATEID=bnd_W;EVENT=TRA1;EVENTTYPE=TRA:BALANCED\tGT:PSL:PSO\t0|1:.,phase:.,2\n",
         encoding="utf-8",
     )
 
