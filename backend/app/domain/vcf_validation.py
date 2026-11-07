@@ -102,6 +102,24 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     return None
 
 
+def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the historical VCFv4.0 implicit FORMAT field definition."""
+    reserved = {
+        "GT": ("1", "String"),
+        "DP": ("1", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("3", "Float"),
+        # VCFv4.0 prose describes GQ and HQ as Numeric. The example header
+        # uses Integer, while the field descriptions permit numeric values.
+        "GQ": ("1", "Numeric"),
+        "HQ": ("2", "Numeric"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
+
+
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
@@ -798,6 +816,24 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"Type={reserved_vcf45_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    reserved_vcf40_definition = (
+        _reserved_vcf40_format_definition(identifier)
+        if fileformat == "VCFv4.0" and kind == "FORMAT"
+        else None
+    )
+    if reserved_vcf40_definition is not None:
+        expected_type = reserved_vcf40_definition["Type"]
+        allowed_types = (
+            {"Integer", "Float"} if expected_type == "Numeric" else {expected_type}
+        )
+        if number != reserved_vcf40_definition["Number"] or parsed["Type"] not in allowed_types:
+            expected_type_text = "Integer or Float" if expected_type == "Numeric" else expected_type
+            raise StrictVCFValidationError(
+                f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
+                f"Number={reserved_vcf40_definition['Number']} and "
+                f"Type={expected_type_text} at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
@@ -1094,6 +1130,16 @@ def _validate_declared_value(
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
                     valid = valid and 0.0 <= numeric_value <= 1.0
+        elif field_type == "Numeric":
+            valid = bool(
+                re.fullmatch(
+                    r"[-+]?(?:[0-9]*\\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)",
+                    item,
+                    flags=re.IGNORECASE,
+                )
+            )
+            if valid and (field_scope, key) in NONNEGATIVE_INTEGER_FIELDS:
+                valid = float(item) >= 0.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
@@ -1966,9 +2012,31 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                 )
                 for key, value in zip(format_keys, sample_values):
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.0":
+                        definition = _reserved_vcf40_format_definition(key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
+                        if (
+                            fileformat == "VCFv4.0"
+                            and key == "GL"
+                            and value not in {None, "."}
+                            and len(alts) != 1
+                        ):
+                            raise StrictVCFValidationError(
+                                f"VCFv4.0 FORMAT/GL is not applicable to multiallelic records at line {line_no}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
+                        if (
+                            fileformat == "VCFv4.5"
+                            and definition["Number"] == "P"
+                            and value not in {None, "."}
+                            and gt_index is None
+                        ):
+                            raise StrictVCFValidationError(
+                                f"Populated VCFv4.5 FORMAT Number=P field {key!r} requires GT to establish per-allele cardinality at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
                         if (
                             definition["Number"] == "G"
                             and genotype_ploidy is None
