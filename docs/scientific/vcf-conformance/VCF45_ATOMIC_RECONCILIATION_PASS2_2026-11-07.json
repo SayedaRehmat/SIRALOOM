@@ -33,7 +33,11 @@
     "exact_duplicates_with_format_candidates": 0,
     "related_to_canonical": 30,
     "related_to_format_candidates": 10,
-    "unmapped_source_candidates": 0
+    "unmapped_source_candidates": 0,
+    "provisional_records_after_pass2": 161,
+    "removed_internal_duplicates": 7,
+    "covered_by_canonical": 3,
+    "source_candidates": 75
   },
   "dispositions": {
     "subsumed_by_canonical": [
@@ -3773,5 +3777,65 @@
       "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
       "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
     }
+  ],
+  "internal_deduplication": [
+    {
+      "removed_provisional_id": "VCF-REQ-900122",
+      "retained_provisional_id": "VCF-REQ-900098",
+      "source_line": 846,
+      "reason": "Same per-ALT all-ALT-alleles obligation; the retained record is itself subsumed by canonical VCF-REQ-000076."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900164",
+      "retained_provisional_id": "VCF-REQ-900107",
+      "source_line": 1903,
+      "reason": "Duplicate of the missing INFO CN condition already represented by the original SHOULD record."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900111",
+      "retained_provisional_id": "VCF-REQ-900108",
+      "source_lines": [
+        1946,
+        1985
+      ],
+      "reason": "Same recommendation to phase non-symbolic tandem-repeat records with the corresponding CNV:TR record; both source locators are retained on one requirement."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900048",
+      "retained_provisional_id": "VCF-REQ-900084",
+      "source_lines": [
+        258,
+        418
+      ],
+      "reason": "Case-sensitive ALT ID rule consolidated; both source references retained."
+    },
+    {
+      "removed_provisional_ids": [
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155"
+      ],
+      "retained_provisional_ids": [
+        "VCF-REQ-900049",
+        "VCF-REQ-900050",
+        "VCF-REQ-900051"
+      ],
+      "source_lines": [
+        258,
+        419
+      ],
+      "reason": "The same symbolic ALT ID exclusions (whitespace, commas, angle brackets) were repeated in two source locations; each rule retains both references."
+    }
+  ],
+  "pass2_corrections": [
+    "Changed structured optional-field inclusion from NOT_STATED to MAY.",
+    "Changed 'not required to preserve ordering/case' statements to MAY_NOT and separated REF type/requiredness from case-preservation semantics.",
+    "Changed ALT enumeration members from independent MAY permissions to descriptive members under one MUST allowed-set constraint.",
+    "Split CHROM/POS/REF/QUAL/FILTER field descriptors and their independent requiredness, data-type and value constraints.",
+    "Split double-quote escaping from backslash escaping; split log10 likelihood scale from the descriptive negative-value statement.",
+    "Corrected FORMAT FT value referents, QUAL missingness/type/conditional interpretation, and FILTER missingness scope.",
+    "Split INFO CN versus FORMAT CN presence and value semantics; attached line 1887 defining their distinct allele-specific versus overall-copy-number roles.",
+    "Added the <*> POS interval exception, ALT ID syntax constraints, INFO key uniqueness, BCF metadata entry statement, and missing-value behavior from adjacent source lines.",
+    "Retained line 1995 RS/RUS, lines 129-130/301-302 header-tag scope, local-GT, Number=P/PSQ, xanthosine capitalization, and POS/SVLEN catalog wording as explicit review issues."
   ]
 }
