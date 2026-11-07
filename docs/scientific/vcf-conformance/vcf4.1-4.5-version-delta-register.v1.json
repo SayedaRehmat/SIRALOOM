@@ -20,7 +20,7 @@
     },
     {
       "path": "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json",
-      "blob_sha1": "4e1c0e88cb7b19c03e5f836d8acfdbac76e46aa3"
+      "blob_sha1": "7a8bee44406cd49ff405b29b061f4be762fcdb90"
     },
     {
       "path": "docs/scientific/vcf-conformance/PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
@@ -80,7 +80,7 @@
     },
     {
       "path": "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
-      "blob_sha1": "575f00ce36fc2e030a5e6f3cd64f9e95803451fe"
+      "blob_sha1": "453a2a8103a1642c53d8739abb7f329b142202c9"
     },
     {
       "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
