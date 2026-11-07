@@ -253,6 +253,20 @@ def _sample_binding_fingerprint(payload: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
+@router.get("/cases/{case_id}/pedigree/sample-bindings")
+def list_sample_bindings(case_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    require_case_permission(case, principal, db, "read")
+    rows = db.scalars(
+        select(PedigreeSampleBinding)
+        .where(PedigreeSampleBinding.case_id == case_id)
+        .order_by(PedigreeSampleBinding.pedigree_member_id, PedigreeSampleBinding.version)
+    ).all()
+    return {"case_id": str(case_id), "bindings": [_sample_binding_payload(row) for row in rows]}
+
+
 @router.post("/cases/{case_id}/pedigree/sample-bindings", status_code=201)
 def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     """Record an unverified family-member/specimen/VCF-sample identity claim."""
@@ -329,6 +343,12 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
     if previous.binding_status != "UNVERIFIED":
         raise HTTPException(409, "Only an unverified binding can be reviewed")
     if body.decision == "VERIFIED":
+        analysis = db.get(Analysis, previous.analysis_id)
+        if analysis is None or (analysis.configuration or {}).get("input_artifact_id") != str(previous.artifact_id):
+            raise HTTPException(409, "Binding source artifact is no longer the selected analysis input")
+        selected_sample = (analysis.configuration or {}).get("vcf_sample_name")
+        if selected_sample != previous.sample_name:
+            raise HTTPException(409, "Binding sample name differs from the analysis-selected sample")
         partitions = db.scalars(select(AnalysisPartition).where(
             AnalysisPartition.analysis_id == previous.analysis_id,
             AnalysisPartition.step_id == "normalize",
