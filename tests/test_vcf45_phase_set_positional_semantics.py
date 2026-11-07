@@ -248,14 +248,14 @@ def test_vcf45_multi_alt_breakend_mates_check_each_reciprocal_phase_vector(
 ):
     path = tmp_path / "multi-alt-breakend-phase-vectors.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t5\\tbnd1a;bnd1b\\tA\\tA]2:10],A]3:20]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2a,bnd3a\\tGT:PSL:PSO\\t0|1:set,set:3,4\\n"
-        "2\\t10\\tbnd2a\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1a\\tGT:PSL:PSO\\t0|1:set,set:3,4\\n"
-        "3\\t20\\tbnd3a\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1b\\tGT:PSL:PSO\\t0|1:set,set:3,5\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\tbnd1a;bnd1b\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2a,bnd3a\tGT:PSL:PSO\t0|1:set,set:3,4\n"
+        "2\t10\tbnd2a\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1a\tGT:PSL:PSO\t0|1:set,set:3,4\n"
+        "3\t20\tbnd3a\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1b\tGT:PSL:PSO\t0|1:set,set:3,5\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
