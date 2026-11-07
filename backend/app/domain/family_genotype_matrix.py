@@ -26,6 +26,12 @@ def _call_state(call: dict[str, Any] | None) -> str:
     alleles = genotype.replace("|", "/").split("/")
     if any(allele == "." for allele in alleles):
         return "NO_CALL" if all(allele == "." for allele in alleles) else "PARTIAL_NO_CALL"
+    try:
+        missing_alleles = int(call.get("missing_allele_count") or 0)
+    except (TypeError, ValueError):
+        missing_alleles = 0
+    if missing_alleles > 0:
+        return "PARTIAL_NO_CALL" if any(allele not in {"", "."} for allele in alleles) else "NO_CALL"
     return "CALL_PRESENT"
 
 
