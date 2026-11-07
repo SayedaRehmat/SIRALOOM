@@ -592,3 +592,47 @@ def test_sample_binding_revision_serializes_case_mutation(monkeypatch):
         db, principal,
     )
     assert any(kwargs.get("with_for_update") is True for _args, kwargs in db.refresh_calls)
+
+
+def test_identity_evidence_history_endpoint_returns_all_immutable_revisions(monkeypatch):
+    case_id, binding_id = uuid4(), uuid4()
+    case = SimpleNamespace(id=case_id)
+    binding = SimpleNamespace(id=binding_id, case_id=case_id)
+    rows = [
+        SimpleNamespace(
+            id=uuid4(), case_id=case_id, binding_id=binding_id,
+            evidence_type="CHAIN_OF_CUSTODY", result="PASS", method="LIMS",
+            method_version="1", evidence_reference="COC-1", source_artifact_id=None,
+            metrics_json={}, review_status="PENDING", review_reason=None, version=1,
+            supersedes_evidence_id=None, recorded_by=uuid4(), reviewed_by=None,
+            reviewed_at=None,
+        ),
+        SimpleNamespace(
+            id=uuid4(), case_id=case_id, binding_id=binding_id,
+            evidence_type="CHAIN_OF_CUSTODY", result="PASS", method="LIMS",
+            method_version="1", evidence_reference="COC-1", source_artifact_id=None,
+            metrics_json={}, review_status="ACCEPTED", review_reason="Verified", version=2,
+            supersedes_evidence_id=uuid4(), recorded_by=uuid4(), reviewed_by=uuid4(),
+            reviewed_at=None,
+        ),
+    ]
+
+    class ReadDB:
+        def get(self, model, identifier):
+            if model is Case and identifier == case_id:
+                return case
+            if model is PedigreeSampleBinding and identifier == binding_id:
+                return binding
+            return None
+
+        def scalars(self, _statement):
+            return _Rows(rows)
+
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
+    result = pedigree.list_sample_identity_evidence(
+        case_id, binding_id, ReadDB(), SimpleNamespace(user_id=uuid4()),
+    )
+    assert result["case_id"] == str(case_id)
+    assert result["binding_id"] == str(binding_id)
+    assert [item["version"] for item in result["evidence"]] == [1, 2]
+    assert result["evidence"][1]["review_status"] == "ACCEPTED"
