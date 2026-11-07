@@ -278,3 +278,143 @@ def test_matrix_endpoint_rejects_superseded_binding(monkeypatch):
             SimpleNamespace(user_id=uuid4()),
         )
     assert getattr(exc.value, "status_code", None) == 409
+
+
+def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch):
+    case_id, member_id, variant_id, user_id = (uuid4() for _ in range(4))
+    case = SimpleNamespace(id=case_id)
+    member = SimpleNamespace(
+        id=member_id, case_id=case_id, member_identifier="PROBAND",
+        relationship_to_proband="PROBAND", sex="UNKNOWN", affected_status="AFFECTED",
+    )
+    specimens = [SimpleNamespace(id=uuid4(), case_id=case_id) for _ in range(2)]
+    artifacts = [
+        SimpleNamespace(id=uuid4(), case_id=case_id, sha256=digest, specimen_id=specimen.id)
+        for specimen, digest in zip(specimens, ("a" * 64, "b" * 64))
+    ]
+    analyses = [
+        SimpleNamespace(
+            id=uuid4(), case_id=case_id, analysis_version=index + 1,
+            reference_build="GRCh38",
+            configuration={
+                "input_artifact_id": str(artifacts[index].id),
+                "vcf_sample_name": f"PROBAND_ASSAY_{index + 1}",
+            },
+        )
+        for index in range(2)
+    ]
+    bindings = [
+        SimpleNamespace(
+            id=uuid4(), case_id=case_id, pedigree_member_id=member_id,
+            specimen_id=specimens[index].id, analysis_id=analyses[index].id,
+            artifact_id=artifacts[index].id, source_artifact_sha256=artifacts[index].sha256,
+            sample_name=f"PROBAND_ASSAY_{index + 1}", binding_status="VERIFIED",
+            binding_fingerprint=("c" if index == 0 else "d") * 64,
+        )
+        for index in range(2)
+    ]
+    variant = SimpleNamespace(id=variant_id, genome_build="GRCh38")
+    workflows = [
+        SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifacts[index].id)])
+        for index in range(2)
+    ]
+    partitions = [[SimpleNamespace(ordinal=0)], [SimpleNamespace(ordinal=0)]]
+    identity_evidence = [
+        [
+            SimpleNamespace(
+                id=uuid4(), evidence_type=kind, result="PASS", method="LAB_QC",
+                method_version="1", evidence_reference=f"{kind}-1",
+                evidence_fingerprint=("e" if kind == "CHAIN_OF_CUSTODY" else "f") * 64,
+                review_status="ACCEPTED", reviewed_by=user_id, reviewed_at=None,
+                supersedes_evidence_id=None,
+            )
+            for kind in ("CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC")
+        ]
+        for _ in range(2)
+    ]
+
+    class MultiAssayDB:
+        def get(self, model, identifier, **_kwargs):
+            objects = {
+                (Case, case_id): case,
+                (Variant, variant_id): variant,
+            }
+            for index in range(2):
+                objects.update({
+                    (PedigreeSampleBinding, bindings[index].id): bindings[index],
+                    (PedigreeMember, member_id): member,
+                    (Specimen, specimens[index].id): specimens[index],
+                    (Analysis, analyses[index].id): analyses[index],
+                    (Artifact, artifacts[index].id): artifacts[index],
+                })
+            return objects.get((model, identifier))
+
+        def refresh(self, *_args, **_kwargs):
+            return None
+
+        def scalar(self, statement):
+            sql = str(statement)
+            if "pedigree_sample_bindings" in sql:
+                return None
+            if "workflow_steps" in sql:
+                analysis_id = next(
+                    analysis.id for analysis in analyses if str(analysis.id) in sql
+                ) if any(str(analysis.id) in sql for analysis in analyses) else None
+                # SQLAlchemy binds are not rendered into the string; preserve call order.
+                return workflows.pop(0)
+            raise AssertionError(f"Unexpected scalar query: {sql}")
+
+        def scalars(self, statement):
+            sql = str(statement)
+            if "analysis_partitions" in sql:
+                return _Rows(partitions.pop(0))
+            if "pedigree_sample_identity_evidence" in sql:
+                return _Rows(identity_evidence.pop(0))
+            if "specimen_ploidy_evidence_revisions" in sql:
+                return _Rows([])
+            if "pedigree_members" in sql:
+                return _Rows([member])
+            if "pedigree_relationships" in sql:
+                return _Rows([])
+            raise AssertionError(f"Unexpected collection query: {sql}")
+
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
+    calls_by_analysis = {
+        analyses[0].id: {
+            variant_id: {
+                "sample_name": "PROBAND_ASSAY_1", "genotype": "0/1",
+                "normalized_genotype": "0/1", "source_record_sha256": "1" * 64,
+            },
+        },
+        analyses[1].id: {
+            variant_id: {
+                "sample_name": "PROBAND_ASSAY_2", "genotype": "0/0",
+                "normalized_genotype": "0/0", "source_record_sha256": "2" * 64,
+            },
+        },
+    }
+    monkeypatch.setattr(
+        pedigree, "get_analysis_sample_calls",
+        lambda _db, analysis_id: calls_by_analysis[analysis_id],
+    )
+
+    result = pedigree.get_family_genotype_matrix(
+        case_id,
+        pedigree.GenotypeMatrixInput(
+            binding_ids=[bindings[0].id, bindings[1].id],
+            variant_ids=[variant_id],
+        ),
+        MultiAssayDB(),
+        SimpleNamespace(user_id=user_id),
+    )
+
+    assert len(result["samples"]) == 2
+    assert {sample["member_id"] for sample in result["samples"]} == {str(member_id)}
+    assert {sample["vcf_sample_name"] for sample in result["samples"]} == {
+        "PROBAND_ASSAY_1", "PROBAND_ASSAY_2",
+    }
+    observed = {
+        sample["vcf_sample_name"]: sample["calls"][0]["normalized_genotype"]
+        for sample in result["samples"]
+    }
+    assert observed == {"PROBAND_ASSAY_1": "0/1", "PROBAND_ASSAY_2": "0/0"}
