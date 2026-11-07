@@ -2059,15 +2059,33 @@ def validate_vcf_strict(
                     raw_cipos = info_values.get("CIPOS") if fileformat == "VCFv4.5" else None
                     cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
                     cipos_by_alt: dict[int, tuple[int, int] | None] = {}
+                    if raw_cipos not in {None, "."} and len(cipos_entries) != 2 * len(alts):
+                        raise StrictVCFValidationError(
+                            f"VCFv4.5 CIPOS must contain exactly two offsets per ALT allele at line {line_no}",
+                            code="VCF_BREAKEND_CIPOS_INVALID",
+                        )
                     for alt_index in breakend_alt_indexes:
                         if raw_cipos is None:
-                            cipos_by_alt[alt_index] = (0, 0)
+                            # The specification supplies an implicit 0,0 only
+                            # when IMPRECISE is also absent.
+                            cipos_by_alt[alt_index] = (
+                                None if "IMPRECISE" in info_values else (0, 0)
+                            )
                             continue
                         if raw_cipos == ".":
                             cipos_by_alt[alt_index] = None
                             continue
                         lower, upper = cipos_entries[2 * alt_index : 2 * alt_index + 2]
-                        cipos_by_alt[alt_index] = None if lower == upper == "." else (int(lower), int(upper))
+                        if lower == "." or upper == ".":
+                            cipos_by_alt[alt_index] = None
+                            continue
+                        lower_offset, upper_offset = int(lower), int(upper)
+                        if lower_offset > 0 or upper_offset < 0:
+                            raise StrictVCFValidationError(
+                                f"VCFv4.5 CIPOS interval must span zero for ALT {alt_index + 1} at line {line_no}",
+                                code="VCF_BREAKEND_CIPOS_INVALID",
+                            )
+                        cipos_by_alt[alt_index] = (lower_offset, upper_offset)
                     breakend_records_by_id[record_id] = {
                         "chrom": _chrom,
                         "pos": _pos,
@@ -2363,7 +2381,10 @@ def validate_vcf_strict(
                                 elif ps_for_modification not in {None, "", "."}:
                                     phase_set = f"PS:{ps_for_modification}"
                                 else:
-                                    phase_set = "__implicit_phased_set__"
+                                    # A phased separator alone does not define a
+                                    # cross-record phase set. Keep this record-local
+                                    # and disclose that cross-record context is unknown.
+                                    phase_set = f"__record_{records + 1}_allele_{allele_index}"
                                 allele_sequence = (
                                     fields[3].upper()
                                     if allele_index == 0
