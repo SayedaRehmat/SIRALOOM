@@ -522,8 +522,17 @@ def fail_tool_execution(
             or payload.get("tool_id") != row.tool_id
             or payload.get("tool_version") != row.tool_version
             or payload.get("profile_id") != row.tool_profile_id
+            or payload.get("executable_sha256") != row.executable_sha256
+            or payload.get("platform") != row.platform
+            or payload.get("operation") != row.operation
+            or payload.get("runtime_image_digest") != row.environment_snapshot.get("runtime_image_digest")
         ):
             raise ExecutionPersistenceError("Failure provenance identity does not match the registered execution.")
+        _require_sha256(payload.get("environment_sha256"), "Environment SHA-256")
+        if payload.get("stdout_sha256") is not None:
+            _require_sha256(payload.get("stdout_sha256"), "stdout SHA-256")
+        if payload.get("stderr_sha256") is not None:
+            _require_sha256(payload.get("stderr_sha256"), "stderr SHA-256")
     row.status = "INTERRUPTED" if retryable else "FAILED"
     row.error_code = error_code[:128]
     row.error_message = error_message[:2000]
