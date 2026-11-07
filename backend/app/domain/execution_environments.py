@@ -120,15 +120,18 @@ class ExecutionEnvironmentProfile:
                 raise ExecutionEnvironmentError("Host runtime profiles cannot declare a container image.")
         else:
             digest = (self.runtime_image_digest or "").lower()
-            reference = self.runtime_image_reference or ""
             if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
-                raise ExecutionEnvironmentError("Container runtime profiles require a pinned sha256 image digest.")
-            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@-]*@sha256:[0-9a-f]{64}", reference):
-                raise ExecutionEnvironmentError("Container image reference must be an immutable repository@sha256:<digest> reference.")
-            if not reference.endswith("@" + digest):
-                raise ExecutionEnvironmentError("Container image reference digest must exactly match runtime_image_digest.")
-            if self.runtime_kind not in {"DOCKER", "PODMAN"}:
-                raise ExecutionEnvironmentError("Only Docker and Podman runtimes are supported for container execution.")
+                raise ExecutionEnvironmentError("Non-host runtime profiles require a pinned sha256 image digest.")
+            if self.executor_kind == "CONTAINER":
+                reference = self.runtime_image_reference or ""
+                if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@-]*@sha256:[0-9a-f]{64}", reference):
+                    raise ExecutionEnvironmentError("Container image reference must be an immutable repository@sha256:<digest> reference.")
+                if not reference.endswith("@" + digest):
+                    raise ExecutionEnvironmentError("Container image reference digest must exactly match runtime_image_digest.")
+                if self.runtime_kind not in {"DOCKER", "PODMAN"}:
+                    raise ExecutionEnvironmentError("Only Docker and Podman runtimes are supported for container execution.")
+            elif self.runtime_image_reference is not None and not self.runtime_image_reference.endswith("@" + digest):
+                raise ExecutionEnvironmentError("Runtime image reference digest must match runtime_image_digest.")
         if not self.workspace_root.startswith("/") or "\\x00" in self.workspace_root:
             raise ExecutionEnvironmentError("Environment workspace_root must be an absolute POSIX path.")
         self.capacity.validate()
