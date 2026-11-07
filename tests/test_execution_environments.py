@@ -226,3 +226,20 @@ def test_persisted_environment_snapshot_round_trips_runtime_contract():
     original = _environment(uuid4())
     restored = execution_environment_profile_from_snapshot(original.snapshot())
     assert restored.snapshot() == original.snapshot()
+
+
+
+def test_container_environment_snapshot_round_trips_immutable_image_identity():
+    digest = "sha256:" + "d" * 64
+    reference = "registry.example.org/siraloom/bcftools@" + digest
+    original = _environment(
+        uuid4(),
+        runtime_kind="DOCKER",
+        executor_kind="CONTAINER",
+        image_digest=digest,
+        image_reference=reference,
+    )
+    restored = execution_environment_profile_from_snapshot(original.snapshot())
+    assert restored.runtime_image_digest == digest
+    assert restored.runtime_image_reference == reference
+    assert restored.snapshot() == original.snapshot()
