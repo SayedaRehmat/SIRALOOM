@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentProfile
 from backend.app.domain.execution_persistence import (
     ExecutionPersistenceError,
-    canonical_fingerprint,
     execution_request_fingerprint,
     claim_tool_execution,
     complete_tool_execution,
