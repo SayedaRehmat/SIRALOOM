@@ -270,6 +270,7 @@ class LinuxContainerToolExecutor:
         monotonic_start = time.monotonic()
         timed_out = False
         cleanup_error: str | None = None
+        runtime_kill_error: str | None = None
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
             try:
                 process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file, env={
@@ -290,7 +291,7 @@ class LinuxContainerToolExecutor:
                     # A failed runtime kill is not silently accepted. The
                     # force-remove and subsequent ps verification below get a
                     # chance to recover; otherwise the failure is persisted.
-                    cleanup_error = f"runtime kill failed: {type(exc).__name__}"
+                    runtime_kill_error = f"runtime kill failed: {type(exc).__name__}"
                 finally:
                     try:
                         os.killpg(process.pid, signal.SIGKILL)
@@ -319,9 +320,9 @@ class LinuxContainerToolExecutor:
                         capture_output=True, text=True, timeout=15, check=False,
                     )
                     if remaining.returncode != 0:
-                        cleanup_error = cleanup_error or "runtime could not verify container removal"
+                        cleanup_error = cleanup_error or ("runtime could not verify container removal" + (f" ({runtime_kill_error})" if runtime_kill_error else ""))
                     elif container_name in (remaining.stdout or "").splitlines():
-                        cleanup_error = cleanup_error or "container remains after force-remove"
+                        cleanup_error = cleanup_error or ("container remains after force-remove" + (f" ({runtime_kill_error})" if runtime_kill_error else ""))
                 except (OSError, subprocess.TimeoutExpired) as exc:
                     cleanup_error = cleanup_error or f"container removal could not be verified: {type(exc).__name__}"
 
