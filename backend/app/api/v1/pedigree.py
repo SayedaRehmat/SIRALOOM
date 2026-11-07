@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 import hashlib
 import json
 from uuid import UUID, uuid4
@@ -231,6 +232,147 @@ def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
             ),
         ),
     }
+
+def _sample_binding_payload(row):
+    return {
+        "binding_id": str(row.id), "case_id": str(row.case_id),
+        "member_id": str(row.pedigree_member_id), "specimen_id": str(row.specimen_id),
+        "analysis_id": str(row.analysis_id), "artifact_id": str(row.artifact_id),
+        "sample_name": row.sample_name, "binding_status": row.binding_status,
+        "binding_method": row.binding_method, "evidence_reference": row.evidence_reference,
+        "review_reason": row.review_reason, "version": row.version,
+        "supersedes_binding_id": str(row.supersedes_binding_id) if row.supersedes_binding_id else None,
+        "recorded_by": str(row.recorded_by),
+        "reviewed_by": str(row.reviewed_by) if row.reviewed_by else None,
+        "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
+    }
+
+
+def _sample_binding_fingerprint(payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+@router.post("/cases/{case_id}/pedigree/sample-bindings", status_code=201)
+def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    """Record an unverified family-member/specimen/VCF-sample identity claim."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    member = db.get(PedigreeMember, body.member_id)
+    specimen = db.get(Specimen, body.specimen_id)
+    analysis = db.get(Analysis, body.analysis_id)
+    artifact = db.get(Artifact, body.artifact_id)
+    if member is None or member.case_id != case_id:
+        raise HTTPException(404, "Pedigree member not found in this case")
+    if specimen is None or specimen.case_id != case_id:
+        raise HTTPException(404, "Specimen not found in this case")
+    if analysis is None or analysis.case_id != case_id:
+        raise HTTPException(404, "Analysis not found in this case")
+    if artifact is None or artifact.case_id != case_id or artifact.artifact_type not in {"VCF", "SOURCE_VCF"}:
+        raise HTTPException(404, "Source VCF artifact not found in this case")
+    configured_sample = (analysis.configuration or {}).get("vcf_sample_name")
+    if configured_sample and configured_sample != body.sample_name.strip():
+        raise HTTPException(409, "Sample name differs from the analysis-selected VCF sample")
+    input_partitions = db.scalars(select(AnalysisPartition).where(
+        AnalysisPartition.analysis_id == analysis.id,
+        AnalysisPartition.input_artifact_id == artifact.id,
+    )).all()
+    if not input_partitions and (analysis.configuration or {}).get("input_artifact_id") != str(artifact.id):
+        raise HTTPException(409, "Artifact is not linked to the selected analysis input")
+    payload = {
+        "schema_version": 1, "case_id": str(case_id), "member_id": str(member.id),
+        "specimen_id": str(specimen.id), "analysis_id": str(analysis.id),
+        "artifact_id": str(artifact.id), "sample_name": body.sample_name.strip(),
+        "binding_status": "UNVERIFIED", "binding_method": body.binding_method.strip(),
+        "evidence_reference": body.evidence_reference, "version": 1,
+        "supersedes_binding_id": None,
+    }
+    row = PedigreeSampleBinding(
+        id=uuid4(), case_id=case_id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        sample_name=body.sample_name.strip(), binding_status="UNVERIFIED",
+        binding_method=body.binding_method.strip(), evidence_reference=body.evidence_reference,
+        version=1, binding_fingerprint=_sample_binding_fingerprint(payload),
+        recorded_by=principal.user_id,
+    )
+    db.add(row)
+    AuditService(db).record(
+        event_type="PEDIGREE_SAMPLE_BINDING_RECORDED", case_id=case_id,
+        analysis_id=analysis.id, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PEDIGREE_SAMPLE_BINDING", subject_id=str(row.id),
+        operation="CREATE_UNVERIFIED", after_state=_sample_binding_payload(row),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason="Family sample identity claim changed; analyses may require reanalysis.",
+        metadata={"change_type": "SAMPLE_BINDING_RECORDED", "binding_id": str(row.id)},
+    )
+    db.commit()
+    return _sample_binding_payload(row)
+
+
+@router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/review", status_code=201)
+def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingReviewInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    """Append a reviewed identity revision; never mutate the prior claim."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "review")
+    require_role(principal, REVIEW_ROLES)
+    previous = db.get(PedigreeSampleBinding, binding_id)
+    if previous is None or previous.case_id != case_id:
+        raise HTTPException(404, "Sample binding not found")
+    if previous.binding_status != "UNVERIFIED":
+        raise HTTPException(409, "Only an unverified binding can be reviewed")
+    if body.decision == "VERIFIED":
+        partitions = db.scalars(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == previous.analysis_id,
+            AnalysisPartition.step_id == "normalize",
+            AnalysisPartition.input_artifact_id == previous.artifact_id,
+        )).all()
+        calls = get_analysis_sample_calls(db, previous.analysis_id)
+        if not partitions or not any(call.get("sample_name") == previous.sample_name for call in calls.values()):
+            raise HTTPException(409, "No normalized calls tie this sample name to the selected source artifact")
+    version = previous.version + 1
+    payload = {
+        "schema_version": 1, "case_id": str(previous.case_id),
+        "member_id": str(previous.pedigree_member_id), "specimen_id": str(previous.specimen_id),
+        "analysis_id": str(previous.analysis_id), "artifact_id": str(previous.artifact_id),
+        "sample_name": previous.sample_name, "binding_status": body.decision,
+        "binding_method": previous.binding_method, "evidence_reference": previous.evidence_reference,
+        "review_reason": body.reason.strip(), "version": version,
+        "supersedes_binding_id": str(previous.id),
+    }
+    row = PedigreeSampleBinding(
+        id=uuid4(), case_id=previous.case_id, pedigree_member_id=previous.pedigree_member_id,
+        specimen_id=previous.specimen_id, analysis_id=previous.analysis_id, artifact_id=previous.artifact_id,
+        sample_name=previous.sample_name, binding_status=body.decision,
+        binding_method=previous.binding_method, evidence_reference=previous.evidence_reference,
+        review_reason=body.reason.strip(), version=version, supersedes_binding_id=previous.id,
+        binding_fingerprint=_sample_binding_fingerprint(payload), recorded_by=principal.user_id,
+        reviewed_by=principal.user_id, reviewed_at=datetime.now(UTC),
+    )
+    db.add(row)
+    AuditService(db).record(
+        event_type="PEDIGREE_SAMPLE_BINDING_REVIEWED", case_id=case_id,
+        analysis_id=previous.analysis_id, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PEDIGREE_SAMPLE_BINDING", subject_id=str(row.id),
+        operation=body.decision, before_state=_sample_binding_payload(previous),
+        after_state=_sample_binding_payload(row), reason=body.reason.strip(),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason="Family sample identity review changed; analyses may require reanalysis.",
+        metadata={"change_type": "SAMPLE_BINDING_REVIEWED", "binding_id": str(row.id)},
+    )
+    db.commit()
+    return _sample_binding_payload(row)
+
 
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
