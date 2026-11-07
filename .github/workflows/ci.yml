@@ -97,8 +97,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes podman
-          podman --version
-          podman info --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["host"]["cgroupVersion"])'
+          sudo podman --version
+          sudo podman info --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["host"]["cgroupVersion"])'
       - name: Publish the exact worker image to a temporary local registry
         run: |
           set -euo pipefail
@@ -109,7 +109,7 @@ jobs:
           test -n "$digest"
           image="localhost:5000/siraloom-worker@$digest"
           docker pull "$image"
-          podman pull --tls-verify=false "$image"
+          sudo podman pull --tls-verify=false "$image"
           echo "SIRALOOM_QUALIFICATION_IMAGE=$image" >> "$GITHUB_ENV"
       - name: Install locked backend dependencies for OCI qualification
         uses: actions/setup-python@v5
@@ -123,9 +123,15 @@ jobs:
         env:
           SIRALOOM_QUALIFICATION_RUNTIME: DOCKER
         run: uv run --locked pytest -q tests/integration/test_linux_container_runtime_qualification.py
+      - name: Configure a rootful Podman adapter with cgroup delegation
+        run: |
+          printf '%s\\n' '#!/bin/sh' 'exec sudo /usr/bin/podman "$@"' | sudo tee /usr/local/bin/siraloom-podman-root >/dev/null
+          sudo chmod 0755 /usr/local/bin/siraloom-podman-root
+          /usr/local/bin/siraloom-podman-root info --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["host"]["cgroupVersion"])'
       - name: Qualify real Podman execution, mounts, cgroups, timeout and BCFtools
         env:
           SIRALOOM_QUALIFICATION_RUNTIME: PODMAN
+          SIRALOOM_QUALIFICATION_RUNTIME_PATH: /usr/local/bin/siraloom-podman-root
         run: uv run --locked pytest -q tests/integration/test_linux_container_runtime_qualification.py
 
   postgres-integration:
