@@ -54,11 +54,19 @@ This resolves the implementation interpretation from the pinned specification's 
 
 The source says unstranded modification information is stored at the lowest POS, with the corresponding other value MISSING or omitted. Its CpG example places the unstranded 5mC measurement at the C-containing record and leaves the subsequent G's M5mC value missing. For N modifications, the positive-strand value is stored and the negative-strand value is MISSING.
 
-The current production implementation maps Number=M values to per-record allele-sequence offsets and strands. That is necessary but not sufficient to enforce the unstranded storage convention across records.
+**Explicit policy and cross-record implementation now present on the research branch:** `validate_vcf_strict` accepts `base_modification_strandedness=None|"stranded"|"unstranded"`. The default `None` preserves existing validation and does not infer assay strandedness. `"stranded"` does not apply the unstranded omission rule. Only explicit `"unstranded"` enables the additional placement checks.
 
-**Critical input distinction:** VCF Number=M does not itself declare whether a measurement is strand-specific or unstranded. The validator must not infer an unstranded assay from a missing value, a complementary base, or a neighbouring record. A future cross-record validator must be explicitly enabled by a caller-supplied unstranded representation policy (or equivalent validated assay metadata), retain the default behavior for strand-specific files, and scope comparisons by sample, contig, modification field/ChEBI identity and compatible allele/haplotype context. It must also distinguish a true MISSING value from an omitted trailing field and must not compare unrelated alleles merely because they are adjacent.
+For unstranded mode, populated Number=M vectors are projected to per-sample observations carrying contig, genomic coordinate, modification field, GT copy index, phase-set identity, base, strand and value. The validator then:
+- checks complementary base pairs within one record and across adjacent records;
+- requires the value at the higher POS of a complementary pair to be MISSING, regardless of which strand has the lower POS;
+- requires negative-strand values for Number=M fields ending in N to be MISSING;
+- joins records only when sample, contig, field, phased GT copy and phase-set context agree;
+- uses record-local allele context for unphased alleles rather than joining unphased calls across records;
+- reports `VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT` for a populated higher-POS value and `VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED` when a length-changing allele prevents safe coordinate projection.
 
-Acceptance tests must include: same-record CpG positions; CpG positions split across adjacent records; reverse-complement orientation; multiple samples; multiallelic and phased genotypes; missing and symbolic alleles; record-order/coordinate boundary cases; and explicit proof that strand-specific mode does not apply the unstranded omission rule. Until this policy and its cross-record evidence model are implemented, unstranded placement remains unsupported by strict validation and must be reported as such rather than inferred.
+The regression suite now covers same-record and adjacent-record CpG pairs, reverse orientation, multiple samples, distinct phase sets, called multiallelic alleles, missing values, explicit stranded/default behavior and the unsupported length-changing-allele boundary.
+
+**Remaining limitations:** cross-record matching is intentionally restricted to equal-length allele/reference representations so that `POS + sequence offset` remains a defensible coordinate map. Unphased calls are validated within their own record/allele context but are not joined across records. Complex indels, overlapping allele representations that cannot be mapped one-to-one, and cases requiring haplotype reconstruction beyond the encoded phase-set/copy context remain unsupported in unstranded mode; the validator rejects length-changing alleles rather than guessing. The current tests do not establish laboratory qualification or assay-level truth of modification fractions.
 
 ## 5. Number=M production validation and biological slot mapping
 
