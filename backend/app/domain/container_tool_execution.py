@@ -269,6 +269,7 @@ class LinuxContainerToolExecutor:
         started = datetime.now(timezone.utc)
         monotonic_start = time.monotonic()
         timed_out = False
+        cleanup_error: str | None = None
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
             try:
                 process = subprocess.Popen(command, stdout=stdout_file, stderr=stderr_file, env={
@@ -281,15 +282,48 @@ class LinuxContainerToolExecutor:
             except subprocess.TimeoutExpired:
                 timed_out = True
                 try:
-                    self.runner([runtime, "kill", container_name], capture_output=True, text=True, timeout=15, check=False)
+                    self.runner(
+                        [runtime, "kill", container_name],
+                        capture_output=True, text=True, timeout=15, check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    # A failed runtime kill is not silently accepted. The
+                    # force-remove and subsequent ps verification below get a
+                    # chance to recover; otherwise the failure is persisted.
+                    cleanup_error = f"runtime kill failed: {type(exc).__name__}"
                 finally:
                     try:
                         os.killpg(process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
-                    process.wait()
+                    try:
+                        process.wait(timeout=15)
+                    except subprocess.TimeoutExpired:
+                        cleanup_error = "container client process did not terminate after SIGKILL"
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        process.wait(timeout=5)
             finally:
-                self.runner([runtime, "rm", "--force", container_name], capture_output=True, text=True, timeout=15, check=False)
+                try:
+                    self.runner(
+                        [runtime, "rm", "--force", container_name],
+                        capture_output=True, text=True, timeout=15, check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    cleanup_error = cleanup_error or f"runtime force-remove failed: {type(exc).__name__}"
+                try:
+                    remaining = self.runner(
+                        [runtime, "ps", "--all", "--filter", f"name={container_name}", "--format", "{{.Names}}"],
+                        capture_output=True, text=True, timeout=15, check=False,
+                    )
+                    if remaining.returncode != 0:
+                        cleanup_error = cleanup_error or "runtime could not verify container removal"
+                    elif container_name in (remaining.stdout or "").splitlines():
+                        cleanup_error = cleanup_error or "container remains after force-remove"
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    cleanup_error = cleanup_error or f"container removal could not be verified: {type(exc).__name__}"
 
             def capture(handle: object) -> tuple[str, str]:
                 handle.seek(0)
@@ -351,6 +385,11 @@ class LinuxContainerToolExecutor:
                 json.dumps(sorted(env.items()), separators=(",", ":")).encode()
             ).hexdigest(),
         )
+        if cleanup_error:
+            raise ToolExecutionError(
+                "Container cleanup could not be verified: " + cleanup_error,
+                retryable=True, provenance=provenance,
+            )
         if timed_out:
             raise ToolExecutionError(
                 f"{profile.tool_id} container exceeded its {request.timeout_seconds}s timeout and was terminated.",
