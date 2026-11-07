@@ -10,11 +10,11 @@ from backend.app.domain.vcf_tools import route_vcf_records
 def _write_member_vcf(path, sample_name, records):
     header = (
         "##fileformat=VCFv4.3\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
-        "##FORMAT=<ID=DP,Number=1,Type=Integer,Description=\"Read depth\">\n"
-        "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description=\"Genotype quality\">\n"
-        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description=\"Allelic depths\">\n"
-        "##FORMAT=<ID=PS,Number=1,Type=Integer,Description=\"Phase set\">\n"
+        "##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n"
+        "##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n"
+        "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n"
+        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n"
+        "##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">\n"
         f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_name}\n"
     )
     path.write_text(header + "".join(record + "\n" for record in records), encoding="utf-8")
@@ -24,10 +24,10 @@ def _parsed_calls(path, sample_name):
     # Exercise the production intake router: it stamps each eligible source
     # record with an immutable source-record SHA-256 lineage payload before
     # normalization. The matrix must receive that lineage from normalized calls.
-    routed_dir = path.parent / f\"{path.stem}-{sample_name}-routed\"
+    routed_dir = path.parent / f"{path.stem}-{sample_name}-routed"
     routing = route_vcf_records(path, routed_dir)
-    assert routing[\"sequence_records\"] > 0
-    routed_vcf = routed_dir / \"sequence-input.vcf\"
+    assert routing["sequence_records"] > 0
+    routed_vcf = routed_dir / "sequence-input.vcf"
     calls = {}
     for record in parse_vcf(str(routed_vcf), sample_name=sample_name):
         call = record.sample_calls[sample_name]
@@ -55,7 +55,7 @@ def _family_sample(member_id, identifier, specimen_id, analysis_id, artifact_id,
         "normalization_step_provenance": {
             "step_id": "normalize", "attempt": 1,
             "input_artifacts": [str(artifact_id)],
-            "output_artifacts": [f\"normalized-{analysis_id}\"],
+            "output_artifacts": [f"normalized-{analysis_id}"],
             "metadata": {"normalization_version": "6.0"},
             "started_at": "2026-11-07T00:00:00+00:00",
             "completed_at": "2026-11-07T00:01:00+00:00",
