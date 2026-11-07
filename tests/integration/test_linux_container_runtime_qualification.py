@@ -315,11 +315,11 @@ def test_runtime_image_inspection_failure_fails_closed_before_launch(tmp_path):
     real_runtime = executor.runtime_path
     wrapper = tmp_path / "runtime-with-inspect-failure"
     wrapper.write_text(
-        "#!/bin/sh\\n"
-        'if [ "$1" = "image" ] && [ "$2" = "inspect" ]; then\\n'
-        "  echo 'injected image inspection failure' >&2; exit 42;\\n"
-        "fi\\n"
-        f'exec {real_runtime} "$@"\\n',
+        "#!/bin/sh\n"
+        'if [ "$1" = "image" ] && [ "$2" = "inspect" ]; then\n'
+        "  echo 'injected image inspection failure' >&2; exit 42;\n"
+        "fi\n"
+        f'exec {real_runtime} "$@"\n',
         encoding="utf-8",
     )
     wrapper.chmod(0o755)
