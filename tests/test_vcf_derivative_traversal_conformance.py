@@ -352,3 +352,30 @@ def test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence(
     assert result["unresolved_breakend_partner_links"][0]["reason_code"] == (
         "VCF_BREAKEND_PARID_NOT_RECIPROCAL"
     )
+
+
+def test_vcf43_record_level_parid_on_multiallelic_breakend_is_unresolved(
+    tmp_path: Path,
+):
+    path = tmp_path / "vcf43-record-level-parid-multiallelic.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=PARID,Number=1,Type=String,Description="ID of partner breakend">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbnd1\tA\tA]2:10],C]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2,bnd3;PARID=bnd4\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n"
+        "3\t20\tbnd3\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n"
+        "4\t30\tbnd4\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;PARID=bnd1\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert len(result["breakend_adjacencies"]) == 2
+    assert result["unresolved_breakend_partner_link_count"] >= 2
+    assert any(
+        item["reason_code"] == "VCF_BREAKEND_PARID_RECORD_LEVEL_MULTIALLELIC_AMBIGUOUS"
+        for item in result["unresolved_breakend_partner_links"]
+    )
