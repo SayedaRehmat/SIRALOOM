@@ -641,7 +641,7 @@ def test_identity_evidence_history_endpoint_returns_all_immutable_revisions(monk
 def test_identity_evidence_correction_appends_pending_successor(monkeypatch):
     _patch_auth(monkeypatch)
     case, member, specimen, analysis, artifact, principal = _context()
-    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id)
+    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id, binding_status="UNVERIFIED")
     previous = SimpleNamespace(
         id=uuid4(), case_id=case.id, binding_id=binding.id,
         evidence_type="SAMPLE_IDENTITY_QC", result="PASS", method="OLD_METHOD",
