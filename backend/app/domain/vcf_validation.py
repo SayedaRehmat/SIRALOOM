@@ -35,6 +35,20 @@ def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
     return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
 
 
+def _breakend_remote_coordinate_within_cipos(
+    remote_locus: tuple[str, int], target_record: dict, target_alt_index: int
+) -> bool:
+    """Check a BND remote coordinate against the target ALT's POS/CIPOS interval."""
+    remote_chrom, remote_position = remote_locus
+    if remote_chrom != target_record["chrom"]:
+        return False
+    interval = target_record["cipos_by_alt"].get(target_alt_index, (0, 0))
+    if interval is None:
+        # Explicitly missing CIPOS means the target uncertainty is unresolved.
+        return True
+    lower_offset, upper_offset = interval
+    return target_record["pos"] + lower_offset <= remote_position <= target_record["pos"] + upper_offset
+
 def _alt_identity_key(allele: str) -> tuple[str, ...]:
     """Return VCF allele identity while respecting sequence and contig case rules."""
     if DNA_RE.fullmatch(allele):
@@ -2038,12 +2052,22 @@ def validate_vcf_strict(
                             f"Breakend record ID {record_id!r} is not unique at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
+                    raw_cipos = info_values.get("CIPOS")
+                    cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
+                    cipos_by_alt: dict[int, tuple[int, int] | None] = {}
+                    for alt_index in breakend_alt_indexes:
+                        if not cipos_entries:
+                            cipos_by_alt[alt_index] = (0, 0)
+                            continue
+                        lower, upper = cipos_entries[2 * alt_index : 2 * alt_index + 2]
+                        cipos_by_alt[alt_index] = None if lower == upper == "." else (int(lower), int(upper))
                     breakend_records_by_id[record_id] = {
                         "chrom": _chrom,
                         "pos": _pos,
                         "breakend_alt_indexes": breakend_alt_indexes,
                         "remote_loci_by_alt": remote_loci_by_alt,
                         "mate_entries_by_alt": mate_entries_by_alt,
+                        "cipos_by_alt": cipos_by_alt,
                         "line_no": line_no,
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
@@ -2600,9 +2624,10 @@ def validate_vcf_strict(
                 f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
                 code="VCF_BREAKEND_MATE_MISSING",
             )
-        if (mate["chrom"], mate["pos"]) != remote_locus:
+        source_record = breakend_records_by_id.get(source_id.split(";")[0])
+        if source_record is None or mate["chrom"] != remote_locus[0]:
             raise StrictVCFValidationError(
-                f"Breakend MATEID {mate_id!r} does not match the remote coordinate for ALT allele {source_alt_index + 1} at line {line_no}",
+                f"Breakend MATEID {mate_id!r} does not match the remote contig for ALT allele {source_alt_index + 1} at line {line_no}",
                 code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
             )
 
@@ -2619,7 +2644,12 @@ def validate_vcf_strict(
         reciprocal_alt_indexes = [
             mate_alt_index
             for mate_alt_index in reciprocal_id_alt_indexes
-            if mate["remote_loci_by_alt"].get(mate_alt_index) == (chrom, pos)
+            if _breakend_remote_coordinate_within_cipos(remote_locus, mate, mate_alt_index)
+            and _breakend_remote_coordinate_within_cipos(
+                mate["remote_loci_by_alt"].get(mate_alt_index, ("", -1)),
+                source_record,
+                source_alt_index,
+            )
         ]
         if not reciprocal_alt_indexes:
             raise StrictVCFValidationError(
