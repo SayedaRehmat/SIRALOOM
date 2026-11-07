@@ -152,7 +152,15 @@ def test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso(
         "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t0|1:set,set:3,3\n",
         encoding="utf-8",
     )
-    assert validate_vcf_strict(path)["records"] == 2
+    result = validate_vcf_strict(path)
+    assert result["records"] == 2
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "set"
+    )
+    assert len(traversal["ordered_events"]) == 1
+    assert traversal["ordered_events"][0]["ordinal"] == 3
+    assert len(traversal["ordered_events"][0]["occurrences"]) == 2
 
 
 def test_vcf45_local_gt_2_4_remains_global_alt_indexes_not_local_indexes(
