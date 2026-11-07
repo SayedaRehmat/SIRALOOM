@@ -22,14 +22,16 @@ BREAKEND_RE = re.compile(
 )
 
 
+def _is_vcf45_breakend_alt(allele: str) -> bool:
+    """Identify paired and single VCFv4.5 breakpoint-notation alleles."""
+    return "[" in allele or "]" in allele or bool(
+        re.fullmatch(r"(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)", allele)
+    )
+
+
 def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
     """Identify VCFv4.5 symbolic SVs and paired or single breakend alleles."""
-    if "[" in allele or "]" in allele:
-        return True
-    # VCFv4.5 single breakends use a leading or trailing dot (for example
-    # .A, A., .TGCA, or TCC.). They are breakpoint-notation alleles too:
-    # a phase set containing one still has the PSO obligation.
-    if re.fullmatch(r"(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)", allele):
+    if _is_vcf45_breakend_alt(allele):
         return True
     match = re.fullmatch(r"<([A-Z]+)(?::[^<>]+)?>", allele)
     return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
@@ -2535,7 +2537,7 @@ def validate_vcf_strict(
             for alt in alts:
                 if SYMBOLIC_RE.fullmatch(alt) or alt == "*":
                     symbolic += 1
-                if "[" in alt or "]" in alt:
+                if _is_vcf45_breakend_alt(alt):
                     breakends += 1
                 if alt == "<NON_REF>":
                     gvcf_markers += 1
