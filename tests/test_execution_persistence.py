@@ -556,10 +556,10 @@ def test_persistent_executor_runs_real_pinned_bcftools_process_and_persists_outp
     workspace.mkdir()
     input_path = workspace / "input.vcf"
     input_path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "##contig=<ID=1,length=1000>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t100\\t.\\tA\\tG,T\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t100\t.\tA\tG,T\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     output_path = workspace / "normalized.vcf"
