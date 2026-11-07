@@ -40,17 +40,21 @@ The source states that PSL contains one phase-set entry for each allele value in
 
 This interpretation follows the source examples and Number=P definition. It does not infer that PSO is a unique-name keyed map.
 
-## 4. Number=M biological position oracle
+## 4. Number=M production validation and biological slot mapping
 
-A new pure helper enumerates the expected per-allele sequence slots:
+The production `validate_vcf_strict` path now derives an ordered slot map for every populated Number=M FORMAT value, rather than calculating only a count:
 
-- Specific base IDs: a matching sequence base maps to the positive strand; its complement maps to the negative strand; slots remain in sequence order.
-- U is treated as T.
-- N emits positive then negative slots for each sequence position.
+- Each slot is keyed to the global GT allele index, zero-based offset in that allele sequence, observed sequence base, and strand.
+- A specific base ID maps the matching base to the positive strand and its complement to the negative strand; slots retain sequence order.
+- U is treated as T. N emits positive then negative slots at every sequence position.
+- GT allele order is retained; repeated identical unphased allele indexes are aggregated once at first occurrence, while phased copies remain distinct. Missing and symbolic alleles contribute no slots.
+- The validator applies numeric type/range validation to each value and binds each comma-separated vector element to its derived slot in order.
 
-Tests cover the normative CGA/M5mC example, reverse sequence orientation, A/T complements, U/T equivalence and the positive-then-negative ordering for N.
+The validator always reports `base_modification_slot_assignment_count`. Call `validate_vcf_strict(..., include_base_modification_slot_assignments=True)` to obtain the detailed per-value mapping, including record/sample provenance, allele index, sequence offset/base, strand, vector index and value. This makes the positional interpretation inspectable and auditable in production validation output.
 
-**Validation boundary:** this oracle tests expected biological slot order and strand assignment independently of the submitted values. It does not prove that an arbitrary unlabelled numeric vector has been populated with biologically correct values. The VCF record does not attach explicit base/strand labels to each numeric value; actual assignment requires trusted source observations or a higher-level data model. Ambiguous sequence symbols are rejected by the helper pending a separate specification interpretation.
+Tests exercise the normative CGA/M5mC example, reverse sequence orientation, A/T complements, U/T equivalence, N's positive-then-negative order, genotype allele order, phased/unphased duplicate behavior, missing values and the actual production validator mapping.
+
+**Evidence boundary:** the validator now enforces and exposes the documentation-defined value-to-slot assignment. It cannot independently establish whether a caller's reported fraction/depth is experimentally true; that requires the underlying read-level or assay evidence. This is a limit of the evidence carried by VCF, not a gap in applying the VCF positional semantics.
 
 ## 5. Independent review status and acceptance criteria
 
