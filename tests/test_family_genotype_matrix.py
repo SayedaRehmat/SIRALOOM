@@ -49,8 +49,8 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
         },
         partial_variant: {
             "sample_name": "FATHER",
-            "genotype": "0/1",
-            "normalized_genotype": "0/1",
+            "genotype": "0/.",
+            "normalized_genotype": "0/.",
             "missing_allele_count": 1,
         },
     })
