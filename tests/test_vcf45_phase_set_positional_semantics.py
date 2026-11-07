@@ -342,12 +342,16 @@ def test_vcf45_psq_distinct_phase_set_identifiers_remain_positionally_aligned(
     assert validate_vcf_strict(path)["records"] == 1
 
 
-def test_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_intervals(
-    tmp_path: Path,
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_and_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_intervals(
+    tmp_path: Path, version: str
 ):
-    path = tmp_path / "breakend-microhomology-cipos.vcf"
+    path = tmp_path / f"breakend-microhomology-cipos-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=CIPOS,Number=.,Type=Integer,Description="Confidence interval around POS">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=0,6\n"
         "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=0,6\n",
@@ -356,12 +360,16 @@ def test_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_interval
     assert validate_vcf_strict(path)["records"] == 2
 
 
-def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
-    tmp_path: Path,
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_and_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
+    tmp_path: Path, version: str
 ):
-    path = tmp_path / "breakend-missing-cipos.vcf"
+    path = tmp_path / f"breakend-missing-cipos-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=CIPOS,Number=.,Type=Integer,Description="Confidence interval around POS">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=.,.\n"
         "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=.,.\n",
@@ -423,12 +431,16 @@ def test_vcf45_cipos_interval_must_span_zero(
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_BREAKEND_CIPOS_INVALID"
 
-def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
-    tmp_path: Path,
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_and_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
+    tmp_path: Path, version: str
 ):
-    path = tmp_path / "breakend-outside-cipos.vcf"
+    path = tmp_path / f"breakend-outside-cipos-{version}.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=CIPOS,Number=.,Type=Integer,Description="Confidence interval around POS">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t321681\tbndV\tT\tT]2:123463]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;CIPOS=0,6\n"
         "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;CIPOS=0,6\n",
