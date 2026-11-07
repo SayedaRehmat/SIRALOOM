@@ -5,8 +5,10 @@
 The common ToolExecutionRequest / ToolExecutionResult /
 ToolExecutionProvenance contract is retained. EnvironmentAwareToolExecutor
 selects the local-process executor for qualified HOST environments and the
-Linux OCI adapter for qualified CONTAINER environments. Remote agents and
-unsupported schedulers fail closed; they never fall back to host execution.
+Linux OCI adapter for qualified CONTAINER environments. The persistent execution service rehydrates the immutable registered environment
+snapshot and selects the adapter when no explicit executor override is supplied.
+Remote agents and unsupported schedulers fail closed; they never fall back to
+host execution.
 
 ## Immutable image identity
 
@@ -17,8 +19,9 @@ A container environment must register both:
 
 A mutable tag is not accepted. Docker/Podman must already have the exact
 repository digest locally; execution uses --pull=never. The adapter verifies
-the runtime version, the inspected repository digest, the in-image executable
-SHA-256, and the tool's version output before running the requested operation.
+the Docker daemon (or Podman runtime) version, the inspected repository digest,
+the in-image executable SHA-256, and the tool's version output before running
+the requested operation.
 
 ## Isolation and resource enforcement
 
