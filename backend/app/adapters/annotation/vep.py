@@ -449,26 +449,154 @@ class VEPProvider(ScientificResourceProvider):
             } for item in normalized.observations),
         )
 
+    def _tool_identity(self) -> ToolIdentity:
+        if self._tool_identity_cache is None:
+            self._tool_identity_cache = ToolIdentity(
+                tool_id="ensembl-vep",
+                version=self.vep_version,
+                profile_id=self.tool_profile_id,
+                executable=self.binary,
+                executable_sha256=self.expected_binary_sha256,
+                platform=self.platform,
+                qualification_status=self.qualification_status,
+                version_args=("--version",),
+                version_output_contains=f"ensembl-vep {self.vep_version}",
+                supported_operations=("annotate", "verify_cache"),
+                runtime_image_digest=self.runtime_image_digest,
+                runtime_path=self.runtime_path,
+                runtime_environment=self.runtime_environment,
+            )
+        return self._tool_identity_cache
+
+    def _verify_runtime_image(self) -> None:
+        observed = os.environ.get("SIRALOOM_RUNTIME_IMAGE_DIGEST", "").strip().lower()
+        if observed != self.runtime_image_digest:
+            raise VEPProviderError(
+                "Running worker image digest does not match the organization-approved VEP tool profile."
+            )
+
+    @staticmethod
+    def _require_read_only_mount(path: Path, *, label: str) -> None:
+        try:
+            flags = os.statvfs(path).f_flag
+        except OSError as exc:
+            raise VEPProviderError(f"{label} resource mount cannot be inspected.") from exc
+        read_only_flag = getattr(os, "ST_RDONLY", 1)
+        if not flags & read_only_flag:
+            raise VEPProviderError(
+                f"{label} resource must be mounted read-only for reproducible VEP execution."
+            )
+
+    def _reference_resource_bindings(
+        self,
+        reference_package: dict[str, Any],
+        assembly: str,
+    ) -> tuple[ScientificResourceBinding, ...]:
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP requires the validated reference package from the normalization stage.")
+        package_assembly = _canonical_assembly(str(reference_package.get("assembly_name") or ""))
+        if package_assembly != assembly:
+            raise VEPProviderError(
+                "VEP reference package assembly does not match the normalized analysis assembly."
+            )
+        package_checksum = str(reference_package.get("package_checksum") or "").lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", package_checksum):
+            raise VEPProviderError("Validated reference package is missing its SHA-256 package checksum.")
+
+        resource_id = str(reference_package.get("resource_id") or "").strip()
+        resource_version = str(reference_package.get("version") or "").strip()
+        if not resource_id or not resource_version:
+            raise VEPProviderError("Validated reference package identity is incomplete.")
+
+        fasta_path = Path(str(reference_package.get("fasta_path") or ""))
+        fai_path = Path(str(reference_package.get("fai_path") or ""))
+        fasta_sha256 = str(reference_package.get("fasta_sha256") or "").lower()
+        fai_sha256 = str(reference_package.get("fai_sha256") or "").lower()
+        if (
+            not fasta_path.is_absolute()
+            or not fai_path.is_absolute()
+            or not re.fullmatch(r"[0-9a-f]{64}", fasta_sha256)
+            or not re.fullmatch(r"[0-9a-f]{64}", fai_sha256)
+        ):
+            raise VEPProviderError("Validated reference package must pin absolute FASTA/FAI paths and SHA-256 digests.")
+
+        if self.fasta and Path(self.fasta).resolve(strict=False) != fasta_path.resolve(strict=False):
+            raise VEPProviderError("VEP FASTA path differs from the reference package used by normalization.")
+        if self.toolchain_fasta_sha256 and self.toolchain_fasta_sha256 != fasta_sha256:
+            raise VEPProviderError("VEP FASTA digest differs from the organization-approved reference package.")
+
+        self._require_read_only_mount(fasta_path, label="Reference FASTA")
+        self._require_read_only_mount(fai_path, label="Reference FAI")
+        bindings = [
+            ScientificResourceBinding(
+                resource_id=f"{resource_id}:FASTA",
+                version=resource_version,
+                sha256=fasta_sha256,
+                assembly=assembly,
+                path=str(fasta_path),
+            ),
+            ScientificResourceBinding(
+                resource_id=f"{resource_id}:FAI",
+                version=resource_version,
+                sha256=fai_sha256,
+                assembly=assembly,
+                path=str(fai_path),
+            ),
+        ]
+        gzi_path_value = reference_package.get("gzi_path")
+        gzi_sha256 = str(reference_package.get("gzi_sha256") or "").lower()
+        if gzi_path_value:
+            gzi_path = Path(str(gzi_path_value))
+            if not gzi_path.is_absolute() or not re.fullmatch(r"[0-9a-f]{64}", gzi_sha256):
+                raise VEPProviderError("Reference GZI index path or digest is invalid.")
+            self._require_read_only_mount(gzi_path, label="Reference GZI")
+            bindings.append(ScientificResourceBinding(
+                resource_id=f"{resource_id}:GZI",
+                version=resource_version,
+                sha256=gzi_sha256,
+                assembly=assembly,
+                path=str(gzi_path),
+            ))
+        return tuple(bindings)
+
     def annotate(self, variants: list[CanonicalVariant], context: dict[str, Any]) -> list[dict[str, Any]]:
         genome_build = _canonical_assembly(context.get("genome_build") or context.get("genome"))
         if not genome_build:
             raise VEPProviderError("VEP annotation requires an explicit GRCh37/GRCh38 assembly.")
-        runtime_check = self.verify_local_runtime(genome_build)
+        reference_package = context.get("reference_package")
+        runtime_check = self.verify_local_runtime(
+            genome_build,
+            reference_package=reference_package,
+            context=context,
+        )
         request = self.prepare_request(
             "annotate",
-            {"variants": variants, "genome_build": context.get("genome_build") or context.get("genome")},
+            {
+                "variants": variants,
+                "genome_build": genome_build,
+                "reference_package": reference_package,
+                "organization_id": context.get("organization_id"),
+                "workflow_id": context.get("workflow_id"),
+            },
         )
         raw = self.execute(request)
         raw.metadata["runtime_check"] = runtime_check
-        normalized = self.normalize_result(raw, inputs=request.payload)
+        try:
+            normalized = self.normalize_result(raw, inputs=request.payload)
+        except VEPProviderError as exc:
+            if exc.execution_provenance is None:
+                exc.execution_provenance = raw.metadata.get("tool_execution_provenance")
+            raise
         return list(normalized.observations)
 
-    def verify_local_runtime(self, genome_build: str | None) -> dict[str, Any]:
-        """Verify the configured VEP binary and cache before scientific execution.
-
-        This check is intentionally performed by the real annotation entry point,
-        not inferred from a registered path or a resource's declared version.
-        """
+    def verify_local_runtime(
+        self,
+        genome_build: str | None,
+        *,
+        reference_package: dict[str, Any] | None,
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Verify the exact VEP executable, offline cache and normalization reference."""
         assembly = _canonical_assembly(genome_build or self.assembly)
         if not assembly:
             raise VEPProviderError("VEP runtime verification requires an explicit GRCh37/GRCh38 assembly.")
@@ -479,113 +607,96 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError(
                 f"VEP resource assembly {configured_assembly} does not match analysis assembly {assembly}."
             )
-        if assembly in self._runtime_checks:
-            return dict(self._runtime_checks[assembly])
+        package_checksum = str((reference_package or {}).get("package_checksum") or "").lower()
+        runtime_key = f"{assembly}:{package_checksum}"
+        if runtime_key in self._runtime_checks:
+            return dict(self._runtime_checks[runtime_key])
 
+        self._verify_runtime_image()
+        reference_bindings = self._reference_resource_bindings(reference_package or {}, assembly)
         cache_manifest_check = self._verify_cache_manifest(assembly)
-        try:
-            binary_sha256_before = _sha256_file(Path(self.binary))
-        except OSError as exc:
-            raise VEPProviderError(f"VEP executable is unavailable for checksum verification: {self.binary}") from exc
-        if binary_sha256_before != self.expected_binary_sha256:
-            raise VEPProviderError("VEP binary SHA-256 does not match the governed execution contract.")
-
-        try:
-            version_result = subprocess.run(
-                [self.binary, "--version"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise VEPProviderError("VEP version check timed out.", retryable=True) from exc
-        except OSError as exc:
-            raise VEPProviderError(f"VEP executable is unavailable: {self.binary}") from exc
-        if version_result.returncode != 0:
-            raise VEPProviderError(
-                "VEP version check failed: "
-                + (version_result.stderr or version_result.stdout or "no diagnostic").strip()[-2000:]
-            )
-        version_output = "\n".join((version_result.stdout or "", version_result.stderr or "")).strip()
-        actual_version = _extract_vep_version(version_output)
-        expected_version = str(
-            (self.contract.toolchain or {}).get("vep_version")
-            or self.contract.provider_version
-        ).strip()
-        expected_release = _version_release(expected_version)
-        if expected_release is None:
-            raise VEPProviderError(
-                "VEP execution contract must pin a parseable tool version in provider_version or toolchain.vep_version."
-            )
-        if actual_version is None:
-            raise VEPProviderError("VEP --version returned output without a parseable release version.")
-        expected_full_version = _extract_vep_version(expected_version)
-        version_matches = (
-            actual_version == expected_full_version
-            if expected_full_version and "." in expected_full_version
-            else _version_release(actual_version) == expected_release
+        self._require_read_only_mount(Path(self.cache_dir), label="VEP cache")
+        self._require_read_only_mount(Path(self.cache_manifest), label="VEP cache manifest")
+        cache_binding = ScientificResourceBinding(
+            resource_id=f"vep-cache-manifest:{self.species}",
+            version=self.cache_version,
+            sha256=self.cache_manifest_sha256,
+            assembly=assembly,
+            path=self.cache_manifest,
         )
-        if not version_matches:
-            raise VEPProviderError(
-                f"VEP binary release {actual_version} does not match governed release {expected_version}."
-            )
+        scratch_root = Path(self.scratch_root).resolve(strict=True)
+        if not scratch_root.is_dir():
+            raise VEPProviderError("VEP scratch root is not a directory.")
 
-        cache_command = [
-            self.binary,
-            "--offline",
-            "--cache",
-            "--species",
-            self.species,
-            "--cache_version",
-            self.cache_version,
-            "--dir_cache",
-            self.cache_dir,
-            "--assembly",
-            assembly,
-            "--show_cache_info",
-        ]
-        try:
-            cache_result = subprocess.run(
-                cache_command,
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=120,
+        organization_id = str(context.get("organization_id") or "").strip()
+        workflow_id = str(context.get("workflow_id") or "").strip()
+        if not organization_id or not workflow_id:
+            raise VEPProviderError("VEP execution requires organization and workflow identity for provenance.")
+
+        with TemporaryDirectory(prefix="siraloom-vep-preflight-", dir=scratch_root) as workspace:
+            request = ToolExecutionRequest(
+                execution_id=str(uuid4()),
+                organization_id=organization_id,
+                workflow_id=workflow_id,
+                operation="verify_cache",
+                argv=(
+                    "--offline", "--cache",
+                    "--species", self.species,
+                    "--cache_version", self.cache_version,
+                    "--dir_cache", self.cache_dir,
+                    "--assembly", assembly,
+                    "--show_cache_info",
+                ),
+                workspace=workspace,
+                timeout_seconds=120,
+                max_output_bytes=self.max_output_bytes,
+                resources=(cache_binding, *reference_bindings),
             )
-        except subprocess.TimeoutExpired as exc:
+            try:
+                result = self.executor.execute(self._tool_identity(), request)
+            except ToolExecutionError as exc:
+                raise VEPProviderError(
+                    f"VEP offline cache verification failed: {exc}",
+                    retryable=exc.retryable,
+                    execution_provenance=asdict(exc.provenance) if exc.provenance else None,
+                ) from exc
+            except ToolExecutionContractError as exc:
+                raise VEPProviderError(f"VEP execution preflight contract failed: {exc}") from exc
+
+        cache_output = "\n".join((result.stdout or "", result.stderr or "")).strip()
+        if not cache_output:
             raise VEPProviderError(
-                "VEP offline cache verification timed out.", retryable=True
-            ) from exc
-        except OSError as exc:
-            raise VEPProviderError(f"VEP cache verification could not start: {self.binary}") from exc
-        cache_output = "\n".join((cache_result.stdout or "", cache_result.stderr or "")).strip()
-        if cache_result.returncode != 0 or not cache_output:
-            raise VEPProviderError(
-                "VEP could not load the governed cache offline: "
-                + (cache_output or "no cache information was returned")[-2000:]
+                "VEP offline cache verification returned no cache information.",
+                execution_provenance=asdict(result.provenance),
             )
-        try:
-            binary_sha256_after = _sha256_file(Path(self.binary))
-        except OSError as exc:
-            raise VEPProviderError("VEP binary could not be checksummed after runtime verification.") from exc
-        if binary_sha256_after != binary_sha256_before:
-            raise VEPProviderError("VEP executable changed during runtime verification.")
 
         runtime_check = {
             "status": "VERIFIED",
             "assembly": assembly,
-            "vep_version": actual_version,
-            "expected_vep_version": expected_version,
+            "vep_version": self.vep_version,
+            "expected_vep_version": self.vep_version,
+            "tool_profile_id": self.tool_profile_id,
+            "platform": self.platform,
+            "runtime_image_digest": self.runtime_image_digest,
+            "vep_binary_sha256": self.expected_binary_sha256,
             "cache_version": self.cache_version,
-            "vep_binary_sha256": binary_sha256_after,
             "cache_manifest_sha256": cache_manifest_check["manifest_sha256"],
             "cache_tree_sha256": cache_manifest_check["tree_sha256"],
             "cache_artifact_sha256": cache_manifest_check["source_artifact_sha256"],
             "cache_info_sha256": hashlib.sha256(cache_output.encode("utf-8")).hexdigest(),
+            "reference_package": {
+                "resource_id": reference_package["resource_id"],
+                "version": reference_package["version"],
+                "package_checksum": package_checksum,
+                "assembly_name": reference_package["assembly_name"],
+                "fasta_sha256": reference_package["fasta_sha256"],
+                "fai_sha256": reference_package["fai_sha256"],
+                "gzi_sha256": reference_package.get("gzi_sha256"),
+            },
+            "tool_execution_provenance": asdict(result.provenance),
             "verified_at": datetime.now(timezone.utc).isoformat(),
         }
-        self._runtime_checks[assembly] = runtime_check
+        self._runtime_checks[runtime_key] = runtime_check
         return dict(runtime_check)
 
     def _verify_cache_manifest(self, assembly: str) -> dict[str, str]:
