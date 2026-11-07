@@ -16,6 +16,8 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
     path.write_text(
         f"##fileformat={version}\n"
         '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
@@ -31,6 +33,12 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
 
     assert result["records"] == 4
     assert len(result["breakend_adjacencies"]) == 2
+    assert len(result["breakend_event_groups"]) == 1
+    event_group = result["breakend_event_groups"][0]
+    assert event_group["event_id"] == "TRA1"
+    assert event_group["event_type"] == "TRA:BALANCED"
+    assert event_group["status"] == "MATCHED"
+    assert len(event_group["adjacency_ids"]) == 2
     traversal = next(
         item for item in result["derivative_chromosome_traversals"]
         if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
@@ -45,17 +53,18 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
     assert traversal["sequence_status"] == "UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE"
 
     orientations = {
-        (endpoint["alt"], endpoint["orientation"]["remote_piece_direction"],
+        (endpoint["alt"], endpoint["orientation"]["local_replacement"],
+         endpoint["orientation"]["remote_piece_direction"],
          endpoint["orientation"]["remote_piece_reverse_complemented"],
          endpoint["orientation"]["joined_side"])
         for adjacency in result["breakend_adjacencies"]
         for endpoint in (adjacency["source"], adjacency["mate"])
     }
     assert orientations == {
-        ("G[13:123457[", "RIGHT", "false", "AFTER_LOCAL_REPLACEMENT"),
-        ("T]13:123456]", "LEFT", "true", "AFTER_LOCAL_REPLACEMENT"),
-        ("[2:321682[C", "RIGHT", "true", "BEFORE_LOCAL_REPLACEMENT"),
-        ("]2:321681]A", "LEFT", "false", "BEFORE_LOCAL_REPLACEMENT"),
+        ("G[13:123457[", "G", "RIGHT", "false", "AFTER_LOCAL_REPLACEMENT"),
+        ("T]13:123456]", "T", "LEFT", "true", "AFTER_LOCAL_REPLACEMENT"),
+        ("[2:321682[C", "C", "RIGHT", "true", "BEFORE_LOCAL_REPLACEMENT"),
+        ("]2:321681]A", "A", "LEFT", "false", "BEFORE_LOCAL_REPLACEMENT"),
     }
 
 
