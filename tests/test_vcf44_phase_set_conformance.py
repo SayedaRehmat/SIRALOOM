@@ -69,3 +69,19 @@ def test_vcf44_format_number_p_requires_gt_to_establish_ploidy(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+def test_vcf44_reserved_psl_header_must_match_number_p(tmp_path: Path):
+    path = tmp_path / "vcf44-psl-wrong-header-definition.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=1,Type=String,Description="Wrong PSL declaration">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:phase:1,2\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
