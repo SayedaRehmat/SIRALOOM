@@ -3245,6 +3245,99 @@ def validate_vcf_strict(
                         for item in ambiguous_copy_signatures
                     ],
                 }
+    unique_breakend_records = {
+        int(record["line_no"]): record
+        for record in breakend_records_by_id.values()
+    }
+    for source_record in unique_breakend_records.values():
+        source_record_ids = set(source_record["record_ids"])
+        for source_alt_index in source_record["all_breakend_alt_indexes"]:
+            parid = source_record["parid_by_alt"].get(source_alt_index)
+            if not parid:
+                continue
+            if not source_record_ids:
+                # This is also captured at parse time; retain one durable
+                # record per ALT when a partner reference cannot be named.
+                continue
+            partner_record = breakend_records_by_id.get(parid)
+            source_endpoint = {
+                "record_id": source_record_ids and sorted(source_record_ids)[0],
+                "line_number": source_record["line_no"],
+                "chrom": source_record["chrom"],
+                "pos": source_record["pos"],
+                "alt_index": source_alt_index + 1,
+                "alt": source_record["alts"][source_alt_index],
+                "orientation": source_record["orientation_by_alt"].get(source_alt_index),
+                "parid": parid,
+            }
+            if partner_record is None:
+                unresolved_breakend_partner_links.append({
+                    "source": source_endpoint,
+                    "status": "UNRESOLVED",
+                    "reason_code": "VCF_BREAKEND_PARID_TARGET_MISSING",
+                })
+                continue
+            reciprocal_partner_alt_indexes = [
+                partner_alt_index
+                for partner_alt_index in partner_record["all_breakend_alt_indexes"]
+                if partner_record["parid_by_alt"].get(partner_alt_index) in source_record_ids
+            ]
+            if len(reciprocal_partner_alt_indexes) != 1:
+                unresolved_breakend_partner_links.append({
+                    "source": source_endpoint,
+                    "target_record_id": parid,
+                    "status": "UNRESOLVED",
+                    "reason_code": (
+                        "VCF_BREAKEND_PARID_TARGET_AMBIGUOUS"
+                        if len(reciprocal_partner_alt_indexes) > 1
+                        else "VCF_BREAKEND_PARID_NOT_RECIPROCAL"
+                    ),
+                    "reciprocal_candidate_alt_indexes": [
+                        item + 1 for item in reciprocal_partner_alt_indexes
+                    ],
+                })
+                continue
+            partner_alt_index = reciprocal_partner_alt_indexes[0]
+            partner_endpoint = {
+                "record_id": sorted(set(partner_record["record_ids"]))[0],
+                "line_number": partner_record["line_no"],
+                "chrom": partner_record["chrom"],
+                "pos": partner_record["pos"],
+                "alt_index": partner_alt_index + 1,
+                "alt": partner_record["alts"][partner_alt_index],
+                "orientation": partner_record["orientation_by_alt"].get(partner_alt_index),
+                "parid": partner_record["parid_by_alt"].get(partner_alt_index),
+            }
+            partner_key = tuple(sorted((
+                (int(source_record["line_no"]), source_alt_index),
+                (int(partner_record["line_no"]), partner_alt_index),
+            )))
+            if partner_key in breakend_partner_link_keys:
+                continue
+            breakend_partner_link_keys.add(partner_key)
+            source_event_id = source_record["event_by_alt"].get(source_alt_index)
+            partner_event_id = partner_record["event_by_alt"].get(partner_alt_index)
+            breakend_partner_links.append({
+                "partner_link_id": (
+                    f"{source_record['line_no']}:{source_alt_index + 1}"
+                    f"<->{partner_record['line_no']}:{partner_alt_index + 1}"
+                ),
+                "source": source_endpoint,
+                "partner": partner_endpoint,
+                "status": "MATCHED",
+                "event_id": source_event_id,
+                "partner_event_id": partner_event_id,
+                "event_group_status": (
+                    "MATCHED"
+                    if source_event_id and source_event_id == partner_event_id
+                    else (
+                        "UNRESOLVED_PARTIAL_OR_MISMATCHED"
+                        if source_event_id or partner_event_id
+                        else "NOT_DECLARED"
+                    )
+                ),
+            })
+
     phase_set_traversal_orders: list[dict[str, object]] = []
     phase_set_traversal_warnings: list[dict[str, object]] = []
     if fileformat in {"VCFv4.4", "VCFv4.5"}:
