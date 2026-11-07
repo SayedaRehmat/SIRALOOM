@@ -249,7 +249,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         input_artifacts=[str(artifact_id)], output_artifacts=["normalized-partition-1"],
         metadata_json={"executor": "test-fixture"}, started_at=None, completed_at=None,
     )
-    partition = SimpleNamespace(ordinal=0)
+    partition = SimpleNamespace(ordinal=0, input_artifact_id="normalized-partition-1")
     ploidy_evidence = SimpleNamespace(
         version=4,
         status="VERIFIED",
@@ -335,6 +335,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
     assert result["samples"][0]["calls"][0]["call_state"] == "CALL_PRESENT"
     assert result["samples"][0]["calls"][0]["source_record_sha256"] == "c" * 64
     assert result["interpretation_status"] == "NOT_PERFORMED"
+    assert result["provenance_completeness_status"] == "COMPLETE"
 
 
 def test_matrix_endpoint_rejects_superseded_binding(monkeypatch):
@@ -644,3 +645,28 @@ def test_verified_specimen_ploidy_is_recorded_without_claiming_locus_interpretat
     assert matrix["samples"][0]["ploidy_evidence_status"] == "VERIFIED_RECORDED_LOCUS_POLICY_REQUIRED"
     assert matrix["samples"][0]["ploidy_interpretation_status"] == "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY"
     assert matrix["samples"][0]["calls"][0]["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
+
+
+
+def test_family_matrix_marks_missing_source_record_digest_incomplete_without_imputing_genotype():
+    case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
+    sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "sample_name": "PROBAND",
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+        },
+    })
+    sample["normalization_step_provenance"] = {
+        "step_id": "normalize", "attempt": 1,
+        "input_artifacts": [str(sample["artifact_id"])],
+        "output_artifacts": ["normalized-output"],
+    }
+    sample["normalized_partition_input_artifact_ids"] = ["normalized-output"]
+    matrix = build_family_genotype_matrix(
+        case_id=case_id, variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    row = matrix["samples"][0]["calls"][0]
+    assert row["call_state"] == "CALL_PRESENT"
+    assert row["source_record_sha256_status"] == "NOT_AVAILABLE"
+    assert matrix["provenance_completeness_status"] == "INCOMPLETE_REQUIRES_REVIEW"
