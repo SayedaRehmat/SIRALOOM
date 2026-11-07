@@ -754,8 +754,12 @@ def _run_bcftools_command(
         ),
     )
     inputs = tuple(
-        InputArtifact(name=path.name, path=str(path.resolve(strict=True)), sha256=sha256_file(path))
-        for path in input_paths
+        InputArtifact(
+            name=f"input-{index}:{path.name}",
+            path=str(path.resolve(strict=True)),
+            sha256=sha256_file(path),
+        )
+        for index, path in enumerate(input_paths)
     )
     outputs = tuple(
         OutputArtifact(name=path.name, path=str(path.absolute()))
