@@ -203,3 +203,52 @@ Use the following status labels consistently:
 - **NOT RUN / PARTIAL / BLOCKED / REQUIRES REVIEW:** evidence is incomplete or capability is unsupported.
 
 A1 is implemented in PR #302 but remains **NOT VERIFIED** until its focused and full CI tests pass. All later milestones remain open until their stated evidence is produced.
+
+
+## 11. A2 — VEP production execution qualification
+
+**Status: BLOCKED ON SHARED EXECUTOR STACK; REAL-DATA QUALIFICATION NOT RUN.** This is an acceptance contract, not evidence of successful VEP execution.
+
+### Dependency gate
+
+The current dependency chain is represented by open draft PRs: #297 durable artifact-validation workers; #300 separation of tool-neutral API and scientific workers (based on #297); #301 universal scientific tool execution contract (based on #300); #302 annotation payload contract (currently based on main, not #301). Do not import an unmerged executor or duplicate its process lifecycle in the VEP adapter. After #297–#301 are integrated and their CI baseline is green, stack/rebase VEP integration on the qualified executor. The six VCF validator failures in the latest #302 CI run remain a separate blocker for the shared backend baseline and must be fixed in the VCF workstream.
+
+### Shared executor audit findings
+
+Inspection of the current #301 executor contract identified additional A2 requirements:
+
+1. ScientificResourceBinding validates digest syntax and records a supplied digest, but does not resolve a governed resource path and hash the actual cache/FASTA/manifest bytes. A caller-supplied digest is not resource attestation.
+2. ToolIdentity records platform but the inspected executor does not compare it with the running platform/architecture. Enforce this or bind execution to an immutable platform-specific image and attest its digest.
+3. The request enforces timeout and bounded returned logs, but no CPU, memory, process-count or scratch-disk limits. These must be enforced by worker/container/cgroup policy.
+4. Output hashes are computed after execution, but atomic publication and durable artifact registration/recovery must be guaranteed by the worker/artifact lifecycle.
+5. The current VEP adapter launches subprocess.Popen directly. Remove this independent lifecycle when shared-executor integration is qualified; no nested subprocess fallback.
+
+These are integration acceptance items, not reasons to bypass the shared executor.
+
+### Governed tool and resource identity
+
+Each organization-approved VEP profile must pin VEP release/version, executable path and SHA-256, version attestation command/output, platform/architecture, immutable runtime image digest (including Perl and VEP modules), cache release/species/assembly and verified content digest, reference FASTA identity/digest and required indexes, explicit annotation options, transcript-selection policy, qualification state and organization approval. Cache, species and assembly mismatch are hard preflight failures. No auto-download, auto-upgrade, online fallback, assembly switch or GeneBe fallback is permitted in a laboratory profile.
+
+### Preflight requirements
+
+Before execution: verify the immutable normalized VCF digest and assembly; resolve the organization-approved resource profile; verify executable regular-file identity, digest and version; verify the cache manifest and every referenced artifact (or a documented cryptographically verified immutable package digest); inspect actual cache metadata for release/species/assembly; verify FASTA digest and assembly against the normalization reference package; verify required indexes; reject symlinks/unapproved paths and any mismatch. Execute offline/cache-only in a controlled environment with no user-supplied shell fragments or ungoverned command overrides. A failed preflight must be typed, non-retryable and must not publish annotation output.
+
+### Real known-answer corpus
+
+Create a manifest-driven corpus with immutable public source URLs, source release/accession, publisher checksum where available, local SHA-256, license/terms review, assembly, input VCF digest, expected semantic output and transcript. GRCh37 and GRCh38 require separate assembly-specific records; do not transfer coordinates between assemblies. Both assemblies must cover synonymous, missense, stop-gained, frameshift insertion/deletion, splice donor/acceptor, in-frame insertion/deletion, UTR, intronic, intergenic and regulatory consequences where stable known-answer loci are available. Include multi-ALT and left-normalized indel records. Compare stable semantic fields (allele, assembly, consequence, complete transcript set, transcript/gene IDs and versions, HGVS where supported, MANE/canonical flags and consequence-specific fields), not JSON key order. Preserve raw provider output.
+
+### Transcript-selection tests
+
+On each assembly, verify unique MANE Select selection on GRCh38; unique eligible canonical fallback when no MANE exists; explicit ambiguity for multiple eligible candidates; explicit no-selection when none qualify; preservation of every transcript consequence independent of the display transcript; and preservation of transcript versions/cross-references. GRCh37 must not claim MANE equivalence without a separately versioned and qualified mapping resource. Expected selections must be declared before execution; selecting the first returned transcript is a failure.
+
+### Reconciliation, provenance and recovery
+
+Durably link each execution to organization/case/workflow, normalized input digest, tool profile and executable digest, runtime image/platform, cache and FASTA/reference digests, exact argv/options, timestamps/exit status, raw response digest/artifact, normalized artifact digest/schema, allele reconciliation counts, worker attempt/lease and publication state. Publish only after complete parse, schema validation, exact one-to-one allele reconciliation and output digest registration. Quarantine partial output. Inject worker termination before start, during VEP, after process exit but before validation, after validation but before publication, and after publication but before workflow acknowledgement. Replay must be idempotent, must not duplicate rows or overwrite immutable artifacts, and must prevent stale workers publishing after lease loss.
+
+### Batch and resource qualification
+
+Run increasing batch sizes on both assemblies and the approved runtime image. Record variant count, input/output bytes, wall time, peak RSS, CPU time, scratch use, throughput, retries and per-variant reconciliation. Include representative WES-scale and supported upper-bound WGS-scale workloads. Enforce CPU, memory, process and scratch limits at the container/cgroup boundary. Limit exhaustion must terminate the process group, classify the failure, clean temporary files safely and leave only transient failures retryable. No silent truncation or partial batch success.
+
+### A2 completion gates
+
+A2 is complete only when the shared executor and durable worker dependencies are integrated and CI-green; executable/cache/FASTA/index/image identities are verified from actual bytes and metadata; GRCh37/38 real known-answer suites pass; required consequence and transcript cases pass against predeclared expectations; exact reconciliation and raw/normalized provenance pass; crash/replay passes at every publication boundary; WES/WGS-scale runs pass within measured resource limits; focused, backend, PostgreSQL/Celery, frontend and production-container CI pass; and discrepancies/exclusions are reviewed. Scientific review and laboratory qualification remain separate approvals. Until then, VEP may be called implemented or unit-tested only where run evidence supports that status—not real-data-qualified, clinically validated or laboratory-qualified.
