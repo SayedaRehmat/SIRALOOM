@@ -50,3 +50,71 @@ def base_modification_positions(
         elif observed == complement:
             slots.append((position, "-"))
     return tuple(slots)
+
+def genotype_base_modification_slots(
+    genotype: str,
+    reference: str,
+    alternates: tuple[str, ...] | list[str],
+    modified_base: str,
+    *,
+    fileformat: str = "VCFv4.5",
+) -> tuple[tuple[int, int, Strand], ...]:
+    """Return Number=M slots in GT order as (global allele index, offset, strand).
+
+    This is a test oracle for concrete sequence alleles. Missing and symbolic
+    alleles contribute no slots. Repeated unphased allele indexes are emitted
+    only at their first unphased occurrence; phased copies remain distinct.
+    """
+    import re
+
+    has_leading_phase = (
+        fileformat in {"VCFv4.4", "VCFv4.5"}
+        and genotype[:1] in {"/", "|"}
+    )
+    value = genotype[1:] if has_leading_phase else genotype
+    tokens = re.split(r"[/|]", value)
+    separators = re.findall(r"[/|]", value)
+    if (
+        not value
+        or any(token == "" for token in tokens)
+        or len(separators) != len(tokens) - 1
+    ):
+        raise ValueError(f"invalid GT structure: {genotype!r}")
+
+    first_separator = genotype[0] if has_leading_phase else (
+        "/" if "/" in separators else "|"
+    )
+    seen_unphased: set[int] = set()
+    slots: list[tuple[int, int, Strand]] = []
+    for index, token in enumerate(tokens):
+        if token == ".":
+            continue
+        if not token.isdigit():
+            raise ValueError(f"invalid GT allele index: {token!r}")
+        allele_index = int(token)
+        if allele_index > len(alternates):
+            raise ValueError(f"GT allele index out of range: {allele_index}")
+        preceding_separator = (
+            first_separator if index == 0 else separators[index - 1]
+        )
+        if preceding_separator == "/":
+            if allele_index in seen_unphased:
+                continue
+            seen_unphased.add(allele_index)
+
+        allele = reference if allele_index == 0 else alternates[allele_index - 1]
+        allele = allele.upper()
+        if not allele or any(base not in "ACGT" for base in allele):
+            # Symbolic alleles contribute no sequence slots. Ambiguous
+            # sequence alleles are not silently treated as symbolic.
+            if allele.startswith("<") and allele.endswith(">"):
+                continue
+            raise ValueError(f"non-concrete sequence allele: {allele!r}")
+        slots.extend(
+            (allele_index, position, strand)
+            for position, strand in base_modification_positions(
+                allele, modified_base
+            )
+        )
+    return tuple(slots)
+
