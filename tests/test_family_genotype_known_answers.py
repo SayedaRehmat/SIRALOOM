@@ -18,11 +18,11 @@ from backend.app.config import settings
 def _write_member_vcf(path, sample_name, records):
     header = (
         "##fileformat=VCFv4.3\n"
-        "##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n"
-        "##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n"
-        "##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n"
-        "##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n"
-        "##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">\n'
+        '##FORMAT=<ID=PS,Number=1,Type=Integer,Description="Phase set">\n'
         f"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t{sample_name}\n"
     )
     path.write_text(header + "".join(record + "\n" for record in records), encoding="utf-8")
