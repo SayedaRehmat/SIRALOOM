@@ -10,7 +10,7 @@
     "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
     "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
     "table_queue_path": "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json",
-    "table_queue_blob_sha1": "16d348b0a9f0523ed965914c9a69daf05ba1c353"
+    "table_queue_blob_sha1": "7a8bee44406cd49ff405b29b061f4be762fcdb90"
   },
   "method": "This supplemental adjudication converts the three repeated generic questions for each indexed table into explicit author disposition, locator-level context debt, and version-delta debt. It reuses only the table classification, semantic disposition, review notes, linked candidate IDs, source locators and context-artifact references already present in the source queue. It does not assert independent review, complete normative coverage, completed version comparison, or conformance. Normative/informative classification is an author-level disposition and remains subject to independent review.",
   "counts": {
