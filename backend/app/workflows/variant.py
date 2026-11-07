@@ -145,6 +145,18 @@ class WorkflowContext:
     audit: AuditService
 
 
+def _base_modification_strandedness_policy(analysis: Analysis) -> str | None:
+    """Return the explicitly configured assay policy; never infer strandedness."""
+    configuration = analysis.configuration if isinstance(analysis.configuration, dict) else {}
+    policy = configuration.get("base_modification_strandedness")
+    if policy not in {None, "stranded", "unstranded"}:
+        raise StrictVCFValidationError(
+            "Analysis base_modification_strandedness must be 'stranded', 'unstranded', or omitted.",
+            code="VCF_BASE_MODIFICATION_POLICY_INVALID",
+        )
+    return policy
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -1454,7 +1466,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         if validation_step.status != StepStatus.SUCCEEDED:
             mark_step(db, validation_step, StepStatus.RUNNING)
             try:
-                profile = validate_vcf_strict(str(input_path))
+                profile = validate_vcf_strict(
+                    str(input_path),
+                    base_modification_strandedness=_base_modification_strandedness_policy(analysis),
+                )
                 validation_step.input_artifacts = [str(input_artifact.id)]
                 validation_step.output_artifacts = [str(input_artifact.id)]
                 validation_status = "PASS_WITH_WARNINGS" if profile.get("warning_codes") else "PASS"
@@ -2045,6 +2060,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 package_profile = validate_vcf_strict(
                     str(input_path),
                     reference_contigs=reference_contigs,
+                    base_modification_strandedness=_base_modification_strandedness_policy(analysis),
                 )
                 reference_allele_profile = validate_vcf_reference_alleles(
                     str(input_path),
