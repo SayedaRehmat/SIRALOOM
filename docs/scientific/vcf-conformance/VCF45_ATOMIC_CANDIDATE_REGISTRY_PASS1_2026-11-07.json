@@ -1,20 +1,20 @@
 {
   "schema_version": "1.0.0",
-  "artifact_id": "vcf45-atomic-candidate-registry-pass1-2026-11-07",
+  "registry_id": "siraloom-vcf-atomic-requirements",
   "registry_status": "IN_PROGRESS",
   "source_manifest": "HTS-specs VCFv4.5.tex, revision 510c107ba89aa13113818c9e4fa3071283cb7f7; blob SHA1 307950e7eeafc33d524969ff906343f756adb7d7; SHA-256 37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5.",
-  "scope": "Supplemental provisional candidate registry only; not the canonical ledger and not a conformance claim. IDs VCF-REQ-900001 onward are reserved local candidate identifiers, not canonical allocations.",
+  "scope": "Supplemental VCFv4.5 candidate registry for the 75 source-line gap worklist. Provisional requirement IDs VCF-REQ-900001 onward are not canonical allocations. No implementation or conformance claim is made.",
   "generated_at_utc": "2026-11-07T00:00:00Z",
   "coverage_summary": {
     "source_documents_reviewed": [
       "VCFv4.5.tex@510c107"
     ],
     "candidate_lines_reviewed": 75,
-    "atomic_requirements_created": 118,
+    "atomic_requirements_created": 126,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
-    "unresolved_source_questions": 3
+    "unresolved_source_questions": 5
   },
   "requirements": [
     {
@@ -5454,16 +5454,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900060",
-      "title": "VCF45-CAND-031 — Contig names use printable ASCII characters in the stated range, subject",
+      "requirement_id": "VCF-REQ-900119",
+      "title": "Source L322 — Contig names may use printable ASCII characters in the stated [!-~] range, ",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MAY",
-      "atomic_statement": "Contig names use printable ASCII characters in the stated range, subject to the enumerated exclusions.",
+      "atomic_statement": "Contig names may use printable ASCII characters in the stated [!-~] range, subject to the specification's exclusions.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-031 at VCFv4.5.tex line 322.",
-      "required_or_prohibited_behavior": "Contig names use printable ASCII characters in the stated range, subject to the enumerated exclusions.",
+      "required_or_prohibited_behavior": "Contig names may use printable ASCII characters in the stated [!-~] range, subject to the specification's exclusions.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -5534,7 +5534,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -5546,16 +5546,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900061",
-      "title": "VCF45-CAND-031 — Contig names contain any of the explicitly excluded punctuation characte",
+      "requirement_id": "VCF-REQ-900120",
+      "title": "Source L322 — Contig names contain any punctuation characters explicitly excluded by the ",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST_NOT",
-      "atomic_statement": "Contig names contain any of the explicitly excluded punctuation characters.",
+      "atomic_statement": "Contig names contain any punctuation characters explicitly excluded by the specification.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-031 at VCFv4.5.tex line 322.",
-      "required_or_prohibited_behavior": "Contig names contain any of the explicitly excluded punctuation characters.",
+      "required_or_prohibited_behavior": "Contig names contain any punctuation characters explicitly excluded by the specification.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -5626,7 +5626,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -5638,8 +5638,8 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900062",
-      "title": "VCF45-CAND-031 — Contig names begin with * or =.",
+      "requirement_id": "VCF-REQ-900121",
+      "title": "Source L322 — Contig names begin with * or =.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
@@ -5718,7 +5718,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -6374,16 +6374,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900070",
-      "title": "VCF45-CAND-039 — For a simple insertion or deletion with an otherwise empty allele, REF a",
+      "requirement_id": "VCF-REQ-900122",
+      "title": "Source L406 — For a simple insertion or deletion with an otherwise empty REF or ALT allel",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "For a simple insertion or deletion with an otherwise empty allele, REF and ALT include the preceding base and POS reflects that base, except at contig position 1.",
+      "atomic_statement": "For a simple insertion or deletion with an otherwise empty REF or ALT allele, REF and ALT strings include the base preceding the variant and POS reflects that base, except at position 1.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-039 at VCFv4.5.tex line 406.",
-      "required_or_prohibited_behavior": "For a simple insertion or deletion with an otherwise empty allele, REF and ALT include the preceding base and POS reflects that base, except at contig position 1.",
+      "required_or_prohibited_behavior": "For a simple insertion or deletion with an otherwise empty REF or ALT allele, REF and ALT strings include the base preceding the variant and POS reflects that base, except at position 1.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -6454,7 +6454,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -6466,16 +6466,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900071",
-      "title": "VCF45-CAND-039 — For a simple insertion or deletion at contig position 1, REF and ALT inc",
+      "requirement_id": "VCF-REQ-900123",
+      "title": "Source L406 — For a simple insertion or deletion at contig position 1, REF and ALT string",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "For a simple insertion or deletion at contig position 1, REF and ALT include the base after the variant.",
+      "atomic_statement": "For a simple insertion or deletion at contig position 1, REF and ALT strings include the base after the variant.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-039 at VCFv4.5.tex line 406.",
-      "required_or_prohibited_behavior": "For a simple insertion or deletion at contig position 1, REF and ALT include the base after the variant.",
+      "required_or_prohibited_behavior": "For a simple insertion or deletion at contig position 1, REF and ALT strings include the base after the variant.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -6546,7 +6546,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -6558,16 +6558,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900072",
-      "title": "VCF45-CAND-039 — For complex substitutions or variants whose alleles are all nonempty, th",
-      "requirement_domain": "ALLELE_REPRESENTATION",
+      "requirement_id": "VCF-REQ-900124",
+      "title": "Source L406 — For complex substitutions or variants in which all alleles have at least on",
+      "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MAY",
-      "atomic_statement": "For complex substitutions or variants whose alleles are all nonempty, the padding base is not required but is permitted.",
+      "atomic_statement": "For complex substitutions or variants in which all alleles have at least one base, the padding base is not required but is permitted.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-039 at VCFv4.5.tex line 406.",
-      "required_or_prohibited_behavior": "For complex substitutions or variants whose alleles are all nonempty, the padding base is not required but is permitted.",
+      "required_or_prohibited_behavior": "For complex substitutions or variants in which all alleles have at least one base, the padding base is not required but is permitted.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -6638,7 +6638,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -8214,16 +8214,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900090",
-      "title": "VCF45-CAND-050 — INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A",
+      "requirement_id": "VCF-REQ-900125",
+      "title": "Source L433 — INFO keys match the specified regular expression.",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
+      "atomic_statement": "INFO keys match the specified regular expression.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-050 at VCFv4.5.tex line 433.",
-      "required_or_prohibited_behavior": "INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
+      "required_or_prohibited_behavior": "INFO keys match the specified regular expression.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -8294,7 +8294,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -8306,16 +8306,108 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900091",
-      "title": "VCF45-CAND-051 — Arbitrary keys are permitted, although those listed in Table~\\ref{table:",
+      "requirement_id": "VCF-REQ-900126",
+      "title": "Source L433 — The literal legacy INFO key 1000G is permitted as a special exception to th",
       "requirement_domain": "INFO",
-      "source_class": "VCF_INFORMATIVE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "GRAMMAR_RULE",
+      "normative_force": "MAY",
+      "atomic_statement": "The literal legacy INFO key 1000G is permitted as a special exception to the general INFO-key regular expression.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-050 at VCFv4.5.tex line 433.",
+      "required_or_prohibited_behavior": "The literal legacy INFO key 1000G is permitted as a special exception to the general INFO-key regular expression.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L433",
+            "start_line": 433,
+            "end_line": 433
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900127",
+      "title": "Source L435 — Arbitrary INFO keys are permitted, subject to the specification's other key",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "NOT_STATED",
-      "atomic_statement": "Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
+      "normative_force": "MAY",
+      "atomic_statement": "Arbitrary INFO keys are permitted, subject to the specification's other key rules.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-051 at VCFv4.5.tex line 435.",
-      "required_or_prohibited_behavior": "Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
+      "required_or_prohibited_behavior": "Arbitrary INFO keys are permitted, subject to the specification's other key rules.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -8386,7 +8478,99 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900128",
+      "title": "Source L435 — Reserved INFO keys are optional; reservation alone does not make a key mand",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "OPTIONAL",
+      "atomic_statement": "Reserved INFO keys are optional; reservation alone does not make a key mandatory.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-051 at VCFv4.5.tex line 435.",
+      "required_or_prohibited_behavior": "Reserved INFO keys are optional; reservation alone does not make a key mandatory.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L435",
+            "start_line": 435,
+            "end_line": 435
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -8582,16 +8766,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900094",
-      "title": "VCF45-CAND-054 — When present, computed END equals the maximum 1-based end reference posi",
+      "requirement_id": "VCF-REQ-900129",
+      "title": "Source L488 — When END is present, its value equals the maximum 1-based end reference pos",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "When present, computed END equals the maximum 1-based end reference position among the components listed in the continuation of this source paragraph.",
+      "atomic_statement": "When END is present, its value equals the maximum 1-based end reference position among (i) the final base of REF, (ii) the end position corresponding to SVLEN of a symbolic SV allele, and (iii) the end positions calculated from FORMAT LEN for the <*> symbolic allele.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-054 at VCFv4.5.tex line 488.",
-      "required_or_prohibited_behavior": "When present, computed END equals the maximum 1-based end reference position among the components listed in the continuation of this source paragraph.",
+      "required_or_prohibited_behavior": "When END is present, its value equals the maximum 1-based end reference position among (i) the final base of REF, (ii) the end position corresponding to SVLEN of a symbolic SV allele, and (iii) the end positions calculated from FORMAT LEN for the <*> symbolic allele.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -8662,7 +8846,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -8860,16 +9044,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900097",
-      "title": "VCF45-CAND-057 — In general, when these keys are used by imprecise variants, the values s",
+      "requirement_id": "VCF-REQ-900130",
+      "title": "Source L845 — For the structural-variant INFO keys in the surrounding section, values use",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
+      "atomic_statement": "For the structural-variant INFO keys in the surrounding section, values used for imprecise variants should be best estimates.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
-      "required_or_prohibited_behavior": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
+      "required_or_prohibited_behavior": "For the structural-variant INFO keys in the surrounding section, values used for imprecise variants should be best estimates.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -8940,7 +9124,99 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900131",
+      "title": "Source L845 — When per-allele values are present, a value is specified for every ALT alle",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "When per-allele values are present, a value is specified for every ALT allele, including non-structural ALT alleles.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
+      "required_or_prohibited_behavior": "When per-allele values are present, a value is specified for every ALT allele, including non-structural ALT alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L845",
+            "start_line": 845,
+            "end_line": 845
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9136,16 +9412,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900100",
-      "title": "VCF45-CAND-060 — $<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treate",
+      "requirement_id": "VCF-REQ-900132",
+      "title": "Source L1889 — A <DEL> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defin",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
+      "atomic_statement": "A <DEL> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defining INFO CN=0.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-060 at VCFv4.5.tex line 1889.",
-      "required_or_prohibited_behavior": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
+      "required_or_prohibited_behavior": "A <DEL> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defining INFO CN=0.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -9216,7 +9492,99 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900133",
+      "title": "Source L1889 — A <DUP> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defin",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "A <DUP> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defining INFO CN=2.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-060 at VCFv4.5.tex line 1889.",
+      "required_or_prohibited_behavior": "A <DUP> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defining INFO CN=2.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1889",
+            "start_line": 1889,
+            "end_line": 1889
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9320,16 +9688,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900102",
-      "title": "VCF45-CAND-062 — When only copy number ALT alleles are present in a VCF record, GT=0 is e",
+      "requirement_id": "VCF-REQ-900134",
+      "title": "Source L1901 — When a record contains only copy-number ALT alleles, GT=0 is equivalent to ",
       "requirement_domain": "FORMAT",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "SHOULD",
-      "atomic_statement": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When a record contains only copy-number ALT alleles, GT=0 is equivalent to a <CNV> ALT allele with INFO CN=1.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-062 at VCFv4.5.tex line 1901.",
-      "required_or_prohibited_behavior": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
+      "required_or_prohibited_behavior": "When a record contains only copy-number ALT alleles, GT=0 is equivalent to a <CNV> ALT allele with INFO CN=1.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -9400,7 +9768,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9412,16 +9780,108 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900103",
-      "title": "VCF45-CAND-063 — If only total copy number is known, the copy number of the segment shoul",
+      "requirement_id": "VCF-REQ-900135",
+      "title": "Source L1901 — The GT=0 and <CNV> ALT with INFO CN=1 representations are treated identical",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The GT=0 and <CNV> ALT with INFO CN=1 representations are treated identically.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-062 at VCFv4.5.tex line 1901.",
+      "required_or_prohibited_behavior": "The GT=0 and <CNV> ALT with INFO CN=1 representations are treated identically.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1901",
+            "start_line": 1901,
+            "end_line": 1901
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900136",
+      "title": "Source L1903 — If only total copy number is known, represent the segment with a single <CN",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
+      "atomic_statement": "If only total copy number is known, represent the segment with a single <CNV> ALT allele.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-063 at VCFv4.5.tex line 1903.",
-      "required_or_prohibited_behavior": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
+      "required_or_prohibited_behavior": "If only total copy number is known, represent the segment with a single <CNV> ALT allele.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -9492,7 +9952,99 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900137",
+      "title": "Source L1903 — If only total copy number is known, the single <CNV> ALT allele has a missi",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "If only total copy number is known, the single <CNV> ALT allele has a missing INFO CN field.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-063 at VCFv4.5.tex line 1903.",
+      "required_or_prohibited_behavior": "If only total copy number is known, the single <CNV> ALT allele has a missing INFO CN field.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1903",
+            "start_line": 1903,
+            "end_line": 1903
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9596,16 +10148,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900105",
-      "title": "VCF45-CAND-065 — When possible, these records should be phased with their corresponding $",
+      "requirement_id": "VCF-REQ-900138",
+      "title": "Source L1946 — When possible, phase the non-symbolic tandem-repeat records with their corr",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
+      "atomic_statement": "When possible, phase the non-symbolic tandem-repeat records with their corresponding <CNV:TR> record.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-065 at VCFv4.5.tex line 1946.",
-      "required_or_prohibited_behavior": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
+      "required_or_prohibited_behavior": "When possible, phase the non-symbolic tandem-repeat records with their corresponding <CNV:TR> record.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -9676,7 +10228,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9964,16 +10516,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900109",
-      "title": "VCF45-CAND-069 — \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are",
+      "requirement_id": "VCF-REQ-900139",
+      "title": "Source L1986 — When both <CNV:TR> and equivalent non-symbolic records are present, the <CN",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
-      "atomic_statement": "\\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
+      "normative_force": "SHOULD",
+      "atomic_statement": "When both <CNV:TR> and equivalent non-symbolic records are present, the <CNV:TR> record approximately encodes the sequence.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-069 at VCFv4.5.tex line 1986.",
-      "required_or_prohibited_behavior": "\\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
+      "required_or_prohibited_behavior": "When both <CNV:TR> and equivalent non-symbolic records are present, the <CNV:TR> record approximately encodes the sequence.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10044,7 +10596,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10056,8 +10608,100 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900110",
-      "title": "VCF45-CAND-070 — A caller that does not report allele-specific tandem repeats uses a sing",
+      "requirement_id": "VCF-REQ-900140",
+      "title": "Source L1986 — The <CNV:TR> record is not required to encode the sequence exactly when equ",
+      "requirement_domain": "STRUCTURAL_VARIANT",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "NOT_STATED",
+      "atomic_statement": "The <CNV:TR> record is not required to encode the sequence exactly when equivalent non-symbolic records are also present.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-069 at VCFv4.5.tex line 1986.",
+      "required_or_prohibited_behavior": "The <CNV:TR> record is not required to encode the sequence exactly when equivalent non-symbolic records are also present.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1986",
+            "start_line": 1986,
+            "end_line": 1986
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900141",
+      "title": "Source L1988 — A caller that does not report allele-specific tandem repeats uses a single ",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
@@ -10136,7 +10780,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10148,16 +10792,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900111",
-      "title": "VCF45-CAND-070 — Such a caller uses a missing GT genotype.",
-      "requirement_domain": "FORMAT",
+      "requirement_id": "VCF-REQ-900142",
+      "title": "Source L1988 — A caller that does not report allele-specific tandem repeats uses the missi",
+      "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "Such a caller uses a missing GT genotype.",
+      "atomic_statement": "A caller that does not report allele-specific tandem repeats uses the missing genotype in GT.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-070 at VCFv4.5.tex line 1988.",
-      "required_or_prohibited_behavior": "Such a caller uses a missing GT genotype.",
+      "required_or_prohibited_behavior": "A caller that does not report allele-specific tandem repeats uses the missing genotype in GT.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10228,7 +10872,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10240,16 +10884,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900112",
-      "title": "VCF45-CAND-071 — INFO and FORMAT CN fields are present for <CNV:TR> records.",
+      "requirement_id": "VCF-REQ-900143",
+      "title": "Source L1989 — INFO and FORMAT CN fields should be present for <CNV:TR> records.",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "INFO and FORMAT CN fields are present for <CNV:TR> records.",
+      "atomic_statement": "INFO and FORMAT CN fields should be present for <CNV:TR> records.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
-      "required_or_prohibited_behavior": "INFO and FORMAT CN fields are present for <CNV:TR> records.",
+      "required_or_prohibited_behavior": "INFO and FORMAT CN fields should be present for <CNV:TR> records.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10320,7 +10964,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10332,16 +10976,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900113",
-      "title": "VCF45-CAND-071 — When present, CN corresponds to sample allelic length divided by referen",
+      "requirement_id": "VCF-REQ-900144",
+      "title": "Source L1989 — When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to ",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
-      "requirement_kind": "PROSE_RULE",
+      "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "When present, CN corresponds to sample allelic length divided by reference allelic length.",
+      "atomic_statement": "When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to sample allelic length divided by reference allelic length.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
-      "required_or_prohibited_behavior": "When present, CN corresponds to sample allelic length divided by reference allelic length.",
+      "required_or_prohibited_behavior": "When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to sample allelic length divided by reference allelic length.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10412,7 +11056,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10424,8 +11068,8 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900114",
-      "title": "VCF45-CAND-072 — STRs use RUS.",
+      "requirement_id": "VCF-REQ-900145",
+      "title": "Source L1994 — STRs use RUS.",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
@@ -10504,7 +11148,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10516,8 +11160,8 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900115",
-      "title": "VCF45-CAND-072 — VNTRs use RUL.",
+      "requirement_id": "VCF-REQ-900146",
+      "title": "Source L1994 — VNTRs use RUL.",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
@@ -10596,7 +11240,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10608,16 +11252,16 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900116",
-      "title": "VCF45-CAND-073 — RUL is omitted when RUS is present; the parenthetical says RS and remain",
+      "requirement_id": "VCF-REQ-900147",
+      "title": "Source L1995 — RUL is omitted when RUS is present; the parenthetical source text says RS a",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "RUL is omitted when RUS is present; the parenthetical says RS and remains unresolved.",
+      "atomic_statement": "RUL is omitted when RUS is present; the parenthetical source text says RS and remains an unresolved inconsistency.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-073 at VCFv4.5.tex line 1995.",
-      "required_or_prohibited_behavior": "RUL is omitted when RUS is present; the parenthetical says RS and remains unresolved.",
+      "required_or_prohibited_behavior": "RUL is omitted when RUS is present; the parenthetical source text says RS and remains an unresolved inconsistency.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10688,7 +11332,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10884,743 +11528,98 @@
       "evidence": [],
       "related_requirement_ids": [],
       "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900148",
+      "title": "Source L846 — Per-allele values cover all ALT alleles",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "When present, per-allele values are specified for all ALT alleles, including non-structural ALT alleles.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
+      "required_or_prohibited_behavior": "When present, per-allele values are specified for all ALT alleles, including non-structural ALT alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L846",
+            "start_line": 846,
+            "end_line": 846
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Adjacent source clause required to preserve the complete two-line conditional rule from the source context; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
     }
-  ],
-  "candidate_line_crosswalk": [
-    {
-      "source_candidate_id": "VCF45-CAND-001",
-      "source_line": 104,
-      "source_text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines}).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900001",
-        "VCF-REQ-900002"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-002",
-      "source_line": 105,
-      "source_text": "They may be either \\emph{unstructured} or \\emph{structured}.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900003",
-        "VCF-REQ-900004"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-003",
-      "source_line": 107,
-      "source_text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900005",
-        "VCF-REQ-900006",
-        "VCF-REQ-900007"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-004",
-      "source_line": 119,
-      "source_text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900008",
-        "VCF-REQ-900009"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-005",
-      "source_line": 120,
-      "source_text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900010"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-006",
-      "source_line": 126,
-      "source_text": "The values of optional fields must be written as quoted strings, even for numeric values.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900011"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-007",
-      "source_line": 127,
-      "source_text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900012",
-        "VCF-REQ-900013"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-008",
-      "source_line": 129,
-      "source_text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900014",
-        "VCF-REQ-900015"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-009",
-      "source_line": 132,
-      "source_text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900016"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-010",
-      "source_line": 133,
-      "source_text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900017",
-        "VCF-REQ-900018"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-011",
-      "source_line": 135,
-      "source_text": "Meta-information lines are optional, but if they are present then they must be completely well-formed.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900019",
-        "VCF-REQ-900020"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-012",
-      "source_line": 136,
-      "source_text": "Other than \\verb|##fileformat|, they may appear in any order.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900021"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-013",
-      "source_line": 138,
-      "source_text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900022"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-014",
-      "source_line": 151,
-      "source_text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900023",
-        "VCF-REQ-900024",
-        "VCF-REQ-900025",
-        "VCF-REQ-900026",
-        "VCF-REQ-900027",
-        "VCF-REQ-900028"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-015",
-      "source_line": 159,
-      "source_text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900029"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-016",
-      "source_line": 164,
-      "source_text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines}).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900030",
-        "VCF-REQ-900031"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-017",
-      "source_line": 166,
-      "source_text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900032",
-        "VCF-REQ-900033"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-018",
-      "source_line": 172,
-      "source_text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900034",
-        "VCF-REQ-900035"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-019",
-      "source_line": 173,
-      "source_text": "The Description value must be surrounded by double-quotes.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900036"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-020",
-      "source_line": 174,
-      "source_text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900037"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-021",
-      "source_line": 175,
-      "source_text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900038",
-        "VCF-REQ-900039",
-        "VCF-REQ-900040",
-        "VCF-REQ-900041"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-022",
-      "source_line": 178,
-      "source_text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900042",
-        "VCF-REQ-900043"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-023",
-      "source_line": 185,
-      "source_text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900044",
-        "VCF-REQ-900045",
-        "VCF-REQ-900046",
-        "VCF-REQ-900047"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-024",
-      "source_line": 258,
-      "source_text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900048",
-        "VCF-REQ-900049",
-        "VCF-REQ-900050",
-        "VCF-REQ-900051"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-025",
-      "source_line": 259,
-      "source_text": "The first level type must be one of the following:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900052"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-026",
-      "source_line": 268,
-      "source_text": "The CNV symbolic allele should not be used when a more specific one (e.g. DEL, CNV:TR) can be applied.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900053"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-027",
-      "source_line": 272,
-      "source_text": "The following subtypes are recommended:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900054"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-028",
-      "source_line": 292,
-      "source_text": "Breakpoint assemblies for structural variations may use an external file:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900055"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-029",
-      "source_line": 301,
-      "source_text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900056",
-        "VCF-REQ-900057"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-030",
-      "source_line": 302,
-      "source_text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900058",
-        "VCF-REQ-900059"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-031",
-      "source_line": 322,
-      "source_text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900060",
-        "VCF-REQ-900061",
-        "VCF-REQ-900062"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-032",
-      "source_line": 329,
-      "source_text": "The contig names must not use a reserved symbolic allele name.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900063"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-033",
-      "source_line": 391,
-      "source_text": "  All entries for a specific CHROM must form a contiguous block within the VCF file.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900064"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-034",
-      "source_line": 392,
-      "source_text": "  (String, no whitespace permitted, Required).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900065"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-035",
-      "source_line": 397,
-      "source_text": "  (Integer, Required)",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900066"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-036",
-      "source_line": 399,
-      "source_text": "  If this is a dbSNP variant the rs number(s) should be used.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900067"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-037",
-      "source_line": 400,
-      "source_text": "  No identifier should be present in more than one data record.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900068"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-038",
-      "source_line": 403,
-      "source_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900069"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-039",
-      "source_line": 406,
-      "source_text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900070",
-        "VCF-REQ-900071",
-        "VCF-REQ-900072"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-040",
-      "source_line": 407,
-      "source_text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900073",
-        "VCF-REQ-900074"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-041",
-      "source_line": 409,
-      "source_text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900075"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-042",
-      "source_line": 411,
-      "source_text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900076"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-043",
-      "source_line": 416,
-      "source_text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900077",
-        "VCF-REQ-900078",
-        "VCF-REQ-900079",
-        "VCF-REQ-900080",
-        "VCF-REQ-900081",
-        "VCF-REQ-900082"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-044",
-      "source_line": 417,
-      "source_text": "  If there are no alternative alleles, then the MISSING value must be used.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900083"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-045",
-      "source_line": 418,
-      "source_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900084",
-        "VCF-REQ-900085"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-046",
-      "source_line": 422,
-      "source_text": "  If unknown, the MISSING value must be specified. (Float)",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900086"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-047",
-      "source_line": 425,
-      "source_text": "  `0' is reserved and must not be used as a filter String.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900087"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-048",
-      "source_line": 426,
-      "source_text": "  If filters have not been applied, then this field must be set to the MISSING value.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900088"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-049",
-      "source_line": 429,
-      "source_text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]].",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900089"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-050",
-      "source_line": 433,
-      "source_text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900090"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-051",
-      "source_line": 435,
-      "source_text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900091"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-052",
-      "source_line": 437,
-      "source_text": "  The exact format of each INFO key should be specified in the meta-information (as described above).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900092"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-053",
-      "source_line": 439,
-      "source_text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900093"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-054",
-      "source_line": 488,
-      "source_text": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900094"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-055",
-      "source_line": 609,
-      "source_text": "  These values should be described in the meta-information in the same way as FILTERs.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900095"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-056",
-      "source_line": 825,
-      "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900096"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-057",
-      "source_line": 845,
-      "source_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900097"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-058",
-      "source_line": 1487,
-      "source_text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900098"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-059",
-      "source_line": 1623,
-      "source_text": "Either one uses the short hand notation described previously (recommended for simple cases):",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900099"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-060",
-      "source_line": 1889,
-      "source_text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900100"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-061",
-      "source_line": 1900,
-      "source_text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900101"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-062",
-      "source_line": 1901,
-      "source_text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900102"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-063",
-      "source_line": 1903,
-      "source_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900103"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-064",
-      "source_line": 1914,
-      "source_text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900104"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-065",
-      "source_line": 1946,
-      "source_text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900105"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-066",
-      "source_line": 1982,
-      "source_text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900106"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-067",
-      "source_line": 1983,
-      "source_text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900107"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-068",
-      "source_line": 1985,
-      "source_text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900108"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-069",
-      "source_line": 1986,
-      "source_text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900109"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-070",
-      "source_line": 1988,
-      "source_text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900110",
-        "VCF-REQ-900111"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-071",
-      "source_line": 1989,
-      "source_text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900112",
-        "VCF-REQ-900113"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-072",
-      "source_line": 1994,
-      "source_text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900114",
-        "VCF-REQ-900115"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-073",
-      "source_line": 1995,
-      "source_text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present).",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900116"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-074",
-      "source_line": 1996,
-      "source_text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900117"
-      ],
-      "decomposition_status": "SPLIT_PROVISIONAL"
-    },
-    {
-      "source_candidate_id": "VCF45-CAND-075",
-      "source_line": 1998,
-      "source_text": "    \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers.",
-      "derived_candidate_requirement_ids": [
-        "VCF-REQ-900118"
-      ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL"
-    }
-  ],
-  "methodology": {
-    "atomicity_rule": "Split independently testable obligations, permissions, prohibitions, recommendations, distinct modalities, and distinct conditional behaviors into separate records. Single-record candidates remain provisional and require second-pass review.",
-    "force_rule": "Preserve source modality; SHOULD_NOT is not MUST_NOT; REQUIRED and RECOMMENDED remain distinct; descriptive and not-required statements are not promoted to mandatory validation rules.",
-    "version_rule": "Only VCFv4.5 is marked APPLICABLE. Earlier versions remain UNRESOLVED pending source-specific reconciliation.",
-    "identifier_rule": "The VCF-REQ-900001 range is a provisional supplemental namespace only; do not import as canonical IDs without deduplication and approval.",
-    "limitations": [
-      "No canonical ledger modified.",
-      "No duplicate reconciliation against the 226 canonical requirements or 61 GT/FORMAT candidates completed.",
-      "Formal JSON Schema validation not yet executed; records were authored to the fetched schema shape.",
-      "No implementation audit or tests performed.",
-      "Some source lines depend on continuation text, tables, or cross-references; second-pass full-context review remains mandatory.",
-      "The VCF/BCF header-tag statements at lines 129 and 301 remain in conflict with adjacent optionality language.",
-      "The tandem-repeat parenthetical at line 1995 says RS while the clause says RUS."
-    ]
-  },
-  "input_worklist_sha1": "1ad379362ce77e73fb294a0be0e54eb8f98bcde9",
-  "input_worklist_path": "docs/scientific/vcf-conformance/VCF45_NEW_ATOMIC_CANDIDATE_WORKLIST_2026-11-07.json"
+  ]
 }
