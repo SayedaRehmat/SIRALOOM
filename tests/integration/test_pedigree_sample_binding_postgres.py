@@ -355,3 +355,80 @@ def test_postgres_family_genotype_matrix_snapshot_is_immutable_and_fingerprint_u
                     db.flush()
     finally:
         engine.dispose()
+
+
+
+@pytest.mark.integration
+def test_postgres_concurrent_family_matrix_snapshot_replay_has_one_winner():
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id, user_id, case_id, analysis_id, variant_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    now = datetime.now(timezone.utc)
+    barrier = Barrier(2)
+
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id, name=f"matrix-replay-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@example.test",
+                display_name="Matrix Replay Integration", role="lab_director",
+                status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"FM-REPLAY-{case_id}", status="ACTIVE",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="1", status="REQUIRES_REVIEW",
+                reference_build="GRCh38", configuration={}, created_by=user_id,
+            ))
+            db.add(Variant(
+                id=variant_id, genome_build="GRCh38", chromosome="1", position=31,
+                reference="C", alternate="T", normalization_status="NORMALIZED",
+                canonical_key=f"GRCh38:1:31:C:T:{variant_id}", identifiers={},
+            ))
+            db.commit()
+
+        def create_snapshot():
+            with Session(engine) as db:
+                db.add(FamilyGenotypeMatrixSnapshot(
+                    id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                    variant_id=variant_id, schema_version=1,
+                    matrix_fingerprint="9" * 64,
+                    matrix_payload={"schema_version": 1, "matrix_fingerprint": "9" * 64},
+                    created_by=user_id, created_at=now,
+                ))
+                barrier.wait(timeout=10)
+                try:
+                    db.commit()
+                    return "CREATED"
+                except IntegrityError:
+                    db.rollback()
+                    return "CONFLICT"
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(lambda _: create_snapshot(), range(2)))
+
+        assert sorted(outcomes) == ["CONFLICT", "CREATED"]
+        with Session(engine) as db:
+            snapshots = db.query(FamilyGenotypeMatrixSnapshot).filter_by(
+                case_id=case_id, matrix_fingerprint="9" * 64,
+            ).all()
+            assert len(snapshots) == 1
+    finally:
+        engine.dispose()
