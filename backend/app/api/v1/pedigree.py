@@ -345,6 +345,96 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     return _sample_binding_payload(row)
 
 
+@router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/supersede", status_code=201)
+def supersede_sample_binding(
+    case_id: UUID,
+    binding_id: UUID,
+    body: SampleBindingInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Append a corrected identity claim without mutating a reviewed binding."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    previous = db.get(PedigreeSampleBinding, binding_id)
+    if previous is None or previous.case_id != case_id:
+        raise HTTPException(404, "Sample binding not found")
+    successor = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == previous.id,
+    ))
+    if successor is not None:
+        raise HTTPException(409, "This sample binding already has a successor revision")
+
+    member = db.get(PedigreeMember, body.member_id)
+    specimen = db.get(Specimen, body.specimen_id)
+    analysis = db.get(Analysis, body.analysis_id)
+    artifact = db.get(Artifact, body.artifact_id)
+    if member is None or member.case_id != case_id:
+        raise HTTPException(404, "Pedigree member not found in this case")
+    if specimen is None or specimen.case_id != case_id:
+        raise HTTPException(404, "Specimen not found in this case")
+    if analysis is None or analysis.case_id != case_id:
+        raise HTTPException(404, "Analysis not found in this case")
+    if artifact is None or artifact.case_id != case_id or artifact.artifact_type not in {"VCF", "SOURCE_VCF"}:
+        raise HTTPException(404, "Source VCF artifact not found in this case")
+    if artifact.specimen_id is not None and artifact.specimen_id != specimen.id:
+        raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
+    configuration = analysis.configuration or {}
+    if configuration.get("input_artifact_id") != str(artifact.id):
+        raise HTTPException(409, "Artifact is not the immutable source VCF selected for this analysis")
+    if configuration.get("vcf_sample_name") != body.sample_name.strip():
+        raise HTTPException(409, "Sample name must exactly match the analysis-selected VCF sample")
+    specimen_sample = (specimen.metadata_json or {}).get("vcf_sample_name")
+    if specimen_sample and specimen_sample != body.sample_name.strip():
+        raise HTTPException(409, "Sample name conflicts with the specimen's registered sample-name hint")
+
+    payload = {
+        "schema_version": 1, "case_id": str(case_id), "member_id": str(member.id),
+        "specimen_id": str(specimen.id), "analysis_id": str(analysis.id),
+        "artifact_id": str(artifact.id), "source_artifact_sha256": artifact.sha256,
+        "sample_name": body.sample_name.strip(), "binding_status": "UNVERIFIED",
+        "binding_method": body.binding_method.strip(), "evidence_reference": body.evidence_reference,
+        "version": previous.version + 1, "supersedes_binding_id": str(previous.id),
+    }
+    binding_fingerprint = _sample_binding_fingerprint(payload)
+    existing = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.case_id == case_id,
+        PedigreeSampleBinding.binding_fingerprint == binding_fingerprint,
+    ))
+    if existing is not None:
+        return _sample_binding_payload(existing)
+    row = PedigreeSampleBinding(
+        id=uuid4(), case_id=case_id, pedigree_member_id=member.id,
+        specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
+        source_artifact_sha256=artifact.sha256, sample_name=body.sample_name.strip(),
+        binding_status="UNVERIFIED", binding_method=body.binding_method.strip(),
+        evidence_reference=body.evidence_reference, version=previous.version + 1,
+        supersedes_binding_id=previous.id, binding_fingerprint=binding_fingerprint,
+        recorded_by=principal.user_id,
+    )
+    db.add(row)
+    AuditService(db).record(
+        event_type="PEDIGREE_SAMPLE_BINDING_SUPERSEDED", case_id=case_id,
+        analysis_id=analysis.id, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PEDIGREE_SAMPLE_BINDING", subject_id=str(row.id),
+        operation="APPEND_CORRECTED_UNVERIFIED_BINDING",
+        before_state=_sample_binding_payload(previous),
+        after_state=_sample_binding_payload(row),
+        reason="Corrected family member, specimen, source artifact, or VCF sample association.",
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason="A family sample identity claim was corrected; dependent analyses may require reanalysis.",
+        metadata={"change_type": "SAMPLE_BINDING_SUPERSEDED", "binding_id": str(row.id)},
+    )
+    db.commit()
+    return _sample_binding_payload(row)
+
+
 @router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/review", status_code=201)
 def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingReviewInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     """Append a reviewed identity revision; never mutate the prior claim."""
