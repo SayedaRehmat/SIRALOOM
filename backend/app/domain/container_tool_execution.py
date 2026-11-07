@@ -135,7 +135,7 @@ class LinuxContainerToolExecutor:
         cgroup_version = self._run_checked(
             [runtime, "info", "--format", "{{.CgroupVersion}}" if self.environment.runtime_kind == "DOCKER" else "{{.Host.CgroupVersion}}"]
         )
-        if cgroup_version not in {"1", "2"}:
+        if cgroup_version not in {"1", "2", "v1", "v2"}:
             raise ToolExecutionContractError(
                 "Container runtime does not expose a verifiable Linux cgroup v1/v2 controller for resource enforcement."
             )
