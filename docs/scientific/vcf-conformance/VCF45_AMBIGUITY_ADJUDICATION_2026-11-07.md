@@ -60,8 +60,9 @@ For unstranded mode, populated Number=M vectors are projected to per-sample obse
 - checks complementary base pairs within one record and across adjacent records;
 - requires the value at the higher POS of a complementary pair to be MISSING, regardless of which strand has the lower POS;
 - requires negative-strand values for Number=M fields ending in N to be MISSING;
-- joins records only when sample, contig, field, phased GT copy and phase-set context agree;
-- uses record-local allele context for unphased alleles rather than joining unphased calls across records;
+- joins records only when sample, contig, field, GT copy and phase-set context agree;
+- safely joins homozygous unphased genotypes because all called copies carry the same allele; keeps heterozygous unphased and unresolved-PSL observations record-local and emits `VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED` with an explicit unresolved-observation count;
+- treats omitted trailing FORMAT values as MISSING when constructing the placement evidence;
 - reports `VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT` for a populated higher-POS value and `VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED` when a length-changing allele prevents safe coordinate projection.
 
 The regression suite now covers same-record and adjacent-record CpG pairs, reverse orientation, multiple samples, distinct phase sets, called multiallelic alleles, missing values, explicit stranded/default behavior and the unsupported length-changing-allele boundary.
