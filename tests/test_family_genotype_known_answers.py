@@ -203,8 +203,8 @@ def test_independent_phase_known_answers_preserve_cis_trans_and_unresolved_witho
 ):
     path = tmp_path / f"{family_id}.vcf"
     _write_member_vcf(path, family_id, [
-        f"1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ:AD:PS\\t{first_gt}:35:90:18,17:100",
-        f"1\\t200\\t.\\tC\\tT\\t.\\tPASS\\t.\\tGT:DP:GQ:AD:PS\\t{second_gt}:32:88:16,16:100",
+        f"1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP:GQ:AD:PS\t{first_gt}:35:90:18,17:100",
+        f"1\t200\t.\tC\tT\t.\tPASS\t.\tGT:DP:GQ:AD:PS\t{second_gt}:32:88:16,16:100",
     ])
     parsed = _parsed_calls(path, family_id)
     variant_ids = {key: uuid4() for key in parsed}
@@ -226,7 +226,7 @@ def test_independent_phase_known_answers_preserve_cis_trans_and_unresolved_witho
 def test_independent_relationship_discordance_known_answer_remains_unverified(tmp_path):
     path = tmp_path / "relationship-discordance.vcf"
     _write_member_vcf(path, "FAMILY-REL", [
-        "1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ\\t0/1:30:90",
+        "1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP:GQ\t0/1:30:90",
     ])
     parsed = _parsed_calls(path, "FAMILY-REL")
     variant_id = uuid4()
@@ -258,7 +258,7 @@ def test_independent_relationship_discordance_known_answer_remains_unverified(tm
 def test_independent_locus_ploidy_known_answer_does_not_promote_specimen_region_copy_number(tmp_path):
     path = tmp_path / "locus-ploidy.vcf"
     _write_member_vcf(path, "PLOIDY-SAMPLE", [
-        "X\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ\\t0:40:99",
+        "X\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP:GQ\t0:40:99",
     ])
     parsed = _parsed_calls(path, "PLOIDY-SAMPLE")
     variant_id = uuid4()
@@ -288,7 +288,7 @@ def test_independent_locus_ploidy_known_answer_does_not_promote_specimen_region_
 def test_independent_low_quality_parent_known_answer_preserves_metrics_without_callability_claim(tmp_path):
     path = tmp_path / "low-quality-parent.vcf"
     _write_member_vcf(path, "LOW-GQ-PARENT", [
-        "1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ:AD\\t0/1:3:2:2,1",
+        "1\t100\t.\tA\tG\t.\tPASS\t.\tGT:DP:GQ:AD\t0/1:3:2:2,1",
     ])
     parsed = _parsed_calls(path, "LOW-GQ-PARENT")
     variant_id = uuid4()
