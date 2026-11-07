@@ -330,6 +330,7 @@ def test_vep_qualification_blocks_manifest_artifact_digest_mismatch(monkeypatch,
     scratch = tmp_path / "scratch"
     scratch.mkdir()
     monkeypatch.setattr(settings, "worker_scratch_root", str(scratch))
+    execution["toolchain"]["scratch_root"] = str(scratch)
     monkeypatch.setenv(
         "SIRALOOM_RUNTIME_IMAGE_DIGEST",
         execution["toolchain"]["runtime_image_digest"],
