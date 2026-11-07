@@ -401,6 +401,25 @@ def test_number_m_unstranded_policy_handles_reverse_complement_cpg_orientation(
     assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
 
 
+def test_number_m_unstranded_policy_rejects_populated_complementary_slot_within_one_record(
+    tmp_path: Path,
+):
+    path = tmp_path / "unstranded-cpg-same-record-invalid.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        # Per phased GT copy, C+ precedes G-. Unstranded storage places the
+        # complementary CpG observation at the lower POS (C), not at G.
+        "1\\t10\\t.\\tCG\\t.\\t.\\tPASS\\t.\\tGT:M5mC\\t0|0:0.5,0.2,0.6,.\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path, base_modification_strandedness="unstranded")
+    assert exc.value.code == "VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT"
+
+
 def test_number_m_unstranded_policy_checks_cpg_slots_within_one_record(
     tmp_path: Path,
 ):
