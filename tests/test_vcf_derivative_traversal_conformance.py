@@ -143,3 +143,89 @@ def test_single_breakend_returns_unresolved_adjacency_without_fabricating_mate(
     )
     assert traversal["event_order_status"] == "RECONSTRUCTED"
     assert traversal["adjacency_status"] == "PARTIAL_OR_UNRESOLVED"
+
+
+@pytest.mark.parametrize(
+    "version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_reciprocal_bnd_event_group_and_orientation_are_supported_across_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}-reciprocal-bnd-event.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;EVENT=E1;EVENTTYPE=TRA:BALANCED\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1;EVENT=E1;EVENTTYPE=TRA:BALANCED\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["breakend_records"] == 2
+    assert len(result["breakend_adjacencies"]) == 1
+    assert result["breakend_adjacencies"][0]["event_group_status"] == "MATCHED"
+    assert result["breakend_adjacencies"][0]["source"]["orientation"]["remote_piece_direction"] == "LEFT"
+    assert result["breakend_adjacencies"][0]["mate"]["orientation"]["remote_piece_direction"] == "LEFT"
+    assert result["breakend_event_groups"][0]["event_id"] == "E1"
+    assert result["breakend_event_groups"][0]["status"] == "MATCHED"
+    assert result["unresolved_breakend_adjacency_count"] == 0
+
+
+@pytest.mark.parametrize(
+    "version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_multiple_alt_breakend_mates_are_resolved_by_alt_index_across_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}-multi-alt-bnd-mates.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbndU\tA\tA]2:10],A]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bndV,bndZ;EVENT=E1,E2\n"
+        "2\t10\tbndV\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT=E1\n"
+        "3\t20\tbndZ\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;EVENT=E2\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["records"] == 3
+    assert len(result["breakend_adjacencies"]) == 2
+    assert {
+        item["source"]["alt_index"] for item in result["breakend_adjacencies"]
+    } == {1, 2}
+    assert {item["event_id"] for item in result["breakend_adjacencies"]} == {"E1", "E2"}
+    assert len(result["breakend_event_groups"]) == 2
+
+
+@pytest.mark.parametrize(
+    "version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+@pytest.mark.parametrize("alt", [".A", "A."])
+def test_single_breakend_is_preserved_as_unresolved_without_mate_across_versions(
+    tmp_path: Path, version: str, alt: str
+):
+    path = tmp_path / f"{version}-single-breakend.vcf"
+    path.write_text(
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t5\tsingle1\tA\t{alt}\t.\tPASS\tSVTYPE=BND\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["unresolved_breakend_adjacency_count"] == 1
+    assert result["unresolved_breakend_adjacencies"][0]["reason_code"] == (
+        "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE"
+    )
+    assert result["breakend_adjacencies"] == []
