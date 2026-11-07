@@ -36,7 +36,7 @@ def _sample(member_id, identifier, calls):
 
 def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
     case_id, father_id, proband_id = uuid4(), uuid4(), uuid4()
-    observed_variant, absent_variant = uuid4(), uuid4()
+    observed_variant, absent_variant, partial_variant = uuid4(), uuid4(), uuid4()
     father = _sample(father_id, "FATHER", {
         observed_variant: {
             "sample_name": "FATHER",
@@ -44,6 +44,12 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
             "normalized_genotype": "./.",
             "missing_allele_count": 2,
             "format_values": {"DP": "18", "GQ": "0"},
+        },
+        partial_variant: {
+            "sample_name": "FATHER",
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+            "missing_allele_count": 1,
         },
     })
     proband = _sample(proband_id, "PROBAND", {
@@ -64,7 +70,7 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
 
     matrix = build_family_genotype_matrix(
         case_id=case_id,
-        variant_ids=[observed_variant, absent_variant],
+        variant_ids=[observed_variant, absent_variant, partial_variant],
         samples=[proband, father],
         relationships=[{
             "parent_member_identifier": "FATHER",
@@ -82,6 +88,7 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
     assert father_calls[str(observed_variant)]["callability"] == "NOT_ASSESSED"
     assert father_calls[str(absent_variant)]["call_state"] == "NO_RECORD"
     assert father_calls[str(absent_variant)]["reference_allele_dosage"] is None
+    assert father_calls[str(partial_variant)]["call_state"] == "PARTIAL_NO_CALL"
     assert proband_calls[str(observed_variant)]["call_state"] == "CALL_PRESENT"
     assert proband_calls[str(observed_variant)]["phase"] == "PHASED"
     assert proband_calls[str(observed_variant)]["phase_set"] == "1200"
