@@ -1,0 +1,1633 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-reserved-row-canonical-ledger-mapping-pass1",
+  "status": "AUTHOR_ROW_ID_MAPPING_COMPLETE_FIELD_SPECIFIC_SEMANTIC_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-07",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "scope": "Map every VCFv4.5 reserved INFO/FORMAT row to the existing canonical ledger row record, and map historical VCFv4.1/4.2 GLE to its existing historical semantic requirements. This is row identity mapping only; it does not complete all field-specific prose reconciliation.",
+  "source_artifacts": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "6cbf4a84681f7dd109249834ad5527dca60bea61"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "a8a7af8b9674548d1085f2c3e488c5168226c194"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/atomic-requirements.v1.json",
+      "blob_sha1": "ba7d1bb0544f5d1105a4bd62f757decae13caee8"
+    }
+  ],
+  "counts": {
+    "canonical_ledger_records": 226,
+    "vcf45_reserved_info_rows": 21,
+    "vcf45_reserved_info_rows_mapped": 21,
+    "vcf45_reserved_format_rows": 64,
+    "vcf45_reserved_format_rows_mapped": 64,
+    "historical_GLE_rows": 1,
+    "historical_GLE_semantic_mapped": 1,
+    "total_vcf45_reserved_rows_mapped": 85,
+    "canonical_ids_allocated": 0,
+    "canonical_records_modified": 0
+  },
+  "info_rows": [
+    {
+      "field_id": "AA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000143"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key AA: Number=1, Type=String",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 171,
+        "VCFv4.2": 188,
+        "VCFv4.3": 395,
+        "VCFv4.4": 411,
+        "VCFv4.5": 460
+      }
+    },
+    {
+      "field_id": "AC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000144"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key AC: Number=A, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 172,
+        "VCFv4.2": 189,
+        "VCFv4.3": 396,
+        "VCFv4.4": 412,
+        "VCFv4.5": 461
+      }
+    },
+    {
+      "field_id": "AD",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000145"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key AD: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 397,
+        "VCFv4.4": 413,
+        "VCFv4.5": 462
+      }
+    },
+    {
+      "field_id": "ADF",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000146"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key ADF: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 398,
+        "VCFv4.4": 414,
+        "VCFv4.5": 463
+      }
+    },
+    {
+      "field_id": "ADR",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000147"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key ADR: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_INFO_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 399,
+        "VCFv4.4": 415,
+        "VCFv4.5": 464
+      }
+    },
+    {
+      "field_id": "AF",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000148"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key AF: Number=A, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 173,
+        "VCFv4.2": 190,
+        "VCFv4.3": 400,
+        "VCFv4.4": 416,
+        "VCFv4.5": 465
+      }
+    },
+    {
+      "field_id": "AN",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000149"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key AN: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 174,
+        "VCFv4.2": 191,
+        "VCFv4.3": 401,
+        "VCFv4.4": 417,
+        "VCFv4.5": 466
+      }
+    },
+    {
+      "field_id": "BQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000150"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key BQ: Number=1, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 175,
+        "VCFv4.2": 192,
+        "VCFv4.3": 402,
+        "VCFv4.4": 418,
+        "VCFv4.5": 467
+      }
+    },
+    {
+      "field_id": "CIGAR",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000151"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key CIGAR: Number=A, Type=String",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 176,
+        "VCFv4.2": 193,
+        "VCFv4.3": 403,
+        "VCFv4.4": 419,
+        "VCFv4.5": 468
+      }
+    },
+    {
+      "field_id": "DB",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000152"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key DB: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 177,
+        "VCFv4.2": 194,
+        "VCFv4.3": 404,
+        "VCFv4.4": 420,
+        "VCFv4.5": 469
+      }
+    },
+    {
+      "field_id": "DP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000153"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key DP: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 178,
+        "VCFv4.2": 195,
+        "VCFv4.3": 405,
+        "VCFv4.4": 421,
+        "VCFv4.5": 470
+      }
+    },
+    {
+      "field_id": "END",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000154"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key END: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 179,
+        "VCFv4.2": 196,
+        "VCFv4.3": 406,
+        "VCFv4.4": 422,
+        "VCFv4.5": 471
+      }
+    },
+    {
+      "field_id": "H2",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000155"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key H2: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 180,
+        "VCFv4.2": 197,
+        "VCFv4.3": 407,
+        "VCFv4.4": 423,
+        "VCFv4.5": 472
+      }
+    },
+    {
+      "field_id": "H3",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000156"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key H3: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 181,
+        "VCFv4.2": 198,
+        "VCFv4.3": 408,
+        "VCFv4.4": 424,
+        "VCFv4.5": 473
+      }
+    },
+    {
+      "field_id": "MQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000157"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key MQ: Number=1, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 182,
+        "VCFv4.2": 199,
+        "VCFv4.3": 409,
+        "VCFv4.4": 425,
+        "VCFv4.5": 474
+      }
+    },
+    {
+      "field_id": "MQ0",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000158"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key MQ0: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 183,
+        "VCFv4.2": 200,
+        "VCFv4.3": 410,
+        "VCFv4.4": 426,
+        "VCFv4.5": 475
+      }
+    },
+    {
+      "field_id": "NS",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000159"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key NS: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 184,
+        "VCFv4.2": 201,
+        "VCFv4.3": 411,
+        "VCFv4.4": 427,
+        "VCFv4.5": 476
+      }
+    },
+    {
+      "field_id": "SB",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000160"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key SB: Number=4, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 185,
+        "VCFv4.2": 202,
+        "VCFv4.3": 412,
+        "VCFv4.4": 428,
+        "VCFv4.5": 477
+      }
+    },
+    {
+      "field_id": "SOMATIC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000161"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key SOMATIC: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 186,
+        "VCFv4.2": 203,
+        "VCFv4.3": 413,
+        "VCFv4.4": 429,
+        "VCFv4.5": 478
+      }
+    },
+    {
+      "field_id": "VALIDATED",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000162"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key VALIDATED: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 187,
+        "VCFv4.2": 204,
+        "VCFv4.3": 414,
+        "VCFv4.4": 430,
+        "VCFv4.5": 479
+      }
+    },
+    {
+      "field_id": "1000G",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000163"
+      ],
+      "canonical_title": "VCFv4.5 reserved INFO key 1000G: Number=0, Type=Flag",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 188,
+        "VCFv4.2": 205,
+        "VCFv4.3": 415,
+        "VCFv4.4": 431,
+        "VCFv4.5": 480
+      }
+    }
+  ],
+  "format_rows": [
+    {
+      "field_id": "AD",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000164"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key AD: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 462,
+        "VCFv4.4": 480,
+        "VCFv4.5": 534
+      }
+    },
+    {
+      "field_id": "ADF",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000165"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADF: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 463,
+        "VCFv4.4": 481,
+        "VCFv4.5": 535
+      }
+    },
+    {
+      "field_id": "ADM[0-9]+[ACGTUN]",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000188"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM[0-9]+[ACGTUN]: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 558
+      }
+    },
+    {
+      "field_id": "ADM5caC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000200"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5caC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 570
+      }
+    },
+    {
+      "field_id": "ADM5caU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000209"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5caU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 579
+      }
+    },
+    {
+      "field_id": "ADM5fC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000197"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5fC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 567
+      }
+    },
+    {
+      "field_id": "ADM5fU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000206"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5fU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 576
+      }
+    },
+    {
+      "field_id": "ADM5hmC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000194"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5hmC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 564
+      }
+    },
+    {
+      "field_id": "ADM5hmU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000203"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5hmU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 573
+      }
+    },
+    {
+      "field_id": "ADM5mC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000191"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM5mC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 561
+      }
+    },
+    {
+      "field_id": "ADM6mA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000212"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM6mA: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 582
+      }
+    },
+    {
+      "field_id": "ADM8oxoG",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000215"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADM8oxoG: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 585
+      }
+    },
+    {
+      "field_id": "ADMXaoN",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000218"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADMXaoN: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 588
+      }
+    },
+    {
+      "field_id": "ADR",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000166"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key ADR: Number=R, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 464,
+        "VCFv4.4": 482,
+        "VCFv4.5": 536
+      }
+    },
+    {
+      "field_id": "DP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000167"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DP: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 205,
+        "VCFv4.2": 222,
+        "VCFv4.3": 465,
+        "VCFv4.4": 483,
+        "VCFv4.5": 537
+      }
+    },
+    {
+      "field_id": "DPM[0-9]+[ACGTUN]",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000187"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM[0-9]+[ACGTUN]: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 557
+      }
+    },
+    {
+      "field_id": "DPM5caC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000199"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5caC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 569
+      }
+    },
+    {
+      "field_id": "DPM5caU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000208"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5caU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 578
+      }
+    },
+    {
+      "field_id": "DPM5fC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000196"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5fC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 566
+      }
+    },
+    {
+      "field_id": "DPM5fU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000205"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5fU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 575
+      }
+    },
+    {
+      "field_id": "DPM5hmC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000193"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5hmC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 563
+      }
+    },
+    {
+      "field_id": "DPM5hmU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000202"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5hmU: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 572
+      }
+    },
+    {
+      "field_id": "DPM5mC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000190"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM5mC: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 560
+      }
+    },
+    {
+      "field_id": "DPM6mA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000211"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM6mA: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 581
+      }
+    },
+    {
+      "field_id": "DPM8oxoG",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000214"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPM8oxoG: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 584
+      }
+    },
+    {
+      "field_id": "DPMXaoN",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000217"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key DPMXaoN: Number=M, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 587
+      }
+    },
+    {
+      "field_id": "EC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000168"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key EC: Number=A, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 215,
+        "VCFv4.2": 232,
+        "VCFv4.3": 466,
+        "VCFv4.4": 484,
+        "VCFv4.5": 538
+      }
+    },
+    {
+      "field_id": "FT",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000170"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key FT: Number=1, Type=String",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 206,
+        "VCFv4.2": 223,
+        "VCFv4.3": 467,
+        "VCFv4.4": 485,
+        "VCFv4.5": 540
+      }
+    },
+    {
+      "field_id": "GL",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000171"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key GL: Number=G, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 207,
+        "VCFv4.2": 224,
+        "VCFv4.3": 468,
+        "VCFv4.4": 486,
+        "VCFv4.5": 541
+      }
+    },
+    {
+      "field_id": "GLE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000027",
+        "VCF-REQ-000135"
+      ],
+      "canonical_title": [
+        "GLE is a string representation for genotype likelihoods of heterogeneous ploidy, used where copy number is…",
+        "VCFv4.1-4.2 GLE represents heterogeneous-ploidy likelihoods"
+      ],
+      "mapping_status": "HISTORICAL_ONLY_SEMANTIC_MATCH_NO_VCF45_RESERVED_ROW",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+      },
+      "source_lines": {
+        "VCFv4.1": 208,
+        "VCFv4.2": 225
+      }
+    },
+    {
+      "field_id": "GP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000172"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key GP: Number=G, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 210,
+        "VCFv4.2": 227,
+        "VCFv4.3": 469,
+        "VCFv4.4": 487,
+        "VCFv4.5": 542
+      }
+    },
+    {
+      "field_id": "GQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000173"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key GQ: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 211,
+        "VCFv4.2": 228,
+        "VCFv4.3": 470,
+        "VCFv4.4": 488,
+        "VCFv4.5": 543
+      }
+    },
+    {
+      "field_id": "GT",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000174"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key GT: Number=1, Type=String",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 200,
+        "VCFv4.2": 217,
+        "VCFv4.3": 471,
+        "VCFv4.4": 489,
+        "VCFv4.5": 544
+      }
+    },
+    {
+      "field_id": "HQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000175"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key HQ: Number=2, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 212,
+        "VCFv4.2": 229,
+        "VCFv4.3": 472,
+        "VCFv4.4": 490,
+        "VCFv4.5": 545
+      }
+    },
+    {
+      "field_id": "LA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000176"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LA: Number=., Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 546
+      }
+    },
+    {
+      "field_id": "LAA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000177"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LAA: Number=., Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 547
+      }
+    },
+    {
+      "field_id": "LAD",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000178"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LAD: Number=LR, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 548
+      }
+    },
+    {
+      "field_id": "LADF",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000179"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LADF: Number=LR, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 549
+      }
+    },
+    {
+      "field_id": "LADR",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000180"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LADR: Number=LR, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 550
+      }
+    },
+    {
+      "field_id": "LEC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000181"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LEC: Number=LA, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 551
+      }
+    },
+    {
+      "field_id": "LEN",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000169"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LEN: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 539
+      }
+    },
+    {
+      "field_id": "LGL",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000182"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LGL: Number=LG, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 552
+      }
+    },
+    {
+      "field_id": "LGP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000183"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LGP: Number=LG, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 553
+      }
+    },
+    {
+      "field_id": "LPL",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000184"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LPL: Number=LG, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 554
+      }
+    },
+    {
+      "field_id": "LPP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000185"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key LPP: Number=LG, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 555
+      }
+    },
+    {
+      "field_id": "M[0-9]+[ACGTUN]",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000186"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M[0-9]+[ACGTUN]: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 556
+      }
+    },
+    {
+      "field_id": "M5caC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000198"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5caC: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 568
+      }
+    },
+    {
+      "field_id": "M5caU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000207"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5caU: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 577
+      }
+    },
+    {
+      "field_id": "M5fC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000195"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5fC: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 565
+      }
+    },
+    {
+      "field_id": "M5fU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000204"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5fU: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 574
+      }
+    },
+    {
+      "field_id": "M5hmC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000192"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5hmC: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 562
+      }
+    },
+    {
+      "field_id": "M5hmU",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000201"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5hmU: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 571
+      }
+    },
+    {
+      "field_id": "M5mC",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000189"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M5mC: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 559
+      }
+    },
+    {
+      "field_id": "M6mA",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000210"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M6mA: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 580
+      }
+    },
+    {
+      "field_id": "M8oxoG",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000213"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key M8oxoG: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 583
+      }
+    },
+    {
+      "field_id": "MQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000219"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key MQ: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 216,
+        "VCFv4.2": 233,
+        "VCFv4.3": 473,
+        "VCFv4.4": 491,
+        "VCFv4.5": 589
+      }
+    },
+    {
+      "field_id": "MXaoN",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000216"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key MXaoN: Number=M, Type=Float",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.5": 586
+      }
+    },
+    {
+      "field_id": "PL",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000220"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PL: Number=G, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 209,
+        "VCFv4.2": 226,
+        "VCFv4.3": 474,
+        "VCFv4.4": 492,
+        "VCFv4.5": 590
+      }
+    },
+    {
+      "field_id": "PP",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000221"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PP: Number=G, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.3": 475,
+        "VCFv4.4": 493,
+        "VCFv4.5": 591
+      }
+    },
+    {
+      "field_id": "PQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000222"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PQ: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 214,
+        "VCFv4.2": 231,
+        "VCFv4.3": 476,
+        "VCFv4.4": 494,
+        "VCFv4.5": 592
+      }
+    },
+    {
+      "field_id": "PS",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000223"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PS: Number=1, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "PRESENT",
+        "VCFv4.2": "PRESENT",
+        "VCFv4.3": "PRESENT",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.1": 213,
+        "VCFv4.2": 230,
+        "VCFv4.3": 477,
+        "VCFv4.4": 495,
+        "VCFv4.5": 593
+      }
+    },
+    {
+      "field_id": "PSL",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000224"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PSL: Number=P, Type=String",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.4": 496,
+        "VCFv4.5": 594
+      }
+    },
+    {
+      "field_id": "PSO",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000225"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PSO: Number=P, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.4": 497,
+        "VCFv4.5": 595
+      }
+    },
+    {
+      "field_id": "PSQ",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000226"
+      ],
+      "canonical_title": "VCFv4.5 reserved FORMAT key PSQ: Number=P, Type=Integer",
+      "version_presence": {
+        "VCFv4.1": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.2": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.3": "NOT_IN_RESERVED_FORMAT_INVENTORY",
+        "VCFv4.4": "PRESENT",
+        "VCFv4.5": "PRESENT"
+      },
+      "source_lines": {
+        "VCFv4.4": 498,
+        "VCFv4.5": 596
+      }
+    }
+  ],
+  "controls": [
+    "Every VCFv4.5 reserved INFO row maps to its existing VCF-REQ-000143..000163 table-row record.",
+    "Every VCFv4.5 reserved FORMAT row maps to its existing VCF-REQ-000164..000226 table-row record.",
+    "GLE is present in the VCFv4.1/4.2 historical inventory and removed in VCFv4.3; it has no VCFv4.5 reserved-row record. Historical semantics map to VCF-REQ-000027 and VCF-REQ-000135.",
+    "Do not interpret row-ID mapping as completion of field-specific normative prose mapping, version applicability adjudication, implementation mapping or executable conformance testing.",
+    "The canonical ledger remains unchanged."
+  ]
+}
