@@ -10,8 +10,16 @@ from sqlalchemy import create_engine, inspect, text
 
 from backend.app.api.v1 import pedigree
 from backend.app.infrastructure.db.models import (
-    Analysis, Artifact, Case, PedigreeMember, PedigreeSampleBinding, Specimen, WorkflowStep,
+    Analysis, Artifact, Case, PedigreeMember, PedigreeSampleBinding, Specimen,
 )
+
+
+class _Rows:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def all(self):
+        return self._rows
 
 
 class _Audit:
