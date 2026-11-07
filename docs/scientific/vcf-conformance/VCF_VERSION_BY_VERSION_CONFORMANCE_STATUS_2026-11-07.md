@@ -125,16 +125,16 @@ The current author research artifacts establish source inventory but do not esta
 - vcf4.1-4.5-version-delta-register.v1.json records author reconciliation of all 44 VCFv4.5 tables and the five-version applicability matrices. It reports zero independent table reviews, one open table-specific question and one blocking source ambiguity.
 - Confirmed transitions include GLE removal from the reserved set in 4.3, PSL/PSO/PSQ and Number=P addition in 4.4, SVLEN cardinality change, SVTYPE deprecation, and VCFv4.5 additions for local alleles, base modifications, FORMAT LEN and END deprecation.
 
-The next cross-version implementation gate is to reconcile VCFv4.4 phase-set semantics (PSL/PSO/PSQ) independently from VCFv4.5, then map each applicable source row/prose rule to a production symbol and an executed version-specific test.
+The next cross-version implementation gate is to complete semantic/atomic reconciliation of every VCFv4.1–4.4 source row and structural-variant rule, then map each applicable source rule to a production symbol and an executed version-specific test.
 
 ## 4. Exact verification evidence and limitation
 
 - Full SIRALOOM CI passed on the historical exact commit d69d351b44f631f82ae754049063820efdd9a159. This is not evidence for the implementation baseline reviewed above.
 - CI on bde6e63957b39a5f8167ea30d3d852aa35d2a4c1 failed with three backend test failures. Subsequent commits corrected the BND/CIPOS diagnostics and telomeric coordinate handling, and added VCFv4.4 phase-set and Number=M regressions.
-- VCF research-ledger schema validation passed on f685a22754431187bcc061933da101610d8f9c87. No full SIRALOOM CI run is associated with the implementation baseline 57c181ecab4d948e02d9bb88799727fb10315d09 in the retrieved workflow-run records. Therefore, this baseline is not CI-verified.
+- VCF research-ledger schema validation passed on f685a22754431187bcc061933da101610d8f9c87. No full SIRALOOM CI run is associated with the implementation baseline 15feffa75bb8fecaec2f3d53ba7729f420cd4d5e in the retrieved workflow-run records. Therefore, this baseline is not CI-verified.
 - The same-record unstranded Number=M negative regression (populated complementary-strand slot must be rejected under the explicit unstranded assay policy) is present in tests/test_vcf45_number_m_conformance.py. It has not yet been executed by GitHub Actions.
-- The VCFv4.5 phase-set test helper's undefined version variable was corrected; it now accepts an explicit VCF version (default VCFv4.5). VCFv4.4 PSQ positional regressions were added in tests/test_vcf44_phase_set_conformance.py. These new tests have not yet been executed by GitHub Actions.
-- The GitHub commit-workflow query returned no pull-request workflow runs or check-runs for the latest inspected branch head 2a0c36dede86a565166820bb1978a88e840b3859. No backend or conformance result is inferred from the absence of a run or from deployment status.
+- The VCFv4.5 phase-set test helper's undefined version variable was corrected; it now accepts an explicit VCF version (default VCFv4.5). VCFv4.4 PSQ positional and missing-value regressions were added in tests/test_vcf44_phase_set_conformance.py. These new tests have not yet been executed by GitHub Actions.
+- The GitHub commit-workflow query returned no pull-request workflow runs or check-runs for the latest inspected branch head 9c39c03ad8920de2844f6155ea32e98b30623273. No backend or conformance result is inferred from the absence of a run or from deployment status.
 - Do not infer success from the previous green commit or from schema validation. The final exact commit must have a full successful run of backend tests, VCFv4.5 conformance tests, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
 
 ## 5. Release decision
