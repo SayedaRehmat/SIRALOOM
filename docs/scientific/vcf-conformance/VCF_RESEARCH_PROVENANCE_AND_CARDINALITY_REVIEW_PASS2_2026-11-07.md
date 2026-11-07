@@ -74,20 +74,54 @@ The addendum-to-`genotype-format-atomic-candidates.v1.json` crosswalk now contai
 
 These are candidate relationships only. They do not establish canonical-ledger deduplication or approval. The full 226-record canonical ledger comparison remains outstanding for this addendum. The existing 61 GT/FORMAT candidates remain provisional and independently unapproved.
 
-## 5. Formal schema validation expansion
+
+
+## 5. Canonical 226-record ledger reconciliation
+
+The complete canonical ledger was fetched from its repository blob and all 226 requirement records were inspected. A separate crosswalk was created at:
+
+- `VCF45_CARDINALITY_CANONICAL_LEDGER_RECONCILIATION_PASS1_2026-11-07.json`
+- Blob SHA-1: `633df7d1a8f669b60faea00d1f740e9b6bf41d77`
+
+Results for the 42 supplemental records:
+
+| Relationship | Count |
+|---|---:|
+| Direct semantic matches | 24 |
+| Partial/combined overlaps | 6 |
+| Normative-force conflicts | 2 |
+| Source-scope conflict | 1 |
+| No canonical match identified | 9 |
+| Total supplemental records | 42 |
+
+Thirty-three supplemental records relate to 32 unique canonical requirement IDs. The nine no-match records are provisional candidates, not confirmed net-new requirements.
+
+Important findings:
+- Number=LA and Number=LR are already combined in canonical `VCF-REQ-000072`; the supplemental records separate them.
+- Local-allele LAA definition and ordering are already represented by canonical `VCF-REQ-000051` and `000052`.
+- Number=LG, Number=P and Number=M semantics are already represented by `000073`, `000074` and `000075`; genotype-dependent Number=M cardinality is `000060`.
+- The local-allele and base-modification semantics are substantially represented by canonical `000053`–`000067`.
+- PSL/PSO/PSQ semantics are substantially represented by canonical `000041` and `000043`–`000050`.
+- Canonical `VCF-REQ-000054` and `000055` have force recorded as DESCRIPTIVE, while the pinned source wording uses SHOULD for the BCF missing-LAA interpretation and local/global A/R/G equivalence. Both discrepancies are retained for adjudication; the canonical ledger was not silently rewritten.
+- Canonical `VCF-REQ-000061` combines per-allele base-modification cardinality and sequence order; supplemental `000240` and `000241` separate those obligations.
+- Canonical `VCF-REQ-000048`, `000142` and related `000113` combine PSL and PSO equality across paired breakend records; supplemental `000254` and `000263` separate them.
+
+The canonical ledger remains unchanged: zero canonical records modified and zero canonical IDs allocated. The crosswalk is author-level and still requires independent review.
+
+## 6. Formal schema validation expansion
 
 The isolated research-only validator was expanded to validate both:
 1. `VCF45_ATOMIC_CANDIDATE_REGISTRY_PASS1_2026-11-07.json` (161 records); and
 2. `vcf4.5-cardinality-local-allele-atomic-addendum.v1.json` (42 records).
 
-It uses `jsonschema==4.26.0`, checks the Draft 2020-12 schema with `Draft202012Validator.check_schema`, and validates each complete registry with `Draft202012Validator.iter_errors`. The updated workflow run is pending at the time this audit was written; no formal-validation PASS is claimed for the 42-record addendum until that run completes successfully.
+It uses `jsonschema==4.26.0`, checks the Draft 2020-12 schema with `Draft202012Validator.check_schema`, and validates each complete registry with `Draft202012Validator.iter_errors`. The updated GitHub Actions run [42351123916](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42351123916) completed successfully at commit `75a1780a70b2c3cdfe5e3349aa7f984048b515f3`. The workflow checked the Draft 2020-12 schema and formally validated both registries: 161 records in the Pass 2 registry and 42 records in the cardinality/local-allele addendum.
 
 The only workflow/code change is to the isolated research schema validator and its dedicated research workflow. No production parser, validator, normalizer, BCFtools/HTSlib toolchain, or existing production CI job was changed.
 
-## 6. Current gates and next execution order
+## 7. Current gates and next execution order
 
 1. Confirm the updated GitHub Actions run passes formal Draft 2020-12 validation for both registries.
-2. Reconcile all 42 addendum records against the complete 226-record canonical ledger; distinguish covered, partial, duplicate and genuinely net-new semantics.
+2. Obtain independent review of the 42-record canonical crosswalk; adjudicate the two modality conflicts, one source-scope conflict and six partial/combined overlaps before any canonical edit or promotion.
 3. Continue clause-level VCFv4.1–4.5 semantic reconciliation for all reserved INFO and FORMAT fields, including the GLE removal, Number=P/PSL/PSO/PSQ, local alleles, Number=M, END/SVLEN and SV-specific semantics.
 4. Complete GT semantic reconciliation across VCFv4.1–4.5 without projecting later Number/Type semantics backward into prose-only versions.
 5. Continue VCFv4.5 FORMAT cardinality/projection work for LA, LR, LG, M and P, including local/global equivalence, genotype likelihood ordering and missing-value behavior.
@@ -95,7 +129,7 @@ The only workflow/code change is to the isolated research schema validator and i
 7. Obtain independent standards review before promoting any candidate to the canonical ledger.
 8. Only after review, map requirements to implementation and execute version-specific conformance tests. Laboratory qualification remains a separate later gate.
 
-## 7. Non-claims
+## 8. Non-claims
 
 - No requirement in the 42-record addendum is independently approved.
 - The 226-record canonical ledger was not changed and no canonical IDs were allocated.
