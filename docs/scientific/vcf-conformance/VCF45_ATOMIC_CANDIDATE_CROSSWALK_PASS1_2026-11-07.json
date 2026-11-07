@@ -13,7 +13,7 @@
         "VCF-REQ-900001",
         "VCF-REQ-900002"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -24,7 +24,7 @@
         "VCF-REQ-900003",
         "VCF-REQ-900004"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -36,7 +36,7 @@
         "VCF-REQ-900006",
         "VCF-REQ-900007"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -47,7 +47,7 @@
         "VCF-REQ-900008",
         "VCF-REQ-900009"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -78,7 +78,7 @@
         "VCF-REQ-900012",
         "VCF-REQ-900013"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -89,7 +89,7 @@
         "VCF-REQ-900014",
         "VCF-REQ-900015"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -110,7 +110,7 @@
         "VCF-REQ-900017",
         "VCF-REQ-900018"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -121,7 +121,7 @@
         "VCF-REQ-900019",
         "VCF-REQ-900020"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -156,7 +156,7 @@
         "VCF-REQ-900027",
         "VCF-REQ-900028"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -177,7 +177,7 @@
         "VCF-REQ-900030",
         "VCF-REQ-900031"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -188,7 +188,7 @@
         "VCF-REQ-900032",
         "VCF-REQ-900033"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -199,7 +199,7 @@
         "VCF-REQ-900034",
         "VCF-REQ-900035"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -232,7 +232,7 @@
         "VCF-REQ-900040",
         "VCF-REQ-900041"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -243,7 +243,7 @@
         "VCF-REQ-900042",
         "VCF-REQ-900043"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -256,7 +256,7 @@
         "VCF-REQ-900046",
         "VCF-REQ-900047"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -269,7 +269,7 @@
         "VCF-REQ-900050",
         "VCF-REQ-900051"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -303,8 +303,13 @@
       "source_candidate_id": "VCF45-CAND-027",
       "source_line": 272,
       "source_text": "The following subtypes are recommended:",
-      "derived_candidate_requirement_ids": [],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "derived_candidate_requirement_ids": [
+        "VCF-REQ-900126",
+        "VCF-REQ-900127",
+        "VCF-REQ-900128",
+        "VCF-REQ-900129"
+      ],
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         273,
         274,
@@ -330,7 +335,7 @@
         "VCF-REQ-900055",
         "VCF-REQ-900056"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -341,7 +346,7 @@
         "VCF-REQ-900057",
         "VCF-REQ-900058"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -353,7 +358,7 @@
         "VCF-REQ-900060",
         "VCF-REQ-900061"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -421,9 +426,10 @@
       "source_line": 403,
       "source_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900068"
+        "VCF-REQ-900068",
+        "VCF-REQ-900123"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         404
       ]
@@ -437,7 +443,7 @@
         "VCF-REQ-900070",
         "VCF-REQ-900071"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -448,7 +454,7 @@
         "VCF-REQ-900072",
         "VCF-REQ-900073"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -483,7 +489,7 @@
         "VCF-REQ-900080",
         "VCF-REQ-900081"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -504,7 +510,7 @@
         "VCF-REQ-900083",
         "VCF-REQ-900084"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -555,7 +561,7 @@
         "VCF-REQ-900089",
         "VCF-REQ-900090"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -566,7 +572,7 @@
         "VCF-REQ-900091",
         "VCF-REQ-900092"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -604,9 +610,11 @@
       "source_line": 609,
       "source_text": "  These values should be described in the meta-information in the same way as FILTERs.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900096"
+        "VCF-REQ-900096",
+        "VCF-REQ-900124",
+        "VCF-REQ-900125"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         610
       ]
@@ -616,9 +624,16 @@
       "source_line": 825,
       "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900130"
+        "VCF-REQ-900130",
+        "VCF-REQ-900131",
+        "VCF-REQ-900132",
+        "VCF-REQ-900133",
+        "VCF-REQ-900134",
+        "VCF-REQ-900135",
+        "VCF-REQ-900136",
+        "VCF-REQ-900137"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         827,
         828,
@@ -634,9 +649,10 @@
       "source_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900097",
-        "VCF-REQ-900098"
+        "VCF-REQ-900098",
+        "VCF-REQ-900122"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         846
       ]
@@ -669,7 +685,7 @@
         "VCF-REQ-900101",
         "VCF-REQ-900102"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -690,7 +706,7 @@
         "VCF-REQ-900104",
         "VCF-REQ-900105"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -701,7 +717,7 @@
         "VCF-REQ-900106",
         "VCF-REQ-900107"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -712,7 +728,7 @@
         "VCF-REQ-900138",
         "VCF-REQ-900139"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -763,7 +779,7 @@
         "VCF-REQ-900112",
         "VCF-REQ-900113"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -774,7 +790,7 @@
         "VCF-REQ-900114",
         "VCF-REQ-900115"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -785,7 +801,7 @@
         "VCF-REQ-900116",
         "VCF-REQ-900117"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -796,7 +812,7 @@
         "VCF-REQ-900118",
         "VCF-REQ-900119"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -827,7 +843,7 @@
         "VCF-REQ-900140",
         "VCF-REQ-900141"
       ],
-      "decomposition_status": "SPLIT_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     }
   ]
