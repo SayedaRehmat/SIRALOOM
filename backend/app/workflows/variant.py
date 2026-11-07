@@ -489,6 +489,7 @@ def _record_annotation_tool_execution(
         return
     metadata = dict(execution_record.metadata_json or {})
     metadata["tool_execution_provenance"] = provenance["tool_execution_provenance"]
+    metadata["runtime_check"] = provenance.get("runtime_check")
     metadata["raw_response_artifact_id"] = provenance.get("raw_response_artifact_id")
     metadata["raw_response_artifact_sha256"] = provenance.get("raw_response_artifact_sha256")
     metadata["reference_package_checksum"] = provenance.get("reference_package_checksum")
@@ -586,6 +587,7 @@ def _persist_raw_vep_provider_response(
                 "batch_key": _batch_key(start, end),
                 "assembly": genome_build,
                 "reference_package_checksum": provenance.get("reference_package_checksum"),
+                "runtime_check": provenance.get("runtime_check"),
                 "response_sha256": response_sha256,
                 "tool_execution_provenance": tool_execution,
             },
