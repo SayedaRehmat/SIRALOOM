@@ -62,7 +62,7 @@ function toIso8601Duration(value: string, unit: string): string {
 
 
 export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [rows, setRows] = useState<PhenotypeRow[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [termQuery, setTermQuery] = useState("");
