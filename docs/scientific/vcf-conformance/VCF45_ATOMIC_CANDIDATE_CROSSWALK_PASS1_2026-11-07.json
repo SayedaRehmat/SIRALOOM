@@ -386,9 +386,11 @@
       "source_line": 392,
       "source_text": "  (String, no whitespace permitted, Required).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900064"
+        "VCF-REQ-900064",
+        "VCF-REQ-900145",
+        "VCF-REQ-900146"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -396,9 +398,10 @@
       "source_line": 397,
       "source_text": "  (Integer, Required)",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900065"
+        "VCF-REQ-900065",
+        "VCF-REQ-900147"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -462,9 +465,11 @@
       "source_line": 409,
       "source_text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900074"
+        "VCF-REQ-900074",
+        "VCF-REQ-900142",
+        "VCF-REQ-900143"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -487,10 +492,16 @@
         "VCF-REQ-900078",
         "VCF-REQ-900079",
         "VCF-REQ-900080",
-        "VCF-REQ-900081"
+        "VCF-REQ-900081",
+        "VCF-REQ-900144",
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        419
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-044",
@@ -518,30 +529,49 @@
       "source_line": 422,
       "source_text": "  If unknown, the MISSING value must be specified. (Float)",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900085"
+        "VCF-REQ-900085",
+        "VCF-REQ-900148",
+        "VCF-REQ-900149",
+        "VCF-REQ-900150",
+        "VCF-REQ-900151"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        420,
+        421
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-047",
       "source_line": 425,
       "source_text": "  `0' is reserved and must not be used as a filter String.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900086"
+        "VCF-REQ-900086",
+        "VCF-REQ-900156",
+        "VCF-REQ-900157",
+        "VCF-REQ-900158",
+        "VCF-REQ-900159"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        427
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-048",
       "source_line": 426,
       "source_text": "  If filters have not been applied, then this field must be set to the MISSING value.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900087"
+        "VCF-REQ-900087",
+        "VCF-REQ-900156",
+        "VCF-REQ-900157",
+        "VCF-REQ-900158",
+        "VCF-REQ-900159"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
+      "context_source_lines": [
+        427
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-049",
@@ -551,7 +581,9 @@
         "VCF-REQ-900088"
       ],
       "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        430
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-050",
@@ -559,10 +591,13 @@
       "source_text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900089",
-        "VCF-REQ-900090"
+        "VCF-REQ-900090",
+        "VCF-REQ-900160"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        434
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-051",
@@ -650,11 +685,15 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900097",
         "VCF-REQ-900098",
-        "VCF-REQ-900122"
+        "VCF-REQ-900122",
+        "VCF-REQ-900165",
+        "VCF-REQ-900166"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
-        846
+        846,
+        847,
+        848
       ]
     },
     {
@@ -715,7 +754,8 @@
       "source_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900106",
-        "VCF-REQ-900107"
+        "VCF-REQ-900107",
+        "VCF-REQ-900164"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
@@ -799,10 +839,14 @@
       "source_text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900116",
-        "VCF-REQ-900117"
+        "VCF-REQ-900117",
+        "VCF-REQ-900162",
+        "VCF-REQ-900163"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        1990
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-072",
