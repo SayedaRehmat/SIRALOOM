@@ -1258,6 +1258,13 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal, "review")
     require_role(principal, REVIEW_ROLES)
+    # Acquire locks in the shared case -> analysis order before the matrix
+    # projection reuses the already-locked case row.
+    case = db.get(Case, analysis.case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "review")
     models = []
     for raw_model in body.models:
         try:
