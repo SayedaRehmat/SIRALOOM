@@ -382,6 +382,8 @@ def test_success_rejects_output_artifact_from_another_analysis(db):
     provenance = {
         "execution_id": record.execution_id,
         "organization_id": str(organization.id),
+        "workflow_id": analysis.workflow_id,
+        "operation": "normalize",
         "tool_id": "bcftools",
         "tool_version": "1.25",
         "profile_id": "bcftools-1.25-htslib-1.25-linux-amd64",
