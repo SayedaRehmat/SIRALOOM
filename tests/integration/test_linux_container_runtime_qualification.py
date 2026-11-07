@@ -180,7 +180,7 @@ def test_real_bcftools_execution_and_output_provenance(tmp_path):
     assert result.provenance.output_sha256 == (
         {"name": "bcftools-normalized-vcf", "sha256": sha256_file(output)},
     )
-    assert "chr1\t10" in output.read_text(encoding="utf-8")
+    assert "chr1\t1\t" in output.read_text(encoding="utf-8")
     assert result.provenance.duration_seconds > 0
 
 
