@@ -193,122 +193,194 @@ class VEPProvider(ScientificResourceProvider):
         variants = inputs.get("variants")
         if not isinstance(variants, list) or not variants:
             raise VEPProviderError("VEP annotate requires a non-empty variants list.")
+        reference_package = inputs.get("reference_package")
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP annotate requires the validated normalization reference package.")
         return ProviderRequest(
             operation="annotate",
-            payload={"variants": variants, "genome_build": inputs.get("genome_build")},
-            metadata={"provider": self.provider_id, "provider_version": self.contract.provider_version},
+            payload={
+                "variants": variants,
+                "genome_build": inputs.get("genome_build"),
+                "reference_package": reference_package,
+                "organization_id": inputs.get("organization_id"),
+                "workflow_id": inputs.get("workflow_id"),
+                "execution_id": inputs.get("execution_id"),
+                "workspace": inputs.get("workspace"),
+            },
+            metadata={
+                "provider": self.provider_id,
+                "provider_version": self.contract.provider_version,
+                "tool_profile_id": self.tool_profile_id,
+                "reference_package_checksum": reference_package.get("package_checksum"),
+            },
         )
 
     def execute(self, request: ProviderRequest) -> ProviderRawResult:
         variants = request.payload["variants"]
         build = _canonical_assembly(request.payload.get("genome_build") or self.assembly)
+        reference_package = request.payload.get("reference_package")
         if not build:
             raise VEPProviderError("VEP execution requires an explicit GRCh37/GRCh38 assembly.")
-        with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
-            input_vcf = Path(tmp) / "input.vcf"
-            output_json = Path(tmp) / "output.json"
-            lines = [
-                "##fileformat=VCFv4.2",
-                f"##reference={build}",
-                "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
-            ]
-            for index, variant in enumerate(variants):
-                lines.append(
-                    f"{variant.chromosome}\t{variant.position}\tSIRALOOM_{index}\t"
-                    f"{variant.reference}\t{variant.alternate}\t.\tPASS\t."
-                )
-            input_vcf.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError("VEP execution requires the validated reference package.")
 
-            cmd = [
-                self.binary,
-                "--offline",
-                "--cache",
-                "--format", "vcf",
-                "--json",
-                "--force_overwrite",
-                "--species", self.species,
-                "--cache_version", self.cache_version,
-                "--dir_cache", self.cache_dir,
-                "--input_file", str(input_vcf),
-                "--output_file", str(output_json),
-                "--canonical",
-                "--symbol",
-                "--transcript_version",
-            ]
-            cmd.extend(["--assembly", build])
-            annotation_options = ["--canonical", "--symbol", "--transcript_version"]
-            if build == "GRCh38":
-                # Ensembl documents MANE annotations for human GRCh38 only.
-                cmd.append("--mane")
-                annotation_options.append("--mane")
-            if self.fasta:
-                cmd.extend(["--fasta", self.fasta, "--hgvs", "--hgvsg"])
-                annotation_options.extend(["--hgvs", "--hgvsg"])
-            cmd.extend(self.extra_args)
+        scratch_root = Path(self.scratch_root).resolve(strict=True)
+        workspace_value = request.payload.get("workspace")
+        if workspace_value:
+            workspace = Path(str(workspace_value))
+            if not workspace.is_absolute():
+                raise VEPProviderError("VEP execution workspace must be an absolute path.")
+            resolved_workspace = workspace.resolve(strict=False)
+            if resolved_workspace != scratch_root and scratch_root not in resolved_workspace.parents:
+                raise VEPProviderError("VEP execution workspace must be contained within the governed scratch root.")
+            workspace.mkdir(parents=True, exist_ok=True)
+        else:
+            workspace = Path(tempfile.mkdtemp(prefix="siraloom-vep-", dir=scratch_root))
+        if workspace.is_symlink() or not workspace.is_dir():
+            raise VEPProviderError("VEP execution workspace must be a regular directory.")
+        input_vcf = workspace / "input.vcf"
+        output_json = workspace / "output.json"
+        input_vcf.unlink(missing_ok=True)
+        output_json.unlink(missing_ok=True)
 
-            try:
-                # Start VEP in its own process group so a timeout can terminate
-                # the entire local toolchain, not merely the immediate process.
-                # This prevents an expired workflow lease from leaving a child VEP
-                # process running indefinitely after SIRALOOM has abandoned it.
-                completed = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
-                )
-                try:
-                    stdout, stderr = completed.communicate(timeout=300)
-                except subprocess.TimeoutExpired as exc:
-                    try:
-                        os.killpg(completed.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    completed.wait()
-                    raise VEPProviderError("VEP execution timed out and its process group was terminated.", retryable=True) from exc
-            except FileNotFoundError as exc:
-                raise VEPProviderError(
-                    f"VEP executable was not found: {self.binary}",
-                    retryable=False,
-                ) from exc
-            except subprocess.TimeoutExpired as exc:
-                raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
+        lines = [
+            "##fileformat=VCFv4.2",
+            f"##reference={build}",
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO",
+        ]
+        for index, variant in enumerate(variants):
+            lines.append(
+                f"{variant.chromosome}\t{variant.position}\tSIRALOOM_{index}\t"
+                f"{variant.reference}\t{variant.alternate}\t.\tPASS\t."
+            )
+        input_vcf.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        input_sha256 = _sha256_file(input_vcf)
 
-            if completed.returncode != 0:
-                message = (stderr or stdout or "VEP failed").strip()[-4000:]
-                raise VEPProviderError(
-                    f"VEP exited with code {completed.returncode}: {message}",
-                    retryable=completed.returncode in {137, 143},
-                )
+        fasta_path = str(reference_package["fasta_path"])
+        argv = [
+            "--offline",
+            "--cache",
+            "--format", "vcf",
+            "--json",
+            "--force_overwrite",
+            "--species", self.species,
+            "--cache_version", self.cache_version,
+            "--dir_cache", self.cache_dir,
+            "--input_file", str(input_vcf),
+            "--output_file", str(output_json),
+            "--assembly", build,
+            "--fasta", fasta_path,
+            "--check_ref",
+            "--hgvs",
+            "--hgvsg",
+            "--canonical",
+            "--symbol",
+            "--transcript_version",
+        ]
+        annotation_options = [
+            "--offline", "--cache", "--format", "vcf", "--json",
+            "--check_ref", "--hgvs", "--hgvsg",
+            "--canonical", "--symbol", "--transcript_version",
+        ]
+        if build == "GRCh38":
+            # Ensembl documents MANE annotations for human GRCh38 only.
+            argv.append("--mane")
+            annotation_options.append("--mane")
+        argv.extend(self.extra_args)
 
-            if not output_json.exists():
-                raise VEPProviderError("VEP completed without producing its governed JSON output.")
+        execution_id = str(request.payload.get("execution_id") or uuid4())
+        organization_id = str(request.payload.get("organization_id") or "").strip()
+        workflow_id = str(request.payload.get("workflow_id") or "").strip()
+        if not organization_id or not workflow_id:
+            raise VEPProviderError("VEP execution requires organization and workflow identity for provenance.")
 
+        execution_request = ToolExecutionRequest(
+            execution_id=execution_id,
+            organization_id=organization_id,
+            workflow_id=workflow_id,
+            operation="annotate",
+            argv=tuple(argv),
+            workspace=str(workspace),
+            inputs=(
+                InputArtifact(
+                    name="normalized-variant-batch",
+                    path=str(input_vcf),
+                    sha256=input_sha256,
+                ),
+            ),
+            outputs=(OutputArtifact(name="vep-json-response", path=str(output_json)),),
+            timeout_seconds=self.execution_timeout_seconds,
+            max_output_bytes=self.max_output_bytes,
+            resources=(
+                ScientificResourceBinding(
+                    resource_id=f"vep-cache-manifest:{self.species}",
+                    version=self.cache_version,
+                    sha256=self.cache_manifest_sha256,
+                    assembly=build,
+                    path=self.cache_manifest,
+                ),
+            ),
+        )
+        try:
+            execution_result = self.executor.execute(self._tool_identity(), execution_request)
+        except ToolExecutionError as exc:
+            raise VEPProviderError(
+                f"VEP execution failed: {exc}",
+                retryable=exc.retryable,
+                execution_provenance=asdict(exc.provenance) if exc.provenance else None,
+            ) from exc
+        except ToolExecutionContractError as exc:
+            raise VEPProviderError(f"VEP execution contract rejected the request: {exc}") from exc
+
+        try:
             raw_text = output_json.read_text(encoding="utf-8")
-            response_sha256 = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
-            records: list[dict[str, Any]] = []
+        except (OSError, UnicodeError) as exc:
+            raise VEPProviderError(
+                "VEP output artifact could not be read after successful process execution.",
+                execution_provenance=asdict(execution_result.provenance),
+            ) from exc
+        response_sha256 = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+        declared_output = next(
+            (item["sha256"] for item in execution_result.provenance.output_sha256
+             if item["name"] == "vep-json-response"),
+            None,
+        )
+        if declared_output != response_sha256:
+            raise VEPProviderError(
+                "VEP response bytes changed after executor output verification.",
+                execution_provenance=asdict(execution_result.provenance),
+            )
+
+        records: list[dict[str, Any]] = []
+        try:
             for line in raw_text.splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError as exc:
-                    raise VEPProviderError("VEP returned a non-JSON record in JSON mode.") from exc
+                records.append(json.loads(line))
+        except json.JSONDecodeError as exc:
+            raise VEPProviderError(
+                "VEP returned a non-JSON record in JSON mode.",
+                execution_provenance=asdict(execution_result.provenance),
+            ) from exc
 
-            return ProviderRawResult(
-                operation="annotate",
-                payload=records,
-                response_sha256=response_sha256,
-                metadata={
-                    "observed_at": datetime.now(timezone.utc).isoformat(),
-                    "command_provider": self.provider_id,
-                    "assembly": build,
-                    "cache_version": self.cache_version,
-                    "annotation_options": annotation_options,
-                },
-            )
+        return ProviderRawResult(
+            operation="annotate",
+            payload=records,
+            response_sha256=response_sha256,
+            metadata={
+                "observed_at": datetime.now(timezone.utc).isoformat(),
+                "command_provider": self.provider_id,
+                "assembly": build,
+                "cache_version": self.cache_version,
+                "annotation_options": annotation_options,
+                "input_sha256": input_sha256,
+                "raw_response_path": str(output_json),
+                "workspace_path": str(workspace),
+                "tool_execution_provenance": asdict(execution_result.provenance),
+                "reference_package_checksum": reference_package.get("package_checksum"),
+            },
+        )
 
     def validate_response(self, result: ProviderRawResult) -> None:
         if not isinstance(result.payload, list):
