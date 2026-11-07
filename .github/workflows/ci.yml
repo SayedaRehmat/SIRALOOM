@@ -1,6 +1,7 @@
 name: SIRALOOM CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
@@ -45,6 +46,38 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: uv run --locked pytest -q
+      - name: Complete VCFv4.0 conformance suite
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: uv run --locked pytest -q tests/test_vcf40_gt_required.py
+      - name: Complete VCFv4.1 and VCFv4.2 conformance suites
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: uv run --locked pytest -q tests/test_vcf_validation.py -k "vcf41 or vcf42"
+      - name: Complete VCFv4.3 conformance suite
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: uv run --locked pytest -q tests/test_vcf_validation.py -k "vcf43"
+      - name: Complete VCFv4.4 conformance suite
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: uv run --locked pytest -q tests/test_vcf44_*.py tests/test_vcf_validation.py -k "vcf44"
       - name: Complete VCFv4.5 conformance suite
         env:
           DATABASE_URL: sqlite:///./ci.db
