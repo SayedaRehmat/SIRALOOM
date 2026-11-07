@@ -277,12 +277,11 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     configured_sample = (analysis.configuration or {}).get("vcf_sample_name")
     if configured_sample and configured_sample != body.sample_name.strip():
         raise HTTPException(409, "Sample name differs from the analysis-selected VCF sample")
-    input_partitions = db.scalars(select(AnalysisPartition).where(
-        AnalysisPartition.analysis_id == analysis.id,
-        AnalysisPartition.input_artifact_id == artifact.id,
-    )).all()
-    if not input_partitions and (analysis.configuration or {}).get("input_artifact_id") != str(artifact.id):
-        raise HTTPException(409, "Artifact is not linked to the selected analysis input")
+    if (analysis.configuration or {}).get("input_artifact_id") != str(artifact.id):
+        raise HTTPException(409, "Artifact is not the immutable source VCF selected for this analysis")
+    specimen_sample = (specimen.metadata_json or {}).get("vcf_sample_name")
+    if specimen_sample and specimen_sample != body.sample_name.strip():
+        raise HTTPException(409, "Sample name conflicts with the specimen's registered sample-name hint")
     payload = {
         "schema_version": 1, "case_id": str(case_id), "member_id": str(member.id),
         "specimen_id": str(specimen.id), "analysis_id": str(analysis.id),
@@ -333,7 +332,7 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         partitions = db.scalars(select(AnalysisPartition).where(
             AnalysisPartition.analysis_id == previous.analysis_id,
             AnalysisPartition.step_id == "normalize",
-            AnalysisPartition.input_artifact_id == previous.artifact_id,
+            AnalysisPartition.status == "SUCCEEDED",
         )).all()
         calls = get_analysis_sample_calls(db, previous.analysis_id)
         if not partitions or not any(call.get("sample_name") == previous.sample_name for call in calls.values()):
