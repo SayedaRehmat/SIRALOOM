@@ -43,6 +43,9 @@ class AnalysisCreate(BaseModel):
     workflow_version: str = "2.1"
     reference_build: str = "GRCh38"
     resource_profile_id: str | None = None
+    # Explicit assay-level interpretation policy for VCFv4.5 Number=M fields.
+    # None means unknown/not asserted; never infer it from VCF values.
+    base_modification_strandedness: Literal["stranded", "unstranded"] | None = None
     configuration: dict[str, Any] = Field(default_factory=dict)
 
 class AnalysisResponse(BaseModel):
