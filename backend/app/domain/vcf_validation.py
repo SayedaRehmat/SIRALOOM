@@ -2920,9 +2920,12 @@ def validate_vcf_strict(
         if fileformat in {"VCFv4.4", "VCFv4.5"}:
             # The two reciprocal BND records describe one breakpoint event and
             # are required by the specification to share one PSO ordinal.
+            # Traversal observations store the global, one-based GT allele
+            # index. Convert the zero-based ALT offsets before recording the
+            # reciprocal endpoint pair so both representations agree.
             reciprocal_breakend_phase_endpoints.add(frozenset((
-                (source_record["line_no"], source_alt_index),
-                (mate["line_no"], mate_alt_index),
+                (source_record["line_no"], source_alt_index + 1),
+                (mate["line_no"], mate_alt_index + 1),
             )))
         unresolved_ends = []
         if source_record["cipos_by_alt"].get(source_alt_index) is None:
