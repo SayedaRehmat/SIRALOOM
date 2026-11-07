@@ -480,6 +480,118 @@ def _ensure_annotation_request_fingerprint(
     return fingerprint
 
 
+def _persist_raw_vep_provider_response(
+    db: Session,
+    artifacts: ArtifactStore,
+    *,
+    analysis: Analysis,
+    start: int,
+    end: int,
+    payloads: list[dict],
+    genome_build: str,
+    temporary_paths: list[Path],
+) -> Artifact | None:
+    """Persist the exact VEP NDJSON response as an immutable, replay-safe artifact."""
+    provenances = [
+        item.get("_siraloom_annotation_provenance")
+        for item in payloads
+        if isinstance(item, dict)
+    ]
+    if not provenances:
+        return None
+    provenance = provenances[0]
+    raw_path_value = provenance.get("raw_response_path")
+    workspace_value = provenance.get("workspace_path")
+    if not raw_path_value:
+        return None
+
+    raw_path = Path(str(raw_path_value))
+    workspace = Path(str(workspace_value or raw_path.parent))
+    scratch_root = Path(settings.worker_scratch_root).resolve(strict=True)
+    resolved_workspace = workspace.resolve(strict=True)
+    if resolved_workspace != scratch_root and scratch_root not in resolved_workspace.parents:
+        raise RuntimeError("VEP raw response workspace is outside the governed worker scratch root.")
+    if not raw_path.is_file() or raw_path.is_symlink() or raw_path.parent.resolve(strict=True) != resolved_workspace:
+        raise RuntimeError("VEP raw response is missing or outside its execution workspace.")
+
+    response_sha256 = str(provenance.get("response_sha256") or "").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", response_sha256):
+        raise RuntimeError("VEP raw response is missing a valid SHA-256 digest.")
+    actual_sha256 = sha256_file(raw_path)
+    if actual_sha256 != response_sha256:
+        raise RuntimeError("VEP raw response bytes do not match the executor response digest.")
+
+    tool_execution = provenance.get("tool_execution_provenance")
+    if not isinstance(tool_execution, dict):
+        raise RuntimeError("VEP raw response is missing shared-executor provenance.")
+    declared_outputs = tool_execution.get("output_sha256") or []
+    if not any(
+        item.get("name") == "vep-json-response" and item.get("sha256") == response_sha256
+        for item in declared_outputs if isinstance(item, dict)
+    ):
+        raise RuntimeError("VEP raw response digest is not bound to the executor output record.")
+
+    artifact_id = uuid5(
+        analysis.id,
+        f"siraloom:annotation:raw-vep-response:{_batch_key(start, end)}",
+    )
+    existing = db.get(Artifact, artifact_id)
+    if existing is not None:
+        if (
+            existing.analysis_id != analysis.id
+            or existing.case_id != analysis.case_id
+            or existing.artifact_type != "RAW_VEP_PROVIDER_RESPONSE"
+            or existing.sha256 != response_sha256
+        ):
+            raise RuntimeError("Existing VEP raw response artifact identity conflicts with this replay.")
+        existing_path = _materialize_artifact_for_worker(db, existing, temporary_paths)
+        verify_artifact_file(
+            existing_path,
+            sha256=existing.sha256,
+            size_bytes=existing.size_bytes,
+        )
+        artifact = existing
+    else:
+        artifact = artifacts.put_file(
+            db=db,
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            source_path=raw_path,
+            filename=f"vep-raw-response-{start}-{end}.jsonl",
+            artifact_type="RAW_VEP_PROVIDER_RESPONSE",
+            media_type="application/x-ndjson",
+            genome_build=genome_build,
+            validation_status="VALIDATED",
+            artifact_id=artifact_id,
+            metadata={
+                "step_id": "annotate",
+                "artifact_role": "RAW_PROVIDER_RESPONSE",
+                "provider_id": provenance.get("provider"),
+                "provider_version": provenance.get("provider_version"),
+                "batch_key": _batch_key(start, end),
+                "assembly": genome_build,
+                "reference_package_checksum": provenance.get("reference_package_checksum"),
+                "response_sha256": response_sha256,
+                "tool_execution_provenance": tool_execution,
+            },
+        )
+        if artifact.sha256 != response_sha256:
+            raise RuntimeError("Persisted VEP raw response artifact digest differs from executor output digest.")
+
+    for item in payloads:
+        item_provenance = dict(item.get("_siraloom_annotation_provenance") or {})
+        item_provenance.pop("raw_response_path", None)
+        item_provenance.pop("workspace_path", None)
+        item_provenance["raw_response_artifact_id"] = str(artifact.id)
+        item_provenance["raw_response_artifact_sha256"] = artifact.sha256
+        item["_siraloom_annotation_provenance"] = item_provenance
+
+    # The immutable artifact is now the durable copy; remove the worker-local
+    # staging directory only after storage and digest verification succeed.
+    shutil.rmtree(resolved_workspace)
+    return artifact
+
+
 def _persist_annotation_response_checkpoint(
     db: Session,
     artifacts: ArtifactStore,
@@ -492,6 +604,7 @@ def _persist_annotation_response_checkpoint(
     resource: Resource,
     provider_id: str,
     provider_version: str,
+    temporary_paths: list[Path] | None = None,
 ) -> Artifact:
     """Durably store a provider response before attempting annotation-row persistence.
 
@@ -508,6 +621,19 @@ def _persist_annotation_response_checkpoint(
     if any(not isinstance(item, dict) for item in provenances):
         raise ValueError("Annotation response record is missing provider provenance.")
     provenance = provenances[0]
+    raw_response_artifact = _persist_raw_vep_provider_response(
+        db,
+        artifacts,
+        analysis=analysis,
+        start=start,
+        end=end,
+        payloads=payloads,
+        genome_build=analysis.reference_build,
+        temporary_paths=temporary_paths if temporary_paths is not None else [],
+    )
+    # The raw provider bytes and normalized replay checkpoint are separate
+    # immutable artifacts with independent digests.
+    provenance = payloads[0].get("_siraloom_annotation_provenance") or provenance
     request_fingerprint = provenance.get("request_fingerprint")
     response_sha256 = provenance.get("response_sha256")
     if any(
@@ -578,6 +704,8 @@ def _persist_annotation_response_checkpoint(
                 "response_sha256": provenance["response_sha256"],
                 "response_artifact_id": str(artifact.id),
                 "response_artifact_sha256": artifact.sha256,
+                "raw_response_artifact_id": str(raw_response_artifact.id) if raw_response_artifact else None,
+                "raw_response_artifact_sha256": raw_response_artifact.sha256 if raw_response_artifact else None,
             },
             commit=False,
         )
