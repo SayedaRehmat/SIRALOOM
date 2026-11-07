@@ -13,7 +13,7 @@ import pytest
 from backend.app.domain.container_tool_execution import ContainerResourceLimits, LinuxContainerToolExecutor
 from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentProfile
 from backend.app.domain.tool_execution import (
-    InputArtifact, OutputArtifact, ScientificResourceBinding, ToolExecutionError,
+    InputArtifact, OutputArtifact, ScientificResourceBinding, ToolExecutionError, ToolExecutionContractError,
     ToolExecutionRequest, ToolIdentity, current_platform_id, sha256_file,
 )
 
@@ -316,10 +316,10 @@ def test_runtime_image_inspection_failure_fails_closed_before_launch(tmp_path):
     wrapper = tmp_path / "runtime-with-inspect-failure"
     wrapper.write_text(
         "#!/bin/sh\\n"
-        "if [ \\"$1\\" = \\"image\\" ] && [ \\"$2\\" = \\"inspect\\" ]; then\\n"
+        'if [ "$1" = "image" ] && [ "$2" = "inspect" ]; then\\n'
         "  echo 'injected image inspection failure' >&2; exit 42;\\n"
         "fi\\n"
-        f"exec {real_runtime} \\"$@\\"\\n",
+        f'exec {real_runtime} "$@"\\n',
         encoding="utf-8",
     )
     wrapper.chmod(0o755)
