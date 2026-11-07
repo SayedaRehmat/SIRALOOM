@@ -127,9 +127,13 @@ class PersistentToolExecutionService:
             request_snapshot=request_snapshot,
             input_manifest=input_manifest,
         )
-        idempotency_key = hashlib.sha256(
-            f"{self.organization_id}:{self.case_id or self.analysis_id}:{self.analysis_id}:{request.execution_id}".encode("utf-8")
-        ).hexdigest()
+        # Preserve the pre-0064 idempotency namespace for analysis-scoped
+        # callers so existing retries/replays retain their original identity.
+        if self.analysis_id is not None and self.case_id is None:
+            idempotency_identity = f"{self.organization_id}:{self.analysis_id}:{request.execution_id}"
+        else:
+            idempotency_identity = f"{self.organization_id}:case:{self.case_id}:analysis:{self.analysis_id}:{request.execution_id}"
+        idempotency_key = hashlib.sha256(idempotency_identity.encode("utf-8")).hexdigest()
 
         record = register_tool_execution(
             self.db,
