@@ -1298,11 +1298,14 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     obs=[]
     observation_fp=fingerprint(obs)
     family_matrix_fp=family_matrix["matrix_fingerprint"] if family_matrix else None
-    fp=hashlib.sha256(json.dumps({
-        "schema_version": 2,
-        "manual_observation_fingerprint": observation_fp,
-        "family_matrix_fingerprint": family_matrix_fp,
-    },sort_keys=True,separators=(",",":")).encode()).hexdigest()
+    fp = (
+        hashlib.sha256(json.dumps({
+            "schema_version": 2,
+            "manual_observation_fingerprint": observation_fp,
+            "family_matrix_fingerprint": family_matrix_fp,
+        },sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        if family_matrix_fp else observation_fp
+    )
     results=[]; audit_changes=[]
     for model in models:
         result=assess_model(model,obs)
