@@ -418,7 +418,7 @@ def test_identity_evidence_is_recorded_pending_with_method_and_provenance(monkey
 def test_identity_evidence_review_appends_immutable_acceptance_revision(monkeypatch):
     _patch_auth(monkeypatch)
     case, member, specimen, analysis, artifact, principal = _context()
-    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id)
+    binding = SimpleNamespace(id=uuid4(), case_id=case.id, analysis_id=analysis.id, binding_status="UNVERIFIED")
     previous = SimpleNamespace(
         id=uuid4(), case_id=case.id, binding_id=binding.id,
         evidence_type="CHAIN_OF_CUSTODY", result="PASS",
