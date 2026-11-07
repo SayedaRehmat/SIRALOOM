@@ -580,6 +580,7 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
     environment_profile = replace(
         _profile(organization.id),
         workspace_root=str(workspace),
+        supported_tool_profile_ids=(settings.bcftools_profile_id,),
         tool_executable_sha256=((settings.bcftools_profile_id, executable_digest),),
     )
     environment = register_environment_profile(
