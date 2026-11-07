@@ -61,13 +61,13 @@ class ExecutionEnvironmentProfile:
     runtime_kind: RuntimeKind
     runtime_version: str
     runtime_image_digest: str | None
-    runtime_image_reference: str | None = None
     scheduler: SchedulerKind
     capacity: ExecutionCapacity
     workspace_root: str
     storage_profile_ids: tuple[str, ...]
     supported_tool_profile_ids: tuple[str, ...]
     network_policy: NetworkPolicy
+    runtime_image_reference: str | None = None
     tool_executable_sha256: tuple[tuple[str, str], ...] = ()
     allowed_egress_hosts: tuple[str, ...] = ()
     agent_id: str | None = None
