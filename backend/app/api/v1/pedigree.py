@@ -810,6 +810,8 @@ def supersede_sample_identity_evidence(
         raise HTTPException(404, "Identity evidence not found for this binding")
     if body.evidence_type != previous.evidence_type:
         raise HTTPException(422, "An identity evidence revision must retain its original evidence type")
+    if not body.method.strip() or not body.method_version.strip() or not body.evidence_reference.strip():
+        raise HTTPException(422, "Identity evidence method, version and reference must be non-empty")
     if body.source_artifact_id is not None:
         evidence_artifact = db.get(Artifact, body.source_artifact_id)
         if evidence_artifact is None or evidence_artifact.case_id != case_id:
