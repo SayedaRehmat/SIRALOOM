@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  validate-vcf45-candidate-registry:
+  validate-vcf-research-registries:
     runs-on: ubuntu-latest
     steps:
       - name: Check out research branch
@@ -27,5 +27,5 @@ jobs:
           python-version: "3.12"
       - name: Install pinned JSON Schema validator
         run: python -m pip install "jsonschema==4.26.0"
-      - name: Validate Draft 2020-12 schema and candidate registry
+      - name: Validate Draft 2020-12 schema and all research registries
         run: python docs/scientific/vcf-conformance/scripts/validate_atomic_registry_schema.py
