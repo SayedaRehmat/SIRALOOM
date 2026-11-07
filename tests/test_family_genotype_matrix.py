@@ -194,7 +194,11 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         binding_status="VERIFIED", binding_fingerprint="b" * 64,
     )
     variant = SimpleNamespace(id=variant_id, genome_build="GRCh38")
-    workflow = SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifact_id)])
+    workflow = SimpleNamespace(
+        status="SUCCEEDED", step_id="normalize", attempt=1,
+        input_artifacts=[str(artifact_id)], output_artifacts=["normalized-partition-1"],
+        metadata_json={"executor": "test-fixture"}, started_at=None, completed_at=None,
+    )
     partition = SimpleNamespace(ordinal=0)
     ploidy_evidence = SimpleNamespace(
         version=4,
@@ -346,7 +350,13 @@ def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch)
     ]
     variant = SimpleNamespace(id=variant_id, genome_build="GRCh38")
     workflows = [
-        SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifacts[index].id)])
+        SimpleNamespace(
+            status="SUCCEEDED", step_id="normalize", attempt=1,
+            input_artifacts=[str(artifacts[index].id)],
+            output_artifacts=[f"normalized-partition-{index + 1}"],
+            metadata_json={"executor": "test-fixture"},
+            started_at=None, completed_at=None,
+        )
         for index in range(2)
     ]
     partitions = [[SimpleNamespace(ordinal=0)], [SimpleNamespace(ordinal=0)]]
