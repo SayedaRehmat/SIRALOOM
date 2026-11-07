@@ -357,12 +357,13 @@ def test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence(
     )
 
 
-def test_vcf43_record_level_parid_on_multiallelic_breakend_is_unresolved(
-    tmp_path: Path,
+@pytest.mark.parametrize("version", ["VCFv4.1", "VCFv4.2", "VCFv4.3"])
+def test_vcf41_to_vcf43_record_level_parid_on_multiallelic_breakend_is_unresolved(
+    tmp_path: Path, version: str
 ):
-    path = tmp_path / "vcf43-record-level-parid-multiallelic.vcf"
+    path = tmp_path / f"{version}-record-level-parid-multiallelic.vcf"
     path.write_text(
-        "##fileformat=VCFv4.3\n"
+        f"##fileformat={version}\n"
         '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
         '##INFO=<ID=MATEID,Number=.,Type=String,Description="ID of mate breakend">\n'
         '##INFO=<ID=PARID,Number=1,Type=String,Description="ID of partner breakend">\n'
