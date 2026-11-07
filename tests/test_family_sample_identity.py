@@ -672,3 +672,36 @@ def test_identity_evidence_correction_appends_pending_successor(monkeypatch):
     assert revision.review_status == "PENDING"
     assert revision.method == "UPDATED_METHOD"
     assert db.commits == 1
+
+
+def test_sample_binding_context_exposes_exact_analysis_source_and_selected_sample(monkeypatch):
+    case_id, analysis_id, artifact_id, user_id = (uuid4() for _ in range(4))
+    case = SimpleNamespace(id=case_id)
+    artifact = SimpleNamespace(
+        id=artifact_id, case_id=case_id, artifact_type="VCF", filename="proband.vcf.gz",
+        sha256="a" * 64, specimen_id=uuid4(), validation_status="VALID", genome_build="GRCh38",
+    )
+    analysis = SimpleNamespace(
+        id=analysis_id, case_id=case_id, status="COMPLETED", reference_build="GRCh38",
+        assay_id=uuid4(), created_at=None,
+        configuration={"input_artifact_id": str(artifact_id), "vcf_sample_name": "FAM-P"},
+    )
+
+    class ContextDB:
+        def get(self, model, identifier):
+            if model is Case and identifier == case_id:
+                return case
+            if model is Artifact and identifier == artifact_id:
+                return artifact
+            return None
+
+        def scalars(self, _statement):
+            return _Rows([analysis])
+
+    monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
+    result = pedigree.get_sample_binding_context(
+        case_id, ContextDB(), SimpleNamespace(user_id=user_id),
+    )
+    assert result["analyses"][0]["binding_candidate_status"] == "READY"
+    assert result["analyses"][0]["selected_sample_name"] == "FAM-P"
+    assert result["analyses"][0]["source_vcf"]["sha256"] == "a" * 64
