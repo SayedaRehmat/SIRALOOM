@@ -3,7 +3,7 @@
 **Report date:** 2026-11-07  
 **Repository:** SayedaRehmat/SIRALOOM  
 **Branch:** research/vcf-conformance-phase-a-20261105  
-**Implementation baseline reviewed:** 965be03d56fe2d05c4dca9a9c6837333ca80d4fc  
+**Implementation baseline reviewed:** 6a8d3cf6ade5612b54f7de5b76846d496027f53a  
 **Disposition:** NOT READY FOR LABORATORY QUALIFICATION
 
 This report separates parser behavior, executable test evidence, explicit capability limits, source-reconciliation status, and laboratory qualification. A parser accepting a version header is not proof of full conformance. A test existing in the repository is not proof it passed on the current commit. No independent standards approval or laboratory qualification is claimed.
@@ -82,7 +82,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Unsupported / blocked:** VCFv4.5-only Number=M base-modification semantics and the VCFv4.5 local-allele model must not be back-applied to VCFv4.4. External assembly contigs remain a reference-package capability limitation for VCFv4.3+.
 
-**Unresolved:** Production cross-record PSO/BND logic is currently gated to VCFv4.5. Since PSL/PSO/PSQ were introduced in VCFv4.4, VCFv4.4 phase-set semantics require their own source reconciliation and implementation/test work; VCFv4.5 behavior is not evidence that VCFv4.4 is complete. Full reserved INFO/FORMAT and SV/breakend semantic reconciliation, dedicated corpus execution, and requirement-level traceability remain pending.
+**Unresolved:** Production cross-record PSO/BND logic is now applied to VCFv4.4 and VCFv4.5. New VCFv4.4 tests cover phase-set-wide PSO obligations, reciprocal BND PSL/PSO equality, MATEID Number=A cardinality, Number=P requiring GT, and telomeric remote coordinate zero. These tests still require exact-head CI execution and full requirement mapping. Full reserved INFO/FORMAT and SV/breakend semantic reconciliation, dedicated corpus execution, and requirement-level traceability remain pending.
 
 ### VCFv4.5
 
@@ -97,13 +97,13 @@ This report separates parser behavior, executable test evidence, explicit capabi
 - PSO is required across every observed occurrence of a sample/phase-set when that phase set contains a recognized symbolic SV or breakpoint-notation allele.
 - BND MATEID association is retained per ALT, reciprocal ALT and coordinate checks use CIPOS intervals, unresolved CIPOS is surfaced, and reciprocal PSL/PSO comparison preserves GT chromosome-copy order.
 - Single breakends and telomeric remote coordinate zero are included in the validator grammar.
-- VCFv4.5 SVTYPE is deprecated; BND records may be represented by breakpoint notation and MATEID without requiring SVTYPE. If SVTYPE is supplied, a conflicting value is rejected.
+- VCFv4.4 and VCFv4.5 deprecate SVTYPE; BND records may be represented by breakpoint notation and MATEID without requiring SVTYPE. MATEID Number=A and per-ALT CIPOS semantics are applied to VCFv4.4/4.5. If SVTYPE is supplied, a conflicting value is rejected.
 
 **Tested:** Targeted suites include tests/test_vcf45_number_m_conformance.py, tests/test_vcf45_base_modification_position_semantics.py, tests/test_vcf45_phase_set_positional_semantics.py, tests/test_vcf45_gt_semantic_conformance.py, tests/test_vcf45_laa_requirements.py, tests/test_vcf45_local_allele_projection_conformance.py, tests/test_vcf45_reserved_sv_format_conformance.py, and tests/test_vcf_assay_policy.py. Shared tests in tests/test_vcf_validation.py cover VCFv4.5 cardinality, local alleles, reference blocks, CIPOS/CIEND and reserved INFO/FORMAT domains. The full backend suite previously passed on d69d351b44f631f82ae754049063820efdd9a159; later PSO/BND, CIPOS, assay-policy and test changes are newer than that successful run.
 
 **Unsupported / bounded behavior:**
 - Unstranded Number=M cross-record coordinate projection is restricted to equal-length sequence alleles. Length-changing alleles raise VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED.
-- Heterozygous unphased or phased calls without PS/PSL cannot establish cross-record haplotype identity; those observations remain record-local and are reported with VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED.
+- Heterozygous unphased or partially phased calls without a per-allele PSL or a usable PS cannot establish cross-record haplotype identity; those observations remain record-local and are reported with VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED. Fully phased genotypes without PS/PSL use the implicit phase set required by the VCFv4.4/4.5 specification.
 - Missing/ambiguous assay strandedness is not inferred. The caller must explicitly select stranded or unstranded to apply that policy.
 - External assembly contigs remain unsupported by the configured reference-package contract.
 - VCF itself does not prove experimental truth of base-modification fractions/depth; assay/read-level evidence is outside this validator's input evidence.
