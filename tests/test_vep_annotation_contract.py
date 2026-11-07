@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from backend.app.adapters.annotation.normalizer import normalize_annotation_payload
-from backend.app.adapters.annotation.vep import VEPProvider
+from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
@@ -158,7 +158,7 @@ def test_vep_rejects_duplicate_annotation_records_for_one_requested_allele():
         "transcript_consequences": [],
     }
 
-    with pytest.raises(Exception, match="more than one annotation record"):
+    with pytest.raises(VEPProviderError, match="more than one annotation record"):
         _provider().normalize_result(
             ProviderRawResult("annotate", [record, record], "d" * 64, {}),
             inputs={"variants": [variant], "genome_build": "GRCh38"},
@@ -186,7 +186,7 @@ def test_vep_rejects_unrequested_annotation_records_instead_of_dropping_them():
         "transcript_consequences": [],
     }
 
-    with pytest.raises(Exception, match="outside the requested batch"):
+    with pytest.raises(VEPProviderError, match="outside the requested batch"):
         _provider().normalize_result(
             ProviderRawResult(
                 "annotate",
@@ -213,7 +213,7 @@ def test_vep_rejects_duplicate_normalized_alleles_in_the_input_batch():
         "transcript_consequences": [],
     }
 
-    with pytest.raises(Exception, match="input batch contains duplicate"):
+    with pytest.raises(VEPProviderError, match="input batch contains duplicate"):
         _provider().normalize_result(
             ProviderRawResult("annotate", [record], "d" * 64, {}),
             inputs={"variants": [variant, variant], "genome_build": "GRCh38"},
