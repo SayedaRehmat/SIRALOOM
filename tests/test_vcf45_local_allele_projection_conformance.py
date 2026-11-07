@@ -154,13 +154,13 @@ def test_all_reserved_local_allele_pairs_project_in_laa_order(
     local_number = {"A": "LA", "R": "LR", "G": "LG"}[number]
     path = tmp_path / f"{standard_key.lower()}-local-projection.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\\n'
-        f'##FORMAT=<ID={standard_key},Number={number},Type={field_type},Description="Standard values">\\n'
-        f'##FORMAT=<ID={local_key},Number={local_number},Type={field_type},Description="Local values">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        f"1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:{standard_key}:{local_key}\\t0/0:2,1:{standard_values}:{local_values}\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        f'##FORMAT=<ID={standard_key},Number={number},Type={field_type},Description="Standard values">\n'
+        f'##FORMAT=<ID={local_key},Number={local_number},Type={field_type},Description="Local values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:{standard_key}:{local_key}\t0/0:2,1:{standard_values}:{local_values}\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
@@ -187,13 +187,13 @@ def test_local_allele_projection_rejects_cardinality_mismatch(
     local_number = {"A": "LA", "R": "LR", "G": "LG"}[number]
     path = tmp_path / f"{standard_key.lower()}-local-projection-mismatch.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\\n'
-        f'##FORMAT=<ID={standard_key},Number={number},Type={field_type},Description="Standard values">\\n'
-        f'##FORMAT=<ID={local_key},Number={local_number},Type={field_type},Description="Local values">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        f"1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:{standard_key}:{local_key}\\t0/0:2:{standard_values}:{local_values}\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        f'##FORMAT=<ID={standard_key},Number={number},Type={field_type},Description="Standard values">\n'
+        f'##FORMAT=<ID={local_key},Number={local_number},Type={field_type},Description="Local values">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:{standard_key}:{local_key}\t0/0:2:{standard_values}:{local_values}\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
