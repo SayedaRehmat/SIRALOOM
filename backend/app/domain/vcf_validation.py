@@ -3234,6 +3234,92 @@ def validate_vcf_strict(
                     "ordered_events": ordered_events,
                 })
 
+    breakend_adjacencies_by_endpoint: dict[tuple[int, int], list[dict[str, object]]] = {}
+    for adjacency in breakend_adjacencies:
+        for endpoint in (adjacency["source"], adjacency["mate"]):
+            endpoint_key = (
+                int(endpoint["line_number"]),
+                int(endpoint["alt_index"]),
+            )
+            breakend_adjacencies_by_endpoint.setdefault(endpoint_key, []).append(adjacency)
+
+    derivative_chromosome_traversals: list[dict[str, object]] = []
+    for traversal in phase_set_traversal_orders:
+        ordered_events = []
+        unresolved_reason_codes: set[str] = set()
+        unresolved_adjacency_count = 0
+        observed_adjacency_ids: set[str] = set()
+        for event in traversal["ordered_events"]:
+            event_occurrences = []
+            for occurrence in event["occurrences"]:
+                allele_index = occurrence["allele_index"]
+                allele = str(occurrence["allele"])
+                matched_adjacencies = (
+                    breakend_adjacencies_by_endpoint.get(
+                        (int(occurrence["line_number"]), int(allele_index)),
+                        [],
+                    )
+                    if allele_index is not None and int(allele_index) > 0
+                    else []
+                )
+                if _is_vcf45_breakend_alt(allele) and allele_index is not None and int(allele_index) > 0:
+                    if matched_adjacencies:
+                        for adjacency in matched_adjacencies:
+                            observed_adjacency_ids.add(str(adjacency["adjacency_id"]))
+                    else:
+                        unresolved_adjacency_count += 1
+                        unresolved_reason_codes.add(
+                            "VCF_DERIVATIVE_BREAKEND_ADJACENCY_UNRESOLVED"
+                        )
+                event_occurrences.append({
+                    **occurrence,
+                    "breakend_adjacency_ids": [
+                        str(adjacency["adjacency_id"])
+                        for adjacency in matched_adjacencies
+                    ],
+                })
+            ordered_events.append({
+                "ordinal": event["ordinal"],
+                "event_kind": event["event_kind"],
+                "occurrences": event_occurrences,
+            })
+            if event["event_kind"] == "ORDINAL_TIE_UNRESOLVED":
+                unresolved_reason_codes.add("VCF_PHASE_SET_PSO_ORDINAL_TIE_UNRESOLVED")
+
+        related_adjacencies = [
+            {
+                key: value
+                for key, value in adjacency.items()
+                if key != "key"
+            }
+            for adjacency in breakend_adjacencies
+            if str(adjacency["adjacency_id"]) in observed_adjacency_ids
+        ]
+        if any(item["coordinate_status"] == "UNRESOLVED_CIPOS" for item in related_adjacencies):
+            unresolved_reason_codes.add("VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED")
+        event_order_status = (
+            "RECONSTRUCTED"
+            if traversal["traversal_status"] == "ORDERED"
+            else "UNRESOLVED"
+        )
+        derivative_chromosome_traversals.append({
+            "sample": traversal["sample"],
+            "phase_set": traversal["phase_set"],
+            "event_order_status": event_order_status,
+            "adjacency_status": (
+                "COMPLETE_FOR_OBSERVED_PAIRED_BREAKENDS"
+                if unresolved_adjacency_count == 0
+                else "PARTIAL_OR_UNRESOLVED"
+            ),
+            "sequence_status": "UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE",
+            "unresolved_reason_codes": sorted(unresolved_reason_codes | {
+                "VCF_DERIVATIVE_SEQUENCE_REQUIRES_REFERENCE_SEGMENT_AND_COPY_NUMBER_RECONSTRUCTION"
+            }),
+            "unresolved_adjacency_count": unresolved_adjacency_count,
+            "ordered_events": ordered_events,
+            "observed_breakend_adjacencies": related_adjacencies,
+        })
+
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
@@ -3273,6 +3359,11 @@ def validate_vcf_strict(
         "phase_set_traversal_orders": phase_set_traversal_orders,
         "phase_set_traversal_warnings": phase_set_traversal_warnings,
         "phase_set_traversal_unresolved_count": len(phase_set_traversal_warnings),
+        "derivative_chromosome_traversals": derivative_chromosome_traversals,
+        "breakend_adjacencies": [
+            {key: value for key, value in adjacency.items() if key != "key"}
+            for adjacency in breakend_adjacencies
+        ],
         "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
         "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
