@@ -124,14 +124,14 @@ def create(
 
     analysis_configuration = dict(payload.configuration or {})
     configured_strandedness = analysis_configuration.get("base_modification_strandedness")
-    if configured_strandedness not in {None, "stranded", "unstranded"}:
+    if configured_strandedness not in (None, "stranded", "unstranded"):
         raise HTTPException(
             status_code=400,
             detail="base_modification_strandedness must be 'stranded', 'unstranded', or omitted",
         )
     if (
         payload.base_modification_strandedness is not None
-        and configured_strandedness not in {None, payload.base_modification_strandedness}
+        and configured_strandedness not in (None, payload.base_modification_strandedness)
     ):
         raise HTTPException(
             status_code=400,
