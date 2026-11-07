@@ -2357,6 +2357,22 @@ def test_vcf41_gle_requires_header_definition_when_number_is_not_source_specifie
     assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_UNRESOLVED"
 
 
+def test_vcf42_reserved_ps_header_must_be_integer(tmp_path: Path):
+    path = tmp_path / "vcf42-ps-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=PS,Number=1,Type=String,Description="Wrong PS declaration">',
+        ],
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:10\n",
+        version="VCFv4.2",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+
+
 def test_vcf41_reserved_ps_header_must_be_integer(tmp_path: Path):
     path = tmp_path / "vcf41-ps-wrong-header-definition.vcf"
     write_vcf_with_metadata(
