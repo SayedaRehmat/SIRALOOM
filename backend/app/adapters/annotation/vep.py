@@ -327,13 +327,30 @@ class VEPProvider(ScientificResourceProvider):
         try:
             execution_result = self.executor.execute(self._tool_identity(), execution_request)
         except ToolExecutionError as exc:
+            failure_provenance = asdict(exc.provenance) if exc.provenance else {}
+            failure_provenance.update({
+                "workspace_path": str(workspace),
+                "raw_response_path": str(output_json) if output_json.is_file() else None,
+                "raw_response_sha256": _sha256_file(output_json) if output_json.is_file() else None,
+            })
             raise VEPProviderError(
                 f"VEP execution failed: {exc}",
                 retryable=exc.retryable,
-                execution_provenance=asdict(exc.provenance) if exc.provenance else None,
+                execution_provenance=failure_provenance,
             ) from exc
         except ToolExecutionContractError as exc:
-            raise VEPProviderError(f"VEP execution contract rejected the request: {exc}") from exc
+            raise VEPProviderError(
+                f"VEP execution contract rejected the request: {exc}",
+                execution_provenance={
+                    "tool_profile_id": self.tool_profile_id,
+                    "vep_version": self.vep_version,
+                    "vep_binary_sha256": self.expected_binary_sha256,
+                    "runtime_image_digest": self.runtime_image_digest,
+                    "platform": self.platform,
+                    "workspace_path": str(workspace),
+                    "preflight_error": str(exc),
+                },
+            ) from exc
 
         try:
             raw_text = output_json.read_text(encoding="utf-8")
@@ -552,7 +569,13 @@ class VEPProvider(ScientificResourceProvider):
         observed = os.environ.get("SIRALOOM_RUNTIME_IMAGE_DIGEST", "").strip().lower()
         if observed != self.runtime_image_digest:
             raise VEPProviderError(
-                "Running worker image digest does not match the organization-approved VEP tool profile."
+                "Running worker image digest does not match the organization-approved VEP tool profile.",
+                execution_provenance={
+                    "tool_profile_id": self.tool_profile_id,
+                    "expected_runtime_image_digest": self.runtime_image_digest,
+                    "observed_runtime_image_digest": observed or None,
+                    "platform": self.platform,
+                },
             )
 
     @staticmethod
@@ -747,7 +770,17 @@ class VEPProvider(ScientificResourceProvider):
                     execution_provenance=asdict(exc.provenance) if exc.provenance else None,
                 ) from exc
             except ToolExecutionContractError as exc:
-                raise VEPProviderError(f"VEP execution preflight contract failed: {exc}") from exc
+                raise VEPProviderError(
+                    f"VEP execution preflight contract failed: {exc}",
+                    execution_provenance={
+                        "tool_profile_id": self.tool_profile_id,
+                        "vep_version": self.vep_version,
+                        "vep_binary_sha256": self.expected_binary_sha256,
+                        "runtime_image_digest": self.runtime_image_digest,
+                        "platform": self.platform,
+                        "preflight_error": str(exc),
+                    },
+                ) from exc
 
         cache_output = "\n".join((result.stdout or "", result.stderr or "")).strip()
         if not cache_output:
