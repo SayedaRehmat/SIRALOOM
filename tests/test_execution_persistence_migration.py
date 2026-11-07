@@ -68,4 +68,5 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
     assert "trg_execution_environment_append_only_delete" in triggers
     assert "trg_tool_execution_record_identity_immutable" in triggers
     assert "trg_tool_execution_record_state_guard" in triggers
+    assert "trg_tool_execution_record_no_delete" in triggers
     engine.dispose()
