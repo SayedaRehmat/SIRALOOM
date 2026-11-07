@@ -30,6 +30,7 @@ def _sample(member_id, identifier, calls):
         "normalization_step_status": "SUCCEEDED",
         "normalized_partition_count": 2,
         "ploidy_evidence": None,
+        "identity_evidence": [],
         "calls": calls,
     }
 
@@ -193,7 +194,26 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
             (Variant, variant_id): variant,
         },
         scalar_rows=[None, workflow],
-        query_rows=[[partition], [], [member], []],
+        query_rows=[
+            [partition],
+            [
+                SimpleNamespace(
+                    id=uuid4(), evidence_type="CHAIN_OF_CUSTODY", result="PASS",
+                    method="LIMS_CHAIN_OF_CUSTODY", method_version="1",
+                    evidence_reference="LIMS-ACCESSION-1", evidence_fingerprint="e" * 64,
+                    review_status="ACCEPTED", reviewed_by=user_id, reviewed_at=None,
+                    supersedes_evidence_id=None,
+                ),
+                SimpleNamespace(
+                    id=uuid4(), evidence_type="SAMPLE_IDENTITY_QC", result="PASS",
+                    method="SNP_FINGERPRINT_CONCORDANCE", method_version="2",
+                    evidence_reference="IDENTITY-QC-REPORT-1", evidence_fingerprint="f" * 64,
+                    review_status="ACCEPTED", reviewed_by=user_id, reviewed_at=None,
+                    supersedes_evidence_id=None,
+                ),
+            ],
+            [], [member], [],
+        ],
     )
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(
@@ -216,6 +236,9 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
 
     assert result["samples"][0]["source_artifact_sha256"] == "a" * 64
     assert result["samples"][0]["vcf_sample_name"] == "FAM-01"
+    assert {item["evidence_type"] for item in result["samples"][0]["identity_evidence"]} == {
+        "CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC",
+    }
     assert result["samples"][0]["calls"][0]["call_state"] == "CALL_PRESENT"
     assert result["samples"][0]["calls"][0]["source_record_sha256"] == "c" * 64
     assert result["interpretation_status"] == "NOT_PERFORMED"
