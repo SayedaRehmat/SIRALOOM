@@ -140,3 +140,81 @@ def test_vep_normalizer_preserves_unresolved_transcript_selection_without_guessi
         "AMBIGUOUS_CANONICAL"
     )
     assert normalized["transcript_consequences"][0]["transcript_id"] == "ENST000001.1"
+
+
+
+def test_vep_rejects_duplicate_annotation_records_for_one_requested_allele():
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="G",
+    )
+    record = {
+        "start": 100,
+        "seq_region_name": "1",
+        "allele_string": "A/G",
+        "transcript_consequences": [],
+    }
+
+    with pytest.raises(Exception, match="more than one annotation record"):
+        _provider().normalize_result(
+            ProviderRawResult("annotate", [record, record], "d" * 64, {}),
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
+def test_vep_rejects_unrequested_annotation_records_instead_of_dropping_them():
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="G",
+    )
+    requested_record = {
+        "start": 100,
+        "seq_region_name": "1",
+        "allele_string": "A/G",
+        "transcript_consequences": [],
+    }
+    unrequested_record = {
+        "start": 200,
+        "seq_region_name": "1",
+        "allele_string": "C/T",
+        "transcript_consequences": [],
+    }
+
+    with pytest.raises(Exception, match="outside the requested batch"):
+        _provider().normalize_result(
+            ProviderRawResult(
+                "annotate",
+                [requested_record, unrequested_record],
+                "d" * 64,
+                {},
+            ),
+            inputs={"variants": [variant], "genome_build": "GRCh38"},
+        )
+
+
+def test_vep_rejects_duplicate_normalized_alleles_in_the_input_batch():
+    variant = CanonicalVariant(
+        genome_build="GRCh38",
+        chromosome="1",
+        position=100,
+        reference="A",
+        alternate="G",
+    )
+    record = {
+        "start": 100,
+        "seq_region_name": "1",
+        "allele_string": "A/G",
+        "transcript_consequences": [],
+    }
+
+    with pytest.raises(Exception, match="input batch contains duplicate"):
+        _provider().normalize_result(
+            ProviderRawResult("annotate", [record], "d" * 64, {}),
+            inputs={"variants": [variant, variant], "genome_build": "GRCh38"},
+        )
