@@ -39,6 +39,7 @@ def upgrade():
             name="ck_pedigree_sample_binding_status",
         ),
         sa.CheckConstraint("version > 0", name="ck_pedigree_sample_binding_version_positive"),
+        sa.CheckConstraint("length(source_artifact_sha256) = 64", name="ck_pedigree_sample_binding_source_sha256_length"),
         sa.CheckConstraint(
             "(binding_status = 'UNVERIFIED' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
             "(binding_status IN ('VERIFIED', 'REJECTED') AND reviewed_by IS NOT NULL "
@@ -55,6 +56,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["reviewed_by"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("case_id", "binding_fingerprint", name="uq_pedigree_sample_binding_fingerprint"),
+        sa.UniqueConstraint("supersedes_binding_id", name="uq_pedigree_sample_binding_successor"),
         sa.UniqueConstraint(
             "case_id", "pedigree_member_id", "specimen_id", "analysis_id",
             "artifact_id", "sample_name", "version",
