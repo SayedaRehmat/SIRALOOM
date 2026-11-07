@@ -14,7 +14,7 @@ The pinned specification is internally inconsistent:
 
 The current upstream `samtools/hts-specs` VCFv4.5 source still exposes the same table/narrative discrepancy: the table contains uppercase-X aliases while the narrative recommends lowercase-x aliases. Neither a canonical spelling nor a versioned erratum was located in the reviewed source context.
 
-**Decision:** keep both spellings recognized as compatibility aliases; do not rewrite, normalize, or designate either as canonical. Record the issue for upstream standards-owner adjudication. A standards maintainer must clarify whether one spelling is canonical, both are valid aliases, or the table/narrative needs correction.
+**Decision:** keep both spellings recognized as compatibility aliases; do not rewrite, normalize, or designate either as canonical. Record the issue for upstream standards-owner adjudication. A standards maintainer must clarify whether one spelling is canonical, both are valid aliases, or the table/narrative needs correction. New production-validator conformance tests now exercise all six table/narrative spellings (fraction, total-detectable depth and modified-base depth) and assert that the original field ID is preserved in each slot assignment. Passing these tests establishes compatibility handling only; it does not adjudicate canonical spelling.
 
 ## 2. Local GT example — source inconsistency with a defensible normative interpretation
 
