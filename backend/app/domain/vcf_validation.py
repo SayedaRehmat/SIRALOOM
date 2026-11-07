@@ -2162,7 +2162,8 @@ def validate_vcf_strict(
                                     f"FORMAT/LAA omits a called GT ALT allele at line {line_no}, sample {sample_index}",
                                     code="VCF_LOCAL_ALLELE_INVALID",
                                 )
-                for key, value in zip(format_keys, sample_values):
+                for format_position, key in enumerate(format_keys):
+                    value = sample_values[format_position] if format_position < len(sample_values) else "."
                     if fileformat == "VCFv4.5" and key == "LAA" and value == "":
                         # VCFv4.5's REF-only local-allele example uses an
                         # empty text value; BCF represents this as MISSING.
