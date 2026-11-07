@@ -1054,6 +1054,8 @@ def get_family_genotype_matrix(
             raise HTTPException(409, "A selected sample binding references inconsistent case-scoped records")
         if artifact.sha256 != binding.source_artifact_sha256:
             raise HTTPException(409, "Source VCF digest no longer matches the reviewed sample binding")
+        if not isinstance(artifact.sha256, str) or len(artifact.sha256) != 64 or any(character not in "0123456789abcdefABCDEF" for character in artifact.sha256):
+            raise HTTPException(409, "Reviewed source VCF artifact has no valid SHA-256 digest")
         configuration = analysis.configuration or {}
         if (
             configuration.get("input_artifact_id") != str(artifact.id)
@@ -1077,6 +1079,24 @@ def get_family_genotype_matrix(
             AnalysisPartition.analysis_id == analysis.id,
             AnalysisPartition.step_id == "normalize",
         ).order_by(AnalysisPartition.ordinal)).all()
+        partition_input_artifact_ids = sorted({
+            str(partition.input_artifact_id)
+            for partition in partitions
+            if partition.input_artifact_id is not None
+        })
+        normalization_output_artifact_ids = {
+            str(value) for value in (normalization_step.output_artifacts or [])
+        }
+        if (
+            not partitions
+            or not partition_input_artifact_ids
+            or not set(partition_input_artifact_ids).issubset(normalization_output_artifact_ids)
+            or int(normalization_step.attempt or 0) < 1
+        ):
+            raise HTTPException(
+                409,
+                "Normalized partitions are not bound to the successful normalization attempt output artifacts",
+            )
         calls = get_analysis_sample_calls(db, analysis.id)
         if not calls or any(call.get("sample_name") != binding.sample_name for call in calls.values()):
             raise HTTPException(409, "Normalized sample calls do not consistently identify the selected VCF sample")
@@ -1132,6 +1152,7 @@ def get_family_genotype_matrix(
                 "completed_at": normalization_step.completed_at.isoformat() if normalization_step.completed_at else None,
             },
             "normalized_partition_count": len(partitions),
+            "normalized_partition_input_artifact_ids": partition_input_artifact_ids,
             "ploidy_evidence": ploidy_evidence,
             "identity_evidence": identity_evidence,
             "calls": calls,
@@ -1314,6 +1335,11 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
             raise HTTPException(
                 409,
                 "Inheritance review requires exactly one verified proband binding from the target analysis",
+            )
+        if family_matrix.get("provenance_completeness_status") != "COMPLETE":
+            raise HTTPException(
+                409,
+                "Inheritance review requires complete source-artifact, normalization-output and per-record digest provenance",
             )
         family_matrix_snapshot = db.scalar(select(FamilyGenotypeMatrixSnapshot).where(
             FamilyGenotypeMatrixSnapshot.case_id == analysis.case_id,
