@@ -1743,6 +1743,7 @@ def validate_vcf_strict(
     unresolved_spanning_deletion_records: list[dict[str, int | str]] = []
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, int, str, tuple[str, int], int]] = []
+    unresolved_breakend_coordinate_links: list[dict[str, object]] = []
     breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
     phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
     record_ids_seen: set[str] = set()
@@ -2056,8 +2057,11 @@ def validate_vcf_strict(
                     cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
                     cipos_by_alt: dict[int, tuple[int, int] | None] = {}
                     for alt_index in breakend_alt_indexes:
-                        if not cipos_entries:
+                        if raw_cipos is None:
                             cipos_by_alt[alt_index] = (0, 0)
+                            continue
+                        if raw_cipos == ".":
+                            cipos_by_alt[alt_index] = None
                             continue
                         lower, upper = cipos_entries[2 * alt_index : 2 * alt_index + 2]
                         cipos_by_alt[alt_index] = None if lower == upper == "." else (int(lower), int(upper))
@@ -2662,6 +2666,22 @@ def validate_vcf_strict(
                 code="VCF_BREAKEND_MATE_AMBIGUOUS",
             )
 
+        mate_alt_index = reciprocal_alt_indexes[0]
+        unresolved_ends = []
+        if source_record["cipos_by_alt"].get(source_alt_index) is None:
+            unresolved_ends.append("source")
+        if mate["cipos_by_alt"].get(mate_alt_index) is None:
+            unresolved_ends.append("mate")
+        if unresolved_ends:
+            unresolved_breakend_coordinate_links.append({
+                "source_record_id": source_id,
+                "source_alt_index": source_alt_index + 1,
+                "mate_record_id": mate_id,
+                "mate_alt_index": mate_alt_index + 1,
+                "line_number": line_no,
+                "unresolved_cipos_ends": unresolved_ends,
+            })
+
         if fileformat == "VCFv4.5":
             source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
             mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
@@ -2739,6 +2759,8 @@ def validate_vcf_strict(
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,
+        "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
+        "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
         "spanning_deletion_records": [
             {
@@ -2775,6 +2797,8 @@ def validate_vcf_strict(
                if unresolved_spanning_deletion_records else [])
             + (["VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED"]
                if unstranded_unphased_observation_count else [])
+            + (["VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED"]
+               if unresolved_breakend_coordinate_links else [])
         ),
     }
 
