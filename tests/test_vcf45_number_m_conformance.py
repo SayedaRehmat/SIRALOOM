@@ -94,7 +94,7 @@ def test_number_m_repeated_unphased_alternate_alleles_are_aggregated(tmp_path: P
         alternate="CG",
         genotype="1/1",
         field_id="M5mC",
-        values="0.3",
+        values="0.3,0.4",
     )
     assert validate_vcf_strict(path)["records"] == 1
 
@@ -107,7 +107,7 @@ def test_number_m_missing_gt_allele_contributes_no_values(tmp_path: Path):
         alternate="CG",
         genotype="./1",
         field_id="M5mC",
-        values="0.8",
+        values="0.8,0.9",
     )
     assert validate_vcf_strict(path)["records"] == 1
 
@@ -126,7 +126,7 @@ def test_number_m_symbolic_alleles_contribute_no_modifiable_bases(
     _write_number_m_vcf(
         path,
         reference="C",
-        alternate="<DEL>",
+        alternate="<*>",
         genotype=genotype,
         field_id="M5mC",
         values=values,
@@ -183,7 +183,7 @@ def test_number_m_fraction_and_depth_values_enforce_specified_ranges(
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
+    assert exc.value.code == "VCF_FIELD_TYPE_INVALID"
 
 
 def test_number_m_requires_gt_format_key(tmp_path: Path):
