@@ -480,6 +480,21 @@ def _ensure_annotation_request_fingerprint(
     return fingerprint
 
 
+def _record_annotation_tool_execution(
+    execution_record: ResourceExecutionRecord,
+    provenance: dict | None,
+) -> None:
+    """Bind executor and raw-response artifact provenance to the resource execution."""
+    if not isinstance(provenance, dict) or not provenance.get("tool_execution_provenance"):
+        return
+    metadata = dict(execution_record.metadata_json or {})
+    metadata["tool_execution_provenance"] = provenance["tool_execution_provenance"]
+    metadata["raw_response_artifact_id"] = provenance.get("raw_response_artifact_id")
+    metadata["raw_response_artifact_sha256"] = provenance.get("raw_response_artifact_sha256")
+    metadata["reference_package_checksum"] = provenance.get("reference_package_checksum")
+    execution_record.metadata_json = metadata
+
+
 def _persist_raw_vep_provider_response(
     db: Session,
     artifacts: ArtifactStore,
@@ -2978,7 +2993,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             temporary_paths=temporary_artifact_paths,
                         )
                         if payloads is None:
-                            payloads = provider.annotate(batch, {"genome": genome})
+                            payloads = provider.annotate(batch, {
+                                "genome": genome,
+                                "reference_package": validated_reference_package,
+                                "organization_id": str(case.organization_id),
+                                "workflow_id": str(analysis.id),
+                            })
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                             _ensure_annotation_request_fingerprint(
                                 payloads,
@@ -3001,7 +3021,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 resource=annotation_resource,
                                 provider_id=provider.provider_id,
                                 provider_version=provider.provider_version,
+                                temporary_paths=temporary_artifact_paths,
                             )
+                            sample = next(
+                                (item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)),
+                                {},
+                            )
+                            _record_annotation_tool_execution(execution_record, sample)
                             # The response artifact and replay checkpoint are the
                             # durable evidence that the provider execution completed.
                             # Do not mark the execution successful before both exist.
@@ -3009,10 +3035,17 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.commit()
                         else:
                             sample = next((item.get("_siraloom_annotation_provenance", {}) for item in payloads if isinstance(item, dict)), {})
+                            _record_annotation_tool_execution(execution_record, sample)
                             complete_resource_execution(db, execution_record, status="SUCCEEDED", request_fingerprint=sample.get("request_fingerprint"), response_sha256=sample.get("response_sha256"))
                             db.commit()
                             scheduler.heartbeat(partition.id, worker_id, lease_token)
                     except (GeneBeError, VEPProviderError) as exc:
+                        failure_provenance = getattr(exc, "execution_provenance", None)
+                        if isinstance(failure_provenance, dict):
+                            execution_metadata = dict(execution_record.metadata_json or {})
+                            execution_metadata["tool_execution_failure"] = failure_provenance
+                            execution_record.metadata_json = execution_metadata
+                            db.add(execution_record)
                         complete_resource_execution(
                             db,
                             execution_record,
