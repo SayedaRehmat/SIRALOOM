@@ -835,3 +835,68 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
     assert db.scalar(select(func.count(InheritanceAssessment.id))) == 2
     assert db.scalar(select(func.count(FamilyGenotypeMatrixSnapshot.id))) == 2
     db.close()
+
+
+def test_de_novo_review_remains_unresolved_when_parent_relationship_is_only_reported(monkeypatch):
+    analysis_id, variant_id, case_id, binding_id, member_id = (uuid4() for _ in range(5))
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    principal = SimpleNamespace(user_id=uuid4())
+    matrix = {
+        "matrix_fingerprint": "9" * 64,
+        "relationships_as_recorded": [{
+            "parent_member_identifier": "FATHER",
+            "child_member_identifier": "PROBAND",
+            "relationship_type": "PARENT_CHILD",
+            "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
+        }],
+        "samples": [{
+            "member_id": str(member_id),
+            "is_proband": True,
+            "analysis_id": str(analysis_id),
+            "identity_interpretation": "BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED",
+        }],
+    }
+
+    class FakeDb:
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
+        def scalars(self, _query):
+            return []
+
+        def scalar(self, _query):
+            return None
+
+        def add(self, _row):
+            pass
+
+        def commit(self):
+            pass
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    monkeypatch.setattr(pedigree, "get_family_genotype_matrix", lambda *_args: matrix)
+
+    result = pedigree.assess_inheritance(
+        analysis_id,
+        variant_id,
+        AssessmentInput(models=["DE_NOVO"], binding_ids=[binding_id]),
+        FakeDb(),
+        principal,
+    )
+    assert result["results"][0]["status"] == "REQUIRES_REVIEW"
+    assert "relationship confidence" in result["results"][0]["rationale"]
+    assert result["family_matrix_fingerprint"] == "9" * 64
