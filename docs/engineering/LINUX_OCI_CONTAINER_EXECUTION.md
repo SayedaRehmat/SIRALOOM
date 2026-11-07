@@ -31,6 +31,7 @@ the requested operation.
   /resources are bounded tmpfs mount points.
 - Network is disabled. Environments declaring allowlisted egress are rejected
   until a separately qualified network enforcement implementation exists.
+- A verifiable Linux cgroup v1/v2 controller is required before resource flags are used.
 - CPU, memory, swap, PID count, non-root UID/GID, Linux capabilities, and
   privilege escalation are constrained explicitly.
 - Request timeout kills the named container and then terminates the runtime
