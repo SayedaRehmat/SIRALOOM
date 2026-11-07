@@ -543,7 +543,10 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
 
     executable_text = shutil.which(settings.bcftools_executable) or shutil.which("bcftools")
     if not executable_text:
-        pytest.skip("Pinned BCFtools is not installed in this test environment.")
+        message = f"Pinned BCFtools is not discoverable on PATH={os.getenv('PATH', '')!r}."
+        if os.getenv("CI") == "true":
+            pytest.fail(message)
+        pytest.skip(message)
     executable = Path(executable_text).resolve()
     version = subprocess.run(
         [str(executable), "--version"],
@@ -558,7 +561,14 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
         or f"bcftools {settings.bcftools_version}" not in version_output
         or f"Using htslib {settings.htslib_version}" not in version_output
     ):
-        pytest.skip("This real-process qualification test requires the pinned BCFtools/HTSlib pair.")
+        message = (
+            "Real BCFtools qualification requires the configured pinned pair; "
+            f"expected bcftools={settings.bcftools_version}, htslib={settings.htslib_version}, "
+            f"observed output={version_output!r}."
+        )
+        if os.getenv("CI") == "true":
+            pytest.fail(message)
+        pytest.skip(message)
 
     organization, _user, case, analysis = _lab(db)
     workspace = tmp_path / "workspace"
