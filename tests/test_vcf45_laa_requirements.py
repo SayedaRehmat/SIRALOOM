@@ -101,3 +101,20 @@ def test_vcf45_empty_laa_text_value_is_ref_only_as_in_spec_example(tmp_path: Pat
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+def test_vcf45_reserved_lec_without_laa_is_rejected_even_without_header_declaration(
+    tmp_path: Path,
+):
+    path = tmp_path / "reserved-lec-without-laa.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tA\tC\t.\tPASS\t.\tGT:LEC\t0/0:5\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_LOCAL_ALLELE_HEADER_INVALID"
