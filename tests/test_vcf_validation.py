@@ -2229,6 +2229,18 @@ def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
     assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
 
 
+def test_vcf41_gle_requires_header_definition_when_number_is_not_source_specified(tmp_path: Path):
+    path = tmp_path / "vcf41-gle-unresolved-number.vcf"
+    write_vcf(
+        path,
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:GLE\t0/1:opaque\n",
+        version="VCFv4.1",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_UNRESOLVED"
+
+
 def test_vcf41_reserved_ps_header_must_be_integer(tmp_path: Path):
     path = tmp_path / "vcf41-ps-wrong-header-definition.vcf"
     write_vcf_with_metadata(
