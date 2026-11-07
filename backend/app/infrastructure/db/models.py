@@ -946,12 +946,14 @@ class SegregationObservationRevision(Base):
         ForeignKey("segregation_observation_revisions.id"), nullable=True,
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False)
+    revision_reason: Mapped[str] = mapped_column(Text, nullable=False)
     payload: Mapped[dict] = mapped_column(JSON, nullable=False)
     observation_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
     recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     __table_args__ = (
         CheckConstraint("version >= 2", name="ck_segregation_observation_revision_version"),
+        CheckConstraint("length(trim(revision_reason)) > 0", name="ck_segregation_observation_revision_reason"),
         CheckConstraint("length(observation_fingerprint) = 64", name="ck_segregation_observation_revision_fingerprint_length"),
         UniqueConstraint("root_observation_id", "version", name="uq_segregation_observation_revision_version"),
         UniqueConstraint("root_observation_id", "observation_fingerprint", name="uq_segregation_observation_revision_fingerprint"),
