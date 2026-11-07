@@ -192,6 +192,15 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
     variant = SimpleNamespace(id=variant_id, genome_build="GRCh38")
     workflow = SimpleNamespace(status="SUCCEEDED", input_artifacts=[str(artifact_id)])
     partition = SimpleNamespace(ordinal=0)
+    ploidy_evidence = SimpleNamespace(
+        version=4,
+        status="ACCEPTED",
+        reference_build="GRCh38",
+        revision_fingerprint="d" * 64,
+        region_copy_number=2,
+        source_type="LAB_VALIDATED",
+        evidence_reference="PLOIDY-QC-001",
+    )
     db = _MatrixDB(
         {
             (Case, case_id): case,
@@ -221,7 +230,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
                     supersedes_evidence_id=None,
                 ),
             ],
-            [], [member], [],
+            [ploidy_evidence], [member], [],
         ],
     )
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
@@ -245,6 +254,15 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
 
     assert result["samples"][0]["source_artifact_sha256"] == "a" * 64
     assert result["samples"][0]["vcf_sample_name"] == "FAM-01"
+    assert result["samples"][0]["ploidy_evidence"] == {
+        "version": 4,
+        "status": "ACCEPTED",
+        "reference_build": "GRCh38",
+        "revision_fingerprint": "d" * 64,
+        "region_copy_number": 2,
+        "source_type": "LAB_VALIDATED",
+        "evidence_reference": "PLOIDY-QC-001",
+    }
     assert {item["evidence_type"] for item in result["samples"][0]["identity_evidence"]} == {
         "CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC",
     }
