@@ -188,6 +188,19 @@ def upgrade():
             BEFORE UPDATE ON tool_execution_records
             FOR EACH ROW EXECUTE FUNCTION siraloom_guard_tool_execution_record()
         """)
+        op.execute("""
+            CREATE FUNCTION siraloom_reject_tool_execution_delete()
+            RETURNS trigger AS $siraloom$
+            BEGIN
+                RAISE EXCEPTION 'tool execution records are an immutable audit ledger';
+            END;
+            $siraloom$ LANGUAGE plpgsql
+        """)
+        op.execute("""
+            CREATE TRIGGER trg_tool_execution_record_no_delete
+            BEFORE DELETE ON tool_execution_records
+            FOR EACH ROW EXECUTE FUNCTION siraloom_reject_tool_execution_delete()
+        """)
     elif connection.dialect.name == "sqlite":
         op.execute("""
             CREATE TRIGGER trg_execution_environment_append_only_update
@@ -220,6 +233,11 @@ def upgrade():
             BEGIN SELECT RAISE(ABORT, 'tool execution identity and request snapshot are immutable'); END
         """)
         op.execute("""
+            CREATE TRIGGER trg_tool_execution_record_no_delete
+            BEFORE DELETE ON tool_execution_records
+            BEGIN SELECT RAISE(ABORT, 'tool execution records are an immutable audit ledger'); END
+        """)
+        op.execute("""
             CREATE TRIGGER trg_tool_execution_record_state_guard
             BEFORE UPDATE ON tool_execution_records
             WHEN OLD.status IN ('SUCCEEDED', 'FAILED')
@@ -235,6 +253,8 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
     if connection.dialect.name == "postgresql":
+        op.execute("DROP TRIGGER IF EXISTS trg_tool_execution_record_no_delete ON tool_execution_records")
+        op.execute("DROP FUNCTION IF EXISTS siraloom_reject_tool_execution_delete()")
         op.execute("DROP TRIGGER IF EXISTS trg_tool_execution_record_guard ON tool_execution_records")
         op.execute("DROP FUNCTION IF EXISTS siraloom_guard_tool_execution_record()")
         op.execute("DROP TRIGGER IF EXISTS trg_execution_environment_append_only ON execution_environment_registrations")
@@ -242,6 +262,7 @@ def downgrade():
     elif connection.dialect.name == "sqlite":
         op.execute("DROP TRIGGER IF EXISTS trg_tool_execution_record_state_guard")
         op.execute("DROP TRIGGER IF EXISTS trg_tool_execution_record_identity_immutable")
+        op.execute("DROP TRIGGER IF EXISTS trg_tool_execution_record_no_delete")
         op.execute("DROP TRIGGER IF EXISTS trg_execution_environment_append_only_delete")
         op.execute("DROP TRIGGER IF EXISTS trg_execution_environment_append_only_update")
     op.drop_index("ix_tool_execution_org_status_created", table_name="tool_execution_records")
