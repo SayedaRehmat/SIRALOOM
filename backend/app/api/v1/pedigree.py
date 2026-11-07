@@ -563,8 +563,35 @@ def _active_sample_identity_evidence(db: Session, binding_id: UUID):
     return [row for row in rows if row.id not in superseded_ids]
 
 
+def _sample_binding_evidence_owner(db: Session, binding: PedigreeSampleBinding) -> UUID:
+    """Resolve evidence attached to the unverified claim promoted by an append-only review."""
+    direct = _active_sample_identity_evidence(db, binding.id)
+    if direct:
+        return binding.id
+    if binding.binding_status != "VERIFIED" or binding.supersedes_binding_id is None:
+        return binding.id
+    predecessor = db.get(PedigreeSampleBinding, binding.supersedes_binding_id)
+    if predecessor is None or predecessor.binding_status != "UNVERIFIED":
+        return binding.id
+    same_claim = (
+        predecessor.case_id == binding.case_id
+        and predecessor.pedigree_member_id == binding.pedigree_member_id
+        and predecessor.specimen_id == binding.specimen_id
+        and predecessor.analysis_id == binding.analysis_id
+        and predecessor.artifact_id == binding.artifact_id
+        and predecessor.source_artifact_sha256 == binding.source_artifact_sha256
+        and predecessor.sample_name == binding.sample_name
+    )
+    return predecessor.id if same_claim else binding.id
+
+
 def _require_sample_identity_evidence(db: Session, binding_id: UUID) -> list[dict]:
-    active = _active_sample_identity_evidence(db, binding_id)
+    binding = db.get(PedigreeSampleBinding, binding_id)
+    evidence_owner_id = (
+        _sample_binding_evidence_owner(db, binding)
+        if binding is not None else binding_id
+    )
+    active = _active_sample_identity_evidence(db, evidence_owner_id)
     summary = []
     for evidence_type in ("CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC"):
         matching = [row for row in active if row.evidence_type == evidence_type]
@@ -607,17 +634,22 @@ def list_sample_identity_evidence(
     binding = db.get(PedigreeSampleBinding, binding_id)
     if binding is None or binding.case_id != case_id:
         raise HTTPException(404, "Sample binding not found")
+    owner_id = _sample_binding_evidence_owner(db, binding)
     rows = db.scalars(
         select(PedigreeSampleIdentityEvidence)
         .where(PedigreeSampleIdentityEvidence.case_id == case_id,
-               PedigreeSampleIdentityEvidence.binding_id == binding_id)
+               PedigreeSampleIdentityEvidence.binding_id == owner_id)
         .order_by(PedigreeSampleIdentityEvidence.evidence_type,
                   PedigreeSampleIdentityEvidence.version)
     ).all()
+    evidence = [_sample_identity_evidence_payload(row) for row in rows]
+    if owner_id != binding_id:
+        for item in evidence:
+            item["inherited_from_binding_id"] = str(owner_id)
     return {
         "case_id": str(case_id),
         "binding_id": str(binding_id),
-        "evidence": [_sample_identity_evidence_payload(row) for row in rows],
+        "evidence": evidence,
     }
 
 
