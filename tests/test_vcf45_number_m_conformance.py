@@ -330,13 +330,13 @@ def test_xanthosine_alias_capitalization_variants_remain_accepted_without_normal
 def _write_unstranded_cpg_vcf(path: Path, *, second_value: str, reverse: bool = False) -> None:
     first_ref, second_ref = ("G", "C") if reverse else ("C", "G")
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        f"1\\t10\\t.\\t{first_ref}\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|0:set,set:0.5\\n"
-        f"1\\t11\\t.\\t{second_ref}\\t.\\t.\\tPASS\\t.\\tGT:PSL:M5mC\\t0|0:set,set:{second_value}\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t10\t.\t{first_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|0:set,set:0.5\n"
+        f"1\t11\t.\t{second_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|0:set,set:{second_value}\n",
         encoding="utf-8",
     )
 
@@ -393,11 +393,11 @@ def test_number_m_unstranded_policy_checks_cpg_slots_within_one_record(
 ):
     path = tmp_path / "unstranded-cpg-same-record.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tCG\\t.\\t.\\tPASS\\t.\\tGT:M5mC\\t0|0:0.5,.,0.6,.\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tCG\t.\t.\tPASS\t.\tGT:M5mC\t0|0:0.5,.,0.6,.\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path, base_modification_strandedness="unstranded")["records"] == 1
