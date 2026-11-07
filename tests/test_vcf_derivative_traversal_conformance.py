@@ -311,8 +311,8 @@ def test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence(
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
         "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;PARID=bnd3\n"
         "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n"
-        "3\t20\tbnd3\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd4\n"
-        "1\t30\tbnd4\tA\tA]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3\n",
+        "1\t6\tbnd3\tA\tA]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd4\n"
+        "3\t20\tbnd4\tA\tA]1:6]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3\n",
         encoding="utf-8",
     )
 
