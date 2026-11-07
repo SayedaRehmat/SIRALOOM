@@ -95,8 +95,9 @@ def _require_sha256(value: str, label: str) -> None:
 def execution_request_fingerprint(
     *,
     organization_id: UUID,
-    analysis_id: UUID,
+    analysis_id: UUID | None,
     execution_id: str,
+    case_id: UUID | None = None,
     environment_registration_id: UUID,
     tool: ToolIdentity,
     operation: str,
@@ -104,9 +105,11 @@ def execution_request_fingerprint(
     input_manifest: list[Mapping[str, Any]],
 ) -> str:
     """Derive the idempotency fingerprint from all immutable execution inputs."""
-    return canonical_fingerprint({
+    if analysis_id is None and case_id is None:
+        raise ExecutionPersistenceError("Case-scoped execution fingerprint requires a case ID.")
+    identity = {
         "organization_id": str(organization_id),
-        "analysis_id": str(analysis_id),
+        "analysis_id": str(analysis_id) if analysis_id is not None else None,
         "execution_id": execution_id,
         "environment_registration_id": str(environment_registration_id),
         "tool": {
@@ -120,7 +123,10 @@ def execution_request_fingerprint(
         "operation": operation,
         "request_snapshot": _json_safe(request_snapshot),
         "input_manifest": _json_safe(input_manifest),
-    })
+    }
+    if case_id is not None:
+        identity["case_id"] = str(case_id)
+    return canonical_fingerprint(identity)
 
 
 def register_environment_profile(
@@ -176,7 +182,8 @@ def register_tool_execution(
     db: Session,
     *,
     organization_id: UUID,
-    analysis_id: UUID,
+    analysis_id: UUID | None = None,
+    case_id: UUID | None = None,
     execution_id: str,
     idempotency_key: str,
     request_fingerprint: str,
@@ -195,13 +202,29 @@ def register_tool_execution(
     if operation not in tool.supported_operations:
         raise ExecutionPersistenceError("Tool profile does not allow the requested operation.")
 
-    analysis_owner = db.execute(
-        select(Analysis.id, Case.organization_id)
-        .join(Case, Case.id == Analysis.case_id)
-        .where(Analysis.id == analysis_id)
-    ).one_or_none()
-    if analysis_owner is None or analysis_owner.organization_id != organization_id:
-        raise ExecutionPersistenceError("Analysis does not belong to the requesting organization.")
+    if analysis_id is not None:
+        analysis_owner = db.execute(
+            select(Analysis.case_id, Case.organization_id)
+            .join(Case, Case.id == Analysis.case_id)
+            .where(Analysis.id == analysis_id)
+        ).one_or_none()
+        if analysis_owner is None or analysis_owner.organization_id != organization_id:
+            raise ExecutionPersistenceError("Analysis does not belong to the requesting organization.")
+        resolved_case_id = analysis_owner.case_id
+        if case_id is not None and case_id != resolved_case_id:
+            raise ExecutionPersistenceError("Analysis does not belong to the supplied case.")
+    else:
+        if case_id is None:
+            raise ExecutionPersistenceError("A case ID is required before an analysis exists.")
+        case = db.scalar(
+            select(Case).where(
+                Case.id == case_id,
+                Case.organization_id == organization_id,
+            )
+        )
+        if case is None:
+            raise ExecutionPersistenceError("Case does not belong to the requesting organization.")
+        resolved_case_id = case.id
 
     environment = db.get(ExecutionEnvironmentRegistration, environment_registration_id)
     if environment is None:
@@ -226,6 +249,7 @@ def register_tool_execution(
     expected_fingerprint = execution_request_fingerprint(
         organization_id=organization_id,
         analysis_id=analysis_id,
+        case_id=case_id,
         execution_id=execution_id,
         environment_registration_id=environment_registration_id,
         tool=tool,
@@ -248,6 +272,7 @@ def register_tool_execution(
         if (
             existing.request_fingerprint != request_fingerprint
             or existing.analysis_id != analysis_id
+            or existing.case_id != resolved_case_id
             or existing.execution_id != execution_id
             or existing.environment_registration_id != environment_registration_id
             or existing.tool_id != tool.tool_id
@@ -286,6 +311,7 @@ def register_tool_execution(
         idempotency_key=idempotency_key,
         request_fingerprint=request_fingerprint.lower(),
         organization_id=organization_id,
+        case_id=resolved_case_id,
         analysis_id=analysis_id,
         environment_registration_id=environment_registration_id,
         tool_id=tool.tool_id,
