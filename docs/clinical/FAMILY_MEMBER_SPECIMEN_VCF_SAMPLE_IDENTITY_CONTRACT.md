@@ -17,7 +17,7 @@ This contract binds a case-scoped pedigree member to a specimen, a specific sour
 Migration `0063_pedigree_sample_identity_bindings` adds `pedigree_sample_bindings` with:
 
 - case, pedigree member, specimen, analysis and source artifact IDs;
-- exact VCF sample name;
+- exact VCF sample name and immutable source-artifact SHA-256 digest;
 - binding method and optional external evidence reference;
 - status `UNVERIFIED`, `VERIFIED` or `REJECTED`;
 - version and superseded-binding pointer;
@@ -31,7 +31,8 @@ Rows are immutable at the database level. Review creates a new version linked to
 - A write-authorized user can record an `UNVERIFIED` binding only when the member and specimen belong to the case, the analysis and source artifact belong to the same case, the artifact is a VCF source, and the artifact is the exact source artifact selected by the analysis.
 - A specimen's optional registered sample-name hint must not conflict with the binding's sample name.
 - A reviewer can append a `VERIFIED` or `REJECTED` version with a mandatory reason.
-- Verification is blocked unless the analysis has a successful normalization partition and persisted normalized sample calls containing the exact sample name.
+- Verification re-fetches the source artifact and checks its SHA-256 against the recorded digest, requires the analysis configuration to select that same source artifact and sample name, requires the successful normalization workflow step to name that source artifact in its inputs, and requires persisted normalized calls containing the exact sample name.
+- Creation and review retries are idempotent under the case-row lock; the database permits at most one successor revision for a binding.
 - A missing call remains missing. This endpoint does not synthesize reference genotypes or create genotype evidence.
 
 ## Important limitations before inheritance integration
