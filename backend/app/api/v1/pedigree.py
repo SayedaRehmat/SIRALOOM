@@ -27,6 +27,7 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     Evidence,
+    FamilyGenotypeMatrixSnapshot,
     InheritanceAssessment,
     PedigreeMember,
     PedigreeRelationship,
@@ -1275,6 +1276,7 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
     _validate_observation_members(rows, members)
 
     family_matrix = None
+    family_matrix_snapshot = None
     if body.binding_ids:
         if len(set(body.binding_ids)) != len(body.binding_ids):
             raise HTTPException(422, "Family binding IDs must be unique")
@@ -1293,12 +1295,29 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
                 409,
                 "Inheritance review requires exactly one verified proband binding from the target analysis",
             )
+        family_matrix_snapshot = db.scalar(select(FamilyGenotypeMatrixSnapshot).where(
+            FamilyGenotypeMatrixSnapshot.case_id == analysis.case_id,
+            FamilyGenotypeMatrixSnapshot.matrix_fingerprint == family_matrix["matrix_fingerprint"],
+        ))
+        if family_matrix_snapshot is None:
+            family_matrix_snapshot = FamilyGenotypeMatrixSnapshot(
+                id=uuid4(),
+                case_id=analysis.case_id,
+                analysis_id=analysis_id,
+                variant_id=variant_id,
+                schema_version=family_matrix["schema_version"],
+                matrix_fingerprint=family_matrix["matrix_fingerprint"],
+                matrix_payload=family_matrix,
+                created_by=principal.user_id,
+            )
+            db.add(family_matrix_snapshot)
 
     # Manually entered SegregationObservation rows remain reviewer notes only.
     # They are never converted into normalized calls or inheritance evidence.
     obs=[]
     observation_fp=fingerprint(obs)
     family_matrix_fp=family_matrix["matrix_fingerprint"] if family_matrix else None
+    family_matrix_snapshot_id=family_matrix_snapshot.id if family_matrix_snapshot else None
     fp = (
         hashlib.sha256(json.dumps({
             "schema_version": 2,
@@ -1331,7 +1350,7 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
             InheritanceAssessment.observation_fingerprint==fp,
         ))
         if row is None:
-            row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,family_matrix_fingerprint=family_matrix_fp,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
+            row=InheritanceAssessment(id=uuid4(),analysis_id=analysis_id,variant_id=variant_id,model=model,status=result["status"],score=None,rationale=result["rationale"],observation_fingerprint=fp,family_matrix_fingerprint=family_matrix_fp,family_matrix_snapshot_id=family_matrix_snapshot_id,reviewer_note=body.reviewer_note,created_by=str(principal.user_id))
             db.add(row)
             audit_changes.append({"operation":"CREATE","assessment_id":str(row.id),"after_state":{"model":model,"status":result["status"],"reviewer_note":body.reviewer_note,"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp}})
         elif row.reviewer_note != body.reviewer_note:
@@ -1341,11 +1360,11 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
         results.append({"id":str(row.id),**result,"fingerprint":fp,"reviewer_note":row.reviewer_note})
         # Store only a neutral pointer to the recorded observations. This is
         # not a calculated segregation or inheritance criterion.
-        payload={"model":model,"status":"REQUIRES_REVIEW","observations_available":result["observations_available"],"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_binding_ids":[str(value) for value in body.binding_ids],"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW","manual_segregation_rows_excluded":True}
+        payload={"model":model,"status":"REQUIRES_REVIEW","observations_available":result["observations_available"],"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_snapshot_id":str(family_matrix_snapshot_id) if family_matrix_snapshot_id else None,"family_matrix_binding_ids":[str(value) for value in body.binding_ids],"reviewer_note":body.reviewer_note,"interpretation":"REQUIRES_HUMAN_REVIEW","manual_segregation_rows_excluded":True}
         evidence_fingerprint=hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         stmt=select(Evidence).where(Evidence.analysis_id==analysis_id,Evidence.variant_id==variant_id,Evidence.evidence_type=="SEGREGATION",Evidence.evidence_fingerprint==evidence_fingerprint)
         if not db.scalar(stmt):
             db.add(Evidence(id=uuid4(),variant_id=variant_id,analysis_id=analysis_id,evidence_type="SEGREGATION",statement=f"Family observations recorded for {model}; disease-specific interpretation requires human review.",direction="CONTEXTUAL",source_name="SIRALOOM Pedigree Observation Workflow",source_version="M11_OBSERVATIONS_ONLY",source_record_id=None,observation_ids=[str(r.id) for r in rows],payload=payload,created_by_type="SYSTEM",created_by_id="inheritance",evidence_fingerprint=evidence_fingerprint))
     if audit_changes:
         AuditService(db).record(event_type="INHERITANCE_ASSESSMENT_RECORDED",case_id=analysis.case_id,analysis_id=analysis_id,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="VARIANT_INHERITANCE",subject_id=str(variant_id),operation="UPSERT",after_state={"changes":audit_changes,"observation_fingerprint":fp},reason=body.reviewer_note)
-    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_attached":family_matrix is not None,"results":results,"important_note":"Inheritance remains REQUIRES_REVIEW. The family matrix is provenance-bearing context only; no automated compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, age, relationship confidence, phase, ploidy and callability."}
+    db.commit(); return {"analysis_id":str(analysis_id),"variant_id":str(variant_id),"observation_fingerprint":fp,"family_matrix_fingerprint":family_matrix_fp,"family_matrix_snapshot_id":str(family_matrix_snapshot_id) if family_matrix_snapshot_id else None,"family_matrix_attached":family_matrix is not None,"results":results,"important_note":"Inheritance remains REQUIRES_REVIEW. The family matrix is provenance-bearing context only; no automated compatibility conclusion or ACMG/ClinGen criterion is generated. Review disease-specific mechanism, penetrance, age, relationship confidence, phase, ploidy and callability."}
