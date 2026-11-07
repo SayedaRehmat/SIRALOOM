@@ -61,6 +61,7 @@ class ExecutionEnvironmentProfile:
     runtime_kind: RuntimeKind
     runtime_version: str
     runtime_image_digest: str | None
+    runtime_image_reference: str | None = None
     scheduler: SchedulerKind
     capacity: ExecutionCapacity
     workspace_root: str
@@ -114,14 +115,20 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError("Remote-agent environments require an agent identity.")
         if self.executor_kind != "REMOTE_AGENT" and self.agent_id is not None:
             raise ExecutionEnvironmentError("Only remote-agent environments may declare agent_id.")
-        if self.runtime_kind == "HOST" and self.runtime_image_digest is not None:
-            raise ExecutionEnvironmentError("Host runtime profiles cannot declare a container image digest.")
-        if self.runtime_kind != "HOST" and not re.fullmatch(
-            r"sha256:[0-9a-f]{64}", (self.runtime_image_digest or "").lower()
-        ):
-            raise ExecutionEnvironmentError(
-                "Container runtime profiles require a pinned sha256 image digest."
-            )
+        if self.runtime_kind == "HOST":
+            if self.runtime_image_digest is not None or self.runtime_image_reference is not None:
+                raise ExecutionEnvironmentError("Host runtime profiles cannot declare a container image.")
+        else:
+            digest = (self.runtime_image_digest or "").lower()
+            reference = self.runtime_image_reference or ""
+            if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                raise ExecutionEnvironmentError("Container runtime profiles require a pinned sha256 image digest.")
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/:@-]*@sha256:[0-9a-f]{64}", reference):
+                raise ExecutionEnvironmentError("Container image reference must be an immutable repository@sha256:<digest> reference.")
+            if not reference.endswith("@" + digest):
+                raise ExecutionEnvironmentError("Container image reference digest must exactly match runtime_image_digest.")
+            if self.runtime_kind not in {"DOCKER", "PODMAN"}:
+                raise ExecutionEnvironmentError("Only Docker and Podman runtimes are supported for container execution.")
         if not self.workspace_root.startswith("/") or "\\x00" in self.workspace_root:
             raise ExecutionEnvironmentError("Environment workspace_root must be an absolute POSIX path.")
         self.capacity.validate()
@@ -218,6 +225,7 @@ class ExecutionEnvironmentProfile:
             "runtime_kind": self.runtime_kind,
             "runtime_version": self.runtime_version,
             "runtime_image_digest": self.runtime_image_digest,
+            "runtime_image_reference": self.runtime_image_reference,
             "scheduler": self.scheduler,
             "capacity": {
                 "cpu_cores": self.capacity.cpu_cores,
