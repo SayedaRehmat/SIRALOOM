@@ -247,10 +247,51 @@ def test_sample_binding_migration_is_append_only_and_refuses_data_loss(tmp_path,
                 '70000000-0000-0000-0000-000000000001', CURRENT_TIMESTAMP
             )
         """), {"digest": "a" * 64, "fingerprint": "b" * 64})
+        connection.execute(text("""
+            INSERT INTO pedigree_sample_bindings (
+                id, case_id, pedigree_member_id, specimen_id, analysis_id, artifact_id,
+                source_artifact_sha256, sample_name, binding_status, binding_method,
+                review_reason, version, supersedes_binding_id, binding_fingerprint,
+                recorded_by, reviewed_by, reviewed_at, created_at
+            ) VALUES (
+                '10000000-0000-0000-0000-000000000002',
+                '20000000-0000-0000-0000-000000000001',
+                '30000000-0000-0000-0000-000000000001',
+                '40000000-0000-0000-0000-000000000001',
+                '50000000-0000-0000-0000-000000000001',
+                '60000000-0000-0000-0000-000000000001',
+                :digest, 'FAM-01', 'VERIFIED', 'LAB_SAMPLE_SHEET',
+                'Reviewed', 2, '10000000-0000-0000-0000-000000000001',
+                :fingerprint,
+                '70000000-0000-0000-0000-000000000001',
+                '70000000-0000-0000-0000-000000000001', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            )
+        """), {"digest": "a" * 64, "fingerprint": "c" * 64})
+        with pytest.raises(Exception):
+            connection.execute(text("""
+                INSERT INTO pedigree_sample_bindings (
+                    id, case_id, pedigree_member_id, specimen_id, analysis_id, artifact_id,
+                    source_artifact_sha256, sample_name, binding_status, binding_method,
+                    review_reason, version, supersedes_binding_id, binding_fingerprint,
+                    recorded_by, reviewed_by, reviewed_at, created_at
+                ) VALUES (
+                    '10000000-0000-0000-0000-000000000003',
+                    '20000000-0000-0000-0000-000000000001',
+                    '30000000-0000-0000-0000-000000000001',
+                    '40000000-0000-0000-0000-000000000001',
+                    '50000000-0000-0000-0000-000000000001',
+                    '60000000-0000-0000-0000-000000000001',
+                    :digest, 'FAM-01', 'VERIFIED', 'LAB_SAMPLE_SHEET',
+                    'Conflicting review', 2, '10000000-0000-0000-0000-000000000001',
+                    :fingerprint,
+                    '70000000-0000-0000-0000-000000000001',
+                    '70000000-0000-0000-0000-000000000001', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                )
+            """), {"digest": "a" * 64, "fingerprint": "d" * 64})
         with pytest.raises(Exception):
             connection.execute(text(
                 "UPDATE pedigree_sample_bindings SET binding_status='VERIFIED' "
-                "WHERE sample_name='FAM-01'"
+                "WHERE id='10000000-0000-0000-0000-000000000001'"
             ))
     with pytest.raises(RuntimeError, match="Refusing to downgrade"):
         command.downgrade(config, "0062_phenotype_observation_amendments")
