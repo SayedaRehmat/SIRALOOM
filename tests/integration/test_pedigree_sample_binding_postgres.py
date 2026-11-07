@@ -10,8 +10,9 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.infrastructure.db.models import (
-    Analysis, Artifact, Case, Organization, PedigreeMember, PedigreeSampleBinding,
-    PedigreeSampleIdentityEvidence, Specimen, User,
+    Analysis, Artifact, Case, FamilyGenotypeMatrixSnapshot, Organization,
+    PedigreeMember, PedigreeSampleBinding, PedigreeSampleIdentityEvidence,
+    Specimen, User, Variant,
 )
 
 
@@ -272,4 +273,85 @@ def test_postgres_binding_and_identity_evidence_successor_races_have_one_winner(
         # These records are intentionally append-only. The PostgreSQL integration
         # workflow provisions a disposable database for this test run; deleting
         # immutable identity evidence/bindings would invalidate the contract under test.
+        engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_family_genotype_matrix_snapshot_is_immutable_and_fingerprint_unique():
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    organization_id, user_id, case_id, analysis_id, variant_id = (
+        uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    snapshot_id = uuid4()
+    try:
+        with Session(engine) as db:
+            db.add(Organization(
+                id=organization_id, name=f"matrix-snapshot-{organization_id}",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@example.test",
+                display_name="Matrix Snapshot Integration", role="lab_director",
+                status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"FM-{case_id}", status="ACTIVE",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            db.add(Analysis(
+                id=analysis_id, case_id=case_id,
+                analysis_type="VARIANT_INTERPRETATION", workflow_id="variant-v1",
+                workflow_version="1", status="REQUIRES_REVIEW",
+                reference_build="GRCh38", configuration={}, created_by=user_id,
+            ))
+            db.add(Variant(
+                id=variant_id, genome_build="GRCh38", chromosome="1", position=30,
+                reference="G", alternate="A", normalization_status="NORMALIZED",
+                canonical_key=f"GRCh38:1:30:G:A:{variant_id}", identifiers={},
+            ))
+            db.flush()
+            snapshot = FamilyGenotypeMatrixSnapshot(
+                id=snapshot_id, case_id=case_id, analysis_id=analysis_id,
+                variant_id=variant_id, schema_version=1,
+                matrix_fingerprint="f" * 64,
+                matrix_payload={"schema_version": 1, "matrix_fingerprint": "f" * 64},
+                created_by=user_id,
+            )
+            db.add(snapshot)
+            db.flush()
+
+            with pytest.raises(DBAPIError):
+                with db.begin_nested():
+                    db.execute(
+                        update(FamilyGenotypeMatrixSnapshot)
+                        .where(FamilyGenotypeMatrixSnapshot.id == snapshot_id)
+                        .values(matrix_payload={"tampered": True})
+                    )
+
+            with pytest.raises(DBAPIError):
+                with db.begin_nested():
+                    db.delete(snapshot)
+                    db.flush()
+
+            duplicate = FamilyGenotypeMatrixSnapshot(
+                id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                variant_id=variant_id, schema_version=1,
+                matrix_fingerprint="f" * 64,
+                matrix_payload={"schema_version": 1, "matrix_fingerprint": "f" * 64},
+                created_by=user_id,
+            )
+            with pytest.raises(IntegrityError):
+                with db.begin_nested():
+                    db.add(duplicate)
+                    db.flush()
+    finally:
         engine.dispose()
