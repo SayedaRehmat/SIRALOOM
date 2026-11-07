@@ -401,10 +401,29 @@ def complete_tool_execution(
     }
     if any(payload.get(key) != value for key, value in expected_identity.items()):
         raise ExecutionPersistenceError("Provenance tool identity does not match the registered execution.")
+    if payload.get("operation") != row.operation:
+        raise ExecutionPersistenceError("Provenance operation does not match the registered execution.")
+    expected_workflow = row.request_snapshot.get("workflow_id")
+    if expected_workflow is not None and payload.get("workflow_id") != expected_workflow:
+        raise ExecutionPersistenceError("Provenance workflow identity does not match the registered request.")
+    if payload.get("runtime_image_digest") != row.environment_snapshot.get("runtime_image_digest"):
+        raise ExecutionPersistenceError("Provenance runtime image does not match the registered environment.")
+    _require_sha256(payload.get("environment_sha256"), "Environment SHA-256")
     if payload.get("exit_code") != 0:
         raise ExecutionPersistenceError("A successful execution record requires process exit code zero.")
     _require_sha256(payload.get("stdout_sha256"), "stdout SHA-256")
     _require_sha256(payload.get("stderr_sha256"), "stderr SHA-256")
+    provenance_inputs = payload.get("input_sha256", [])
+    actual_inputs = {
+        item.get("name"): str(item.get("sha256", "")).lower()
+        for item in provenance_inputs if isinstance(item, dict)
+    }
+    expected_inputs = {
+        item["name"]: str(item["sha256"]).lower()
+        for item in row.input_manifest
+    }
+    if actual_inputs != expected_inputs:
+        raise ExecutionPersistenceError("Provenance input checksums do not match the registered input manifest.")
 
     safe_outputs = _json_safe(output_manifest)
     if not isinstance(safe_outputs, list):
