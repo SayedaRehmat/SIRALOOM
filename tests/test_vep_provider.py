@@ -535,10 +535,10 @@ def test_vep_execution_requests_and_records_versioned_transcript_annotations(
     assert command[command.index("--fasta") + 1] == context["reference_package"]["fasta_path"]
     assert result.metadata["annotation_options"] == [
         option for option in (
-            "--offline", "--cache", "--format", "--json", "--check_ref",
+            "--offline", "--cache", "--format", "vcf", "--json", "--check_ref",
             "--hgvs", "--hgvsg", "--canonical", "--symbol",
             "--transcript_version", "--mane",
-        ) if option in expected_options or option in {"--offline", "--cache", "--format", "--json"}
+        ) if option in expected_options or option in {"--offline", "--cache", "--format", "vcf", "--json"}
     ]
     assert result.payload[0]["allele_string"] == "A/G"
     assert result.metadata["tool_execution_provenance"]["tool_version"] == "115.2"
