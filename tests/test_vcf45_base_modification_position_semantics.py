@@ -80,9 +80,13 @@ def test_number_m_phased_duplicate_alleles_keep_distinct_slots():
 
 
 def test_number_m_missing_and_symbolic_gt_alleles_add_no_slots():
+    expected_reference_slots = ((0, 0, "+"), (0, 1, "-"))
     assert genotype_base_modification_slots(
-        "./1", "CGA", ("<*>",), "C"
-    ) == ((0, 0, "+"), (0, 1, "-"))
+        "./0", "CGA", (), "C"
+    ) == expected_reference_slots
+    assert genotype_base_modification_slots(
+        "0/1", "CGA", ("<*>",), "C"
+    ) == expected_reference_slots
 
 
 def test_number_m_N_slots_preserve_positive_then_negative_within_gt_order():
