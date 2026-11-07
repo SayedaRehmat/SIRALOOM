@@ -127,8 +127,8 @@ def test_vcf45_breakend_mates_require_identical_sample_psl_and_pso(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
         "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t5\\tbnd1\\tA\\tA]2:10]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2\\tGT:PSL:PSO\\t0|1:set,set:.,3\\n"
-        "2\\t10\\tbnd2\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1\\tGT:PSL:PSO\\t0|1:set,set:.,4\\n",
+        "1\\t5\\tbnd1\\tA\\tA]2:10]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2\\tGT:PSL:PSO\\t0|1:set,set:3,3\\n"
+        "2\\t10\\tbnd2\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1\\tGT:PSL:PSO\\t0|1:set,set:3,4\\n",
         encoding="utf-8",
     )
     with pytest.raises(StrictVCFValidationError) as exc:
@@ -146,8 +146,8 @@ def test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
         "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t5\\tbnd1\\tA\\tA]2:10]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2\\tGT:PSL:PSO\\t0|1:set,set:.,3\\n"
-        "2\\t10\\tbnd2\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1\\tGT:PSL:PSO\\t0|1:set,set:.,3\\n",
+        "1\\t5\\tbnd1\\tA\\tA]2:10]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2\\tGT:PSL:PSO\\t0|1:set,set:3,3\\n"
+        "2\\t10\\tbnd2\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1\\tGT:PSL:PSO\\t0|1:set,set:3,3\\n",
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 2
