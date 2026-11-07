@@ -8,7 +8,9 @@ from backend.app.domain.vcf_validation import (
 )
 
 
-def _write(path: Path, *, format_keys: str, sample: str) -> None:
+def _write(
+    path: Path, *, format_keys: str, sample: str, version: str = "VCFv4.5"
+) -> None:
     path.write_text(
         f"##fileformat={version}\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
