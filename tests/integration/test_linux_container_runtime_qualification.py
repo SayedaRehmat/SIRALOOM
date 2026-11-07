@@ -151,17 +151,28 @@ def test_real_bcftools_execution_and_output_provenance(tmp_path):
     workspace = _workspace(tmp_path)
     source = tmp_path / "sample.vcf"
     source.write_text(
-        "##fileformat=VCFv4.2\n##contig=<ID=chr1,length=1000>\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "chr1\t10\t.\tA\tG\t.\tPASS\t.\n",
+        "##fileformat=VCFv4.2\\n##contig=<ID=chr1,length=1000>\\n"
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
+        "chr1\\t10\\t.\\tA\\tAA\\t.\\tPASS\\t.\\n",
         encoding="utf-8",
     )
+    reference = tmp_path / "GRCh38"
+    reference.mkdir()
+    fasta = reference / "GRCh38.fa"
+    fasta.write_text(">chr1\\n" + ("A" * 1000) + "\\n", encoding="utf-8")
+    (reference / "GRCh38.fa.fai").write_text("chr1\\t1000\\t6\\t1000\\t1001\\n", encoding="utf-8")
     output = workspace / "normalized.vcf"
     request = _request(
-        environment, workspace, ("view", "-Ov", "-o", str(output), str(source)),
-        operation="convert",
+        environment, workspace,
+        ("norm", "-f", str(fasta), "-m", "-any", "-Ov", "-o", str(output), str(source)),
+        operation="normalize",
         inputs=(InputArtifact("sample-vcf", str(source), sha256_file(source)),),
-        outputs=(OutputArtifact("bcftools-output", str(output)),),
+        outputs=(OutputArtifact("bcftools-normalized-vcf", str(output)),),
+        resources=(ScientificResourceBinding(
+            "grch38-reference", "fixture-grch38-v1",
+            __import__("backend.app.domain.tool_execution", fromlist=["sha256_resource_path"]).sha256_resource_path(reference),
+            assembly="GRCh38", path=str(reference),
+        ),),
     )
     result = executor.execute(bcftools, request)
     assert result.provenance.exit_code == 0
