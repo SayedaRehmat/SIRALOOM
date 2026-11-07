@@ -77,7 +77,7 @@ def test_local_pl_projection_preserves_missing_value_positions(tmp_path: Path):
     valid = tmp_path / "local-pl-missing-position-valid.vcf"
     _write_local_likelihood_vcf(
         valid,
-        gt="0/2",
+        gt="0/0",
         laa="2",
         standard_values="0,1,2,.,4,5",
         local_values="0,.,5",
