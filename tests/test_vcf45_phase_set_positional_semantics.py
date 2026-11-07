@@ -411,7 +411,7 @@ def test_vcf45_cipos_interval_must_span_zero(
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
+    assert exc.value.code == "VCF_BREAKEND_CIPOS_INVALID"
 
 def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
     tmp_path: Path,
@@ -490,13 +490,13 @@ def test_vcf45_pso_ordinal_cannot_be_reused_by_distinct_variant_events(
 ):
     path = tmp_path / "pso-duplicate-ordinal-across-events.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n"
-        "1\\t20\\tsnv2\\tG\\tT\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,set:.,2\n"
+        "1\t20\tsnv2\tG\tT\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,set:.,2\n",
         encoding="utf-8",
     )
 
@@ -511,13 +511,13 @@ def test_vcf45_pso_order_is_not_inferred_from_vcf_coordinate_order(
 ):
     path = tmp_path / "pso-derivative-order-differs-from-coordinate-order.vcf"
     path.write_text(
-        "##fileformat=VCFv4.5\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
-        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,4\\n"
-        "1\\t20\\tsnv2\\tG\\tT\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:.,set:.,2\\n",
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,set:.,4\n"
+        "1\t20\tsnv2\tG\tT\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,set:.,2\n",
         encoding="utf-8",
     )
 
