@@ -18,7 +18,7 @@ def normalize_annotation_payload(provider_id: str, raw: dict[str, Any]) -> dict[
         from backend.app.adapters.annotation.genebe_normalizer import normalize_gene_be_variant
         return normalize_gene_be_variant(raw)
     if provider == "VEP":
-        transcript_consequences = _object_list(raw, "consequences")
+        transcript_consequences = _object_list(raw, "transcript_consequences" if raw.get("transcript_consequences") is not None else "consequences" if raw.get("consequences") is not None else "hgvs_consequences")
         intergenic = _object_list(raw, "intergenic_consequences")
         regulatory = _object_list(raw, "regulatory_feature_consequences")
         motif = _object_list(raw, "motif_feature_consequences")
