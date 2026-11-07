@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLanguage } from "../lib/i18n";
 
 type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
@@ -61,6 +62,7 @@ function toIso8601Duration(value: string, unit: string): string {
 
 
 export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
+  const { language } = useLanguage();
   const [rows, setRows] = useState<PhenotypeRow[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [termQuery, setTermQuery] = useState("");
@@ -146,6 +148,12 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
       window.clearTimeout(handle);
     };
   }, [apiFetch, caseId, termQuery]);
+
+  const timelineRows = useMemo(() => [...rows].sort((left, right) => {
+    const leftTime = left.observed_at ? new Date(left.observed_at).getTime() : Number.MAX_SAFE_INTEGER;
+    const rightTime = right.observed_at ? new Date(right.observed_at).getTime() : Number.MAX_SAFE_INTEGER;
+    return leftTime - rightTime;
+  }), [rows]);
 
   const selectedMember = useMemo(
     () => members.find(member => member.id === subjectMemberId),
@@ -486,6 +494,44 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
           <button type="button" className="secondary" onClick={resetForm} disabled={saving}>Clear form</button>
           <button type="button" className="secondary" onClick={() => void refresh()} disabled={loading}>{loading ? "Refreshing…" : "Refresh observations"}</button>
         </div>
+      </div>
+
+      <div className="clinical-card">
+        <h4>{t("phenotype.timelineTitle")}</h4>
+        <p className="quiet">{t("phenotype.timelineDescription")}</p>
+        {timelineRows.length === 0 ? <p className="quiet">{t("phenotype.noTimeline")}</p> : (
+          <ol className="phenotype-timeline" aria-label={t("phenotype.timelineTitle")}>
+            {timelineRows.map((row) => {
+              const member = members.find(item => item.id === row.subject_member_id);
+              const attributes = row.clinical_attributes ?? {};
+              const sourceReference = row.evidence?.source_reference ?? row.evidence?.source_document_id ?? null;
+              const observedAt = row.observed_at
+                ? new Date(row.observed_at).toLocaleString(language === "ar" ? "ar" : "en")
+                : t("phenotype.timelineUnknownTime");
+              const onsetAge = attributes.onset_age_iso8601 ?? row.onset ?? "—";
+              const assessmentAge = attributes.age_at_assessment_iso8601 ?? attributes.age_at_assessment ?? "—";
+              const course = attributes.clinical_course_hpo_id ?? attributes.temporal_pattern ?? "—";
+              return (
+                <li className="phenotype-timeline-item" key={row.phenotype_id}>
+                  <div className="phenotype-timeline-marker" aria-hidden="true" />
+                  <div className="phenotype-timeline-content">
+                    <div className="panel-head">
+                      <strong>{row.canonical_hpo_id || row.hpo_id} · {row.label || row.ontology_resolution?.primary_term?.label || "Unresolved term"}</strong>
+                      <span className="badge neutral">{row.phenotype_status}</span>
+                    </div>
+                    <small>{member?.member_identifier ?? "Proband / primary patient"} · {t("phenotype.observedAt")}: {observedAt}</small>
+                    <div className="context-row"><span>{t("phenotype.onsetAge")}</span><strong>{onsetAge}</strong></div>
+                    <div className="context-row"><span>{t("phenotype.ageAtAssessment")}</span><strong>{assessmentAge}</strong></div>
+                    <div className="context-row"><span>{t("phenotype.course")}</span><strong>{course}</strong></div>
+                    {row.severity && <div className="context-row"><span>{t("review.severity")}</span><strong>{row.severity}</strong></div>}
+                    {sourceReference && <div className="context-row"><span>{t("phenotype.sourceReference")}</span><strong>{String(sourceReference)}</strong></div>}
+                    <small>{row.record_lifecycle_status ?? "ACTIVE"} · {row.source ?? "SOURCE_NOT_RECORDED"}</small>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </div>
 
       <div className="clinical-card">
