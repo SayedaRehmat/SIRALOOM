@@ -220,9 +220,10 @@
       "source_line": 174,
       "source_text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$.",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900037"
+        "VCF-REQ-900037",
+        "VCF-REQ-900167"
       ],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": []
     },
     {
@@ -267,13 +268,15 @@
       "source_line": 258,
       "source_text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})",
       "derived_candidate_requirement_ids": [
-        "VCF-REQ-900048",
         "VCF-REQ-900049",
         "VCF-REQ-900050",
-        "VCF-REQ-900051"
+        "VCF-REQ-900051",
+        "VCF-REQ-900084"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": []
+      "context_source_lines": [
+        419
+      ]
     },
     {
       "source_candidate_id": "VCF45-CAND-025",
@@ -470,15 +473,10 @@
       "derived_candidate_requirement_ids": [
         "VCF-REQ-900074",
         "VCF-REQ-900142",
-        "VCF-REQ-900143",
-        "VCF-REQ-900153",
-        "VCF-REQ-900154",
-        "VCF-REQ-900155"
+        "VCF-REQ-900143"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
-      "context_source_lines": [
-        419
-      ]
+      "context_source_lines": []
     },
     {
       "source_candidate_id": "VCF45-CAND-042",
@@ -495,16 +493,16 @@
       "source_line": 416,
       "source_text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}.",
       "derived_candidate_requirement_ids": [
+        "VCF-REQ-900049",
+        "VCF-REQ-900050",
+        "VCF-REQ-900051",
         "VCF-REQ-900076",
         "VCF-REQ-900077",
         "VCF-REQ-900078",
         "VCF-REQ-900079",
         "VCF-REQ-900080",
         "VCF-REQ-900081",
-        "VCF-REQ-900144",
-        "VCF-REQ-900153",
-        "VCF-REQ-900154",
-        "VCF-REQ-900155"
+        "VCF-REQ-900144"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -526,11 +524,11 @@
       "source_line": 418,
       "source_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
       "derived_candidate_requirement_ids": [
+        "VCF-REQ-900049",
+        "VCF-REQ-900050",
+        "VCF-REQ-900051",
         "VCF-REQ-900083",
-        "VCF-REQ-900084",
-        "VCF-REQ-900153",
-        "VCF-REQ-900154",
-        "VCF-REQ-900155"
+        "VCF-REQ-900084"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
@@ -679,7 +677,8 @@
         "VCF-REQ-900134",
         "VCF-REQ-900135",
         "VCF-REQ-900136",
-        "VCF-REQ-900137"
+        "VCF-REQ-900137",
+        "VCF-REQ-900168"
       ],
       "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
