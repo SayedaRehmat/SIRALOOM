@@ -2961,16 +2961,6 @@ def validate_vcf_strict(
             )
 
         mate_alt_index = reciprocal_alt_indexes[0]
-        if fileformat in {"VCFv4.4", "VCFv4.5"}:
-            # The two reciprocal BND records describe one breakpoint event and
-            # are required by the specification to share one PSO ordinal.
-            # Traversal observations store the global, one-based GT allele
-            # index. Convert the zero-based ALT offsets before recording the
-            # reciprocal endpoint pair so both representations agree.
-            reciprocal_breakend_phase_endpoints.add(frozenset((
-                (source_record["line_no"], source_alt_index + 1),
-                (mate["line_no"], mate_alt_index + 1),
-            )))
         unresolved_ends = []
         if source_record["cipos_by_alt"].get(source_alt_index) is None:
             unresolved_ends.append("source")
@@ -2995,30 +2985,42 @@ def validate_vcf_strict(
                 mate_sample = mate_vectors.get(sample_name, {})
                 source_allele_number = str(source_alt_index + 1)
                 mate_allele_number = str(mate_alt_index + 1)
+                source_psl = source_sample.get("psl", [])
+                source_pso = source_sample.get("pso", [])
+                mate_psl = mate_sample.get("psl", [])
+                mate_pso = mate_sample.get("pso", [])
+                # The paired BND records are two representations of one
+                # adjacency. Preserve positional correspondences for every
+                # matching PSL/PSO entry, including reference GT alleles
+                # carrying a phase-set name and ordinal.
+                for position in range(min(len(source_psl), len(source_pso), len(mate_psl), len(mate_pso))):
+                    if (
+                        source_psl[position] == mate_psl[position]
+                        and source_pso[position] == mate_pso[position]
+                        and source_psl[position] not in {"", "."}
+                        and source_pso[position] not in {"", "."}
+                    ):
+                        try:
+                            source_number = int(source_sample.get("alleles", [])[position])
+                            mate_number = int(mate_sample.get("alleles", [])[position])
+                        except (IndexError, TypeError, ValueError):
+                            continue
+                        reciprocal_breakend_phase_endpoints.add(frozenset((
+                            (source_record["line_no"], source_number),
+                            (mate["line_no"], mate_number),
+                        )))
                 # GT positions encode the ordered chromosome copies. Preserve
                 # that order: sorting would conceal PSL/PSO swaps between
                 # haplotypes in polyploid or repeated-allele genotypes.
                 source_signature = [
-                    (
-                        source_sample.get("psl", [])[position]
-                        if position < len(source_sample.get("psl", []))
-                        else ".",
-                        source_sample.get("pso", [])[position]
-                        if position < len(source_sample.get("pso", []))
-                        else ".",
-                    )
+                    (source_psl[position] if position < len(source_psl) else ".",
+                     source_pso[position] if position < len(source_pso) else ".")
                     for position, allele in enumerate(source_sample.get("alleles", []))
                     if allele == source_allele_number
                 ]
                 mate_signature = [
-                    (
-                        mate_sample.get("psl", [])[position]
-                        if position < len(mate_sample.get("psl", []))
-                        else ".",
-                        mate_sample.get("pso", [])[position]
-                        if position < len(mate_sample.get("pso", []))
-                        else ".",
-                    )
+                    (mate_psl[position] if position < len(mate_psl) else ".",
+                     mate_pso[position] if position < len(mate_pso) else ".")
                     for position, allele in enumerate(mate_sample.get("alleles", []))
                     if allele == mate_allele_number
                 ]
@@ -3028,45 +3030,57 @@ def validate_vcf_strict(
                         code="VCF_BREAKEND_PHASE_SET_MISMATCH",
                     )
     phase_set_traversal_orders: list[dict[str, object]] = []
+    phase_set_traversal_warnings: list[dict[str, object]] = []
     if fileformat in {"VCFv4.4", "VCFv4.5"}:
         for (sample_name, phase_set), observations in phase_set_observations.items():
             by_ordinal: dict[int, list[dict[str, object]]] = {}
             for observation in observations:
                 raw_ordinal = observation["pso"]
-                # PSO orders variant alleles encountered on the derivative
-                # chromosome; reference GT alleles are not traversal events.
-                allele_index = observation["allele_index"]
-                if raw_ordinal in {"", "."} or allele_index is None or int(allele_index) == 0:
+                # Preserve every populated PSL/PSO allele position, including
+                # reference GT alleles used by the normative tandem-duplication
+                # example. PSO is an ordering annotation, not an ALT-only field.
+                if raw_ordinal in {"", "."}:
                     continue
                 ordinal = int(str(raw_ordinal))
                 by_ordinal.setdefault(ordinal, []).append(observation)
-            ordered_occurrences = []
+            ordered_events = []
+            unresolved_ordinal_tie_count = 0
             for ordinal, ordinal_observations in sorted(by_ordinal.items()):
-                lines = {int(item["line_number"]) for item in ordinal_observations}
-                if len(lines) > 1:
-                    endpoints = {
-                        (int(item["line_number"]), int(item["allele_index"]))
-                        for item in ordinal_observations
-                        if item["allele_index"] is not None
-                    }
-                    matching_reciprocal_pairs = {
-                        frozenset((endpoint, other))
-                        for endpoint in endpoints
-                        for other in endpoints
-                        if endpoint != other
-                        and frozenset((endpoint, other)) in reciprocal_breakend_phase_endpoints
-                    }
-                    if (
-                        len(matching_reciprocal_pairs) != 1
-                        or endpoints != set(next(iter(matching_reciprocal_pairs), ()))
-                    ):
-                        first = ordinal_observations[0]
-                        raise StrictVCFValidationError(
-                            f"FORMAT/PSO ordinal {ordinal} is reused by distinct variant records in sample {sample_name!r}, phase set {phase_set!r}; each ordinal must identify one traversal event (reciprocal BND records are one event) at line {first['line_number']}",
-                            code="VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE",
-                        )
-                ordered_occurrences.append({
+                endpoints = {
+                    (int(item["line_number"]), int(item["allele_index"]))
+                    for item in ordinal_observations
+                    if item["allele_index"] is not None
+                }
+                matching_reciprocal_pairs = {
+                    frozenset((endpoint, other))
+                    for endpoint in endpoints
+                    for other in endpoints
+                    if endpoint != other
+                    and frozenset((endpoint, other)) in reciprocal_breakend_phase_endpoints
+                }
+                is_reciprocal_pair = (
+                    len(matching_reciprocal_pairs) == 1
+                    and endpoints == set(next(iter(matching_reciprocal_pairs), ()))
+                )
+                has_ordinal_tie = len(endpoints) > 1 and not is_reciprocal_pair
+                if has_ordinal_tie:
+                    unresolved_ordinal_tie_count += 1
+                    phase_set_traversal_warnings.append({
+                        "code": "VCF_PHASE_SET_PSO_ORDINAL_TIE_UNRESOLVED",
+                        "sample": sample_name,
+                        "phase_set": phase_set,
+                        "ordinal": ordinal,
+                        "line_numbers": sorted({int(item["line_number"]) for item in ordinal_observations}),
+                    })
+                ordered_events.append({
                     "ordinal": ordinal,
+                    "event_kind": (
+                        "RECIPROCAL_BREAKEND_EVENT"
+                        if is_reciprocal_pair
+                        else "ORDINAL_TIE_UNRESOLVED"
+                        if has_ordinal_tie
+                        else "SINGLE_TRAVERSAL_EVENT"
+                    ),
                     "occurrences": [
                         {
                             "record_index": item["record_index"],
@@ -3074,17 +3088,24 @@ def validate_vcf_strict(
                             "line_number": item["line_number"],
                             "chrom": item["chrom"],
                             "pos": item["pos"],
+                            "allele_position": item["allele_position"],
                             "allele_index": item["allele_index"],
                             "allele": item["allele"],
                         }
                         for item in ordinal_observations
                     ],
                 })
-            if ordered_occurrences:
+            if ordered_events:
                 phase_set_traversal_orders.append({
                     "sample": sample_name,
                     "phase_set": phase_set,
-                    "ordered_events": ordered_occurrences,
+                    "traversal_status": (
+                        "UNRESOLVED_ORDINAL_TIES"
+                        if unresolved_ordinal_tie_count
+                        else "ORDERED"
+                    ),
+                    "unresolved_ordinal_tie_count": unresolved_ordinal_tie_count,
+                    "ordered_events": ordered_events,
                 })
 
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
@@ -3124,6 +3145,8 @@ def validate_vcf_strict(
         "symbolic_records": symbolic,
         "breakend_records": breakends,
         "phase_set_traversal_orders": phase_set_traversal_orders,
+        "phase_set_traversal_warnings": phase_set_traversal_warnings,
+        "phase_set_traversal_unresolved_count": len(phase_set_traversal_warnings),
         "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
         "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
