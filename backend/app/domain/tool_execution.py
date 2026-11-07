@@ -159,6 +159,20 @@ class ToolExecutionRequest:
             resource.validate()
         if any(not str(key).replace("_", "").isalnum() for key in self.environment):
             raise ToolExecutionContractError("Environment variable names must be simple identifiers.")
+        protected_environment = {
+            "PATH", "HOME", "IFS", "PYTHONPATH", "PYTHONHOME",
+            "LD_PRELOAD", "LD_LIBRARY_PATH", "BASH_ENV", "ENV",
+        }
+        overridden = sorted(
+            str(key) for key in self.environment
+            if str(key).upper() in protected_environment
+            or str(key).upper().startswith("LD_")
+        )
+        if overridden:
+            raise ToolExecutionContractError(
+                "Execution request cannot override protected variable(s): "
+                + ", ".join(overridden)
+            )
         if any("\x00" in str(value) for value in self.environment.values()):
             raise ToolExecutionContractError("Environment values must not contain NUL bytes.")
 
