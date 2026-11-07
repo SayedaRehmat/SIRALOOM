@@ -418,3 +418,53 @@ def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch)
         for sample in result["samples"]
     }
     assert observed == {"PROBAND_ASSAY_1": "0/1", "PROBAND_ASSAY_2": "0/0"}
+
+
+def test_family_matrix_does_not_treat_other_alt_or_invalid_projection_as_called_genotype():
+    case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
+    sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "genotype": "0/2",
+            "normalized_genotype": "0/2",
+            "projected_genotype": None,
+            "projection_status": "CONTAINS_OTHER_ALT",
+            "selected_alt_dosage": 0,
+            "other_alt_dosage": 1,
+            "missing_allele_count": 0,
+        },
+    })
+    matrix = build_family_genotype_matrix(
+        case_id=case_id, variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    call = matrix["samples"][0]["calls"][0]
+    assert call["call_state"] == "OTHER_ALT_PRESENT"
+    assert call["projection_status"] == "CONTAINS_OTHER_ALT"
+    assert call["selected_alt_dosage"] == 0
+    assert call["other_alt_dosage"] == 1
+
+    invalid = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "genotype": "0/X",
+            "normalized_genotype": "0/X",
+            "projection_status": "INVALID_SOURCE_GT",
+        },
+    })
+    invalid_matrix = build_family_genotype_matrix(
+        case_id=case_id, variant_ids=[variant_id], samples=[invalid], relationships=[],
+    )
+    assert invalid_matrix["samples"][0]["calls"][0]["call_state"] == "INVALID_CALL"
+
+
+def test_family_matrix_rejects_inconsistent_missing_allele_count():
+    case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
+    sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+            "missing_allele_count": 1,
+        },
+    })
+    matrix = build_family_genotype_matrix(
+        case_id=case_id, variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    assert matrix["samples"][0]["calls"][0]["call_state"] == "INVALID_CALL"
