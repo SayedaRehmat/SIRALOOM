@@ -4898,7 +4898,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900055",
+      "requirement_id": "VCF-REQ-900054",
       "title": "VCF45-CAND-028 — Breakpoint assemblies for structural variations may use an external file",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -4990,7 +4990,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900056",
+      "requirement_id": "VCF-REQ-900055",
       "title": "VCF45-CAND-029 — A VCF header includes tags describing contigs referred to in the file.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5084,7 +5084,7 @@
       ]
     },
     {
-      "requirement_id": "VCF-REQ-900057",
+      "requirement_id": "VCF-REQ-900056",
       "title": "VCF45-CAND-029 — A BCF header includes tags describing contigs referred to in the file.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5178,7 +5178,7 @@
       ]
     },
     {
-      "requirement_id": "VCF-REQ-900058",
+      "requirement_id": "VCF-REQ-900057",
       "title": "VCF45-CAND-030 — A structured contig declaration includes ID.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5270,7 +5270,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900059",
+      "requirement_id": "VCF-REQ-900058",
       "title": "VCF45-CAND-030 — A structured contig declaration includes additional optional attributes.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5362,7 +5362,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900119",
+      "requirement_id": "VCF-REQ-900059",
       "title": "Source L322 — Contig names may use printable ASCII characters in the stated [!-~] range, ",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5454,7 +5454,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900120",
+      "requirement_id": "VCF-REQ-900060",
       "title": "Source L322 — Contig names contain any punctuation characters explicitly excluded by the ",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5546,7 +5546,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900121",
+      "requirement_id": "VCF-REQ-900061",
       "title": "Source L322 — Contig names begin with * or =.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5638,7 +5638,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900063",
+      "requirement_id": "VCF-REQ-900062",
       "title": "VCF45-CAND-032 — The contig names must not use a reserved symbolic allele name.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5730,7 +5730,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900064",
+      "requirement_id": "VCF-REQ-900063",
       "title": "VCF45-CAND-033 — All records for a given CHROM value form one contiguous block.",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -5822,7 +5822,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900065",
+      "requirement_id": "VCF-REQ-900064",
       "title": "VCF45-CAND-034 — (String, no whitespace permitted, Required).",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -5914,7 +5914,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900066",
+      "requirement_id": "VCF-REQ-900065",
       "title": "VCF45-CAND-035 — (Integer, Required)",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -6006,7 +6006,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900067",
+      "requirement_id": "VCF-REQ-900066",
       "title": "VCF45-CAND-036 — If this is a dbSNP variant the rs number(s) should be used.",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -6098,7 +6098,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900068",
+      "requirement_id": "VCF-REQ-900067",
       "title": "VCF45-CAND-037 — No identifier should be present in more than one data record.",
       "requirement_domain": "FIXED_FIELDS",
       "source_class": "VCF_NORMATIVE",
@@ -6190,7 +6190,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900069",
+      "requirement_id": "VCF-REQ-900068",
       "title": "VCF45-CAND-038 — \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (cas",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -6282,7 +6282,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900122",
+      "requirement_id": "VCF-REQ-900069",
       "title": "Source L406 — For a simple insertion or deletion with an otherwise empty REF or ALT allel",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -6374,7 +6374,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900123",
+      "requirement_id": "VCF-REQ-900070",
       "title": "Source L406 — For a simple insertion or deletion at contig position 1, REF and ALT string",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -6466,7 +6466,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900124",
+      "requirement_id": "VCF-REQ-900071",
       "title": "Source L406 — For complex substitutions or variants in which all alleles have at least on",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -6558,7 +6558,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900073",
+      "requirement_id": "VCF-REQ-900072",
       "title": "VCF45-CAND-040 — If any ALT allele is symbolic, the padding base is required, except for ",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -6650,7 +6650,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900074",
+      "requirement_id": "VCF-REQ-900073",
       "title": "VCF45-CAND-040 — For a symbolic ALT allele, POS denotes the coordinate of the base preced",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_INFORMATIVE",
@@ -6742,7 +6742,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900075",
+      "requirement_id": "VCF-REQ-900074",
       "title": "VCF45-CAND-041 — Tools processing VCF files are not required to preserve case in the REF ",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -6834,7 +6834,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900076",
+      "requirement_id": "VCF-REQ-900075",
       "title": "VCF45-CAND-042 — If the reference sequence contains IUPAC ambiguity codes not allowed by ",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -6926,7 +6926,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900077",
+      "requirement_id": "VCF-REQ-900076",
       "title": "VCF45-CAND-043 — A sequence ALT allele is a non-empty string of A, C, G, T, or N, case-in",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7018,7 +7018,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900078",
+      "requirement_id": "VCF-REQ-900077",
       "title": "VCF45-CAND-043 — The * ALT allele represents an allele missing due to an overlapping dele",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7110,7 +7110,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900079",
+      "requirement_id": "VCF-REQ-900078",
       "title": "VCF45-CAND-043 — The . ALT value represents no variant.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7202,7 +7202,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900080",
+      "requirement_id": "VCF-REQ-900079",
       "title": "VCF45-CAND-043 — An angle-bracketed ID string is a permitted symbolic ALT allele.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7294,7 +7294,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900081",
+      "requirement_id": "VCF-REQ-900080",
       "title": "VCF45-CAND-043 — The <*> unspecified allele is a permitted ALT allele.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7386,7 +7386,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900082",
+      "requirement_id": "VCF-REQ-900081",
       "title": "VCF45-CAND-043 — A breakend replacement string is a permitted ALT allele.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7478,7 +7478,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900083",
+      "requirement_id": "VCF-REQ-900082",
       "title": "VCF45-CAND-044 — If there are no alternative alleles, then the MISSING value must be used",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7570,7 +7570,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900084",
+      "requirement_id": "VCF-REQ-900083",
       "title": "VCF45-CAND-045 — Tools processing VCF are not required to preserve allele-string case.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_INFORMATIVE",
@@ -7662,7 +7662,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900085",
+      "requirement_id": "VCF-REQ-900084",
       "title": "VCF45-CAND-045 — Allele IDs are case-sensitive.",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -7754,7 +7754,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900086",
+      "requirement_id": "VCF-REQ-900085",
       "title": "VCF45-CAND-046 — If unknown, the MISSING value must be specified. (Float)",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -7846,7 +7846,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900087",
+      "requirement_id": "VCF-REQ-900086",
       "title": "VCF45-CAND-047 — `0' is reserved and must not be used as a filter String.",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -7938,7 +7938,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900088",
+      "requirement_id": "VCF-REQ-900087",
       "title": "VCF45-CAND-048 — If filters have not been applied, then this field must be set to the MIS",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -8030,7 +8030,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900089",
+      "requirement_id": "VCF-REQ-900088",
       "title": "VCF45-CAND-049 — Each subfield consists of a short \\emph{key} with optional \\emph{values}",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_INFORMATIVE",
@@ -8122,7 +8122,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900125",
+      "requirement_id": "VCF-REQ-900089",
       "title": "Source L433 — INFO keys match the specified regular expression.",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -8214,7 +8214,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900126",
+      "requirement_id": "VCF-REQ-900090",
       "title": "Source L433 — The literal legacy INFO key 1000G is permitted as a special exception to th",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -8306,7 +8306,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900127",
+      "requirement_id": "VCF-REQ-900091",
       "title": "Source L435 — Arbitrary INFO keys are permitted, subject to the specification's other key",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -8398,7 +8398,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900128",
+      "requirement_id": "VCF-REQ-900092",
       "title": "Source L435 — Reserved INFO keys are optional; reservation alone does not make a key mand",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -8490,7 +8490,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900092",
+      "requirement_id": "VCF-REQ-900093",
       "title": "VCF45-CAND-052 — The exact format of each INFO key should be specified in the meta-inform",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -8582,7 +8582,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900093",
+      "requirement_id": "VCF-REQ-900094",
       "title": "VCF45-CAND-053 — Keys without corresponding values may be used to indicate group membersh",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -8674,7 +8674,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900129",
+      "requirement_id": "VCF-REQ-900095",
       "title": "Source L488 — When END is present, its value equals the maximum 1-based end reference pos",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -8768,7 +8768,7 @@
       ]
     },
     {
-      "requirement_id": "VCF-REQ-900095",
+      "requirement_id": "VCF-REQ-900096",
       "title": "VCF45-CAND-055 — These values should be described in the meta-information in the same way",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -8860,7 +8860,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900130",
+      "requirement_id": "VCF-REQ-900097",
       "title": "Source L845 — For the structural-variant INFO keys in the surrounding section, values use",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -8952,7 +8952,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900131",
+      "requirement_id": "VCF-REQ-900098",
       "title": "Source L845 — When per-allele values are present, a value is specified for every ALT alle",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -9044,7 +9044,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900098",
+      "requirement_id": "VCF-REQ-900099",
       "title": "VCF45-CAND-058 — \\textbf{Note}: In the special case of the complete insertion of a sequen",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -9136,7 +9136,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900099",
+      "requirement_id": "VCF-REQ-900100",
       "title": "VCF45-CAND-059 — Either one uses the short hand notation described previously (recommende",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -9228,7 +9228,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900132",
+      "requirement_id": "VCF-REQ-900101",
       "title": "Source L1889 — A <DEL> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defin",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -9320,7 +9320,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900133",
+      "requirement_id": "VCF-REQ-900102",
       "title": "Source L1889 — A <DUP> allele with SVCLAIM=D is treated as a <CNV> allele implicitly defin",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -9412,7 +9412,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900101",
+      "requirement_id": "VCF-REQ-900103",
       "title": "VCF45-CAND-061 — To eliminate genotype ambiguity, copy number ALT alleles should not be m",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -9504,7 +9504,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900134",
+      "requirement_id": "VCF-REQ-900104",
       "title": "Source L1901 — When a record contains only copy-number ALT alleles, GT=0 is equivalent to ",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_INFORMATIVE",
@@ -9596,7 +9596,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900135",
+      "requirement_id": "VCF-REQ-900105",
       "title": "Source L1901 — The GT=0 and <CNV> ALT with INFO CN=1 representations are treated identical",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -9688,7 +9688,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900136",
+      "requirement_id": "VCF-REQ-900106",
       "title": "Source L1903 — If only total copy number is known, represent the segment with a single <CN",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -9780,7 +9780,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900137",
+      "requirement_id": "VCF-REQ-900107",
       "title": "Source L1903 — If only total copy number is known, the single <CNV> ALT allele has a missi",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -9872,7 +9872,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900104",
+      "requirement_id": "VCF-REQ-900108",
       "title": "VCF45-CAND-064 — When the bounds of a copy number segment is not known precisely, this sh",
       "requirement_domain": "INFO",
       "source_class": "VCF_NORMATIVE",
@@ -9964,7 +9964,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900138",
+      "requirement_id": "VCF-REQ-900109",
       "title": "Source L1946 — When possible, phase the non-symbolic tandem-repeat records with their corr",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
@@ -10056,7 +10056,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900106",
+      "requirement_id": "VCF-REQ-900110",
       "title": "VCF45-CAND-066 — \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to t",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -10148,7 +10148,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900107",
+      "requirement_id": "VCF-REQ-900111",
       "title": "VCF45-CAND-067 — \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -10240,7 +10240,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900108",
+      "requirement_id": "VCF-REQ-900112",
       "title": "VCF45-CAND-068 — \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repe",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
@@ -10332,7 +10332,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900139",
+      "requirement_id": "VCF-REQ-900113",
       "title": "Source L1986 — When both <CNV:TR> and equivalent non-symbolic records are present, the <CN",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
@@ -10424,7 +10424,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900140",
+      "requirement_id": "VCF-REQ-900114",
       "title": "Source L1986 — The <CNV:TR> record is not required to encode the sequence exactly when equ",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_INFORMATIVE",
@@ -10516,7 +10516,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900141",
+      "requirement_id": "VCF-REQ-900115",
       "title": "Source L1988 — A caller that does not report allele-specific tandem repeats uses a single ",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -10608,7 +10608,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900142",
+      "requirement_id": "VCF-REQ-900116",
       "title": "Source L1988 — A caller that does not report allele-specific tandem repeats uses the missi",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
@@ -10700,7 +10700,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900143",
+      "requirement_id": "VCF-REQ-900117",
       "title": "Source L1989 — INFO and FORMAT CN fields should be present for <CNV:TR> records.",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -10792,7 +10792,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900144",
+      "requirement_id": "VCF-REQ-900118",
       "title": "Source L1989 — When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to ",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -10884,7 +10884,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900145",
+      "requirement_id": "VCF-REQ-900119",
       "title": "Source L1994 — STRs use RUS.",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -10976,7 +10976,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900146",
+      "requirement_id": "VCF-REQ-900120",
       "title": "Source L1994 — VNTRs use RUL.",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11068,7 +11068,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900147",
+      "requirement_id": "VCF-REQ-900121",
       "title": "Source L1995 — RUL is omitted when RUS is present; the parenthetical source text says RS a",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11162,7 +11162,7 @@
       ]
     },
     {
-      "requirement_id": "VCF-REQ-900117",
+      "requirement_id": "VCF-REQ-900122",
       "title": "VCF45-CAND-074 — Every <CNV:TR> record specifies RUS or RUL.",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_NORMATIVE",
@@ -11254,7 +11254,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900118",
+      "requirement_id": "VCF-REQ-900123",
       "title": "VCF45-CAND-075 — \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNT",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -11346,7 +11346,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900148",
+      "requirement_id": "VCF-REQ-900124",
       "title": "Source L846 — Per-allele values cover all ALT alleles",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11438,7 +11438,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900137",
+      "requirement_id": "VCF-REQ-900125",
       "title": "Multiple REF bases permitted",
       "requirement_domain": "REFERENCE",
       "source_class": "VCF_NORMATIVE",
@@ -11530,7 +11530,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900138",
+      "requirement_id": "VCF-REQ-900126",
       "title": "FILTER-like values exclude whitespace",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -11622,7 +11622,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900139",
+      "requirement_id": "VCF-REQ-900127",
       "title": "FILTER-like values exclude semicolons",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
@@ -11714,7 +11714,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900149",
+      "requirement_id": "VCF-REQ-900128",
       "title": "Recommended subtype CNV:TR",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11806,7 +11806,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900150",
+      "requirement_id": "VCF-REQ-900129",
       "title": "Recommended subtype DUP:TANDEM",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11898,7 +11898,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900151",
+      "requirement_id": "VCF-REQ-900130",
       "title": "Recommended subtype DEL:ME",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -11990,7 +11990,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900152",
+      "requirement_id": "VCF-REQ-900131",
       "title": "Recommended subtype INS:ME",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -12082,7 +12082,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900153",
+      "requirement_id": "VCF-REQ-900132",
       "title": "Implementation-defined tag naming conventions",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -12174,7 +12174,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900154",
+      "requirement_id": "VCF-REQ-900133",
       "title": "L suffix likelihood meaning",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
@@ -12266,7 +12266,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900155",
+      "requirement_id": "VCF-REQ-900134",
       "title": "Likelihood log10 representation",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
@@ -12358,7 +12358,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900156",
+      "requirement_id": "VCF-REQ-900135",
       "title": "Likelihood phred-scale companion",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
@@ -12450,7 +12450,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900157",
+      "requirement_id": "VCF-REQ-900136",
       "title": "P suffix probability meaning",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
@@ -12542,7 +12542,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900158",
+      "requirement_id": "VCF-REQ-900137",
       "title": "Q suffix quality meaning",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
@@ -12634,7 +12634,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900159",
+      "requirement_id": "VCF-REQ-900138",
       "title": "Q suffix model reference",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
@@ -12726,7 +12726,7 @@
       "open_questions": []
     },
     {
-      "requirement_id": "VCF-REQ-900160",
+      "requirement_id": "VCF-REQ-900139",
       "title": "QUAL site-level convention",
       "requirement_domain": "HEADER",
       "source_class": "VCF_INFORMATIVE",
