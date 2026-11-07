@@ -47,6 +47,7 @@ class ToolIdentity:
     qualification_status: str
     version_args: tuple[str, ...] = ("--version",)
     version_output_contains: str = ""
+    supported_operations: tuple[str, ...] = ("validate", "normalize", "annotate", "align", "call", "index", "convert", "benchmark")
 
     def validate(self) -> None:
         required = {
@@ -69,6 +70,8 @@ class ToolIdentity:
             raise ToolExecutionContractError("Tool version attestation arguments are required.")
         if not self.version_output_contains:
             raise ToolExecutionContractError("Expected version attestation text is required.")
+        if not self.supported_operations or any(not item.strip() for item in self.supported_operations):
+            raise ToolExecutionContractError("Tool profile must declare supported operations.")
 
 
 @dataclass(frozen=True)
@@ -115,8 +118,8 @@ class ToolExecutionRequest:
     def validate(self, profile: ToolIdentity) -> None:
         if not all((self.execution_id.strip(), self.organization_id.strip(), self.workflow_id.strip(), self.operation.strip())):
             raise ToolExecutionContractError("Execution, organization, workflow and operation identities are required.")
-        if self.operation not in {"validate", "normalize", "annotate", "align", "call", "index", "convert", "benchmark"}:
-            raise ToolExecutionContractError(f"Unsupported scientific tool operation: {self.operation!r}.")
+        if self.operation not in profile.supported_operations:
+            raise ToolExecutionContractError(f"Tool profile {profile.profile_id!r} does not support operation {self.operation!r}.")
         if not self.argv or any("\x00" in str(arg) for arg in self.argv):
             raise ToolExecutionContractError("Execution argv must be non-empty and contain no NUL bytes.")
         if not 1 <= int(self.timeout_seconds) <= 86400:
@@ -144,6 +147,8 @@ class ToolExecutionRequest:
             path = Path(item.path)
             if not path.is_absolute():
                 raise ToolExecutionContractError(f"Output artifact {item.name!r} path must be absolute.")
+            if path.is_symlink():
+                raise ToolExecutionContractError(f"Output artifact {item.name!r} cannot be a symlink.")
             parent = path.parent.resolve(strict=True)
             if not parent.is_relative_to(root):
                 raise ToolExecutionContractError(f"Output artifact {item.name!r} must be inside the execution workspace.")
@@ -198,11 +203,14 @@ class LocalProcessToolExecutor:
     def execute(self, profile: ToolIdentity, request: ToolExecutionRequest) -> ToolExecutionResult:
         profile.validate()
         request.validate(profile)
-        executable = Path(profile.executable).resolve(strict=True)
+        configured_executable = Path(profile.executable)
+        if configured_executable.is_symlink():
+            raise ToolExecutionContractError("Configured tool executable cannot be a symlink.")
+        executable = configured_executable.resolve(strict=True)
         if not executable.is_file():
             raise ToolExecutionContractError("Configured tool executable is not a regular file.")
         executable_digest = sha256_file(executable)
-        if executable_digest != profile.executable_sha256:
+        if executable_digest != profile.executable_sha256.lower():
             raise ToolExecutionContractError("Tool executable SHA-256 does not match the approved profile.")
 
         version_check = subprocess.run(
