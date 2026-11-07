@@ -303,8 +303,13 @@
       "source_candidate_id": "VCF45-CAND-027",
       "source_line": 272,
       "source_text": "The following subtypes are recommended:",
-      "derived_candidate_requirement_ids": [],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "derived_candidate_requirement_ids": [
+        "VCF-REQ-900149",
+        "VCF-REQ-900150",
+        "VCF-REQ-900151",
+        "VCF-REQ-900152"
+      ],
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         273,
         274,
@@ -618,8 +623,17 @@
       "source_candidate_id": "VCF45-CAND-056",
       "source_line": 825,
       "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
-      "derived_candidate_requirement_ids": [],
-      "decomposition_status": "SINGLE_RECORD_PROVISIONAL",
+      "derived_candidate_requirement_ids": [
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155",
+        "VCF-REQ-900156",
+        "VCF-REQ-900157",
+        "VCF-REQ-900158",
+        "VCF-REQ-900159",
+        "VCF-REQ-900160"
+      ],
+      "decomposition_status": "SPLIT_OR_CONTEXT_EXPANDED_PROVISIONAL",
       "context_source_lines": [
         827,
         828,
