@@ -2,6 +2,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
+from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
@@ -612,8 +613,10 @@ def test_assessment_api_rejects_mitochondrial_model_outside_trial_scope(monkeypa
         lambda *_args, **_kwargs: analysis,
     )
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
-    with pytest.raises(Exception, match="Mitochondrial interpretation is outside"):
+    with pytest.raises(HTTPException) as exc:
         pedigree.assess_inheritance(
             analysis_id, variant_id, AssessmentInput(models=["MITOCHONDRIAL"]),
             SimpleNamespace(), SimpleNamespace(user_id=uuid4()),
         )
+    assert exc.value.status_code == 400
+    assert "outside the qualified SNV/INDEL trial scope" in exc.value.detail
