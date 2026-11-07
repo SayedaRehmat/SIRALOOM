@@ -322,6 +322,10 @@ def get_sample_binding_context(
             artifact is not None
             and artifact.case_id == case_id
             and artifact.artifact_type in {"VCF", "SOURCE_VCF"}
+            and artifact.validation_status in {"VALID", "VALIDATED"}
+            and isinstance(artifact.sha256, str)
+            and len(artifact.sha256) == 64
+            and all(character in "0123456789abcdefABCDEF" for character in artifact.sha256)
         )
         rows.append({
             "analysis_id": str(analysis.id),
@@ -368,6 +372,15 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
         raise HTTPException(404, "Source VCF artifact not found in this case")
     if artifact.specimen_id is not None and artifact.specimen_id != specimen.id:
         raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
+    if (
+        artifact.validation_status not in {"VALID", "VALIDATED"}
+        or not isinstance(artifact.sha256, str)
+        or len(artifact.sha256) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in artifact.sha256)
+    ):
+        raise HTTPException(409, "Source VCF must be validated and have a SHA-256 digest before identity binding")
+    if not body.sample_name.strip() or not body.binding_method.strip():
+        raise HTTPException(422, "Sample name and binding method must be non-empty")
     configured_sample = (analysis.configuration or {}).get("vcf_sample_name")
     if not configured_sample or configured_sample != body.sample_name.strip():
         raise HTTPException(409, "Sample name must exactly match the analysis-selected VCF sample")
@@ -447,6 +460,15 @@ def supersede_sample_binding(
         raise HTTPException(404, "Source VCF artifact not found in this case")
     if artifact.specimen_id is not None and artifact.specimen_id != specimen.id:
         raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
+    if (
+        artifact.validation_status not in {"VALID", "VALIDATED"}
+        or not isinstance(artifact.sha256, str)
+        or len(artifact.sha256) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in artifact.sha256)
+    ):
+        raise HTTPException(409, "Source VCF must be validated and have a SHA-256 digest before identity binding")
+    if not body.sample_name.strip() or not body.binding_method.strip():
+        raise HTTPException(422, "Sample name and binding method must be non-empty")
     configuration = analysis.configuration or {}
     if configuration.get("input_artifact_id") != str(artifact.id):
         raise HTTPException(409, "Artifact is not the immutable source VCF selected for this analysis")
@@ -619,6 +641,11 @@ def create_sample_identity_evidence(
         raise HTTPException(404, "Sample binding not found")
     if binding.binding_status != "UNVERIFIED":
         raise HTTPException(409, "Identity evidence can only be attached to an unverified binding")
+    if not body.method.strip() or not body.method_version.strip() or not body.evidence_reference.strip():
+        raise HTTPException(422, "Identity evidence method, version and reference must be non-empty")
+    active_evidence = _active_sample_identity_evidence(db, binding.id)
+    if any(row.evidence_type == body.evidence_type for row in active_evidence):
+        raise HTTPException(409, "An active evidence revision of this type already exists; append a correction instead")
     successor = db.scalar(select(PedigreeSampleBinding).where(
         PedigreeSampleBinding.supersedes_binding_id == binding.id,
     ))
