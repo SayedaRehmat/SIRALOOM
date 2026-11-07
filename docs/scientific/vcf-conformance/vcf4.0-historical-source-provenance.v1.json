@@ -19,12 +19,13 @@
         "source_refs": [
           "turn319131search1",
           "turn319131search0",
-          "turn319131search2"
+          "turn319131search2",
+          "turn109883view0"
         ],
         "retrieval_date": "2026-11-05",
         "corroboration": "VCFtools historical specifications page states that older VCF 4.0 specification documents are hosted on the 1000 Genomes wiki; IGSR page identifies itself as VCF version 4.0; current HTS index identifies VCFv4.1-4.5 as successor specifications."
       },
-      "provenance_assessment": "The VCFtools historical index and IGSR page independently corroborate the historical location and VCFv4.0 identity of the core specification. The core page contains the version-specific format description, while the separate SV page explicitly labels its content as 1000 Genomes project conventions/extensions. However, exact immutable source-byte identity and complete original release provenance remain unverified.",
+      "provenance_assessment": "The VCFtools historical index and IGSR page independently corroborate the historical location and VCFv4.0 identity of the core specification. The core page contains the version-specific format description, while the separate SV page explicitly labels its content as 1000 Genomes project conventions/extensions. However, exact immutable source-byte identity and complete original release provenance remain unverified. A 2026-11-07 direct line-anchored inspection of the detailed rendered page further corroborates VCFv4.0 FORMAT semantics (GT presence/order, GL biallelic applicability, and reserved FORMAT field typing), but does not change the raw-source qualification blocker.",
       "raw_source_capture": {
         "status": "NOT_CAPTURED",
         "bytes": null,
@@ -76,6 +77,11 @@
           "source_ref": "turn160906search2",
           "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
           "observation": "Current IGSR general VCF page states that maintenance moved to the GA4GH Data Working Group and points to HTS specifications; used only for historical governance/provenance context."
+        },
+        {
+          "source_ref": "turn109883view0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "Direct inspection returned a 245-line rendered page. Lines 0-2 identify VCFv4.0 and separate 1000 Genomes SV conventions; lines 23-26 show example GT/GQ/DP/HQ header definitions; lines 43-58 describe optional but well-formed metadata and FORMAT Types; lines 108-120 specify GT-first/all-sample GT, DP, FT, GL biallelic restriction, GQ/HQ numeric semantics and non-droppable GT. This is rendered-page evidence only, not an immutable raw-source capture."
         }
       ],
       "acquisition_attempts": [
@@ -93,6 +99,11 @@
         {
           "attempt": "Search for an authoritative VCFv4.0 PDF or source archive",
           "result": "No authoritative original VCFv4.0 PDF/source archive located. Search results include secondary teaching materials and the rendered IGSR historical page; these are not accepted as original normative bytes.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "Direct line-anchored inspection of the detailed IGSR VCFv4.0 page",
+          "result": "Retrieved 245 rendered lines and inspected FORMAT-relevant source locations 0-2, 23-26, 43-58 and 108-120. This supports targeted semantic review but does not expose original HTTP entity bytes, revision identity or an authoritative source digest.",
           "accepted_as_raw_capture": false
         }
       ],
