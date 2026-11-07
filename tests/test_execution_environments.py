@@ -148,7 +148,7 @@ def test_registry_rejects_tool_profile_not_explicitly_approved():
 
 
 def test_container_environment_requires_pinned_image_digest():
-    profile = _environment(uuid4(), runtime_kind="DOCKER")
+    profile = _environment(uuid4(), runtime_kind="DOCKER", executor_kind="CONTAINER")
 
     with pytest.raises(ExecutionEnvironmentError, match="pinned sha256 image digest"):
         profile.validate()
