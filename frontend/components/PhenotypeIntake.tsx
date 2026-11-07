@@ -542,7 +542,7 @@ export default function PhenotypeIntake({ caseId, apiFetch }: Props) {
                     <div className="context-row"><span>{t("phenotype.onsetAge")}</span><strong>{onsetAge}</strong></div>
                     <div className="context-row"><span>{t("phenotype.ageAtAssessment")}</span><strong>{assessmentAge}</strong></div>
                     <div className="context-row"><span>{t("phenotype.course")}</span><strong>{course}</strong></div>
-                    {row.severity && <div className="context-row"><span>{t("review.severity")}</span><strong>{row.severity}</strong></div>}
+                    {row.severity && <div className="context-row"><span>{t("phenotype.severity")}</span><strong>{row.severity}</strong></div>}
                     {sourceReference && <div className="context-row"><span>{t("phenotype.sourceReference")}</span><strong>{String(sourceReference)}</strong></div>}
                     <small>{row.record_lifecycle_status ?? "ACTIVE"} · {row.source ?? "SOURCE_NOT_RECORDED"}</small>
                   </div>
