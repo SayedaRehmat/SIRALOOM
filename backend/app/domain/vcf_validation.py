@@ -1711,6 +1711,7 @@ def validate_vcf_strict(
     base_modification_slot_assignment_count = 0
     base_modification_slot_assignments: list[dict[str, object]] = []
     unstranded_base_modification_observations: list[dict[str, object]] = []
+    unstranded_unphased_observation_count = 0
     vcf45_reference_span_records = 0
     vcf45_max_reference_end = 0
     vcf45_reference_block_sample_count = 0
@@ -2301,6 +2302,8 @@ def validate_vcf_strict(
                                     if slot_index < len(observed_modification_values)
                                     else "."
                                 )
+                                if phase_set.startswith("__record_"):
+                                    unstranded_unphased_observation_count += 1
                                 unstranded_base_modification_observations.append({
                                     "sample": chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index),
                                     "chrom": _chrom,
@@ -2604,6 +2607,7 @@ def validate_vcf_strict(
         "base_modification_slot_assignment_count": base_modification_slot_assignment_count,
         "base_modification_strandedness_policy": base_modification_strandedness,
         "unstranded_base_modification_observation_count": len(unstranded_base_modification_observations),
+        "unstranded_base_modification_unresolved_phase_observation_count": unstranded_unphased_observation_count,
         **({"base_modification_slot_assignments": base_modification_slot_assignments} if include_base_modification_slot_assignments else {}),
         "vcf45_reference_span_records": vcf45_reference_span_records,
         "vcf45_max_reference_end": vcf45_max_reference_end,
@@ -2618,6 +2622,8 @@ def validate_vcf_strict(
              else [])
             + (["VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"]
                if unresolved_spanning_deletion_records else [])
+            + (["VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED"]
+               if unstranded_unphased_observation_count else [])
         ),
     }
 
