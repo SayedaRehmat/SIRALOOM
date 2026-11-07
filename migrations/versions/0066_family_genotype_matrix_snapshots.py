@@ -41,17 +41,18 @@ def upgrade():
         "family_genotype_matrix_snapshots",
         ["analysis_id", "variant_id"],
     )
-    op.add_column(
-        "inheritance_assessments",
-        sa.Column("family_matrix_snapshot_id", sa.Uuid(), nullable=True),
-    )
-    op.create_foreign_key(
-        "fk_inheritance_assessment_family_matrix_snapshot",
-        "inheritance_assessments",
-        "family_genotype_matrix_snapshots",
-        ["family_matrix_snapshot_id"],
-        ["id"],
-    )
+    # Batch mode preserves SQLite migration support while emitting ordinary
+    # ALTER TABLE operations on PostgreSQL.
+    with op.batch_alter_table("inheritance_assessments") as batch_op:
+        batch_op.add_column(
+            sa.Column("family_matrix_snapshot_id", sa.Uuid(), nullable=True),
+        )
+        batch_op.create_foreign_key(
+            "fk_inheritance_assessment_family_matrix_snapshot",
+            "family_genotype_matrix_snapshots",
+            ["family_matrix_snapshot_id"],
+            ["id"],
+        )
 
     connection = op.get_bind()
     if connection.dialect.name == "postgresql":
@@ -101,12 +102,12 @@ def downgrade():
     elif connection.dialect.name == "sqlite":
         op.execute("DROP TRIGGER IF EXISTS trg_family_genotype_matrix_snapshot_no_update")
         op.execute("DROP TRIGGER IF EXISTS trg_family_genotype_matrix_snapshot_no_delete")
-    op.drop_constraint(
-        "fk_inheritance_assessment_family_matrix_snapshot",
-        "inheritance_assessments",
-        type_="foreignkey",
-    )
-    op.drop_column("inheritance_assessments", "family_matrix_snapshot_id")
+    with op.batch_alter_table("inheritance_assessments") as batch_op:
+        batch_op.drop_constraint(
+            "fk_inheritance_assessment_family_matrix_snapshot",
+            type_="foreignkey",
+        )
+        batch_op.drop_column("family_matrix_snapshot_id")
     op.drop_index(
         "ix_family_genotype_matrix_snapshot_analysis_variant",
         table_name="family_genotype_matrix_snapshots",
