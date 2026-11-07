@@ -9,7 +9,7 @@
       "VCFv4.5.tex@510c107"
     ],
     "candidate_lines_reviewed": 75,
-    "atomic_requirements_created": 141,
+    "atomic_requirements_created": 166,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
@@ -846,22 +846,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900010",
-      "title": "VCF45-CAND-005 — For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|#",
+      "title": "Optional structured metadata fields may be included",
       "requirement_domain": "FORMAT",
-      "source_class": "VCF_INFORMATIVE",
+      "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
-      "normative_force": "NOT_STATED",
-      "atomic_statement": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included.",
+      "normative_force": "MAY",
+      "atomic_statement": "Optional fields may be included in structured meta-information lines.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-005 at VCFv4.5.tex line 120.",
-      "required_or_prohibited_behavior": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included.",
+      "required_or_prohibited_behavior": "Optional fields may be included in structured meta-information lines.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_class": "VCF_NORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -925,7 +925,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -1586,22 +1586,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900018",
-      "title": "VCF45-CAND-010 — An implementation is required to preserve structured metadata field orde",
+      "title": "Structured metadata field order need not be preserved",
       "requirement_domain": "ORDERING",
-      "source_class": "VCF_INFORMATIVE",
+      "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "NOT_STATED",
-      "atomic_statement": "An implementation is required to preserve structured metadata field ordering.",
+      "normative_force": "MAY_NOT",
+      "atomic_statement": "An implementation is not required to preserve the ordering of fields within structured meta-information lines.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-010 at VCFv4.5.tex line 133.",
-      "required_or_prohibited_behavior": "An implementation is required to preserve structured metadata field ordering.",
+      "required_or_prohibited_behavior": "An implementation is not required to preserve the ordering of fields within structured meta-information lines.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_class": "VCF_NORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -1665,7 +1665,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -5822,15 +5822,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900064",
-      "title": "VCF45-CAND-034 — (String, no whitespace permitted, Required).",
+      "title": "CHROM values exclude whitespace",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
-      "atomic_statement": "(String, no whitespace permitted, Required).",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "CHROM values contain no whitespace.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-034 at VCFv4.5.tex line 392.",
-      "required_or_prohibited_behavior": "(String, no whitespace permitted, Required).",
+      "required_or_prohibited_behavior": "CHROM values contain no whitespace.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -5901,7 +5901,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -5914,22 +5914,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900065",
-      "title": "VCF45-CAND-035 — (Integer, Required)",
+      "title": "POS field data type",
       "requirement_domain": "HEADER",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
-      "atomic_statement": "(Integer, Required)",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The POS field has Integer data type.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-035 at VCFv4.5.tex line 397.",
-      "required_or_prohibited_behavior": "(Integer, Required)",
+      "required_or_prohibited_behavior": "The POS field has Integer data type.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -5993,7 +5993,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -6742,15 +6742,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900074",
-      "title": "VCF45-CAND-041 — Tools processing VCF files are not required to preserve case in the REF ",
+      "title": "REF allele string case need not be preserved",
       "requirement_domain": "ALLELE_REPRESENTATION",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "REQUIRED",
-      "atomic_statement": "Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
+      "normative_force": "MAY_NOT",
+      "atomic_statement": "A tool processing VCF files is not required to preserve case in REF allele strings.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-041 at VCFv4.5.tex line 409.",
-      "required_or_prohibited_behavior": "Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
+      "required_or_prohibited_behavior": "A tool processing VCF files is not required to preserve case in REF allele strings.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -6821,7 +6821,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -6926,22 +6926,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900076",
-      "title": "VCF45-CAND-043 — A sequence ALT allele is a non-empty string of A, C, G, T, or N, case-in",
+      "title": "Sequence ALT allele form",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST",
-      "atomic_statement": "A sequence ALT allele is a non-empty string of A, C, G, T, or N, case-insensitively.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A sequence ALT allele is a non-empty string containing only A, C, G, T, or N, case-insensitively.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "A sequence ALT allele is a non-empty string of A, C, G, T, or N, case-insensitively.",
+      "required_or_prohibited_behavior": "A sequence ALT allele is a non-empty string containing only A, C, G, T, or N, case-insensitively.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7005,7 +7005,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7018,22 +7018,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900077",
-      "title": "VCF45-CAND-043 — The * ALT allele represents an allele missing due to an overlapping dele",
+      "title": "Asterisk ALT allele meaning",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "The * ALT allele represents an allele missing due to an overlapping deletion.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The * ALT symbol denotes an allele missing due to an overlapping deletion.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "The * ALT allele represents an allele missing due to an overlapping deletion.",
+      "required_or_prohibited_behavior": "The * ALT symbol denotes an allele missing due to an overlapping deletion.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7097,7 +7097,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7110,22 +7110,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900078",
-      "title": "VCF45-CAND-043 — The . ALT value represents no variant.",
+      "title": "Missing ALT value meaning",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "The . ALT value represents no variant.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The . ALT value denotes no variant.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "The . ALT value represents no variant.",
+      "required_or_prohibited_behavior": "The . ALT value denotes no variant.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7189,7 +7189,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7202,22 +7202,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900079",
-      "title": "VCF45-CAND-043 — An angle-bracketed ID string is a permitted symbolic ALT allele.",
+      "title": "Symbolic ALT allele form",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "An angle-bracketed ID string is a permitted symbolic ALT allele.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "An angle-bracketed ID string is a symbolic ALT allele form.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "An angle-bracketed ID string is a permitted symbolic ALT allele.",
+      "required_or_prohibited_behavior": "An angle-bracketed ID string is a symbolic ALT allele form.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7281,7 +7281,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7294,22 +7294,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900080",
-      "title": "VCF45-CAND-043 — The <*> unspecified allele is a permitted ALT allele.",
+      "title": "Unspecified ALT allele meaning",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "The <*> unspecified allele is a permitted ALT allele.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The <*> value denotes the unspecified ALT allele.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "The <*> unspecified allele is a permitted ALT allele.",
+      "required_or_prohibited_behavior": "The <*> value denotes the unspecified ALT allele.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7373,7 +7373,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7386,22 +7386,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900081",
-      "title": "VCF45-CAND-043 — A breakend replacement string is a permitted ALT allele.",
+      "title": "Breakend ALT allele form",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "A breakend replacement string is a permitted ALT allele.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A breakend replacement string is a permitted ALT allele form.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
-      "required_or_prohibited_behavior": "A breakend replacement string is a permitted ALT allele.",
+      "required_or_prohibited_behavior": "A breakend replacement string is a permitted ALT allele form.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7465,7 +7465,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7570,22 +7570,22 @@
     },
     {
       "requirement_id": "VCF-REQ-900083",
-      "title": "VCF45-CAND-045 — Tools processing VCF are not required to preserve allele-string case.",
+      "title": "ALT allele string case need not be preserved except for IDs",
       "requirement_domain": "ALLELE_REPRESENTATION",
-      "source_class": "VCF_INFORMATIVE",
+      "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "NOT_STATED",
-      "atomic_statement": "Tools processing VCF are not required to preserve allele-string case.",
+      "normative_force": "MAY_NOT",
+      "atomic_statement": "A tool processing VCF files is not required to preserve case in allele strings other than case-sensitive IDs.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-045 at VCFv4.5.tex line 418.",
-      "required_or_prohibited_behavior": "Tools processing VCF are not required to preserve allele-string case.",
+      "required_or_prohibited_behavior": "A tool processing VCF files is not required to preserve case in allele strings other than case-sensitive IDs.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_class": "VCF_NORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -7649,7 +7649,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -7754,15 +7754,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900085",
-      "title": "VCF45-CAND-046 — If unknown, the MISSING value must be specified. (Float)",
+      "title": "Unknown QUAL value uses MISSING",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "If unknown, the MISSING value must be specified. (Float)",
+      "atomic_statement": "If QUAL is unknown, the MISSING value must be specified.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-046 at VCFv4.5.tex line 422.",
-      "required_or_prohibited_behavior": "If unknown, the MISSING value must be specified. (Float)",
+      "required_or_prohibited_behavior": "If QUAL is unknown, the MISSING value must be specified.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -7833,7 +7833,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -8975,9 +8975,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:L845",
-            "start_line": 845,
-            "end_line": 845
+            "locator_value": "VCFv4.5.tex:L846",
+            "start_line": 846,
+            "end_line": 846
           }
         }
       ],
@@ -9031,7 +9031,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "review_rationale": "Exact semantic duplicate of canonical VCF-REQ-000076 (per-ALT value coverage including non-structural ALT alleles); retained only for crosswalk provenance, not a net-new promotion candidate.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -9039,7 +9039,9 @@
         "second_review_status": "NOT_STARTED"
       },
       "evidence": [],
-      "related_requirement_ids": [],
+      "related_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
       "open_questions": []
     },
     {
@@ -10332,15 +10334,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900113",
-      "title": "Source L1986 — The <CNV:TR> record is not required to encode the sequence exactly when equ",
+      "title": "Exact sequence encoding is not required for paired CNV:TR records",
       "requirement_domain": "STRUCTURAL_VARIANT",
       "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "PROSE_RULE",
-      "normative_force": "NOT_STATED",
-      "atomic_statement": "The <CNV:TR> record is not required to encode the sequence exactly when equivalent non-symbolic records are also present.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When equivalent non-symbolic tandem-repeat records are present, the <CNV:TR> record is not required to encode the sequence exactly.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-069 at VCFv4.5.tex line 1986.",
-      "required_or_prohibited_behavior": "The <CNV:TR> record is not required to encode the sequence exactly when equivalent non-symbolic records are also present.",
+      "required_or_prohibited_behavior": "When equivalent non-symbolic tandem-repeat records are present, the <CNV:TR> record is not required to encode the sequence exactly.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10411,7 +10413,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10608,15 +10610,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900116",
-      "title": "Source L1989 — INFO and FORMAT CN fields should be present for <CNV:TR> records.",
+      "title": "INFO CN recommended for CNV:TR",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "INFO and FORMAT CN fields should be present for <CNV:TR> records.",
+      "atomic_statement": "An INFO CN field should be present for <CNV:TR> records.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
-      "required_or_prohibited_behavior": "INFO and FORMAT CN fields should be present for <CNV:TR> records.",
+      "required_or_prohibited_behavior": "An INFO CN field should be present for <CNV:TR> records.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10687,7 +10689,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10700,15 +10702,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900117",
-      "title": "Source L1989 — When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to ",
+      "title": "INFO CN allele-specific ratio",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "MUST",
-      "atomic_statement": "When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to sample allelic length divided by reference allelic length.",
+      "atomic_statement": "When INFO CN is present for a <CNV:TR> record, it represents allele-specific copy number as sample allelic length divided by reference allelic length.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
-      "required_or_prohibited_behavior": "When INFO or FORMAT CN is present for a <CNV:TR> record, it corresponds to sample allelic length divided by reference allelic length.",
+      "required_or_prohibited_behavior": "When INFO CN is present for a <CNV:TR> record, it represents allele-specific copy number as sample allelic length divided by reference allelic length.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -10779,7 +10781,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10976,15 +10978,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900120",
-      "title": "Source L1995 — RUL is omitted when RUS is present; the parenthetical source text says RS a",
+      "title": "Omit RUL when RUS is present",
       "requirement_domain": "HEADER",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "PROSE_RULE",
       "normative_force": "SHOULD",
-      "atomic_statement": "RUL is omitted when RUS is present; the parenthetical source text says RS and remains an unresolved inconsistency.",
+      "atomic_statement": "RUL should be omitted when RUS is present.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-073 at VCFv4.5.tex line 1995.",
-      "required_or_prohibited_behavior": "RUL is omitted when RUS is present; the parenthetical source text says RS and remains an unresolved inconsistency.",
+      "required_or_prohibited_behavior": "RUL should be omitted when RUS is present.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -11055,7 +11057,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Second-pass provisional atomization of a compound source clause; independent review and duplicate reconciliation remain pending.",
+        "review_rationale": "Atomic SHOULD rule separated from the unresolved RS/RUS parenthetical inconsistency; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -11065,7 +11067,7 @@
       "evidence": [],
       "related_requirement_ids": [],
       "open_questions": [
-        "Source parenthetical says RS although clause names RUS; preserve discrepancy pending independent review."
+        "The parenthetical source text says RUL is redundant when RS is present, although the main clause says RUS. Preserve both literal tokens; do not infer RS is a typo without independent source-author confirmation."
       ]
     },
     {
@@ -11346,15 +11348,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900124",
-      "title": "FILTER-like values exclude whitespace",
+      "title": "FORMAT FT values exclude whitespace",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "MUST_NOT",
-      "atomic_statement": "Values in the field described by the surrounding section must not contain whitespace.",
+      "atomic_statement": "FORMAT FT values contain no whitespace.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-055 at VCFv4.5.tex line 609.",
-      "required_or_prohibited_behavior": "Values in the field described by the surrounding section must not contain whitespace.",
+      "required_or_prohibited_behavior": "FORMAT FT values contain no whitespace.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -11425,7 +11427,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Context-derived atomic candidate; exact source context captured and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -11438,15 +11440,15 @@
     },
     {
       "requirement_id": "VCF-REQ-900125",
-      "title": "FILTER-like values exclude semicolons",
+      "title": "FORMAT FT values exclude semicolons",
       "requirement_domain": "FORMAT",
       "source_class": "VCF_NORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
       "normative_force": "MUST_NOT",
-      "atomic_statement": "Values in the field described by the surrounding section must not contain semicolons.",
+      "atomic_statement": "FORMAT FT values contain no semicolons.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-055 at VCFv4.5.tex line 609.",
-      "required_or_prohibited_behavior": "Values in the field described by the surrounding section must not contain semicolons.",
+      "required_or_prohibited_behavior": "FORMAT FT values contain no semicolons.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
@@ -11517,7 +11519,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Context-derived atomic candidate; exact source context captured and independent review pending.",
+        "review_rationale": "Pass-2 complete-context review corrected modality/scope/atomicity; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -12998,6 +13000,2310 @@
       },
       "evidence": [],
       "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900142",
+      "title": "REF field is a required field",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "The REF field is required.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-041 at VCFv4.5.tex line 409.",
+      "required_or_prohibited_behavior": "The REF field is required.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L409",
+            "start_line": 409,
+            "end_line": 409
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900143",
+      "title": "REF field data type",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The REF field has String data type.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-041 at VCFv4.5.tex line 409.",
+      "required_or_prohibited_behavior": "The REF field has String data type.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L409",
+            "start_line": 409,
+            "end_line": 409
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900144",
+      "title": "ALT alleles belong to the permitted allele set",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Each ALT allele is one of the specified permitted forms: a non-empty A/C/G/T/N sequence string, *, ., an angle-bracketed ID string, <*>, or a breakend replacement string.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-043 at VCFv4.5.tex line 416.",
+      "required_or_prohibited_behavior": "Each ALT allele is one of the specified permitted forms: a non-empty A/C/G/T/N sequence string, *, ., an angle-bracketed ID string, <*>, or a breakend replacement string.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900145",
+      "title": "CHROM field is required",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "The CHROM field is required.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-034 at VCFv4.5.tex line 392.",
+      "required_or_prohibited_behavior": "The CHROM field is required.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L392",
+            "start_line": 392,
+            "end_line": 392
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900146",
+      "title": "CHROM field data type",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The CHROM field has String data type.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-034 at VCFv4.5.tex line 392.",
+      "required_or_prohibited_behavior": "The CHROM field has String data type.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L392",
+            "start_line": 392,
+            "end_line": 392
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900147",
+      "title": "POS field is required",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "REQUIRED",
+      "atomic_statement": "The POS field is required.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-035 at VCFv4.5.tex line 397.",
+      "required_or_prohibited_behavior": "The POS field is required.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L397",
+            "start_line": 397,
+            "end_line": 397
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900148",
+      "title": "QUAL field data type",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The QUAL field has Float data type.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-046 at VCFv4.5.tex line 422.",
+      "required_or_prohibited_behavior": "The QUAL field has Float data type.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L422",
+            "start_line": 422,
+            "end_line": 422
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900149",
+      "title": "QUAL phred-scale definition",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "QUAL is the phred-scaled quality score for the assertion made in ALT.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-046 at VCFv4.5.tex line 422.",
+      "required_or_prohibited_behavior": "QUAL is the phred-scaled quality score for the assertion made in ALT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L420",
+            "start_line": 420,
+            "end_line": 420
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900150",
+      "title": "QUAL meaning when ALT is missing",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When ALT is ., QUAL is -10 log10 of the probability of a variant.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-046 at VCFv4.5.tex line 422.",
+      "required_or_prohibited_behavior": "When ALT is ., QUAL is -10 log10 of the probability of a variant.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900151",
+      "title": "QUAL meaning when ALT is present",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When ALT is not ., QUAL is -10 log10 of the probability of no variant.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-046 at VCFv4.5.tex line 422.",
+      "required_or_prohibited_behavior": "When ALT is not ., QUAL is -10 log10 of the probability of no variant.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900152",
+      "title": "Unspecified allele interval includes POS",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "For the <*> symbolic allele, the reference-call interval includes the POS base.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-040 at VCFv4.5.tex line 407.",
+      "required_or_prohibited_behavior": "For the <*> symbolic allele, the reference-call interval includes the POS base.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L408",
+            "start_line": 408,
+            "end_line": 408
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900153",
+      "title": "ALT symbolic ID excludes whitespace",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "The ID string itself contains no whitespace.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-045 at VCFv4.5.tex line 418.",
+      "required_or_prohibited_behavior": "The ID string itself contains no whitespace.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900154",
+      "title": "ALT symbolic ID excludes commas",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "The ID string itself contains no commas.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-045 at VCFv4.5.tex line 418.",
+      "required_or_prohibited_behavior": "The ID string itself contains no commas.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900155",
+      "title": "ALT symbolic ID excludes angle brackets",
+      "requirement_domain": "ALLELE_REPRESENTATION",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "The ID string itself contains no angle brackets.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-045 at VCFv4.5.tex line 418.",
+      "required_or_prohibited_behavior": "The ID string itself contains no angle brackets.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900156",
+      "title": "FILTER field data type",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_INFORMATIVE",
+      "requirement_kind": "FIELD_DEFINITION",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The FILTER field has String data type.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-047 at VCFv4.5.tex line 425.",
+      "required_or_prohibited_behavior": "The FILTER field has String data type.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900157",
+      "title": "FILTER values exclude whitespace",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "FILTER values contain no whitespace.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-047 at VCFv4.5.tex line 425.",
+      "required_or_prohibited_behavior": "FILTER values contain no whitespace.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900158",
+      "title": "FILTER values exclude semicolons",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "FILTER values contain no semicolons.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-047 at VCFv4.5.tex line 425.",
+      "required_or_prohibited_behavior": "FILTER values contain no semicolons.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900159",
+      "title": "FILTER values are unique",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "A FILTER value is not repeated within a FILTER field.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-047 at VCFv4.5.tex line 425.",
+      "required_or_prohibited_behavior": "A FILTER value is not repeated within a FILTER field.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900160",
+      "title": "INFO keys are unique",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "An INFO field does not contain duplicate keys.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-050 at VCFv4.5.tex line 433.",
+      "required_or_prohibited_behavior": "An INFO field does not contain duplicate keys.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L434",
+            "start_line": 434,
+            "end_line": 434
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900161",
+      "title": "BCF metadata entries are present",
+      "requirement_domain": "FIXED_FIELDS",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "BCF contains all required metadata entries.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-007 at VCFv4.5.tex line 127.",
+      "required_or_prohibited_behavior": "BCF contains all required metadata entries.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L137",
+            "start_line": 137,
+            "end_line": 137
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900162",
+      "title": "FORMAT CN recommended for CNV:TR",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "A FORMAT CN field should be present for <CNV:TR> records.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
+      "required_or_prohibited_behavior": "A FORMAT CN field should be present for <CNV:TR> records.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900163",
+      "title": "FORMAT CN overall copy number ratio",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "When FORMAT CN is present for a <CNV:TR> record, it represents overall sample copy number as sample allelic length divided by reference allelic length.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-071 at VCFv4.5.tex line 1989.",
+      "required_or_prohibited_behavior": "When FORMAT CN is present for a <CNV:TR> record, it represents overall sample copy number as sample allelic length divided by reference allelic length.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900164",
+      "title": "Total-copy-number-only CNV has missing INFO CN",
+      "requirement_domain": "INFO",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "If only total copy number is known, the single <CNV> ALT allele has a missing INFO CN field.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-063 at VCFv4.5.tex line 1903.",
+      "required_or_prohibited_behavior": "If only total copy number is known, the single <CNV> ALT allele has a missing INFO CN field.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1903",
+            "start_line": 1903,
+            "end_line": 1903
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900165",
+      "title": "Missing ALT-per-allele placeholder",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Except in lists of strings, use the missing value as a placeholder for ALT alleles for which the key has no meaningful value.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
+      "required_or_prohibited_behavior": "Except in lists of strings, use the missing value as a placeholder for ALT alleles for which the key has no meaningful value.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L847",
+            "start_line": 847,
+            "end_line": 847
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-900166",
+      "title": "Empty string for missing string-list values",
+      "requirement_domain": "HEADER",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Use the empty string to encode missing values in lists of strings.",
+      "actor": "VCF/BCF producer or implementation as scoped by the condition",
+      "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
+      "required_or_prohibited_behavior": "Use the empty string to encode missing values in lists of strings.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
+      "source_references": [
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L848",
+            "start_line": 848,
+            "end_line": 848
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "UNRESOLVED",
+          "source_reference_ids": [],
+          "delta_summary": "Version-specific source reconciliation pending.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "HTS-SPECS-VCF45-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": "VCFv4.5 conformance",
+        "rationale": "No implementation audit performed."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Pass-2 source-context correction/addition; exact source line captured; independent review pending.",
+        "reviewer_role": "Research candidate author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
       "open_questions": []
     }
   ]
