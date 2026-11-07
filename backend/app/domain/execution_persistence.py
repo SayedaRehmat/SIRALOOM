@@ -158,6 +158,7 @@ def register_tool_execution(
     """Create a tenant-checked PENDING record, or return an identical idempotent replay."""
     tool.validate()
     _require_sha256(request_fingerprint, "Request fingerprint")
+    request_fingerprint = request_fingerprint.lower()
     if not execution_id.strip() or not idempotency_key.strip() or not operation.strip():
         raise ExecutionPersistenceError("Execution ID, idempotency key and operation are required.")
     if operation not in tool.supported_operations:
@@ -197,6 +198,12 @@ def register_tool_execution(
             existing.request_fingerprint != request_fingerprint
             or existing.analysis_id != analysis_id
             or existing.execution_id != execution_id
+            or existing.environment_registration_id != environment_registration_id
+            or existing.tool_id != tool.tool_id
+            or existing.tool_version != tool.version
+            or existing.tool_profile_id != tool.profile_id
+            or existing.executable_sha256 != tool.executable_sha256.lower()
+            or existing.operation != operation
         ):
             raise ExecutionPersistenceError("Idempotency key was reused for a different execution request.")
         return existing
@@ -425,13 +432,21 @@ def fail_tool_execution(
         raise ExecutionPersistenceError("Execution failure time must be timezone-aware.")
     if not error_code.strip() or not error_message.strip():
         raise ExecutionPersistenceError("Execution failure requires an error code and message.")
+    payload = None
+    if provenance is not None:
+        payload = _safe_provenance(provenance)
+        if (
+            payload.get("execution_id") != row.execution_id
+            or payload.get("organization_id") != str(organization_id)
+            or payload.get("tool_id") != row.tool_id
+            or payload.get("tool_version") != row.tool_version
+            or payload.get("profile_id") != row.tool_profile_id
+        ):
+            raise ExecutionPersistenceError("Failure provenance identity does not match the registered execution.")
     row.status = "INTERRUPTED" if retryable else "FAILED"
     row.error_code = error_code[:128]
     row.error_message = error_message[:2000]
-    if provenance is not None:
-        payload = _safe_provenance(provenance)
-        if payload.get("execution_id") != row.execution_id:
-            raise ExecutionPersistenceError("Failure provenance execution identity does not match.")
+    if payload is not None:
         row.provenance = payload
         row.exit_code = payload.get("exit_code")
         row.stdout_sha256 = payload.get("stdout_sha256")
