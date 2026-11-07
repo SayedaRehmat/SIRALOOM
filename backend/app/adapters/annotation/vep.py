@@ -157,6 +157,10 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError("VEP execution contract must pin absolute runtime PATH directories.")
         if "PERL5LIB" not in self.runtime_environment:
             raise VEPProviderError("VEP runtime environment must explicitly pin PERL5LIB.")
+        if self.runtime_environment.get("PERL_HASH_SEED") != "0" or self.runtime_environment.get("PERL_PERTURB_KEYS") != "0":
+            raise VEPProviderError(
+                "VEP runtime must pin PERL_HASH_SEED=0 and PERL_PERTURB_KEYS=0 for deterministic annotation ordering."
+            )
         if not 1 <= self.execution_timeout_seconds <= 86400:
             raise VEPProviderError("VEP execution timeout must be between 1 and 86400 seconds.")
         if not 1024 <= self.max_output_bytes <= 10485760:
