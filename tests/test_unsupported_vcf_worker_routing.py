@@ -108,7 +108,10 @@ def _vcf(columns: str, records: str, *, headers: str = "") -> str:
             _vcf(
                 "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tS1",
                 "1\t1\t.\tA\t<NON_REF>\t.\tPASS\tEND=10\tGT:DP:MIN_DP:GQ:PL\t0/0:30:25:40:0,40,400\n",
-                headers='##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n',
+                headers=(
+                    '##ALT=<ID=NON_REF,Description="Any possible alternate allele">\n'
+                    '##FORMAT=<ID=MIN_DP,Number=1,Type=Integer,Description="Minimum depth">\n'
+                ),
             ),
             "GVCF_REFERENCE_BLOCKS",
             "gvcf_reference_blocks",
