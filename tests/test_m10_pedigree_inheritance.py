@@ -923,3 +923,46 @@ def test_de_novo_review_remains_unresolved_when_parent_relationship_is_only_repo
     assert result["results"][0]["status"] == "REQUIRES_REVIEW"
     assert "relationship confidence" in result["results"][0]["rationale"]
     assert result["family_matrix_fingerprint"] == "9" * 64
+
+
+
+def test_inheritance_assessment_rejects_family_matrix_with_incomplete_source_provenance(monkeypatch):
+    analysis_id, variant_id, case_id, binding_id, member_id = (uuid4() for _ in range(5))
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    matrix = {
+        "schema_version": 1,
+        "provenance_completeness_status": "INCOMPLETE_REQUIRES_REVIEW",
+        "matrix_fingerprint": "c" * 64,
+        "samples": [{
+            "member_id": str(member_id),
+            "is_proband": True,
+            "analysis_id": str(analysis_id),
+        }],
+    }
+
+    class FakeDb:
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
+        def scalars(self, _query):
+            return []
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "get_family_genotype_matrix", lambda *_args: matrix)
+
+    with pytest.raises(HTTPException) as exc:
+        pedigree.assess_inheritance(
+            analysis_id,
+            variant_id,
+            AssessmentInput(models=["AR"], binding_ids=[binding_id]),
+            FakeDb(),
+            SimpleNamespace(user_id=uuid4()),
+        )
+    assert exc.value.status_code == 409
+    assert "complete source-artifact, normalization-output and per-record digest provenance" in exc.value.detail
