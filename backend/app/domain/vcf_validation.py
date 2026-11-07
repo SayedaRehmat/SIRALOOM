@@ -1975,8 +1975,8 @@ def validate_vcf_strict(
                 # explicit SVTYPE=BND requirement used by their source contract.
                 declared_svtype = info_values.get("SVTYPE")
                 if (
-                    (fileformat != "VCFv4.5" and declared_svtype != "BND")
-                    or (fileformat == "VCFv4.5" and declared_svtype not in {None, "BND"})
+                    (fileformat not in {"VCFv4.4", "VCFv4.5"} and declared_svtype != "BND")
+                    or (fileformat in {"VCFv4.4", "VCFv4.5"} and declared_svtype not in {None, "BND"})
                 ):
                     raise StrictVCFValidationError(
                         f"Breakend ALT has an incompatible INFO/SVTYPE value at line {line_no}",
@@ -1989,7 +1989,7 @@ def validate_vcf_strict(
                 # association between each ALT allele and its mate record ID.
                 # Earlier VCF versions used other cardinality conventions, so
                 # retain the legacy compact BND-only list interpretation there.
-                if fileformat == "VCFv4.5":
+                if fileformat in {"VCFv4.4", "VCFv4.5"}:
                     if mate_entries and len(mate_entries) != len(alts):
                         raise StrictVCFValidationError(
                             f"VCFv4.5 MATEID cardinality must match all ALT alleles at line {line_no}",
@@ -2024,14 +2024,18 @@ def validate_vcf_strict(
                         remote_loci_by_alt[alt_index] = (
                             match.group(2), int(match.group(3))
                         )
-                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
-                    not VCF_CONTIG_NAME_RE.fullmatch(contig)
-                    for contig, _position in remote_loci_by_alt.values()
-                ):
-                    raise StrictVCFValidationError(
-                        f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
-                        code="VCF_BREAKEND_ALT_INVALID",
-                    )
+                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+                    for remote_contig, _remote_position in remote_loci_by_alt.values():
+                        if re.fullmatch(r"<[^<>,\\s]+>", remote_contig):
+                            raise StrictVCFValidationError(
+                                f"External assembly mate contig {remote_contig!r} is valid VCF syntax but unsupported by the configured reference-package contract at line {line_no}",
+                                code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
+                            )
+                        if not VCF_CONTIG_NAME_RE.fullmatch(remote_contig):
+                            raise StrictVCFValidationError(
+                                f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                                code="VCF_BREAKEND_ALT_INVALID",
+                            )
                 if len(remote_loci_by_alt) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
@@ -2063,7 +2067,7 @@ def validate_vcf_strict(
                             f"Breakend record ID {record_id!r} is not unique at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    raw_cipos = info_values.get("CIPOS") if fileformat == "VCFv4.5" else None
+                    raw_cipos = info_values.get("CIPOS") if fileformat in {"VCFv4.4", "VCFv4.5"} else None
                     cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
                     cipos_by_alt: dict[int, tuple[int, int] | None] = {}
                     if raw_cipos not in {None, "."} and len(cipos_entries) != 2 * len(alts):
@@ -2106,7 +2110,7 @@ def validate_vcf_strict(
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
-                if "PSL" in format_keys:
+                if fileformat in {"VCFv4.4", "VCFv4.5"} and "PSL" in format_keys:
                     psl_index = format_keys.index("PSL")
                     psl_value = sample_values[psl_index] if psl_index < len(sample_values) else "."
                     gt_value = (
@@ -2161,7 +2165,7 @@ def validate_vcf_strict(
                                 f"FORMAT/{dependent_key} must use '.' where the corresponding PSL value is missing at line {line_no}, sample {sample_index}",
                                 code="VCF_PHASE_SET_INVALID",
                             )
-                elif any(
+                elif fileformat in {"VCFv4.4", "VCFv4.5"} and any(
                     key in format_keys
                     and format_keys.index(key) < len(sample_values)
                     and sample_values[format_keys.index(key)] not in {"", "."}
@@ -2171,7 +2175,7 @@ def validate_vcf_strict(
                         f"FORMAT/PSO and FORMAT/PSQ require FORMAT/PSL at line {line_no}, sample {sample_index}",
                         code="VCF_PHASE_SET_INVALID",
                     )
-                if "PS" in format_keys and "PSL" in format_keys:
+                if fileformat in {"VCFv4.4", "VCFv4.5"} and "PS" in format_keys and "PSL" in format_keys:
                     ps_value = sample_values[format_keys.index("PS")] if format_keys.index("PS") < len(sample_values) else "."
                     psl_value = sample_values[format_keys.index("PSL")] if format_keys.index("PSL") < len(sample_values) else "."
                     if ps_value not in {"", "."} and psl_value not in {"", "."}:
@@ -2192,7 +2196,7 @@ def validate_vcf_strict(
                     # A missing GT value still carries ploidy: "." is haploid,
                     # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
-                if fileformat == "VCFv4.5" and "PSL" in format_keys and gt_index is not None:
+                if fileformat in {"VCFv4.4", "VCFv4.5"} and "PSL" in format_keys and gt_index is not None:
                     gt_for_phase = sample_values[gt_index]
                     if gt_for_phase not in {"", "."}:
                         allele_phase = _gt_alleles_with_phase(gt_for_phase, fileformat, line_no)
@@ -2377,9 +2381,12 @@ def validate_vcf_strict(
                                     and all(token != "." for token in all_called_alleles)
                                     and len(set(all_called_alleles)) == 1
                                 )
+                                fully_phased = "|" in gt_for_modification and all(
+                                    separator == "|" for _token, separator in gt_phase
+                                )
                                 if homozygous_unphased:
                                     phase_set = "__unphased_homozygous_set__"
-                                elif "|" not in gt_for_modification or phase_separator != "|":
+                                elif not fully_phased:
                                     phase_set = f"__record_{records + 1}_allele_{allele_index}"
                                 elif psl_positions:
                                     phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else "."
@@ -2388,10 +2395,9 @@ def validate_vcf_strict(
                                 elif ps_for_modification not in {None, "", "."}:
                                     phase_set = f"PS:{ps_for_modification}"
                                 else:
-                                    # A phased separator alone does not define a
-                                    # cross-record phase set. Keep this record-local
-                                    # and disclose that cross-record context is unknown.
-                                    phase_set = f"__record_{records + 1}_allele_{allele_index}"
+                                    # VCFv4.4/4.5 defines phased genotypes without
+                                    # PS as belonging to the same implicit phase set.
+                                    phase_set = "__implicit_phased_set__"
                                 allele_sequence = (
                                     fields[3].upper()
                                     if allele_index == 0
@@ -2448,7 +2454,7 @@ def validate_vcf_strict(
                                     "strand": strand,
                                     "value": None if observed_value == "." else observed_value,
                                 })
-                if fileformat == "VCFv4.5" and breakend_alts and record_ids:
+                if fileformat in {"VCFv4.4", "VCFv4.5"} and breakend_alts and record_ids:
                     record_phase_vectors: dict[str, dict[str, list[str]]] = {}
                     sample_names = chrom_header[9:] if chrom_header is not None else []
                     for sample_offset, sample_name in enumerate(sample_names):
@@ -2636,7 +2642,7 @@ def validate_vcf_strict(
                                 code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
                             )
 
-    if fileformat == "VCFv4.5":
+    if fileformat in {"VCFv4.4", "VCFv4.5"}:
         for (sample_name, phase_set), observations in phase_set_observations.items():
             phase_set_requires_pso = any(bool(item["requires_pso"]) for item in observations)
             if phase_set_requires_pso:
@@ -2718,7 +2724,7 @@ def validate_vcf_strict(
                 "unresolved_cipos_ends": unresolved_ends,
             })
 
-        if fileformat == "VCFv4.5":
+        if fileformat in {"VCFv4.4", "VCFv4.5"}:
             source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
             mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
             mate_alt_index = reciprocal_alt_indexes[0]
