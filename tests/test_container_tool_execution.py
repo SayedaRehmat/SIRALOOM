@@ -165,12 +165,15 @@ def test_docker_executor_builds_isolated_command_and_returns_common_provenance(t
             stdout = ""
         return subprocess.CompletedProcess(command, 0, stdout, "")
 
+    executed_commands = []
+
     class FakeProcess:
         pid = 12345
         returncode = 0
 
         def __init__(self, command, *, stdout, stderr, **kwargs):
             self.command = command
+            executed_commands.append(command)
             self.stdout = stdout
             self.stderr = stderr
             output_path.write_text("validated\n", encoding="utf-8")
@@ -203,11 +206,19 @@ def test_docker_executor_builds_isolated_command_and_returns_common_provenance(t
 
     result = executor.execute(_tool(), request)
 
-    run_command = next(call for call in calls if call[1] == "rm") if False else None
     assert result.provenance.runtime_image_digest == environment.runtime_image_digest
     assert result.provenance.exit_code == 0
     assert result.provenance.output_sha256[0]["name"] == "validated"
-    assert result.stdout == "container stdout\n"
-    executed = container_module.subprocess.Popen
-    assert executed is FakeProcess
-    assert any("--cpus" in call and "--memory" in call and "--pids-limit" in call for call in [FakeProcess.command] if hasattr(FakeProcess, "command")) is False
+    assert result.stdout == "container stdout\\n"
+    assert len(executed_commands) == 1
+    command = executed_commands[0]
+    assert "--pull=never" in command
+    assert "--network=none" in command
+    assert "--read-only" in command
+    assert "--cpus" in command and "--memory" in command and "--memory-swap" in command
+    assert "--pids-limit" in command and "--user" in command
+    mounts = [command[index + 1] for index, value in enumerate(command[:-1]) if value == "--mount"]
+    assert any("dst=/workspace" in mount and "readonly" not in mount for mount in mounts)
+    assert any("dst=/inputs/sample-vcf" in mount and "readonly" in mount for mount in mounts)
+    assert any("dst=/resources/reference-fasta" in mount and "readonly" in mount for mount in mounts)
+    assert any(call[1:3] == ["image", "inspect"] for call in calls)
