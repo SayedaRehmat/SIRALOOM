@@ -4,7 +4,6 @@
   "registry_status": "IN_PROGRESS",
   "source_manifest": "HTS-specs VCFv4.5.tex, revision 510c107ba89aa13113818c9e4fa3071283cb7f7; blob SHA1 307950e7eeafc33d524969ff906343f756adb7d7; SHA-256 37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5.",
   "scope": "Supplemental VCFv4.5 candidate registry for the 75 source-line gap worklist. Provisional requirement IDs VCF-REQ-900001 onward are not canonical allocations. No implementation or conformance claim is made.",
-  "generated_at_utc": "2026-11-07T00:00:00Z",
   "coverage_summary": {
     "source_documents_reviewed": [
       "VCFv4.5.tex@510c107"
