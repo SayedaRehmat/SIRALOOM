@@ -565,15 +565,15 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
     workspace.mkdir()
     input_path = workspace / "input.vcf"
     input_path.write_text(
-        "##fileformat=VCFv4.2\\n"
-        "##contig=<ID=1,length=1000>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        "1\\t100\\t.\\tA\\tG,T\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t100\t.\tA\tG,T\t.\tPASS\t.\n",
         encoding="utf-8",
     )
     reference_path = workspace / "reference.fa"
-    reference_path.write_text(">1\\n" + ("A" * 1000) + "\\n", encoding="ascii")
-    Path(str(reference_path) + ".fai").write_text("1\\t1000\\t3\\t1000\\t1001\\n", encoding="ascii")
+    reference_path.write_text(">1\n" + ("A" * 1000) + "\n", encoding="ascii")
+    Path(str(reference_path) + ".fai").write_text("1\t1000\t3\t1000\t1001\n", encoding="ascii")
     output_path = workspace / "normalized.vcf.gz"
 
     executable_digest = sha256_file(executable)
