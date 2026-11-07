@@ -188,3 +188,120 @@ def test_family_sample_selection_rejects_sample_swap_and_unselected_multisample_
     assert len(selected) == 1
     assert set(selected[0].sample_calls) == {"FAM-F"}
     assert selected[0].sample_calls["FAM-F"]["normalized_genotype"] == "0/0"
+
+
+@pytest.mark.parametrize(
+    ("family_id", "first_gt", "second_gt", "first_phase", "second_phase"),
+    [
+        ("TRANS-KA", "1|0", "0|1", "PHASED", "PHASED"),
+        ("CIS-KA", "1|0", "1|0", "PHASED", "PHASED"),
+        ("UNRESOLVED-KA", "0/1", "0/1", "UNPHASED", "UNPHASED"),
+    ],
+)
+def test_independent_phase_known_answers_preserve_cis_trans_and_unresolved_without_inference(
+    tmp_path, family_id, first_gt, second_gt, first_phase, second_phase,
+):
+    path = tmp_path / f"{family_id}.vcf"
+    _write_member_vcf(path, family_id, [
+        f"1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ:AD:PS\\t{first_gt}:35:90:18,17:100",
+        f"1\\t200\\t.\\tC\\tT\\t.\\tPASS\\t.\\tGT:DP:GQ:AD:PS\\t{second_gt}:32:88:16,16:100",
+    ])
+    parsed = _parsed_calls(path, family_id)
+    variant_ids = {key: uuid4() for key in parsed}
+    sample = _family_sample(
+        uuid4(), "PROBAND", uuid4(), uuid4(), uuid4(), family_id,
+        {variant_ids[key]: value for key, value in parsed.items()},
+    )
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=list(variant_ids.values()),
+        samples=[sample], relationships=[],
+    )
+    calls = matrix["samples"][0]["calls"]
+    assert [row["normalized_genotype"] for row in calls] == [first_gt, second_gt]
+    assert [row["phase"] for row in calls] == [first_phase, second_phase]
+    assert all(row["phase_set"] == "100" for row in calls)
+    assert matrix["interpretation_status"] == "NOT_PERFORMED"
+
+
+def test_independent_relationship_discordance_known_answer_remains_unverified(tmp_path):
+    path = tmp_path / "relationship-discordance.vcf"
+    _write_member_vcf(path, "FAMILY-REL", [
+        "1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ\\t0/1:30:90",
+    ])
+    parsed = _parsed_calls(path, "FAMILY-REL")
+    variant_id = uuid4()
+    sample = _family_sample(
+        uuid4(), "REPORTED_FATHER", uuid4(), uuid4(), uuid4(), "FAMILY-REL",
+        {variant_id: next(iter(parsed.values()))},
+    )
+    relationship = {
+        "parent_member_identifier": "REPORTED_FATHER",
+        "child_member_identifier": "PROBAND",
+        "relationship_type": "PARENT_CHILD",
+        "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
+        "metadata": {
+            "reported_relationship": "FATHER",
+            "independent_relationship_test": "DISCORDANT",
+            "review_status": "REQUIRES_REVIEW",
+        },
+    }
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=[variant_id], samples=[sample],
+        relationships=[relationship],
+    )
+    assert matrix["relationships_as_recorded"][0]["metadata"]["independent_relationship_test"] == "DISCORDANT"
+    assert matrix["relationships_as_recorded"][0]["relationship_status"] == "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED"
+    assert matrix["biological_relatedness_status"] == "NOT_ESTABLISHED"
+    assert matrix["interpretation_status"] == "NOT_PERFORMED"
+
+
+def test_independent_locus_ploidy_known_answer_does_not_promote_specimen_region_copy_number(tmp_path):
+    path = tmp_path / "locus-ploidy.vcf"
+    _write_member_vcf(path, "PLOIDY-SAMPLE", [
+        "X\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ\\t0:40:99",
+    ])
+    parsed = _parsed_calls(path, "PLOIDY-SAMPLE")
+    variant_id = uuid4()
+    sample = _family_sample(
+        uuid4(), "PROBAND", uuid4(), uuid4(), uuid4(), "PLOIDY-SAMPLE",
+        {variant_id: next(iter(parsed.values()))},
+    )
+    sample["ploidy_evidence"] = {
+        "version": 7,
+        "status": "VERIFIED",
+        "reference_build": "GRCh38",
+        "revision_fingerprint": "a" * 64,
+        "region_copy_number": {"chrX:1-155270560": 1},
+        "source_type": "LAB_VALIDATED",
+        "evidence_reference": "PLOIDY-KA-007",
+    }
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=[variant_id], samples=[sample], relationships=[],
+    )
+    projected = matrix["samples"][0]
+    assert projected["ploidy_evidence_status"] == "VERIFIED_RECORDED_LOCUS_POLICY_REQUIRED"
+    assert projected["ploidy_interpretation_status"] == "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY"
+    assert projected["calls"][0]["call_state"] == "CALL_PRESENT"
+    assert matrix["interpretation_status"] == "NOT_PERFORMED"
+
+
+def test_independent_low_quality_parent_known_answer_preserves_metrics_without_callability_claim(tmp_path):
+    path = tmp_path / "low-quality-parent.vcf"
+    _write_member_vcf(path, "LOW-GQ-PARENT", [
+        "1\\t100\\t.\\tA\\tG\\t.\\tPASS\\t.\\tGT:DP:GQ:AD\\t0/1:3:2:2,1",
+    ])
+    parsed = _parsed_calls(path, "LOW-GQ-PARENT")
+    variant_id = uuid4()
+    parent = _family_sample(
+        uuid4(), "FATHER", uuid4(), uuid4(), uuid4(), "LOW-GQ-PARENT",
+        {variant_id: next(iter(parsed.values()))},
+    )
+    matrix = build_family_genotype_matrix(
+        case_id=uuid4(), variant_ids=[variant_id], samples=[parent], relationships=[],
+    )
+    call = matrix["samples"][0]["calls"][0]
+    assert call["call_state"] == "CALL_PRESENT"
+    assert call["quality_metrics"] == {"DP": "3", "GQ": "2", "AD": "2,1"}
+    assert call["quality_assessment_status"] == "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY"
+    assert call["callability"] == "NOT_ASSESSED"
+    assert matrix["interpretation_status"] == "NOT_PERFORMED"
