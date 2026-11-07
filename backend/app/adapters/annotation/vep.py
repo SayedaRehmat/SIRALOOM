@@ -4,13 +4,14 @@ import hashlib
 import json
 import os
 import re
-import signal
 import stat
-import subprocess
 import tempfile
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 from typing import Any
+from uuid import uuid4
 
 from backend.app.domain.provider_contract import (
     ProviderEvidenceResult,
@@ -22,12 +23,31 @@ from backend.app.domain.provider_contract import (
 from backend.app.domain.resource_capabilities import ResourceCapability
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    LocalProcessToolExecutor,
+    OutputArtifact,
+    ScientificResourceBinding,
+    ToolExecutionContractError,
+    ToolExecutionError,
+    ToolExecutionRequest,
+    ToolExecutor,
+    ToolIdentity,
+)
+from backend.app.config import settings
 
 
 class VEPProviderError(RuntimeError):
-    def __init__(self, message: str, *, retryable: bool = False):
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool = False,
+        execution_provenance: dict[str, Any] | None = None,
+    ):
         super().__init__(message)
         self.retryable = retryable
+        self.execution_provenance = execution_provenance
 
 
 class VEPProvider(ScientificResourceProvider):
@@ -46,8 +66,14 @@ class VEPProvider(ScientificResourceProvider):
     capabilities = frozenset({ResourceCapability.ANNOTATION})
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
-    def __init__(self, contract: ResourceExecutionContract):
+    def __init__(
+        self,
+        contract: ResourceExecutionContract,
+        *,
+        executor: ToolExecutor | None = None,
+    ):
         self.contract = contract
+        self.executor = executor or LocalProcessToolExecutor()
         toolchain = dict(contract.toolchain or {})
         self.binary = str(toolchain.get("vep_binary") or contract.location or "vep")
         self.cache_dir = str(toolchain.get("cache_dir") or "").strip()
@@ -59,12 +85,32 @@ class VEPProvider(ScientificResourceProvider):
         self.cache_manifest_sha256 = str(toolchain.get("cache_manifest_sha256") or "").strip().lower()
         self.cache_artifact_sha256 = str(toolchain.get("cache_artifact_sha256") or "").strip().lower()
         self.expected_binary_sha256 = str(toolchain.get("vep_binary_sha256") or "").strip().lower()
+        self.toolchain_fasta_sha256 = str(toolchain.get("fasta_sha256") or "").strip().lower()
+        self.vep_version = str(toolchain.get("vep_version") or "").strip()
+        self.tool_profile_id = str(toolchain.get("tool_profile_id") or "").strip()
+        self.platform = str(toolchain.get("platform") or "").strip()
+        self.qualification_status = str(toolchain.get("qualification_status") or "").strip()
+        self.runtime_image_digest = str(toolchain.get("runtime_image_digest") or "").strip().lower()
+        self.runtime_path = tuple(str(x) for x in (toolchain.get("runtime_path") or ()))
+        self.runtime_environment = {
+            str(key): str(value)
+            for key, value in (toolchain.get("runtime_environment") or {}).items()
+        }
+        self.execution_timeout_seconds = int(toolchain.get("execution_timeout_seconds") or 1800)
+        self.max_output_bytes = int(toolchain.get("max_output_bytes") or 65536)
+        self.scratch_root = str(toolchain.get("scratch_root") or settings.worker_scratch_root)
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
         self._runtime_checks: dict[str, dict[str, Any]] = {}
+        self._tool_identity_cache: ToolIdentity | None = None
         self._validate_toolchain()
 
     @classmethod
-    def from_execution_contract(cls, contract: ResourceExecutionContract) -> "VEPProvider":
+    def from_execution_contract(
+        cls,
+        contract: ResourceExecutionContract,
+        *,
+        executor: ToolExecutor | None = None,
+    ) -> "VEPProvider":
         if contract.provider_id != cls.provider_id:
             raise VEPProviderError(
                 f"Execution provider {contract.provider_id!r} does not match VEP."
@@ -73,7 +119,7 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError(
                 f"VEP laboratory execution requires LOCAL/FILE/LOCAL_ONLY access, got {contract.access_method!r}."
             )
-        return cls(contract)
+        return cls(contract, executor=executor)
 
     def _validate_toolchain(self) -> None:
         if not self.cache_dir:
@@ -90,6 +136,28 @@ class VEPProvider(ScientificResourceProvider):
             raise VEPProviderError("VEP execution contract must pin assembly to GRCh37 or GRCh38.")
         if not Path(self.cache_manifest).is_absolute():
             raise VEPProviderError("VEP execution contract must declare an absolute cache_manifest path.")
+        if not re.fullmatch(r"\d+\.\d+", self.vep_version):
+            raise VEPProviderError("VEP execution contract must pin the exact VEP release, e.g. 115.2.")
+        if not self.tool_profile_id:
+            raise VEPProviderError("VEP execution contract must declare tool_profile_id.")
+        if not self.platform:
+            raise VEPProviderError("VEP execution contract must pin the worker platform.")
+        if self.qualification_status != "SOFTWARE_QUALIFIED":
+            raise VEPProviderError("VEP execution requires a SOFTWARE_QUALIFIED tool profile.")
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", self.runtime_image_digest):
+            raise VEPProviderError("VEP execution contract must pin the runtime image SHA-256 digest.")
+        if not self.runtime_path or any(not Path(item).is_absolute() for item in self.runtime_path):
+            raise VEPProviderError("VEP execution contract must pin absolute runtime PATH directories.")
+        if "PERL5LIB" not in self.runtime_environment:
+            raise VEPProviderError("VEP runtime environment must explicitly pin PERL5LIB.")
+        if not 1 <= self.execution_timeout_seconds <= 86400:
+            raise VEPProviderError("VEP execution timeout must be between 1 and 86400 seconds.")
+        if not 1024 <= self.max_output_bytes <= 10485760:
+            raise VEPProviderError("VEP diagnostic output limit must be between 1 KiB and 10 MiB.")
+        if not Path(self.scratch_root).is_absolute():
+            raise VEPProviderError("VEP scratch_root must be an absolute path.")
+        if _version_release(self.vep_version) != self.cache_version:
+            raise VEPProviderError("VEP executable release and cache_version must match exactly.")
         for name, digest in (
             ("cache_manifest_sha256", self.cache_manifest_sha256),
             ("cache_artifact_sha256", self.cache_artifact_sha256),
