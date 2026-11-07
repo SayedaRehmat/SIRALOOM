@@ -125,7 +125,7 @@ class SegregationInput(BaseModel):
 
 class AssessmentInput(BaseModel):
     models: list[str] = Field(
-        default_factory=lambda: ["AD", "AR", "X_LINKED", "MITOCHONDRIAL", "DE_NOVO"],
+        default_factory=lambda: ["AD", "AR", "X_LINKED", "DE_NOVO"],
         min_length=1,
         max_length=6,
     )
