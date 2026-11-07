@@ -108,6 +108,19 @@ Important findings:
 
 The canonical ledger remains unchanged: zero canonical records modified and zero canonical IDs allocated. The crosswalk is author-level and still requires independent review.
 
+
+### Reserved INFO/FORMAT table-row mapping
+
+A separate row-identity crosswalk now maps the complete reserved table inventory to existing canonical records:
+
+- All **21 VCFv4.5 reserved INFO rows** map to canonical `VCF-REQ-000143`–`VCF-REQ-000163`.
+- All **63 VCFv4.5 reserved FORMAT rows** map to canonical `VCF-REQ-000164`–`VCF-REQ-000226`.
+- Historical `GLE` is not a VCFv4.5 reserved row; its VCFv4.1/4.2 semantics map to `VCF-REQ-000027` and `VCF-REQ-000135`, while its removal from the reserved inventory in VCFv4.3 remains a version-delta fact.
+
+The mapping artifact records 84/84 VCFv4.5 reserved rows and the additional historical GLE entry (85 union field IDs total). This is table-row identity mapping only. It does **not** complete the field-specific normative prose mapping, prove all per-version applicability cells, or qualify implementation behavior.
+
+Artifact: `VCF45_RESERVED_ROW_CANONICAL_MAPPING_PASS1_2026-11-07.json`.
+
 ## 6. Formal schema validation expansion
 
 The isolated research-only validator was expanded to validate both:
@@ -122,7 +135,7 @@ The only workflow/code change is to the isolated research schema validator and i
 
 1. Confirm the updated GitHub Actions run passes formal Draft 2020-12 validation for both registries.
 2. Obtain independent review of the 42-record canonical crosswalk; adjudicate the two modality conflicts, one source-scope conflict and six partial/combined overlaps before any canonical edit or promotion.
-3. Continue clause-level VCFv4.1–4.5 semantic reconciliation for all reserved INFO and FORMAT fields, including the GLE removal, Number=P/PSL/PSO/PSQ, local alleles, Number=M, END/SVLEN and SV-specific semantics.
+3. Complete field-specific normative prose mapping for the 21 INFO and 63 FORMAT rows across VCFv4.1–4.5. Row identity is mapped; clause-level semantics, version applicability, GLE removal context, Number=P/PSL/PSO/PSQ, local alleles, Number=M, END/SVLEN and SV-specific semantics remain open.
 4. Complete GT semantic reconciliation across VCFv4.1–4.5 without projecting later Number/Type semantics backward into prose-only versions.
 5. Continue VCFv4.5 FORMAT cardinality/projection work for LA, LR, LG, M and P, including local/global equivalence, genotype likelihood ordering and missing-value behavior.
 6. Acquire and qualify exact historical VCFv4.0 core source bytes; keep 1000 Genomes producer conventions separate.
