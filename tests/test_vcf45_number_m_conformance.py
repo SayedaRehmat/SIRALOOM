@@ -1,0 +1,146 @@
+from pathlib import Path
+
+import pytest
+
+from backend.app.domain.vcf_validation import (
+    StrictVCFValidationError,
+    validate_vcf_strict,
+)
+
+
+def _write_number_m_vcf(
+    path: Path,
+    *,
+    reference: str,
+    alternate: str,
+    genotype: str,
+    field_id: str,
+    values: str,
+) -> None:
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        f'##FORMAT=<ID={field_id},Number=M,Type=Float,Description="Base modification fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\t{reference}\t{alternate}\t.\tPASS\t.\tGT:{field_id}\t{genotype}:{values}\n",
+        encoding="utf-8",
+    )
+
+
+def test_number_m_counts_complementary_strand_sites_in_allele_sequence(tmp_path: Path):
+    # For M5mC, C on the forward strand and G representing C on the reverse
+    # strand are both modifiable positions in the allele sequence CGA.
+    path = tmp_path / "number-m-complementary-strands.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="CGA",
+        alternate=".",
+        genotype="0/0",
+        field_id="M5mC",
+        values="0.25,0.75",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_number_m_N_has_positive_and_negative_strand_value_per_base(tmp_path: Path):
+    # Number=M for N contains two values per base: positive then negative strand.
+    path = tmp_path / "number-m-unknown-base-both-strands.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="AC",
+        alternate=".",
+        genotype="0",
+        field_id="M18107N",
+        values="0.1,0.2,0.3,0.4",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("genotype", "values", "expected_valid"),
+    [
+        ("0/0", "0.4", True),       # repeated unphased allele is aggregated once
+        ("0|0", "0.4,0.6", True),   # phased copies remain separate
+        ("0/0", "0.4,0.6", False),  # aggregation must not be skipped
+        ("0|0", "0.4", False),      # phased copies must not be collapsed
+    ],
+)
+def test_number_m_repeated_allele_aggregation_depends_on_phasing(
+    tmp_path: Path, genotype: str, values: str, expected_valid: bool
+):
+    path = tmp_path / "number-m-repeated-alleles.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="C",
+        alternate=".",
+        genotype=genotype,
+        field_id="M5mC",
+        values=values,
+    )
+    if expected_valid:
+        assert validate_vcf_strict(path)["records"] == 1
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc:
+            validate_vcf_strict(path)
+        assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+
+
+def test_number_m_repeated_unphased_alternate_alleles_are_aggregated(tmp_path: Path):
+    path = tmp_path / "number-m-repeated-unphased-alt.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="A",
+        alternate="CG",
+        genotype="1/1",
+        field_id="M5mC",
+        values="0.3",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_number_m_missing_gt_allele_contributes_no_values(tmp_path: Path):
+    path = tmp_path / "number-m-missing-gt-allele.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="A",
+        alternate="CG",
+        genotype="./1",
+        field_id="M5mC",
+        values="0.8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("genotype", "values"),
+    [
+        ("0/1", "0.5"),  # only the concrete REF allele contributes
+        ("1/1", "."),    # symbolic-only genotype contributes zero values
+    ],
+)
+def test_number_m_symbolic_alleles_contribute_no_modifiable_bases(
+    tmp_path: Path, genotype: str, values: str
+):
+    path = tmp_path / "number-m-symbolic-alleles.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="C",
+        alternate="<DEL>",
+        genotype=genotype,
+        field_id="M5mC",
+        values=values,
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_number_m_U_is_synonymous_with_T(tmp_path: Path):
+    path = tmp_path / "number-m-uracil-synonymous-with-thymine.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="TAA",
+        alternate=".",
+        genotype="0",
+        field_id="M16964U",
+        values="0.7",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
