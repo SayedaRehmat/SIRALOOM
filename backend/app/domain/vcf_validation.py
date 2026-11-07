@@ -180,6 +180,9 @@ def _reserved_vcf43_format_definition(field_id: str) -> dict[str, str] | None:
         "GT": ("1", "String"), "HQ": ("2", "Integer"), "MQ": ("1", "Integer"),
         "PL": ("G", "Integer"), "PP": ("G", "Integer"), "PQ": ("1", "Integer"),
         "PS": ("1", "Integer"),
+        "CN": ("1", "Integer"), "CNQ": ("1", "Float"), "CNL": ("G", "Float"),
+        "CNP": ("G", "Float"), "NQ": ("1", "Integer"), "HAP": ("1", "Integer"),
+        "AHAP": ("1", "Integer"),
     }
     definition = reserved.get(field_id)
     return {"Number": definition[0], "Type": definition[1]} if definition else None
@@ -190,7 +193,12 @@ def _reserved_vcf44_format_definition(field_id: str) -> dict[str, str] | None:
     definition = _reserved_vcf43_format_definition(field_id)
     if definition is not None:
         return definition
-    reserved = {"PSL": ("P", "String"), "PSO": ("P", "Integer"), "PSQ": ("P", "Integer")}
+    reserved = {
+        "PSL": ("P", "String"), "PSO": ("P", "Integer"), "PSQ": ("P", "Integer"),
+        "CN": ("1", "Float"), "CICN": ("2", "Float"), "CNQ": ("1", "Float"),
+        "CNL": ("G", "Float"), "CNP": ("G", "Float"), "NQ": ("1", "Integer"),
+        "HAP": ("1", "Integer"), "AHAP": ("1", "Integer"),
+    }
     value = reserved.get(field_id)
     return {"Number": value[0], "Type": value[1]} if value else None
 
