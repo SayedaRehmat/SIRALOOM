@@ -16,11 +16,12 @@ def _write_number_m_vcf(
     genotype: str,
     field_id: str,
     values: str,
+    field_type: str = "Float",
 ) -> None:
     path.write_text(
         "##fileformat=VCFv4.5\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-        f'##FORMAT=<ID={field_id},Number=M,Type=Float,Description="Base modification fraction">\n'
+        f'##FORMAT=<ID={field_id},Number=M,Type={field_type},Description="Base modification value">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         f"1\t2\t.\t{reference}\t{alternate}\t.\tPASS\t.\tGT:{field_id}\t{genotype}:{values}\n",
         encoding="utf-8",
