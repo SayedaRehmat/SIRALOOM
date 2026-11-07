@@ -134,7 +134,7 @@ The next cross-version implementation gate is to complete semantic/atomic reconc
 - VCF research-ledger schema validation passed on f685a22754431187bcc061933da101610d8f9c87. No full SIRALOOM CI run is associated with the implementation baseline 15feffa75bb8fecaec2f3d53ba7729f420cd4d5e in the retrieved workflow-run records. Therefore, this baseline is not CI-verified.
 - The same-record unstranded Number=M negative regression (populated complementary-strand slot must be rejected under the explicit unstranded assay policy) is present in tests/test_vcf45_number_m_conformance.py. It has not yet been executed by GitHub Actions.
 - The VCFv4.5 phase-set test helper's undefined version variable was corrected; it now accepts an explicit VCF version (default VCFv4.5). VCFv4.4 PSQ positional and missing-value regressions were added in tests/test_vcf44_phase_set_conformance.py. These new tests have not yet been executed by GitHub Actions.
-- The GitHub commit-workflow query returned no pull-request workflow runs or check-runs for the latest inspected branch head 9c39c03ad8920de2844f6155ea32e98b30623273. No backend or conformance result is inferred from the absence of a run or from deployment status.
+- The GitHub commit-workflow query returned no full SIRALOOM CI run for implementation baseline 15feffa75bb8fecaec2f3d53ba7729f420cd4d5e or the subsequent report-only commits. No backend or conformance result is inferred from the absence of a run or from deployment status.
 - Do not infer success from the previous green commit or from schema validation. The final exact commit must have a full successful run of backend tests, VCFv4.5 conformance tests, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
 
 ## 5. Release decision
