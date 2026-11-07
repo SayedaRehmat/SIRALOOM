@@ -21,15 +21,19 @@ from backend.app.domain.case_change import create_case_change_candidates
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
+    AnalysisPartition,
+    Artifact,
     Case,
     Evidence,
     InheritanceAssessment,
     PedigreeMember,
     PedigreeRelationship,
+    PedigreeSampleBinding,
     SegregationObservation,
     Specimen,
 )
 from backend.app.infrastructure.db.session import get_db
+from backend.app.domain.sample_call import get_analysis_sample_calls
 from backend.app.inheritance import FamilyObservation, assess_model, fingerprint, normalize_model
 
 router = APIRouter(tags=["pedigree-inheritance"])
@@ -60,6 +64,21 @@ class MemberInput(BaseModel):
     sampled: bool = False
     specimen_id: UUID | None = None
     metadata: dict = Field(default_factory=dict)
+
+class SampleBindingInput(BaseModel):
+    member_id: UUID
+    specimen_id: UUID
+    analysis_id: UUID
+    artifact_id: UUID
+    sample_name: str = Field(min_length=1, max_length=200)
+    binding_method: str = Field(min_length=1, max_length=100)
+    evidence_reference: str | None = Field(default=None, max_length=1000)
+
+
+class SampleBindingReviewInput(BaseModel):
+    decision: str = Field(pattern=r"^(VERIFIED|REJECTED)$")
+    reason: str = Field(min_length=1, max_length=5000)
+
 
 class RelationshipInput(BaseModel):
     parent_member_id: UUID
