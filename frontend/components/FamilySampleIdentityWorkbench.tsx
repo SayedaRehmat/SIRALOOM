@@ -7,6 +7,7 @@ type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = {
   caseId: string;
   variantId: string;
+  probandAnalysisId: string;
   canWrite: boolean;
   canReview: boolean;
   apiFetch: ApiFetch;
@@ -69,6 +70,7 @@ type IdentityEvidence = {
 export default function FamilySampleIdentityWorkbench({
   caseId,
   variantId,
+  probandAnalysisId,
   canWrite,
   canReview,
   apiFetch,
@@ -81,7 +83,10 @@ export default function FamilySampleIdentityWorkbench({
   const [bindings, setBindings] = useState<Binding[]>([]);
   const [selectedBindingIds, setSelectedBindingIds] = useState<string[]>([]);
   const [matrix, setMatrix] = useState<any>(null);
+  const [matrixBindingIds, setMatrixBindingIds] = useState<string[]>([]);
   const [matrixLoading, setMatrixLoading] = useState(false);
+  const [inheritanceReviewSaving, setInheritanceReviewSaving] = useState(false);
+  const [inheritanceReviewResult, setInheritanceReviewResult] = useState<any>(null);
   const [evidenceByBinding, setEvidenceByBinding] = useState<Record<string, IdentityEvidence[]>>({});
   const [memberId, setMemberId] = useState("");
   const [specimenId, setSpecimenId] = useState("");
@@ -152,7 +157,9 @@ export default function FamilySampleIdentityWorkbench({
   useEffect(() => {
     setSelectedBindingIds(bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).map((binding) => binding.binding_id));
     setMatrix(null);
-  }, [bindings, supersededBindingIds, variantId]);
+    setMatrixBindingIds([]);
+    setInheritanceReviewResult(null);
+  }, [bindings, supersededBindingIds, variantId, probandAnalysisId]);
 
   const loadMatrix = async () => {
     if (!variantId || selectedBindingIds.length === 0) return;
@@ -165,6 +172,8 @@ export default function FamilySampleIdentityWorkbench({
         body: JSON.stringify({ binding_ids: selectedBindingIds, variant_ids: [variantId] }),
       });
       setMatrix(result);
+      setMatrixBindingIds([...selectedBindingIds].sort());
+      setInheritanceReviewResult(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("familyIdentity.errorAction"));
       setMatrix(null);
@@ -172,6 +181,42 @@ export default function FamilySampleIdentityWorkbench({
       setMatrixLoading(false);
     }
   };
+
+  const attachMatrixToInheritanceReview = async () => {
+    if (!canReview || !matrix || !probandAnalysisId || !variantId || matrixBindingIds.length === 0) return;
+    const currentSelection = [...selectedBindingIds].sort();
+    if (currentSelection.length !== matrixBindingIds.length
+      || currentSelection.some((bindingId, index) => bindingId !== matrixBindingIds[index])) {
+      setMatrix(null);
+      setMatrixBindingIds([]);
+      setError(t("familyIdentity.matrixSelectionChanged"));
+      return;
+    }
+    setInheritanceReviewSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const result = await apiFetch(
+        `/analyses/${probandAnalysisId}/variants/${variantId}/inheritance/assess`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ binding_ids: matrixBindingIds }),
+        },
+      );
+      setInheritanceReviewResult(result);
+      setNotice(t("familyIdentity.inheritanceReviewRecorded"));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t("familyIdentity.errorAction"));
+      setInheritanceReviewResult(null);
+    } finally {
+      setInheritanceReviewSaving(false);
+    }
+  };
+
+  const targetProbandBindingCount = (matrix?.samples ?? []).filter(
+    (sample: any) => sample.is_proband && sample.analysis_id === probandAnalysisId,
+  ).length;
 
   const resetBindingForm = () => {
     setMemberId("");
@@ -351,9 +396,14 @@ export default function FamilySampleIdentityWorkbench({
                   <input
                     type="checkbox"
                     checked={selectedBindingIds.includes(binding.binding_id)}
-                    onChange={(event) => setSelectedBindingIds((current) => event.target.checked
-                      ? [...new Set([...current, binding.binding_id])]
-                      : current.filter((id) => id !== binding.binding_id))}
+                    onChange={(event) => {
+                      setSelectedBindingIds((current) => event.target.checked
+                        ? [...new Set([...current, binding.binding_id])]
+                        : current.filter((id) => id !== binding.binding_id));
+                      setMatrix(null);
+                      setMatrixBindingIds([]);
+                      setInheritanceReviewResult(null);
+                    }}
                   />
                   {members.find((member) => member.id === binding.member_id)?.member_identifier ?? binding.member_id}
                   {" · "}{specimens.find((specimen) => specimen.specimen_id === binding.specimen_id)?.specimen_identifier ?? binding.specimen_id}
@@ -366,6 +416,29 @@ export default function FamilySampleIdentityWorkbench({
           </button>
           {matrix && <>
             <p className="quiet">{t("familyIdentity.callability")}: {matrix.callability_status} · {t("familyIdentity.matrixFingerprint")}: {matrix.matrix_fingerprint}</p>
+            {canReview && (
+              <div className="m10-form-grid">
+                <button
+                  className="secondary"
+                  type="button"
+                  onClick={() => void attachMatrixToInheritanceReview()}
+                  disabled={inheritanceReviewSaving || matrixLoading || targetProbandBindingCount !== 1}
+                >
+                  {inheritanceReviewSaving
+                    ? t("familyIdentity.inheritanceReviewSaving")
+                    : t("familyIdentity.attachInheritanceReview")}
+                </button>
+                {targetProbandBindingCount !== 1 && (
+                  <p className="quiet">{t("familyIdentity.inheritanceRequiresProbandBinding")}</p>
+                )}
+                {inheritanceReviewResult && (
+                  <p className="quiet">
+                    {t("familyIdentity.inheritanceReviewRecorded")}: {inheritanceReviewResult.results?.map((item: any) => item.status).join(", ")}
+                    {" · "}{inheritanceReviewResult.family_matrix_fingerprint}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="resources-table-wrap">
               <table className="resources-table">
                 <thead><tr>
