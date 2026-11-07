@@ -1331,31 +1331,51 @@ def _gt_alleles_with_phase(
     ]
 
 
-def _base_modification_allele_count(sequence: str, modified_base: str) -> int:
-    """Count modifiable positions on both strands of one concrete allele."""
+def _base_modification_allele_slots(
+    sequence: str,
+    modified_base: str,
+) -> list[tuple[int, str, str]]:
+    """Enumerate VCFv4.5 Number=M slots as (zero-based offset, strand, base).
+
+    Slots are emitted in allele sequence order. For a specific modified base,
+    the matching base is the positive-strand slot and its complement is the
+    negative-strand slot. N emits positive then negative slots at each
+    sequence position. Ambiguous N sequence symbols do not match a specific
+    base, but still have both slots for modified-base identifier N.
+    """
     base = "T" if modified_base == "U" else modified_base
     if base == "N":
-        return 2 * len(sequence)
+        return [
+            (position, strand, nucleotide)
+            for position, nucleotide in enumerate(sequence)
+            for strand in ("+", "-")
+        ]
     complement = {"A": "T", "T": "A", "C": "G", "G": "C"}[base]
-    return sum(1 for nucleotide in sequence if nucleotide in {base, complement})
+    slots: list[tuple[int, str, str]] = []
+    for position, nucleotide in enumerate(sequence):
+        if nucleotide == base:
+            slots.append((position, "+", nucleotide))
+        elif nucleotide == complement:
+            slots.append((position, "-", nucleotide))
+    return slots
 
 
-def _expected_base_modification_cardinality(
+def _expected_base_modification_slots(
     genotype: str,
     reference: str,
     alternates: list[str],
     field_id: str,
     fileformat: str | None,
     line_no: int,
-) -> int:
-    """Calculate VCFv4.5 Number=M cardinality from GT and allele sequences.
+) -> list[tuple[int, int, str, str]]:
+    """Map each Number=M vector position to (GT allele, sequence offset, strand, base).
 
-    Identical unphased allele values are aggregated at their first occurrence;
-    phased copies remain distinct. Missing and symbolic alleles contribute no
-    modifiable bases, as required by VCFv4.5.
+    GT allele indexes remain global ALT indexes. Repeated identical unphased
+    allele indexes contribute once at first occurrence; phased copies remain
+    separate. Missing and non-sequence alleles contribute no slots.
     """
     seen_unphased_alleles: set[int] = set()
-    expected = 0
+    slots: list[tuple[int, int, str, str]] = []
     modified_base = field_id[-1].upper()
     for allele_token, phase_separator in _gt_alleles_with_phase(
         genotype, fileformat, line_no
@@ -1370,11 +1390,31 @@ def _expected_base_modification_cardinality(
         allele_sequence = (
             reference if allele_index == 0 else alternates[allele_index - 1]
         )
-        if DNA_RE.fullmatch(allele_sequence):
-            expected += _base_modification_allele_count(
+        if not DNA_RE.fullmatch(allele_sequence):
+            continue
+        slots.extend(
+            (allele_index, position, strand, sequence_base)
+            for position, strand, sequence_base in _base_modification_allele_slots(
                 allele_sequence, modified_base
             )
-    return expected
+        )
+    return slots
+
+
+def _expected_base_modification_cardinality(
+    genotype: str,
+    reference: str,
+    alternates: list[str],
+    field_id: str,
+    fileformat: str | None,
+    line_no: int,
+) -> int:
+    """Return the number of sequence/strand slots defined by VCFv4.5 Number=M."""
+    return len(
+        _expected_base_modification_slots(
+            genotype, reference, alternates, field_id, fileformat, line_no
+        )
+    )
 
 
 def _validate_record(
@@ -1596,7 +1636,12 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+def validate_vcf_strict(
+    path: str | Path,
+    *,
+    reference_contigs: set[str] | None = None,
+    include_base_modification_slot_assignments: bool = False,
+) -> dict:
     source = Path(path)
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
@@ -1615,6 +1660,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
     base_modification_format_fields: set[str] = set()
+    base_modification_slot_assignment_count = 0
+    base_modification_slot_assignments: list[dict[str, object]] = []
     vcf45_reference_span_records = 0
     vcf45_max_reference_end = 0
     vcf45_reference_block_sample_count = 0
@@ -2069,22 +2116,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         ):
                             unchecked_format_number_g_fields.add(key)
                         base_modification_cardinality = None
+                        base_modification_slots: list[tuple[int, int, str, str]] = []
                         if definition["Number"] == "M":
                             if gt_index is None or gt_index >= len(sample_values):
                                 raise StrictVCFValidationError(
                                     f"VCFv4.5 base-modification field {key!r} has no sample GT at line {line_no}",
                                     code="VCF_BASE_MODIFICATION_GT_MISSING",
                                 )
-                            base_modification_cardinality = (
-                                _expected_base_modification_cardinality(
-                                    sample_values[gt_index],
-                                    fields[3].upper(),
-                                    alts,
-                                    key,
-                                    fileformat,
-                                    line_no,
-                                )
+                            base_modification_slots = _expected_base_modification_slots(
+                                sample_values[gt_index],
+                                fields[3].upper(),
+                                alts,
+                                key,
+                                fileformat,
+                                line_no,
                             )
+                            base_modification_cardinality = len(base_modification_slots)
                         _validate_declared_value(
                             kind=f"FORMAT sample {sample_index}",
                             key=key,
@@ -2096,6 +2143,34 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
                         )
+                        if definition["Number"] == "M" and value not in {None, "."}:
+                            observed_modification_values = value.split(",")
+                            base_modification_slot_assignment_count += len(base_modification_slots)
+                            if include_base_modification_slot_assignments:
+                                sample_name = (
+                                    chrom_header[8 + sample_index]
+                                    if chrom_header is not None and 8 + sample_index < len(chrom_header)
+                                    else None
+                                )
+                                for value_index, (slot, observed_value) in enumerate(
+                                    zip(base_modification_slots, observed_modification_values)
+                                ):
+                                    allele_index, sequence_position, strand, sequence_base = slot
+                                    base_modification_slot_assignments.append({
+                                        "record_index": records + 1,
+                                        "line_number": line_no,
+                                        "chrom": _chrom,
+                                        "pos": _pos,
+                                        "sample_index": sample_index,
+                                        "sample_name": sample_name,
+                                        "field_id": key,
+                                        "value_index": value_index,
+                                        "allele_index": allele_index,
+                                        "allele_sequence_position": sequence_position,
+                                        "sequence_base": sequence_base,
+                                        "strand": strand,
+                                        "value": None if observed_value == "." else observed_value,
+                                    })
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
@@ -2264,6 +2339,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
+        "base_modification_slot_assignment_count": base_modification_slot_assignment_count,
+        **({"base_modification_slot_assignments": base_modification_slot_assignments} if include_base_modification_slot_assignments else {}),
         "vcf45_reference_span_records": vcf45_reference_span_records,
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
