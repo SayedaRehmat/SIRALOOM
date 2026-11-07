@@ -24,10 +24,13 @@ For the source example:
 
 - REF=G; ALT=A,C,T,<*>.
 - LAA=2,4 selects local alleles [G,C,<*>] for LAD/LPL.
-- GT=2/4 therefore calls global ALT alleles C and <*>.
-- The paired expanded representation should retain GT=2/4. Its GT=2/2 entry conflicts with the normative global GT allele-index definition and does not encode the same allele pair.
+- GT allele values remain global ALT indexes; LAA changes only the local A/R/G vector interpretation.
+- For three local alleles and diploid ploidy, LPL colexicographic order is 00, 01, 11, 02, 12, 22. The supplied LPL vector `90,80,0,100,110,120` has its minimum at local genotype 1/1, which maps to global allele 2/2 (C/C).
+- The expanded PL vector likewise has its minimum at global genotype 2/2. The expanded row's GT=2/2 is therefore consistent; the local row's GT=2/4 instead calls C/<*> and is inconsistent with the paired likelihood representation.
 
-**Decision:** do not reinterpret GT as local-vector indexes. Preserve global ALT allele indexes in GT; apply LAA only to the local A/R/G FORMAT vectors. Treat the source's expanded GT=2/2 as an apparent example typo pending confirmation from the standards maintainers. A regression fixture now verifies that GT=2/4 with LAA=2,4 is accepted without local reindexing.
+An independent comment by `ecrum19` on upstream [samtools/hts-specs issue #871](https://github.com/samtools/hts-specs/issues/871#issuecomment-5637479778) makes this same local-row correction and explains the LPL-to-global mapping. The issue remains open; this is independent supporting review, not a standards-maintainer resolution.
+
+**Decision:** do not reinterpret GT as local-vector indexes. Preserve global ALT allele indexes in GT; apply LAA only to the local A/R/G FORMAT vectors. Treat the source's local-row GT=2/4 as the apparent example typo; the consistent value is GT=2/2. A regression fixture now uses GT=2/2 with LAA=2,4 and checks local/global LAD/AD and LPL/PL projection equivalence.
 
 ## 3. PSL, PSO and PSQ positional semantics
 
@@ -56,8 +59,8 @@ No independent standards review has been obtained by this change. PR #293 remain
 Required external decisions:
 
 1. Confirm canonical xanthosine alias spelling or publish an erratum.
-2. Confirm the local GT expanded-row correction.
-3. Confirm per-position PSO/PSQ alignment, especially repeated phase-set names and missing positions.
+2. Confirm the local-row GT=2/2 correction identified in upstream issue #871.
+3. Confirm per-position PSO/PSQ alignment, especially repeated phase-set names and missing positions; upstream issue #868 also requests examples for Number=P/PSL/PSO/PSQ.
 4. Review Number=M strand/base slot derivation and ambiguous sequence handling.
 
 Until those decisions are recorded with reviewer identity, date, source citations and disposition, VCFv4.5 remains unqualified.
