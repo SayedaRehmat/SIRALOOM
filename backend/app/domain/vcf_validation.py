@@ -2013,7 +2013,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                 local_alt_indexes: list[int] = []
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
-                    if raw_laa == ".":
+                    if raw_laa in {"", "."}:
+                        # The VCFv4.5 local-allele example uses an empty
+                        # LAA value for the REF-only local allele vector;
+                        # BCF represents the same zero-length vector as MISSING.
                         local_allele_count = 1
                     else:
                         try:
