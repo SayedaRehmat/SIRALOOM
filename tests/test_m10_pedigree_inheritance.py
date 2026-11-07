@@ -624,3 +624,106 @@ def test_assessment_api_rejects_mitochondrial_model_outside_trial_scope(monkeypa
         )
     assert exc.value.status_code == 400
     assert "outside the qualified SNV/INDEL trial scope" in exc.value.detail
+
+
+def test_inheritance_assessment_binds_verified_family_matrix_fingerprint_and_stays_review_only(monkeypatch):
+    analysis_id, variant_id, case_id, member_id, binding_id = (uuid4() for _ in range(5))
+    principal = SimpleNamespace(user_id=uuid4())
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    matrix_fingerprint = "f" * 64
+    family_matrix = {
+        "matrix_fingerprint": matrix_fingerprint,
+        "samples": [{
+            "member_id": str(member_id),
+            "is_proband": True,
+            "analysis_id": str(analysis_id),
+        }],
+    }
+
+    class FakeDb:
+        def __init__(self):
+            self.rows = [[], []]
+            self.added = []
+            self.committed = False
+
+        def scalars(self, _query):
+            return self.rows.pop(0)
+
+        def scalar(self, _query):
+            return None
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.committed = True
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+    monkeypatch.setattr(
+        pedigree,
+        "get_family_genotype_matrix",
+        lambda _case_id, body, _db, _principal: family_matrix
+        if body.binding_ids == [binding_id] and body.variant_ids == [variant_id]
+        else pytest.fail("Unexpected family matrix request"),
+    )
+
+    result = pedigree.assess_inheritance(
+        analysis_id,
+        variant_id,
+        AssessmentInput(models=["AR"], binding_ids=[binding_id]),
+        FakeDb(),
+        principal,
+    )
+
+    assessment = next(row for row in FakeDb.__mro__ if False) if False else None
+    assert result["family_matrix_attached"] is True
+    assert result["family_matrix_fingerprint"] == matrix_fingerprint
+    assert result["results"][0]["status"] == "REQUIRES_REVIEW"
+    assert "Automated inheritance compatibility is not qualified" in result["results"][0]["rationale"]
+
+
+def test_inheritance_assessment_rejects_matrix_without_target_proband_binding(monkeypatch):
+    analysis_id, variant_id, case_id, binding_id = (uuid4() for _ in range(4))
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+
+    class FakeDb:
+        def scalars(self, _query):
+            return []
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args, **_kwargs: analysis)
+    monkeypatch.setattr(pedigree, "_lock_analysis_for_pedigree", lambda *_args: analysis)
+    monkeypatch.setattr(pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id))
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(
+        pedigree,
+        "get_family_genotype_matrix",
+        lambda *_args: {
+            "matrix_fingerprint": "e" * 64,
+            "samples": [{
+                "member_id": str(uuid4()),
+                "is_proband": False,
+                "analysis_id": str(uuid4()),
+            }],
+        },
+    )
+    with pytest.raises(HTTPException) as exc:
+        pedigree.assess_inheritance(
+            analysis_id,
+            variant_id,
+            AssessmentInput(models=["AD"], binding_ids=[binding_id]),
+            FakeDb(),
+            SimpleNamespace(user_id=uuid4()),
+        )
+    assert exc.value.status_code == 409
+    assert "exactly one verified proband binding" in exc.value.detail
