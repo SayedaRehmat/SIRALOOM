@@ -10,6 +10,7 @@ import hashlib
 import os
 import signal
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -113,6 +114,7 @@ class ToolExecutionRequest:
     outputs: tuple[OutputArtifact, ...] = ()
     resources: tuple[ScientificResourceBinding, ...] = ()
     timeout_seconds: int = 1800
+    max_output_bytes: int = 1_048_576
     environment: Mapping[str, str] = field(default_factory=dict)
 
     def validate(self, profile: ToolIdentity) -> None:
@@ -124,6 +126,8 @@ class ToolExecutionRequest:
             raise ToolExecutionContractError("Execution argv must be non-empty and contain no NUL bytes.")
         if not 1 <= int(self.timeout_seconds) <= 86400:
             raise ToolExecutionContractError("Execution timeout must be between 1 and 86400 seconds.")
+        if not 1024 <= int(self.max_output_bytes) <= 10_485_760:
+            raise ToolExecutionContractError("Captured process output limit must be between 1024 bytes and 10 MiB.")
         workspace = Path(self.workspace)
         if not workspace.is_absolute() or not workspace.is_dir() or workspace.is_symlink():
             raise ToolExecutionContractError("Execution workspace must be an existing absolute non-symlink directory.")
@@ -245,27 +249,53 @@ class LocalProcessToolExecutor:
         command = [str(executable), *request.argv]
         started = datetime.now(timezone.utc)
         monotonic_start = time.monotonic()
-        process = subprocess.Popen(
-            command,
-            cwd=workspace,
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-        try:
-            stdout, stderr = process.communicate(timeout=request.timeout_seconds)
-        except subprocess.TimeoutExpired as exc:
+        # Spool process output to disk rather than PIPEs: a noisy scientific
+        # executable must not be able to exhaust worker memory. Hash the complete
+        # streams, but return only a bounded tail for diagnostics.
+        with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
+            process = subprocess.Popen(
+                command,
+                cwd=workspace,
+                env=env,
+                stdout=stdout_file,
+                stderr=stderr_file,
+                start_new_session=True,
+            )
             try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait()
-            raise ToolExecutionError(
-                f"{profile.tool_id} execution exceeded its {request.timeout_seconds}s timeout.",
-                retryable=True,
-            ) from exc
+                process.communicate(timeout=request.timeout_seconds)
+            except subprocess.TimeoutExpired as exc:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+                raise ToolExecutionError(
+                    f"{profile.tool_id} execution exceeded its {request.timeout_seconds}s timeout.",
+                    retryable=True,
+                ) from exc
+
+            def capture(handle) -> tuple[str, str]:
+                handle.seek(0)
+                digest = hashlib.sha256()
+                tail = bytearray()
+                total = 0
+                while True:
+                    chunk = handle.read(64 * 1024)
+                    if not chunk:
+                        break
+                    digest.update(chunk)
+                    total += len(chunk)
+                    tail.extend(chunk)
+                    if len(tail) > request.max_output_bytes:
+                        del tail[:-request.max_output_bytes]
+                rendered = tail.decode("utf-8", errors="replace")
+                if total > request.max_output_bytes:
+                    rendered = "[... earlier process output truncated ...]\\n" + rendered
+                return rendered, digest.hexdigest()
+
+            stdout, stdout_digest = capture(stdout_file)
+            stderr, stderr_digest = capture(stderr_file)
+
         completed = datetime.now(timezone.utc)
         duration = time.monotonic() - monotonic_start
         if process.returncode != 0:
@@ -302,7 +332,7 @@ class LocalProcessToolExecutor:
             started_at=started.isoformat(),
             completed_at=completed.isoformat(),
             duration_seconds=duration,
-            stdout_sha256=hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
-            stderr_sha256=hashlib.sha256(stderr.encode("utf-8")).hexdigest(),
+            stdout_sha256=stdout_digest,
+            stderr_sha256=stderr_digest,
         )
         return ToolExecutionResult(provenance=provenance, stdout=stdout, stderr=stderr)
