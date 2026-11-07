@@ -335,8 +335,8 @@ def _write_unstranded_cpg_vcf(path: Path, *, second_value: str, reverse: bool = 
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="5-methylcytosine fraction">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        f"1\t10\t.\t{first_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|0:set,set:0.5\n"
-        f"1\t11\t.\t{second_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|0:set,set:{second_value}\n",
+        f"1\t10\t.\t{first_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:set,.:0.5\n"
+        f"1\t11\t.\t{second_ref}\t.\t.\tPASS\t.\tGT:PSL:M5mC\t0|.:set,.:{second_value}\n",
         encoding="utf-8",
     )
 
@@ -411,7 +411,7 @@ def test_number_m_unstranded_policy_rejects_length_changing_allele_coordinate_ma
         path,
         reference="C",
         alternate="CG",
-        genotype="0|1",
+        genotype="1|.",
         field_id="M5mC",
         values="0.5,0.6",
     )
