@@ -1005,6 +1005,8 @@ export type TranslationKey =
   | "familyIdentity.saving"
   | "familyIdentity.unverified"
   | "familyIdentity.noEvidence"
+  | "familyIdentity.bindingRecorded"
+  | "familyIdentity.evidenceRecorded"
   | "familyIdentity.errorLoad"
   | "familyIdentity.errorAction"
   | "familyIdentity.readOnlyRole"
