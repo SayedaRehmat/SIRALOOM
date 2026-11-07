@@ -5841,19 +5841,19 @@
           "backend/app/domain/vcf_validation.py::_gt_allele_tokens",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "GT separators are parsed as allele-level prefix markers for VCFv4.4/v4.5 and are used when validating per-allele PSL/PSO values."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf44_and_vcf45_accept_leading_gt_phase_separator_and_correct_ploidy",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -5970,19 +5970,19 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The sample FORMAT validator rejects simultaneous populated PS and PSL values."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6215,29 +6215,39 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSL cardinality is validated against the parsed GT allele vector, with missing entries retained positionally."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_psq_has_one_entry_per_psl_gt_position_even_for_repeated_set_name",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_psl_phase_set_is_global_across_chromosomes",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6354,19 +6364,19 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Unphased GT allele positions require the corresponding PSL entry to be missing."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6484,39 +6494,39 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#phase_set_observations",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#phase_set_traversal_orders"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSL traversal observations are keyed by sample and phase-set name without CHROM, preserving the specification's cross-chromosome phase-set scope."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_psl_phase_set_is_global_across_chromosomes",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_psl_phase_set_is_global_across_chromosomes_for_pso_obligations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_psl_phase_set_pso_obligation_crosses_chromosomes",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6634,39 +6644,49 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#phase_set_traversal_orders",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#derivative_chromosome_traversals"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSO values are assembled into per-sample/per-phase-set ordered variant events. The result explicitly separates reconstructed event order from unresolved full derivative sequence reconstruction."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_pso_order_is_not_inferred_from_vcf_coordinate_order",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_tandem_duplication_source_example_retains_reference_allele_pso",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_bnd_orientations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6783,39 +6803,39 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#phase_set_requires_pso"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The validator accumulates the PSO obligation across every occurrence of a sample/phase-set name and blocks a missing PSO when any allele in that set is a symbolic SV or breakend."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_phase_set_requires_pso_on_every_occurrence_when_set_contains_sv",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_pso_is_required_on_every_occurrence_of_phase_set_with_sv_allele",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_psl_phase_set_pso_obligation_crosses_chromosomes",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -6933,59 +6953,69 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_phase_vectors_by_record",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#reciprocal_breakend_phase_endpoints"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Reciprocal BND ALT occurrences are compared using their ordered per-ALT PSL/PSO vectors; unique phase identities can be paired across shifted GT positions, while ambiguous duplicate identities remain unresolved."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_breakend_phase_conformance.py::test_vcf44_reciprocal_breakend_phase_vectors_must_match",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf44_breakend_phase_conformance.py::test_vcf44_reciprocal_breakend_phase_vectors_accept_matching_values",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_breakend_phase_vectors_preserve_haplotype_order",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_multicopy_bnd_phase_pairs_follow_psl_pso_identity",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_duplicate_bnd_phase_copy_identifiers_remain_unresolved",
           "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_breakend_phase_values_match_across_different_gt_copy_positions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -7102,29 +7132,29 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#PSQ_Number_P_validation"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSQ is validated as a Number=P FORMAT vector aligned to the GT/PSL positions; repeated PSL names do not collapse positional entries."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_psq_values_remain_positionally_aligned_for_repeated_psl_names",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_psq_repeated_phase_set_positions_may_have_distinct_values",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -7241,29 +7271,29 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#PSQ_missing_position_validation"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Missing PSQ values are checked at the corresponding missing PSL positions; the validator does not compact or dictionary-collapse the vectors."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_psq_missing_value_must_follow_missing_psl_position",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_pso_psq_follow_psl_missing_positions",
-          "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "NEGATIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -12331,29 +12361,39 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_links",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_adjacencies"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "MATEID-linked breakends are represented as explicit two-end adjacency records. Missing mate identity is retained as unresolved evidence instead of inventing a mate."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_bnd_orientations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_paired_breakend_without_mateid_returns_durable_unresolved_adjacency",
           "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_reciprocal_bnd_event_group_and_orientation_are_supported_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -12537,19 +12577,29 @@
           "backend/app/domain/vcf_validation.py::_is_vcf45_breakend_alt",
           "backend/app/domain/vcf_validation.py::_breakend_orientation_details"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Bracketed ALT parsing retains the remote locus and local replacement sequence; orientation is represented separately from any inferred derivative sequence."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_bnd_orientations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -12732,19 +12782,29 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::_breakend_orientation_details"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The four bracket-placement forms are mapped to remote-piece direction, reverse-complement status, and joined side. This records the source-defined orientation without asserting a full chromosome sequence."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_bnd_orientations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -12928,39 +12988,49 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#mate_entries_by_alt",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_adjacencies"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "MATEID values are associated with ALT indexes and reciprocal mate ALT candidates are resolved independently; indistinguishable multiple candidates are rejected as ambiguous."
       },
       "tests": [
         {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_multiple_alt_breakend_mates_are_resolved_by_alt_index_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_multiallelic_breakend_mate_ids_preserve_alt_order",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_multiallelic_breakend_mates_compare_only_corresponding_alt_phase_values",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_multiallelic_mate_record_with_indistinguishable_reciprocal_alts_is_unresolved",
           "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -13139,13 +13209,58 @@
         }
       },
       "implementation": {
-        "status": "NOT_AUDITED",
-        "code_symbols": [],
-        "implementation_commit": null,
-        "owner_workstream": null,
-        "rationale": "Deferred until source ledger and independent review are complete."
+        "status": "IMPLEMENTED",
+        "code_symbols": [
+          "backend/app/domain/vcf_validation.py::validate_vcf_strict#parid_by_alt",
+          "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_partner_links",
+          "backend/app/domain/vcf_validation.py::validate_vcf_strict#derivative_graph_components"
+        ],
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
+        "rationale": "PARID is parsed using version-specific cardinality, resolved as a reciprocal partner edge distinct from MATEID, and incorporated into a derivative adjacency graph. Ambiguous legacy record-level multi-ALT PARID, missing IDs, missing targets and nonreciprocal references are preserved as UNRESOLVED evidence."
       },
-      "tests": [],
+      "tests": [
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence",
+          "test_kind": "BOUNDARY",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_vcf41_to_vcf43_record_level_parid_on_multiallelic_breakend_is_unresolved",
+          "test_kind": "BOUNDARY",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_without_source_record_id_is_durable_unresolved_traversal_evidence",
+          "test_kind": "BOUNDARY",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        }
+      ],
       "review": {
         "status": "IN_REVIEW",
         "review_rationale": "Author atomization from exact VCFv4.5 source context; independent review and cross-version reconciliation pending.",
@@ -13326,29 +13441,19 @@
           "backend/app/domain/vcf_validation.py::_breakend_remote_coordinate_within_cipos",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#telomere_validation"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Telomeric boundary coordinates are accepted when supported by the contig/reference boundary evidence; remote position zero and declared N+1 boundaries have dedicated tests."
       },
       "tests": [
         {
-          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf44_and_vcf45_telomeric_breakend_remote_position_zero_is_valid",
-          "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
-          "evidence_sha256": null
-        },
-        {
-          "test_id": "tests/test_vcf_validation.py::test_strict_validation_counts_declared_contig_n_plus_one_as_telomere",
-          "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf41_to_vcf45_telomeric_breakend_remote_position_zero_is_valid",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -13714,39 +13819,39 @@
           "backend/app/domain/vcf_validation.py::_breakend_remote_coordinate_within_cipos",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#unresolved_breakend_coordinate_links"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Remote mate coordinates are evaluated against the mate's selected POS and CIPOS interval; unresolved confidence intervals are reported as unresolved evidence rather than silently equated to exact coordinates."
       },
       "tests": [
         {
-          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_breakend_remote_positions_within_cipos_intervals",
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf44_and_vcf45_reciprocal_breakends_allow_remote_positions_within_cipos_intervals",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
-          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected",
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf44_and_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
-          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence",
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf44_and_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence",
           "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -13930,29 +14035,39 @@
           "backend/app/domain/vcf_validation.py::_is_vcf45_breakend_alt",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#unresolved_breakend_adjacencies"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "Single-breakend ALT forms are accepted as breakends without inventing a mate; derivative traversal returns a durable unresolved adjacency reason."
       },
       "tests": [
         {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_single_breakend_is_preserved_as_unresolved_without_mate_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_single_breakend_with_pso_is_accepted_and_counted",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_single_breakend_returns_unresolved_adjacency_without_fabricating_mate",
           "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -14906,49 +15021,49 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_phase_vectors_by_record",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#reciprocal_breakend_phase_endpoints"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The paired-breakend phase equality rule is implemented for VCFv4.4/v4.5 with ordered per-ALT PSL/PSO matching and explicit ambiguity handling for duplicate phase-copy identities."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_breakend_phase_conformance.py::test_vcf44_reciprocal_breakend_phase_vectors_must_match",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf44_breakend_phase_conformance.py::test_vcf44_reciprocal_breakend_phase_vectors_accept_matching_values",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_breakend_mates_require_identical_sample_psl_and_pso",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -18162,19 +18277,19 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::_gt_allele_tokens"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "VCFv4.4/v4.5 GT phasing indicators are parsed as prefixes on subsequent allele values and retained in allele-position order."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf44_and_vcf45_accept_leading_gt_phase_separator_and_correct_ploidy",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -18413,29 +18528,39 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#PSL_Number_P_validation"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSL cardinality and missing-position semantics are checked against the GT allele vector."
       },
       "tests": [
         {
+          "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_psl_phase_set_is_global_across_chromosomes",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_psl_requires_missing_value_for_unphased_gt_alleles",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reference_phase_positions_are_not_misclassified_as_bnd_alt_pairs",
-          "test_kind": "BOUNDARY",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -18555,19 +18680,19 @@
         "code_symbols": [
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#PS_and_PSL_exclusivity"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "A sample genotype with both populated PS and PSL is rejected."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_ps_and_psl_cannot_both_be_populated_for_one_sample",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -18688,39 +18813,49 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#phase_set_traversal_orders",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#derivative_chromosome_traversals"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "PSO obligations and ordinal order are tracked across records; only ordered event traversal is reconstructed. Full sequence remains explicitly unresolved when reference segments and copy-number structure are insufficient."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_phase_set_requires_pso_on_every_occurrence_when_set_contains_sv",
-          "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_tandem_duplication_source_example_retains_reference_allele_pso",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_bnd_orientations",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf_derivative_traversal_conformance.py::test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -18841,29 +18976,49 @@
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#breakend_phase_vectors_by_record",
           "backend/app/domain/vcf_validation.py::validate_vcf_strict#reciprocal_breakend_phase_endpoints"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The same VCFv4.4/v4.5 reciprocal BND PSL/PSO equality rule is enforced at the ALT-copy level; duplicate phase-copy identities are reported unresolved."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_breakend_phase_conformance.py::test_vcf44_reciprocal_breakend_phase_vectors_must_match",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_reciprocal_multicopy_bnd_phase_pairs_follow_psl_pso_identity",
           "test_kind": "POSITIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_breakend_mates_require_identical_sample_psl_and_pso",
+          "test_kind": "NEGATIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
+          "evidence_sha256": null
+        },
+        {
+          "test_id": "tests/test_vcf45_phase_set_positional_semantics.py::test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso",
+          "test_kind": "POSITIVE",
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -26982,29 +27137,29 @@
           "backend/app/domain/vcf_validation.py::_reserved_vcf45_format_definition",
           "backend/app/domain/vcf_validation.py::_reserved_format_definition_for_version"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The VCFv4.5 reserved FORMAT definition for PSL is enforced as Number=P, Type=String."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_reserved_psl_header_must_match_number_p",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_reserved_field_definitions_enforce_spec_number_and_type",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -27105,29 +27260,29 @@
           "backend/app/domain/vcf_validation.py::_reserved_vcf45_format_definition",
           "backend/app/domain/vcf_validation.py::_reserved_format_definition_for_version"
         ],
-        "implementation_commit": "d7ed372c52e23de0f015472135634f9a18ae3fbb",
-        "owner_workstream": "VCFv4.4-v4.5 PSO/BND conformance",
+        "implementation_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+        "owner_workstream": "VCFv4.1-v4.5 PSO/BND and derivative graph conformance",
         "rationale": "The VCFv4.5 reserved FORMAT definition for PSO is enforced as Number=P, Type=Integer; VCFv4.4 PSO Number/Type behavior has an explicit regression."
       },
       "tests": [
         {
           "test_id": "tests/test_vcf44_phase_set_conformance.py::test_vcf44_reserved_pso_header_must_match_number_p_integer",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         },
         {
           "test_id": "tests/test_vcf_validation.py::test_vcf45_reserved_field_definitions_enforce_spec_number_and_type",
           "test_kind": "NEGATIVE",
-          "execution_status": "NOT_RUN",
-          "expected_result": "Conformance behavior described by the atomic requirement.",
-          "observed_result": null,
-          "execution_commit": null,
-          "evidence_uri": null,
+          "execution_status": "PASS",
+          "expected_result": "The atomic requirement's positive, negative or boundary acceptance condition is enforced.",
+          "observed_result": "PASS on GitHub Actions workflow run 42369768444 at exact commit f4c9ec0e3ba700fe2293f7759aa46d68771080f1.",
+          "execution_commit": "f4c9ec0e3ba700fe2293f7759aa46d68771080f1",
+          "evidence_uri": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42369768444",
           "evidence_sha256": null
         }
       ],
@@ -27250,7 +27405,7 @@
   ],
   "coverage_summary": {
     "source_documents_reviewed": [
-      "VCFv4.0 historical core page",
+      "VCFv4.0 historical core page identified; authoritative source bytes and SHA-256 not captured",
       "VCFv4.1",
       "VCFv4.2",
       "VCFv4.3",
@@ -27260,8 +27415,8 @@
     "candidate_lines_reviewed": 0,
     "atomic_requirements_created": 142,
     "atomic_requirements_independently_reviewed": 0,
-    "requirements_with_code_mapping": 25,
-    "requirements_with_executed_tests": 0,
+    "requirements_with_code_mapping": 26,
+    "requirements_with_executed_tests": 26,
     "unresolved_source_questions": 49
   }
 }
