@@ -398,3 +398,33 @@ def test_vcf41_to_vcf43_record_level_parid_on_multiallelic_breakend_is_unresolve
         item["reason_code"] == "VCF_BREAKEND_PARID_RECORD_LEVEL_MULTIALLELIC_AMBIGUOUS"
         for item in result["unresolved_breakend_partner_links"]
     )
+
+
+def test_parid_without_source_record_id_is_durable_unresolved_traversal_evidence(
+    tmp_path: Path,
+):
+    path = tmp_path / "parid-without-source-id.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=PARID,Number=A,Type=String,Description="ID of partner breakend">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t5\t.\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;PARID=bnd2\tGT:PSL:PSO\t0|1:.,phase:.,1\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["unresolved_breakend_partner_link_count"] == 1
+    assert result["unresolved_breakend_partner_links"][0]["reason_code"] == (
+        "VCF_BREAKEND_PARID_SOURCE_ID_MISSING"
+    )
+    traversal = next(
+        item for item in result["derivative_chromosome_traversals"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
+    )
+    assert traversal["adjacency_status"] == "PARTIAL_OR_UNRESOLVED"
+    assert "VCF_BREAKEND_PARID_PARTNER_UNRESOLVED" in traversal["unresolved_reason_codes"]
