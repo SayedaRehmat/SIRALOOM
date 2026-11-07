@@ -548,6 +548,34 @@ def list_sample_identity_evidence(
     }
 
 
+@router.get("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence")
+def list_sample_identity_evidence(
+    case_id: UUID,
+    binding_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    require_case_permission(case, principal, db, "read")
+    binding = db.get(PedigreeSampleBinding, binding_id)
+    if binding is None or binding.case_id != case_id:
+        raise HTTPException(404, "Sample binding not found")
+    rows = db.scalars(select(PedigreeSampleIdentityEvidence).where(
+        PedigreeSampleIdentityEvidence.case_id == case_id,
+        PedigreeSampleIdentityEvidence.binding_id == binding_id,
+    ).order_by(
+        PedigreeSampleIdentityEvidence.evidence_type,
+        PedigreeSampleIdentityEvidence.version,
+    )).all()
+    return {
+        "case_id": str(case_id),
+        "binding_id": str(binding_id),
+        "evidence": [_sample_identity_evidence_payload(row) for row in rows],
+    }
+
+
 @router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence", status_code=201)
 def create_sample_identity_evidence(
     case_id: UUID,
