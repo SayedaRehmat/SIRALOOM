@@ -602,7 +602,7 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 ### 17.2 Output and decomposition
 
 - All 75 input source-line candidates have at least one mapped provisional requirement record in the crosswalk.
-- The supplemental registry contains 141 requirement records, each with a provisional ID in the `VCF-REQ-900001`–`VCF-REQ-900141` range. These identifiers are not canonical allocations.
+- The supplemental registry contains 161 requirement records, each with a provisional ID in the `VCF-REQ-900001`–`VCF-REQ-900141` range. These identifiers are not canonical allocations.
 - Clearly compound clauses were split by independently verifiable behavior and/or distinct modality. Examples include:
   - unstructured metadata grammar and value constraints;
   - structured metadata ID presence and uniqueness;
@@ -618,7 +618,7 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 
 ### 17.3 Validation boundary
 
-- A structural contract check against the fetched ledger schema found 141 unique requirement IDs, all schema-required requirement fields present, no unexpected root/requirement properties, valid enumerated values, six version-applicability entries per record, valid source digest formats and ordered integer source line locators.
+- A structural contract check against the fetched ledger schema found 161 unique requirement IDs, all schema-required requirement fields present, no unexpected root/requirement properties, valid enumerated values, six version-applicability entries per record, valid source digest formats and ordered integer source line locators.
 - All 75 worklist candidates are mapped; zero are unmapped.
 - This was a programmatic structural/schema-contract check, not execution of a full JSON Schema 2020-12 validator. Formal JSON Schema validation remains required before promotion.
 - The records remain IN_REVIEW; independent second review has not occurred. No duplicate reconciliation against the 226 canonical requirements or the 61 GT/FORMAT candidates has yet been completed.
@@ -627,9 +627,66 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 
 ### 17.4 Remaining adjudication and quality gates
 
-- Re-read all 139 statements against complete paragraph/table/footnote/example context to identify any residual multi-obligation records, over-splitting, incorrect actor/condition, or modality drift.
+- Re-read all 161 surviving records against complete paragraph/table/footnote/example context to identify any residual multi-obligation records, over-splitting, incorrect actor/condition, or modality drift.
 - Run a real JSON Schema 2020-12 validator against the supplemental registry and fix any failures.
 - Reconcile all provisional records against the full 226-record canonical ledger and 61 GT/FORMAT candidates; retain only net-new semantics and add crosswalk dispositions for duplicates/overlaps.
 - Resolve the VCF/BCF header-tag optionality scope at lines 129–130 and 301–302; preserve the RUS/RS inconsistency at line 1995; keep the previously recorded local-GT, Number=P/PSQ and xanthosine capitalization questions open pending independent/source-author review.
 - Obtain independent standards review before any candidate is promoted to the canonical ledger.
 - This pass does not establish complete VCFv4.5 coverage, complete VCF-stage qualification, or laboratory approval.
+
+
+## 18. VCFv4.5 context review, formal schema validation and full-ledger reconciliation pass 2 (2026-11-07)
+
+### 18.1 Final pass-2 artifacts
+
+- Supplemental registry: `VCF45_ATOMIC_CANDIDATE_REGISTRY_PASS1_2026-11-07.json` — **161** surviving records; current blob SHA-1 `d72ac4b4fe3231c9c2418293af6e38a9c006f5ae`.
+- Source-line crosswalk: `VCF45_ATOMIC_CANDIDATE_CROSSWALK_PASS1_2026-11-07.json` — 75/75 source candidates mapped, zero unmapped.
+- Complete-context author review: `VCF45_ATOMIC_CONTEXT_REVIEW_PASS2_2026-11-07.json` — 161/161 records reviewed; 161/161 source references have the pinned revision/digests and valid line bounds.
+- Full reconciliation: `VCF45_ATOMIC_RECONCILIATION_PASS2_2026-11-07.json` — compared against all 226 canonical requirements and all 61 GT/FORMAT candidates.
+- Ambiguities: `VCF45_SOURCE_AMBIGUITY_ADJUDICATION_2026-11-07.json` — six source-internal/scope issues explicitly retained.
+- Independent review package: `VCF45_INDEPENDENT_STANDARDS_REVIEW_PACKAGE_PASS2_2026-11-07.md`.
+
+### 18.2 Formal JSON Schema 2020-12 validation
+
+- Added reproducible validator: `docs/scientific/vcf-conformance/scripts/validate_atomic_registry_schema.py`.
+- Added isolated workflow: `.github/workflows/vcf-research-ledger-schema.yml`.
+- Validator version: `jsonschema==4.26.0`.
+- The validator calls `Draft202012Validator.check_schema(schema)` and validates the entire supplemental registry with `Draft202012Validator.iter_errors(registry)`.
+- GitHub Actions run **42350000590** completed successfully for the exact 161-record registry blob `d72ac4b4fe3231c9c2418293af6e38a9c006f5ae`. Both schema-check and registry-validation steps completed successfully.
+- This is formal Draft 2020-12 validation, not the earlier schema-directed structural check.
+
+### 18.3 Complete-context review corrections
+
+The 141-record first pass was reread against full paragraph/list/table context. The pass-2 registry now contains 161 records after additions and duplicate consolidation. Corrections included:
+
+- Restored MAY for optional structured metadata fields and MAY_NOT for statements saying preservation is not required.
+- Reclassified ALT enumeration members as descriptive members of one permitted-set MUST rule rather than independent MAY rules.
+- Split field type, requiredness and value constraints for CHROM, POS, REF, QUAL and FILTER.
+- Split quote escaping from backslash escaping; split log10 likelihood scale from the descriptive negative-value statement.
+- Corrected referents for FORMAT FT and FILTER missingness; added INFO-key uniqueness and BCF metadata-entry scope as explicit candidates.
+- Split INFO CN from FORMAT CN presence and semantics; added line 1887 to establish allele-specific versus overall-copy-number meaning.
+- Added the <*> POS interval exception and adjacent ALT ID, QUAL, FILTER and missing-value clauses.
+- Consolidated repeated ID syntax constraints across lines 258 and 419 while preserving both source locators.
+- Consolidated the repeated tandem-repeat phasing recommendation at lines 1946 and 1985.
+- Removed internal duplicate provisional records for per-ALT coverage, missing INFO CN, repeated phasing and repeated ID syntax/case rules.
+- Preserved exact source modality and all unresolved source contradictions; no upstream correction is assumed.
+
+### 18.4 Reconciliation results
+
+- Canonical ledger: **226** records reviewed.
+- GT/FORMAT candidate set: **61** records reviewed.
+- Supplemental registry: **161** surviving records.
+- **3** supplemental records are subsumed by canonical `VCF-REQ-000076`; they remain in the source traceability set but must not be promoted as separate canonical IDs.
+- **19** records have related/partial semantic overlap with canonical requirements; these are not classified as duplicates.
+- **6** records have related/partial overlap with GT/FORMAT candidates; no direct duplicate was identified against the 61-candidate set.
+- **7** internal duplicate records were removed/merged, with all relevant source locators retained on the surviving record.
+- **75/75** original source candidates are mapped; zero unmapped.
+- Canonical `atomic-requirements.v1.json` remains unchanged. No canonical IDs were allocated.
+
+### 18.5 Open source questions and review boundary
+
+Six issues remain explicitly open: local-GT paired-example mismatch; Number=P/PSQ positional interpretation; xanthosine alias capitalization; RUL/RS parenthetical mismatch; reference/contig tag and BCF “all entries” scope; POS/SVLEN mapping to reference-catalog fields.
+
+The author-level review is complete for this pass, but independent standards review is **not** complete. PR #293 remains draft and currently has no requested reviewers. The review package is attached to the PR; formal reviewer assignment requires a non-author GitHub username or team slug.
+
+No production implementation, parser/validator/normalizer change, executable conformance fixture, test execution, or laboratory qualification was made. The new workflow is isolated to JSON Schema validation; existing production CI jobs were not changed.
