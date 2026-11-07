@@ -168,3 +168,41 @@ def test_request_rejects_protected_environment_overrides(tmp_path: Path) -> None
 
     with pytest.raises(ToolExecutionContractError, match="protected variable"):
         request.validate(_profile())
+
+
+
+def test_executor_bounds_returned_logs_but_hashes_complete_output(tmp_path: Path) -> None:
+    profile = _profile()
+    payload = "x" * 5000
+    request = ToolExecutionRequest(
+        execution_id="execution-008",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=("-c", f"print({payload!r}, end='')"),
+        workspace=str(tmp_path),
+        max_output_bytes=1024,
+    )
+
+    result = LocalProcessToolExecutor().execute(profile, request)
+
+    expected = payload.encode("utf-8")
+    assert result.stdout.startswith("[... earlier process output truncated ...]\\n")
+    assert len(result.stdout.encode("utf-8")) < 1100
+    assert result.provenance.stdout_sha256 == hashlib.sha256(expected).hexdigest()
+    assert result.provenance.stderr_sha256 == hashlib.sha256(b"").hexdigest()
+
+
+def test_request_rejects_unbounded_or_too_small_output_capture_limit(tmp_path: Path) -> None:
+    request = ToolExecutionRequest(
+        execution_id="execution-009",
+        organization_id="lab-001",
+        workflow_id="workflow-v1",
+        operation="validate",
+        argv=("--version",),
+        workspace=str(tmp_path),
+        max_output_bytes=100_000_000,
+    )
+
+    with pytest.raises(ToolExecutionContractError, match="Captured process output limit"):
+        request.validate(_profile())
