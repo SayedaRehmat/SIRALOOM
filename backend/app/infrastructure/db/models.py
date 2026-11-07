@@ -956,7 +956,6 @@ class SegregationObservationRevision(Base):
         CheckConstraint("length(trim(revision_reason)) > 0", name="ck_segregation_observation_revision_reason"),
         CheckConstraint("length(observation_fingerprint) = 64", name="ck_segregation_observation_revision_fingerprint_length"),
         UniqueConstraint("root_observation_id", "version", name="uq_segregation_observation_revision_version"),
-        UniqueConstraint("root_observation_id", "observation_fingerprint", name="uq_segregation_observation_revision_fingerprint"),
         UniqueConstraint("supersedes_revision_id", name="uq_segregation_observation_revision_successor"),
         Index("ix_segregation_observation_revision_root", "root_observation_id", "version"),
     )
