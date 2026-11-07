@@ -1009,7 +1009,9 @@ export type TranslationKey =
   | "familyIdentity.selectedSampleMissing"
   | "familyIdentity.independentReviewer"
   | "familyIdentity.analysisStatus"
-  | "familyIdentity.superseded";
+  | "familyIdentity.superseded"
+  | "familyIdentity.evidenceArtifact"
+  | "familyIdentity.noEvidenceArtifact";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -2016,6 +2018,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.independentReviewer": "An independent reviewer must review evidence and binding claims.",
     "familyIdentity.analysisStatus": "Analysis status",
     "familyIdentity.superseded": "Superseded",
+    "familyIdentity.evidenceArtifact": "Evidence source artifact",
+    "familyIdentity.noEvidenceArtifact": "No attached artifact",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3020,5 +3024,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.independentReviewer": "يجب أن يراجع شخص مستقل أدلة الهوية وادعاءات الربط.",
     "familyIdentity.analysisStatus": "حالة التحليل",
     "familyIdentity.superseded": "مستبدل بإصدار أحدث",
+    "familyIdentity.evidenceArtifact": "ملف مصدر الدليل",
+    "familyIdentity.noEvidenceArtifact": "لا يوجد ملف مرفق",
   },
 };
