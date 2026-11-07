@@ -95,9 +95,18 @@ def build_family_genotype_matrix(
             call = calls.get(UUID(variant_id))
             state = _call_state(call)
             call = call or {}
+            source_record_sha256 = call.get("source_record_sha256")
+            if source_record_sha256 is None:
+                source_record_sha256_status = "NOT_AVAILABLE"
+            elif isinstance(source_record_sha256, str) and re.fullmatch(r"[0-9a-fA-F]{64}", source_record_sha256):
+                source_record_sha256_status = "PRESENT_VALID_SHA256"
+            else:
+                source_record_sha256_status = "INVALID_SHA256"
+                state = "INVALID_CALL"
             rows.append({
                 "variant_id": variant_id,
                 "call_state": state,
+                "source_record_sha256_status": source_record_sha256_status,
                 "callability": "NOT_ASSESSED",
                 "source_genotype": call.get("source_genotype"),
                 "normalized_genotype": call.get("normalized_genotype"),
@@ -118,6 +127,16 @@ def build_family_genotype_matrix(
                 "projected_phase": call.get("projected_phase"),
                 "sample_call_status": call.get("status", "GENOTYPE_UNAVAILABLE"),
             })
+        ploidy_evidence = sample.get("ploidy_evidence")
+        if not ploidy_evidence:
+            ploidy_status = "NOT_ASSESSED"
+        elif ploidy_evidence.get("status") != "VERIFIED":
+            ploidy_status = "UNVERIFIED_OR_CONFLICTED"
+        elif ploidy_evidence.get("reference_build") != sample.get("analysis_reference_build"):
+            ploidy_status = "REFERENCE_BUILD_MISMATCH"
+        else:
+            ploidy_status = "VERIFIED_RECORDED_LOCUS_POLICY_REQUIRED"
+
         matrix_samples.append({
             "member_id": str(sample["member_id"]),
             "member_identifier": sample["member_identifier"],
@@ -138,10 +157,13 @@ def build_family_genotype_matrix(
             "identity_evidence": sample["identity_evidence"],
             "normalization_step_status": sample["normalization_step_status"],
             "normalized_partition_count": sample["normalized_partition_count"],
-            "ploidy_evidence": sample.get("ploidy_evidence") or {
+            "analysis_reference_build": sample.get("analysis_reference_build"),
+            "ploidy_evidence": ploidy_evidence or {
                 "status": "NOT_ASSESSED",
                 "reason": "No specimen-scoped ploidy evidence revision was available.",
             },
+            "ploidy_evidence_status": ploidy_status,
+            "ploidy_interpretation_status": "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY",
             "calls": rows,
         })
 
@@ -168,6 +190,8 @@ def build_family_genotype_matrix(
         "relationships_as_recorded": relationship_snapshot,
         "interpretation_status": "NOT_PERFORMED",
         "callability_status": "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY",
+        "ploidy_status": "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED",
+        "qualification_status": "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED",
         "biological_relatedness_status": "NOT_ESTABLISHED",
         "matrix_fingerprint": _canonical_fingerprint(fingerprint_payload),
     }
