@@ -222,3 +222,24 @@ def test_docker_executor_builds_isolated_command_and_returns_common_provenance(t
     assert any("dst=/inputs/sample-vcf" in mount and "readonly" in mount for mount in mounts)
     assert any("dst=/resources/reference-fasta" in mount and "readonly" in mount for mount in mounts)
     assert any(call[1:3] == ["image", "inspect"] for call in calls)
+
+
+
+def test_container_workspace_rejects_symlink_escape(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    outside = tmp_path / "outside.txt"
+    outside.write_text("protected", encoding="utf-8")
+    (workspace / "escape").symlink_to(outside)
+    with pytest.raises(ToolExecutionContractError, match="symlinks"):
+        LinuxContainerToolExecutor._validate_workspace_contents(workspace)
+
+
+def test_container_workspace_rejects_hardlink_alias(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    source = tmp_path / "source.txt"
+    source.write_text("protected", encoding="utf-8")
+    (workspace / "alias.txt").hardlink_to(source)
+    with pytest.raises(ToolExecutionContractError, match="hard-linked"):
+        LinuxContainerToolExecutor._validate_workspace_contents(workspace)
