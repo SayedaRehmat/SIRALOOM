@@ -261,3 +261,33 @@ def test_vcf45_multi_alt_breakend_mates_check_each_reciprocal_phase_vector(
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
+
+def test_vcf45_pso_obligations_are_tracked_for_multiple_sets_in_one_sample(
+    tmp_path: Path,
+):
+    path = tmp_path / "pso-multiple-sets-one-sample.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t5\\tdel1\\tA\\t<DEL>,<DUP>\\t.\\tPASS\\tEND=8\\tGT:PSL:PSO\\t1|2|0:alpha,beta,gamma:3,4,5\\n"
+        "1\\t9\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t1|2|0:alpha,beta,gamma:6,.,8\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_PHASE_SET_PSO_REQUIRED"
+
+
+def test_vcf45_psq_distinct_phase_set_identifiers_remain_positionally_aligned(
+    tmp_path: Path,
+):
+    path = tmp_path / "psq-distinct-phase-set-identifiers.vcf"
+    _write(
+        path,
+        format_keys="GT:PSL:PSQ",
+        sample="|0|1:phaseA,phaseB:11,29",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
