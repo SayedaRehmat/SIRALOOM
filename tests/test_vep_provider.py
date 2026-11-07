@@ -486,3 +486,68 @@ def test_vep_rejects_analysis_assembly_different_from_resource_assembly(monkeypa
         provider.verify_local_runtime("GRCh37")
 
     assert calls == []
+
+
+def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
+    toolchain["execution_profile_id"] = "vep-115-linux-amd64"
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    provider.verify_local_runtime = lambda _assembly: {"status": "VERIFIED"}
+
+    environment = SimpleNamespace(profile_json={"runtime_image_digest": None})
+    calls = []
+    published = []
+
+    class FakePersistentService:
+        organization_id = __import__("uuid").uuid4()
+        analysis_id = __import__("uuid").uuid4()
+        environment_registration_id = __import__("uuid").uuid4()
+        db = SimpleNamespace(get=lambda _model, _identifier: environment)
+
+        def execute(self, profile, request, *, artifact_publisher=None):
+            calls.append((profile, request))
+            output_path = Path(request.outputs[0].path)
+            output_path.write_text(
+                json.dumps({
+                    "start": 100,
+                    "seq_region_name": "1",
+                    "allele_string": "A/G",
+                    "transcript_consequences": [],
+                }) + "\\n",
+                encoding="utf-8",
+            )
+            output_sha = hashlib.sha256(output_path.read_bytes()).hexdigest()
+            provenance = SimpleNamespace(exit_code=0)
+            result = SimpleNamespace(result=SimpleNamespace(
+                provenance=provenance,
+                stdout="",
+                stderr="",
+            ), record_id=__import__("uuid").uuid4())
+            if artifact_publisher:
+                published.append(artifact_publisher(request, result, result.record_id))
+            return result
+
+    provider.persistent_execution_service = FakePersistentService()
+    provider.persistent_artifact_publisher = (
+        lambda request, result, record_id: {"vep-output.json": record_id}
+    )
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+    request = provider.prepare_request(
+        "annotate", {"variants": [variant], "genome_build": "GRCh38"}
+    )
+
+    result = provider.execute(request)
+
+    assert len(calls) == 1
+    profile, tool_request = calls[0]
+    assert profile.tool_id == "ensembl-vep"
+    assert profile.profile_id == "vep-115-linux-amd64"
+    assert tool_request.operation == "annotate"
+    assert tool_request.inputs[0].name == "vep-input.vcf"
+    assert tool_request.outputs[0].name == "vep-output.json"
+    assert result.metadata["tool_execution_record_id"]
+    assert result.payload[0]["allele_string"] == "A/G"
