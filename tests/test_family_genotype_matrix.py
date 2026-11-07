@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -176,6 +177,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
     member = SimpleNamespace(
         id=member_id, case_id=case_id, member_identifier="PROBAND",
         relationship_to_proband="PROBAND", sex="UNKNOWN", affected_status="AFFECTED",
+        is_proband=True,
     )
     specimen = SimpleNamespace(id=specimen_id, case_id=case_id)
     artifact = SimpleNamespace(
@@ -200,8 +202,10 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         reference_build="GRCh38",
         revision_fingerprint="d" * 64,
         region_copy_number={"chrX": 2},
+        recorded_by=uuid4(),
+        recorded_at=datetime(2026, 11, 7, tzinfo=timezone.utc),
         reviewed_by=uuid4(),
-        reviewed_at="2026-11-07T00:00:00Z",
+        reviewed_at=datetime(2026, 11, 7, tzinfo=timezone.utc),
         source_type="LAB_VALIDATED",
         evidence_reference="PLOIDY-QC-001",
     )
@@ -266,6 +270,10 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         "region_copy_number": {"chrX": 2},
         "source_type": "LAB_VALIDATED",
         "evidence_reference": "PLOIDY-QC-001",
+        "recorded_by": str(ploidy_evidence.recorded_by),
+        "recorded_at": "2026-11-07T00:00:00+00:00",
+        "reviewed_by": str(ploidy_evidence.reviewed_by),
+        "reviewed_at": "2026-11-07T00:00:00+00:00",
     }
     assert {item["evidence_type"] for item in result["samples"][0]["identity_evidence"]} == {
         "CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC",
