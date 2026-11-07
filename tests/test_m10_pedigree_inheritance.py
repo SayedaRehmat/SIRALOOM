@@ -1043,7 +1043,17 @@ def test_segregation_observation_corrections_are_append_only_and_idempotent(monk
         phenotype_status="AFFECTED",
         source="NORMALIZED_VCF",
         notes="corrected note",
+        revision_reason="Corrected after review of the laboratory source document",
     )
+    missing_reason_db = FakeDb()
+    body_without_reason = body.model_copy(update={"revision_reason": None})
+    with pytest.raises(HTTPException, match="correction reason is required"):
+        pedigree.add_segregation(
+            analysis_id, variant_id, body_without_reason, missing_reason_db, principal,
+        )
+    assert missing_reason_db.added == []
+    assert missing_reason_db.commits == 0
+
     db = FakeDb()
     result = pedigree.add_segregation(
         analysis_id, variant_id, body, db, principal,
@@ -1055,6 +1065,7 @@ def test_segregation_observation_corrections_are_append_only_and_idempotent(monk
     )
     assert revision.root_observation_id == root_id
     assert revision.version == 2
+    assert revision.revision_reason == "Corrected after review of the laboratory source document"
     assert revision.supersedes_revision_id is None
     assert revision.payload["genotype"] == "1/1"
     assert revision.payload["source"] == "MANUALLY_REPORTED"
