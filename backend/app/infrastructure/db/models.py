@@ -934,6 +934,26 @@ class SegregationObservation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("analysis_id", "variant_id", "pedigree_member_id"),)
 
+class FamilyGenotypeMatrixSnapshot(Base):
+    """Immutable, reproducible snapshot of source-bound family genotype evidence."""
+    __tablename__ = "family_genotype_matrix_snapshots"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    variant_id: Mapped[UUID] = mapped_column(ForeignKey("variants.id"), nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    matrix_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    matrix_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "matrix_fingerprint", name="uq_family_genotype_matrix_snapshot_fingerprint"),
+        CheckConstraint("schema_version = 1", name="ck_family_genotype_matrix_snapshot_schema"),
+        CheckConstraint("length(matrix_fingerprint) = 64", name="ck_family_genotype_matrix_snapshot_fingerprint_length"),
+        Index("ix_family_genotype_matrix_snapshot_analysis_variant", "analysis_id", "variant_id"),
+    )
+
+
 class InheritanceAssessment(Base):
     __tablename__ = "inheritance_assessments"
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -949,6 +969,9 @@ class InheritanceAssessment(Base):
     # Fingerprint of the exact verified family genotype matrix used as context.
     # Nullable only for legacy assessments recorded before matrix binding existed.
     family_matrix_fingerprint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    family_matrix_snapshot_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("family_genotype_matrix_snapshots.id"), nullable=True,
+    )
     reviewer_note: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
