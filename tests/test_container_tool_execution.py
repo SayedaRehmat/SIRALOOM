@@ -9,7 +9,7 @@ from backend.app.domain.container_tool_execution import (
     EnvironmentAwareToolExecutor,
     LinuxContainerToolExecutor,
 )
-from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentProfile
+from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentError, ExecutionEnvironmentProfile
 from backend.app.domain.tool_execution import ToolExecutionContractError, ToolIdentity
 
 
@@ -87,5 +87,5 @@ def test_container_runtime_must_be_installed_and_explicit():
 def test_environment_aware_executor_never_falls_back_for_remote_agent():
     environment = _environment(runtime_kind="OCI", executor_kind="REMOTE_AGENT")
     executor = EnvironmentAwareToolExecutor(environment)
-    with pytest.raises(Exception, match="not implemented"):
+    with pytest.raises(ExecutionEnvironmentError, match="not implemented"):
         executor.execute(_tool(), None)
