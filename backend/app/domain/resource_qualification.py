@@ -98,8 +98,13 @@ def _qualify_reference_toolchain(resource: Resource, execution: Any, blockers: l
     checks["bcftools_execution"] = "GOVERNED"
 
 
-def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, Any]) -> None:
-    """Require the governed VEP executable and cache to be usable offline.
+def _qualify_vep_runtime(
+    resource: Resource,
+    execution: Any,
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Require the governed VEP executable, cache and reference to be usable offline.
 
     This is a technical preflight only. Scientific accuracy still requires an
     independently specified known-answer fixture and laboratory qualification.
@@ -107,9 +112,25 @@ def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, 
     from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 
     try:
+        toolchain = dict(execution.toolchain or {})
+        reference_package = toolchain.get("reference_package")
+        if not isinstance(reference_package, dict):
+            raise VEPProviderError(
+                "VEP qualification requires an explicitly bound reference_package "
+                "with assembly, FASTA/FAI paths and checksums."
+            )
         provider = VEPProvider.from_execution_contract(execution)
-        build = str((execution.toolchain or {}).get("assembly") or "")
-        checks["vep_runtime"] = provider.verify_local_runtime(build)
+        build = str(toolchain.get("assembly") or "")
+        context = {
+            "organization_id": str(resource.organization_id or "system-resource-qualification"),
+            "workflow_id": f"resource-qualification:{resource.id}",
+            "reference_package": reference_package,
+        }
+        checks["vep_runtime"] = provider.verify_local_runtime(
+            build,
+            reference_package=reference_package,
+            context=context,
+        )
     except (VEPProviderError, OSError) as exc:
         blockers.append("VEP_RUNTIME_PREFLIGHT_FAILED")
         checks["vep_runtime"] = {
@@ -231,7 +252,7 @@ def qualify_resource(
                 != registered_artifact_sha256
             ):
                 blockers.append("VEP_CACHE_ARTIFACT_DIGEST_MISMATCH")
-            _qualify_vep_runtime(execution, blockers, checks)
+            _qualify_vep_runtime(resource, execution, blockers, checks)
     passed = all(bool(checks.get(name)) for name in ("publisher_present", "release_identity_match", "artifact_location_match")) and not blockers
     if resource.provider == "NCBI ClinVar" and checks.get("artifact_validation") != "GZIP_XML_WELL_FORMED":
         passed = False
