@@ -20,6 +20,7 @@ from backend.app.infrastructure.db.models import (
     Organization,
     PedigreeMember,
     SegregationObservation,
+    SegregationObservationRevision,
     User,
     Variant,
 )
@@ -966,3 +967,110 @@ def test_inheritance_assessment_rejects_family_matrix_with_incomplete_source_pro
         )
     assert exc.value.status_code == 409
     assert "complete source-artifact, normalization-output and per-record digest provenance" in exc.value.detail
+
+
+def test_segregation_observation_corrections_are_append_only_and_idempotent(monkeypatch):
+    analysis_id, variant_id, case_id, member_id = (uuid4() for _ in range(4))
+    root_id, principal_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
+    member = SimpleNamespace(
+        id=member_id, case_id=case_id, member_identifier="PROBAND",
+    )
+    snapshot = {"schema_version": 1, "members": [], "relationships": []}
+    root = SimpleNamespace(
+        id=root_id,
+        analysis_id=analysis_id,
+        variant_id=variant_id,
+        pedigree_member_id=member_id,
+        genotype="0/1",
+        zygosity="HET",
+        phase="UNPHASED",
+        allele_observed=None,
+        phenotype_status="AFFECTED",
+        source="MANUALLY_REPORTED",
+        notes="initial note",
+        metadata_json={"pedigree_context_snapshot": snapshot},
+    )
+    principal = SimpleNamespace(user_id=principal_id)
+
+    class FakeDb:
+        def __init__(self, revisions=()):
+            self.revisions = list(revisions)
+            self.added = []
+            self.commits = 0
+
+        def get(self, model, _identifier):
+            assert model is pedigree.PedigreeMember
+            return member
+
+        def scalar(self, _query):
+            return root
+
+        def scalars(self, _query):
+            return self.revisions
+
+        def add(self, row):
+            self.added.append(row)
+
+        def commit(self):
+            self.commits += 1
+
+    class FakeAudit:
+        def __init__(self, _db):
+            pass
+
+        def record(self, **_kwargs):
+            pass
+
+    monkeypatch.setattr(pedigree, "get_accessible_analysis", lambda *_args: analysis)
+    monkeypatch.setattr(
+        pedigree,
+        "_lock_analysis_for_pedigree",
+        lambda *_args: analysis,
+    )
+    monkeypatch.setattr(
+        pedigree, "get_analysis_variant", lambda *_args: SimpleNamespace(id=variant_id)
+    )
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(pedigree, "_pedigree_context_snapshot", lambda *_args: snapshot)
+    monkeypatch.setattr(pedigree, "AuditService", FakeAudit)
+
+    body = pedigree.SegregationInput(
+        pedigree_member_id=member_id,
+        genotype="1/1",
+        zygosity="HOM_ALT",
+        phase="UNPHASED",
+        phenotype_status="AFFECTED",
+        source="NORMALIZED_VCF",
+        notes="corrected note",
+    )
+    db = FakeDb()
+    result = pedigree.add_segregation(
+        analysis_id, variant_id, body, db, principal,
+    )
+
+    revision = next(
+        item for item in db.added
+        if isinstance(item, SegregationObservationRevision)
+    )
+    assert revision.root_observation_id == root_id
+    assert revision.version == 2
+    assert revision.supersedes_revision_id is None
+    assert revision.payload["genotype"] == "1/1"
+    assert revision.payload["source"] == "MANUALLY_REPORTED"
+    assert result["id"] == str(root_id)
+    assert result["revision_id"] == str(revision.id)
+    assert result["revision_version"] == 2
+    assert root.genotype == "0/1"
+    assert root.notes == "initial note"
+    assert db.commits == 1
+
+    replay_db = FakeDb(revisions=[revision])
+    replay = pedigree.add_segregation(
+        analysis_id, variant_id, body, replay_db, principal,
+    )
+    assert replay["revision_id"] == str(revision.id)
+    assert replay["revision_version"] == 2
+    assert replay_db.added == []
+    assert replay_db.commits == 0
+
