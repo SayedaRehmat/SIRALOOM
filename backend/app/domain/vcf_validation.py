@@ -2026,7 +2026,7 @@ def validate_vcf_strict(
                         )
                 if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
                     for remote_contig, _remote_position in remote_loci_by_alt.values():
-                        if re.fullmatch(r"<[^<>,\\s]+>", remote_contig):
+                        if re.fullmatch(r"<[^<>,\s]+>", remote_contig):
                             raise StrictVCFValidationError(
                                 f"External assembly mate contig {remote_contig!r} is valid VCF syntax but unsupported by the configured reference-package contract at line {line_no}",
                                 code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
@@ -2072,7 +2072,7 @@ def validate_vcf_strict(
                     cipos_by_alt: dict[int, tuple[int, int] | None] = {}
                     if raw_cipos not in {None, "."} and len(cipos_entries) != 2 * len(alts):
                         raise StrictVCFValidationError(
-                            f"VCFv4.5 CIPOS must contain exactly two offsets per ALT allele at line {line_no}",
+                            f"VCFv4.4/4.5 CIPOS must contain exactly two offsets per ALT allele at line {line_no}",
                             code="VCF_BREAKEND_CIPOS_INVALID",
                         )
                     for alt_index in breakend_alt_indexes:
@@ -2093,7 +2093,7 @@ def validate_vcf_strict(
                         lower_offset, upper_offset = int(lower), int(upper)
                         if lower_offset > 0 or upper_offset < 0:
                             raise StrictVCFValidationError(
-                                f"VCFv4.5 CIPOS interval must span zero for ALT {alt_index + 1} at line {line_no}",
+                                f"VCFv4.4/4.5 CIPOS interval must span zero for ALT {alt_index + 1} at line {line_no}",
                                 code="VCF_BREAKEND_CIPOS_INVALID",
                             )
                         cipos_by_alt[alt_index] = (lower_offset, upper_offset)
