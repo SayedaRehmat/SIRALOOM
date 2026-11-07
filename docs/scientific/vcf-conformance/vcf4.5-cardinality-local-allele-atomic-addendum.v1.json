@@ -1,0 +1,4112 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "siraloom-vcf-atomic-requirements",
+  "registry_status": "IN_PROGRESS",
+  "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+  "scope": "Supplemental atomic requirement batch for the VCFv4.5 local-allele, Number=M base-modification and Number=P/phase-set semantics. IDs 000227–000268 extend the 226-record candidate set. This addendum is not yet merged into atomic-requirements.v1.json; duplicate-ID and source-manifest reconciliation is a required integration gate.",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "coverage_summary": {
+    "source_documents_reviewed": [
+      "VCFv4.4.tex",
+      "VCFv4.5.tex"
+    ],
+    "candidate_lines_reviewed": 213,
+    "atomic_requirements_created": 42,
+    "atomic_requirements_independently_reviewed": 0,
+    "requirements_with_code_mapping": 0,
+    "requirements_with_executed_tests": 0,
+    "unresolved_source_questions": 4
+  },
+  "requirements": [
+    {
+      "requirement_id": "VCF-REQ-000227",
+      "title": "Number LA local alternate cardinality",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A Number=LA FORMAT value has one element for each alternate allele selected by LAA, excluding REF.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=LA.",
+      "required_or_prohibited_behavior": "A Number=LA FORMAT value has one element for each alternate allele selected by LAA, excluding REF.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The value count equals the number of ALT indices in the applicable LAA vector.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:195-197",
+            "start_line": 195,
+            "end_line": 197
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000228",
+      "title": "Number LR local reference-plus-alternate cardinality",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A Number=LR FORMAT value follows Number=R cardinality but considers only the ALT alleles selected by LAA in addition to REF.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=LR.",
+      "required_or_prohibited_behavior": "A Number=LR FORMAT value follows Number=R cardinality but considers only the ALT alleles selected by LAA in addition to REF.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The value count equals one REF element plus one element for each ALT index in LAA.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:195-197",
+            "start_line": 195,
+            "end_line": 197
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000229",
+      "title": "Number LG local genotype cardinality",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A Number=LG FORMAT value follows Number=G genotype cardinality over REF and only the ALT alleles selected by LAA.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=LG and sample ploidy is established from GT or the applicable Number=G rule.",
+      "required_or_prohibited_behavior": "A Number=LG FORMAT value follows Number=G genotype cardinality over REF and only the ALT alleles selected by LAA.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The vector length and index order match the genotype space over REF plus the LAA-selected alleles at the applicable ploidy.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:195-197",
+            "start_line": 195,
+            "end_line": 197
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:632-669",
+            "start_line": 632,
+            "end_line": 669
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:717-718",
+            "start_line": 717,
+            "end_line": 718
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000230",
+      "title": "LAA distinct one-based ALT indices",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "LAA is a list of distinct integers that identify ALT alleles by their one-based indices in the record ALT list.",
+      "actor": "VCF producer",
+      "condition": "A sample uses LAA to define its local alternate-allele set.",
+      "required_or_prohibited_behavior": "LAA is a list of distinct integers that identify ALT alleles by their one-based indices in the record ALT list.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Each LAA element is an integer, is distinct within the list, and resolves to an existing ALT entry.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:686-692",
+            "start_line": 686,
+            "end_line": 692
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000231",
+      "title": "LAA order defines local allele interpretation order",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The order of indices in LAA defines the order in which the selected local alternate alleles are interpreted.",
+      "actor": "VCF producer or consumer",
+      "condition": "A local-allele field is interpreted for a sample.",
+      "required_or_prohibited_behavior": "The order of indices in LAA defines the order in which the selected local alternate alleles are interpreted.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Projection and decoding preserve the LAA sequence order rather than sorting global ALT indices.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:691-696",
+            "start_line": 691,
+            "end_line": 696
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000232",
+      "title": "LAA presence and FORMAT ordering dependency",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "If any local-allele field is present, LAA must also be present.",
+      "actor": "VCF producer",
+      "condition": "A local-allele FORMAT field is present.",
+      "required_or_prohibited_behavior": "If any local-allele field is present, LAA must also be present.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A record with a local-allele field but no LAA, or with LAA after a local field other than GT, is rejected.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:501-502",
+            "start_line": 501,
+            "end_line": 502
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": [
+        "VCFv4.5.tex:502 states that LAA must be present if any local-allele field is present, while VCFv4.5.tex:692-696 says LAA must be present if any local-allele fields are neither omitted nor MISSING. Preserve this source-scope discrepancy; do not silently select the broad or narrow interpretation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000233",
+      "title": "BCF missing LAA denotes empty local alternate vector",
+      "requirement_domain": "MISSINGNESS",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "When local-allele fields are neither omitted nor MISSING and BCF represents a zero-length LAA vector as MISSING, the MISSING LAA value should be treated as an empty vector representing a REF-only local-allele set.",
+      "actor": "VCF/BCF consumer",
+      "condition": "The BCF zero-length-vector representation is encountered with local-allele payload present.",
+      "required_or_prohibited_behavior": "When local-allele fields are neither omitted nor MISSING and BCF represents a zero-length LAA vector as MISSING, the MISSING LAA value should be treated as an empty vector representing a REF-only local-allele set.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The decoded LAA is an empty vector and local allele domain contains REF only.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:693-695",
+            "start_line": 693,
+            "end_line": 695
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000234",
+      "title": "GQ semantics unchanged under local allele encoding",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "GQ remains the genotype quality when genotype data are represented against local alleles.",
+      "actor": "VCF producer or consumer",
+      "condition": "GT is interpreted using local-allele encoding.",
+      "required_or_prohibited_behavior": "GQ remains the genotype quality when genotype data are represented against local alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "GQ is not reinterpreted as a local-allele-indexed likelihood vector.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:695-698",
+            "start_line": 695,
+            "end_line": 698
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000235",
+      "title": "Local and global FORMAT equivalents share semantics",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "A specification-defined FORMAT field with Number A, R, or G should be interpreted like its corresponding global field, restricted to the ALT alleles selected by LAA and their LAA-defined order.",
+      "actor": "VCF producer or consumer",
+      "condition": "A local equivalent and its corresponding global FORMAT field are interpreted.",
+      "required_or_prohibited_behavior": "A specification-defined FORMAT field with Number A, R, or G should be interpreted like its corresponding global field, restricted to the ALT alleles selected by LAA and their LAA-defined order.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Decoded local and global representations resolve to the same semantic values over the selected allele domain.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:695-697",
+            "start_line": 695,
+            "end_line": 697
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:701-711",
+            "start_line": 701,
+            "end_line": 711
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000236",
+      "title": "Library abstraction for local allele encoding",
+      "requirement_domain": "INTEROPERABILITY",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "RECOMMENDED",
+      "atomic_statement": "A VCF library is recommended to expose local-allele values through an API that abstracts the local encoding and accesses values using corresponding non-local keys.",
+      "actor": "VCF library implementer",
+      "condition": "A library exposes FORMAT field access to API consumers.",
+      "required_or_prohibited_behavior": "A VCF library is recommended to expose local-allele values through an API that abstracts the local encoding and accesses values using corresponding non-local keys.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Library API provides access to the semantic field without requiring callers to manually decode local allele encoding.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:713-717",
+            "start_line": 713,
+            "end_line": 717
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000237",
+      "title": "Number M cardinality depends on genotype and possible modifications",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=M.",
+      "required_or_prohibited_behavior": "A Number=M FORMAT field has one value for each possible base modification for the corresponding ChEBI ID.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Expected value count is derived from genotype alleles and eligible modification sites rather than a fixed or generic list length.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:195-202",
+            "start_line": 195,
+            "end_line": 202
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000238",
+      "title": "Base-modification fields require GT",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "If any base-modification key is present for a sample, GT must be defined for that sample.",
+      "actor": "VCF producer",
+      "condition": "A sample contains at least one base-modification FORMAT key.",
+      "required_or_prohibited_behavior": "If any base-modification key is present for a sample, GT must be defined for that sample.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The sample has a GT subfield; otherwise validation rejects the sample's base-modification annotation.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:198-204",
+            "start_line": 198,
+            "end_line": 204
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000239",
+      "title": "Base-modification U suffix is synonymous with T",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "The U base suffix in a base-modification FORMAT key is treated as synonymous with T.",
+      "actor": "VCF consumer",
+      "condition": "A base-modification key ends in U.",
+      "required_or_prohibited_behavior": "The U base suffix in a base-modification FORMAT key is treated as synonymous with T.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Eligibility and interpretation for the U suffix follow the source-defined T synonym rule.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:198-201",
+            "start_line": 198,
+            "end_line": 201
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000240",
+      "title": "Base-modification per-allele cardinality derives from sequence",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "For a given allele, the number of base-modification values equals the number of bases on either strand in that allele sequence that can contain the specified modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A base-modification FORMAT field is present for an allele.",
+      "required_or_prohibited_behavior": "For a given allele, the number of base-modification values equals the number of bases on either strand in that allele sequence that can contain the specified modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The expected count is computed from eligible bases in the allele sequence, including eligible bases on either strand.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:201-207",
+            "start_line": 201,
+            "end_line": 207
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000241",
+      "title": "Base-modification values follow eligible base sequence order",
+      "requirement_domain": "ORDERING",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Base-modification values for an allele follow the order in which eligible bases occur in that allele sequence.",
+      "actor": "VCF producer or consumer",
+      "condition": "An allele contributes one or more base-modification values.",
+      "required_or_prohibited_behavior": "Base-modification values for an allele follow the order in which eligible bases occur in that allele sequence.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Values map to eligible positions in allele-sequence order.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:201-208",
+            "start_line": 201,
+            "end_line": 208
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000242",
+      "title": "N modification values preserve positive-negative strand adjacency",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "For an N base modification, each negative-strand value immediately follows its corresponding positive-strand value.",
+      "actor": "VCF producer or consumer",
+      "condition": "A base-modification field uses the N suffix.",
+      "required_or_prohibited_behavior": "For an N base modification, each negative-strand value immediately follows its corresponding positive-strand value.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The encoded value order places each negative-strand value directly after its positive-strand counterpart.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:205-211",
+            "start_line": 205,
+            "end_line": 211
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000243",
+      "title": "Base-modification values follow genotype allele order and phasing",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The order of base-modification alleles and their values follows the allele order and phasing represented by GT.",
+      "actor": "VCF producer or consumer",
+      "condition": "Base-modification values are encoded for a sample genotype.",
+      "required_or_prohibited_behavior": "The order of base-modification alleles and their values follows the allele order and phasing represented by GT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The values can be partitioned and interpreted in GT allele order with phase state preserved.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:208-214",
+            "start_line": 208,
+            "end_line": 214
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000244",
+      "title": "Unphased base-modification alleles aggregate at first occurrence",
+      "requirement_domain": "GENOTYPE",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "Values for unphased allele occurrences are aggregated and encoded at the position of the first occurrence of that unphased allele value.",
+      "actor": "VCF producer",
+      "condition": "GT contains unphased allele values and base-modification values are encoded.",
+      "required_or_prohibited_behavior": "Values for unphased allele occurrences are aggregated and encoded at the position of the first occurrence of that unphased allele value.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The aggregated values occupy the first occurrence position and are not duplicated at later occurrences.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:211-216",
+            "start_line": 211,
+            "end_line": 216
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000245",
+      "title": "Missing and symbolic alleles contribute no modification values",
+      "requirement_domain": "MISSINGNESS",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "MISSING allele values and symbolic alleles are treated as containing no relevant bases and contribute no base-modification values.",
+      "actor": "VCF producer or consumer",
+      "condition": "A GT allele is MISSING or corresponds to a symbolic allele.",
+      "required_or_prohibited_behavior": "MISSING allele values and symbolic alleles are treated as containing no relevant bases and contribute no base-modification values.",
+      "exceptions": [],
+      "observable_acceptance_condition": "No base-modification values are allocated to that allele.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:212-217",
+            "start_line": 212,
+            "end_line": 217
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000246",
+      "title": "Unstranded base modifications use lowest POS location",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "Unstranded base-modification information should be stored at the base with the lowest POS, with other values MISSING.",
+      "actor": "VCF producer",
+      "condition": "Base-modification information is unstranded across a represented region.",
+      "required_or_prohibited_behavior": "Unstranded base-modification information should be stored at the base with the lowest POS, with other values MISSING.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The value is stored at the lowest-POS eligible base and other positions are MISSING, subject to the source's SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:216-218",
+            "start_line": 216,
+            "end_line": 218
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000247",
+      "title": "Unstranded N modifications use positive-strand value",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "Unstranded N base-modification information should be stored in the positive-strand value with the negative-strand value MISSING.",
+      "actor": "VCF producer",
+      "condition": "An N base modification is represented without strand specificity.",
+      "required_or_prohibited_behavior": "Unstranded N base-modification information should be stored in the positive-strand value with the negative-strand value MISSING.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The positive-strand slot contains the value and the negative-strand slot is MISSING.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:216-218",
+            "start_line": 216,
+            "end_line": 218
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000248",
+      "title": "Number P cardinality follows GT allele values",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "A Number=P FORMAT field has one value for each allele value defined in GT.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=P.",
+      "required_or_prohibited_behavior": "A Number=P FORMAT field has one value for each allele value defined in GT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The number of values corresponds to the allele values in GT, including the applicable ploidy/local-copy-number representation.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:198-202",
+            "start_line": 198,
+            "end_line": 202
+          }
+        },
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:496-498",
+            "start_line": 496,
+            "end_line": 498
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:195-197",
+            "start_line": 195,
+            "end_line": 197
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:594-596",
+            "start_line": 594,
+            "end_line": 596
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000249",
+      "title": "PSL positions correspond to GT allele values",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "PSL contains one phase-set entry for each allele value specified in GT.",
+      "actor": "VCF producer or consumer",
+      "condition": "PSL is present for a sample.",
+      "required_or_prohibited_behavior": "PSL contains one phase-set entry for each allele value specified in GT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "PSL positions align one-to-one with GT allele-value positions.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:598-613",
+            "start_line": 598,
+            "end_line": 613
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:771-786",
+            "start_line": 771,
+            "end_line": 786
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000250",
+      "title": "Unphased PSL allele positions are missing",
+      "requirement_domain": "MISSINGNESS",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "An unphased GT allele, identified by the absence of a preceding phase separator, has a MISSING value at the corresponding PSL position.",
+      "actor": "VCF producer",
+      "condition": "PSL is present and the corresponding GT allele is unphased.",
+      "required_or_prohibited_behavior": "An unphased GT allele, identified by the absence of a preceding phase separator, has a MISSING value at the corresponding PSL position.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The PSL element at that allele position is `.`.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:598-603",
+            "start_line": 598,
+            "end_line": 603
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:771-776",
+            "start_line": 771,
+            "end_line": 776
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000251",
+      "title": "PS and PSL cannot coexist in one sample genotype",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST_NOT",
+      "atomic_statement": "A sample genotype must not contain both PS and PSL.",
+      "actor": "VCF producer",
+      "condition": "PS and PSL are candidate FORMAT fields for the same sample genotype.",
+      "required_or_prohibited_behavior": "A sample genotype must not contain both PS and PSL.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A record containing both fields for the same sample is rejected.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:598-603",
+            "start_line": 598,
+            "end_line": 603
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:771-776",
+            "start_line": 771,
+            "end_line": 776
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000252",
+      "title": "PSO defines derivative chromosome traversal ordinal",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "PSO gives the ordinal order in which variants are encountered when traversing a derivative chromosome.",
+      "actor": "VCF producer or consumer",
+      "condition": "PSO is present for a phase set.",
+      "required_or_prohibited_behavior": "PSO gives the ordinal order in which variants are encountered when traversing a derivative chromosome.",
+      "exceptions": [],
+      "observable_acceptance_condition": "PSO values are interpreted as traversal ordinals, not as genotype likelihoods or genomic coordinates.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:615-619",
+            "start_line": 615,
+            "end_line": 619
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:788-792",
+            "start_line": 788,
+            "end_line": 792
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000253",
+      "title": "PSO should be defined for phase sets containing SV or breakend alleles",
+      "requirement_domain": "STRUCTURAL_VARIANT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "For each phase-set name, PSO should be defined if any allele with that name on any record is a symbolic structural variant or uses breakend notation.",
+      "actor": "VCF producer",
+      "condition": "A phase set contains at least one symbolic SV allele or breakend allele.",
+      "required_or_prohibited_behavior": "For each phase-set name, PSO should be defined if any allele with that name on any record is a symbolic structural variant or uses breakend notation.",
+      "exceptions": [],
+      "observable_acceptance_condition": "PSO is supplied for the affected phase set; validation/reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:615-619",
+            "start_line": 615,
+            "end_line": 619
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:788-792",
+            "start_line": 788,
+            "end_line": 792
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000254",
+      "title": "Breakend records share PSL values on both mates",
+      "requirement_domain": "BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Variants in breakpoint notation must have the same PSL value on both records.",
+      "actor": "VCF producer",
+      "condition": "A variant is represented in breakpoint notation using paired records.",
+      "required_or_prohibited_behavior": "Variants in breakpoint notation must have the same PSL value on both records.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The paired records carry matching PSL and PSO values.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:615-619",
+            "start_line": 615,
+            "end_line": 619
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:788-792",
+            "start_line": 788,
+            "end_line": 792
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000255",
+      "title": "PSQ missing value follows missing PSL or unknown quality",
+      "requirement_domain": "MISSINGNESS",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "PSQ should use MISSING when the corresponding PSL value is MISSING or the phasing quality is unknown.",
+      "actor": "VCF producer",
+      "condition": "PSQ is present and its corresponding phase-set or quality is missing/unknown.",
+      "required_or_prohibited_behavior": "PSQ should use MISSING when the corresponding PSL value is MISSING or the phasing quality is unknown.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The corresponding PSQ element is `.`; the source's SHOULD force is preserved.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:808-809",
+            "start_line": 808,
+            "end_line": 809
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "CHANGED",
+          "source_reference_ids": [],
+          "delta_summary": "PSQ exists in VCFv4.4, but this explicit MISSING rule is added in VCFv4.5; do not back-port the clarification.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000256",
+      "title": "Base-modification fraction bounds",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Values in M base-modification fraction fields must be between 0 and 1.",
+      "actor": "VCF producer",
+      "condition": "An M base-modification fraction value is encoded.",
+      "required_or_prohibited_behavior": "Values in M base-modification fraction fields must be between 0 and 1.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Values below 0 or above 1 are rejected; 0 and 1 are accepted.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 726; M base-modification fraction value range",
+            "start_line": 726,
+            "end_line": 726
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000257",
+      "title": "M base-modification key family reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the M[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the M[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the M[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:722",
+            "start_line": 722,
+            "end_line": 722
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000258",
+      "title": "M base-modification named aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified M aliases should be used instead of their corresponding ChEBI-keyed M field names.",
+      "actor": "VCF producer",
+      "condition": "An M base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified M aliases should be used instead of their corresponding ChEBI-keyed M field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:724",
+            "start_line": 724,
+            "end_line": 724
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000259",
+      "title": "Base-modification annotations propagate across reference blocks",
+      "requirement_domain": "GVCF",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "When base-modification information is present in a reference-block record, it applies to all applicable bases covered by that reference block.",
+      "actor": "VCF producer or consumer",
+      "condition": "A reference-block record contains base-modification information.",
+      "required_or_prohibited_behavior": "When base-modification information is present in a reference-block record, it applies to all applicable bases covered by that reference block.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The annotation is interpreted across all applicable bases covered by the reference block.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 728; base-modification information in reference-block records",
+            "start_line": 728,
+            "end_line": 728
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000260",
+      "title": "ADFM base-modification key family is not reserved",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The ADFM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the ADFM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "The ADFM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The validator does not classify these forms as specification-reserved base-modification keys solely by pattern.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex line 742; ADFM and ADRM are not reserved fields",
+            "start_line": 742,
+            "end_line": 742
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000261",
+      "title": "LAA precedes all FORMAT fields other than GT",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "If any local-allele field is present, LAA must precede all FORMAT fields other than GT.",
+      "actor": "VCF producer",
+      "condition": "At least one local-allele FORMAT field is present.",
+      "required_or_prohibited_behavior": "If any local-allele field is present, LAA must precede all FORMAT fields other than GT.",
+      "exceptions": [],
+      "observable_acceptance_condition": "A record with a local-allele field but no LAA, or with LAA after a local field other than GT, is rejected.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:502",
+            "start_line": 502,
+            "end_line": 502
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000262",
+      "title": "Number M cardinality depends on genotype and possible modifications",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The cardinality of Number=M FORMAT fields is determined by genotype and the number of possible base modifications for the corresponding alleles.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT field declares Number=M.",
+      "required_or_prohibited_behavior": "The cardinality of Number=M FORMAT fields is determined by genotype and the number of possible base modifications for the corresponding alleles.",
+      "exceptions": [],
+      "observable_acceptance_condition": "Expected value count is derived from genotype alleles and eligible modification sites rather than a fixed or generic list length.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:202",
+            "start_line": 202,
+            "end_line": 202
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Not found in the pinned source scan for this version; source-specific feature is introduced in VCFv4.5.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000263",
+      "title": "Breakend records share PSO values on both mates",
+      "requirement_domain": "BREAKEND",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "MUST",
+      "atomic_statement": "Variants in breakpoint notation must have the same PSO value on both records.",
+      "actor": "VCF producer",
+      "condition": "A variant is represented in breakpoint notation using paired records.",
+      "required_or_prohibited_behavior": "Variants in breakpoint notation must have the same PSO value on both records.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The paired records carry matching PSL and PSO values.",
+      "source_references": [
+        {
+          "source_id": "VCF44-HTS-510c107",
+          "version": "VCFv4.4",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.4.tex",
+          "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+          "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.4.tex:619",
+            "start_line": 619,
+            "end_line": 619
+          }
+        },
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:792",
+            "start_line": 792,
+            "end_line": 792
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "Number=P and PSL/PSO/PSQ not present in reviewed pinned source context.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF44-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from the pinned source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000264",
+      "title": "DPM base-modification named aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified DPM aliases should be used instead of their corresponding ChEBI-keyed DPM field names.",
+      "actor": "VCF producer",
+      "condition": "A DPM base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified DPM aliases should be used instead of their corresponding ChEBI-keyed DPM field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:734",
+            "start_line": 734,
+            "end_line": 734
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000265",
+      "title": "ADM base-modification named aliases preferred",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "SHOULD",
+      "atomic_statement": "The specified ADM aliases should be used instead of their corresponding ChEBI-keyed ADM field names.",
+      "actor": "VCF producer",
+      "condition": "An ADM base-modification field has a named alias specified by VCFv4.5.",
+      "required_or_prohibited_behavior": "The specified ADM aliases should be used instead of their corresponding ChEBI-keyed ADM field names.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The producer emits the named alias; conformance reporting preserves SHOULD force.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:740",
+            "start_line": 740,
+            "end_line": 740
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000266",
+      "title": "DPM base-modification key family reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the DPM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the DPM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the DPM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:732",
+            "start_line": 732,
+            "end_line": 732
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000267",
+      "title": "ADM base-modification key family reserved for unknown ChEBI IDs",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "FORMAT keys matching the ADM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the ADM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "FORMAT keys matching the ADM[0-9]+[ACGTUN] pattern are reserved even when the ChEBI ID does not correspond to a valid base modification.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The key is recognized as reserved based on the specified pattern without requiring the ChEBI identifier to resolve to a known modification.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:738",
+            "start_line": 738,
+            "end_line": 738
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    },
+    {
+      "requirement_id": "VCF-REQ-000268",
+      "title": "ADRM base-modification key family is not reserved",
+      "requirement_domain": "FORMAT",
+      "source_class": "VCF_NORMATIVE",
+      "requirement_kind": "PROSE_RULE",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "The ADRM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "actor": "VCF producer or consumer",
+      "condition": "A FORMAT key matches the ADRM[0-9]+[ACGTUN] pattern.",
+      "required_or_prohibited_behavior": "The ADRM[0-9]+[ACGTUN] FORMAT key family is not reserved by VCFv4.5.",
+      "exceptions": [],
+      "observable_acceptance_condition": "The validator does not classify these forms as specification-reserved base-modification keys solely by pattern.",
+      "source_references": [
+        {
+          "source_id": "VCF45-HTS-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:742",
+            "start_line": 742,
+            "end_line": 742
+          }
+        }
+      ],
+      "version_applicability": {
+        "VCFv4.0": {
+          "status": "SOURCE_NOT_PINNED",
+          "source_reference_ids": [],
+          "delta_summary": "Historical core source remains unpinned; applicability cannot be adjudicated.",
+          "exceptions": []
+        },
+        "VCFv4.1": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.2": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.3": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.4": {
+          "status": "NOT_APPLICABLE",
+          "source_reference_ids": [],
+          "delta_summary": "The field family/rule was introduced in VCFv4.5 and was not found in pinned predecessor source scans.",
+          "exceptions": []
+        },
+        "VCFv4.5": {
+          "status": "APPLICABLE",
+          "source_reference_ids": [
+            "VCF45-HTS-510c107"
+          ],
+          "delta_summary": null,
+          "exceptions": []
+        }
+      },
+      "implementation": {
+        "status": "NOT_AUDITED",
+        "code_symbols": [],
+        "implementation_commit": null,
+        "owner_workstream": null,
+        "rationale": "No production implementation mapping has been performed in this research addendum."
+      },
+      "tests": [],
+      "review": {
+        "status": "IN_REVIEW",
+        "review_rationale": "Author-decomposed from pinned VCFv4.5 source; independent standards review remains required.",
+        "reviewer_role": "author",
+        "reviewer_reference": null,
+        "reviewed_at_utc": null,
+        "independent_second_review_required": true,
+        "second_review_status": "NOT_STARTED"
+      },
+      "evidence": [],
+      "related_requirement_ids": [],
+      "open_questions": []
+    }
+  ]
+}

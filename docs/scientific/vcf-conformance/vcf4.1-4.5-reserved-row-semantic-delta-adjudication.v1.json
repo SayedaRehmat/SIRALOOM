@@ -1,0 +1,2598 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-reserved-row-semantic-delta-adjudication",
+  "status": "AUTHOR_MECHANICAL_ROW_DELTAS_AND_MAJOR_CONTEXT_ADJUDICATION_RECORDED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "inputs": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-info-format-row-semantic-review.v1.json",
+      "blob_sha1": "5516fa0039696ec444bd02424ea7191adf7fd2c8"
+    }
+  ],
+  "scope": "Version transitions in reserved INFO and FORMAT field inventories for VCFv4.1-4.5. This adjudication addresses reserved-row presence, formalization, Number/Type and description changes; it does not replace full source-wide atomic requirement reconciliation.",
+  "method": "Use source-pinned row inventories and direct normative context locators. Preserve prose-only VCFv4.1/4.2 lists without retroactively assigning Number/Type. Distinguish newly specified attributes from changed attributes. Change-log entries corroborate, but do not alone create normative requirements.",
+  "transitions": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "info": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "format": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "formalization": {
+        "info_number_type_newly_specified": [],
+        "format_number_type_newly_specified": []
+      }
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "info": {
+        "added": [
+          {
+            "id": "AD",
+            "source_line": 397,
+            "description": "Total read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADF",
+            "source_line": 398,
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADR",
+            "source_line": 399,
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          }
+        ],
+        "removed": [],
+        "changed": [
+          {
+            "id": "AF",
+            "from": {
+              "id": "AF",
+              "source_line": 190,
+              "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+              "raw_source_line": "\\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "AF",
+              "source_line": 400,
+              "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+              "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\",
+              "number": "A",
+              "type": "Float",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+                "to": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+              }
+            ]
+          },
+          {
+            "id": "BQ",
+            "from": {
+              "id": "BQ",
+              "source_line": 192,
+              "description": "RMS base quality at this position",
+              "raw_source_line": "\\item BQ : RMS base quality at this position",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "BQ",
+              "source_line": 402,
+              "description": "RMS base quality",
+              "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\",
+              "number": "1",
+              "type": "Float",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "RMS base quality at this position",
+                "to": "RMS base quality"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "from": {
+              "id": "DP",
+              "source_line": 195,
+              "description": "combined depth across samples, e.g.\\ DP=154",
+              "raw_source_line": "\\item DP : combined depth across samples, e.g.\\ DP=154",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "DP",
+              "source_line": 405,
+              "description": "Combined depth across samples",
+              "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "combined depth across samples, e.g.\\ DP=154",
+                "to": "Combined depth across samples"
+              }
+            ]
+          },
+          {
+            "id": "END",
+            "from": {
+              "id": "END",
+              "source_line": 196,
+              "description": "end position of the variant described in this record (for use with symbolic alleles)",
+              "raw_source_line": "\\item END : end position of the variant described in this record (for use with symbolic alleles)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "END",
+              "source_line": 406,
+              "description": "End position on CHROM (used with symbolic alleles; see below)",
+              "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "end position of the variant described in this record (for use with symbolic alleles)",
+                "to": "End position on CHROM (used with symbolic alleles; see below)"
+              }
+            ]
+          },
+          {
+            "id": "H2",
+            "from": {
+              "id": "H2",
+              "source_line": 197,
+              "description": "membership in hapmap2",
+              "raw_source_line": "\\item H2 : membership in hapmap2",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "H2",
+              "source_line": 407,
+              "description": "HapMap2 membership",
+              "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\",
+              "number": "0",
+              "type": "Flag",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "membership in hapmap2",
+                "to": "HapMap2 membership"
+              }
+            ]
+          },
+          {
+            "id": "H3",
+            "from": {
+              "id": "H3",
+              "source_line": 198,
+              "description": "membership in hapmap3",
+              "raw_source_line": "\\item H3 : membership in hapmap3",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "H3",
+              "source_line": 408,
+              "description": "HapMap3 membership",
+              "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\",
+              "number": "0",
+              "type": "Flag",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "membership in hapmap3",
+                "to": "HapMap3 membership"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "from": {
+              "id": "MQ",
+              "source_line": 199,
+              "description": "RMS mapping quality, e.g.\\ MQ=52",
+              "raw_source_line": "\\item MQ : RMS mapping quality, e.g.\\ MQ=52",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "MQ",
+              "source_line": 409,
+              "description": "RMS mapping quality",
+              "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\",
+              "number": "1",
+              "type": "Float",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "RMS mapping quality, e.g.\\ MQ=52",
+                "to": "RMS mapping quality"
+              }
+            ]
+          },
+          {
+            "id": "MQ0",
+            "from": {
+              "id": "MQ0",
+              "source_line": 200,
+              "description": "Number of MAPQ == 0 reads covering this record",
+              "raw_source_line": "\\item MQ0 : Number of MAPQ == 0 reads covering this record",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "MQ0",
+              "source_line": 410,
+              "description": "Number of MAPQ == 0 reads",
+              "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "Number of MAPQ == 0 reads covering this record",
+                "to": "Number of MAPQ == 0 reads"
+              }
+            ]
+          },
+          {
+            "id": "SB",
+            "from": {
+              "id": "SB",
+              "source_line": 202,
+              "description": "strand bias at this position",
+              "raw_source_line": "\\item SB : strand bias at this position",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "SB",
+              "source_line": 412,
+              "description": "Strand bias",
+              "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\",
+              "number": "4",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "strand bias at this position",
+                "to": "Strand bias"
+              }
+            ]
+          },
+          {
+            "id": "SOMATIC",
+            "from": {
+              "id": "SOMATIC",
+              "source_line": 203,
+              "description": "indicates that the record is a somatic mutation, for cancer genomics",
+              "raw_source_line": "\\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "SOMATIC",
+              "source_line": 413,
+              "description": "Somatic mutation (for cancer genomics)",
+              "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\",
+              "number": "0",
+              "type": "Flag",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "indicates that the record is a somatic mutation, for cancer genomics",
+                "to": "Somatic mutation (for cancer genomics)"
+              }
+            ]
+          },
+          {
+            "id": "1000G",
+            "from": {
+              "id": "1000G",
+              "source_line": 205,
+              "description": "membership in 1000 Genomes",
+              "raw_source_line": "\\item 1000G : membership in 1000 Genomes",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "1000G",
+              "source_line": 415,
+              "description": "1000 Genomes membership",
+              "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\",
+              "number": "0",
+              "type": "Flag",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "membership in 1000 Genomes",
+                "to": "1000 Genomes membership"
+              }
+            ]
+          }
+        ]
+      },
+      "format": {
+        "added": [
+          {
+            "id": "AD",
+            "source_line": 462,
+            "description": "Read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADF",
+            "source_line": 463,
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADR",
+            "source_line": 464,
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+            "number": "R",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "PP",
+            "source_line": 475,
+            "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+            "raw_source_line": "PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\",
+            "number": "G",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          }
+        ],
+        "removed": [
+          {
+            "id": "GLE",
+            "source_line": 225,
+            "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "raw_source_line": "\\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "number": null,
+            "type": null,
+            "source_representation": "PROSE_ENUMERATION"
+          }
+        ],
+        "changed": [
+          {
+            "id": "GT",
+            "from": {
+              "id": "GT",
+              "source_line": 217,
+              "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+              "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "GT",
+              "source_line": 471,
+              "description": "Genotype",
+              "raw_source_line": "GT\t\t& 1\t\t& String\t& Genotype \\\\",
+              "number": "1",
+              "type": "String",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+                "to": "Genotype"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "from": {
+              "id": "DP",
+              "source_line": 222,
+              "description": "read depth at this position for this sample (Integer)",
+              "raw_source_line": "\\item DP : read depth at this position for this sample (Integer)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "DP",
+              "source_line": 465,
+              "description": "Read depth",
+              "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Read depth \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "read depth at this position for this sample (Integer)",
+                "to": "Read depth"
+              }
+            ]
+          },
+          {
+            "id": "FT",
+            "from": {
+              "id": "FT",
+              "source_line": 223,
+              "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+              "raw_source_line": "\\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "FT",
+              "source_line": 467,
+              "description": "Filter indicating if this genotype was ``called''",
+              "raw_source_line": "FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\",
+              "number": "1",
+              "type": "String",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+                "to": "Filter indicating if this genotype was ``called''"
+              }
+            ]
+          },
+          {
+            "id": "GL",
+            "from": {
+              "id": "GL",
+              "source_line": 224,
+              "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+              "raw_source_line": "\\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "GL",
+              "source_line": 468,
+              "description": "Genotype likelihoods",
+              "raw_source_line": "GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\",
+              "number": "G",
+              "type": "Float",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+                "to": "Genotype likelihoods"
+              }
+            ]
+          },
+          {
+            "id": "PL",
+            "from": {
+              "id": "PL",
+              "source_line": 226,
+              "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+              "raw_source_line": "\\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "PL",
+              "source_line": 474,
+              "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+              "raw_source_line": "PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\",
+              "number": "G",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+                "to": "Phred-scaled genotype likelihoods rounded to the closest integer"
+              }
+            ]
+          },
+          {
+            "id": "GP",
+            "from": {
+              "id": "GP",
+              "source_line": 227,
+              "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+              "raw_source_line": "\\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "GP",
+              "source_line": 469,
+              "description": "Genotype posterior probabilities",
+              "raw_source_line": "GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\",
+              "number": "G",
+              "type": "Float",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+                "to": "Genotype posterior probabilities"
+              }
+            ]
+          },
+          {
+            "id": "GQ",
+            "from": {
+              "id": "GQ",
+              "source_line": 228,
+              "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+              "raw_source_line": "\\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "GQ",
+              "source_line": 470,
+              "description": "Conditional genotype quality",
+              "raw_source_line": "GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+                "to": "Conditional genotype quality"
+              }
+            ]
+          },
+          {
+            "id": "HQ",
+            "from": {
+              "id": "HQ",
+              "source_line": 229,
+              "description": "haplotype qualities, two comma separated phred qualities (Integers)",
+              "raw_source_line": "\\item HQ : haplotype qualities, two comma separated phred qualities (Integers)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "HQ",
+              "source_line": 472,
+              "description": "Haplotype quality",
+              "raw_source_line": "HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\",
+              "number": "2",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "haplotype qualities, two comma separated phred qualities (Integers)",
+                "to": "Haplotype quality"
+              }
+            ]
+          },
+          {
+            "id": "PS",
+            "from": {
+              "id": "PS",
+              "source_line": 230,
+              "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+              "raw_source_line": "\\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "PS",
+              "source_line": 477,
+              "description": "Phase set",
+              "raw_source_line": "PS\t\t& 1\t\t& Integer\t& Phase set \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+                "to": "Phase set"
+              }
+            ]
+          },
+          {
+            "id": "PQ",
+            "from": {
+              "id": "PQ",
+              "source_line": 231,
+              "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+              "raw_source_line": "\\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "PQ",
+              "source_line": 476,
+              "description": "Phasing quality",
+              "raw_source_line": "PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+                "to": "Phasing quality"
+              }
+            ]
+          },
+          {
+            "id": "EC",
+            "from": {
+              "id": "EC",
+              "source_line": 232,
+              "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+              "raw_source_line": "\\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "EC",
+              "source_line": 466,
+              "description": "Expected alternate allele counts",
+              "raw_source_line": "EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\",
+              "number": "A",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+                "to": "Expected alternate allele counts"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "from": {
+              "id": "MQ",
+              "source_line": 233,
+              "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+              "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)",
+              "number": null,
+              "type": null,
+              "source_representation": "PROSE_ENUMERATION"
+            },
+            "to": {
+              "id": "MQ",
+              "source_line": 473,
+              "description": "RMS mapping quality",
+              "raw_source_line": "MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+                "to": "RMS mapping quality"
+              }
+            ]
+          }
+        ]
+      },
+      "formalization": {
+        "info_number_type_newly_specified": [
+          {
+            "id": "AA",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "AC",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "AF",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "AN",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "BQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "CIGAR",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "DB",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "END",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "H2",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "H3",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "MQ0",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "NS",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "SB",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "4"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "SOMATIC",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "VALIDATED",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          },
+          {
+            "id": "1000G",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "0"
+              },
+              {
+                "field": "Type",
+                "value": "Flag"
+              }
+            ]
+          }
+        ],
+        "format_number_type_newly_specified": [
+          {
+            "id": "GT",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "DP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "FT",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "String"
+              }
+            ]
+          },
+          {
+            "id": "GL",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "PL",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "GP",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "G"
+              },
+              {
+                "field": "Type",
+                "value": "Float"
+              }
+            ]
+          },
+          {
+            "id": "GQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "HQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "2"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "PS",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "PQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "EC",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "A"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          },
+          {
+            "id": "MQ",
+            "fields": [
+              {
+                "field": "Number",
+                "value": "1"
+              },
+              {
+                "field": "Type",
+                "value": "Integer"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "info": {
+        "added": [],
+        "removed": [],
+        "changed": []
+      },
+      "format": {
+        "added": [
+          {
+            "id": "PSL",
+            "source_line": 496,
+            "description": "Phase set list",
+            "raw_source_line": "PSL\t\t& P\t\t& String\t& Phase set list \\\\",
+            "number": "P",
+            "type": "String",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "PSO",
+            "source_line": 497,
+            "description": "Phase set list ordinal",
+            "raw_source_line": "PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\",
+            "number": "P",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "PSQ",
+            "source_line": 498,
+            "description": "Phase set list quality",
+            "raw_source_line": "PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\",
+            "number": "P",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          }
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "formalization": {
+        "info_number_type_newly_specified": [],
+        "format_number_type_newly_specified": []
+      }
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "info": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          {
+            "id": "END",
+            "from": {
+              "id": "END",
+              "source_line": 422,
+              "description": "End position on CHROM (used with symbolic alleles; see below)",
+              "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "to": {
+              "id": "END",
+              "source_line": 471,
+              "description": "Deprecated. Present for backwards compatibility with earlier versions of VCF.",
+              "raw_source_line": "END\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\",
+              "number": "1",
+              "type": "Integer",
+              "source_representation": "NUMBER_TYPE_TABLE"
+            },
+            "mechanical_changes": [
+              {
+                "field": "description",
+                "from": "End position on CHROM (used with symbolic alleles; see below)",
+                "to": "Deprecated. Present for backwards compatibility with earlier versions of VCF."
+              }
+            ]
+          }
+        ]
+      },
+      "format": {
+        "added": [
+          {
+            "id": "LEN",
+            "source_line": 539,
+            "description": "Length of $<$*$>$ reference block",
+            "raw_source_line": "LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\",
+            "number": "1",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LA",
+            "source_line": 546,
+            "description": "Reserved",
+            "raw_source_line": "LA\t\t& .\t\t\t& Integer\t& Reserved \\\\",
+            "number": ".",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LAA",
+            "source_line": 547,
+            "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+            "raw_source_line": "LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\",
+            "number": ".",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LAD",
+            "source_line": 548,
+            "description": "Local-allele representation of AD",
+            "raw_source_line": "LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\",
+            "number": "LR",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LADF",
+            "source_line": 549,
+            "description": "Local-allele representation of ADF",
+            "raw_source_line": "LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\",
+            "number": "LR",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LADR",
+            "source_line": 550,
+            "description": "Local-allele representation of ADR",
+            "raw_source_line": "LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\",
+            "number": "LR",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LEC",
+            "source_line": 551,
+            "description": "Local-allele representation of EC",
+            "raw_source_line": "LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\",
+            "number": "LA",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LGL",
+            "source_line": 552,
+            "description": "Local-allele representation of GL",
+            "raw_source_line": "LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\",
+            "number": "LG",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LGP",
+            "source_line": 553,
+            "description": "Local-allele representation of GP",
+            "raw_source_line": "LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\",
+            "number": "LG",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LPL",
+            "source_line": 554,
+            "description": "Local-allele representation of PL",
+            "raw_source_line": "LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\",
+            "number": "LG",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "LPP",
+            "source_line": 555,
+            "description": "Local-allele representation of PP",
+            "raw_source_line": "LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\",
+            "number": "LG",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M[0-9]+[ACGTUN]",
+            "source_line": 556,
+            "description": "Fraction of bases modified with the given ChEBI ID.",
+            "raw_source_line": "M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM[0-9]+[ACGTUN]",
+            "source_line": 557,
+            "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+            "raw_source_line": "DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM[0-9]+[ACGTUN]",
+            "source_line": 558,
+            "description": "Read depth for reads with the base modification with the given ChEBI ID.",
+            "raw_source_line": "ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5mC",
+            "source_line": 559,
+            "description": "Alias for M27551C 5-Methylcytosine",
+            "raw_source_line": "M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5mC",
+            "source_line": 560,
+            "description": "Alias for DPM27551C",
+            "raw_source_line": "DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5mC",
+            "source_line": 561,
+            "description": "Alias for ADM27551C",
+            "raw_source_line": "ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5hmC",
+            "source_line": 562,
+            "description": "Alias for M76792C 5-Hydroxymethylcytosine",
+            "raw_source_line": "M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5hmC",
+            "source_line": 563,
+            "description": "Alias for DPM76792C",
+            "raw_source_line": "DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5hmC",
+            "source_line": 564,
+            "description": "Alias for ADM76792C",
+            "raw_source_line": "ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5fC",
+            "source_line": 565,
+            "description": "Alias for M76794C 5-Formylcytosine",
+            "raw_source_line": "M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5fC",
+            "source_line": 566,
+            "description": "Alias for DPM76794C",
+            "raw_source_line": "DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5fC",
+            "source_line": 567,
+            "description": "Alias for ADM76794C",
+            "raw_source_line": "ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5caC",
+            "source_line": 568,
+            "description": "Alias for M76793C 5-Carboxylcytosine",
+            "raw_source_line": "M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5caC",
+            "source_line": 569,
+            "description": "Alias for DPM76793C",
+            "raw_source_line": "DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5caC",
+            "source_line": 570,
+            "description": "Alias for ADM76793C",
+            "raw_source_line": "ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5hmU",
+            "source_line": 571,
+            "description": "Alias for M16964T 5-Hydroxymethyluracil",
+            "raw_source_line": "M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5hmU",
+            "source_line": 572,
+            "description": "Alias for DPM16964T",
+            "raw_source_line": "DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5hmU",
+            "source_line": 573,
+            "description": "Alias for ADM16964T",
+            "raw_source_line": "ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5fU",
+            "source_line": 574,
+            "description": "Alias for M80961T 5-Formyluracil",
+            "raw_source_line": "M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5fU",
+            "source_line": 575,
+            "description": "Alias for DPM80961T",
+            "raw_source_line": "DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5fU",
+            "source_line": 576,
+            "description": "Alias for ADM80961T",
+            "raw_source_line": "ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M5caU",
+            "source_line": 577,
+            "description": "Alias for M17477T 5-Carboxyluracil",
+            "raw_source_line": "M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM5caU",
+            "source_line": 578,
+            "description": "Alias for DPM17477T",
+            "raw_source_line": "DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM5caU",
+            "source_line": 579,
+            "description": "Alias for ADM17477T",
+            "raw_source_line": "ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M6mA",
+            "source_line": 580,
+            "description": "Alias for M28871A 6-Methyladenine",
+            "raw_source_line": "M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM6mA",
+            "source_line": 581,
+            "description": "Alias for DPM28871A",
+            "raw_source_line": "DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM6mA",
+            "source_line": 582,
+            "description": "Alias for ADM28871A",
+            "raw_source_line": "ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "M8oxoG",
+            "source_line": 583,
+            "description": "Alias for M44605G 8-Oxoguanine",
+            "raw_source_line": "M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPM8oxoG",
+            "source_line": 584,
+            "description": "Alias for DPM44605G",
+            "raw_source_line": "DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADM8oxoG",
+            "source_line": 585,
+            "description": "Alias for ADM44605G",
+            "raw_source_line": "ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "MXaoN",
+            "source_line": 586,
+            "description": "Alias for M18107N Xanthosine",
+            "raw_source_line": "MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\",
+            "number": "M",
+            "type": "Float",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "DPMXaoN",
+            "source_line": 587,
+            "description": "Alias for DPM18107N",
+            "raw_source_line": "DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          },
+          {
+            "id": "ADMXaoN",
+            "source_line": 588,
+            "description": "Alias for ADM18107N",
+            "raw_source_line": "ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\",
+            "number": "M",
+            "type": "Integer",
+            "source_representation": "NUMBER_TYPE_TABLE"
+          }
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "formalization": {
+        "info_number_type_newly_specified": [],
+        "format_number_type_newly_specified": []
+      }
+    }
+  ],
+  "VCFv4_4_to_VCFv4_5_new_format_row_adjudication": {
+    "count": 44,
+    "categories": {
+      "sample_specific_reference_block_length": 1,
+      "local_allele_support": 10,
+      "base_modification_fields_and_aliases": 33
+    },
+    "rows": [
+      {
+        "id": "LEN",
+        "source_line": 539,
+        "description": "Length of $<$*$>$ reference block",
+        "raw_source_line": "LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\",
+        "number": "1",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "SAMPLE_SPECIFIC_REFERENCE_BLOCK_LENGTH",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:539",
+          "VCFv4.5.tex:606",
+          "VCFv4.5.tex:1848-1860"
+        ],
+        "author_semantic_interpretation": "FORMAT LEN carries per-sample <*> reference-block length and participates in computed END/backward compatibility.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LA",
+        "source_line": 546,
+        "description": "Reserved",
+        "raw_source_line": "LA\t\t& .\t\t\t& Integer\t& Reserved \\\\",
+        "number": ".",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LAA",
+        "source_line": 547,
+        "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+        "raw_source_line": "LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\",
+        "number": ".",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LAD",
+        "source_line": 548,
+        "description": "Local-allele representation of AD",
+        "raw_source_line": "LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\",
+        "number": "LR",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LADF",
+        "source_line": 549,
+        "description": "Local-allele representation of ADF",
+        "raw_source_line": "LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\",
+        "number": "LR",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LADR",
+        "source_line": 550,
+        "description": "Local-allele representation of ADR",
+        "raw_source_line": "LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\",
+        "number": "LR",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LEC",
+        "source_line": 551,
+        "description": "Local-allele representation of EC",
+        "raw_source_line": "LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\",
+        "number": "LA",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LGL",
+        "source_line": 552,
+        "description": "Local-allele representation of GL",
+        "raw_source_line": "LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\",
+        "number": "LG",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LGP",
+        "source_line": 553,
+        "description": "Local-allele representation of GP",
+        "raw_source_line": "LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\",
+        "number": "LG",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LPL",
+        "source_line": 554,
+        "description": "Local-allele representation of PL",
+        "raw_source_line": "LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\",
+        "number": "LG",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "LPP",
+        "source_line": 555,
+        "description": "Local-allele representation of PP",
+        "raw_source_line": "LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\",
+        "number": "LG",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "LOCAL_ALLELE_SUPPORT",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:501-502",
+          "VCFv4.5.tex:535-556",
+          "VCFv4.5.tex:686-718"
+        ],
+        "author_semantic_interpretation": "Local-allele family; LAA identifies distinct 1-based ALT indices and controls local allele order; corresponding local A/R/G fields mirror their global equivalents over the selected allele subset. BCF empty-vector/missing behavior is specified separately.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M[0-9]+[ACGTUN]",
+        "source_line": 556,
+        "description": "Fraction of bases modified with the given ChEBI ID.",
+        "raw_source_line": "M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM[0-9]+[ACGTUN]",
+        "source_line": 557,
+        "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+        "raw_source_line": "DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM[0-9]+[ACGTUN]",
+        "source_line": 558,
+        "description": "Read depth for reads with the base modification with the given ChEBI ID.",
+        "raw_source_line": "ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5mC",
+        "source_line": 559,
+        "description": "Alias for M27551C 5-Methylcytosine",
+        "raw_source_line": "M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5mC",
+        "source_line": 560,
+        "description": "Alias for DPM27551C",
+        "raw_source_line": "DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5mC",
+        "source_line": 561,
+        "description": "Alias for ADM27551C",
+        "raw_source_line": "ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5hmC",
+        "source_line": 562,
+        "description": "Alias for M76792C 5-Hydroxymethylcytosine",
+        "raw_source_line": "M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5hmC",
+        "source_line": 563,
+        "description": "Alias for DPM76792C",
+        "raw_source_line": "DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5hmC",
+        "source_line": 564,
+        "description": "Alias for ADM76792C",
+        "raw_source_line": "ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5fC",
+        "source_line": 565,
+        "description": "Alias for M76794C 5-Formylcytosine",
+        "raw_source_line": "M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5fC",
+        "source_line": 566,
+        "description": "Alias for DPM76794C",
+        "raw_source_line": "DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5fC",
+        "source_line": 567,
+        "description": "Alias for ADM76794C",
+        "raw_source_line": "ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5caC",
+        "source_line": 568,
+        "description": "Alias for M76793C 5-Carboxylcytosine",
+        "raw_source_line": "M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5caC",
+        "source_line": 569,
+        "description": "Alias for DPM76793C",
+        "raw_source_line": "DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5caC",
+        "source_line": 570,
+        "description": "Alias for ADM76793C",
+        "raw_source_line": "ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5hmU",
+        "source_line": 571,
+        "description": "Alias for M16964T 5-Hydroxymethyluracil",
+        "raw_source_line": "M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5hmU",
+        "source_line": 572,
+        "description": "Alias for DPM16964T",
+        "raw_source_line": "DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5hmU",
+        "source_line": 573,
+        "description": "Alias for ADM16964T",
+        "raw_source_line": "ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5fU",
+        "source_line": 574,
+        "description": "Alias for M80961T 5-Formyluracil",
+        "raw_source_line": "M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5fU",
+        "source_line": 575,
+        "description": "Alias for DPM80961T",
+        "raw_source_line": "DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5fU",
+        "source_line": 576,
+        "description": "Alias for ADM80961T",
+        "raw_source_line": "ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M5caU",
+        "source_line": 577,
+        "description": "Alias for M17477T 5-Carboxyluracil",
+        "raw_source_line": "M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM5caU",
+        "source_line": 578,
+        "description": "Alias for DPM17477T",
+        "raw_source_line": "DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM5caU",
+        "source_line": 579,
+        "description": "Alias for ADM17477T",
+        "raw_source_line": "ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M6mA",
+        "source_line": 580,
+        "description": "Alias for M28871A 6-Methyladenine",
+        "raw_source_line": "M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM6mA",
+        "source_line": 581,
+        "description": "Alias for DPM28871A",
+        "raw_source_line": "DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM6mA",
+        "source_line": 582,
+        "description": "Alias for ADM28871A",
+        "raw_source_line": "ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "M8oxoG",
+        "source_line": 583,
+        "description": "Alias for M44605G 8-Oxoguanine",
+        "raw_source_line": "M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPM8oxoG",
+        "source_line": 584,
+        "description": "Alias for DPM44605G",
+        "raw_source_line": "DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADM8oxoG",
+        "source_line": 585,
+        "description": "Alias for ADM44605G",
+        "raw_source_line": "ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "MXaoN",
+        "source_line": 586,
+        "description": "Alias for M18107N Xanthosine",
+        "raw_source_line": "MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\",
+        "number": "M",
+        "type": "Float",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "DPMXaoN",
+        "source_line": 587,
+        "description": "Alias for DPM18107N",
+        "raw_source_line": "DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      },
+      {
+        "id": "ADMXaoN",
+        "source_line": 588,
+        "description": "Alias for ADM18107N",
+        "raw_source_line": "ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\",
+        "number": "M",
+        "type": "Integer",
+        "source_representation": "NUMBER_TYPE_TABLE",
+        "category": "BASE_MODIFICATION_FIELD_FAMILY",
+        "semantic_context_locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:556-588",
+          "VCFv4.5.tex:720-758",
+          "VCFv4.5.tex:1878"
+        ],
+        "author_semantic_interpretation": "M/DPM/ADM base-modification measurements, ChEBI identifiers and recommended aliases; value type/cardinality, GT allele order, strand, missing-value and reference-block propagation rules apply. Xanthosine alias capitalization ambiguity remains open.",
+        "independent_review_status": "NOT_STARTED",
+        "implementation_mapping_status": "NOT_MAPPED",
+        "test_status": "NOT_EXECUTED"
+      }
+    ],
+    "source_internal_ambiguity": {
+      "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+      "affected_rows": [
+        "MXaoN",
+        "DPMXaoN",
+        "ADMXaoN"
+      ],
+      "table_locators": [
+        "VCFv4.5.tex:586-588"
+      ],
+      "prose_locators": [
+        "VCFv4.5.tex:724",
+        "VCFv4.5.tex:734",
+        "VCFv4.5.tex:740"
+      ],
+      "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED"
+    }
+  },
+  "findings": [
+    {
+      "transition": "VCFv4.1_to_VCFv4.2",
+      "finding": "No reserved INFO or FORMAT row additions/removals/description changes were detected in the source-derived inventory; this does not imply whole-spec semantic identity."
+    },
+    {
+      "transition": "VCFv4.2_to_VCFv4.3",
+      "finding": "INFO AD/ADF/ADR and FORMAT AD/ADF/ADR/PP are added; GLE is removed from the reserved FORMAT list. VCFv4.3's change log explicitly calls GLE unused and ill-defined and records its removal. The Number/Type table formalizes attributes not specified in the earlier prose list."
+    },
+    {
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "finding": "PSL/PSO/PSQ are added as Number=P FORMAT fields; SVLEN changes from Number=. to Number=A with per-ALT meaning. VCFv4.4 also records Number=P introduction in its change log."
+    },
+    {
+      "transition": "VCFv4.4_to_VCFv4.5",
+      "finding": "INFO END description becomes explicitly deprecated/backwards-compatibility; 44 FORMAT rows are added: one LEN field, ten local-allele fields, three base-modification generic key patterns and 30 named base-modification aliases. Existing 19 FORMAT rows show no mechanical Number/Type/description change in the reserved table."
+    }
+  ],
+  "unresolved": [
+    "For the 21 INFO rows, finish field-by-field normative prose comparison, including END computed semantics, SVLEN compatibility, SVTYPE deprecation, and all per-ALT missing/cardinality rules.",
+    "For the 63 FORMAT rows, finish field-by-field normative prose comparison; the new-row categories are mapped to context but each atomic constraint still needs requirement IDs and per-version applicability.",
+    "Resolve the xanthosine alias case inconsistency with authoritative maintainer clarification or correction.",
+    "Independent second-person review remains not started.",
+    "No implementation mapping, executable test or laboratory qualification is claimed."
+  ],
+  "controls": [
+    "A row's absence from a reserved table is not proof that arbitrary metadata-defined fields are forbidden.",
+    "Do not treat a shortened table description as deletion of detailed prose semantics.",
+    "Do not assume same row ID means unchanged meaning across versions.",
+    "Do not project Number/Type attributes backward into prose-only versions.",
+    "Keep the row delta ledger separate from BCF binary encoding conformance."
+  ]
+}

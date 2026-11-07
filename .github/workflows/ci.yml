@@ -48,6 +48,14 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: uv run --locked pytest -q
+      - name: Complete VCFv4.5 conformance suite
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: uv run --locked pytest -q tests/test_vcf45_*.py
       - name: Validate process startup scripts
         run: sh -n scripts/start_worker.sh scripts/start_beat.sh
       - name: Compile Python

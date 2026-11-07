@@ -1,0 +1,2043 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-core-meta-information-source-review",
+  "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_ATOMIC_DECOMPOSITION_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "scope": "Core VCF meta-information line syntax and INFO/FILTER/FORMAT metadata declaration semantics, including Number and Type domains, VCFv4.1–4.5. Structural-variant ALT metadata details are retained as adjacent context but not fully decomposed in this tranche.",
+  "method": [
+    "Capture the complete version-specific meta-information passages with source line numbers and pinned blob identity.",
+    "Compare declaration grammar and required/recommended metadata fields separately by VCF version.",
+    "Treat Number cardinality symbols as semantic rules with ordering and dependency constraints, not mere enum values.",
+    "Preserve differences in normative force and field requirements; do not normalize them into a single version-agnostic schema.",
+    "Retain footnotes, data-type definitions, and BCF-related restrictions as separate review targets."
+  ],
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "source": {
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.1.tex",
+        "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+        "start_line": 56,
+        "end_line": 112,
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.1.tex#L56"
+      },
+      "source_excerpt_lines": [
+        {
+          "line": 56,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 57,
+          "text": "File meta-information is included after the \\#\\# string and must be key=value pairs. It is strongly encouraged that information lines describing the INFO, FILTER and FORMAT entries used in the body of the VCF file be included in the meta-information section. Although they are optional, if these lines are present then they must be completely well-formed."
+        },
+        {
+          "line": 58,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 59,
+          "text": "A single `fileformat' field is always required, must be the first line in the file, and details the VCF format version number. For example, for VCF version 4.1, this line should read:"
+        },
+        {
+          "line": 60,
+          "text": ""
+        },
+        {
+          "line": 61,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 62,
+          "text": "##fileformat=VCFv4.1"
+        },
+        {
+          "line": 63,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 64,
+          "text": ""
+        },
+        {
+          "line": 65,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 66,
+          "text": "INFO fields should be described as follows (all keys are required):"
+        },
+        {
+          "line": 67,
+          "text": ""
+        },
+        {
+          "line": 68,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 69,
+          "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 70,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 71,
+          "text": ""
+        },
+        {
+          "line": 72,
+          "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String. The Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be $1$; if the INFO field describes a pair of numbers, then this value should be $2$ and so on. If the field has one value per alternate allele then this value should be `A'; if the field has one value for each possible genotype (more relevant to the FORMAT tags) then this value should be `G'.  If the number of possible values varies, is unknown, or is unbounded, then this value should be `.'. The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number should be $0$ in this case. The Description value must be surrounded by double-quotes. Double-quote character can be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 73,
+          "text": ""
+        },
+        {
+          "line": 74,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 75,
+          "text": "FILTERs that have been applied to the data should be described as follows:"
+        },
+        {
+          "line": 76,
+          "text": ""
+        },
+        {
+          "line": 77,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 78,
+          "text": "##FILTER=<ID=ID,Description=\"description\">"
+        },
+        {
+          "line": 79,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 80,
+          "text": ""
+        },
+        {
+          "line": 81,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 82,
+          "text": "Likewise, Genotype fields specified in the FORMAT field should be described as follows:"
+        },
+        {
+          "line": 83,
+          "text": ""
+        },
+        {
+          "line": 84,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 85,
+          "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 86,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 87,
+          "text": ""
+        },
+        {
+          "line": 88,
+          "text": "Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field)."
+        },
+        {
+          "line": 89,
+          "text": ""
+        },
+        {
+          "line": 90,
+          "text": "\\subsubsection{Alternative allele field format}"
+        },
+        {
+          "line": 91,
+          "text": "Symbolic alternate alleles for imprecise structural variants:"
+        },
+        {
+          "line": 92,
+          "text": ""
+        },
+        {
+          "line": 93,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 94,
+          "text": "##ALT=<ID=type,Description=\"description\">"
+        },
+        {
+          "line": 95,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 96,
+          "text": "The ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes. ID values are case sensitive strings and may not contain whitespace or angle brackets. The first level type must be one of the following:"
+        },
+        {
+          "line": 97,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 98,
+          "text": "  \\item DEL Deletion relative to the reference"
+        },
+        {
+          "line": 99,
+          "text": "  \\item INS Insertion of novel sequence relative to the reference"
+        },
+        {
+          "line": 100,
+          "text": "  \\item DUP Region of elevated copy number relative to the reference"
+        },
+        {
+          "line": 101,
+          "text": "  \\item INV Inversion of reference sequence"
+        },
+        {
+          "line": 102,
+          "text": "  \\item CNV Copy number variable region (may be both deletion and duplication)"
+        },
+        {
+          "line": 103,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 104,
+          "text": ""
+        },
+        {
+          "line": 105,
+          "text": "The CNV category should not be used when a more specific category can be applied. Reserved subtypes include:"
+        },
+        {
+          "line": 106,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 107,
+          "text": "  \\item DUP:TANDEM Tandem duplication"
+        },
+        {
+          "line": 108,
+          "text": "  \\item DEL:ME Deletion of mobile element relative to the reference"
+        },
+        {
+          "line": 109,
+          "text": "  \\item INS:ME Insertion of a mobile element relative to the reference"
+        },
+        {
+          "line": 110,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 111,
+          "text": ""
+        },
+        {
+          "line": 112,
+          "text": "In addition, it is highly recommended (but not required) that the header include tags describing the reference and contigs backing the data contained in the file.  These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.2",
+      "source": {
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.2.tex",
+        "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+        "start_line": 56,
+        "end_line": 120,
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.2.tex#L56"
+      },
+      "source_excerpt_lines": [
+        {
+          "line": 56,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 57,
+          "text": "File meta-information is included after the \\#\\# string and must be key=value pairs. It is strongly encouraged that information lines describing the INFO, FILTER and FORMAT entries used in the body of the VCF file be included in the meta-information section. Although they are optional, if these lines are present then they must be completely well-formed."
+        },
+        {
+          "line": 58,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 59,
+          "text": "A single `fileformat' field is always required, must be the first line in the file, and details the VCF format version number. For example, for VCF version 4.2, this line should read:"
+        },
+        {
+          "line": 60,
+          "text": ""
+        },
+        {
+          "line": 61,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 62,
+          "text": "##fileformat=VCFv4.2"
+        },
+        {
+          "line": 63,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 64,
+          "text": ""
+        },
+        {
+          "line": 65,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 66,
+          "text": "INFO fields should be described as follows (first four keys are required, source and version are recommended):"
+        },
+        {
+          "line": 67,
+          "text": ""
+        },
+        {
+          "line": 68,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 69,
+          "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\",Source=\"source\",Version=\"version\">"
+        },
+        {
+          "line": 70,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 71,
+          "text": ""
+        },
+        {
+          "line": 72,
+          "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String. The Number entry is an Integer that describes the number of values that can be included with the INFO field. For example, if the INFO field contains a single number, then this value should be $1$; if the INFO field describes a pair of numbers, then this value should be $2$ and so on. There are also certain special characters used to define special cases:"
+        },
+        {
+          "line": 73,
+          "text": ""
+        },
+        {
+          "line": 74,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 75,
+          "text": "  \\item If the field has one value per alternate allele then this value should be `A'."
+        },
+        {
+          "line": 76,
+          "text": "  \\item If the field has one value for each possible allele (including the reference), then this value should be `R'."
+        },
+        {
+          "line": 77,
+          "text": "  \\item If the field has one value for each possible genotype (more relevant to the FORMAT tags) then this value should be `G'."
+        },
+        {
+          "line": 78,
+          "text": "  \\item If the number of possible values varies, is unknown, or is unbounded, then this value should be `.'."
+        },
+        {
+          "line": 79,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 80,
+          "text": ""
+        },
+        {
+          "line": 81,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number should be $0$ in this case. The Description value must be surrounded by double-quotes. Double-quote character can be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$. Source and Version values likewise should be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ ``dbsnp'') and exact version (e.g.\\ ``138''), respectively for computational use."
+        },
+        {
+          "line": 82,
+          "text": ""
+        },
+        {
+          "line": 83,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 84,
+          "text": "FILTERs that have been applied to the data should be described as follows:"
+        },
+        {
+          "line": 85,
+          "text": ""
+        },
+        {
+          "line": 86,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 87,
+          "text": "##FILTER=<ID=ID,Description=\"description\">"
+        },
+        {
+          "line": 88,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 89,
+          "text": ""
+        },
+        {
+          "line": 90,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 91,
+          "text": "Likewise, Genotype fields specified in the FORMAT field should be described as follows:"
+        },
+        {
+          "line": 92,
+          "text": ""
+        },
+        {
+          "line": 93,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 94,
+          "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 95,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 96,
+          "text": ""
+        },
+        {
+          "line": 97,
+          "text": "Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field)."
+        },
+        {
+          "line": 98,
+          "text": ""
+        },
+        {
+          "line": 99,
+          "text": "\\subsubsection{Alternative allele field format}"
+        },
+        {
+          "line": 100,
+          "text": "Symbolic alternate alleles for imprecise structural variants:"
+        },
+        {
+          "line": 101,
+          "text": ""
+        },
+        {
+          "line": 102,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 103,
+          "text": "##ALT=<ID=type,Description=\"description\">"
+        },
+        {
+          "line": 104,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 105,
+          "text": "The ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes. ID values are case sensitive strings and may not contain whitespace or angle brackets. The first level type must be one of the following:"
+        },
+        {
+          "line": 106,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 107,
+          "text": "  \\item DEL Deletion relative to the reference"
+        },
+        {
+          "line": 108,
+          "text": "  \\item INS Insertion of novel sequence relative to the reference"
+        },
+        {
+          "line": 109,
+          "text": "  \\item DUP Region of elevated copy number relative to the reference"
+        },
+        {
+          "line": 110,
+          "text": "  \\item INV Inversion of reference sequence"
+        },
+        {
+          "line": 111,
+          "text": "  \\item CNV Copy number variable region (may be both deletion and duplication)"
+        },
+        {
+          "line": 112,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 113,
+          "text": ""
+        },
+        {
+          "line": 114,
+          "text": "The CNV category should not be used when a more specific category can be applied. Reserved subtypes include:"
+        },
+        {
+          "line": 115,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 116,
+          "text": "  \\item DUP:TANDEM Tandem duplication"
+        },
+        {
+          "line": 117,
+          "text": "  \\item DEL:ME Deletion of mobile element relative to the reference"
+        },
+        {
+          "line": 118,
+          "text": "  \\item INS:ME Insertion of a mobile element relative to the reference"
+        },
+        {
+          "line": 119,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 120,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.3",
+      "source": {
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.3.tex",
+        "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+        "start_line": 105,
+        "end_line": 191,
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex#L105"
+      },
+      "source_excerpt_lines": [
+        {
+          "line": 105,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 106,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 107,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        },
+        {
+          "line": 108,
+          "text": ""
+        },
+        {
+          "line": 109,
+          "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+        },
+        {
+          "line": 110,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 111,
+          "text": "\\verb|##|\\emph{key}\\verb|=|\\emph{value}"
+        },
+        {
+          "line": 112,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 113,
+          "text": "Several unstructured meta-information lines are defined in this specification, notably \\verb|##fileformat|."
+        },
+        {
+          "line": 114,
+          "text": "Others not defined by this specification, e.g.\\ \\verb|##fileDate| and \\verb|##source|, are commonly found in VCF files."
+        },
+        {
+          "line": 115,
+          "text": "These typically have meanings that are obvious, or they are immaterial for processing the file, or both."
+        },
+        {
+          "line": 116,
+          "text": ""
+        },
+        {
+          "line": 117,
+          "text": "A \\emph{structured} meta-information line is similar, but the value is itself a comma-separated list of key=value pairs, enclosed within `\\verb|<|' and `\\verb|>|' characters:"
+        },
+        {
+          "line": 118,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 119,
+          "text": "\\verb|##|\\emph{key}\\verb|=<|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\ldots\\verb|>|"
+        },
+        {
+          "line": 120,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 121,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 122,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, extra fields can be included after the default fields."
+        },
+        {
+          "line": 123,
+          "text": "For example:"
+        },
+        {
+          "line": 124,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 125,
+          "text": "##INFO=<ID=ALLELEID,Number=A,Type=String,Description=\"Allele ID\",Source=\"ClinVar\",Version=\"20220804\">"
+        },
+        {
+          "line": 126,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 127,
+          "text": "In the above example, the extra fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 128,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 129,
+          "text": "Other structured lines not defined by this specification may also be used; the only default field for such lines is the required \\verb|ID| field."
+        },
+        {
+          "line": 130,
+          "text": ""
+        },
+        {
+          "line": 131,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 132,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        },
+        {
+          "line": 133,
+          "text": ""
+        },
+        {
+          "line": 134,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 135,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        },
+        {
+          "line": 136,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        },
+        {
+          "line": 137,
+          "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+        },
+        {
+          "line": 138,
+          "text": ""
+        },
+        {
+          "line": 139,
+          "text": ""
+        },
+        {
+          "line": 140,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 141,
+          "text": "A single `fileformat' line is always required, must be the first line in the file, and details the VCF format version number."
+        },
+        {
+          "line": 142,
+          "text": "For VCF version 4.3, this line is:"
+        },
+        {
+          "line": 143,
+          "text": ""
+        },
+        {
+          "line": 144,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 145,
+          "text": "##fileformat=VCFv4.3"
+        },
+        {
+          "line": 146,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 147,
+          "text": ""
+        },
+        {
+          "line": 148,
+          "text": ""
+        },
+        {
+          "line": 149,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 150,
+          "text": "INFO fields are described as follows (first four keys are required, source and version are recommended):"
+        },
+        {
+          "line": 151,
+          "text": ""
+        },
+        {
+          "line": 152,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 153,
+          "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\",Source=\"source\",Version=\"version\">"
+        },
+        {
+          "line": 154,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 155,
+          "text": ""
+        },
+        {
+          "line": 156,
+          "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String."
+        },
+        {
+          "line": 157,
+          "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+        },
+        {
+          "line": 158,
+          "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+        },
+        {
+          "line": 159,
+          "text": "There are also certain special characters used to define special cases:"
+        },
+        {
+          "line": 160,
+          "text": ""
+        },
+        {
+          "line": 161,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 162,
+          "text": "  \\item A: The field has one value per alternate allele."
+        },
+        {
+          "line": 163,
+          "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+        },
+        {
+          "line": 164,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        },
+        {
+          "line": 165,
+          "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+        },
+        {
+          "line": 166,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        },
+        {
+          "line": 167,
+          "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+        },
+        {
+          "line": 168,
+          "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+        },
+        {
+          "line": 169,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 170,
+          "text": ""
+        },
+        {
+          "line": 171,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 172,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 173,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 174,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        },
+        {
+          "line": 175,
+          "text": ""
+        },
+        {
+          "line": 176,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 177,
+          "text": "FILTERs that have been applied to the data are described as follows:"
+        },
+        {
+          "line": 178,
+          "text": ""
+        },
+        {
+          "line": 179,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 180,
+          "text": "##FILTER=<ID=ID,Description=\"description\">"
+        },
+        {
+          "line": 181,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 182,
+          "text": ""
+        },
+        {
+          "line": 183,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 184,
+          "text": "Genotype fields specified in the FORMAT field are described as follows:"
+        },
+        {
+          "line": 185,
+          "text": ""
+        },
+        {
+          "line": 186,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 187,
+          "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 188,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 189,
+          "text": ""
+        },
+        {
+          "line": 190,
+          "text": "Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field)."
+        },
+        {
+          "line": 191,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.4",
+      "source": {
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.4.tex",
+        "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+        "start_line": 105,
+        "end_line": 200,
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex#L105"
+      },
+      "source_excerpt_lines": [
+        {
+          "line": 105,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 106,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 107,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        },
+        {
+          "line": 108,
+          "text": ""
+        },
+        {
+          "line": 109,
+          "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+        },
+        {
+          "line": 110,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 111,
+          "text": "\\verb|##|\\emph{key}\\verb|=|\\emph{value}"
+        },
+        {
+          "line": 112,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 113,
+          "text": "Several unstructured meta-information lines are defined in this specification, notably \\verb|##fileformat|."
+        },
+        {
+          "line": 114,
+          "text": "Others not defined by this specification, e.g.\\ \\verb|##fileDate| and \\verb|##source|, are commonly found in VCF files."
+        },
+        {
+          "line": 115,
+          "text": "These typically have meanings that are obvious, or they are immaterial for processing the file, or both."
+        },
+        {
+          "line": 116,
+          "text": ""
+        },
+        {
+          "line": 117,
+          "text": "A \\emph{structured} meta-information line is similar, but the value is itself a comma-separated list of key=value pairs, enclosed within `\\verb|<|' and `\\verb|>|' characters:"
+        },
+        {
+          "line": 118,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 119,
+          "text": "\\verb|##|\\emph{key}\\verb|=<|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\ldots\\verb|>|"
+        },
+        {
+          "line": 120,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 121,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 122,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included."
+        },
+        {
+          "line": 123,
+          "text": "For example:"
+        },
+        {
+          "line": 124,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 125,
+          "text": "##INFO=<ID=ALLELEID,Number=A,Type=String,Description=\"Allele ID\",Source=\"ClinVar\",Version=\"20220804\">"
+        },
+        {
+          "line": 126,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 127,
+          "text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 128,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 129,
+          "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+        },
+        {
+          "line": 130,
+          "text": ""
+        },
+        {
+          "line": 131,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 132,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        },
+        {
+          "line": 133,
+          "text": ""
+        },
+        {
+          "line": 134,
+          "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+        },
+        {
+          "line": 135,
+          "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+        },
+        {
+          "line": 136,
+          "text": ""
+        },
+        {
+          "line": 137,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 138,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        },
+        {
+          "line": 139,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        },
+        {
+          "line": 140,
+          "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+        },
+        {
+          "line": 141,
+          "text": ""
+        },
+        {
+          "line": 142,
+          "text": ""
+        },
+        {
+          "line": 143,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 144,
+          "text": "A single `fileformat' line is always required, must be the first line in the file, and details the VCF format version number."
+        },
+        {
+          "line": 145,
+          "text": "For VCF version 4.4, this line is:"
+        },
+        {
+          "line": 146,
+          "text": ""
+        },
+        {
+          "line": 147,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 148,
+          "text": "##fileformat=VCFv4.4"
+        },
+        {
+          "line": 149,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 150,
+          "text": ""
+        },
+        {
+          "line": 151,
+          "text": ""
+        },
+        {
+          "line": 152,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 153,
+          "text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:"
+        },
+        {
+          "line": 154,
+          "text": ""
+        },
+        {
+          "line": 155,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 156,
+          "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\",Source=\"source\",Version=\"version\">"
+        },
+        {
+          "line": 157,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 158,
+          "text": ""
+        },
+        {
+          "line": 159,
+          "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String."
+        },
+        {
+          "line": 160,
+          "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+        },
+        {
+          "line": 161,
+          "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+        },
+        {
+          "line": 162,
+          "text": "There are also certain special characters used to define special cases:"
+        },
+        {
+          "line": 163,
+          "text": ""
+        },
+        {
+          "line": 164,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 165,
+          "text": "  \\item A: The field has one value per alternate allele."
+        },
+        {
+          "line": 166,
+          "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+        },
+        {
+          "line": 167,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        },
+        {
+          "line": 168,
+          "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+        },
+        {
+          "line": 169,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        },
+        {
+          "line": 170,
+          "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+        },
+        {
+          "line": 171,
+          "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+        },
+        {
+          "line": 172,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 173,
+          "text": ""
+        },
+        {
+          "line": 174,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 175,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 176,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 177,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        },
+        {
+          "line": 178,
+          "text": ""
+        },
+        {
+          "line": 179,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 180,
+          "text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:"
+        },
+        {
+          "line": 181,
+          "text": ""
+        },
+        {
+          "line": 182,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 183,
+          "text": "##FILTER=<ID=ID,Description=\"description\">"
+        },
+        {
+          "line": 184,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 185,
+          "text": ""
+        },
+        {
+          "line": 186,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 187,
+          "text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:"
+        },
+        {
+          "line": 188,
+          "text": ""
+        },
+        {
+          "line": 189,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 190,
+          "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 191,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 192,
+          "text": ""
+        },
+        {
+          "line": 193,
+          "text": "Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field)."
+        },
+        {
+          "line": 194,
+          "text": "The Number field is defined as per the INFO Number field with the following additional possibilities:"
+        },
+        {
+          "line": 195,
+          "text": ""
+        },
+        {
+          "line": 196,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 197,
+          "text": "\t\\item P: The field has one value for each allele value defined in $GT$."
+        },
+        {
+          "line": 198,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 199,
+          "text": ""
+        },
+        {
+          "line": 200,
+          "text": "\\subsubsection{Alternative allele field format} \\label{altfield}"
+        }
+      ]
+    },
+    {
+      "version": "VCFv4.5",
+      "source": {
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.5.tex",
+        "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "start_line": 103,
+        "end_line": 218,
+        "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.5.tex#L103"
+      },
+      "source_excerpt_lines": [
+        {
+          "line": 103,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 104,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 105,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        },
+        {
+          "line": 106,
+          "text": ""
+        },
+        {
+          "line": 107,
+          "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+        },
+        {
+          "line": 108,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 109,
+          "text": "\\verb|##|\\emph{key}\\verb|=|\\emph{value}"
+        },
+        {
+          "line": 110,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 111,
+          "text": "Several unstructured meta-information lines are defined in this specification, notably \\verb|##fileformat|."
+        },
+        {
+          "line": 112,
+          "text": "Others not defined by this specification, e.g.\\ \\verb|##fileDate| and \\verb|##source|, are commonly found in VCF files."
+        },
+        {
+          "line": 113,
+          "text": "These typically have meanings that are obvious, or they are immaterial for processing the file, or both."
+        },
+        {
+          "line": 114,
+          "text": ""
+        },
+        {
+          "line": 115,
+          "text": "A \\emph{structured} meta-information line is similar, but the value is itself a comma-separated list of key=value pairs, enclosed within `\\verb|<|' and `\\verb|>|' characters:"
+        },
+        {
+          "line": 116,
+          "text": "\\begin{quote}"
+        },
+        {
+          "line": 117,
+          "text": "\\verb|##|\\emph{key}\\verb|=<|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\ldots\\verb|>|"
+        },
+        {
+          "line": 118,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 119,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 120,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included."
+        },
+        {
+          "line": 121,
+          "text": "For example:"
+        },
+        {
+          "line": 122,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 123,
+          "text": "##INFO=<ID=ALLELEID,Number=A,Type=String,Description=\"Allele ID\",Source=\"ClinVar\",Version=\"20220804\">"
+        },
+        {
+          "line": 124,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 125,
+          "text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 126,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 127,
+          "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+        },
+        {
+          "line": 128,
+          "text": ""
+        },
+        {
+          "line": 129,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 130,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        },
+        {
+          "line": 131,
+          "text": ""
+        },
+        {
+          "line": 132,
+          "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+        },
+        {
+          "line": 133,
+          "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+        },
+        {
+          "line": 134,
+          "text": ""
+        },
+        {
+          "line": 135,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 136,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        },
+        {
+          "line": 137,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        },
+        {
+          "line": 138,
+          "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+        },
+        {
+          "line": 139,
+          "text": ""
+        },
+        {
+          "line": 140,
+          "text": ""
+        },
+        {
+          "line": 141,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 142,
+          "text": "A single `fileformat' line is always required, must be the first line in the file, and details the VCF format version number."
+        },
+        {
+          "line": 143,
+          "text": "For VCF version 4.5, this line is:"
+        },
+        {
+          "line": 144,
+          "text": ""
+        },
+        {
+          "line": 145,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 146,
+          "text": "##fileformat=VCFv4.5"
+        },
+        {
+          "line": 147,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 148,
+          "text": ""
+        },
+        {
+          "line": 149,
+          "text": ""
+        },
+        {
+          "line": 150,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 151,
+          "text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:"
+        },
+        {
+          "line": 152,
+          "text": ""
+        },
+        {
+          "line": 153,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 154,
+          "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\",Source=\"source\",Version=\"version\">"
+        },
+        {
+          "line": 155,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 156,
+          "text": ""
+        },
+        {
+          "line": 157,
+          "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String."
+        },
+        {
+          "line": 158,
+          "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+        },
+        {
+          "line": 159,
+          "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+        },
+        {
+          "line": 160,
+          "text": "There are also certain special characters used to define special cases:"
+        },
+        {
+          "line": 161,
+          "text": ""
+        },
+        {
+          "line": 162,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 163,
+          "text": "  \\item A: The field has one value per alternate allele."
+        },
+        {
+          "line": 164,
+          "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+        },
+        {
+          "line": 165,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        },
+        {
+          "line": 166,
+          "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+        },
+        {
+          "line": 167,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        },
+        {
+          "line": 168,
+          "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+        },
+        {
+          "line": 169,
+          "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+        },
+        {
+          "line": 170,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 171,
+          "text": ""
+        },
+        {
+          "line": 172,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 173,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 174,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 175,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        },
+        {
+          "line": 176,
+          "text": ""
+        },
+        {
+          "line": 177,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 178,
+          "text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:"
+        },
+        {
+          "line": 179,
+          "text": ""
+        },
+        {
+          "line": 180,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 181,
+          "text": "##FILTER=<ID=ID,Description=\"description\">"
+        },
+        {
+          "line": 182,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 183,
+          "text": ""
+        },
+        {
+          "line": 184,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 185,
+          "text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:"
+        },
+        {
+          "line": 186,
+          "text": ""
+        },
+        {
+          "line": 187,
+          "text": "\\begin{verbatim}"
+        },
+        {
+          "line": 188,
+          "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+        },
+        {
+          "line": 189,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 190,
+          "text": ""
+        },
+        {
+          "line": 191,
+          "text": "Possible Types for FORMAT fields are: Integer, Float, Character, and String (this field is otherwise defined precisely as the INFO field)."
+        },
+        {
+          "line": 192,
+          "text": "The Number field is defined as per the INFO Number field with the following additional possibilities:"
+        },
+        {
+          "line": 193,
+          "text": ""
+        },
+        {
+          "line": 194,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 195,
+          "text": "  \\item LA: Identical to A except the only alternate alleles defined in the $LAA$ field are considered present."
+        },
+        {
+          "line": 196,
+          "text": "  \\item LR: Identical to R except the only alternate alleles defined in the $LAA$ field are considered present."
+        },
+        {
+          "line": 197,
+          "text": "  \\item LG: Identical to G except the only alternate alleles defined in the $LAA$ field are considered present."
+        },
+        {
+          "line": 198,
+          "text": "  \\item P: The field has one value for each allele value defined in $GT$."
+        },
+        {
+          "line": 199,
+          "text": "  \\item M: The field has one value for each possible base modification for the corresponding ChEBI ID."
+        },
+        {
+          "line": 200,
+          "text": "\\end{itemize}"
+        },
+        {
+          "line": 201,
+          "text": ""
+        },
+        {
+          "line": 202,
+          "text": "The cardinality of M fields is determined by genotype and number of possible base modifications for the corresponding alleles."
+        },
+        {
+          "line": 203,
+          "text": "The ID of all M fields must end with A, C, G, T, U, or N which defines the base(s) that the modification can occur on."
+        },
+        {
+          "line": 204,
+          "text": "U must be treated as synonymous with T."
+        },
+        {
+          "line": 205,
+          "text": "If any base modification key is present for a sample, GT must be defined for that sample."
+        },
+        {
+          "line": 206,
+          "text": "The number of base modification values for a given allele is the number of bases on either strand in the allele sequence that could contain the base modification."
+        },
+        {
+          "line": 207,
+          "text": "The order of the base modification values is the order that these bases occur in the allele."
+        },
+        {
+          "line": 208,
+          "text": "For N base modifications, the field contains values for both the positive and negative strands with the negative strand value immediately after the positive strand value."
+        },
+        {
+          "line": 209,
+          "text": "For example, an allele of CGA has 2 M5mC values, the first defining the methylation rate on forward strand C at the first base pair, and the second defining the methylation rate for reverse strand C at the second base pair."
+        },
+        {
+          "line": 210,
+          "text": ""
+        },
+        {
+          "line": 211,
+          "text": "The order and number of alleles encoded in these fields is determined by the order and phasing in the genotype."
+        },
+        {
+          "line": 212,
+          "text": "Base modifications values are encoded in their GT order with one value for each possible base modification in the concatenated genotype allele bases."
+        },
+        {
+          "line": 213,
+          "text": "Unphased allele values are aggregated and encoded at the position of the first occurrence of the unphased allele value."
+        },
+        {
+          "line": 214,
+          "text": "MISSING allele values and symbolic alleles are treated as containing no relevant bases thus encode no base modification values."
+        },
+        {
+          "line": 215,
+          "text": ""
+        },
+        {
+          "line": 216,
+          "text": "Unstranded base modification information should be stored at the base with the lowest POS with the other values MISSING."
+        },
+        {
+          "line": 217,
+          "text": "Unstranded N base modifications should be stored on the positive strand with the values MISSING."
+        },
+        {
+          "line": 218,
+          "text": "For example, unstranded 5mC CpG methylation should be stored on the VCF recording containing the C with the M5mC value of the subsequent G set to MISSING or omitted entirely. Similarly, unstranded MxaoN values should be stored in the positive strand value with the negative strand value MISSING."
+        }
+      ]
+    }
+  ],
+  "primary_findings": [
+    {
+      "id": "META-DELTA-01",
+      "topic": "General meta-information syntax",
+      "summary": "VCFv4.1–4.2 describe meta-information as key=value pairs after the ## string. VCFv4.3–4.5 distinguish unstructured ##key=value lines from structured ##key=<key=value,...> lines, define ordering before header/data, and require unique IDs within each structured line type.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.1": [
+          57
+        ],
+        "VCFv4.2": [
+          57
+        ],
+        "VCFv4.3": [
+          106,
+          109,
+          117,
+          121
+        ],
+        "VCFv4.4": [
+          106,
+          109,
+          117,
+          121
+        ],
+        "VCFv4.5": [
+          104,
+          107,
+          115,
+          119
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-02",
+      "topic": "INFO declaration required fields",
+      "summary": "VCFv4.1 says all INFO declaration keys are required. VCFv4.2–4.5 specify ID, Number, Type and Description as required, with Source and Version recommended.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.1": [
+          66,
+          69
+        ],
+        "VCFv4.2": [
+          66,
+          69
+        ],
+        "VCFv4.3": [
+          150,
+          153
+        ],
+        "VCFv4.4": [
+          153,
+          156
+        ],
+        "VCFv4.5": [
+          151,
+          154
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-03",
+      "topic": "INFO Number domains",
+      "summary": "VCFv4.1 defines numeric cardinality plus A, G and dot. VCFv4.2 introduces R. VCFv4.3–4.5 additionally specify value ordering for A, R and G, including ALT order and genotype ordering.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.1": [
+          72
+        ],
+        "VCFv4.2": [
+          72,
+          75,
+          78
+        ],
+        "VCFv4.3": [
+          157,
+          162,
+          164,
+          166,
+          168
+        ],
+        "VCFv4.4": [
+          160,
+          165,
+          167,
+          169,
+          171
+        ],
+        "VCFv4.5": [
+          158,
+          163,
+          165,
+          167,
+          169
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-04",
+      "topic": "Flag cardinality and quoting",
+      "summary": "Flag carries no value and uses Number=0. Description strings require double quotes; escaping of embedded quotes and backslashes is specified. VCFv4.3–4.5 use explicit MUST wording for these constraints; earlier versions use weaker wording for some statements.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.1": [
+          72
+        ],
+        "VCFv4.2": [
+          81
+        ],
+        "VCFv4.3": [
+          171,
+          172,
+          173,
+          174
+        ],
+        "VCFv4.4": [
+          174,
+          175,
+          176,
+          177
+        ],
+        "VCFv4.5": [
+          172,
+          173,
+          174,
+          175
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-05",
+      "topic": "FILTER and FORMAT metadata declarations",
+      "summary": "VCFv4.3–4.5 explicitly call FILTER and FORMAT metadata lines structured declarations with required fields. FORMAT Number semantics extend beyond INFO Number: P appears in 4.4; LA, LR, LG and M appear in 4.5.",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.1": [
+          75,
+          82,
+          85,
+          88
+        ],
+        "VCFv4.2": [
+          84,
+          91,
+          94,
+          97
+        ],
+        "VCFv4.3": [
+          177,
+          184,
+          187,
+          190
+        ],
+        "VCFv4.4": [
+          180,
+          187,
+          190,
+          193,
+          194,
+          197
+        ],
+        "VCFv4.5": [
+          178,
+          185,
+          188,
+          191,
+          192,
+          195,
+          196,
+          197,
+          198,
+          199
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-06",
+      "topic": "Base-modification FORMAT semantics",
+      "summary": "VCFv4.5 adds Number=M and local-allele cardinalities LA/LR/LG, and defines base-modification key suffixes, GT dependency, strand ordering, allele ordering and missing/symbolic allele handling.",
+      "versions": [
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.5": [
+          195,
+          196,
+          197,
+          198,
+          199,
+          202,
+          203,
+          204,
+          205,
+          206,
+          207,
+          208,
+          211,
+          212,
+          213,
+          214,
+          216,
+          217,
+          218
+        ]
+      }
+    },
+    {
+      "id": "META-DELTA-07",
+      "topic": "Integer and Float data types",
+      "summary": "VCFv4.3–4.5 define Integer as signed 32-bit and Float as IEEE-754 32-bit with accepted lexical forms; a low integer range is disallowed due to BCF representation constraints. The parser must preserve the distinction between VCF textual grammar and the BCF compatibility restriction.",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "sources": {
+        "VCFv4.3": [
+          99,
+          100,
+          103
+        ],
+        "VCFv4.4": [
+          99,
+          100,
+          103
+        ],
+        "VCFv4.5": [
+          97,
+          98,
+          101
+        ]
+      }
+    }
+  ],
+  "review": {
+    "primary_source_context_review": "COMPLETE_FOR_CAPTURED_PASSAGES",
+    "atomicity_review": "PENDING",
+    "independent_second_review": "NOT_STARTED",
+    "implementation_mapping": "NOT_STARTED",
+    "clause_tests": "NOT_STARTED",
+    "laboratory_qualification": "NOT_CLAIMED"
+  },
+  "limitations": [
+    "VCFv4.0 historical source not included pending byte-level capture and SHA-256.",
+    "The full header metadata family (contig, assembly, sample, pedigree, ALT and producer extensions) requires its own complete row/grammar and cross-reference review.",
+    "No claim is made that all normative constraints in these passages have been atomized yet."
+  ]
+}

@@ -1,0 +1,3453 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf43-modal-candidate-context-review",
+  "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_ALL_82_CANDIDATES_ATOMIC_DECOMPOSITION_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+  "source_file": "VCFv4.3.tex",
+  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.3.tex",
+  "candidate_count": 82,
+  "candidates": [
+    {
+      "candidate_id": "VCFv4.3:L0039",
+      "source_line": 39,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        }
+      ],
+      "source_context": [
+        {
+          "line": 38,
+          "text": "It contains meta-information lines (prefixed with ``\\verb|##|''), a header line (prefixed with ``\\verb|#|''), and data lines each containing information about a position in the genome and genotype information on samples for each position (text fields separated by tabs)."
+        },
+        {
+          "line": 39,
+          "text": "Zero length fields are not allowed, a dot (``.'') must be used instead."
+        },
+        {
+          "line": 40,
+          "text": "In order to ensure interoperability across platforms, VCF compliant implementations must support both LF (``\\verb|\\n|'') and CR+LF (``\\verb|\\r\\n|'') newline conventions."
+        }
+      ],
+      "candidate_line_text": "Zero length fields are not allowed, a dot (``.'') must be used instead.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "Zero-length fields are prohibited; dot is the missing-value representation. Split prohibition from replacement encoding.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0040",
+      "source_line": 40,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        }
+      ],
+      "source_context": [
+        {
+          "line": 39,
+          "text": "Zero length fields are not allowed, a dot (``.'') must be used instead."
+        },
+        {
+          "line": 40,
+          "text": "In order to ensure interoperability across platforms, VCF compliant implementations must support both LF (``\\verb|\\n|'') and CR+LF (``\\verb|\\r\\n|'') newline conventions."
+        },
+        {
+          "line": 41,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "In order to ensure interoperability across platforms, VCF compliant implementations must support both LF (``\\verb|\\n|'') and CR+LF (``\\verb|\\r\\n|'') newline conventions.",
+      "primary_disposition": "NORMATIVE_READER_REQUIREMENT",
+      "primary_review_note": "A compliant reader supports LF and CR+LF line endings.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0080",
+      "source_line": 80,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Character encoding, non-printable characters and characters with special meaning",
+          "heading_line": 75
+        }
+      ],
+      "source_context": [
+        {
+          "line": 79,
+          "text": "As a result, most software that processes VCF files does not have to be aware of the possible presence of multi-byte UTF-8 characters."
+        },
+        {
+          "line": 80,
+          "text": "VCF files must not contain a byte order mark."
+        },
+        {
+          "line": 81,
+          "text": "Note that non-printable characters U+0000--U+0008, U+000B--U+000C, U+000E--U+001F are disallowed."
+        }
+      ],
+      "candidate_line_text": "VCF files must not contain a byte order mark.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "A VCF file must not contain a byte-order mark.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0082",
+      "source_line": 82,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Character encoding, non-printable characters and characters with special meaning",
+          "heading_line": 75
+        }
+      ],
+      "source_context": [
+        {
+          "line": 81,
+          "text": "Note that non-printable characters U+0000--U+0008, U+000B--U+000C, U+000E--U+001F are disallowed."
+        },
+        {
+          "line": 82,
+          "text": "Line separators must be CR+LF or LF and they are allowed only as line separators at end of line."
+        },
+        {
+          "line": 83,
+          "text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:"
+        }
+      ],
+      "candidate_line_text": "Line separators must be CR+LF or LF and they are allowed only as line separators at end of line.",
+      "primary_disposition": "NORMATIVE_GRAMMAR",
+      "primary_review_note": "Line separators are CR+LF or LF and may occur only at end of line.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0083",
+      "source_line": 83,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Character encoding, non-printable characters and characters with special meaning",
+          "heading_line": 75
+        }
+      ],
+      "source_context": [
+        {
+          "line": 82,
+          "text": "Line separators must be CR+LF or LF and they are allowed only as line separators at end of line."
+        },
+        {
+          "line": 83,
+          "text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:"
+        },
+        {
+          "line": 84,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:",
+      "primary_disposition": "NORMATIVE_ENCODING_RULE",
+      "primary_review_note": "Characters with special syntax meaning must be percent-encoded when intended literally; exact allowed escape set and encoding details require linked character-encoding review.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0106",
+      "source_line": 106,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 105,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 106,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 107,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        }
+      ],
+      "candidate_line_text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines}).",
+      "primary_disposition": "NORMATIVE_HEADER_ORDER",
+      "primary_review_note": "Meta-information lines begin with ## and precede header and data lines.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0107",
+      "source_line": 107,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 106,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 107,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        },
+        {
+          "line": 108,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "They may be either \\emph{unstructured} or \\emph{structured}.",
+      "primary_disposition": "PERMITTED_ALTERNATIVES",
+      "primary_review_note": "Meta-information lines may be unstructured or structured; capture the two grammar branches separately.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0109",
+      "source_line": 109,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 108,
+          "text": ""
+        },
+        {
+          "line": 109,
+          "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+        },
+        {
+          "line": 110,
+          "text": "\\begin{quote}"
+        }
+      ],
+      "candidate_line_text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:",
+      "primary_disposition": "NORMATIVE_GRAMMAR",
+      "primary_review_note": "Unstructured metadata has a key and non-empty value; value must not start with '<'; key/value separated by '='. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0121",
+      "source_line": 121,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 120,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 121,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 122,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, extra fields can be included after the default fields."
+        }
+      ],
+      "candidate_line_text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix.",
+      "primary_disposition": "NORMATIVE_UNIQUENESS",
+      "primary_review_note": "ID is required in each structured meta-information line and unique within the same ##key= line type.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0128",
+      "source_line": 128,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 127,
+          "text": "In the above example, the extra fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 128,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 129,
+          "text": "Other structured lines not defined by this specification may also be used; the only default field for such lines is the required \\verb|ID| field."
+        }
+      ],
+      "candidate_line_text": "The values of optional fields must be written as quoted strings, even for numeric values.",
+      "primary_disposition": "NORMATIVE_SERIALIZATION",
+      "primary_review_note": "Optional structured-field values are quoted strings, including numeric values.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0129",
+      "source_line": 129,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 128,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 129,
+          "text": "Other structured lines not defined by this specification may also be used; the only default field for such lines is the required \\verb|ID| field."
+        },
+        {
+          "line": 130,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Other structured lines not defined by this specification may also be used; the only default field for such lines is the required \\verb|ID| field.",
+      "primary_disposition": "PERMISSION_AND_REQUIRED_DEFAULT",
+      "primary_review_note": "Other structured line types may be used; the default field for such lines is required ID. Split permission and default schema.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0131",
+      "source_line": 131,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 130,
+          "text": ""
+        },
+        {
+          "line": 131,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 132,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        }
+      ],
+      "candidate_line_text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file.",
+      "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+      "primary_review_note": "Reference/contig tags are recommended for VCF and required for BCF; maintain format scope, do not apply BCF requirement to VCF.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0132",
+      "source_line": 132,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 131,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 132,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        },
+        {
+          "line": 133,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above).",
+      "primary_disposition": "AMBIGUOUS_SCOPE_REQUIRES_ADJUDICATION",
+      "primary_review_note": "The statement that all tags are optional may refer to individual SQ-derived attributes, but appears adjacent to VCF recommendation/BCF requirement. Preserve exact context and do not resolve by assumption.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0134",
+      "source_line": 134,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 133,
+          "text": ""
+        },
+        {
+          "line": 134,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 135,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        }
+      ],
+      "candidate_line_text": "Meta-information lines are optional, but if they are present then they must be completely well-formed.",
+      "primary_disposition": "MIXED_OPTIONALITY_AND_WELL_FORMEDNESS",
+      "primary_review_note": "Meta-information lines are optional; any present line must be well-formed. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0135",
+      "source_line": 135,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 134,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 135,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        },
+        {
+          "line": 136,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        }
+      ],
+      "candidate_line_text": "Other than \\verb|##fileformat|, they may appear in any order.",
+      "primary_disposition": "NORMATIVE_ORDERING_PERMISSION",
+      "primary_review_note": "Meta-information lines may appear in any order except ##fileformat; do not impose source order on other metadata lines.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0137",
+      "source_line": 137,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        }
+      ],
+      "source_context": [
+        {
+          "line": 136,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        },
+        {
+          "line": 137,
+          "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+        },
+        {
+          "line": 138,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Recommend meta-information descriptions for entries used in the VCF body; not mandatory presence.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0141",
+      "source_line": 141,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "File format",
+          "heading_line": 140
+        }
+      ],
+      "source_context": [
+        {
+          "line": 140,
+          "text": "\\subsubsection{File format}"
+        },
+        {
+          "line": 141,
+          "text": "A single `fileformat' line is always required, must be the first line in the file, and details the VCF format version number."
+        },
+        {
+          "line": 142,
+          "text": "For VCF version 4.3, this line is:"
+        }
+      ],
+      "candidate_line_text": "A single `fileformat' line is always required, must be the first line in the file, and details the VCF format version number.",
+      "primary_disposition": "NORMATIVE_FILEFORMAT",
+      "primary_review_note": "Exactly one fileformat line is required and it is first.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0150",
+      "source_line": 150,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 149,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 150,
+          "text": "INFO fields are described as follows (first four keys are required, source and version are recommended):"
+        },
+        {
+          "line": 151,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "INFO fields are described as follows (first four keys are required, source and version are recommended):",
+      "primary_disposition": "MIXED_REQUIRED_AND_RECOMMENDED_SCHEMA",
+      "primary_review_note": "First four INFO declaration keys required; Source and Version recommended. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0158",
+      "source_line": 158,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 157,
+          "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+        },
+        {
+          "line": 158,
+          "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+        },
+        {
+          "line": 159,
+          "text": "There are also certain special characters used to define special cases:"
+        }
+      ],
+      "candidate_line_text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "For fixed numeric cardinality, Number must equal the number of values; preserve context for symbolic cardinality alternatives.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0163",
+      "source_line": 163,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 162,
+          "text": "  \\item A: The field has one value per alternate allele."
+        },
+        {
+          "line": 163,
+          "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+        },
+        {
+          "line": 164,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        }
+      ],
+      "candidate_line_text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines}).",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=A values follow ALT column order.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0165",
+      "source_line": 165,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 164,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        },
+        {
+          "line": 165,
+          "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+        },
+        {
+          "line": 166,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        }
+      ],
+      "candidate_line_text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column.",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=R values are REF first, then ALT alleles in ALT order.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0167",
+      "source_line": 167,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 166,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        },
+        {
+          "line": 167,
+          "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+        },
+        {
+          "line": 168,
+          "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+        }
+      ],
+      "candidate_line_text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering}).",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=G values follow genotype ordering specified by genotype-ordering section.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0171",
+      "source_line": 171,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 170,
+          "text": ""
+        },
+        {
+          "line": 171,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 172,
+          "text": "The Description value must be surrounded by double-quotes."
+        }
+      ],
+      "candidate_line_text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case.",
+      "primary_disposition": "NORMATIVE_FLAG_SCHEMA",
+      "primary_review_note": "Flag INFO fields contain no Value entry and Number must be zero.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0172",
+      "source_line": 172,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 171,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 172,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 173,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        }
+      ],
+      "candidate_line_text": "The Description value must be surrounded by double-quotes.",
+      "primary_disposition": "NORMATIVE_QUOTING",
+      "primary_review_note": "INFO Description is double-quoted.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0173",
+      "source_line": 173,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 172,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 173,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 174,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        }
+      ],
+      "candidate_line_text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$.",
+      "primary_disposition": "NORMATIVE_ESCAPING",
+      "primary_review_note": "Embedded double quote and backslash characters use backslash escaping as specified.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0174",
+      "source_line": 174,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Information field format",
+          "heading_line": 149
+        }
+      ],
+      "source_context": [
+        {
+          "line": 173,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 174,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        },
+        {
+          "line": 175,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use.",
+      "primary_disposition": "NORMATIVE_QUOTING_AND_SEMANTICS",
+      "primary_review_note": "Source and Version are double-quoted and identify annotation source (case-insensitive) and exact version for computational use. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0200",
+      "source_line": 200,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Alternative allele field format",
+          "heading_line": 192
+        }
+      ],
+      "source_context": [
+        {
+          "line": 199,
+          "text": "In symbolic alternate alleles for imprecise structural variants, the ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes."
+        },
+        {
+          "line": 200,
+          "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets."
+        },
+        {
+          "line": 201,
+          "text": "The first level type must be one of the following:"
+        }
+      ],
+      "candidate_line_text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets.",
+      "primary_disposition": "NORMATIVE_LEXICAL_CONSTRAINT",
+      "primary_review_note": "Structural ALT ID strings are case-sensitive and contain no whitespace, commas or angle brackets.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0201",
+      "source_line": 201,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Alternative allele field format",
+          "heading_line": 192
+        }
+      ],
+      "source_context": [
+        {
+          "line": 200,
+          "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets."
+        },
+        {
+          "line": 201,
+          "text": "The first level type must be one of the following:"
+        },
+        {
+          "line": 202,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "candidate_line_text": "The first level type must be one of the following:",
+      "primary_disposition": "NORMATIVE_ENUMERATED_DOMAIN",
+      "primary_review_note": "The first-level structural-variant type is restricted to the enumerated set; enumerate each value and distinguish subtypes.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0207",
+      "source_line": 207,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Alternative allele field format",
+          "heading_line": 192
+        }
+      ],
+      "source_context": [
+        {
+          "line": 206,
+          "text": "  \\item INV Inversion of reference sequence"
+        },
+        {
+          "line": 207,
+          "text": "  \\item CNV Copy number variable region (may be both deletion and duplication)"
+        },
+        {
+          "line": 208,
+          "text": "  \\item BND Breakend"
+        }
+      ],
+      "candidate_line_text": "  \\item CNV Copy number variable region (may be both deletion and duplication)",
+      "primary_disposition": "DESCRIPTIVE_ENUMERATION",
+      "primary_review_note": "CNV is one enumerated first-level type; not an independent requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0211",
+      "source_line": 211,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Alternative allele field format",
+          "heading_line": 192
+        }
+      ],
+      "source_context": [
+        {
+          "line": 210,
+          "text": ""
+        },
+        {
+          "line": 211,
+          "text": "The CNV category should not be used when a more specific category can be applied. Reserved subtypes include:"
+        },
+        {
+          "line": 212,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "candidate_line_text": "The CNV category should not be used when a more specific category can be applied. Reserved subtypes include:",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Do not use CNV when a more specific category can be applied; SHOULD-level.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0229",
+      "source_line": 229,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Assembly field format",
+          "heading_line": 228
+        }
+      ],
+      "source_context": [
+        {
+          "line": 228,
+          "text": "\\subsubsection{Assembly field format}"
+        },
+        {
+          "line": 229,
+          "text": "Breakpoint assemblies for structural variations may use an external file:"
+        },
+        {
+          "line": 230,
+          "text": "\\begin{verbatim}"
+        }
+      ],
+      "candidate_line_text": "Breakpoint assemblies for structural variations may use an external file:",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Breakpoint assemblies for SV may use an external file.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0238",
+      "source_line": 238,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Contig field format",
+          "heading_line": 236
+        }
+      ],
+      "source_context": [
+        {
+          "line": 237,
+          "text": "\\label{sec-contig-field}"
+        },
+        {
+          "line": 238,
+          "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+        },
+        {
+          "line": 239,
+          "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+        }
+      ],
+      "candidate_line_text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file.",
+      "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+      "primary_review_note": "Contig tags recommended in VCF and required in BCF. Keep the format distinction.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0239",
+      "source_line": 239,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Contig field format",
+          "heading_line": 236
+        }
+      ],
+      "source_context": [
+        {
+          "line": 238,
+          "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+        },
+        {
+          "line": 239,
+          "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+        },
+        {
+          "line": 240,
+          "text": "the following ones reserved:"
+        }
+      ],
+      "candidate_line_text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with",
+      "primary_disposition": "NORMATIVE_STRUCTURED_SCHEMA",
+      "primary_review_note": "Structured contig field must include ID and may include optional attributes; full continuation and syntax must be captured.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0259",
+      "source_line": 259,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Contig field format",
+          "heading_line": 236
+        }
+      ],
+      "source_context": [
+        {
+          "line": 258,
+          "text": "Contig names follow the same rules as the SAM format's reference sequence names:"
+        },
+        {
+          "line": 259,
+          "text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'."
+        },
+        {
+          "line": 260,
+          "text": "Thus they match the following regular expression:"
+        }
+      ],
+      "candidate_line_text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'.",
+      "primary_disposition": "NORMATIVE_LEXICAL_GRAMMAR",
+      "primary_review_note": "Contig-name character domain restricted to printable ASCII with enumerated exclusions and prohibited initial '*' or '='. Split exclusions and prefix constraints.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0266",
+      "source_line": 266,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Meta-information lines",
+          "heading_line": 105
+        },
+        {
+          "level": 3,
+          "heading": "Contig field format",
+          "heading_line": 236
+        }
+      ],
+      "source_context": [
+        {
+          "line": 265,
+          "text": "In particular, excluding commas facilitates parsing \\verb|##contig| lines, and excluding the characters `\\verb|<>[]|' and initial~`{\\tt *}' avoids clashes with symbolic alleles."
+        },
+        {
+          "line": 266,
+          "text": "The contig names must not use a reserved symbolic allele name."
+        },
+        {
+          "line": 267,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The contig names must not use a reserved symbolic allele name.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "Contig names must not use reserved symbolic allele names; reserved-name list and cross-reference must be reviewed.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0313",
+      "source_line": 313,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Header line syntax",
+          "heading_line": 297
+        }
+      ],
+      "source_context": [
+        {
+          "line": 312,
+          "text": "Duplicate sample IDs are not allowed."
+        },
+        {
+          "line": 313,
+          "text": "The header line is tab-delimited and there must be no tab characters at the end of the line."
+        },
+        {
+          "line": 314,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The header line is tab-delimited and there must be no tab characters at the end of the line.",
+      "primary_disposition": "NORMATIVE_HEADER_SERIALIZATION",
+      "primary_review_note": "Header line is tab-delimited and has no trailing tab.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0318",
+      "source_line": 318,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        }
+      ],
+      "source_context": [
+        {
+          "line": 317,
+          "text": "All data lines are tab-delimited with no tab character at the end of the line."
+        },
+        {
+          "line": 318,
+          "text": "The last data line must end with a line separator."
+        },
+        {
+          "line": 319,
+          "text": "In all cases, missing values are specified with a dot (`.')."
+        }
+      ],
+      "candidate_line_text": "The last data line must end with a line separator.",
+      "primary_disposition": "NORMATIVE_RECORD_TERMINATOR",
+      "primary_review_note": "Final data line must end with a line separator.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0327",
+      "source_line": 327,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 326,
+          "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+        },
+        {
+          "line": 327,
+          "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+        },
+        {
+          "line": 328,
+          "text": "  (String, no whitespace permitted, Required)."
+        }
+      ],
+      "candidate_line_text": "  All entries for a specific CHROM must form a contiguous block within the VCF file.",
+      "primary_disposition": "NORMATIVE_ORDERING",
+      "primary_review_note": "All records with a given CHROM form one contiguous block.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0328",
+      "source_line": 328,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 327,
+          "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+        },
+        {
+          "line": 328,
+          "text": "  (String, no whitespace permitted, Required)."
+        },
+        {
+          "line": 329,
+          "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+        }
+      ],
+      "candidate_line_text": "  (String, no whitespace permitted, Required).",
+      "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+      "primary_review_note": "CHROM is a required String and contains no whitespace; identifier domain is described in preceding lines.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0333",
+      "source_line": 333,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 332,
+          "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+        },
+        {
+          "line": 333,
+          "text": "  (Integer, Required)"
+        },
+        {
+          "line": 334,
+          "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+        }
+      ],
+      "candidate_line_text": "  (Integer, Required)",
+      "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+      "primary_review_note": "POS is a required Integer; numeric bounds and telomere exceptions are separately specified.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0335",
+      "source_line": 335,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 334,
+          "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+        },
+        {
+          "line": 335,
+          "text": "  If this is a dbSNP variant the rs number(s) should be used."
+        },
+        {
+          "line": 336,
+          "text": "  No identifier should be present in more than one data record."
+        }
+      ],
+      "candidate_line_text": "  If this is a dbSNP variant the rs number(s) should be used.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "dbSNP rs identifiers should be used; preserve SHOULD, not MUST.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0336",
+      "source_line": 336,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 335,
+          "text": "  If this is a dbSNP variant the rs number(s) should be used."
+        },
+        {
+          "line": 336,
+          "text": "  No identifier should be present in more than one data record."
+        },
+        {
+          "line": 337,
+          "text": "  If there is no identifier available, then the MISSING value should be used."
+        }
+      ],
+      "candidate_line_text": "  No identifier should be present in more than one data record.",
+      "primary_disposition": "NORMATIVE_UNIQUENESS",
+      "primary_review_note": "No identifier may appear in more than one data record.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0337",
+      "source_line": 337,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 336,
+          "text": "  No identifier should be present in more than one data record."
+        },
+        {
+          "line": 337,
+          "text": "  If there is no identifier available, then the MISSING value should be used."
+        },
+        {
+          "line": 338,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        }
+      ],
+      "candidate_line_text": "  If there is no identifier available, then the MISSING value should be used.",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "If no ID is available, use MISSING.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0339",
+      "source_line": 339,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 338,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        },
+        {
+          "line": 339,
+          "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+        },
+        {
+          "line": 340,
+          "text": "  Multiple bases are permitted."
+        }
+      ],
+      "candidate_line_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
+      "primary_disposition": "NORMATIVE_LEXICAL_DOMAIN",
+      "primary_review_note": "REF bases are A,C,G,T,N case-insensitively; multiple bases permitted by adjacent text.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0342",
+      "source_line": 342,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 341,
+          "text": "  The value in the POS field refers to the position of the first base in the String."
+        },
+        {
+          "line": 342,
+          "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; \\pagebreak[1] this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings."
+        },
+        {
+          "line": 343,
+          "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+        }
+      ],
+      "candidate_line_text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; \\pagebreak[1] this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings.",
+      "primary_disposition": "MIXED_NORMATIVE_AND_EXCEPTION",
+      "primary_review_note": "Indel padding preceding base, POS adjustment, position-1 following-base exception, and complex-event exception. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0343",
+      "source_line": 343,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 342,
+          "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; \\pagebreak[1] this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings."
+        },
+        {
+          "line": 343,
+          "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+        },
+        {
+          "line": 344,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required)."
+        }
+      ],
+      "candidate_line_text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism.",
+      "primary_disposition": "NORMATIVE_ALLELE_REPRESENTATION",
+      "primary_review_note": "If any ALT is symbolic, required padding base and POS coordinate relationship apply.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0344",
+      "source_line": 344,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 343,
+          "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+        },
+        {
+          "line": 344,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required)."
+        },
+        {
+          "line": 345,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "  Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required).",
+      "primary_disposition": "IMPLEMENTATION_PERMISSION",
+      "primary_review_note": "Tools need not preserve allele case; do not require case-preserving output.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0346",
+      "source_line": 346,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 345,
+          "text": ""
+        },
+        {
+          "line": 346,
+          "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+        },
+        {
+          "line": 347,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)",
+      "primary_disposition": "NORMATIVE_REFERENCE_ALPHABET_POLICY",
+      "primary_review_note": "Disallowed IUPAC reference ambiguity must be reduced to the alphabetically first concrete base; actor and producer/reader applicability require careful assignment.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0351",
+      "source_line": 351,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 350,
+          "text": "  Options are base Strings made up of the bases A,C,G,T,N (case insensitive) or the `*' symbol (allele missing due to overlapping deletion) or a MISSING value `.' (no variant) or an angle-bracketed ID String (``$<$ID$>$'') or a breakend replacement string as described in Section \\ref{Breakends}."
+        },
+        {
+          "line": 351,
+          "text": "  If there are no alternative alleles, then the MISSING value must be used."
+        },
+        {
+          "line": 352,
+          "text": "  In other words, the ALT field must be a symbolic allele, or a breakend replacement string, or match the regular expression \\texttt{\\^{}([ACGTNacgtn]+|\\string\\*|\\string\\.)\\$}."
+        }
+      ],
+      "candidate_line_text": "  If there are no alternative alleles, then the MISSING value must be used.",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "No alternative alleles are represented by MISSING.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0352",
+      "source_line": 352,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 351,
+          "text": "  If there are no alternative alleles, then the MISSING value must be used."
+        },
+        {
+          "line": 352,
+          "text": "  In other words, the ALT field must be a symbolic allele, or a breakend replacement string, or match the regular expression \\texttt{\\^{}([ACGTNacgtn]+|\\string\\*|\\string\\.)\\$}."
+        },
+        {
+          "line": 353,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+        }
+      ],
+      "candidate_line_text": "  In other words, the ALT field must be a symbolic allele, or a breakend replacement string, or match the regular expression \\texttt{\\^{}([ACGTNacgtn]+|\\string\\*|\\string\\.)\\$}.",
+      "primary_disposition": "NORMATIVE_ALT_GRAMMAR",
+      "primary_review_note": "ALT must be a symbolic allele, breakend replacement string, or match the specified sequence/*/. regular expression; linked symbolic and breakend grammar still applies.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0353",
+      "source_line": 353,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 352,
+          "text": "  In other words, the ALT field must be a symbolic allele, or a breakend replacement string, or match the regular expression \\texttt{\\^{}([ACGTNacgtn]+|\\string\\*|\\string\\.)\\$}."
+        },
+        {
+          "line": 353,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+        },
+        {
+          "line": 354,
+          "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+        }
+      ],
+      "candidate_line_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
+      "primary_disposition": "IMPLEMENTATION_PERMISSION_AND_CASE_SENSITIVITY",
+      "primary_review_note": "Tools need not preserve allele case; IDs remain case-sensitive. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0357",
+      "source_line": 357,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 356,
+          "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+        },
+        {
+          "line": 357,
+          "text": "  If unknown, the MISSING value must be specified. (Float)"
+        },
+        {
+          "line": 358,
+          "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+        }
+      ],
+      "candidate_line_text": "  If unknown, the MISSING value must be specified. (Float)",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE_AND_TYPE",
+      "primary_review_note": "Unknown QUAL must use MISSING; QUAL type is Float. Split missing representation and type.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0360",
+      "source_line": 360,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 359,
+          "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+        },
+        {
+          "line": 360,
+          "text": "  `0' is reserved and must not be used as a filter String."
+        },
+        {
+          "line": 361,
+          "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+        }
+      ],
+      "candidate_line_text": "  `0' is reserved and must not be used as a filter String.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "FILTER identifier '0' must not be used.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0361",
+      "source_line": 361,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 360,
+          "text": "  `0' is reserved and must not be used as a filter String."
+        },
+        {
+          "line": 361,
+          "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+        },
+        {
+          "line": 362,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        }
+      ],
+      "candidate_line_text": "  If filters have not been applied, then this field must be set to the MISSING value.",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "If filters have not been applied, FILTER must be MISSING; do not conflate with PASS.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0364",
+      "source_line": 364,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 363,
+          "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+        },
+        {
+          "line": 364,
+          "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+        },
+        {
+          "line": 365,
+          "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+        }
+      ],
+      "candidate_line_text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]].",
+      "primary_disposition": "NORMATIVE_INFO_GRAMMAR",
+      "primary_review_note": "Each INFO subfield is a key with optional value(s); delimiters and value grammar are separate constraints.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0368",
+      "source_line": 368,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 367,
+          "text": ""
+        },
+        {
+          "line": 368,
+          "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+        },
+        {
+          "line": 369,
+          "text": "  Duplicate keys are not allowed."
+        }
+      ],
+      "candidate_line_text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
+      "primary_disposition": "NORMATIVE_KEY_GRAMMAR",
+      "primary_review_note": "INFO keys must match the regex, with 1000G explicit legacy exception.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0370",
+      "source_line": 370,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 369,
+          "text": "  Duplicate keys are not allowed."
+        },
+        {
+          "line": 370,
+          "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+        },
+        {
+          "line": 371,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
+      "primary_disposition": "PERMISSION_AND_OPTIONALITY",
+      "primary_review_note": "Arbitrary INFO keys permitted; reserved keys remain optional. Do not require every reserved key.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0372",
+      "source_line": 372,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 371,
+          "text": ""
+        },
+        {
+          "line": 372,
+          "text": "  The exact format of each INFO key should be specified in the meta-information (as described above)."
+        },
+        {
+          "line": 373,
+          "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+        }
+      ],
+      "candidate_line_text": "  The exact format of each INFO key should be specified in the meta-information (as described above).",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Exact INFO key format should be specified in meta-information; preserve SHOULD.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0374",
+      "source_line": 374,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Fixed fields",
+          "heading_line": 321
+        }
+      ],
+      "source_context": [
+        {
+          "line": 373,
+          "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+        },
+        {
+          "line": 374,
+          "text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2)."
+        },
+        {
+          "line": 375,
+          "text": "  See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants."
+        }
+      ],
+      "candidate_line_text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Keys without values may indicate group membership; no requirement to emit negative/false keys.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0428",
+      "source_line": 428,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 427,
+          "text": "\\subsubsection{Genotype fields}"
+        },
+        {
+          "line": 428,
+          "text": "If genotype information is present, then the same types of data must be present for all samples."
+        },
+        {
+          "line": 429,
+          "text": "First a FORMAT field is given specifying the data types and order (colon-separated FORMAT keys matching the regular expression \\texttt{\\^{}[A-Za-z\\_][0-9A-Za-z\\_.]*\\$}, duplicate keys are not allowed)."
+        }
+      ],
+      "candidate_line_text": "If genotype information is present, then the same types of data must be present for all samples.",
+      "primary_disposition": "NORMATIVE_SAMPLE_CONSISTENCY",
+      "primary_review_note": "If genotype data present, same types of data must be present for all samples.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0431",
+      "source_line": 431,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 430,
+          "text": "This is followed by one data block per sample, with the colon-separated data corresponding to the types specified in the format."
+        },
+        {
+          "line": 431,
+          "text": "The first key must always be the genotype (GT) if it is present."
+        },
+        {
+          "line": 432,
+          "text": "There are no required keys."
+        }
+      ],
+      "candidate_line_text": "The first key must always be the genotype (GT) if it is present.",
+      "primary_disposition": "NORMATIVE_FORMAT_ORDER",
+      "primary_review_note": "GT is first FORMAT key when present.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0432",
+      "source_line": 432,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 431,
+          "text": "The first key must always be the genotype (GT) if it is present."
+        },
+        {
+          "line": 432,
+          "text": "There are no required keys."
+        },
+        {
+          "line": 433,
+          "text": "Additional Genotype keys can be defined in the meta-information, however, software support for them is not guaranteed."
+        }
+      ],
+      "candidate_line_text": "There are no required keys.",
+      "primary_disposition": "NORMATIVE_OPTIONALITY",
+      "primary_review_note": "There are no universally required FORMAT keys; this does not override conditional requirements such as GT-first or local-allele dependencies.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0438",
+      "source_line": 438,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 437,
+          "text": "If a field contains a list of missing values, it can be represented either as a single MISSING value (`.') or as a list of missing values (e.g.\\ `.,.,.' if the field was Number=3)."
+        },
+        {
+          "line": 438,
+          "text": "Trailing fields can be dropped, with the exception of the GT field, which should always be present if specified in the FORMAT field."
+        },
+        {
+          "line": 439,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Trailing fields can be dropped, with the exception of the GT field, which should always be present if specified in the FORMAT field.",
+      "primary_disposition": "MIXED_PERMISSION_AND_EXCEPTION",
+      "primary_review_note": "Trailing FORMAT fields may be dropped, except GT should always be present if specified. Clarify force and field-presence semantics.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0488",
+      "source_line": 488,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 487,
+          "text": "  Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied."
+        },
+        {
+          "line": 488,
+          "text": "  These values should be described in the meta-information in the same way as FILTERs."
+        },
+        {
+          "line": 489,
+          "text": "  No whitespace or semicolons permitted."
+        }
+      ],
+      "candidate_line_text": "  These values should be described in the meta-information in the same way as FILTERs.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "FORMAT filter values should be described in metadata as FILTERs are; recommendation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0497",
+      "source_line": 497,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 496,
+          "text": "  A triploid call might look like $0/0/1$."
+        },
+        {
+          "line": 497,
+          "text": "  If a call cannot be made for a sample at a given locus, `.' must be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype)."
+        },
+        {
+          "line": 498,
+          "text": "  The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        }
+      ],
+      "candidate_line_text": "  If a call cannot be made for a sample at a given locus, `.' must be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype).",
+      "primary_disposition": "NORMATIVE_MISSING_GENOTYPE",
+      "primary_review_note": "If a GT call cannot be made, each missing allele must be represented with MISSING.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0571",
+      "source_line": 571,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 315
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 427
+        }
+      ],
+      "source_context": [
+        {
+          "line": 570,
+          "text": "  If the genotype in the GT field is unphased, the corresponding PS field is ignored."
+        },
+        {
+          "line": 571,
+          "text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required)."
+        },
+        {
+          "line": 572,
+          "text": "\\end{itemize}"
+        }
+      ],
+      "candidate_line_text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required).",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Using the first variant position as PS identifier is recommended, not required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0605",
+      "source_line": 605,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 601
+        }
+      ],
+      "source_context": [
+        {
+          "line": 604,
+          "text": "The following INFO keys are reserved for encoding structural variants."
+        },
+        {
+          "line": 605,
+          "text": "In general, when these keys are used by imprecise variants, the values should be best estimates."
+        },
+        {
+          "line": 606,
+          "text": "When a key reflects a property of a single alt allele (e.g.\\ SVLEN), then when there are multiple alt alleles there will be multiple values for the key corresponding to each allele (e.g.\\ SVLEN=-100,-110 for a deletion with two distinct alt alleles)."
+        }
+      ],
+      "candidate_line_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "For imprecise SV, values should be best estimates; preserve SHOULD.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0623",
+      "source_line": 623,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 601
+        }
+      ],
+      "source_context": [
+        {
+          "line": 622,
+          "text": "This key can be derived from the REF/ALT fields but is useful for filtering."
+        },
+        {
+          "line": 623,
+          "text": "The reserved values must be used for the types listed below:"
+        },
+        {
+          "line": 624,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "candidate_line_text": "The reserved values must be used for the types listed below:",
+      "primary_disposition": "NORMATIVE_ENUMERATED_DOMAIN",
+      "primary_review_note": "Reserved SVTYPE values must be from the enumerated list; capture every value and version-specific scope.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0629",
+      "source_line": 629,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 601
+        }
+      ],
+      "source_context": [
+        {
+          "line": 628,
+          "text": "  \\item INV: Inversion of reference sequence"
+        },
+        {
+          "line": 629,
+          "text": "  \\item CNV: Copy number variable region (may be both deletion and duplication)"
+        },
+        {
+          "line": 630,
+          "text": "  \\item BND: Breakend"
+        }
+      ],
+      "candidate_line_text": "  \\item CNV: Copy number variable region (may be both deletion and duplication)",
+      "primary_disposition": "DESCRIPTIVE_ENUMERATION",
+      "primary_review_note": "CNV is one member of the SVTYPE list; not an independent requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0650",
+      "source_line": 650,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 601
+        }
+      ],
+      "source_context": [
+        {
+          "line": 649,
+          "text": "For precise variants, the consensus sequence the alternate allele assembly is derivable from the REF and ALT fields."
+        },
+        {
+          "line": 650,
+          "text": "However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs."
+        },
+        {
+          "line": 651,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Alternate allele assembly file may contain additional information; permissive description.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0690",
+      "source_line": 690,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "FORMAT keys used for structural variants",
+          "heading_line": 672
+        }
+      ],
+      "source_context": [
+        {
+          "line": 689,
+          "text": "CNP is 0 to 1-scaled copy number posterior probabilities (and otherwise defined precisely as the CNL field), intended to store imputed genotype probabilities."
+        },
+        {
+          "line": 690,
+          "text": "When possible, GT/GQ/GL/GP should be used instead of (or in addition to) these keys."
+        },
+        {
+          "line": 691,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "When possible, GT/GQ/GL/GP should be used instead of (or in addition to) these keys.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "When possible, GT/GQ/GL/GP should be used instead of or in addition to copy-number-specific fields.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0715",
+      "source_line": 715,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Creating VCF entries for SNPs and small indels",
+          "heading_line": 693
+        },
+        {
+          "level": 3,
+          "heading": "Example 1",
+          "heading_line": 694
+        }
+      ],
+      "source_context": [
+        {
+          "line": 714,
+          "text": ""
+        },
+        {
+          "line": 715,
+          "text": "Note that the positions must be sorted in increasing order:"
+        },
+        {
+          "line": 716,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Note that the positions must be sorted in increasing order:",
+      "primary_disposition": "NORMATIVE_EXAMPLE_ASSERTION",
+      "primary_review_note": "An example explicitly says positions must be sorted; cross-check against fixed-field POS ordering clause and do not count as a separate duplicate requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L0938",
+      "source_line": 938,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        }
+      ],
+      "source_context": [
+        {
+          "line": 937,
+          "text": "  \\item The string t that replaces places s."
+        },
+        {
+          "line": 938,
+          "text": "  The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency."
+        },
+        {
+          "line": 939,
+          "text": "  \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''."
+        }
+      ],
+      "candidate_line_text": "  The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+      "primary_disposition": "PERMISSION_WITHIN_BREAKEND_GRAMMAR",
+      "primary_review_note": "Inserted novel bases may extend the breakend replacement sequence; part of breakend grammar.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1019",
+      "source_line": 1019,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Large Insertions",
+          "heading_line": 1000
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1018,
+          "text": ""
+        },
+        {
+          "line": 1019,
+          "text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described above:"
+        },
+        {
+          "line": 1020,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described above:",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Shorthand notation recommended for complete insertion case; not mandatory.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1075",
+      "source_line": 1075,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Explicit partners",
+          "heading_line": 1071
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1074,
+          "text": "However, it is not uncommon to observe loss of a few basepairs during the rearrangement."
+        },
+        {
+          "line": 1075,
+          "text": "A breakend's partner may be explicitly named as in Figure 5:"
+        },
+        {
+          "line": 1076,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "A breakend's partner may be explicitly named as in Figure 5:",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "A breakend partner may be explicitly named; permitted representation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1154",
+      "source_line": 1154,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Inversions",
+          "heading_line": 1142
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1153,
+          "text": "can be described equivalently in two ways."
+        },
+        {
+          "line": 1154,
+          "text": "Either one uses the short hand notation described previously (recommended for simple cases):"
+        },
+        {
+          "line": 1155,
+          "text": "\\end{samepage}"
+        }
+      ],
+      "candidate_line_text": "Either one uses the short hand notation described previously (recommended for simple cases):",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Short-hand notation recommended for simple inversion; not mandatory.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1233",
+      "source_line": 1233,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Single breakends",
+          "heading_line": 1213
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1232,
+          "text": ""
+        },
+        {
+          "line": 1233,
+          "text": "On the other hand, if we know a simple reciprocal translocation has occurred as in Figure 7, then even if we have no evidence for the (W,X) adjacency, for accounting purposes an adjacency between W and X may also be recorded in the VCF file."
+        },
+        {
+          "line": 1234,
+          "text": "These two breakends W and X can still be crossed-referenced as mates."
+        }
+      ],
+      "candidate_line_text": "On the other hand, if we know a simple reciprocal translocation has occurred as in Figure 7, then even if we have no evidence for the (W,X) adjacency, for accounting purposes an adjacency between W and X may also be recorded in the VCF file.",
+      "primary_disposition": "PERMISSION_AND_EXAMPLE_CONTEXT",
+      "primary_review_note": "A mate adjacency may be recorded without direct evidence; specific representation example, not universal obligation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1263",
+      "source_line": 1263,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Sample mixtures",
+          "heading_line": 1262
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1262,
+          "text": "\\subsubsection{Sample mixtures}"
+        },
+        {
+          "line": 1263,
+          "text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell."
+        },
+        {
+          "line": 1264,
+          "text": "Let's imagine that two samples are taken from a cancer patient: healthy blood, and some tumor tissue with an estimated 30\\% stromal contamination."
+        }
+      ],
+      "candidate_line_text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Clinical sample mixture difficulty is explanatory narrative, not VCF syntax.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1314",
+      "source_line": 1314,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1307
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1313,
+          "text": ""
+        },
+        {
+          "line": 1314,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1315,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        }
+      ],
+      "candidate_line_text": "In general there may be several tumor genomes from the same patient in the VCF file.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Multiple tumor genomes are described as possible context; no normative file requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1315",
+      "source_line": 1315,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1307
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1314,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1315,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        },
+        {
+          "line": 1316,
+          "text": "We suggest the derivation relationships between genomes in a cancer VCF file be represented in the header with PEDIGREE tags."
+        }
+      ],
+      "candidate_line_text": "Some of these may be secondary tumors derived from an original primary tumor.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Secondary tumor relationship is descriptive context; no normative requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1372",
+      "source_line": 1372,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1307
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1371,
+          "text": "Secondly, we define a \\textbf{haplotype} as a set of variants which are known to be on the same chromosome in the germline genome."
+        },
+        {
+          "line": 1372,
+          "text": "Haplotype identifiers must be unique across the germline genome, and are conserved along clonal lineages, regardless of mutations, rearrangements, or recombination."
+        },
+        {
+          "line": 1373,
+          "text": "In the case of the duplication of a region within a haplotype, one copy retains the original haplotype identifier, and the others are considered to be novel haplotypes with their own unique identifiers."
+        }
+      ],
+      "candidate_line_text": "Haplotype identifiers must be unique across the germline genome, and are conserved along clonal lineages, regardless of mutations, rearrangements, or recombination.",
+      "primary_disposition": "MIXED_NORMATIVE",
+      "primary_review_note": "Haplotype identifiers must be unique and conserved along clonal lineages; split unique and conservation constraints.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.3:L1414",
+      "source_line": 1414,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 692
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 925
+        },
+        {
+          "level": 3,
+          "heading": "Phasing adjacencies in an aneuploid context",
+          "heading_line": 1376
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1413,
+          "text": "These are specified using the using the DP, CN, BDP, BCN, and HQ subfields, respectively."
+        },
+        {
+          "line": 1414,
+          "text": "The total information available about the three haplotypes of breakend U in the figure above may be visualized in a table as follows."
+        },
+        {
+          "line": 1415,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The total information available about the three haplotypes of breakend U in the figure above may be visualized in a table as follows.",
+      "primary_disposition": "INFORMATIVE_CROSS_REFERENCE",
+      "primary_review_note": "A table visualizes previously described subfields; not independent syntax requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    }
+  ],
+  "disposition_counts": {
+    "NORMATIVE_PROHIBITION": 4,
+    "NORMATIVE_READER_REQUIREMENT": 1,
+    "NORMATIVE_GRAMMAR": 2,
+    "NORMATIVE_ENCODING_RULE": 1,
+    "NORMATIVE_HEADER_ORDER": 1,
+    "PERMITTED_ALTERNATIVES": 1,
+    "NORMATIVE_UNIQUENESS": 2,
+    "NORMATIVE_SERIALIZATION": 1,
+    "PERMISSION_AND_REQUIRED_DEFAULT": 1,
+    "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT": 2,
+    "AMBIGUOUS_SCOPE_REQUIRES_ADJUDICATION": 1,
+    "MIXED_OPTIONALITY_AND_WELL_FORMEDNESS": 1,
+    "NORMATIVE_ORDERING_PERMISSION": 1,
+    "RECOMMENDATION": 10,
+    "NORMATIVE_FILEFORMAT": 1,
+    "MIXED_REQUIRED_AND_RECOMMENDED_SCHEMA": 1,
+    "NORMATIVE_CARDINALITY": 1,
+    "NORMATIVE_VALUE_ORDER": 3,
+    "NORMATIVE_FLAG_SCHEMA": 1,
+    "NORMATIVE_QUOTING": 1,
+    "NORMATIVE_ESCAPING": 1,
+    "NORMATIVE_QUOTING_AND_SEMANTICS": 1,
+    "NORMATIVE_LEXICAL_CONSTRAINT": 1,
+    "NORMATIVE_ENUMERATED_DOMAIN": 2,
+    "DESCRIPTIVE_ENUMERATION": 2,
+    "PERMISSION": 4,
+    "NORMATIVE_STRUCTURED_SCHEMA": 1,
+    "NORMATIVE_LEXICAL_GRAMMAR": 1,
+    "NORMATIVE_HEADER_SERIALIZATION": 1,
+    "NORMATIVE_RECORD_TERMINATOR": 1,
+    "NORMATIVE_ORDERING": 1,
+    "NORMATIVE_FIELD_SCHEMA": 2,
+    "NORMATIVE_MISSING_VALUE": 3,
+    "NORMATIVE_LEXICAL_DOMAIN": 1,
+    "MIXED_NORMATIVE_AND_EXCEPTION": 1,
+    "NORMATIVE_ALLELE_REPRESENTATION": 1,
+    "IMPLEMENTATION_PERMISSION": 1,
+    "NORMATIVE_REFERENCE_ALPHABET_POLICY": 1,
+    "NORMATIVE_ALT_GRAMMAR": 1,
+    "IMPLEMENTATION_PERMISSION_AND_CASE_SENSITIVITY": 1,
+    "NORMATIVE_MISSING_VALUE_AND_TYPE": 1,
+    "NORMATIVE_INFO_GRAMMAR": 1,
+    "NORMATIVE_KEY_GRAMMAR": 1,
+    "PERMISSION_AND_OPTIONALITY": 1,
+    "NORMATIVE_SAMPLE_CONSISTENCY": 1,
+    "NORMATIVE_FORMAT_ORDER": 1,
+    "NORMATIVE_OPTIONALITY": 1,
+    "MIXED_PERMISSION_AND_EXCEPTION": 1,
+    "NORMATIVE_MISSING_GENOTYPE": 1,
+    "NORMATIVE_EXAMPLE_ASSERTION": 1,
+    "PERMISSION_WITHIN_BREAKEND_GRAMMAR": 1,
+    "PERMISSION_AND_EXAMPLE_CONTEXT": 1,
+    "INFORMATIVE_NARRATIVE": 3,
+    "MIXED_NORMATIVE": 1,
+    "INFORMATIVE_CROSS_REFERENCE": 1
+  },
+  "review": {
+    "primary_context_review": "COMPLETE_FOR_82_CANDIDATES",
+    "atomic_requirement_records_created_from_this_batch": 0,
+    "independent_second_reviewed": 0,
+    "implementation_mapped": 0,
+    "tests_executed": 0
+  },
+  "limitations": [
+    "A modal candidate may be a recommendation, permission, informative example or descriptive clause; it is not automatically a MUST.",
+    "Some source lines refer to BCF requirements or to cross-referenced subsections; these are scoped separately.",
+    "Candidate atomicity and precise normative force still require decomposition and independent review.",
+    "This review covers modal candidates only; non-modal discovery, all tables, grammar, footnotes and cross-references remain open."
+  ]
+}

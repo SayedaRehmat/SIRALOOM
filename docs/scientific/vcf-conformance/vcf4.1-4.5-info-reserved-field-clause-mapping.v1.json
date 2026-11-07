@@ -1,0 +1,1588 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-info-reserved-field-clause-mapping",
+  "status": "AUTHOR_RESERVED_ROW_TO_CANONICAL_MAPPING_COMPLETE_FIELD_SPECIFIC_PROSE_MAPPING_AND_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "inputs": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+      "blob_sha1": "8134576a46af696754ee406e8a3e327c4044cb4d"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-info-format-row-semantic-review.v1.json",
+      "blob_sha1": "5516fa0039696ec444bd02424ea7191adf7fd2c8"
+    }
+  ],
+  "scope": "All 21 reserved INFO field IDs in VCFv4.1-4.5. SV-specific INFO definitions outside the reserved INFO table are handled in the SV semantic crosswalk and are not falsely represented as rows in table VCF5.3.",
+  "method": "For each INFO row, retain exact version-specific source line, representation, Number/Type where specified and description; record all mechanical row changes; attach the VCFv4.5 row semantic note and field interpretation. This completes author row-level interpretation of the reserved INFO table but not independent review or all SV INFO clause mappings.",
+  "fields": [
+    {
+      "field_id": "AA",
+      "meaning": "Ancestral allele; Number=1 String. Optional reserved definition.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 171,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "ancestral allele"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 188,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "ancestral allele"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 395,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 411,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 460,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000143"
+      ]
+    },
+    {
+      "field_id": "AC",
+      "meaning": "Allele count in called genotypes for each ALT allele, in ALT order; Number=A Integer.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 172,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 189,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 396,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 412,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 461,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000144"
+      ]
+    },
+    {
+      "field_id": "AD",
+      "meaning": "Total read depth for each allele; Number=R Integer, REF followed by ALT alleles.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 397,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 413,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 462,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000145"
+      ]
+    },
+    {
+      "field_id": "ADF",
+      "meaning": "Forward-strand read depth for each allele; Number=R Integer, REF followed by ALT alleles.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 398,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 414,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 463,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000146"
+      ]
+    },
+    {
+      "field_id": "ADR",
+      "meaning": "Reverse-strand read depth for each allele; Number=R Integer, REF followed by ALT alleles.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INFO_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 399,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 415,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 464,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "vcf45_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000147"
+      ]
+    },
+    {
+      "field_id": "AF",
+      "meaning": "Estimated allele frequency for each ALT allele from primary data, not called genotypes; Number=A Float.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 173,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 190,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 400,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 416,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 465,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+              "to": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000148"
+      ]
+    },
+    {
+      "field_id": "AN",
+      "meaning": "Total number of alleles in called genotypes; Number=1 Integer.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 174,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "total number of alleles in called genotypes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 191,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "total number of alleles in called genotypes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 401,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 417,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 466,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000149"
+      ]
+    },
+    {
+      "field_id": "BQ",
+      "meaning": "RMS base quality; Number=1 Float.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 175,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS base quality at this position"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 192,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS base quality at this position"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 402,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 418,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 467,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS base quality at this position",
+              "to": "RMS base quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000150"
+      ]
+    },
+    {
+      "field_id": "CIGAR",
+      "meaning": "CIGAR string describing alignment of each alternate allele to the reference allele; Number=A String.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 176,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 193,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 403,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 419,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 468,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000151"
+      ]
+    },
+    {
+      "field_id": "DB",
+      "meaning": "dbSNP membership presence flag; Number=0 Type=Flag.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 177,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "dbSNP membership"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 194,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "dbSNP membership"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 404,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 420,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 469,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000152"
+      ]
+    },
+    {
+      "field_id": "DP",
+      "meaning": "Combined depth across samples; Number=1 Integer.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 178,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "combined depth across samples, e.g.\\ DP=154"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 195,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "combined depth across samples, e.g.\\ DP=154"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 405,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 421,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 470,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "combined depth across samples, e.g.\\ DP=154",
+              "to": "Combined depth across samples"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000153"
+      ]
+    },
+    {
+      "field_id": "END",
+      "meaning": "Deprecated compatibility field in VCFv4.5; computed endpoint semantics are defined separately and feed BCF rlen/indexing. Do not treat as a primary variant span when computed semantics apply.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 179,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 196,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 406,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "End position on CHROM (used with symbolic alleles; see below)"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 422,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "End position on CHROM (used with symbolic alleles; see below)"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 471,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Deprecated. Present for backwards compatibility with earlier versions of VCF."
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "end position of the variant described in this record (for use with symbolic alleles)",
+              "to": "End position on CHROM (used with symbolic alleles; see below)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "End position on CHROM (used with symbolic alleles; see below)",
+              "to": "Deprecated. Present for backwards compatibility with earlier versions of VCF."
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Deprecated compatibility field; separate prose defines it as a computed maximum endpoint across REF, symbolic SVLEN and <NON_REF> LEN-derived intervals; it feeds BCF rlen and indexing. Do not treat it as a primary source of variant span when recomputation is required.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000154"
+      ]
+    },
+    {
+      "field_id": "H2",
+      "meaning": "HapMap2 membership presence flag; Number=0 Type=Flag.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 180,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap2"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 197,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap2"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 407,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 423,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 472,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in hapmap2",
+              "to": "HapMap2 membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000155"
+      ]
+    },
+    {
+      "field_id": "H3",
+      "meaning": "HapMap3 membership presence flag; Number=0 Type=Flag.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 181,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap3"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 198,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap3"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 408,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 424,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 473,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in hapmap3",
+              "to": "HapMap3 membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000156"
+      ]
+    },
+    {
+      "field_id": "MQ",
+      "meaning": "RMS mapping quality; Number=1 Float.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 182,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, e.g.\\ MQ=52"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 199,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, e.g.\\ MQ=52"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 409,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 425,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 474,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS mapping quality, e.g.\\ MQ=52",
+              "to": "RMS mapping quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000157"
+      ]
+    },
+    {
+      "field_id": "MQ0",
+      "meaning": "Number of MAPQ=0 reads; Number=1 Integer.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 183,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of MAPQ == 0 reads covering this record"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 200,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of MAPQ == 0 reads covering this record"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 410,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 426,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 475,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "Number of MAPQ == 0 reads covering this record",
+              "to": "Number of MAPQ == 0 reads"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000158"
+      ]
+    },
+    {
+      "field_id": "NS",
+      "meaning": "Number of samples with data; Number=1 Integer.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 184,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of samples with data"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 201,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of samples with data"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 411,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 427,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 476,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000159"
+      ]
+    },
+    {
+      "field_id": "SB",
+      "meaning": "Strand bias fixed vector of four integers; Number=4.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 185,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "strand bias at this position"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 202,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "strand bias at this position"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 412,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 428,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 477,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "strand bias at this position",
+              "to": "Strand bias"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "4"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=4 is a fixed four-integer vector; retain exact cardinality rather than treating it as a scalar.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000160"
+      ]
+    },
+    {
+      "field_id": "SOMATIC",
+      "meaning": "Somatic mutation marker for cancer genomics; Number=0 Type=Flag.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 186,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 203,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 413,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 429,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 478,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "indicates that the record is a somatic mutation, for cancer genomics",
+              "to": "Somatic mutation (for cancer genomics)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000161"
+      ]
+    },
+    {
+      "field_id": "VALIDATED",
+      "meaning": "Validated by follow-up experiment presence flag; Number=0 Type=Flag.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 187,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "validated by follow-up experiment"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 204,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "validated by follow-up experiment"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 414,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 430,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 479,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000162"
+      ]
+    },
+    {
+      "field_id": "1000G",
+      "meaning": "1000 Genomes membership presence flag in VCF core; do not import producer/project conventions from the named project.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 188,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in 1000 Genomes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 205,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in 1000 Genomes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 415,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 431,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 480,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in 1000 Genomes",
+              "to": "1000 Genomes membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "vcf45_semantic_note": "Reserved legacy membership flag in VCF core; its name does not import the 1000 Genomes project's producer conventions or imply cohort-specific semantics.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000163"
+      ]
+    }
+  ],
+  "summary": {
+    "total_field_ids": 21,
+    "present_in_vcf45": 21,
+    "added_in_vcf43": [
+      "AD",
+      "ADF",
+      "ADR"
+    ],
+    "changed_in_vcf45": [
+      "END"
+    ],
+    "author_row_context_reviewed": 21,
+    "independent_reviewed": 0,
+    "atomic_requirement_mapped": 21,
+    "canonical_row_records_mapped": 21
+  },
+  "cross_table_semantics": [
+    {
+      "topic": "SVLEN",
+      "scope": "SV INFO definition outside table VCF5.3",
+      "artifact": "vcf4.1-4.5-version-delta-register.v1.json",
+      "finding": "Number=. in VCFv4.1-4.3, Number=A in VCFv4.4-4.5; per-ALT semantics and missing-value details are version-specific."
+    },
+    {
+      "topic": "SVTYPE",
+      "scope": "SV INFO definition outside table VCF5.3",
+      "artifact": "vcf4.1-4.5-version-delta-register.v1.json",
+      "finding": "Deprecated in VCFv4.4 change log and explicitly explained in VCFv4.5 prose as redundant with symbolic ALT."
+    },
+    {
+      "topic": "CIPOS/CIEND/CN/EVENT/MATEID/PARID/SVCLAIM",
+      "scope": "SV INFO definitions outside table VCF5.3",
+      "artifact": "vcf4.1-4.5-genotype-sv-breakend-semantic-crosswalk.v1.json",
+      "finding": "Remain separate from the 21-row generic reserved INFO table and require their own row/section-level semantic mapping."
+    }
+  ],
+  "remaining": [
+    "Independent reviewer must verify every INFO row's interpretation and exact version applicability.",
+    "Map all 21 INFO rows to atomic requirement IDs and field-specific executable tests.",
+    "Complete SV INFO clause mapping separately; do not claim table VCF5.3 contains every SV INFO field.",
+    "No implementation or laboratory qualification is claimed."
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "SIRALOOM-VCF40-HISTORICAL-SOURCE-PROVENANCE-2026-11-05",
+  "status": "HISTORICAL_SOURCE_IDENTITY_CORROBORATED_EXACT_SOURCE_BYTES_AND_SHA256_BLOCKED",
+  "scope": {
+    "version": "VCFv4.0",
+    "purpose": "Identify and qualify a historical VCFv4.0 normative source without conflating the core format specification with 1000 Genomes Project producer conventions or structural-variation extensions."
+  },
+  "source_discovery": [
+    {
+      "source_id": "VCF40-IGSR-CORE-HISTORICAL",
+      "source_role": "HISTORICAL_SPECIFICATION_PAGE_CANDIDATE",
+      "title": "VCF (Variant Call Format) version 4.0",
+      "publisher": "International Genome Sample Resource (EMBL-EBI)",
+      "uri": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+      "observed_page_title": "VCF (Variant Call Format) version 4.0",
+      "observed_scope": "Core VCF v4.0 text: metadata, header syntax, fixed fields, INFO, FORMAT, GT and haplotype representation.",
+      "web_evidence": {
+        "source_refs": [
+          "turn319131search1",
+          "turn319131search0",
+          "turn319131search2",
+          "turn109883view0"
+        ],
+        "retrieval_date": "2026-11-05",
+        "corroboration": "VCFtools historical specifications page states that older VCF 4.0 specification documents are hosted on the 1000 Genomes wiki; IGSR page identifies itself as VCF version 4.0; current HTS index identifies VCFv4.1-4.5 as successor specifications."
+      },
+      "provenance_assessment": "The VCFtools historical index and IGSR page independently corroborate the historical location and VCFv4.0 identity of the core specification. The core page contains the version-specific format description, while the separate SV page explicitly labels its content as 1000 Genomes project conventions/extensions. However, exact immutable source-byte identity and complete original release provenance remain unverified. A 2026-11-07 direct line-anchored inspection of the detailed rendered page further corroborates VCFv4.0 FORMAT semantics (GT presence/order, GL biallelic applicability, and reserved FORMAT field typing), but does not change the raw-source qualification blocker.",
+      "raw_source_capture": {
+        "status": "NOT_CAPTURED",
+        "bytes": null,
+        "sha256": null,
+        "media_type": "text/html",
+        "reason": "Only rendered/search-indexed HTML text was retrievable. The raw-export endpoint was inaccessible and no authoritative original PDF/TeX/source archive was located. Do not reconstruct HTML or hash rendered text as a substitute.",
+        "byte_length": null
+      },
+      "normative_status": "CANDIDATE_NOT_YET_ACCEPTED_AS_PINNED_NORMATIVE_SOURCE",
+      "limitations": [
+        "The page contains 1000 Genomes-oriented examples and fields such as H2; these must be classified individually rather than presumed universally normative.",
+        "The page links to a separate 1000 Genomes structural-variation conventions page.",
+        "Do not promote the current mutable URL to a pinned immutable source revision.",
+        "The source host relationship is corroborated by the historical VCFtools specifications index, but no immutable HTML/PDF/source-byte artifact or SHA-256 has been captured."
+      ],
+      "alternate_canonical_uri": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+      "additional_web_evidence": [
+        {
+          "source_ref": "turn430266search0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "Current IGSR page identifies itself as VCF version 4.0 and explicitly separates the 1000 Genomes structural-variation conventions/extensions page."
+        },
+        {
+          "source_ref": "turn259309search1",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "IGSR historical page content exposes VCFv4.0 core sections: meta-information, header syntax, fixed fields, INFO and genotype fields."
+        },
+        {
+          "source_ref": "turn259309search2",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "The short historical page provides an example and links the separate structural-variation conventions."
+        },
+        {
+          "source_ref": "turn430266search3",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
+          "observation": "IGSR general VCF page states that specification maintenance moved to GA4GH and points to the maintained HTS specifications."
+        },
+        {
+          "source_ref": "turn160906search0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/vcf4.0/",
+          "observation": "Current rendered historical core page identifies itself as VCF 4.0, presents metadata/header/fixed-field/INFO/FORMAT/genotype/haplotype sections, and explicitly points structural-variation conventions to a separate page. This is rendered-page corroboration only, not raw-source capture."
+        },
+        {
+          "source_ref": "turn160906search3",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "Alternate current IGSR route exposes detailed VCFv4.0 core text including metadata typing, Number/Type semantics, fixed fields, reserved INFO keys, GT/GL examples and haplotype representation. The route remains mutable rendered HTML."
+        },
+        {
+          "source_ref": "turn160906search2",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
+          "observation": "Current IGSR general VCF page states that maintenance moved to the GA4GH Data Working Group and points to HTS specifications; used only for historical governance/provenance context."
+        },
+        {
+          "source_ref": "turn109883view0",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40/",
+          "observation": "Direct inspection returned a 245-line rendered page. Lines 0-2 identify VCFv4.0 and separate 1000 Genomes SV conventions; lines 23-26 show example GT/GQ/DP/HQ header definitions; lines 43-58 describe optional but well-formed metadata and FORMAT Types; lines 108-120 specify GT-first/all-sample GT, DP, FT, GL biallelic restriction, GQ/HQ numeric semantics and non-droppable GT. This is rendered-page evidence only, not an immutable raw-source capture."
+        }
+      ],
+      "acquisition_attempts": [
+        {
+          "attempt": "Web retrieval of the canonical IGSR page",
+          "result": "Rendered historical page content retrieved; original HTTP entity bytes and byte length are not exposed by the retrieval interface.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "DokuWiki raw-export endpoint probe (?do=export_raw)",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/vcf-variant-call-format-version-40?do=export_raw",
+          "result": "Endpoint was inaccessible through the available retrieval interface; no bytes returned.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "Search for an authoritative VCFv4.0 PDF or source archive",
+          "result": "No authoritative original VCFv4.0 PDF/source archive located. Search results include secondary teaching materials and the rendered IGSR historical page; these are not accepted as original normative bytes.",
+          "accepted_as_raw_capture": false
+        },
+        {
+          "attempt": "Direct line-anchored inspection of the detailed IGSR VCFv4.0 page",
+          "result": "Retrieved 245 rendered lines and inspected FORMAT-relevant source locations 0-2, 23-26, 43-58 and 108-120. This supports targeted semantic review but does not expose original HTTP entity bytes, revision identity or an authoritative source digest.",
+          "accepted_as_raw_capture": false
+        }
+      ],
+      "capture_plan": [
+        "Obtain the historical page's original HTTP response entity or an authoritative archival snapshot with verifiable custody and capture date.",
+        "If the page was maintained in DokuWiki, obtain the original revision export or database-backed page revision and preserve the exact bytes; do not use a newly rendered page as an equivalent without provenance.",
+        "Record the exact retrieval URL, redirect chain, HTTP Last-Modified/ETag where available, retrieval timestamp, media type, byte count and archive/revision identifier.",
+        "Compute SHA-256 over the exact captured byte stream and commit the immutable artifact into the research source archive.",
+        "Compare the captured artifact against both current IGSR renderings and any independent contemporaneous copies, recording differences and omissions.",
+        "Keep the separate 1000 Genomes SV conventions and project-specific tags classified as producer/project material unless core normative provenance is independently established."
+      ]
+    },
+    {
+      "source_id": "VCF40-IGSR-SV-CONVENTIONS",
+      "source_role": "PRODUCER_CONVENTION_AND_EXTENSION_SOURCE",
+      "title": "Encoding Structural Variants in VCF (Variant Call Format) version 4.0",
+      "publisher": "International Genome Sample Resource (EMBL-EBI)",
+      "uri": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/",
+      "web_evidence": {
+        "source_ref": "turn313790search2",
+        "retrieval_date": "2026-11-05"
+      },
+      "provenance_assessment": "The page explicitly describes conventions and extensions adopted by the 1000 Genomes Project for structural-variation encoding in VCF 4.0. It is not the core VCFv4.0 normative specification.",
+      "raw_source_capture": {
+        "status": "NOT_CAPTURED",
+        "bytes": null,
+        "sha256": null,
+        "media_type": "text/html"
+      },
+      "normative_status": "PRODUCER_CONVENTION_SOURCE_ONLY",
+      "limitations": [
+        "Keep separate from core VCFv4.0 requirements.",
+        "Do not generalize producer conventions to all VCFv4.0 producers or readers without independent normative evidence."
+      ],
+      "additional_web_evidence": [
+        {
+          "source_ref": "turn160906search1",
+          "url": "https://www.internationalgenome.org/wiki/Analysis/Variant%20Call%20Format/VCF%20%28Variant%20Call%20Format%29%20version%204.0/encoding-structural-variants/",
+          "observation": "The separate page explicitly states that it describes conventions and extensions adopted by the 1000 Genomes Project for structural-variation encoding in VCF 4.0. This supports source separation, not universal core normative status."
+        }
+      ]
+    },
+    {
+      "source_id": "VCF40-IGSR-GENERAL-VCF-PAGE",
+      "source_role": "HISTORICAL_FORMAT_POINTER",
+      "title": "Variant Call Format",
+      "publisher": "International Genome Sample Resource (EMBL-EBI)",
+      "uri": "https://www.internationalgenome.org/wiki/Analysis/variant-call-format/",
+      "web_evidence": {
+        "source_ref": "turn224961search6",
+        "retrieval_date": "2026-11-05"
+      },
+      "provenance_assessment": "The current pointer states that VCF/BCF specification maintenance moved from 1000 Genomes to the GA4GH Data Working Group and points readers to HTS specifications.",
+      "raw_source_capture": {
+        "status": "NOT_CAPTURED",
+        "bytes": null,
+        "sha256": null,
+        "media_type": "text/html"
+      },
+      "normative_status": "INFORMATIVE_PROVENANCE_CONTEXT"
+    }
+  ],
+  "separation_rules": [
+    "Core VCFv4.0 syntax and semantics must be sourced from the historical VCFv4.0 specification, not inferred from 1000 Genomes example files.",
+    "1000 Genomes producer conventions, project-specific INFO tags and data-release conventions must be registered separately as PRODUCER_CONVENTION sources.",
+    "1000 Genomes structural-variation extensions must remain separate from the core VCFv4.0 specification unless a specific provision is independently shown to be normative core text.",
+    "Do not use VCFv4.1–4.5 text to silently backfill missing VCFv4.0 requirements.",
+    "Do not mark VCFv4.0 applicability APPLICABLE until a source is accepted, pinned and reviewed; use SOURCE_NOT_PINNED meanwhile."
+  ],
+  "capture_plan": [
+    "Use the VCFtools historical specifications index as a provenance pointer to the 1000 Genomes VCFv4.0 core page; verify original author/release metadata and capture the exact page/artifact bytes.",
+    "Identify the original VCFv4.0 specification artifact or an authoritative archival reproduction with provenance back to the original specification authors/release.",
+    "Obtain the complete original PDF, TeX/source archive or equivalent source bytes, not only a rendered search result.",
+    "Record retrieval URL, publisher/custodian, release/date/version metadata, media type, byte count and immutable archive/commit identity where available.",
+    "Compute SHA-256 over the exact captured bytes and preserve the bytes in the research evidence package.",
+    "Compare the captured core text against the IGSR page and identify editorial changes, omissions and project-specific additions.",
+    "Create a separate source record for 1000 Genomes structural-variation conventions and any producer-specific tags.",
+    "Only then atomize VCFv4.0 requirements and reconcile applicability against VCFv4.1–4.5."
+  ],
+  "explicit_nonclaims": [
+    "The IGSR VCFv4.0 page is a corroborated historical source candidate, but has not yet been accepted as the final pinned normative source.",
+    "No original VCFv4.0 source bytes or SHA-256 were captured in this pass; rendered web text is not a substitute.",
+    "The 1000 Genomes structural-variation conventions are not treated as core VCFv4.0 normative requirements.",
+    "No VCFv4.0 conformance declaration is made."
+  ],
+  "last_reviewed_utc": "2026-11-05T15:42:00+05:00"
+}

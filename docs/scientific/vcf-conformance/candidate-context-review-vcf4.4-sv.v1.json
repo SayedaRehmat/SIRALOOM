@@ -1,0 +1,3140 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf44-sv-modal-candidate-context-review",
+  "status": "PRIMARY_SOURCE_CONTEXT_REVIEW_COMPLETE_FOR_85_SV_AND_REPRESENTATION_CANDIDATES_ATOMIC_DECOMPOSITION_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+  "source_file": "VCFv4.4.tex",
+  "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7b/VCFv4.4.tex",
+  "scope": "VCFv4.4 modal candidates after core genotype-field section, including phase-set lists, structural-variant INFO/FORMAT, breakends, copy-number variation and tandem-repeat representation.",
+  "candidate_count": 85,
+  "candidates": [
+    {
+      "candidate_id": "VCFv4.4:L0597",
+      "source_line": 597,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 596,
+          "text": "  If the genotype in the GT field is unphased, the corresponding PS field is ignored."
+        },
+        {
+          "line": 597,
+          "text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required)."
+        },
+        {
+          "line": 598,
+          "text": "  \\item PSL (List of Strings): The list of phase sets, one for each allele specified in the {\\tt GT}. "
+        }
+      ],
+      "candidate_line_text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required).",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "First variant position as PS identifier is recommended but explicitly not required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0599",
+      "source_line": 599,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 598,
+          "text": "  \\item PSL (List of Strings): The list of phase sets, one for each allele specified in the {\\tt GT}. "
+        },
+        {
+          "line": 599,
+          "text": "  Unphased alleles (without a $\\mid$ separator before them) must have the value '$.$' in their corresponding position in the list."
+        },
+        {
+          "line": 600,
+          "text": "  Unlike {\\tt PS} (which is defined per CHROM), records with different CHROM but the same phase-set name are considered part of the same phase set."
+        }
+      ],
+      "candidate_line_text": "  Unphased alleles (without a $\\mid$ separator before them) must have the value '$.$' in their corresponding position in the list.",
+      "primary_disposition": "NORMATIVE_GT_SEMANTICS",
+      "primary_review_note": "Unphased alleles lacking a preceding phase separator must have MISSING at corresponding position in phase-set list.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0601",
+      "source_line": 601,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 600,
+          "text": "  Unlike {\\tt PS} (which is defined per CHROM), records with different CHROM but the same phase-set name are considered part of the same phase set."
+        },
+        {
+          "line": 601,
+          "text": "  If an implementation cannot guarantee uniqueness of phase-set names across the VCF (for example, phasing a streaming VCF or each CHROM is processed independently in parallel), new phase-set names should be of the format CHROM*POS*ALLELE-NUMBER of the ``first'' allele which is included in this set, with ALLELE-NUMBER being the one-based index of the allele in the {\\tt GT} field, since multiple distinct phase-sets could start at the same position. \\footnote{The `*' character is used as a separator since `:' is not reserved in the CHROM column.}"
+        },
+        {
+          "line": 602,
+          "text": "  A given sample-genotype must not have values for both PS and PSL."
+        }
+      ],
+      "candidate_line_text": "  If an implementation cannot guarantee uniqueness of phase-set names across the VCF (for example, phasing a streaming VCF or each CHROM is processed independently in parallel), new phase-set names should be of the format CHROM*POS*ALLELE-NUMBER of the ``first'' allele which is included in this set, with ALLELE-NUMBER being the one-based index of the allele in the {\\tt GT} field, since multiple distinct phase-sets could start at the same position. \\footnote{The `*' character is used as a separator since `:' is not reserved in the CHROM column.}",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "If implementation cannot guarantee phase-set-name uniqueness, should use CHROM*POS*ALLELE-NUMBER; includes footnote delimiter rationale. Preserve condition and SHOULD.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0602",
+      "source_line": 602,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 601,
+          "text": "  If an implementation cannot guarantee uniqueness of phase-set names across the VCF (for example, phasing a streaming VCF or each CHROM is processed independently in parallel), new phase-set names should be of the format CHROM*POS*ALLELE-NUMBER of the ``first'' allele which is included in this set, with ALLELE-NUMBER being the one-based index of the allele in the {\\tt GT} field, since multiple distinct phase-sets could start at the same position. \\footnote{The `*' character is used as a separator since `:' is not reserved in the CHROM column.}"
+        },
+        {
+          "line": 602,
+          "text": "  A given sample-genotype must not have values for both PS and PSL."
+        },
+        {
+          "line": 603,
+          "text": "  In addition, PS and PSL are not interoperable, in that a PS mentioned in one variant cannot be referenced in a PSL in another,  since when used in PS it isn't connected to any specific haplotype (i.e. first or second), but PSL is. "
+        }
+      ],
+      "candidate_line_text": "  A given sample-genotype must not have values for both PS and PSL.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "A sample-genotype must not contain both PS and PSL.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0617",
+      "source_line": 617,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 616,
+          "text": "  For each phase-set name, defines the order in which variants are encountered when traversing a derivative chromosome."
+        },
+        {
+          "line": 617,
+          "text": "  The missing value '$.$' should be used when the corresponding PSO value is missing."
+        },
+        {
+          "line": 618,
+          "text": "  For each phase-set name, PSO should be defined if any allele with that phase-set name on any record is symbolic structural variant or in breakpoint notation."
+        }
+      ],
+      "candidate_line_text": "  The missing value '$.$' should be used when the corresponding PSO value is missing.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "MISSING should be used when corresponding PSO is missing.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0618",
+      "source_line": 618,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 617,
+          "text": "  The missing value '$.$' should be used when the corresponding PSO value is missing."
+        },
+        {
+          "line": 618,
+          "text": "  For each phase-set name, PSO should be defined if any allele with that phase-set name on any record is symbolic structural variant or in breakpoint notation."
+        },
+        {
+          "line": 619,
+          "text": "  Variants in breakpoint notation must have the same PSL and PSO on both records."
+        }
+      ],
+      "candidate_line_text": "  For each phase-set name, PSO should be defined if any allele with that phase-set name on any record is symbolic structural variant or in breakpoint notation.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "PSO should be defined when any allele in phase set is symbolic SV or breakend.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0619",
+      "source_line": 619,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 618,
+          "text": "  For each phase-set name, PSO should be defined if any allele with that phase-set name on any record is symbolic structural variant or in breakpoint notation."
+        },
+        {
+          "line": 619,
+          "text": "  Variants in breakpoint notation must have the same PSL and PSO on both records."
+        },
+        {
+          "line": 620,
+          "text": "  "
+        }
+      ],
+      "candidate_line_text": "  Variants in breakpoint notation must have the same PSL and PSO on both records.",
+      "primary_disposition": "NORMATIVE_CROSS_RECORD_CONSISTENCY",
+      "primary_review_note": "Breakend-notation variants must share PSL and PSO across both records.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0636",
+      "source_line": 636,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "The VCF specification",
+          "heading_line": 36
+        },
+        {
+          "level": 2,
+          "heading": "Data lines",
+          "heading_line": 329
+        },
+        {
+          "level": 3,
+          "heading": "Genotype fields",
+          "heading_line": 445
+        }
+      ],
+      "source_context": [
+        {
+          "line": 635,
+          "text": "  \\item PSQ (List of integers): The list of PQs, one for each phase set in PSL (encoded like PQ). "
+        },
+        {
+          "line": 636,
+          "text": "  The missing value '$.$' should be used when the corresponding PSL value is missing, or when the phasing is of unknown quality."
+        },
+        {
+          "line": 637,
+          "text": "\\end{itemize}"
+        }
+      ],
+      "candidate_line_text": "  The missing value '$.$' should be used when the corresponding PSL value is missing, or when the phasing is of unknown quality.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "MISSING should be used when PSL is missing or phasing quality unknown.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0670",
+      "source_line": 670,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 669,
+          "text": "The following INFO keys are reserved for encoding structural variants."
+        },
+        {
+          "line": 670,
+          "text": "In general, when these keys are used by imprecise variants, the values should be best estimates."
+        },
+        {
+          "line": 671,
+          "text": "When present, per allele values must be specified for all ALT alleles (including non-structural alleles)."
+        }
+      ],
+      "candidate_line_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Imprecise SV values should be best estimates.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0671",
+      "source_line": 671,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 670,
+          "text": "In general, when these keys are used by imprecise variants, the values should be best estimates."
+        },
+        {
+          "line": 671,
+          "text": "When present, per allele values must be specified for all ALT alleles (including non-structural alleles)."
+        },
+        {
+          "line": 672,
+          "text": "Except in lists of strings, the missing value should be used as a placeholder for the ALT alleles for which the key does not have a meaningful value."
+        }
+      ],
+      "candidate_line_text": "When present, per allele values must be specified for all ALT alleles (including non-structural alleles).",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When a per-allele INFO value is present, it must have entries for all ALT alleles, including non-SV alleles.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0672",
+      "source_line": 672,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 671,
+          "text": "When present, per allele values must be specified for all ALT alleles (including non-structural alleles)."
+        },
+        {
+          "line": 672,
+          "text": "Except in lists of strings, the missing value should be used as a placeholder for the ALT alleles for which the key does not have a meaningful value."
+        },
+        {
+          "line": 673,
+          "text": "The empty string should be used to encode missing values in lists of strings."
+        }
+      ],
+      "candidate_line_text": "Except in lists of strings, the missing value should be used as a placeholder for the ALT alleles for which the key does not have a meaningful value.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Use MISSING as placeholder for ALT alleles without meaningful values except string lists.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0673",
+      "source_line": 673,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 672,
+          "text": "Except in lists of strings, the missing value should be used as a placeholder for the ALT alleles for which the key does not have a meaningful value."
+        },
+        {
+          "line": 673,
+          "text": "The empty string should be used to encode missing values in lists of strings."
+        },
+        {
+          "line": 674,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The empty string should be used to encode missing values in lists of strings.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Empty string should encode missing values in string lists.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0683",
+      "source_line": 683,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 682,
+          "text": ""
+        },
+        {
+          "line": 683,
+          "text": "If a precise ALT allele is present in a record with the $IMPRECISE$ flag, $CIPOS$ must be explicitly set for that allele, even if it is `0,0`."
+        },
+        {
+          "line": 684,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "If a precise ALT allele is present in a record with the $IMPRECISE$ flag, $CIPOS$ must be explicitly set for that allele, even if it is `0,0`.",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "A precise ALT allele in a record carrying IMPRECISE requires explicit CIPOS even when 0,0.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0703",
+      "source_line": 703,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 702,
+          "text": ""
+        },
+        {
+          "line": 703,
+          "text": "END must be present for all records containing the $<$*$>$ symbolic allele and, for backwards compatibility, should be present for records containing any symbolic structural variant alleles."
+        },
+        {
+          "line": 704,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "END must be present for all records containing the $<$*$>$ symbolic allele and, for backwards compatibility, should be present for records containing any symbolic structural variant alleles.",
+      "primary_disposition": "MIXED_REQUIRED_AND_BACKWARD_COMPATIBILITY",
+      "primary_review_note": "END is mandatory for records containing <*>; for backward compatibility it should be present for records containing any symbolic SV allele. Split MUST and SHOULD.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0705",
+      "source_line": 705,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 704,
+          "text": ""
+        },
+        {
+          "line": 705,
+          "text": "To prevent loss of information, any VCF record containing the $<$*$>$ symbolic allele must have END set to the last reference call position of the $<$*$>$ symbolic allele."
+        },
+        {
+          "line": 706,
+          "text": "When a record contains both the $<$*$>$ symbolic allele, the END position of the longest allele should be used as the record end position for indexing purposes."
+        }
+      ],
+      "candidate_line_text": "To prevent loss of information, any VCF record containing the $<$*$>$ symbolic allele must have END set to the last reference call position of the $<$*$>$ symbolic allele.",
+      "primary_disposition": "NORMATIVE_VALUE_SEMANTICS",
+      "primary_review_note": "For <*> records, END must equal last reference-call position of that allele.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0706",
+      "source_line": 706,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 705,
+          "text": "To prevent loss of information, any VCF record containing the $<$*$>$ symbolic allele must have END set to the last reference call position of the $<$*$>$ symbolic allele."
+        },
+        {
+          "line": 706,
+          "text": "When a record contains both the $<$*$>$ symbolic allele, the END position of the longest allele should be used as the record end position for indexing purposes."
+        },
+        {
+          "line": 707,
+          "text": "  "
+        }
+      ],
+      "candidate_line_text": "When a record contains both the $<$*$>$ symbolic allele, the END position of the longest allele should be used as the record end position for indexing purposes.",
+      "primary_disposition": "RECOMMENDATION_FOR_INDEXING",
+      "primary_review_note": "When <*> and other alleles coexist, END of longest allele should be used for indexing.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0726",
+      "source_line": 726,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 725,
+          "text": ""
+        },
+        {
+          "line": 726,
+          "text": "SVLEN must be specified for symbolic structural variant alleles."
+        },
+        {
+          "line": 727,
+          "text": "SVLEN is defined for $INS$, $DUP$, $INV$, and $DEL$ symbolic alleles as the number of the inserted, duplicated, inverted, and deleted bases respectively."
+        }
+      ],
+      "candidate_line_text": "SVLEN must be specified for symbolic structural variant alleles.",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "SVLEN must be specified for symbolic SV alleles.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0729",
+      "source_line": 729,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 728,
+          "text": "SVLEN is defined for $CNV$ symbolic alleles as the length of the segment over which the copy number variant is defined."
+        },
+        {
+          "line": 729,
+          "text": "The missing value $.$ should be used for all other ALT alleles, including ALT alleles using breakend notation."
+        },
+        {
+          "line": 730,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The missing value $.$ should be used for all other ALT alleles, including ALT alleles using breakend notation.",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "Other ALT alleles, including breakend alleles, use MISSING for SVLEN.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0731",
+      "source_line": 731,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 730,
+          "text": ""
+        },
+        {
+          "line": 731,
+          "text": "For backwards compatibility, a missing SVLEN should be inferred from the $END$ field of VCF records whose $ALT$ field contains a single symbolic allele."
+        },
+        {
+          "line": 732,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "For backwards compatibility, a missing SVLEN should be inferred from the $END$ field of VCF records whose $ALT$ field contains a single symbolic allele.",
+      "primary_disposition": "BACKWARD_COMPATIBILITY_RULE",
+      "primary_review_note": "For a single symbolic ALT with missing SVLEN, infer SVLEN from END. Retain explicit compatibility scope.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0733",
+      "source_line": 733,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 732,
+          "text": ""
+        },
+        {
+          "line": 733,
+          "text": "For backwards compatibility, the absolute value of SVLEN should be taken and a negative SVLEN should be treated as positive values."
+        },
+        {
+          "line": 734,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "For backwards compatibility, the absolute value of SVLEN should be taken and a negative SVLEN should be treated as positive values.",
+      "primary_disposition": "BACKWARD_COMPATIBILITY_RULE",
+      "primary_review_note": "For backward compatibility, take absolute SVLEN and treat negative value as positive; inspect exact surrounding version rationale before applying as general normalization.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0743",
+      "source_line": 743,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 742,
+          "text": ""
+        },
+        {
+          "line": 743,
+          "text": "If present, the number of entries must be twice the number of ALT alleles."
+        },
+        {
+          "line": 744,
+          "text": "$CIPOS$ consists of successive pairs of records indicating the start and end offsets relative to $POS$ of the confidence interval for each ALT allele."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be twice the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals two times number of ALT alleles; field-specific identity and tuple order must be linked from preceding lines.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0747",
+      "source_line": 747,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 746,
+          "text": ""
+        },
+        {
+          "line": 747,
+          "text": "When breakpoint sequence homology exists, $CIPOS$ should be used in conjunction with $HOMSEQ$ to specify the interval of homology."
+        },
+        {
+          "line": 748,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "When breakpoint sequence homology exists, $CIPOS$ should be used in conjunction with $HOMSEQ$ to specify the interval of homology.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Use CIPOS with HOMSEQ when breakpoint sequence homology exists.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0751",
+      "source_line": 751,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 750,
+          "text": ""
+        },
+        {
+          "line": 751,
+          "text": "Each $CIPOS$ interval must span 0. That is, the lower bound cannot be greater than 0, and the upper bound cannot be less than 0."
+        },
+        {
+          "line": 752,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Each $CIPOS$ interval must span 0. That is, the lower bound cannot be greater than 0, and the upper bound cannot be less than 0.",
+      "primary_disposition": "NORMATIVE_INTERVAL_CONSTRAINT",
+      "primary_review_note": "Each CIPOS interval spans zero; lower bound <=0 and upper bound >=0.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0759",
+      "source_line": 759,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 758,
+          "text": ""
+        },
+        {
+          "line": 759,
+          "text": "If present, the number of entries must be twice the number of ALT alleles."
+        },
+        {
+          "line": 760,
+          "text": "$CIEND$ consists of successive pairs of records encoding the confidence interval start and end offsets relative to the $END$ position inferred by $SVLEN$ for each ALT allele."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be twice the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals two times number of ALT alleles; identify field and pair ordering from context.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0761",
+      "source_line": 761,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 760,
+          "text": "$CIEND$ consists of successive pairs of records encoding the confidence interval start and end offsets relative to the $END$ position inferred by $SVLEN$ for each ALT allele."
+        },
+        {
+          "line": 761,
+          "text": "For symbolic structural variants, the first in the pair must not be greater than 0, and the second must not be less than 0."
+        },
+        {
+          "line": 762,
+          "text": "For all other alleles, both should be the missing value $.$."
+        }
+      ],
+      "candidate_line_text": "For symbolic structural variants, the first in the pair must not be greater than 0, and the second must not be less than 0.",
+      "primary_disposition": "NORMATIVE_INTERVAL_CONSTRAINT",
+      "primary_review_note": "For symbolic SVs, first interval value <=0 and second >=0.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0762",
+      "source_line": 762,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 761,
+          "text": "For symbolic structural variants, the first in the pair must not be greater than 0, and the second must not be less than 0."
+        },
+        {
+          "line": 762,
+          "text": "For all other alleles, both should be the missing value $.$."
+        },
+        {
+          "line": 763,
+          "text": "For example, $CIEND=-5,5,.,.$ indicates a 5bp confidence interval in each direction around the end position for the first ALT allele, and no $CIEND$ is defined for the second alt allele."
+        }
+      ],
+      "candidate_line_text": "For all other alleles, both should be the missing value $.$.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "For other alleles, both values should be MISSING.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0783",
+      "source_line": 783,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 782,
+          "text": "For precise variants, the consensus sequence the alternate allele assembly is derivable from the REF and ALT fields."
+        },
+        {
+          "line": 783,
+          "text": "However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs."
+        },
+        {
+          "line": 784,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Alternate allele assembly file may contain additional information.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0791",
+      "source_line": 791,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 790,
+          "text": ""
+        },
+        {
+          "line": 791,
+          "text": "If present, the number of entries must be four (4) times the number of ALT alleles."
+        },
+        {
+          "line": 792,
+          "text": "$MEINFO$ consists of successive quadruplets of records for each ALT allele."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be four (4) times the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals four times number of ALT alleles; retain field-specific grouping.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0800",
+      "source_line": 800,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 799,
+          "text": ""
+        },
+        {
+          "line": 800,
+          "text": "If present, the number of entries must be four (4) times the number of ALT alleles."
+        },
+        {
+          "line": 801,
+          "text": "$METRANS$ consists of successive quadruplets of records for each ALT allele."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be four (4) times the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals four times number of ALT alleles; retain field-specific grouping.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0819",
+      "source_line": 819,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 818,
+          "text": ""
+        },
+        {
+          "line": 819,
+          "text": "The following $EVENTTYPE$ values are reserved and should be used when appropriate:"
+        },
+        {
+          "line": 820,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "The following $EVENTTYPE$ values are reserved and should be used when appropriate:",
+      "primary_disposition": "RECOMMENDATION_WITH_RESERVED_DOMAIN",
+      "primary_review_note": "EVENTTYPE values are reserved and should be used when appropriate; enumerate values and preserve recommendation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0848",
+      "source_line": 848,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 847,
+          "text": ""
+        },
+        {
+          "line": 848,
+          "text": "If present, the number of entries must be twice the number of ALT alleles."
+        },
+        {
+          "line": 849,
+          "text": "$CILEN$ consists of successive pairs of records indicating the lower and upper bounds of the $SVLEN$ confidence interval."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be twice the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals two times number of ALT alleles; field-specific context required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0858",
+      "source_line": 858,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 857,
+          "text": ""
+        },
+        {
+          "line": 858,
+          "text": "If present, the number of entries must be twice the number of ALT alleles."
+        },
+        {
+          "line": 859,
+          "text": "$CICN$ consists of successive pairs of records indicating the lower and upper copy number bounds."
+        }
+      ],
+      "candidate_line_text": "If present, the number of entries must be twice the number of ALT alleles.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "When present, entry count equals two times number of ALT alleles; field-specific context required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0870",
+      "source_line": 870,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 869,
+          "text": "The distinction between different claim types is made necessary by the fact that many structural variants affect both the overall abundance of a region and its adjacency structure, but often only one of those effects is being directly observed."
+        },
+        {
+          "line": 870,
+          "text": "It is important to specify which one, because if this is not done, other variants in a genome may make the call ambiguous."
+        },
+        {
+          "line": 871,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "It is important to specify which one, because if this is not done, other variants in a genome may make the call ambiguous.",
+      "primary_disposition": "EXPLANATORY_SEMANTIC_RATIONALE",
+      "primary_review_note": "Explains importance of distinguishing event claim; not a standalone syntax obligation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0873",
+      "source_line": 873,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 872,
+          "text": "For example, a ``conventional'' deletion usually both decreases the DNA abundance of a region and creates an adjacency between two sequence locations, which are the breakpoints of that deletion."
+        },
+        {
+          "line": 873,
+          "text": "However, if a deletion or duplication is accompanied by a compensatory variant elsewhere in the genome, it may only cause changes in the adjacency structure, but not the overall copy number."
+        },
+        {
+          "line": 874,
+          "text": "On the contrary, combinations of certain complex events in a genome may cause the overall copy number decrease, but not the linear excision of a sequence fragment."
+        }
+      ],
+      "candidate_line_text": "However, if a deletion or duplication is accompanied by a compensatory variant elsewhere in the genome, it may only cause changes in the adjacency structure, but not the overall copy number.",
+      "primary_disposition": "EXPLANATORY_SEMANTIC_CASE",
+      "primary_review_note": "Compensatory SV may alter adjacency without changing total copy number; explanatory semantics.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0874",
+      "source_line": 874,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 873,
+          "text": "However, if a deletion or duplication is accompanied by a compensatory variant elsewhere in the genome, it may only cause changes in the adjacency structure, but not the overall copy number."
+        },
+        {
+          "line": 874,
+          "text": "On the contrary, combinations of certain complex events in a genome may cause the overall copy number decrease, but not the linear excision of a sequence fragment."
+        },
+        {
+          "line": 875,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "On the contrary, combinations of certain complex events in a genome may cause the overall copy number decrease, but not the linear excision of a sequence fragment.",
+      "primary_disposition": "EXPLANATORY_SEMANTIC_CASE",
+      "primary_review_note": "Complex events may reduce total copy number without linear sequence excision; explanatory semantics.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0893",
+      "source_line": 893,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 892,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 893,
+          "text": "  \\item DEL/DUP: SVCLAIM must be specified and can be be D, J, or DJ. J and DJ claims indicate a breakpoint between the start and end of the DEL/DUP."
+        },
+        {
+          "line": 894,
+          "text": "  \\item CNV: implicit abundance claim (SVCLAIM=D). SVCLAIM is optional but, if specified, must be D, or the missing value ``.'', which is equivalent to D."
+        }
+      ],
+      "candidate_line_text": "  \\item DEL/DUP: SVCLAIM must be specified and can be be D, J, or DJ. J and DJ claims indicate a breakpoint between the start and end of the DEL/DUP.",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_SCHEMA",
+      "primary_review_note": "DEL/DUP SVCLAIM must be specified and allowed values D/J/DJ; J/DJ imply breakpoint between start/end. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0894",
+      "source_line": 894,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 893,
+          "text": "  \\item DEL/DUP: SVCLAIM must be specified and can be be D, J, or DJ. J and DJ claims indicate a breakpoint between the start and end of the DEL/DUP."
+        },
+        {
+          "line": 894,
+          "text": "  \\item CNV: implicit abundance claim (SVCLAIM=D). SVCLAIM is optional but, if specified, must be D, or the missing value ``.'', which is equivalent to D."
+        },
+        {
+          "line": 895,
+          "text": "  \\item INV/INS: implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, DJ, or the missing value ``.'', which is equivalent to J."
+        }
+      ],
+      "candidate_line_text": "  \\item CNV: implicit abundance claim (SVCLAIM=D). SVCLAIM is optional but, if specified, must be D, or the missing value ``.'', which is equivalent to D.",
+      "primary_disposition": "MIXED_OPTIONALITY_AND_VALUE_DOMAIN",
+      "primary_review_note": "CNV SVCLAIM optional; if present must be D or MISSING (equivalent D). Split optionality and allowed values.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0895",
+      "source_line": 895,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 894,
+          "text": "  \\item CNV: implicit abundance claim (SVCLAIM=D). SVCLAIM is optional but, if specified, must be D, or the missing value ``.'', which is equivalent to D."
+        },
+        {
+          "line": 895,
+          "text": "  \\item INV/INS: implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, DJ, or the missing value ``.'', which is equivalent to J."
+        },
+        {
+          "line": 896,
+          "text": "  \\item breakend alleles are implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, or the missing value ``.'', which is equivalent to J."
+        }
+      ],
+      "candidate_line_text": "  \\item INV/INS: implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, DJ, or the missing value ``.'', which is equivalent to J.",
+      "primary_disposition": "MIXED_OPTIONALITY_AND_VALUE_DOMAIN",
+      "primary_review_note": "INV/INS SVCLAIM optional; if present J/DJ/MISSING (equivalent J). Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0896",
+      "source_line": 896,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 895,
+          "text": "  \\item INV/INS: implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, DJ, or the missing value ``.'', which is equivalent to J."
+        },
+        {
+          "line": 896,
+          "text": "  \\item breakend alleles are implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, or the missing value ``.'', which is equivalent to J."
+        },
+        {
+          "line": 897,
+          "text": "  \\item Non-SV alleles should use the missing value ``.''."
+        }
+      ],
+      "candidate_line_text": "  \\item breakend alleles are implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, or the missing value ``.'', which is equivalent to J.",
+      "primary_disposition": "MIXED_OPTIONALITY_AND_VALUE_DOMAIN",
+      "primary_review_note": "Breakend SVCLAIM optional; if present J/MISSING (equivalent J). Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0897",
+      "source_line": 897,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 896,
+          "text": "  \\item breakend alleles are implicit adjacency claims (SVCLAIM=J). SVCLAIM is optional but, if specified, must be J, or the missing value ``.'', which is equivalent to J."
+        },
+        {
+          "line": 897,
+          "text": "  \\item Non-SV alleles should use the missing value ``.''."
+        },
+        {
+          "line": 898,
+          "text": "\\end{itemize}"
+        }
+      ],
+      "candidate_line_text": "  \\item Non-SV alleles should use the missing value ``.''.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Non-SV alleles should use MISSING SVCLAIM.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0904",
+      "source_line": 904,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 903,
+          "text": "Complex events such as a cut and paste transposition of a mobile element result in multiple interrelated copy number and breakpoint claims."
+        },
+        {
+          "line": 904,
+          "text": "These records should be linked using EVENT/EVENTTYPE, with the SVCLAIM field on each record specifying the claim of that individual allele record."
+        },
+        {
+          "line": 905,
+          "text": "That is, a J claim must not be made on a CNV record even if the corresponding start/end breakpoints are known, and a DJ claim on a DEL or DUP is a claim of a simple, isolated deletion or tandem duplication."
+        }
+      ],
+      "candidate_line_text": "These records should be linked using EVENT/EVENTTYPE, with the SVCLAIM field on each record specifying the claim of that individual allele record.",
+      "primary_disposition": "RECOMMENDATION_AND_LINKAGE",
+      "primary_review_note": "Records should link via EVENT/EVENTTYPE and SVCLAIM per record; recommendation.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0905",
+      "source_line": 905,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 904,
+          "text": "These records should be linked using EVENT/EVENTTYPE, with the SVCLAIM field on each record specifying the claim of that individual allele record."
+        },
+        {
+          "line": 905,
+          "text": "That is, a J claim must not be made on a CNV record even if the corresponding start/end breakpoints are known, and a DJ claim on a DEL or DUP is a claim of a simple, isolated deletion or tandem duplication."
+        },
+        {
+          "line": 906,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "That is, a J claim must not be made on a CNV record even if the corresponding start/end breakpoints are known, and a DJ claim on a DEL or DUP is a claim of a simple, isolated deletion or tandem duplication.",
+      "primary_disposition": "NORMATIVE_PROHIBITION_AND_DEFINITION",
+      "primary_review_note": "J claim must not be made on CNV; DJ on DEL/DUP denotes simple isolated deletion or tandem duplication. Split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0915",
+      "source_line": 915,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 914,
+          "text": "This field determines the number of values encoded in the RUS, RUL, RB, CIRB, RUC and CIRUC fields for each allele."
+        },
+        {
+          "line": 915,
+          "text": "The length of these fields must match the sum of all RN values for the record."
+        },
+        {
+          "line": 916,
+          "text": "For the purposes of determining RUS, RUL, RB, CIRB, RUC and CIRUC lengths, the missing value ``.'' should be treated as 0."
+        }
+      ],
+      "candidate_line_text": "The length of these fields must match the sum of all RN values for the record.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "Length of specified fields must equal sum of RN values for record.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0916",
+      "source_line": 916,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 915,
+          "text": "The length of these fields must match the sum of all RN values for the record."
+        },
+        {
+          "line": 916,
+          "text": "For the purposes of determining RUS, RUL, RB, CIRB, RUC and CIRUC lengths, the missing value ``.'' should be treated as 0."
+        },
+        {
+          "line": 917,
+          "text": "If this field is missing, the RN for each $<$CNV:TR$>$ allele is assumed to be 1 and 0 otherwise."
+        }
+      ],
+      "candidate_line_text": "For the purposes of determining RUS, RUL, RB, CIRB, RUC and CIRUC lengths, the missing value ``.'' should be treated as 0.",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE_SEMANTICS",
+      "primary_review_note": "MISSING treated as zero for length calculations of named fields.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0932",
+      "source_line": 932,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 931,
+          "text": "Conceptually, these fields each contain a list of values for each ALT allele."
+        },
+        {
+          "line": 932,
+          "text": "The length of these inner lists are determined by the RN field for that ALT allele and the length must match the sum of RN for the record."
+        },
+        {
+          "line": 933,
+          "text": "These fields contain the flattened and concatenated list contents in the same order as either corresponding ALT allele."
+        }
+      ],
+      "candidate_line_text": "The length of these inner lists are determined by the RN field for that ALT allele and the length must match the sum of RN for the record.",
+      "primary_disposition": "NORMATIVE_NESTED_CARDINALITY",
+      "primary_review_note": "Inner-list lengths determined by RN for each ALT; length matches sum of RN for record. Decompose outer/inner cardinality.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0939",
+      "source_line": 939,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 938,
+          "text": ""
+        },
+        {
+          "line": 939,
+          "text": "RUS may contain only IUPAC nucleotide codes (ambiguous bases are allowed) or the missing value (`.')."
+        },
+        {
+          "line": 940,
+          "text": "If both RUS and RUL are present and not missing, the length of each RUS entry must match the corresponding RUL."
+        }
+      ],
+      "candidate_line_text": "RUS may contain only IUPAC nucleotide codes (ambiguous bases are allowed) or the missing value (`.').",
+      "primary_disposition": "PERMITTED_VALUE_DOMAIN",
+      "primary_review_note": "RUS may contain IUPAC nucleotide codes or MISSING; ambiguity allowed.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0940",
+      "source_line": 940,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 939,
+          "text": "RUS may contain only IUPAC nucleotide codes (ambiguous bases are allowed) or the missing value (`.')."
+        },
+        {
+          "line": 940,
+          "text": "If both RUS and RUL are present and not missing, the length of each RUS entry must match the corresponding RUL."
+        },
+        {
+          "line": 941,
+          "text": "If both RUC and RB are present and not missing, RB should approximately equal RUL*RUC but is not required to match exactly."
+        }
+      ],
+      "candidate_line_text": "If both RUS and RUL are present and not missing, the length of each RUS entry must match the corresponding RUL.",
+      "primary_disposition": "NORMATIVE_CROSS_FIELD_CONSISTENCY",
+      "primary_review_note": "When both RUS and RUL present/nonmissing, each RUS entry length equals corresponding RUL.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0941",
+      "source_line": 941,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 940,
+          "text": "If both RUS and RUL are present and not missing, the length of each RUS entry must match the corresponding RUL."
+        },
+        {
+          "line": 941,
+          "text": "If both RUC and RB are present and not missing, RB should approximately equal RUL*RUC but is not required to match exactly."
+        },
+        {
+          "line": 942,
+          "text": "If RUS is present but RUL is not, RUL should be inferred to be equal to the length of the corresponding RUS."
+        }
+      ],
+      "candidate_line_text": "If both RUC and RB are present and not missing, RB should approximately equal RUL*RUC but is not required to match exactly.",
+      "primary_disposition": "RECOMMENDATION_WITH_TOLERANCE",
+      "primary_review_note": "RB should approximately equal RUL*RUC but exact equality not required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0942",
+      "source_line": 942,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 941,
+          "text": "If both RUC and RB are present and not missing, RB should approximately equal RUL*RUC but is not required to match exactly."
+        },
+        {
+          "line": 942,
+          "text": "If RUS is present but RUL is not, RUL should be inferred to be equal to the length of the corresponding RUS."
+        },
+        {
+          "line": 943,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "If RUS is present but RUL is not, RUL should be inferred to be equal to the length of the corresponding RUS.",
+      "primary_disposition": "RECOMMENDATION_AND_INFERENCE",
+      "primary_review_note": "If RUS present and RUL absent, RUL should be inferred as RUS length.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0955",
+      "source_line": 955,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 954,
+          "text": "Confidence interval around RUC and RB respectively."
+        },
+        {
+          "line": 955,
+          "text": "The length of these fields must be twice that of their corresponding fields."
+        },
+        {
+          "line": 956,
+          "text": "CIRUC/CIRB must not be non-missing for any alleles with no corresponding RUC/RB value."
+        }
+      ],
+      "candidate_line_text": "The length of these fields must be twice that of their corresponding fields.",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "Length of named fields must be twice their corresponding fields; identify each pair from context.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0956",
+      "source_line": 956,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 955,
+          "text": "The length of these fields must be twice that of their corresponding fields."
+        },
+        {
+          "line": 956,
+          "text": "CIRUC/CIRB must not be non-missing for any alleles with no corresponding RUC/RB value."
+        },
+        {
+          "line": 957,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "CIRUC/CIRB must not be non-missing for any alleles with no corresponding RUC/RB value.",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "CIRUC/CIRB must not be non-missing for alleles lacking corresponding RUC/RB.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0959",
+      "source_line": 959,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 958,
+          "text": "These fields are defined in the same manner as $CIPOS$ and contain the difference between the lower and upper confidence interval bounds and the value of the corresponding field."
+        },
+        {
+          "line": 959,
+          "text": "The lower bound must be less than or equal to zero and the upper bound must be greater than or equal to zero."
+        },
+        {
+          "line": 960,
+          "text": "If the lower bound is the missing value ``.'', is assumed to be 0 and if the upper bound is the missing value ``.'', it is assumed to be an unbounded estimate."
+        }
+      ],
+      "candidate_line_text": "The lower bound must be less than or equal to zero and the upper bound must be greater than or equal to zero.",
+      "primary_disposition": "NORMATIVE_INTERVAL_CONSTRAINT",
+      "primary_review_note": "Lower bound <=0 and upper bound >=0.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0972",
+      "source_line": 972,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 971,
+          "text": "This field encodes the length of each repeat unit for situations where the length of each repeat unit varies greatly."
+        },
+        {
+          "line": 972,
+          "text": "If this field is present, RUC must also be present and must contain only integer values."
+        },
+        {
+          "line": 973,
+          "text": "This field uses the same list-of-list encoding as RUS/RUL/RUC/RB but contains a list for each RC entry, the length of which is determined by the corresponding integer RUC value."
+        }
+      ],
+      "candidate_line_text": "If this field is present, RUC must also be present and must contain only integer values.",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_SCHEMA",
+      "primary_review_note": "If this field is present, RUC must also be present and contain only integer values.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0977",
+      "source_line": 977,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "INFO keys used for structural variants",
+          "heading_line": 666
+        }
+      ],
+      "source_context": [
+        {
+          "line": 976,
+          "text": ""
+        },
+        {
+          "line": 977,
+          "text": "For the vast majority of tandem repeats, this field can be omitted and is only required in complex situations such as when a VNTR contains one or more variable length STRs."
+        },
+        {
+          "line": 978,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "For the vast majority of tandem repeats, this field can be omitted and is only required in complex situations such as when a VNTR contains one or more variable length STRs.",
+      "primary_disposition": "CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "RN can be omitted generally but is required in complex cases where a VNTR contains one or more variable-length STRs.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L0996",
+      "source_line": 996,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "FORMAT keys used for structural variants",
+          "heading_line": 981
+        }
+      ],
+      "source_context": [
+        {
+          "line": 995,
+          "text": "CN specifies the total copy number over the region defined in the $<$CNV$>$, $<$DEL$>$, $<$DUP$>$ alleles."
+        },
+        {
+          "line": 996,
+          "text": "When FORMAT CN is present, all $<$CNV$>$, $<$DEL$>$ and $<$DUP$>$ alleles must have the same SVLEN."
+        },
+        {
+          "line": 997,
+          "text": "CNQ, CNL, and CNP are analogous to GQ/GL/GP fields."
+        }
+      ],
+      "candidate_line_text": "When FORMAT CN is present, all $<$CNV$>$, $<$DEL$>$ and $<$DUP$>$ alleles must have the same SVLEN.",
+      "primary_disposition": "NORMATIVE_CROSS_FIELD_CONSISTENCY",
+      "primary_review_note": "When FORMAT CN present, all <CNV>/<DEL>/<DUP> alleles share the same SVLEN.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1001",
+      "source_line": 1001,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "FORMAT keys used for structural variants",
+          "heading_line": 981
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1000,
+          "text": "CNP is 0 to 1-scaled copy number posterior probabilities (and otherwise defined precisely as the CNL field), intended to store imputed genotype probabilities."
+        },
+        {
+          "line": 1001,
+          "text": "When possible, GT/GQ/GL/GP should be used instead of (or in addition to) these keys."
+        },
+        {
+          "line": 1002,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "When possible, GT/GQ/GL/GP should be used instead of (or in addition to) these keys.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "When possible use GT/GQ/GL/GP instead of or in addition to copy-number keys.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1026",
+      "source_line": 1026,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Creating VCF entries for SNPs and small indels",
+          "heading_line": 1004
+        },
+        {
+          "level": 3,
+          "heading": "Example 1",
+          "heading_line": 1005
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1025,
+          "text": ""
+        },
+        {
+          "line": 1026,
+          "text": "Note that the positions must be sorted in increasing order:"
+        },
+        {
+          "line": 1027,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "Note that the positions must be sorted in increasing order:",
+      "primary_disposition": "INFORMATIVE_EXAMPLE",
+      "primary_review_note": "Example reiterates position sorting; do not duplicate the core POS requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1246",
+      "source_line": 1246,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1245,
+          "text": "  \\item The string t that replaces places s."
+        },
+        {
+          "line": 1246,
+          "text": "  The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency."
+        },
+        {
+          "line": 1247,
+          "text": "  \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''."
+        }
+      ],
+      "candidate_line_text": "  The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+      "primary_disposition": "PERMISSION_WITHIN_BREAKEND_GRAMMAR",
+      "primary_review_note": "Breakend replacement sequence may be extended by inserted novel bases.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1327",
+      "source_line": 1327,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Large Insertions",
+          "heading_line": 1308
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1326,
+          "text": ""
+        },
+        {
+          "line": 1327,
+          "text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:"
+        },
+        {
+          "line": 1328,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Shorthand notation recommended in special complete-insertion case.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1384",
+      "source_line": 1384,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Explicit partners",
+          "heading_line": 1379
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1383,
+          "text": "However, it is not uncommon to observe loss of a few basepairs during the rearrangement."
+        },
+        {
+          "line": 1384,
+          "text": "A breakend's partner may be explicitly named as in Figure 5:"
+        },
+        {
+          "line": 1385,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "A breakend's partner may be explicitly named as in Figure 5:",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Breakend partner may be explicitly named.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1463",
+      "source_line": 1463,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Inversions",
+          "heading_line": 1451
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1462,
+          "text": "can be described equivalently in two ways."
+        },
+        {
+          "line": 1463,
+          "text": "Either one uses the short hand notation described previously (recommended for simple cases):"
+        },
+        {
+          "line": 1464,
+          "text": "\\end{samepage}"
+        }
+      ],
+      "candidate_line_text": "Either one uses the short hand notation described previously (recommended for simple cases):",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Short-hand notation recommended for simple inversion.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1542",
+      "source_line": 1542,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Single breakends",
+          "heading_line": 1522
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1541,
+          "text": ""
+        },
+        {
+          "line": 1542,
+          "text": "On the other hand, if we know a simple reciprocal translocation has occurred as in Figure 7, then even if we have no evidence for the (W,X) adjacency, for accounting purposes an adjacency between W and X may also be recorded in the VCF file."
+        },
+        {
+          "line": 1543,
+          "text": "These two breakends W and X can still be crossed-referenced as mates."
+        }
+      ],
+      "candidate_line_text": "On the other hand, if we know a simple reciprocal translocation has occurred as in Figure 7, then even if we have no evidence for the (W,X) adjacency, for accounting purposes an adjacency between W and X may also be recorded in the VCF file.",
+      "primary_disposition": "PERMISSION_AND_EXAMPLE_CONTEXT",
+      "primary_review_note": "Mate adjacency may be recorded without evidence for that adjacency; contextual permission.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1572",
+      "source_line": 1572,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Sample mixtures",
+          "heading_line": 1571
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1571,
+          "text": "\\subsubsection{Sample mixtures}"
+        },
+        {
+          "line": 1572,
+          "text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell."
+        },
+        {
+          "line": 1573,
+          "text": "Let's imagine that two samples are taken from a cancer patient: healthy blood, and some tumor tissue with an estimated 30\\% stromal contamination."
+        }
+      ],
+      "candidate_line_text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Sample mixture narrative; not syntax requirement.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1623",
+      "source_line": 1623,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1616
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1622,
+          "text": ""
+        },
+        {
+          "line": 1623,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1624,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        }
+      ],
+      "candidate_line_text": "In general there may be several tumor genomes from the same patient in the VCF file.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Multiple tumor genomes described as possible; no normative format constraint.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1624",
+      "source_line": 1624,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1616
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1623,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1624,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        },
+        {
+          "line": 1625,
+          "text": "We suggest the derivation relationships between genomes in a cancer VCF file be represented in the header with PEDIGREE tags."
+        }
+      ],
+      "candidate_line_text": "Some of these may be secondary tumors derived from an original primary tumor.",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Secondary tumor relationship described as possible; no normative format constraint.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1681",
+      "source_line": 1681,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Specifying complex rearrangements with breakends",
+          "heading_line": 1234
+        },
+        {
+          "level": 3,
+          "heading": "Clonal derivation relationships",
+          "heading_line": 1616
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1680,
+          "text": "Secondly, we define a \\textbf{haplotype} as a set of variants which are known to be on the same chromosome in the germline genome."
+        },
+        {
+          "line": 1681,
+          "text": "Haplotype identifiers must be unique across the germline genome, and are conserved along clonal lineages, regardless of mutations, rearrangements, or recombination."
+        },
+        {
+          "line": 1682,
+          "text": "In the case of the duplication of a region within a haplotype, one copy retains the original haplotype identifier, and the others are considered to be novel haplotypes with their own unique identifiers."
+        }
+      ],
+      "candidate_line_text": "Haplotype identifiers must be unique across the germline genome, and are conserved along clonal lineages, regardless of mutations, rearrangements, or recombination.",
+      "primary_disposition": "MIXED_NORMATIVE",
+      "primary_review_note": "Haplotype identifiers unique across germline genome and conserved along clonal lineages; split.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1720",
+      "source_line": 1720,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1719,
+          "text": "POS and INFO SVLEN specify the genomic interval over which the copy number is defined."
+        },
+        {
+          "line": 1720,
+          "text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively."
+        },
+        {
+          "line": 1721,
+          "text": "As with all symbolic structural variants, the starting position of the interval is the base immediately after POS."
+        }
+      ],
+      "candidate_line_text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
+      "primary_disposition": "RECOMMENDATION_AND_SEMANTIC_MAPPING",
+      "primary_review_note": "DEL/DUP copy-number alleles should be treated as CNV alleles with implicit INFO CN 0/2.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1730",
+      "source_line": 1730,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1729,
+          "text": ""
+        },
+        {
+          "line": 1730,
+          "text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN."
+        },
+        {
+          "line": 1731,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        }
+      ],
+      "candidate_line_text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "CNV alleles in same record should have same SVLEN.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1731",
+      "source_line": 1731,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1730,
+          "text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN."
+        },
+        {
+          "line": 1731,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        },
+        {
+          "line": 1732,
+          "text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically."
+        }
+      ],
+      "candidate_line_text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Copy-number ALT alleles should not be mixed with other ALT alleles to avoid genotype ambiguity.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1732",
+      "source_line": 1732,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1731,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        },
+        {
+          "line": 1732,
+          "text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically."
+        },
+        {
+          "line": 1733,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
+      "primary_disposition": "RECOMMENDATION_AND_SEMANTIC_EQUIVALENCE",
+      "primary_review_note": "With only copy-number ALT alleles, GT=0 is equivalent to CNV ALT with INFO CN=1 and should be treated identically.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1734",
+      "source_line": 1734,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1733,
+          "text": ""
+        },
+        {
+          "line": 1734,
+          "text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field."
+        },
+        {
+          "line": 1735,
+          "text": "In the above example this corresponds to the following:"
+        }
+      ],
+      "candidate_line_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "If only total copy number known, segment should be represented with single CNV ALT and missing INFO CN.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1745",
+      "source_line": 1745,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing copy number variation",
+          "heading_line": 1712
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1744,
+          "text": "Copy number segmentation can be base-pair accurate with even 1bp changes deletions resulting in new copy number segments, be at a highly granular megabase level of resolution, or anywhere in between."
+        },
+        {
+          "line": 1745,
+          "text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields."
+        },
+        {
+          "line": 1746,
+          "text": ""
+        }
+      ],
+      "candidate_line_text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Uncertain segment bounds should be encoded in CIPOS and CILEN.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1777",
+      "source_line": 1777,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1776,
+          "text": "A tandem repeat allele can be described by both a $<$CNV:TR$>$ 'summary' record as well as non-symbolic records."
+        },
+        {
+          "line": 1777,
+          "text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example."
+        },
+        {
+          "line": 1778,
+          "text": "In the following example, the reference genome contains a $(CAG)_{10}$ repeat at positions 101 to 130 inclusive, the first allele expands this to $(CAG)_{30}$ and the second allele is missing a $G$ from the 6th repeat unit $(CAG)_{5}(CA)_{1}(CAG)_{4}$:"
+        }
+      ],
+      "candidate_line_text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "When possible, tandem-repeat records should be phased with corresponding CNV:TR record.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1814",
+      "source_line": 1814,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1813,
+          "text": "    It is not the length of the $<$CNV:TR$>$ allele."
+        },
+        {
+          "line": 1814,
+          "text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1."
+        },
+        {
+          "line": 1815,
+          "text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence."
+        }
+      ],
+      "candidate_line_text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Novel CNV:TR allele SVLEN should be 1.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1815",
+      "source_line": 1815,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1814,
+          "text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1."
+        },
+        {
+          "line": 1815,
+          "text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence."
+        },
+        {
+          "line": 1816,
+          "text": "    \\item Both a $<$CNV:TR$>$ and one or more non-symbolic records encoding the tandem repeat can be present."
+        }
+      ],
+      "candidate_line_text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Novel CNV:TR POS should be immediately preceding inserted repeat sequence.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1817",
+      "source_line": 1817,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1816,
+          "text": "    \\item Both a $<$CNV:TR$>$ and one or more non-symbolic records encoding the tandem repeat can be present."
+        },
+        {
+          "line": 1817,
+          "text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible."
+        },
+        {
+          "line": 1818,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        }
+      ],
+      "candidate_line_text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible.",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "CNV:TR and non-symbolic tandem-repeat records should be phased if possible.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1818",
+      "source_line": 1818,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1817,
+          "text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible."
+        },
+        {
+          "line": 1818,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        },
+        {
+          "line": 1819,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        }
+      ],
+      "candidate_line_text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
+      "primary_disposition": "RECOMMENDATION_WITH_EXPLICIT_TOLERANCE",
+      "primary_review_note": "CNV:TR should approximately encode sequence; exact sequence encoding not required.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1819",
+      "source_line": 1819,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1818,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        },
+        {
+          "line": 1819,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        },
+        {
+          "line": 1820,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        }
+      ],
+      "candidate_line_text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record.",
+      "primary_disposition": "PERMISSION_AND_EXAMPLE",
+      "primary_review_note": "SNVs/indels may be omitted in CNV:TR record; illustrative examples.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1820",
+      "source_line": 1820,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1819,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        },
+        {
+          "line": 1820,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        },
+        {
+          "line": 1821,
+          "text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length."
+        }
+      ],
+      "candidate_line_text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid).",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "Callers not reporting allele-specific tandem repeats should use one CNV:TR ALT and missing GT.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1821",
+      "source_line": 1821,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1820,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        },
+        {
+          "line": 1821,
+          "text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length."
+        },
+        {
+          "line": 1822,
+          "text": "\tNote that CN FORMAT field represents the overall copy number and the INFO CN the allele-specific copy number."
+        }
+      ],
+      "candidate_line_text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
+      "primary_disposition": "MIXED_RECOMMENDATION_AND_NORMATIVE_CONSTRAINT",
+      "primary_review_note": "INFO/FORMAT CN should be present for CNV:TR; when present, must equal sample allelic length/reference allelic length. Split presence force and value rule.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1826",
+      "source_line": 1826,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1825,
+          "text": "\tConceptually, this a mechanism to encode a list-of-list with flat list format used in VCF."
+        },
+        {
+          "line": 1826,
+          "text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large."
+        },
+        {
+          "line": 1827,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        }
+      ],
+      "candidate_line_text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "STRs should use RUS and VNTRs RUL for compactness.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1827",
+      "source_line": 1827,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1826,
+          "text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large."
+        },
+        {
+          "line": 1827,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        },
+        {
+          "line": 1828,
+          "text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$."
+        }
+      ],
+      "candidate_line_text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present).",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "RUL should be omitted when RUS present.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1828",
+      "source_line": 1828,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1827,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        },
+        {
+          "line": 1828,
+          "text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$."
+        },
+        {
+          "line": 1829,
+          "text": "    \\item Support for multiple levels of repeat nesting (such as STRs within VNTRs) is limited to the RUL repeat unit length field which allows the overall length of each top-level repeat unit to be encoded."
+        }
+      ],
+      "candidate_line_text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$.",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "RUS or RUL must be specified for each CNV:TR.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1830",
+      "source_line": 1830,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1829,
+          "text": "    \\item Support for multiple levels of repeat nesting (such as STRs within VNTRs) is limited to the RUL repeat unit length field which allows the overall length of each top-level repeat unit to be encoded."
+        },
+        {
+          "line": 1830,
+          "text": "    \\item The POS and END of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers."
+        },
+        {
+          "line": 1831,
+          "text": "    \\item Variant normalisation has limited utility in regions of low complexity as almost identical haplotypes can have very different normalised representations."
+        }
+      ],
+      "candidate_line_text": "    \\item The POS and END of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers.",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Catalog-based callers should align POS/END with STR/VNTR reference catalog sizes.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    },
+    {
+      "candidate_id": "VCFv4.4:L1859",
+      "source_line": 1859,
+      "section_path": [
+        {
+          "level": 1,
+          "heading": "Representing variation in VCF records",
+          "heading_line": 1003
+        },
+        {
+          "level": 2,
+          "heading": "Representing tandem repeats",
+          "heading_line": 1748
+        }
+      ],
+      "source_context": [
+        {
+          "line": 1858,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 1859,
+          "text": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1."
+        },
+        {
+          "line": 1860,
+          "text": "\t\\item The confidence interval bounds are relative to the nominal value."
+        }
+      ],
+      "candidate_line_text": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1.",
+      "primary_disposition": "CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "RN omitted except required when at least one CNV:TR allele has RN>1.",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "independent_second_review": "PENDING",
+      "implementation_mapping": "NOT_STARTED",
+      "tests": "NOT_STARTED"
+    }
+  ],
+  "disposition_counts": {
+    "RECOMMENDATION": 22,
+    "NORMATIVE_GT_SEMANTICS": 1,
+    "CONDITIONAL_RECOMMENDATION": 4,
+    "NORMATIVE_PROHIBITION": 2,
+    "NORMATIVE_CROSS_RECORD_CONSISTENCY": 1,
+    "NORMATIVE_CARDINALITY": 9,
+    "NORMATIVE_CONDITIONAL_REQUIREMENT": 3,
+    "MIXED_REQUIRED_AND_BACKWARD_COMPATIBILITY": 1,
+    "NORMATIVE_VALUE_SEMANTICS": 1,
+    "RECOMMENDATION_FOR_INDEXING": 1,
+    "NORMATIVE_MISSING_VALUE": 1,
+    "BACKWARD_COMPATIBILITY_RULE": 2,
+    "NORMATIVE_INTERVAL_CONSTRAINT": 3,
+    "PERMISSION": 2,
+    "RECOMMENDATION_WITH_RESERVED_DOMAIN": 1,
+    "EXPLANATORY_SEMANTIC_RATIONALE": 1,
+    "EXPLANATORY_SEMANTIC_CASE": 2,
+    "NORMATIVE_CONDITIONAL_SCHEMA": 2,
+    "MIXED_OPTIONALITY_AND_VALUE_DOMAIN": 3,
+    "RECOMMENDATION_AND_LINKAGE": 1,
+    "NORMATIVE_PROHIBITION_AND_DEFINITION": 1,
+    "NORMATIVE_MISSING_VALUE_SEMANTICS": 1,
+    "NORMATIVE_NESTED_CARDINALITY": 1,
+    "PERMITTED_VALUE_DOMAIN": 1,
+    "NORMATIVE_CROSS_FIELD_CONSISTENCY": 2,
+    "RECOMMENDATION_WITH_TOLERANCE": 1,
+    "RECOMMENDATION_AND_INFERENCE": 1,
+    "CONDITIONAL_REQUIREMENT": 2,
+    "INFORMATIVE_EXAMPLE": 1,
+    "PERMISSION_WITHIN_BREAKEND_GRAMMAR": 1,
+    "PERMISSION_AND_EXAMPLE_CONTEXT": 1,
+    "INFORMATIVE_NARRATIVE": 3,
+    "MIXED_NORMATIVE": 1,
+    "RECOMMENDATION_AND_SEMANTIC_MAPPING": 1,
+    "RECOMMENDATION_AND_SEMANTIC_EQUIVALENCE": 1,
+    "RECOMMENDATION_WITH_EXPLICIT_TOLERANCE": 1,
+    "PERMISSION_AND_EXAMPLE": 1,
+    "MIXED_RECOMMENDATION_AND_NORMATIVE_CONSTRAINT": 1
+  },
+  "review": {
+    "primary_context_review": "COMPLETE_FOR_85_CANDIDATES",
+    "independent_second_reviewed": 0,
+    "implementation_mapped": 0,
+    "tests_executed": 0
+  },
+  "limitations": [
+    "Many SV clauses depend on exact field identity and adjacent definitions; context and row/section review must be completed before ledger promotion.",
+    "Recommendations, conditional permissions and backward-compatibility rules remain distinct from normative prohibitions/requirements.",
+    "This source review is not a clinical SV/CNV assay validation and does not qualify SIRALOOM's SV support.",
+    "No implementation or clause-specific execution evidence is implied."
+  ]
+}

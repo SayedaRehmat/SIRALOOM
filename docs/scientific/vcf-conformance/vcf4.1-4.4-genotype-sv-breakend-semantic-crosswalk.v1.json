@@ -1,0 +1,1044 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.4-genotype-sv-breakend-semantic-crosswalk.v1",
+  "status": "AUTHOR_SOURCE_CONTEXT_CROSSWALK_EXPANDED_PEDIGREE_AND_ENCODING_DELTAS_ATOMIC_RECONCILIATION_STILL_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+  },
+  "scope": "Versioned semantic comparison of genotype/GT/GL ordering, phasing, SV INFO/FORMAT definitions, symbolic SVs and breakend sections for VCFv4.1 through VCFv4.4. Reserved INFO/FORMAT row inventory is separately captured in vcf4.1-4.4-reserved-row-version-crosswalk.v1.json. This artifact does not claim complete whole-spec review.",
+  "versions": {
+    "VCFv4.1": {
+      "file": "VCFv4.1.tex",
+      "line_count": 1519,
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "anchors": {
+        "GT": 200,
+        "GL": 207,
+        "SV_INFO_START": 233,
+        "SV_FORMAT_START": 286,
+        "SVLEN_DEF": 253,
+        "CIPOS_DEF": 259,
+        "BREAKEND_START": 524,
+        "SINGLE_BREAKEND": 777,
+        "SV_CLAIM": null,
+        "TANDEM_REPEAT": null,
+        "PHASE_SET_LIST": null
+      },
+      "excerpts": [
+        {
+          "id": "GT",
+          "start_line": 200,
+          "end_line": 206,
+          "text": [
+            "200:   \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+            "201: \t\\begin{itemize}",
+            "202: \t  \\item $/$ : genotype unphased",
+            "203: \t  \\item $\\mid$ : genotype phased",
+            "204: \t\\end{itemize}",
+            "205:   \\item DP : read depth at this position for this sample (Integer)",
+            "206:   \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          ]
+        },
+        {
+          "id": "GL",
+          "start_line": 207,
+          "end_line": 218,
+          "text": [
+            "207:   \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+            "208:   \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "209:   \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+            "210:   \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+            "211:   \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+            "212:   \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)",
+            "213:   \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+            "214:   \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+            "215:   \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+            "216:   \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)",
+            "217: \\end{itemize}",
+            "218: "
+          ]
+        },
+        {
+          "id": "SV_INFO_START",
+          "start_line": 233,
+          "end_line": 254,
+          "text": [
+            "233: \\section{INFO keys used for structural variants}",
+            "234: When the INFO keys reserved for encoding structural variants are used for imprecise variants, the values should be best estimates. When a key reflects a property of a single alt allele (e.g.\\ SVLEN), then when there are multiple alt alleles there will be multiple values for the key corresponding to each allele (e.g.\\ SVLEN=-100,-110 for a deletion with two distinct alt alleles).",
+            "235: ",
+            "236: The following INFO keys are reserved for encoding structural variants.",
+            "237: \\footnotesize",
+            "238: \\begin{verbatim}",
+            "239: ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+            "240: ##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+            "241: ##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+            "242: \\end{verbatim}",
+            "243: \\normalsize",
+            "244: For precise variants, END is POS + length of REF allele - 1, and the for imprecise variants the corresponding best estimate.",
+            "245: \\footnotesize",
+            "246: \\begin{verbatim}",
+            "247: ##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+            "248: \\end{verbatim}",
+            "249: \\normalsize",
+            "250: Value should be one of DEL, INS, DUP, INV, CNV, BND. This key can be derived from the REF/ALT fields but is useful for filtering.",
+            "251: \\footnotesize",
+            "252: \\begin{verbatim}",
+            "253: ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+            "254: \\end{verbatim}"
+          ]
+        },
+        {
+          "id": "SV_FORMAT_START",
+          "start_line": 286,
+          "end_line": 305,
+          "text": [
+            "286: \\section{FORMAT keys used for structural variants}",
+            "287: \\footnotesize",
+            "288: \\begin{verbatim}",
+            "289: ##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+            "290: ##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+            "291: ##FORMAT=<ID=CNL,Number=.,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+            "292: ##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+            "293: ##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+            "294: ##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+            "295: \\end{verbatim}",
+            "296: \\normalsize",
+            "297: These keys are analogous to GT/GQ/GL and are provided for genotyping imprecise events by copy number (either because there is an unknown number of alternate alleles or because the haplotypes cannot be determined). CN specifies the integer copy number of the variant in this sample. CNQ is encoded as a phred quality $-10log_{10}$ p(copy number genotype call is wrong). CNL specifies a list of $log_{10}$ likelihoods for each potential copy number, starting from zero. When possible, GT/GQ/GL should be used instead of (or in addition to) these keys.",
+            "298: ",
+            "299: \\section{Representing variation in VCF records}",
+            "300: \\subsection{Creating VCF entries for SNPs and small indels}",
+            "301: \\subsubsection{Example 1}",
+            "302: For example, suppose we are looking at a locus in the genome:",
+            "303: ",
+            "304: \\vspace{0.3cm}",
+            "305: \\begin{tabular}{ | l | l | l | }"
+          ]
+        },
+        {
+          "id": "SVLEN_DEF",
+          "start_line": 253,
+          "end_line": 267,
+          "text": [
+            "253: ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+            "254: \\end{verbatim}",
+            "255: \\normalsize",
+            "256: One value for each ALT allele. Longer ALT alleles (e.g.\\ insertions) have positive values, shorter ALT alleles (e.g.\\ deletions) have negative values.",
+            "257: \\footnotesize",
+            "258: \\begin{verbatim}",
+            "259: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "260: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "261: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "262: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "263: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "264: \\end{verbatim}",
+            "265: \\normalsize",
+            "266: For precise variants, the consensus sequence of the alternate allele assembly is derivable from the REF and ALT fields. However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+            "267: \\footnotesize"
+          ]
+        },
+        {
+          "id": "CIPOS_DEF",
+          "start_line": 259,
+          "end_line": 268,
+          "text": [
+            "259: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "260: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "261: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "262: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "263: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "264: \\end{verbatim}",
+            "265: \\normalsize",
+            "266: For precise variants, the consensus sequence of the alternate allele assembly is derivable from the REF and ALT fields. However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+            "267: \\footnotesize",
+            "268: \\begin{verbatim}"
+          ]
+        },
+        {
+          "id": "BREAKEND_START",
+          "start_line": 524,
+          "end_line": 553,
+          "text": [
+            "524: \\subsection{Specifying complex rearrangements with breakends}",
+            "525: ",
+            "526: An arbitrary rearrangement event can be summarized as a set of novel \\textbf{adjacencies}. Each adjacency ties together $2$ \\textbf{breakends}. The two breakends at either end of a novel adjacency are called \\textbf{mates}.",
+            "527: ",
+            "528: There is one line of VCF (i.e.\\ one record) for each of the two breakends in a novel adjacency. A breakend record is identified with the tag ``SVTYPE=BND'' in the INFO field. The REF field of a breakend record indicates a base or sequence s of bases beginning at position POS, as in all VCF records. The ALT field of a breakend record indicates a replacement for s. This ``breakend replacement'' has three parts:",
+            "529: \\begin{enumerate}",
+            "530:   \\item The string t that replaces places s. The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+            "531:   \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''. This is the location of the first mapped base in the piece being joined at this novel adjacency.",
+            "532:   \\item The direction that the joined sequence continues in, starting from p. This is indicated by the orientation of square brackets surrounding p.",
+            "533: ",
+            "534: \\end{enumerate}",
+            "535: These 3 elements are combined in 4 possible ways to create the ALT. In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t. The cases are:",
+            "536: ",
+            "537: \\vspace{0.3cm}",
+            "538: \\begin{tabular}{ l l l }",
+            "539: REF & ALT & Meaning \\\\",
+            "540: s & t$[$p$[$ & piece extending to the right of p is joined after t \\\\",
+            "541: s & t$]$p$]$ & reverse comp piece extending left of p is joined after t \\\\",
+            "542: s & $]$p$]$t & piece extending to the left of p is joined before t \\\\",
+            "543: s & $[$p$[$t & reverse comp piece extending right of p is joined before t \\\\",
+            "544: \\end{tabular}",
+            "545: \\vspace{0.3cm}",
+            "546: ",
+            "547: The example in Figure 1 shows a 3-break operation involving 6 breakends. It exemplifies all possible orientations of breakends in adjacencies. Notice how the ALT field expresses the orientation of the breakends.",
+            "548: ",
+            "549: \\begin{figure}[ht]",
+            "550: \\centering",
+            "551: \\includegraphics[width=4in,height=2.96in]{img/all_orientations-400x296.png}",
+            "552: \\caption{All possible orientations of breakends}",
+            "553: \\end{figure}"
+          ]
+        },
+        {
+          "id": "SINGLE_BREAKEND",
+          "start_line": 777,
+          "end_line": 786,
+          "text": [
+            "777: \\subsubsection{Single breakends}",
+            "778: We allow for the definition of a breakend that is not part of a novel adjacency, also identified by the tag SVTYPE=BND. We call these single breakends, because they lack a mate. Breakends that are unobserved partners of breakends in observed novel adjacencies are one kind of single breakend. For example, if the true situation is known to be either as depicted back in Figure 1, and we only observe the adjacency (U,V), and no adjacencies for W, X, Y, or Z, then we cannot be sure whether we have a simple reciprocal translocation or a more complex 3-break operation. Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates. The 4 lines of VCF representing this situation would be:",
+            "779: ",
+            "780: \\vspace{0.3cm}",
+            "781: \\small",
+            "782: \\begin{tabular}{ l l l l l l l l }",
+            "783: \\#CHROM & POS & ID & REF & ALT & QUAL & FILTER & INFO \\\\",
+            "784: 2 & 321681 & bnd\\_W & G & G. & 6 & PASS & SVTYPE=BND \\\\",
+            "785: 2 & 321682 & bnd\\_V & T & $]13:123456]$T & 6 & PASS & SVTYPE=BND;MATEID=bnd\\_U \\\\",
+            "786: 13 & 123456 & bnd\\_U & C & C$[2:321682[$ & 6 & PASS & SVTYPE=BND;MATEID=bnd\\_V \\\\"
+          ]
+        }
+      ],
+      "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa"
+    },
+    "VCFv4.2": {
+      "file": "VCFv4.2.tex",
+      "line_count": 1534,
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "anchors": {
+        "GT": 217,
+        "GL": 224,
+        "SV_INFO_START": 250,
+        "SV_FORMAT_START": 303,
+        "SVLEN_DEF": 270,
+        "CIPOS_DEF": 276,
+        "BREAKEND_START": 541,
+        "SINGLE_BREAKEND": 794,
+        "SV_CLAIM": null,
+        "TANDEM_REPEAT": null,
+        "PHASE_SET_LIST": null
+      },
+      "excerpts": [
+        {
+          "id": "GT",
+          "start_line": 217,
+          "end_line": 223,
+          "text": [
+            "217:   \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+            "218: \t\\begin{itemize}",
+            "219: \t  \\item $/$ : genotype unphased",
+            "220: \t  \\item $\\mid$ : genotype phased",
+            "221: \t\\end{itemize}",
+            "222:   \\item DP : read depth at this position for this sample (Integer)",
+            "223:   \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          ]
+        },
+        {
+          "id": "GL",
+          "start_line": 224,
+          "end_line": 235,
+          "text": [
+            "224:   \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+            "225:   \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+            "226:   \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+            "227:   \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+            "228:   \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+            "229:   \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)",
+            "230:   \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+            "231:   \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+            "232:   \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+            "233:   \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)",
+            "234: \\end{itemize}",
+            "235: "
+          ]
+        },
+        {
+          "id": "SV_INFO_START",
+          "start_line": 250,
+          "end_line": 271,
+          "text": [
+            "250: \\section{INFO keys used for structural variants}",
+            "251: When the INFO keys reserved for encoding structural variants are used for imprecise variants, the values should be best estimates. When a key reflects a property of a single alt allele (e.g.\\ SVLEN), then when there are multiple alt alleles there will be multiple values for the key corresponding to each allele (e.g.\\ SVLEN=-100,-110 for a deletion with two distinct alt alleles).",
+            "252: ",
+            "253: The following INFO keys are reserved for encoding structural variants.",
+            "254: \\footnotesize",
+            "255: \\begin{verbatim}",
+            "256: ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+            "257: ##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+            "258: ##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+            "259: \\end{verbatim}",
+            "260: \\normalsize",
+            "261: For precise variants, END is POS + length of REF allele - 1, and the for imprecise variants the corresponding best estimate.",
+            "262: \\footnotesize",
+            "263: \\begin{verbatim}",
+            "264: ##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+            "265: \\end{verbatim}",
+            "266: \\normalsize",
+            "267: Value should be one of DEL, INS, DUP, INV, CNV, BND. This key can be derived from the REF/ALT fields but is useful for filtering.",
+            "268: \\footnotesize",
+            "269: \\begin{verbatim}",
+            "270: ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+            "271: \\end{verbatim}"
+          ]
+        },
+        {
+          "id": "SV_FORMAT_START",
+          "start_line": 303,
+          "end_line": 322,
+          "text": [
+            "303: \\section{FORMAT keys used for structural variants}",
+            "304: \\footnotesize",
+            "305: \\begin{verbatim}",
+            "306: ##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+            "307: ##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+            "308: ##FORMAT=<ID=CNL,Number=.,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+            "309: ##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+            "310: ##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+            "311: ##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+            "312: \\end{verbatim}",
+            "313: \\normalsize",
+            "314: These keys are analogous to GT/GQ/GL and are provided for genotyping imprecise events by copy number (either because there is an unknown number of alternate alleles or because the haplotypes cannot be determined). CN specifies the integer copy number of the variant in this sample. CNQ is encoded as a phred quality $-10log_{10}$ p(copy number genotype call is wrong). CNL specifies a list of $log_{10}$ likelihoods for each potential copy number, starting from zero. When possible, GT/GQ/GL should be used instead of (or in addition to) these keys.",
+            "315: ",
+            "316: \\section{Representing variation in VCF records}",
+            "317: \\subsection{Creating VCF entries for SNPs and small indels}",
+            "318: \\subsubsection{Example 1}",
+            "319: For example, suppose we are looking at a locus in the genome:",
+            "320: ",
+            "321: \\vspace{0.3cm}",
+            "322: \\begin{tabular}{ | l | l | l | }"
+          ]
+        },
+        {
+          "id": "SVLEN_DEF",
+          "start_line": 270,
+          "end_line": 284,
+          "text": [
+            "270: ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+            "271: \\end{verbatim}",
+            "272: \\normalsize",
+            "273: One value for each ALT allele. Longer ALT alleles (e.g.\\ insertions) have positive values, shorter ALT alleles (e.g.\\ deletions) have negative values.",
+            "274: \\footnotesize",
+            "275: \\begin{verbatim}",
+            "276: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "277: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "278: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "279: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "280: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "281: \\end{verbatim}",
+            "282: \\normalsize",
+            "283: For precise variants, the consensus sequence of the alternate allele assembly is derivable from the REF and ALT fields. However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+            "284: \\footnotesize"
+          ]
+        },
+        {
+          "id": "CIPOS_DEF",
+          "start_line": 276,
+          "end_line": 285,
+          "text": [
+            "276: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "277: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "278: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "279: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "280: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "281: \\end{verbatim}",
+            "282: \\normalsize",
+            "283: For precise variants, the consensus sequence of the alternate allele assembly is derivable from the REF and ALT fields. However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+            "284: \\footnotesize",
+            "285: \\begin{verbatim}"
+          ]
+        },
+        {
+          "id": "BREAKEND_START",
+          "start_line": 541,
+          "end_line": 570,
+          "text": [
+            "541: \\subsection{Specifying complex rearrangements with breakends}",
+            "542: ",
+            "543: An arbitrary rearrangement event can be summarized as a set of novel \\textbf{adjacencies}. Each adjacency ties together $2$ \\textbf{breakends}. The two breakends at either end of a novel adjacency are called \\textbf{mates}.",
+            "544: ",
+            "545: There is one line of VCF (i.e.\\ one record) for each of the two breakends in a novel adjacency. A breakend record is identified with the tag ``SVTYPE=BND'' in the INFO field. The REF field of a breakend record indicates a base or sequence s of bases beginning at position POS, as in all VCF records. The ALT field of a breakend record indicates a replacement for s. This ``breakend replacement'' has three parts:",
+            "546: \\begin{enumerate}",
+            "547:   \\item The string t that replaces places s. The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+            "548:   \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''. This is the location of the first mapped base in the piece being joined at this novel adjacency.",
+            "549:   \\item The direction that the joined sequence continues in, starting from p. This is indicated by the orientation of square brackets surrounding p.",
+            "550: ",
+            "551: \\end{enumerate}",
+            "552: These 3 elements are combined in 4 possible ways to create the ALT. In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t. The cases are:",
+            "553: ",
+            "554: \\vspace{0.3cm}",
+            "555: \\begin{tabular}{ l l l }",
+            "556: REF & ALT & Meaning \\\\",
+            "557: s & t$[$p$[$ & piece extending to the right of p is joined after t \\\\",
+            "558: s & t$]$p$]$ & reverse comp piece extending left of p is joined after t \\\\",
+            "559: s & $]$p$]$t & piece extending to the left of p is joined before t \\\\",
+            "560: s & $[$p$[$t & reverse comp piece extending right of p is joined before t \\\\",
+            "561: \\end{tabular}",
+            "562: \\vspace{0.3cm}",
+            "563: ",
+            "564: The example in Figure 1 shows a 3-break operation involving 6 breakends. It exemplifies all possible orientations of breakends in adjacencies. Notice how the ALT field expresses the orientation of the breakends.",
+            "565: ",
+            "566: \\begin{figure}[ht]",
+            "567: \\centering",
+            "568: \\includegraphics[width=4in,height=2.96in]{img/all_orientations-400x296.png}",
+            "569: \\caption{All possible orientations of breakends}",
+            "570: \\end{figure}"
+          ]
+        },
+        {
+          "id": "SINGLE_BREAKEND",
+          "start_line": 794,
+          "end_line": 803,
+          "text": [
+            "794: \\subsubsection{Single breakends}",
+            "795: We allow for the definition of a breakend that is not part of a novel adjacency, also identified by the tag SVTYPE=BND. We call these single breakends, because they lack a mate. Breakends that are unobserved partners of breakends in observed novel adjacencies are one kind of single breakend. For example, if the true situation is known to be either as depicted back in Figure 1, and we only observe the adjacency (U,V), and no adjacencies for W, X, Y, or Z, then we cannot be sure whether we have a simple reciprocal translocation or a more complex 3-break operation. Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates. The 4 lines of VCF representing this situation would be:",
+            "796: ",
+            "797: \\vspace{0.3cm}",
+            "798: \\small",
+            "799: \\begin{tabular}{ l l l l l l l l }",
+            "800: \\#CHROM & POS & ID & REF & ALT & QUAL & FILTER & INFO \\\\",
+            "801: 2 & 321681 & bnd\\_W & G & G. & 6 & PASS & SVTYPE=BND \\\\",
+            "802: 2 & 321682 & bnd\\_V & T & $]13:123456]$T & 6 & PASS & SVTYPE=BND;MATEID=bnd\\_U \\\\",
+            "803: 13 & 123456 & bnd\\_U & C & C$[2:321682[$ & 6 & PASS & SVTYPE=BND;MATEID=bnd\\_V \\\\"
+          ]
+        }
+      ],
+      "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc"
+    },
+    "VCFv4.3": {
+      "file": "VCFv4.3.tex",
+      "line_count": 2191,
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "anchors": {
+        "GT": 492,
+        "GL": 504,
+        "SV_INFO_START": 601,
+        "SV_FORMAT_START": 672,
+        "SVLEN_DEF": 635,
+        "CIPOS_DEF": 642,
+        "BREAKEND_START": 925,
+        "SINGLE_BREAKEND": 1213,
+        "SV_CLAIM": null,
+        "TANDEM_REPEAT": null,
+        "PHASE_SET_LIST": null
+      },
+      "excerpts": [
+        {
+          "id": "GT",
+          "start_line": 492,
+          "end_line": 498,
+          "text": [
+            "492:   \\item GT (String): Genotype, encoded as allele values separated by either of $/$ or $\\mid$.",
+            "493:   The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on.",
+            "494:   For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc.",
+            "495:   Haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, are indicated by having only one allele value.",
+            "496:   A triploid call might look like $0/0/1$.",
+            "497:   If a call cannot be made for a sample at a given locus, `.' must be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype).",
+            "498:   The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          ]
+        },
+        {
+          "id": "GL",
+          "start_line": 504,
+          "end_line": 515,
+          "text": [
+            "504:   \\item GL (Float): Genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields.",
+            "505:   In presence of the GT field the same ploidy is expected; without GT field, diploidy is assumed.",
+            "506: ",
+            "507:   \\textsc{Genotype Ordering.} \\label{genotype-fields:genotype-ordering}",
+            "508:   In general case of ploidy P and N alternate alleles (0 is the REF and $1\\ldots N$ the alternate alleles), the ordering of genotypes for the likelihoods can be expressed by the following pseudocode with as many nested loops as ploidy:",
+            "509:   \\footnote{Note that we use inclusive \\texttt{for} loop boundaries.}",
+            "510:   \\begingroup",
+            "511:   \\small",
+            "512:   \\begin{lstlisting}",
+            "513:   for $a_P = 0\\ldots N$",
+            "514:     for $a_{P-1} = 0\\ldots a_P$",
+            "515:         $\\ldots$"
+          ]
+        },
+        {
+          "id": "SV_INFO_START",
+          "start_line": 601,
+          "end_line": 622,
+          "text": [
+            "601: \\section{INFO keys used for structural variants}",
+            "602: \\label{sv-info-keys}",
+            "603: \\begin{samepage}",
+            "604: The following INFO keys are reserved for encoding structural variants.",
+            "605: In general, when these keys are used by imprecise variants, the values should be best estimates.",
+            "606: When a key reflects a property of a single alt allele (e.g.\\ SVLEN), then when there are multiple alt alleles there will be multiple values for the key corresponding to each allele (e.g.\\ SVLEN=-100,-110 for a deletion with two distinct alt alleles).",
+            "607: \\footnotesize",
+            "608: \\begin{verbatim}",
+            "609: ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+            "610: ##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+            "611: ##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+            "612: \\end{verbatim}",
+            "613: \\normalsize",
+            "614: For precise variants, END is $\\mbox{POS} + \\mbox{length of REF allele} - 1$, and the for imprecise variants the corresponding best estimate.",
+            "615: ",
+            "616: \\footnotesize",
+            "617: \\begin{verbatim}",
+            "618: ##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+            "619: \\end{verbatim}",
+            "620: \\normalsize",
+            "621: \\end{samepage}",
+            "622: This key can be derived from the REF/ALT fields but is useful for filtering."
+          ]
+        },
+        {
+          "id": "SV_FORMAT_START",
+          "start_line": 672,
+          "end_line": 691,
+          "text": [
+            "672: \\section{FORMAT keys used for structural variants}",
+            "673: \\label{sv-format-keys}",
+            "674: \\footnotesize",
+            "675: \\begin{verbatim}",
+            "676: ##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+            "677: ##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+            "678: ##FORMAT=<ID=CNL,Number=G,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+            "679: ##FORMAT=<ID=CNP,Number=G,Type=Float,Description=\"Copy number posterior probabilities\">",
+            "680: ##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+            "681: ##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+            "682: ##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+            "683: \\end{verbatim}",
+            "684: \\normalsize",
+            "685: These keys are analogous to GT/GQ/GL/GP and are provided for genotyping imprecise events by copy number (either because there is an unknown number of alternate alleles or because the haplotypes cannot be determined).",
+            "686: CN specifies the integer copy number of the variant in this sample.",
+            "687: CNQ is encoded as a phred quality $-10log_{10}$ p(copy number genotype call is wrong).",
+            "688: CNL specifies a list of $log_{10}$ likelihoods for each potential copy number, starting from zero.",
+            "689: CNP is 0 to 1-scaled copy number posterior probabilities (and otherwise defined precisely as the CNL field), intended to store imputed genotype probabilities.",
+            "690: When possible, GT/GQ/GL/GP should be used instead of (or in addition to) these keys.",
+            "691: "
+          ]
+        },
+        {
+          "id": "SVLEN_DEF",
+          "start_line": 635,
+          "end_line": 649,
+          "text": [
+            "635: ##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+            "636: \\end{verbatim}",
+            "637: \\normalsize",
+            "638: One value for each ALT allele. Longer ALT alleles (e.g.\\ insertions) have positive values, shorter ALT alleles (e.g.\\ deletions) have negative values.",
+            "639: ",
+            "640: \\footnotesize",
+            "641: \\begin{verbatim}",
+            "642: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "643: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "644: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "645: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "646: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "647: \\end{verbatim}",
+            "648: \\normalsize",
+            "649: For precise variants, the consensus sequence the alternate allele assembly is derivable from the REF and ALT fields."
+          ]
+        },
+        {
+          "id": "CIPOS_DEF",
+          "start_line": 642,
+          "end_line": 651,
+          "text": [
+            "642: ##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+            "643: ##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+            "644: ##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+            "645: ##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+            "646: ##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+            "647: \\end{verbatim}",
+            "648: \\normalsize",
+            "649: For precise variants, the consensus sequence the alternate allele assembly is derivable from the REF and ALT fields.",
+            "650: However, the alternate allele assembly file may contain additional information about the characteristics of the alt allele contigs.",
+            "651: "
+          ]
+        },
+        {
+          "id": "BREAKEND_START",
+          "start_line": 925,
+          "end_line": 954,
+          "text": [
+            "925: \\subsection{Specifying complex rearrangements with breakends}",
+            "926: \\label{Breakends}",
+            "927: ",
+            "928: An arbitrary rearrangement event can be summarized as a set of novel \\textbf{adjacencies}. Each adjacency ties together $2$ \\textbf{breakends}.",
+            "929: The two breakends at either end of a novel adjacency are called \\textbf{mates}.",
+            "930: ",
+            "931: There is one line of VCF (i.e.\\ one record) for each of the two breakends in a novel adjacency.",
+            "932: A breakend record is identified with the tag ``SVTYPE=BND'' in the INFO field.",
+            "933: The REF field of a breakend record indicates a base or sequence s of bases beginning at position POS, as in all VCF records.",
+            "934: The ALT field of a breakend record indicates a replacement for s.",
+            "935: This ``breakend replacement'' has three parts:",
+            "936: \\begin{enumerate}",
+            "937:   \\item The string t that replaces places s.",
+            "938:   The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+            "939:   \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''.",
+            "940:   This is the location of the first mapped base in the piece being joined at this novel adjacency.",
+            "941:   \\item The direction that the joined sequence continues in, starting from p.",
+            "942:   This is indicated by the orientation of square brackets surrounding p.",
+            "943: ",
+            "944: \\end{enumerate}",
+            "945: These 3 elements are combined in 4 possible ways to create the ALT.",
+            "946: In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t.",
+            "947: The cases are:",
+            "948: ",
+            "949: \\vspace{0.3cm}",
+            "950: \\begin{tabular}{ l l l }",
+            "951: REF & ALT & Meaning \\\\",
+            "952: s & t$[$p$[$ & piece extending to the right of p is joined after t \\\\",
+            "953: s & t$]$p$]$ & reverse comp piece extending left of p is joined after t \\\\",
+            "954: s & $]$p$]$t & piece extending to the left of p is joined before t \\\\"
+          ]
+        },
+        {
+          "id": "SINGLE_BREAKEND",
+          "start_line": 1213,
+          "end_line": 1222,
+          "text": [
+            "1213: \\subsubsection{Single breakends}",
+            "1214: We allow for the definition of a breakend that is not part of a novel adjacency, also identified by the tag SVTYPE=BND.",
+            "1215: We call these single breakends, because they lack a mate.",
+            "1216: Breakends that are unobserved partners of breakends in observed novel adjacencies are one kind of single breakend.",
+            "1217: For example, if the true situation is known to be either as depicted back in Figure 1, and we only observe the adjacency (U,V), and no adjacencies for W, X, Y, or Z, then we cannot be sure whether we have a simple reciprocal translocation or a more complex 3-break operation.",
+            "1218: Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates.",
+            "1219: The 4 lines of VCF representing this situation would be:",
+            "1220: ",
+            "1221: \\vspace{0.3cm}",
+            "1222: \\small"
+          ]
+        }
+      ],
+      "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde"
+    },
+    "VCFv4.4": {
+      "file": "VCFv4.4.tex",
+      "line_count": 2653,
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "anchors": {
+        "GT": 514,
+        "GL": 530,
+        "SV_INFO_START": 666,
+        "SV_FORMAT_START": 981,
+        "SVLEN_DEF": 720,
+        "CIPOS_DEF": 739,
+        "BREAKEND_START": 1234,
+        "SINGLE_BREAKEND": 1522,
+        "SV_CLAIM": 863,
+        "TANDEM_REPEAT": 1748,
+        "PHASE_SET_LIST": 598
+      },
+      "excerpts": [
+        {
+          "id": "GT",
+          "start_line": 514,
+          "end_line": 520,
+          "text": [
+            "514:   \\item GT (String): Genotype, encoded as allele value preceded by either of $/$ or $\\mid$ depending on whether that allele is considered phased. ",
+            "515:     The first phasing indicator may be omitted and is implicitly defined as $/$ if any phasing indicators are $/$ and $\\mid$ otherwise.",
+            "516:     The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on.",
+            "517:     For diploid calls examples could be $0/1$, $1\\mid0$, $/0/1$, or $1/2$, etc.",
+            "518:     Haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondria, should be indicated by having only one allele value.",
+            "519:     A triploid call might look like $0/0/1$, and a partially phased triploid call could be $|0/1/2$ to indicate that the first allele is phased with another variant in the VCF.",
+            "520:     If a call cannot be made for a sample at a given locus, `$.$' must be specified for each missing allele in the {\\tt GT} field (for example `$./.$' for a diploid genotype and `$.$' for haploid genotype)."
+          ]
+        },
+        {
+          "id": "GL",
+          "start_line": 530,
+          "end_line": 541,
+          "text": [
+            "530:   \\item GL (Float): Genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields.",
+            "531:   In presence of the GT field the same ploidy is expected; without GT field, diploidy is assumed.",
+            "532: ",
+            "533:   \\textsc{Genotype Ordering.} \\label{genotype-fields:genotype-ordering}",
+            "534:   In general case of ploidy P and N alternate alleles (0 is the REF and $1\\ldots N$ the alternate alleles), the ordering of genotypes for the likelihoods can be expressed by the following pseudocode with as many nested loops as ploidy:",
+            "535:   \\footnote{Note that we use inclusive \\texttt{for} loop boundaries.}",
+            "536:   \\begingroup",
+            "537:   \\small",
+            "538:   \\begin{lstlisting}",
+            "539:   for $a_P = 0\\ldots N$",
+            "540:     for $a_{P-1} = 0\\ldots a_P$",
+            "541:         $\\ldots$"
+          ]
+        },
+        {
+          "id": "SV_INFO_START",
+          "start_line": 666,
+          "end_line": 687,
+          "text": [
+            "666: \\section{INFO keys used for structural variants}",
+            "667: \\label{sv-info-keys}",
+            "668: \\begin{samepage}",
+            "669: The following INFO keys are reserved for encoding structural variants.",
+            "670: In general, when these keys are used by imprecise variants, the values should be best estimates.",
+            "671: When present, per allele values must be specified for all ALT alleles (including non-structural alleles).",
+            "672: Except in lists of strings, the missing value should be used as a placeholder for the ALT alleles for which the key does not have a meaningful value.",
+            "673: The empty string should be used to encode missing values in lists of strings.",
+            "674: ",
+            "675: \\footnotesize",
+            "676: \\begin{verbatim}",
+            "677: ##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+            "678: \\end{verbatim}",
+            "679: \\normalsize",
+            "680: ",
+            "681: Indicates that this record contains an imprecise structural variant $ALT$ allele. ALT alleles missing $CIPOS$ are to be interpreted as imprecise variants with an unspecified confidence interval.",
+            "682: ",
+            "683: If a precise ALT allele is present in a record with the $IMPRECISE$ flag, $CIPOS$ must be explicitly set for that allele, even if it is `0,0`.",
+            "684: ",
+            "685: \\footnotesize",
+            "686: \\begin{verbatim}",
+            "687: ##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">"
+          ]
+        },
+        {
+          "id": "SV_FORMAT_START",
+          "start_line": 981,
+          "end_line": 1000,
+          "text": [
+            "981: \\section{FORMAT keys used for structural variants}",
+            "982: \\label{sv-format-keys}",
+            "983: \\footnotesize",
+            "984: \\begin{verbatim}",
+            "985: ##FORMAT=<ID=CN,Number=1,Type=Float,Description=\"Copy number\">",
+            "986: ##FORMAT=<ID=CICN,Number=2,Type=Float,Description=\"Confidence interval around copy number\">",
+            "987: ##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality\">",
+            "988: ##FORMAT=<ID=CNL,Number=G,Type=Float,Description=\"Copy number genotype likelihood\">",
+            "989: ##FORMAT=<ID=CNP,Number=G,Type=Float,Description=\"Copy number posterior probabilities\">",
+            "990: ##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+            "991: ##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+            "992: ##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+            "993: \\end{verbatim}",
+            "994: \\normalsize",
+            "995: CN specifies the total copy number over the region defined in the $<$CNV$>$, $<$DEL$>$, $<$DUP$>$ alleles.",
+            "996: When FORMAT CN is present, all $<$CNV$>$, $<$DEL$>$ and $<$DUP$>$ alleles must have the same SVLEN.",
+            "997: CNQ, CNL, and CNP are analogous to GQ/GL/GP fields.",
+            "998: CNQ is encoded as a phred quality $-10log_{10}$ p(copy number genotype call is wrong).",
+            "999: CNL specifies a list of $log_{10}$ likelihoods for each potential copy number, starting from zero.",
+            "1000: CNP is 0 to 1-scaled copy number posterior probabilities (and otherwise defined precisely as the CNL field), intended to store imputed genotype probabilities."
+          ]
+        },
+        {
+          "id": "SVLEN_DEF",
+          "start_line": 720,
+          "end_line": 734,
+          "text": [
+            "720: ##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+            "721: \\end{verbatim}",
+            "722: \\normalsize",
+            "723: ",
+            "724: One value for each ALT allele.",
+            "725: ",
+            "726: SVLEN must be specified for symbolic structural variant alleles.",
+            "727: SVLEN is defined for $INS$, $DUP$, $INV$, and $DEL$ symbolic alleles as the number of the inserted, duplicated, inverted, and deleted bases respectively.",
+            "728: SVLEN is defined for $CNV$ symbolic alleles as the length of the segment over which the copy number variant is defined.",
+            "729: The missing value $.$ should be used for all other ALT alleles, including ALT alleles using breakend notation.",
+            "730: ",
+            "731: For backwards compatibility, a missing SVLEN should be inferred from the $END$ field of VCF records whose $ALT$ field contains a single symbolic allele.",
+            "732: ",
+            "733: For backwards compatibility, the absolute value of SVLEN should be taken and a negative SVLEN should be treated as positive values.",
+            "734: "
+          ]
+        },
+        {
+          "id": "CIPOS_DEF",
+          "start_line": 739,
+          "end_line": 748,
+          "text": [
+            "739: ##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+            "740: \\end{verbatim}",
+            "741: \\normalsize",
+            "742: ",
+            "743: If present, the number of entries must be twice the number of ALT alleles.",
+            "744: $CIPOS$ consists of successive pairs of records indicating the start and end offsets relative to $POS$ of the confidence interval for each ALT allele.",
+            "745: For example, $CIPOS=-5,5,0,0$ indicates a 5bp confidence interval in each direction for the first ALT allele, and an exact position for the second alt allele.",
+            "746: ",
+            "747: When breakpoint sequence homology exists, $CIPOS$ should be used in conjunction with $HOMSEQ$ to specify the interval of homology.",
+            "748: "
+          ]
+        },
+        {
+          "id": "BREAKEND_START",
+          "start_line": 1234,
+          "end_line": 1263,
+          "text": [
+            "1234: \\subsection{Specifying complex rearrangements with breakends}",
+            "1235: \\label{Breakends}",
+            "1236: ",
+            "1237: An arbitrary rearrangement can be summarized as a set of novel \\textbf{adjacencies}. Each adjacency ties together $2$ \\textbf{breakends}.",
+            "1238: The two breakends at either end of a novel adjacency are called \\textbf{mates}.",
+            "1239: ",
+            "1240: There is one line of VCF (i.e.\\ one record) for each of the two breakends in a novel adjacency.",
+            "1241: The REF field of a breakend record indicates a base or sequence s of bases beginning at position POS, as in all VCF records.",
+            "1242: The ALT field of a breakend record indicates a replacement for s.",
+            "1243: This ``breakend replacement'' has three parts:",
+            "1244: \\begin{enumerate}",
+            "1245:   \\item The string t that replaces places s.",
+            "1246:   The string t may be an extended version of s if some novel bases are inserted during the formation of the novel adjacency.",
+            "1247:   \\item The position p of the mate breakend, indicated by a string of the form ``chr:pos''.",
+            "1248:   This is the location of the first mapped base in the piece being joined at this novel adjacency.",
+            "1249:   \\item The direction that the joined sequence continues in, starting from p.",
+            "1250:   This is indicated by the orientation of square brackets surrounding p.",
+            "1251: ",
+            "1252: \\end{enumerate}",
+            "1253: These 3 elements are combined in 4 possible ways to create the ALT.",
+            "1254: In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t.",
+            "1255: The cases are:",
+            "1256: ",
+            "1257: \\vspace{0.3cm}",
+            "1258: \\begin{tabular}{ l l l }",
+            "1259: REF & ALT & Meaning \\\\",
+            "1260: s & t$[$p$[$ & piece extending to the right of p is joined after t \\\\",
+            "1261: s & t$]$p$]$ & reverse comp piece extending left of p is joined after t \\\\",
+            "1262: s & $]$p$]$t & piece extending to the left of p is joined before t \\\\",
+            "1263: s & $[$p$[$t & reverse comp piece extending right of p is joined before t \\\\"
+          ]
+        },
+        {
+          "id": "SINGLE_BREAKEND",
+          "start_line": 1522,
+          "end_line": 1531,
+          "text": [
+            "1522: \\subsubsection{Single breakends}",
+            "1523: We allow for the definition of a breakend that is not part of a novel adjacency.",
+            "1524: We call these single breakends, because they lack a mate.",
+            "1525: Breakends that are unobserved partners of breakends in observed novel adjacencies are one kind of single breakend.",
+            "1526: For example, if the true situation is known to be either as depicted back in Figure 1, and we only observe the adjacency (U,V), and no adjacencies for W, X, Y, or Z, then we cannot be sure whether we have a simple reciprocal translocation or a more complex 3-break operation.",
+            "1527: Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates.",
+            "1528: The 4 lines of VCF representing this situation would be:",
+            "1529: ",
+            "1530: \\vspace{0.3cm}",
+            "1531: \\small"
+          ]
+        },
+        {
+          "id": "SV_CLAIM",
+          "start_line": 863,
+          "end_line": 874,
+          "text": [
+            "863: ##INFO=<ID=SVCLAIM,Number=A,Type=String,Description=\"Claim made by the structural variant call. Valid values are D, J, DJ for abundance, adjacency and both respectively\">",
+            "864: \\end{verbatim}",
+            "865: \\normalsize",
+            "866: ",
+            "867: This field disambiguates the claim being made by DEL and DUP structural variants.",
+            "868: ",
+            "869: The distinction between different claim types is made necessary by the fact that many structural variants affect both the overall abundance of a region and its adjacency structure, but often only one of those effects is being directly observed.",
+            "870: It is important to specify which one, because if this is not done, other variants in a genome may make the call ambiguous.",
+            "871: ",
+            "872: For example, a ``conventional'' deletion usually both decreases the DNA abundance of a region and creates an adjacency between two sequence locations, which are the breakpoints of that deletion.",
+            "873: However, if a deletion or duplication is accompanied by a compensatory variant elsewhere in the genome, it may only cause changes in the adjacency structure, but not the overall copy number.",
+            "874: On the contrary, combinations of certain complex events in a genome may cause the overall copy number decrease, but not the linear excision of a sequence fragment."
+          ]
+        },
+        {
+          "id": "TANDEM_REPEAT",
+          "start_line": 1748,
+          "end_line": 1762,
+          "text": [
+            "1748: \\subsection{Representing tandem repeats}",
+            "1749: \\label{tandem-repeats}",
+            "1750: ",
+            "1751: The repetitive nature of both Short Tandem Repeats (STRs) and Variable Number Tandem Repeats (VNTRs) makes identifying variants in these regions difficult.",
+            "1752: As a result, specialised techniques have been developed to estimate the length and composition of these regions.",
+            "1753: Many of these techniques result in imprecise variant calls which cannot be unambiguously represented with non-symbolic alleles.",
+            "1754: To accommodate such variant calls, a the $<$CNV:TR$>$ symbolic allele can be used.",
+            "1755: ",
+            "1756: In general, tandem repeats can be represented in one or both of two complementary representations.",
+            "1757: When the exact sequence is known, the variant can be represented as a non-symbolic ALT allele.",
+            "1758: The variant can be represented either as a single VCF record containing the entire sequence in the ALT field, or over multiple phased records.",
+            "1759: When the exact sequence is not known, or when reporting tandem repeat 'summary' information, the variant can be represented as $<$CNV:TR$>$ copy number variants with the RN, RS, RL, RB, RC and RUL INFO fields encoding the nature of the repeat expansion/contraction.",
+            "1760: The allele sequence of a $<$CNV:TR$>$ record consists of the one or more repeat sequences, each of which consist of a single repeat unit repeated one or more times.",
+            "1761: That is, $<$CNV:TR$>$ records can encode multiple different repeat motifs in a single allele but do not support \"nested\" repeats.",
+            "1762: "
+          ]
+        },
+        {
+          "id": "PHASE_SET_LIST",
+          "start_line": 598,
+          "end_line": 609,
+          "text": [
+            "598:   \\item PSL (List of Strings): The list of phase sets, one for each allele specified in the {\\tt GT}. ",
+            "599:   Unphased alleles (without a $\\mid$ separator before them) must have the value '$.$' in their corresponding position in the list.",
+            "600:   Unlike {\\tt PS} (which is defined per CHROM), records with different CHROM but the same phase-set name are considered part of the same phase set.",
+            "601:   If an implementation cannot guarantee uniqueness of phase-set names across the VCF (for example, phasing a streaming VCF or each CHROM is processed independently in parallel), new phase-set names should be of the format CHROM*POS*ALLELE-NUMBER of the ``first'' allele which is included in this set, with ALLELE-NUMBER being the one-based index of the allele in the {\\tt GT} field, since multiple distinct phase-sets could start at the same position. \\footnote{The `*' character is used as a separator since `:' is not reserved in the CHROM column.}",
+            "602:   A given sample-genotype must not have values for both PS and PSL.",
+            "603:   In addition, PS and PSL are not interoperable, in that a PS mentioned in one variant cannot be referenced in a PSL in another,  since when used in PS it isn't connected to any specific haplotype (i.e. first or second), but PSL is. ",
+            "604:  ",
+            "605:   Example:",
+            "606:   ",
+            "607:   \\vspace{0.5em}",
+            "608:   \\begin{tabular}{ l l l l l l l l l l}",
+            "609:     \\#CHROM & POS & ID & REF & ALT & QUAL & FILTER & INFO & FORMAT & SAMPLE1\\\\"
+          ]
+        }
+      ],
+      "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a"
+    }
+  },
+  "semantic_deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "topic": "ALT star allele",
+      "finding": "VCFv4.2 adds * as an ALT allele for an allele missing due to an upstream deletion; VCFv4.1's ALT definition does not contain this option.",
+      "source_locators": [
+        "VCFv4.1.tex:166",
+        "VCFv4.2.tex:183"
+      ]
+    },
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "topic": "GT and genotype likelihoods",
+      "finding": "Both versions describe / and | as genotype-level unphased/phased separators. Both specify the diploid triangular GL ordering formula, with diploidy assumed when GT is absent. VCFv4.1 and 4.2 also include GLE for heterogeneous ploidy; this is not the same as arbitrary-ploidy canonical Number=G ordering.",
+      "source_locators": [
+        "VCFv4.1.tex:200-210",
+        "VCFv4.2.tex:217-227"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "Genotype ordering",
+      "finding": "VCFv4.3 replaces the diploid-only closed-form description with general ploidy P ordering pseudocode and an index formula; the source introduces a general combinatorial ordering model.",
+      "source_locators": [
+        "VCFv4.2.tex:224-225",
+        "VCFv4.3.tex:504-535"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "SV definitions",
+      "finding": "VCFv4.3 introduces explicit Number/Type reserved INFO and FORMAT tables and moves structural-variant definitions into a reorganized source. The table formalization must not be projected back into 4.1/4.2 prose lists.",
+      "source_locators": [
+        "VCFv4.2.tex:250-326",
+        "VCFv4.3.tex:601-870"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "GT phasing semantics",
+      "finding": "VCFv4.4 changes GT to allele-level phasing indicators: an allele is preceded by its phasing indicator, and the first indicator may be omitted and inferred from the remaining indicators. This is not identical to the earlier genotype-level separator description.",
+      "source_locators": [
+        "VCFv4.3.tex:492-504",
+        "VCFv4.4.tex:514-530"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "SV allele cardinality",
+      "finding": "VCFv4.4 revises SV fields to support multiple symbolic ALT alleles with per-ALT Number=A or paired Number=. vectors; INFO SVLEN becomes Number=A and CIPOS/CIEND become ALT-paired offset lists.",
+      "source_locators": [
+        "VCFv4.3.tex:601-672",
+        "VCFv4.4.tex:666-981"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "BND notation",
+      "finding": "VCFv4.4 disallows symbolic BND ALT records; the change log explicitly directs breakpoint representation to breakend replacement notation. Earlier 4.1-4.3 examples and definitions include SVTYPE=BND.",
+      "source_locators": [
+        "VCFv4.3.tex:601-672; 925-1481",
+        "VCFv4.4.tex:2583-2589"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "Tandem repeats and SV claims",
+      "finding": "VCFv4.4 adds tandem-repeat <CNV:TR> fields and SVCLAIM semantics, EVENTTYPE, and PSL/PSO/PSQ support for derivative-chromosome reconstruction; these are not 4.3 requirements.",
+      "source_locators": [
+        "VCFv4.4.tex:808-980; 1748-1909",
+        "VCFv4.4.tex:2583-2589"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "Copy-number semantics",
+      "finding": "VCFv4.4 changes INFO CN to allele-specific copy number and FORMAT CN to sample total copy number, including non-integer values; 4.3 uses earlier segment/breakend-oriented copy-number descriptions.",
+      "source_locators": [
+        "VCFv4.3.tex:665-679",
+        "VCFv4.4.tex:853-860; 985-989"
+      ]
+    },
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "topic": "PEDIGREE and clonal derivation",
+      "finding": "Both versions describe clonal derivation with PEDIGREE=<Derived=ID2,Original=ID1>, family trio relationships using Child/Mother/Father, and a general Name_0=G0-ID,...,Name_N=GN-ID form. The general form defines Name_0 as derived from N>=1 ancestor genomes.",
+      "source_locators": [
+        "VCFv4.1.tex:867-905",
+        "VCFv4.2.tex:884-922"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "PEDIGREE header syntax",
+      "finding": "VCFv4.3 changes the PEDIGREE syntax to ID=DerivedID,Original=OriginalID and ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN. The clonal and multiple-ancestor semantics persist, but header key layout changes.",
+      "source_locators": [
+        "VCFv4.2.tex:884-922",
+        "VCFv4.3.tex:1321-1364"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "PEDIGREE and haplotype semantics",
+      "finding": "VCFv4.4 retains the VCFv4.3 ID=SampleID PEDIGREE syntax and the haplotype uniqueness/conservation and duplication semantics; source text is moved to the corresponding 4.4 section.",
+      "source_locators": [
+        "VCFv4.3.tex:1321-1373",
+        "VCFv4.4.tex:1630-1682"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "topic": "Character percent-encoding",
+      "finding": "VCFv4.3 explicitly defines uppercase percent-escape codes for reserved delimiters and control characters. The corresponding specific escape-code rules are absent from VCFv4.1 and VCFv4.2 and must not be back-projected.",
+      "source_locators": [
+        "VCFv4.2.tex: full source scan",
+        "VCFv4.3.tex:84-94"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "topic": "Character percent-encoding",
+      "finding": "VCFv4.4 retains the VCFv4.3 uppercase percent-escape code set for colon, semicolon, equals, percent, comma, CR, LF and horizontal tab.",
+      "source_locators": [
+        "VCFv4.3.tex:84-94",
+        "VCFv4.4.tex:84-94"
+      ]
+    }
+  ],
+  "explicit_separation": [
+    "The 1000 Genomes SV conventions page is producer/project convention, not core VCF normative text.",
+    "BCF serialization details are not interchangeable with VCF textual grammar.",
+    "Examples and change-log entries are discovery/corroboration evidence; the corresponding normative section controls the requirement."
+  ],
+  "unresolved": [
+    "Perform row-by-row source-context reconciliation for every VCFv4.1-4.4 SV INFO/FORMAT definition, including table/prose row-level cardinality and footnotes.",
+    "Atomize each version's GT/GL/GLE, phase, SVLEN/END, confidence-interval, breakend and copy-number clauses into version-scoped atomic requirements.",
+    "Review all remaining VCFv4.1-4.4 tables, grammar productions, definitions, enumerations, footnotes and non-modal constraints.",
+    "Compare every candidate against VCFv4.0 after the historical source is pinned."
+  ],
+  "controls": {
+    "independent_review_status": "NOT_STARTED",
+    "implementation_mapping": "NOT_STARTED",
+    "test_execution": "NOT_STARTED",
+    "laboratory_qualification": "NOT_CLAIMED"
+  }
+}

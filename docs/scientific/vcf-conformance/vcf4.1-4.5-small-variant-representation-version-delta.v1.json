@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-small-variant-representation-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "Small-variant creation/decoding section corresponding to VCFv4.5 tables VCF5.10-VCF5.24.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "SECTION_PRESENT",
+      "locator": "VCFv4.1.tex:299-467"
+    },
+    "VCFv4_2": {
+      "status": "SECTION_PRESENT_NO_MATERIAL_TEXT_CHANGE_FOUND_VS_4.1",
+      "locator": "VCFv4.2.tex:316-484"
+    },
+    "VCFv4_3": {
+      "status": "SECTION_PRESENT_WITH_EXPLICIT_SORTING_RULE_AND_REF_ALT_EXPLANATION",
+      "locator": "VCFv4.3.tex:692-869"
+    },
+    "VCFv4_4": {
+      "status": "SECTION_RETAINED",
+      "locator": "VCFv4.4.tex:1003-1180"
+    },
+    "VCFv4_5": {
+      "status": "SECTION_RETAINED",
+      "locator": "VCFv4.5.tex:1164-1341"
+    }
+  },
+  "content_comparison": {
+    "method": "Trimmed non-empty source lines compared within the corresponding section ranges; version section line offsets differ. 4.1/4.2 and 4.3/4.4 and 4.4/4.5 normalized line sets are identical in the reviewed ranges; 4.2-to-4.3 contains wording and ordering changes recorded below.",
+    "VCFv4_1_to_4_2": "No normalized non-empty line differences found in the reviewed section.",
+    "VCFv4_3_to_4_4": "No normalized non-empty line differences found in the reviewed section.",
+    "VCFv4_4_to_4_5": "No normalized non-empty line differences found in the reviewed section."
+  },
+  "deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SMALL_VARIANT_SECTION",
+      "evidence": [
+        "VCFv4.1.tex:299-467",
+        "VCFv4.2.tex:316-484"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "EXPLICIT_RECORD_SORTING_REQUIREMENT_ADDED_AND_EXAMPLE_REWRITTEN",
+      "changes": [
+        {
+          "finding": "VCFv4.3 adds the explicit sentence 'positions must be sorted in increasing order' immediately before the SNP/deletion/insertion record example.",
+          "locator": "VCFv4.3.tex:711-716",
+          "force": "MUST"
+        },
+        {
+          "finding": "VCFv4.1/4.2 show the deletion at POS=2 after the SNP at POS=3 in the same example, while VCFv4.3 reorders the records and adds the sorting sentence.",
+          "locators": [
+            "VCFv4.1.tex:322-325",
+            "VCFv4.2.tex:339-342",
+            "VCFv4.3.tex:711-716"
+          ]
+        },
+        {
+          "finding": "VCFv4.3 rewrites the three example descriptions to specify position 3 and explicit REF/ALT fields; this is a clarity change, not a normalization algorithm.",
+          "locator": "VCFv4.3.tex:708-710"
+        }
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SMALL_VARIANT_SECTION",
+      "evidence": [
+        "VCFv4.3.tex:692-869",
+        "VCFv4.4.tex:1003-1180"
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SMALL_VARIANT_SECTION",
+      "evidence": [
+        "VCFv4.4.tex:1003-1180",
+        "VCFv4.5.tex:1164-1341"
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "table": "VCF5.10-VCF5.15",
+      "scope": "Small-variant encoding examples: SNP, deletion, insertion and multiallelic representation."
+    },
+    {
+      "table": "VCF5.16-VCF5.24",
+      "scope": "Small-variant decoding examples: SNP, insertion, deletion and mixed microsatellite records."
+    }
+  ],
+  "interpretation_controls": [
+    "The explicit sorted-position requirement is first observed in the VCFv4.3 small-variant section; do not backfill it into VCFv4.1/4.2 without independent source evidence elsewhere.",
+    "The examples show anchoring and REF/ALT construction but do not specify a canonical left-alignment or normalization algorithm.",
+    "The source explicitly notes that VCF does not retain the molecular equivalence among bases shown in alignment examples; do not infer preservation of alignment placement.",
+    "Example tables are informative; normative force comes from the surrounding prose."
+  ],
+  "remaining": [
+    "Independent reviewer must verify whether any other VCFv4.1/4.2 section imposes a record sorting requirement beyond this reviewed small-variant section.",
+    "Map the VCFv4.3 sorting clause and REF/ALT anchoring statements to atomic requirement IDs.",
+    "Add tests for same-CHROM increasing POS ordering, multiallelic REF/ALT representation and examples that do not imply normalization.",
+    "No implementation or test execution is claimed."
+  ]
+}

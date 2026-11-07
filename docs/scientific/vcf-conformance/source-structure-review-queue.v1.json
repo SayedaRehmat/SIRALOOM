@@ -1,0 +1,1159 @@
+{
+  "schema_version": "1.0.0",
+  "queue_id": "siraloom-vcf-source-structure-review-queue",
+  "status": "TABLE_ENVIRONMENTS_INDEXED_ROW_SEMANTICS_REVIEW_PENDING",
+  "source_manifest": "PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+  "source_structure_inventory": "Existing PR #282 docs/implementation/VCF_NORMATIVE_SECTION_INVENTORY.json",
+  "purpose": "Track source structures that may encode requirements without normative modal language. These are review targets, not asserted normative clauses.",
+  "discovery_scope": [
+    "section_and_subsection_headings",
+    "table_captions_and_rows",
+    "grammar_productions",
+    "field_definition_tables",
+    "reserved_key_definitions",
+    "enumerated_value_sets",
+    "footnotes",
+    "cross_references",
+    "examples_and_constraints",
+    "version_change_notes_as_discovery_only"
+  ],
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "headings": [
+        {
+          "level": "section",
+          "title": "The VCF specification"
+        },
+        {
+          "level": "subsection",
+          "title": "An example"
+        },
+        {
+          "level": "subsection",
+          "title": "Meta-information lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "File format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Information field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Filter field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Individual format field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Alternative allele field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Assembly field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Contig field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Pedigree field format"
+        },
+        {
+          "level": "subsection",
+          "title": "Header line syntax"
+        },
+        {
+          "level": "subsection",
+          "title": "Data lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Fixed fields"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Genotype fields"
+        },
+        {
+          "level": "section",
+          "title": "Understanding the VCF format and the haplotype representation"
+        },
+        {
+          "level": "section",
+          "title": "INFO keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "FORMAT keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "Representing variation in VCF records"
+        },
+        {
+          "level": "subsection",
+          "title": "Creating VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 1"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 2"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 3"
+        },
+        {
+          "level": "subsection",
+          "title": "Decoding VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "SNP VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Insertion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Deletion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Mixed VCF record for a microsatellite"
+        },
+        {
+          "level": "subsection",
+          "title": "Encoding Structural Variants"
+        },
+        {
+          "level": "subsection",
+          "title": "Specifying complex rearrangements with breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inserted Sequence"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Large Insertions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Multiple mates"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Explicit partners"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Telomeres"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Event modifiers"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inversions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Uncertainty around breakend location"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Single breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample mixtures"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Clonal derivation relationships"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Phasing adjacencies in an aneuploid context"
+        }
+      ],
+      "table_caption_count": 11,
+      "table_captions": [
+        "All possible orientations of breakends",
+        "Inserted sequence between breakends",
+        "Inserted contig",
+        "Breakend with multiple mates",
+        "Partner breakends",
+        "Telomeres",
+        "Rearrangements",
+        "Inversion",
+        "Homology",
+        "Pedigree example",
+        "Phasing"
+      ],
+      "labels": [
+        "BcfSiteEncoding",
+        "GenotypeEncoding"
+      ]
+    },
+    {
+      "version": "VCFv4.2",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "headings": [
+        {
+          "level": "section",
+          "title": "The VCF specification"
+        },
+        {
+          "level": "subsection",
+          "title": "An example"
+        },
+        {
+          "level": "subsection",
+          "title": "Meta-information lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "File format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Information field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Filter field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Individual format field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Alternative allele field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Assembly field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Contig field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Pedigree field format"
+        },
+        {
+          "level": "subsection",
+          "title": "Header line syntax"
+        },
+        {
+          "level": "subsection",
+          "title": "Data lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Fixed fields"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Genotype fields"
+        },
+        {
+          "level": "section",
+          "title": "Understanding the VCF format and the haplotype representation"
+        },
+        {
+          "level": "section",
+          "title": "INFO keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "FORMAT keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "Representing variation in VCF records"
+        },
+        {
+          "level": "subsection",
+          "title": "Creating VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 1"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 2"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 3"
+        },
+        {
+          "level": "subsection",
+          "title": "Decoding VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "SNP VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Insertion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Deletion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Mixed VCF record for a microsatellite"
+        },
+        {
+          "level": "subsection",
+          "title": "Encoding Structural Variants"
+        },
+        {
+          "level": "subsection",
+          "title": "Specifying complex rearrangements with breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inserted Sequence"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Large Insertions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Multiple mates"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Explicit partners"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Telomeres"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Event modifiers"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inversions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Uncertainty around breakend location"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Single breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample mixtures"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Clonal derivation relationships"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Phasing adjacencies in an aneuploid context"
+        }
+      ],
+      "table_caption_count": 11,
+      "table_captions": [
+        "All possible orientations of breakends",
+        "Inserted sequence between breakends",
+        "Inserted contig",
+        "Breakend with multiple mates",
+        "Partner breakends",
+        "Telomeres",
+        "Rearrangements",
+        "Inversion",
+        "Homology",
+        "Pedigree example",
+        "Phasing"
+      ],
+      "labels": [
+        "BcfSiteEncoding",
+        "GenotypeEncoding"
+      ]
+    },
+    {
+      "version": "VCFv4.3",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "headings": [
+        {
+          "level": "section",
+          "title": "The VCF specification"
+        },
+        {
+          "level": "subsection",
+          "title": "An example"
+        },
+        {
+          "level": "subsection",
+          "title": "Character encoding, non-printable characters and characters with special meaning"
+        },
+        {
+          "level": "subsection",
+          "title": "Data types"
+        },
+        {
+          "level": "subsection",
+          "title": "Meta-information lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "File format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Information field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Filter field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Individual format field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Alternative allele field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Assembly field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Contig field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Pedigree field format"
+        },
+        {
+          "level": "subsection",
+          "title": "Header line syntax"
+        },
+        {
+          "level": "subsection",
+          "title": "Data lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Fixed fields"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Genotype fields"
+        },
+        {
+          "level": "section",
+          "title": "Understanding the VCF format and the haplotype representation"
+        },
+        {
+          "level": "subsection",
+          "title": "VCF tag naming conventions"
+        },
+        {
+          "level": "section",
+          "title": "INFO keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "FORMAT keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "Representing variation in VCF records"
+        },
+        {
+          "level": "subsection",
+          "title": "Creating VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 1"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 2"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 3"
+        },
+        {
+          "level": "subsection",
+          "title": "Decoding VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "SNP VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Insertion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Deletion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Mixed VCF record for a microsatellite"
+        },
+        {
+          "level": "subsection",
+          "title": "Encoding Structural Variants"
+        },
+        {
+          "level": "subsection",
+          "title": "Specifying complex rearrangements with breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inserted Sequence"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Large Insertions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Multiple mates"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Explicit partners"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Telomeres"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Event modifiers"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inversions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Uncertainty around breakend location"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Single breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample mixtures"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Clonal derivation relationships"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Phasing adjacencies in an aneuploid context"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing unspecified alleles and REF-only blocks (gVCF)"
+        }
+      ],
+      "table_caption_count": 13,
+      "table_captions": [
+        "Reserved INFO keys",
+        "Reserved genotype keys",
+        "All possible orientations of breakends",
+        "Inserted sequence between breakends",
+        "Inserted contig",
+        "Breakend with multiple mates",
+        "Partner breakends",
+        "Telomeres",
+        "Rearrangements",
+        "Inversion",
+        "Homology",
+        "Pedigree example",
+        "Phasing"
+      ],
+      "labels": [
+        "character-encoding",
+        "sec-contig-field",
+        "header-line",
+        "data-lines",
+        "table:reserved-info",
+        "table:reserved-genotypes",
+        "genotype-fields:genotype-ordering",
+        "sv-info-keys",
+        "sv-format-keys",
+        "Breakends",
+        "PedigreeInDetail",
+        "BcfSiteEncoding",
+        "GenotypeEncoding",
+        "BcfTypeEncoding"
+      ]
+    },
+    {
+      "version": "VCFv4.4",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "headings": [
+        {
+          "level": "section",
+          "title": "The VCF specification"
+        },
+        {
+          "level": "subsection",
+          "title": "An example"
+        },
+        {
+          "level": "subsection",
+          "title": "Character encoding, non-printable characters and characters with special meaning"
+        },
+        {
+          "level": "subsection",
+          "title": "Data types"
+        },
+        {
+          "level": "subsection",
+          "title": "Meta-information lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "File format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Information field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Filter field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Individual format field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Alternative allele field format",
+          "anchor": "altfield"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Assembly field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Contig field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Pedigree field format"
+        },
+        {
+          "level": "subsection",
+          "title": "Header line syntax"
+        },
+        {
+          "level": "subsection",
+          "title": "Data lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Fixed fields"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Genotype fields"
+        },
+        {
+          "level": "section",
+          "title": "Understanding the VCF format and the haplotype representation"
+        },
+        {
+          "level": "subsection",
+          "title": "VCF tag naming conventions"
+        },
+        {
+          "level": "section",
+          "title": "INFO keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "FORMAT keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "Representing variation in VCF records"
+        },
+        {
+          "level": "subsection",
+          "title": "Creating VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 1"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 2"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 3"
+        },
+        {
+          "level": "subsection",
+          "title": "Decoding VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "SNP VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Insertion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Deletion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Mixed VCF record for a microsatellite"
+        },
+        {
+          "level": "subsection",
+          "title": "Encoding Structural Variants"
+        },
+        {
+          "level": "subsection",
+          "title": "Specifying complex rearrangements with breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inserted Sequence"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Large Insertions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Multiple mates"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Explicit partners"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Telomeres"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Event modifiers"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inversions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Uncertainty around breakend location"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Single breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample mixtures"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Clonal derivation relationships"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing unspecified alleles and REF-only blocks (gVCF)"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing copy number variation"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing tandem repeats"
+        }
+      ],
+      "table_caption_count": 13,
+      "table_captions": [
+        "Reserved INFO keys",
+        "Reserved genotype keys",
+        "All possible orientations of breakends",
+        "Inserted sequence between breakends",
+        "Inserted contig",
+        "Breakend with multiple mates",
+        "Partner breakends",
+        "Telomeres",
+        "Rearrangements",
+        "Inversion",
+        "Homology",
+        "Pedigree example",
+        "$<$CNV:TR$>$ Tandem Repeats"
+      ],
+      "labels": [
+        "character-encoding",
+        "altfield",
+        "sec-contig-field",
+        "header-line",
+        "data-lines",
+        "fixed-fields",
+        "fixed-fields-alt",
+        "table:reserved-info",
+        "table:reserved-genotypes",
+        "genotype-fields:genotype-ordering",
+        "sv-info-keys",
+        "sv-format-keys",
+        "Breakends",
+        "explicit-partners",
+        "PedigreeInDetail",
+        "unspecified-allele",
+        "cnv",
+        "tandem-repeats",
+        "BcfSiteEncoding",
+        "GenotypeEncoding",
+        "BcfTypeEncoding"
+      ]
+    },
+    {
+      "version": "VCFv4.5",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+      "headings": [
+        {
+          "level": "section",
+          "title": "The VCF specification"
+        },
+        {
+          "level": "subsection",
+          "title": "An example"
+        },
+        {
+          "level": "subsection",
+          "title": "Character encoding, non-printable characters and characters with special meaning"
+        },
+        {
+          "level": "subsection",
+          "title": "Data types"
+        },
+        {
+          "level": "subsection",
+          "title": "Meta-information lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "File format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Information field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Filter field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Individual format field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Alternative allele field format",
+          "anchor": "altfield"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Assembly field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Contig field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample field format"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Pedigree field format"
+        },
+        {
+          "level": "subsection",
+          "title": "Header line syntax"
+        },
+        {
+          "level": "subsection",
+          "title": "Data lines"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Fixed fields"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Genotype fields"
+        },
+        {
+          "level": "section",
+          "title": "Understanding the VCF format and the haplotype representation"
+        },
+        {
+          "level": "subsection",
+          "title": "VCF tag naming conventions"
+        },
+        {
+          "level": "section",
+          "title": "INFO keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "FORMAT keys used for structural variants"
+        },
+        {
+          "level": "section",
+          "title": "Representing variation in VCF records"
+        },
+        {
+          "level": "subsection",
+          "title": "Creating VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 1"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 2"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Example 3"
+        },
+        {
+          "level": "subsection",
+          "title": "Decoding VCF entries for SNPs and small indels"
+        },
+        {
+          "level": "subsubsection",
+          "title": "SNP VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Insertion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Deletion VCF record"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Mixed VCF record for a microsatellite"
+        },
+        {
+          "level": "subsection",
+          "title": "Encoding Structural Variants"
+        },
+        {
+          "level": "subsection",
+          "title": "Specifying complex rearrangements with breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inserted Sequence"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Large Insertions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Multiple mates"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Explicit partners"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Telomeres"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Event modifiers"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Inversions"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Uncertainty around breakend location"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Single breakends"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Sample mixtures"
+        },
+        {
+          "level": "subsubsection",
+          "title": "Clonal derivation relationships"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing unspecified alleles and REF-only blocks (gVCF)"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing copy number variation"
+        },
+        {
+          "level": "subsection",
+          "title": "Representing tandem repeats"
+        }
+      ],
+      "table_caption_count": 13,
+      "table_captions": [
+        "Reserved INFO keys",
+        "Reserved genotype keys",
+        "All possible orientations of breakends",
+        "Inserted sequence between breakends",
+        "Inserted contig",
+        "Breakend with multiple mates",
+        "Partner breakends",
+        "Telomeres",
+        "Rearrangements",
+        "Inversion",
+        "Homology",
+        "Pedigree example",
+        "$<$CNV:TR$>$ Tandem Repeats"
+      ],
+      "labels": [
+        "character-encoding",
+        "altfield",
+        "sec-contig-field",
+        "header-line",
+        "data-lines",
+        "fixed-fields",
+        "fixed-fields-alt",
+        "table:reserved-info",
+        "table:reserved-genotypes",
+        "genotype-fields:genotype-ordering",
+        "sv-info-keys",
+        "sv-format-keys",
+        "Breakends",
+        "explicit-partners",
+        "PedigreeInDetail",
+        "unspecified-allele",
+        "cnv",
+        "tandem-repeats",
+        "BcfSiteEncoding",
+        "GenotypeEncoding",
+        "BcfTypeEncoding"
+      ]
+    }
+  ],
+  "historical_vcf40": {
+    "source_catalog": "Existing PR #282 docs/implementation/VCF40_HISTORICAL_SOURCE_AND_CLAUSE_CATALOG.md",
+    "current_catalog_entries": 66,
+    "catalog_source_bytes_pinned": false,
+    "catalog_review_status": "FIRST_PASS_PARTIAL_NOT_COMPLETE",
+    "sv_conventions_separate_from_core": true
+  },
+  "counts": {
+    "maintained_spec_versions": 5,
+    "total_headings": 229,
+    "total_table_captions": 61,
+    "modal_language_candidate_lines": 510,
+    "atomic_requirements_created": 0,
+    "independently_reviewed_atomic_requirements": 0
+  },
+  "controls": {
+    "candidate_line_does_not_equal_requirement": true,
+    "heading_does_not_equal_requirement": true,
+    "table_caption_does_not_equal_requirement": true,
+    "normative_force_must_be_source_supported": true,
+    "recommendations_must_not_be_promoted_to_mandatory": true,
+    "informative_examples_must_not_be_promoted_to_normative": true,
+    "producer_extensions_must_be_separate_from_vcf_core": true
+  },
+  "table_structure_inventory": "table-structure-inventory.v1.json",
+  "structural_counts": {
+    "vcf_specific_table_environments_by_version": {
+      "VCFv4.1": 35,
+      "VCFv4.2": 35,
+      "VCFv4.3": 40,
+      "VCFv4.4": 41,
+      "VCFv4.5": 44
+    },
+    "total_table_environments": 195,
+    "row_terminator_lines_navigation_only": 939,
+    "footnote_marker_lines": 123,
+    "enumerated_list_starts": 84
+  }
+}

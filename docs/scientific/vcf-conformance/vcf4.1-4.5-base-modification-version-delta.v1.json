@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-base-modification-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_WITH_UPSTREAM_ALIAS_BLOCKER_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "VCFv4.5 FORMAT M/DPM/ADM base-modification fields, their 30 named aliases, Number=M cardinality and example tables VCF5.2/VCF5.7.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND",
+      "scan": "No M[0-9]+[ACGTUN], M5mC or base-modification field family found in pinned VCFv4.1 source scan."
+    },
+    "VCFv4_2": {
+      "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND",
+      "scan": "No M[0-9]+[ACGTUN], M5mC or base-modification field family found in pinned VCFv4.2 source scan."
+    },
+    "VCFv4_3": {
+      "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND",
+      "scan": "No M[0-9]+[ACGTUN], M5mC or base-modification field family found in pinned VCFv4.3 source scan."
+    },
+    "VCFv4_4": {
+      "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND",
+      "scan": "No M[0-9]+[ACGTUN], M5mC or base-modification field family found in pinned VCFv4.4 source scan."
+    },
+    "VCFv4_5": {
+      "status": "INTRODUCED",
+      "locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758"
+      ]
+    }
+  },
+  "fields": {
+    "M": {
+      "number": "M",
+      "type": "Float",
+      "table_locator": "VCFv4.5.tex:556",
+      "definition_locator": "VCFv4.5.tex:720-728",
+      "meaning": "Fraction of DNA or RNA bases modified with the given ChEBI ID; values must be between 0 and 1."
+    },
+    "DPM": {
+      "number": "M",
+      "type": "Integer",
+      "table_locator": "VCFv4.5.tex:557",
+      "definition_locator": "VCFv4.5.tex:730-734",
+      "meaning": "Total read depth for reads able to detect the base modification with the given ChEBI ID."
+    },
+    "ADM": {
+      "number": "M",
+      "type": "Integer",
+      "table_locator": "VCFv4.5.tex:558",
+      "definition_locator": "VCFv4.5.tex:736-740",
+      "meaning": "Read depth for reads with the base modification with the given ChEBI ID."
+    }
+  },
+  "cardinality_and_ordering": {
+    "locator": "VCFv4.5.tex:199-218",
+    "rules": [
+      "Number=M has one value for each possible base modification for the corresponding ChEBI ID; cardinality depends on genotype and possible modifications for corresponding alleles.",
+      "The ID suffix must be A, C, G, T, U or N; U is synonymous with T.",
+      "If any base-modification key is present for a sample, GT must be defined.",
+      "The number of values for an allele equals the number of bases on either strand in its allele sequence that can contain the modification.",
+      "Values follow the order in which eligible bases occur in the allele sequence.",
+      "For N modifications, positive and negative strand values are both represented, with the negative-strand value immediately after the positive-strand value.",
+      "Values follow GT allele order and phasing; unphased allele values are aggregated at the first occurrence of the unphased allele value.",
+      "MISSING allele values and symbolic alleles contain no relevant bases and contribute no modification values.",
+      "Unstranded values are stored at the base with lowest POS and other values are MISSING; unstranded N modifications use the positive-strand value and missing negative-strand value."
+    ]
+  },
+  "reserved_key_and_alias_rules": {
+    "locator": "VCFv4.5.tex:720-758",
+    "rules": [
+      "All FORMAT keys matching M[0-9]+[ACGTUN], DPM[0-9]+[ACGTUN] and ADM[0-9]+[ACGTUN] are reserved, even where the ChEBI ID does not correspond to a valid base modification.",
+      "The named aliases are recommended instead of corresponding ChEBI keys.",
+      "ADFM[0-9]+[ACGTUN] and ADRM[0-9]+[ACGTUN] are not reserved; Type=M fields are intrinsically stranded.",
+      "Base-modification information on a reference-block record applies to all applicable bases covered by the block."
+    ],
+    "aliases": [
+      {
+        "modification": "5-Methylcytosine",
+        "M": "M5mC",
+        "DPM": "DPM5mC",
+        "ADM": "ADM5mC",
+        "chebi": "27551C"
+      },
+      {
+        "modification": "5-Hydroxymethylcytosine",
+        "M": "M5hmC",
+        "DPM": "DPM5hmC",
+        "ADM": "ADM5hmC",
+        "chebi": "76792C"
+      },
+      {
+        "modification": "5-Formylcytosine",
+        "M": "M5fC",
+        "DPM": "DPM5fC",
+        "ADM": "ADM5fC",
+        "chebi": "76794C"
+      },
+      {
+        "modification": "5-Carboxylcytosine",
+        "M": "M5caC",
+        "DPM": "DPM5caC",
+        "ADM": "ADM5caC",
+        "chebi": "76793C"
+      },
+      {
+        "modification": "5-Hydroxymethyluracil",
+        "M": "M5hmU",
+        "DPM": "DPM5hmU",
+        "ADM": "ADM5hmU",
+        "chebi": "16964T"
+      },
+      {
+        "modification": "5-Formyluracil",
+        "M": "M5fU",
+        "DPM": "DPM5fU",
+        "ADM": "ADM5fU",
+        "chebi": "80961T"
+      },
+      {
+        "modification": "5-Carboxyluracil",
+        "M": "M5caU",
+        "DPM": "DPM5caU",
+        "ADM": "ADM5caU",
+        "chebi": "17477T"
+      },
+      {
+        "modification": "6-Methyladenine",
+        "M": "M6mA",
+        "DPM": "DPM6mA",
+        "ADM": "ADM6mA",
+        "chebi": "28871A"
+      },
+      {
+        "modification": "8-Oxoguanine",
+        "M": "M8oxoG",
+        "DPM": "DPM8oxoG",
+        "ADM": "ADM8oxoG",
+        "chebi": "44605G"
+      },
+      {
+        "modification": "Xanthosine",
+        "M": "MXaoN_or_MxaoN_unresolved",
+        "DPM": "DPMXaoN_or_DPMxaoN_unresolved",
+        "ADM": "ADMXaoN_or_ADMxaoN_unresolved",
+        "chebi": "18107N"
+      }
+    ]
+  },
+  "examples": {
+    "VCF5_2": "VCFv4.5.tex:223-229",
+    "VCF5_7": "VCFv4.5.tex:749-755",
+    "interpretation": "Informative examples only; constraints are sourced from Number=M and M/DPM/ADM definitions, not example records."
+  },
+  "source_internal_blocker": {
+    "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+    "table_spellings": [
+      "MXaoN",
+      "DPMXaoN",
+      "ADMXaoN"
+    ],
+    "prose_spellings": [
+      "MxaoN",
+      "DPMxaoN",
+      "ADMxaoN"
+    ],
+    "table_locator": "VCFv4.5.tex:586-588",
+    "prose_locators": [
+      "VCFv4.5.tex:724",
+      "VCFv4.5.tex:734",
+      "VCFv4.5.tex:740"
+    ],
+    "history": "Both spellings were introduced in the same upstream VCFv4.5 RC2 commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf; no later correction was found in retrieved file history.",
+    "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
+    "control": "Do not silently normalize case or accept both spellings without authoritative clarification."
+  },
+  "remaining": [
+    "Independent reviewer must validate Number=M cardinality, GT dependency, strand order, unphased aggregation, missing/symbolic allele behavior and reference-block propagation.",
+    "Resolve the upstream xanthosine alias capitalization ambiguity.",
+    "Map every M/DPM/ADM key and alias to atomic requirement IDs and tests.",
+    "No implementation or test execution is claimed."
+  ]
+}

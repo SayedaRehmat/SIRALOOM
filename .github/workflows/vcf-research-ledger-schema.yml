@@ -1,0 +1,31 @@
+name: VCF research ledger schema validation
+
+on:
+  pull_request:
+    paths:
+      - "docs/scientific/vcf-conformance/**"
+      - ".github/workflows/vcf-research-ledger-schema.yml"
+  push:
+    branches:
+      - "research/vcf-conformance-phase-a-20261105"
+    paths:
+      - "docs/scientific/vcf-conformance/**"
+      - ".github/workflows/vcf-research-ledger-schema.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-vcf-research-registries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out research branch
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned JSON Schema validator
+        run: python -m pip install "jsonschema==4.26.0"
+      - name: Validate Draft 2020-12 schema and all research registries
+        run: python docs/scientific/vcf-conformance/scripts/validate_atomic_registry_schema.py

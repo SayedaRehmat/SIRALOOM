@@ -1,0 +1,3481 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-table-semantic-review-queue",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_COMPLETE_FOR_ALL_44_TABLES_INDEPENDENT_REVIEW_AND_ONE_UPSTREAM_ALIAS_RESOLUTION_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "file": "VCFv4.5.tex",
+    "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+  },
+  "scope": "All 44 VCF-only table environments indexed by the VCFv4.5 source inventory. Additional raw TeX table environments belong to BCF serialization and are excluded from this VCF-text queue.",
+  "method": "All 44 VCFv4.5 table environments have author-context dispositions. The 21 reserved INFO rows and 63 reserved FORMAT rows have been extracted as separate descriptive field-definition candidates and linked to the atomic ledger. These candidates are not independent approvals; field-specific prose reconciliation, cross-version applicability and independent review remain open. Row terminator counts are navigation metadata, not semantic row or requirement counts. A supplemental author adjudication artifact now records a table-specific normative/informative disposition for all 44 tables and replaces repeated generic open questions with explicit locator-level context and version-delta work. These dispositions do not constitute independent review; all 44 tables retain open locator-level reconciliation and version comparison. Exact source-context line ranges and contextual findings are now recorded per table using the row-semantic, SV/breakend and pedigree/gVCF context reviews. This closes the author locator-capture subtask only; all 44 version-delta assessments and all independent reviews remain open. A preliminary section-level applicability comparison against VCFv4.1-4.4 is now recorded per table. It identifies presence/absence and relevant source locators, but does not establish exact table identity or complete clause-level semantic deltas. All 44 tables still require full clause-level version reconciliation.",
+  "counts": {
+    "indexed_vcf_tables": 44,
+    "not_semantically_reviewed": 0,
+    "atomic_requirements_created": 109,
+    "excluded_bcf_tables": "Separate BCF conformance scope.",
+    "author_context_reviewed": 44,
+    "independently_reviewed": 0,
+    "reserved_info_rows_atomized": 21,
+    "reserved_format_rows_atomized": 63,
+    "author_dispositions_recorded": 44,
+    "locator_level_context_reconciliations_pending": 0,
+    "version_delta_assessments_not_yet_performed": 0,
+    "semantic_reconciliation_incomplete": 44,
+    "source_internal_blocking_ambiguities": 1,
+    "open_review_questions": 1,
+    "author_context_locator_reconciliations_complete": 44,
+    "preliminary_version_comparisons_recorded": 44,
+    "full_clause_level_version_reconciliations_pending": 0,
+    "genotype_ordering_version_delta_reconciled": 1,
+    "phase_set_list_version_deltas_reconciled": 2,
+    "base_modification_version_deltas_reconciled": 2,
+    "gvcf_reference_block_version_deltas_reconciled": 1,
+    "character_encoding_version_delta_reconciled": 1,
+    "local_allele_version_deltas_reconciled": 1,
+    "small_variant_representation_version_deltas_reconciled": 15,
+    "breakend_version_deltas_reconciled": 17,
+    "sample_mixture_pedigree_version_deltas_reconciled": 2,
+    "reserved_info_format_row_delta_matrices_reconciled": 2,
+    "info_reserved_row_mappings_complete": 1,
+    "format_reserved_row_mappings_complete": 1,
+    "table_version_deltas_reconciled": 44
+  },
+  "tables": [
+    {
+      "table_id": "VCF5.1",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 84,
+        "end_line": 93,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Character encoding, non-printable characters and characters with special meaning",
+      "preceding_context": "Note that non-printable characters U+0000--U+0008, U+000B--U+000C, U+000E--U+001F are disallowed. Line separators must be CR+LF or LF and they are allowed only as line separators at end of line. Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:  \\begingroup\\footnotesize",
+      "row_terminator_lines": 7,
+      "classification": "CHARACTER_ENCODING_ENUMERATION",
+      "semantic_review_target": "Enumerate escaped character mappings and reconcile with encoding, special-character and quoting rules.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000114",
+        "VCF-REQ-000115",
+        "VCF-REQ-000116",
+        "VCF-REQ-000117",
+        "VCF-REQ-000118",
+        "VCF-REQ-000119",
+        "VCF-REQ-000120",
+        "VCF-REQ-000121"
+      ],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_ENCODING_MAPPING",
+      "review_notes": "Eight escape mappings reconciled to preceding UTF-8, BOM, control-character, delimiter and uppercase percent-encoding prose; each mapping atomized separately.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_CHARACTER_ENCODING_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 75,
+          "end_line": 95,
+          "anchor_id": "CHARACTER-ENCODING",
+          "review_finding": "UTF-8, no BOM, prohibited control characters, CRLF/LF line separators, special delimiter handling and eight uppercase percent-encoding mappings; table is a normative encoding enumeration.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_DEDICATED_ENCODING_SECTION_OR_TABLE_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "locator": "VCFv4.3.tex:75-95"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:75-95"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:73-93"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-character-encoding-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.2",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 223,
+        "end_line": 229,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Individual format field format",
+      "preceding_context": "For example, unstranded 5mC CpG methylation should be stored on the VCF recording containing the C with the M5mC value of the subsequent G set to MISSING or omitted entirely. Similarly, unstranded MxaoN values should be stored in the positive strand value with the negative strand value MISSING.  Examples:   \\vspace{0.5em}",
+      "row_terminator_lines": 5,
+      "classification": "BASE_MODIFICATION_EXAMPLE",
+      "semantic_review_target": "Validate example value placement against M/DPM/ADM rules; examples do not create independent normative obligations.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_BASE_MODIFICATION_EXAMPLE",
+      "review_notes": "Checked against M/DPM/ADM suffix, allele-order, strand and missing-value prose; illustrative, not an independent normative rule.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 188,
+          "end_line": 229,
+          "anchor_id": "FORMAT-CARDINALITY-AND-BASEMOD-EXAMPLE",
+          "review_finding": "Number definitions and M cardinality/genotype dependency precede the illustrative xanthosine/base-modification example.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 720,
+          "end_line": 758,
+          "anchor_id": "BASE-MODIFICATION-FIELD-DEFINITIONS",
+          "review_finding": "M/DPM/ADM key families, alias recommendations, value range, GT dependency, strand/missing rules and reference-block propagation; compare case-sensitive alias spelling against reserved table.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.4": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:223-229; 720-758"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.3",
+      "environment": "longtable",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 443,
+        "end_line": 481,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Fixed fields",
+      "preceding_context": "Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}.   Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).   See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants. \\end{enumerate}",
+      "row_terminator_lines": 26,
+      "classification": "RESERVED_INFO_DEFINITION_TABLE",
+      "semantic_review_target": "Atomize reserved INFO key ID, Number, Type, descriptions, conditions, aliases, missing-value behavior and cross-references.",
+      "review_status": "AUTHOR_ROW_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000143",
+        "VCF-REQ-000144",
+        "VCF-REQ-000145",
+        "VCF-REQ-000146",
+        "VCF-REQ-000147",
+        "VCF-REQ-000148",
+        "VCF-REQ-000149",
+        "VCF-REQ-000150",
+        "VCF-REQ-000151",
+        "VCF-REQ-000152",
+        "VCF-REQ-000153",
+        "VCF-REQ-000154",
+        "VCF-REQ-000155",
+        "VCF-REQ-000156",
+        "VCF-REQ-000157",
+        "VCF-REQ-000158",
+        "VCF-REQ-000159",
+        "VCF-REQ-000160",
+        "VCF-REQ-000161",
+        "VCF-REQ-000162",
+        "VCF-REQ-000163"
+      ],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_RESERVED_INFO_TABLE",
+      "review_notes": "All 21 rows reviewed against INFO grammar, Number/Type, optionality, allele cardinality and SV INFO cross-reference; reserved rows are not universally required.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_INFO_RESERVED_ROW_MAPPING_COMPLETE_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 428,
+          "end_line": 495,
+          "anchor_id": "RESERVED-INFO-TABLE",
+          "review_finding": "Governing reserved-key optionality, 21 row definitions, END deprecation/computed compatibility semantics.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 841,
+          "end_line": 1066,
+          "anchor_id": "SV-INFO-KEYS",
+          "review_finding": "Detailed SV INFO definitions and ALT-specific cardinality/missing-value rules for reserved SV keys.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.1.tex:70-90 and reserved INFO list"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.2.tex:70-90 and reserved INFO list"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.3.tex:445-478"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.4.tex:463-500"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.5.tex:443-481"
+        }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ],
+      "version_delta_artifact": "vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json"
+    },
+    {
+      "table_id": "VCF5.4",
+      "environment": "longtable",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 517,
+        "end_line": 598,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "As with the INFO field, there are several common, reserved keywords that are standards across the community. See their detailed definitions below, as well as Table~\\ref{table:reserved-genotypes} for their reference Number, Type and Description. See also Section~\\ref{sv-format-keys} for a list of genotype keys reserved for structural variants.",
+      "row_terminator_lines": 68,
+      "classification": "RESERVED_FORMAT_DEFINITION_TABLE",
+      "semantic_review_target": "Atomize reserved FORMAT key ID, Number, Type, genotype/ploidy/order constraints, dependencies and missing-value behavior.",
+      "review_status": "AUTHOR_ROW_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000164",
+        "VCF-REQ-000165",
+        "VCF-REQ-000166",
+        "VCF-REQ-000167",
+        "VCF-REQ-000168",
+        "VCF-REQ-000169",
+        "VCF-REQ-000170",
+        "VCF-REQ-000171",
+        "VCF-REQ-000172",
+        "VCF-REQ-000173",
+        "VCF-REQ-000174",
+        "VCF-REQ-000175",
+        "VCF-REQ-000176",
+        "VCF-REQ-000177",
+        "VCF-REQ-000178",
+        "VCF-REQ-000179",
+        "VCF-REQ-000180",
+        "VCF-REQ-000181",
+        "VCF-REQ-000182",
+        "VCF-REQ-000183",
+        "VCF-REQ-000184",
+        "VCF-REQ-000185",
+        "VCF-REQ-000186",
+        "VCF-REQ-000187",
+        "VCF-REQ-000188",
+        "VCF-REQ-000189",
+        "VCF-REQ-000190",
+        "VCF-REQ-000191",
+        "VCF-REQ-000192",
+        "VCF-REQ-000193",
+        "VCF-REQ-000194",
+        "VCF-REQ-000195",
+        "VCF-REQ-000196",
+        "VCF-REQ-000197",
+        "VCF-REQ-000198",
+        "VCF-REQ-000199",
+        "VCF-REQ-000200",
+        "VCF-REQ-000201",
+        "VCF-REQ-000202",
+        "VCF-REQ-000203",
+        "VCF-REQ-000204",
+        "VCF-REQ-000205",
+        "VCF-REQ-000206",
+        "VCF-REQ-000207",
+        "VCF-REQ-000208",
+        "VCF-REQ-000209",
+        "VCF-REQ-000210",
+        "VCF-REQ-000211",
+        "VCF-REQ-000212",
+        "VCF-REQ-000213",
+        "VCF-REQ-000214",
+        "VCF-REQ-000215",
+        "VCF-REQ-000216",
+        "VCF-REQ-000217",
+        "VCF-REQ-000218",
+        "VCF-REQ-000219",
+        "VCF-REQ-000220",
+        "VCF-REQ-000221",
+        "VCF-REQ-000222",
+        "VCF-REQ-000223",
+        "VCF-REQ-000224",
+        "VCF-REQ-000225",
+        "VCF-REQ-000226"
+      ],
+      "open_questions": [
+        "Upstream VCFv4.5 source inconsistency confirmed in history: commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced MXaoN/DPMXaoN/ADMXaoN in the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN in prose alias lists. No later correction was found in retrieved VCFv4.5 file history and scoped issue/PR searches returned no result. Canonical case remains unresolved; obtain authoritative maintainer clarification or source correction before implementation. Do not normalize or silently accept both."
+      ],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "NORMATIVE_RESERVED_FORMAT_TABLE",
+      "review_notes": "All 63 rows reviewed against FORMAT prose, GT/ploidy/order, local allele, base-modification, phase-set and SV FORMAT cross-references; no FORMAT key is universally required.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "NORMATIVE_TABLE_DEFINITION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_WITH_OPEN_UPSTREAM_SOURCE_AMBIGUITY_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_FORMAT_RESERVED_ROW_MAPPING_COMPLETE_PENDING_INDEPENDENT_REVIEW_AND_ALIAS_RESOLUTION",
+        "source_internal_issue_ids": [
+          "VCF45-FORMAT-XAON-ALIAS-CASE-001"
+        ]
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 497,
+          "end_line": 598,
+          "anchor_id": "RESERVED-FORMAT-TABLE",
+          "review_finding": "Governing FORMAT optionality/order and all 63 Number/Type rows.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 600,
+          "end_line": 810,
+          "anchor_id": "FORMAT-FIELD-DEFINITIONS",
+          "review_finding": "GT, Number=G ordering, local alleles, base modifications, PS/PSL/PSO/PSQ and SV FORMAT semantics.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 188,
+          "end_line": 218,
+          "anchor_id": "NUMBER-CARDINALITY-DEFINITIONS",
+          "review_finding": "Number=LA/LR/LG/P/M cardinality and base-modification key constraints.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1142,
+          "end_line": 1162,
+          "anchor_id": "SV-FORMAT-KEYS",
+          "review_finding": "Sample-level CN and CNQ/CNL/CNP definitions.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.1.tex:193-222"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_PROSE_ENUMERATION",
+          "locator": "VCFv4.2.tex:210-239"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.3.tex:550-556 and genotype field definitions"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.4.tex:576-582 and genotype field definitions"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_NUMBER_TYPE_TABLE",
+          "locator": "VCFv4.5.tex:517-598"
+        }
+      },
+      "version_delta_artifacts": [
+        "vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+        "vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json"
+      ],
+      "version_delta_artifact": "vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json"
+    },
+    {
+      "table_id": "VCF5.5",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 675,
+        "end_line": 681,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "\\item for $P$=1, the index of the genotype $a$ is $a$     \\item for $P$=2, the index of the genotype ``$a/b$'', where $a\\le b$, is $b (b+1)/2 + a$     \\item for $P$=2 and arbitrary $N$, the ordering can be easily derived from a triangular matrix             \\newline             \\hbox{\\hskip5em\\footnotesize",
+      "row_terminator_lines": 4,
+      "classification": "GENOTYPE_ORDERING_ALGORITHM_TABLE",
+      "semantic_review_target": "Reconcile combinatorial ordering with pseudocode, loop boundaries, ploidy, allele count and worked indices; verify mathematical equivalence.",
+      "review_status": "AUTHOR_ALGORITHM_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "GENOTYPE_ORDERING_ALGORITHM_AND_INFORMATIVE_MATRIX",
+      "review_notes": "Checked diploid triangular special case against general-ploidy nested loops, recursive algorithm, inclusive loop footnote, combinatorial index formula and worked examples.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "MIXED_NORMATIVE_PROSE_AND_INFORMATIVE_MATRIX",
+        "normative_or_informative_status": "MIXED_DISPOSITION_RECORDED_ATOMIC_PROSE_MAPPING_OPEN",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_GENOTYPE_ORDERING_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 632,
+          "end_line": 683,
+          "anchor_id": "GENOTYPE-ORDERING-ALGORITHM",
+          "review_finding": "General-ploidy nested-loop and recursive algorithms, inclusive loop-boundary footnote, genotype-index formula and informative worked examples; table matrix is a diploid illustration only.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "DIPLOID_ORDERING_DESCRIPTION",
+          "locator": "VCFv4.1.tex:207"
+        },
+        "VCFv4.2": {
+          "status": "DIPLOID_ORDERING_DESCRIPTION",
+          "locator": "VCFv4.2.tex:224"
+        },
+        "VCFv4.3": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.3.tex:507-536"
+        },
+        "VCFv4.4": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.4.tex:533-562"
+        },
+        "VCFv4.5": {
+          "status": "GENERAL_PLOIDY_ALGORITHM",
+          "locator": "VCFv4.5.tex:632-661"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-genotype-ordering-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.6",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 701,
+        "end_line": 711,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "For example, if REF is G, ALT is A,C,T,\\verb!<*>! and a genotype only has information about G, C, and \\verb!<*>!, one can have LAA=[2,4] and thus LPL will be interpreted as pertaining to the alleles [G, C, \\verb!<*>!] and not contain likelihood values for genotypes that involve A or T.   GQ is still the genotype quality, even when the genotype is given against the local alleles.   In the following example, the records with the same POS encode the same information (some columns removed for clarity):    \\vspace{0.5em}",
+      "row_terminator_lines": 9,
+      "classification": "LOCAL_ALLELE_EQUIVALENCE_EXAMPLE",
+      "semantic_review_target": "Review local/global allele vector mapping, LAA order, LA/LR/LG cardinalities and REF handling against prose.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "LOCAL_ALLELE_INFORMATIVE_EQUIVALENCE_EXAMPLE",
+      "review_notes": "Checked local/global equivalence, LAA 1-based ALT ordering, implicit REF, local A/R/G mapping and BCF empty-vector caveat against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_LOCAL_ALLELE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 686,
+          "end_line": 718,
+          "anchor_id": "LOCAL-ALLELE-DEFINITION-AND-EXAMPLE",
+          "review_finding": "LAA distinct 1-based ALT indices, local allele order, LAA presence conditions, local/global equivalence, BCF empty-vector/missing caveat and recommended API abstraction.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4.4": {
+          "status": "NO_LOCAL_ALLELE_FIELDS_FOUND"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:188-202; 686-718"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-local-allele-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.7",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 749,
+        "end_line": 755,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "Stranded CpG methylation counts should be placed in both values with the C position effectively encoding ADF, and the G effectively encoding ADR due to the strand the C in the CpG occurs on.    The follow example contains unphased, unstranded CpG methylation information for the CpG at chr:10-11 and phased, stranded CpG methylation information for the CpG at chr:20-21.  \\vspace{0.5em}",
+      "row_terminator_lines": 5,
+      "classification": "BASE_MODIFICATION_EXAMPLE",
+      "semantic_review_target": "Trace M/DPM/ADM cardinality, strand order, allele sequence order and missing values to prose and definitions.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "BASE_MODIFICATION_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked unstranded/stranded CpG examples against intrinsic strand semantics and missing-value placement; no new rule inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BASE_MODIFICATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 720,
+          "end_line": 758,
+          "anchor_id": "BASE-MODIFICATION-DEFINITION-AND-EXAMPLE",
+          "review_finding": "M/DPM/ADM key families, aliases, value domain, GT dependency, strand/order/missing semantics and reference-block propagation; example is informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.4": {
+          "status": "NO_BASE_MODIFICATION_FIELD_FAMILY_FOUND"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:720-758"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-base-modification-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.8",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 781,
+        "end_line": 786,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "In addition, PS and PSL are not interoperable, in that a PS mentioned in one variant cannot be referenced in a PSL in another,  since when used in PS it isn't connected to any specific haplotype (i.e. first or second), but PSL is.      Example:      \\vspace{0.5em}",
+      "row_terminator_lines": 4,
+      "classification": "PHASE_SET_LIST_EXAMPLE",
+      "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 763,
+          "end_line": 782,
+          "anchor_id": "PHASE-SET-LIST-DEFINITION-AND-EXAMPLE",
+          "review_finding": "PSL per-GT-allele cardinality, unphased missing entries, cross-CHROM phase-set naming, uniqueness convention and PS/PSL mutual exclusion/non-interoperability.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:496; 598-613"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:594; 771-786"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.9",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 798,
+        "end_line": 803,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Genotype fields",
+      "preceding_context": "Without explicitly specifying the derivative chromosome traversal order, multiple derivative chromosome reconstructions are possible.   Take for example this tandem duplication in a triploid organism with SNVs (ID/QUAL/FILTER columns removed for clarity):      \\vspace{0.5em}",
+      "row_terminator_lines": 4,
+      "classification": "PHASE_SET_LIST_EXAMPLE",
+      "semantic_review_target": "Trace PSL/PSO naming, allele-index association and SV traversal rules to prose and footnotes.",
+      "review_status": "AUTHOR_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "PHASE_SET_LIST_INFORMATIVE_EXAMPLE",
+      "review_notes": "Checked PSL naming, allele alignment, cross-CHROM scope, PS non-interoperability and PSO derivative traversal order against prose.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_PHASE_SET_LIST_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 783,
+          "end_line": 809,
+          "anchor_id": "PHASE-SET-ORDINAL-AND-QUALITY",
+          "review_finding": "PSO derivative-chromosome traversal order, breakpoint-record PSL/PSO equality, illustrative tandem duplication reconstruction and PSQ per-phase-set alignment.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "locator": "VCFv4.4.tex:497; 615-635"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "locator": "VCFv4.5.tex:595-596; 788-809"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-phase-set-list-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.10",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1170,
+        "end_line": 1177,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 1",
+      "preceding_context": "\\subsection{Creating VCF entries for SNPs and small indels} \\subsubsection{Example 1} For example, suppose we are looking at a locus in the genome:  \\vspace{0.3cm}",
+      "row_terminator_lines": 5,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1168,
+          "end_line": 1195,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-1",
+          "review_finding": "Descriptive allele alignment and VCF representation example; surrounding text states record positions are sorted.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.11",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1190,
+        "end_line": 1195,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 1",
+      "preceding_context": "\\end{enumerate}  Note that the positions must be sorted in increasing order:  \\vspace{0.5em}",
+      "row_terminator_lines": 4,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1168,
+          "end_line": 1195,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-1",
+          "review_finding": "Descriptive allele alignment and VCF representation example; no independent normalization algorithm is defined by the example.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.12",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1201,
+        "end_line": 1207,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 2",
+      "preceding_context": "\\subsubsection{Example 2} Suppose I see a the following in a population of individuals and want to represent these three segregating alleles:  \\vspace{0.3cm}",
+      "row_terminator_lines": 4,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1196,
+          "end_line": 1216,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-2",
+          "review_finding": "Multiallelic segregating allele representation example; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.13",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1213,
+        "end_line": 1216,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 2",
+      "preceding_context": "\\vspace{0.3cm}  In this case there are three segregating alleles: $\\{tC,tG,t\\}$ with a corresponding VCF record:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1196,
+          "end_line": 1216,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-2",
+          "review_finding": "Multiallelic segregating allele representation example; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.14",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1221,
+        "end_line": 1228,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 3",
+      "preceding_context": "\\end{tabular} \\subsubsection{Example 3} Now suppose I have this more complex example:  \\vspace{0.3cm}",
+      "row_terminator_lines": 5,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1217,
+          "end_line": 1238,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-3",
+          "review_finding": "Complex multiallelic representation and loss of explicit molecular equivalence; example does not impose a canonical normalization rule.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.15",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1235,
+        "end_line": 1238,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Example 3",
+      "preceding_context": "\\vspace{0.3cm} There are actually four segregating alleles: $\\{tCg,tg,t,tCAg\\}$ over bases 2--4. This complex set of allele is represented in VCF as:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1217,
+          "end_line": 1238,
+          "anchor_id": "SMALL-VARIANT-ENCODING-EXAMPLE-3",
+          "review_finding": "Complex multiallelic representation and loss of explicit molecular equivalence; example does not impose a canonical normalization rule.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.16",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1249,
+        "end_line": 1252,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "SNP VCF record",
+      "preceding_context": "\\subsection{Decoding VCF entries for SNPs and small indels} \\subsubsection{SNP VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1240,
+          "end_line": 1263,
+          "anchor_id": "SMALL-VARIANT-DECODING-SNP",
+          "review_finding": "SNP record decoding example; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.17",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1258,
+        "end_line": 1263,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "SNP VCF record",
+      "preceding_context": "\\vspace{0.3cm}  This is a SNP since its only single base substitution and there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
+      "row_terminator_lines": 3,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1240,
+          "end_line": 1263,
+          "anchor_id": "SMALL-VARIANT-DECODING-SNP",
+          "review_finding": "SNP record decoding example; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.18",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1269,
+        "end_line": 1272,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Insertion VCF record",
+      "preceding_context": "\\subsubsection{Insertion VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1264,
+          "end_line": 1284,
+          "anchor_id": "SMALL-VARIANT-DECODING-INSERTION",
+          "review_finding": "Insertion anchor/reference-base explanation; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.19",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1279,
+        "end_line": 1284,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Insertion VCF record",
+      "preceding_context": "This is a insertion since the reference base C is being replaced by C [the reference base] plus three insertion bases TAG. Again there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
+      "row_terminator_lines": 3,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1264,
+          "end_line": 1284,
+          "anchor_id": "SMALL-VARIANT-DECODING-INSERTION",
+          "review_finding": "Insertion anchor/reference-base explanation; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.20",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1290,
+        "end_line": 1293,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Deletion VCF record",
+      "preceding_context": "\\subsubsection{Deletion VCF record} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1285,
+          "end_line": 1305,
+          "anchor_id": "SMALL-VARIANT-DECODING-DELETION",
+          "review_finding": "Deletion anchor/reference-base explanation; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.21",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1300,
+        "end_line": 1305,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Deletion VCF record",
+      "preceding_context": "This is a deletion of two reference bases since the reference allele TCG is being replaced by just the T [the reference base]. Again there are only two alleles so I have the two following segregating haplotypes:  \\vspace{0.3cm}",
+      "row_terminator_lines": 3,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1285,
+          "end_line": 1305,
+          "anchor_id": "SMALL-VARIANT-DECODING-DELETION",
+          "review_finding": "Deletion anchor/reference-base explanation; informative.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.22",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1311,
+        "end_line": 1314,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "preceding_context": "\\subsubsection{Mixed VCF record for a microsatellite} Suppose I receive the following VCF record:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1306,
+          "end_line": 1340,
+          "anchor_id": "SMALL-VARIANT-DECODING-MICROSATELLITE",
+          "review_finding": "Mixed insertion/deletion microsatellite example and alternate alignments; source explicitly notes VCF does not retain base equivalence. No normalization requirement inferred.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.23",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1321,
+        "end_line": 1327,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "preceding_context": "This is a mixed type record containing a 2 base insertion and a 2 base deletion. There are are three segregating alleles so I have the three following haplotypes:  \\vspace{0.3cm}",
+      "row_terminator_lines": 4,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1306,
+          "end_line": 1340,
+          "anchor_id": "SMALL-VARIANT-DECODING-MICROSATELLITE",
+          "review_finding": "Mixed insertion/deletion microsatellite example and alternate alignments; source explicitly notes VCF does not retain base equivalence. No normalization requirement inferred.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.24",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1334,
+        "end_line": 1340,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Mixed VCF record for a microsatellite",
+      "preceding_context": "Note that in all of these examples dashes have been added to make the haplotypes clearer but of course the equivalence among bases isn't provided by the VCF. Technically the following is an equivalent alignment:  \\vspace{0.3cm}",
+      "row_terminator_lines": 4,
+      "classification": "SMALL_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Check REF anchoring, padding, POS and allele decomposition against normative prose; examples remain informative.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SMALL_VARIANT_REPRESENTATION",
+      "review_notes": "Checked examples against fixed-field REF/POS anchoring and small-indel representation prose. Example alignments illustrate equivalence but do not preserve molecular placement of equivalent bases; no separate normative requirement inferred.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SMALL_VARIANT_REPRESENTATION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1306,
+          "end_line": 1340,
+          "anchor_id": "SMALL-VARIANT-DECODING-MICROSATELLITE",
+          "review_finding": "Mixed insertion/deletion microsatellite example and alternate alignments; source explicitly notes VCF does not retain base equivalence. No normalization requirement inferred.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:299-467",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:316-484",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:692-869",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1003-1180",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1164-1341",
+          "finding": "The small-variant creation/decoding section exists in every pinned version; this is section-level correspondence, not proof that this exact table is identical across versions."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-small-variant-representation-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.25",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1418,
+        "end_line": 1424,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Specifying complex rearrangements with breakends",
+      "preceding_context": "These 3 elements are combined in 4 possible ways to create the ALT. In each of the 4 cases, the assertion is that s is replaced with t, and then some piece starting at position p is joined to t. The cases are:  \\vspace{0.3cm}",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1394,
+          "end_line": 1465,
+          "anchor_id": "BREAKEND-SYNTAX",
+          "review_finding": "Two mates/two records, REF/ALT replacement, coordinate interpretation and four bracket/orientation forms.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.26",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1438,
+        "end_line": 1446,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Specifying complex rearrangements with breakends",
+      "preceding_context": "\\includegraphics[width=4in,height=2.96in]{img/all_orientations-400x296.png} \\caption{All possible orientations of breakends} \\end{figure}  \\vspace{0.3cm}",
+      "row_terminator_lines": 7,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1394,
+          "end_line": 1465,
+          "anchor_id": "BREAKEND-SYNTAX",
+          "review_finding": "Two mates/two records, REF/ALT replacement, coordinate interpretation and four bracket/orientation forms.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.27",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1460,
+        "end_line": 1464,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inserted Sequence",
+      "preceding_context": "\\caption{Inserted sequence between breakends} \\end{figure}  \\vspace{0.3cm} \\footnotesize",
+      "row_terminator_lines": 3,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1394,
+          "end_line": 1465,
+          "anchor_id": "BREAKEND-SYNTAX-AND-INSERTED-SEQUENCE",
+          "review_finding": "Breakend ALT replacement syntax and inserted sequence placement.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Assembly contig insertion and partial/circular contig adjacency context.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.28",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1479,
+        "end_line": 1483,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "preceding_context": "\\caption{Inserted contig} \\end{figure}  \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 3,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Whole-contig insertion shorthand recommendation and assembly-contig representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.29",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1490,
+        "end_line": 1493,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "preceding_context": "\\vspace{0.3cm}  \\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:  \\vspace{0.3cm}",
+      "row_terminator_lines": 2,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Partial contig interval insertion representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.30",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1500,
+        "end_line": 1504,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "preceding_context": "If only a portion of $<$ctg$1>$, say from position $7$ to position $214$, is inserted, the VCF would be: \\par\\nobreak \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 3,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Circular contig adjacency representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.31",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1512,
+        "end_line": 1518,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Large Insertions",
+      "preceding_context": "If $<$ctg$1>$ is circular and a segment from position 229 to position 45 is inserted, i.e., continuing from position 329 on to position 1, this is represented by adding a circular adjacency:  \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Assembly contig insertion and alternate allele representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.32",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1531,
+        "end_line": 1536,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Multiple mates",
+      "preceding_context": "\\includegraphics[width=4in,height=2.80in]{img/multiple_mates-400x280.png} \\caption{Breakend with multiple mates} \\end{figure}  \\footnotesize",
+      "row_terminator_lines": 4,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1468,
+          "end_line": 1537,
+          "anchor_id": "BREAKEND-CONTIG-AND-MULTIMATE",
+          "review_finding": "Multiple mates represented as alternate alleles.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.33",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1554,
+        "end_line": 1560,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Explicit partners",
+      "preceding_context": "\\caption{Partner breakends} \\end{figure}  \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1539,
+          "end_line": 1585,
+          "anchor_id": "BREAKEND-PARTNER-TELOMERE",
+          "review_finding": "Partner relation is distinct from mates; one partner per breakend; PARID explicit partner naming.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.34",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1578,
+        "end_line": 1584,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Telomeres",
+      "preceding_context": "\\end{figure}  the records would look like:  \\small",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1539,
+          "end_line": 1585,
+          "anchor_id": "BREAKEND-PARTNER-TELOMERE",
+          "review_finding": "Virtual telomeric breakends at coordinate 0 and N+1.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.35",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1602,
+        "end_line": 1608,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Event modifiers",
+      "preceding_context": "\\noindent would be described as:  \\vspace{0.3cm} \\footnotesize",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1587,
+          "end_line": 1680,
+          "anchor_id": "BREAKEND-EVENT-UNCERTAINTY",
+          "review_finding": "EVENT/EVENTTYPE context and inversion/breakend representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.36",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1628,
+        "end_line": 1631,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inversions",
+      "preceding_context": "Either one uses the short hand notation described previously (recommended for simple cases): \\end{samepage}  \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 2,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1587,
+          "end_line": 1680,
+          "anchor_id": "BREAKEND-EVENT-UNCERTAINTY",
+          "review_finding": "Symbolic inversion shorthand versus explicit breakend representation.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.37",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1639,
+        "end_line": 1645,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Inversions",
+      "preceding_context": "or one describes the breakends:  \\vspace{0.3cm} \\footnotesize",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1587,
+          "end_line": 1680,
+          "anchor_id": "BREAKEND-EVENT-UNCERTAINTY",
+          "review_finding": "Inversion and complex event relationships.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.38",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1666,
+        "end_line": 1670,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Uncertainty around breakend location",
+      "preceding_context": "The red and green dashed lines represent the most extreme possible recombination events which are allowed by the sequence evidence available. We therefore place both U and V arbitrarily within the interval of possibility:  \\vspace{0.3cm} \\footnotesize",
+      "row_terminator_lines": 3,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1587,
+          "end_line": 1680,
+          "anchor_id": "BREAKEND-EVENT-UNCERTAINTY",
+          "review_finding": "Microhomology uncertainty, arbitrary leftmost local placement, CIPOS, mate coordinates, MATEID and PARID.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.39",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1692,
+        "end_line": 1698,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "preceding_context": "Yet we know the partner X of U and the partner W of V exist and are breakends. In this case we can specify these as single breakends, with unknown mates. The 4 lines of VCF representing this situation would be:  \\vspace{0.3cm} \\small",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1682,
+          "end_line": 1729,
+          "anchor_id": "SINGLE-BREAKENDS",
+          "review_finding": "Single breakend syntax and unobserved partner semantics.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.40",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1710,
+        "end_line": 1715,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "preceding_context": "Another possible reason for calling single breakends is an observed but unexplained change in copy number along a chromosome.  \\vspace{0.3cm} \\scriptsize",
+      "row_terminator_lines": 4,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1682,
+          "end_line": 1729,
+          "anchor_id": "SINGLE-BREAKENDS",
+          "review_finding": "Single breakend use in copy-number-change contexts; example not a universal requirement.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.41",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1723,
+        "end_line": 1728,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Single breakends",
+      "preceding_context": "Finally, if an insertion is detected but only the first few base-pairs provided by overhanging reads could be assembled, then this inserted sequence can be provided on that line, in analogy to paired breakends:  \\vspace{0.3cm} \\scriptsize",
+      "row_terminator_lines": 4,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SV_BREAKEND_EXAMPLE",
+      "review_notes": "Reviewed against complete SV INFO/FORMAT and breakend prose, including orientation, inserted sequence, contigs, circular adjacency, multi-mate, partner, telomere, EVENT, uncertainty and single-breakend semantics. Examples are not independently promoted to normative rules.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_BREAKEND_VERSION_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1682,
+          "end_line": 1729,
+          "anchor_id": "SINGLE-BREAKENDS",
+          "review_finding": "Partial inserted sequence on single-breakend ALT; example not a universal requirement.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:524-816",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:541-833",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:925-1246",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1234-1555",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1394-1729",
+          "finding": "The complex rearrangement/breakend section exists in every pinned version; the section-level locator does not establish exact table-to-table identity."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-breakend-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.42",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1750,
+        "end_line": 1756,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Sample mixtures",
+      "preceding_context": "Using the example of the inversion just above, the VCF code could become:  \\vspace{0.3cm} \\tiny \\begin{flushleft}",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1729,
+          "end_line": 1774,
+          "anchor_id": "SAMPLE-GENOME-MIXTURE",
+          "review_finding": "SAMPLE Genomes/Mixture/Description, sample-level observations versus genome-level deconvolution; tables are examples, not mandatory deconvolution.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:819-860",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:836-877",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:1262-1307",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:1571-1616",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:1731-1774",
+          "finding": "Sample mixture section exists in every pinned version; compare SAMPLE metadata and distinction between sample-level and genome-level observations."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.43",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1766,
+        "end_line": 1772,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Sample mixtures",
+      "preceding_context": "However, a more evolved algorithm could attempt actually deconvolving the two genomes and generating copy number estimates based on the raw data:  \\vspace{0.3cm} \\tiny \\begin{flushleft}",
+      "row_terminator_lines": 5,
+      "classification": "STRUCTURAL_VARIANT_OR_BREAKEND_EXAMPLE",
+      "semantic_review_target": "Resolve orientation, mate/partner relationships, inserted sequence, telomere, uncertainty, sample mixture and clonal derivation against prose and SV field definitions.",
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "INFORMATIVE_SAMPLE_MIXTURE_AND_CLONAL_PEDIGREE",
+      "review_notes": "Reviewed against SAMPLE Genomes/Mixture and PEDIGREE/clonal derivation sections. Sample-level and genome-level representations are distinct; examples do not mandate deconvolution.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_SAMPLE_MIXTURE_PEDIGREE_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1729,
+          "end_line": 1774,
+          "anchor_id": "SAMPLE-GENOME-MIXTURE",
+          "review_finding": "Genome-mixture and copy-number illustration; no mandatory deconvolution algorithm inferred.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1776,
+          "end_line": 1843,
+          "anchor_id": "CLONAL-PEDIGREE-HAPLOTYPE",
+          "review_finding": "PEDIGREE lineage and haplotype-identity context; mixed modal force preserved.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.1.tex:132; 861-906",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4.2": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.2.tex:149; 878-923",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.3.tex:281; 1308-1368",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.4.tex:295; 1617-1677",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_SECTION_LEVEL",
+          "locator": "VCFv4.5.tex:344; 1776-1843",
+          "finding": "PEDIGREE field format and clonal derivation/haplotype context exist in every pinned version."
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json"
+    },
+    {
+      "table_id": "VCF5.44",
+      "environment": "tabular",
+      "source_locator": {
+        "file": "VCFv4.5.tex",
+        "start_line": 1865,
+        "end_line": 1874,
+        "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+        "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+      },
+      "enclosing_section": "Representing unspecified alleles and REF-only blocks (gVCF)",
+      "preceding_context": "and a missing FORMAT LEN field should be inferred from the INFO END tag if present.  An example with both FORMAT LEN and a redundant INFO END is given below: \\scriptsize \\begin{flushleft}",
+      "row_terminator_lines": 8,
+      "classification": "GVCF_OR_VARIANT_REPRESENTATION_EXAMPLE",
+      "semantic_review_target": "Trace unspecified allele, REF-only block, END/LEN, copy-number and tandem-repeat conventions; separate core requirements from gVCF conventions.",
+      "review_status": "AUTHOR_EXAMPLE_AND_CONTEXT_REVIEW_COMPLETE",
+      "atomic_requirement_ids": [
+        "VCF-REQ-000125",
+        "VCF-REQ-000126",
+        "VCF-REQ-000127",
+        "VCF-REQ-000129"
+      ],
+      "open_questions": [],
+      "independent_review_status": "NOT_STARTED",
+      "semantic_disposition": "GVCF_REFERENCE_BLOCK_INFORMATIVE_EXAMPLE",
+      "review_notes": "Reviewed against <*> reference-block, LAA, LEN/END compatibility and base-modification coverage prose. gVCF convention is distinguished from core VCF grammar.",
+      "context_artifacts": [
+        "vcf4.5-info-format-row-semantic-review.v1.json",
+        "vcf4.5-sv-breakend-full-context-review.v1.json",
+        "vcf4.5-pedigree-gvcf-context-review.v1.json"
+      ],
+      "review_debt_adjudication": {
+        "artifact": "vcf4.5-table-review-debt-adjudication.v1.json",
+        "status": "INFORMATIVE_EXAMPLE_OR_ILLUSTRATION",
+        "normative_or_informative_status": "AUTHOR_DISPOSITION_RECORDED_PENDING_INDEPENDENT_REVIEW",
+        "context_locator_status": "AUTHOR_CONTEXT_RECONCILED_LOCATORS_CAPTURED_PENDING_INDEPENDENT_REVIEW",
+        "version_delta_status": "AUTHOR_GVCF_REFERENCE_BLOCK_DELTA_RECONCILED_PENDING_INDEPENDENT_REVIEW"
+      },
+      "reviewed_context_locators": [
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 1846,
+          "end_line": 1878,
+          "anchor_id": "GVCF-REFERENCE-BLOCK",
+          "review_finding": "<*>/LEN reference blocks, missing GT and FORMAT restrictions, LAA inclusion, NON_REF alias and LEN inference from END; distinguish core specification text from producer-specific gVCF conventions.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 686,
+          "end_line": 718,
+          "anchor_id": "LOCAL-ALLELE-REFERENCE-BLOCK-CROSS-REFERENCE",
+          "review_finding": "LAA and local allele interaction with <*> reference-only blocks.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        },
+        {
+          "file": "VCFv4.5.tex",
+          "start_line": 720,
+          "end_line": 758,
+          "anchor_id": "BASEMOD-REFERENCE-BLOCK-CROSS-REFERENCE",
+          "review_finding": "Base modification values propagate across applicable bases in reference blocks.",
+          "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+        }
+      ],
+      "preliminary_version_applicability": {
+        "VCFv4.1": {
+          "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
+        },
+        "VCFv4.2": {
+          "status": "NO_DEDICATED_GVCF_REFERENCE_BLOCK_SECTION_FOUND"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
+          "locator": "VCFv4.3.tex:1428-1460"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT_INFO_END_BASED_REFERENCE_BLOCK",
+          "locator": "VCFv4.4.tex:1686-1747"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT_FORMAT_LEN_AND_STAR_ALLELE",
+          "locator": "VCFv4.5.tex:1846-1878"
+        }
+      },
+      "version_delta_artifact": "vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json"
+    }
+  ],
+  "review_controls": {
+    "examples_not_automatically_normative": true,
+    "descriptive_definitions_not_automatically_presence_requirements": true,
+    "normative_force_preserved": true,
+    "bcf_serialization_separate": true,
+    "gvcf_conventions_separate": true,
+    "version_specificity_required": true,
+    "author_review_disclaimer": "Author review status means source-context inspection and classification only; it is not independent approval, implementation mapping, test execution, or laboratory qualification."
+  },
+  "review_debt_adjudication_artifact": "vcf4.5-table-review-debt-adjudication.v1.json"
+}

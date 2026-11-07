@@ -1,0 +1,4770 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-reserved-info-format-field-matrix",
+  "status": "ALL_RESERVED_ROW_IDS_AND_MECHANICAL_VERSION_CHANGES_RECONCILED_AUTHOR_SEMANTIC_REVIEW_RECORDED_INDEPENDENT_REVIEW_AND_ATOMIC_MAPPING_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "inputs": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-info-format-row-semantic-review.v1.json",
+      "blob_sha1": "5516fa0039696ec444bd02424ea7191adf7fd2c8"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+      "blob_sha1": "c5659737fbf9a4406905d2e395e6d87bf49a407f"
+    }
+  ],
+  "method": "Union every reserved INFO/FORMAT row ID from VCFv4.1-4.5 source-derived inventories. Preserve each version's exact row description, source line, Number/Type only where explicitly specified, and source representation. Compare row presence, Number/Type and descriptions mechanically. Attach VCFv4.5 row semantic notes where available. This matrix is not a replacement for field-specific normative prose, whole-source atomic decomposition or independent review.",
+  "summary": {
+    "versions": [
+      "VCFv4.1",
+      "VCFv4.2",
+      "VCFv4.3",
+      "VCFv4.4",
+      "VCFv4.5"
+    ],
+    "info_row_ids": 21,
+    "format_row_ids": 64,
+    "vcf45_info_rows_reviewed": 21,
+    "vcf45_format_rows_reviewed": 63,
+    "independent_reviews_completed": 0,
+    "atomic_requirement_mappings_completed": 0
+  },
+  "INFO": [
+    {
+      "field_id": "1000G",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 188,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in 1000 Genomes",
+          "raw_source_line": "\\item 1000G : membership in 1000 Genomes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 205,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in 1000 Genomes",
+          "raw_source_line": "\\item 1000G : membership in 1000 Genomes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 415,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership",
+          "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 431,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership",
+          "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 480,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership",
+          "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in 1000 Genomes",
+              "to": "1000 Genomes membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved legacy membership flag in VCF core; its name does not import the 1000 Genomes project's producer conventions or imply cohort-specific semantics.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "AA",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 171,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "ancestral allele",
+          "raw_source_line": "\\item AA : ancestral allele"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 188,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "ancestral allele",
+          "raw_source_line": "\\item AA : ancestral allele"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 395,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele",
+          "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 411,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele",
+          "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 460,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele",
+          "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "AC",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 172,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "\\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 189,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "\\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 396,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 412,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 461,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "AD",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 397,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 413,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 462,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADF",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 398,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 414,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 463,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADR",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 399,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 415,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 464,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "AF",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 173,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+          "raw_source_line": "\\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 190,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+          "raw_source_line": "\\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 400,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+          "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 416,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+          "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 465,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+          "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+              "to": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "AN",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 174,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "total number of alleles in called genotypes",
+          "raw_source_line": "\\item AN : total number of alleles in called genotypes"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 191,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "total number of alleles in called genotypes",
+          "raw_source_line": "\\item AN : total number of alleles in called genotypes"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 401,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes",
+          "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 417,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes",
+          "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 466,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes",
+          "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "BQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 175,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS base quality at this position",
+          "raw_source_line": "\\item BQ : RMS base quality at this position"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 192,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS base quality at this position",
+          "raw_source_line": "\\item BQ : RMS base quality at this position"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 402,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality",
+          "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 418,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality",
+          "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 467,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality",
+          "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS base quality at this position",
+              "to": "RMS base quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "CIGAR",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 176,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "\\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 193,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "\\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 403,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 419,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 468,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DB",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 177,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "dbSNP membership",
+          "raw_source_line": "\\item DB : dbSNP membership"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 194,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "dbSNP membership",
+          "raw_source_line": "\\item DB : dbSNP membership"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 404,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership",
+          "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 420,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership",
+          "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 469,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership",
+          "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DP",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 178,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "combined depth across samples, e.g.\\ DP=154",
+          "raw_source_line": "\\item DP : combined depth across samples, e.g.\\ DP=154"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 195,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "combined depth across samples, e.g.\\ DP=154",
+          "raw_source_line": "\\item DP : combined depth across samples, e.g.\\ DP=154"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 405,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 421,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 470,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "combined depth across samples, e.g.\\ DP=154",
+              "to": "Combined depth across samples"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "END",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 179,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "end position of the variant described in this record (for use with symbolic alleles)",
+          "raw_source_line": "\\item END : end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 196,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "end position of the variant described in this record (for use with symbolic alleles)",
+          "raw_source_line": "\\item END : end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 406,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "End position on CHROM (used with symbolic alleles; see below)",
+          "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 422,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "End position on CHROM (used with symbolic alleles; see below)",
+          "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 471,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Deprecated. Present for backwards compatibility with earlier versions of VCF.",
+          "raw_source_line": "END\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "end position of the variant described in this record (for use with symbolic alleles)",
+              "to": "End position on CHROM (used with symbolic alleles; see below)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "End position on CHROM (used with symbolic alleles; see below)",
+              "to": "Deprecated. Present for backwards compatibility with earlier versions of VCF."
+            }
+          ]
+        }
+      ],
+      "summary": "Present across all versions; VCFv4.5 explicitly marks deprecated/backward compatibility and supplies computed endpoint semantics.",
+      "VCFv4_5_semantic_note": "Deprecated compatibility field; separate prose defines it as a computed maximum endpoint across REF, symbolic SVLEN and <NON_REF> LEN-derived intervals; it feeds BCF rlen and indexing. Do not treat it as a primary source of variant span when recomputation is required.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "H2",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 180,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap2",
+          "raw_source_line": "\\item H2 : membership in hapmap2"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 197,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap2",
+          "raw_source_line": "\\item H2 : membership in hapmap2"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 407,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership",
+          "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 423,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership",
+          "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 472,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership",
+          "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in hapmap2",
+              "to": "HapMap2 membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "H3",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 181,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap3",
+          "raw_source_line": "\\item H3 : membership in hapmap3"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 198,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "membership in hapmap3",
+          "raw_source_line": "\\item H3 : membership in hapmap3"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 408,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership",
+          "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 424,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership",
+          "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 473,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership",
+          "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "membership in hapmap3",
+              "to": "HapMap3 membership"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "MQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 182,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, e.g.\\ MQ=52",
+          "raw_source_line": "\\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 199,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, e.g.\\ MQ=52",
+          "raw_source_line": "\\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 409,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 425,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 474,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS mapping quality, e.g.\\ MQ=52",
+              "to": "RMS mapping quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "MQ0",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 183,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of MAPQ == 0 reads covering this record",
+          "raw_source_line": "\\item MQ0 : Number of MAPQ == 0 reads covering this record"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 200,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of MAPQ == 0 reads covering this record",
+          "raw_source_line": "\\item MQ0 : Number of MAPQ == 0 reads covering this record"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 410,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads",
+          "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 426,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads",
+          "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 475,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads",
+          "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "Number of MAPQ == 0 reads covering this record",
+              "to": "Number of MAPQ == 0 reads"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "NS",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 184,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of samples with data",
+          "raw_source_line": "\\item NS : Number of samples with data"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 201,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "Number of samples with data",
+          "raw_source_line": "\\item NS : Number of samples with data"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 411,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data",
+          "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 427,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data",
+          "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 476,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data",
+          "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "SB",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 185,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "strand bias at this position",
+          "raw_source_line": "\\item SB : strand bias at this position"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 202,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "strand bias at this position",
+          "raw_source_line": "\\item SB : strand bias at this position"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 412,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias",
+          "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 428,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias",
+          "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 477,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias",
+          "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "strand bias at this position",
+              "to": "Strand bias"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "4"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=4 is a fixed four-integer vector; retain exact cardinality rather than treating it as a scalar.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "SOMATIC",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 186,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "indicates that the record is a somatic mutation, for cancer genomics",
+          "raw_source_line": "\\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 203,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "indicates that the record is a somatic mutation, for cancer genomics",
+          "raw_source_line": "\\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 413,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)",
+          "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 429,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)",
+          "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 478,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)",
+          "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "indicates that the record is a somatic mutation, for cancer genomics",
+              "to": "Somatic mutation (for cancer genomics)"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "VALIDATED",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 187,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "validated by follow-up experiment",
+          "raw_source_line": "\\item VALIDATED : validated by follow-up experiment"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 204,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "validated by follow-up experiment",
+          "raw_source_line": "\\item VALIDATED : validated by follow-up experiment"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 414,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment",
+          "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 430,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment",
+          "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 479,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment",
+          "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "0"
+            },
+            {
+              "field": "Type",
+              "value": "Flag"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    }
+  ],
+  "FORMAT": [
+    {
+      "field_id": "AD",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 462,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 480,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 534,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADF",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 463,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 481,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 535,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM[0-9]+[ACGTUN]",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 558,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Read depth for reads with the base modification with the given ChEBI ID.",
+          "raw_source_line": "ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5caC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 570,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76793C",
+          "raw_source_line": "ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5caU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 579,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM17477T",
+          "raw_source_line": "ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5fC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 567,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76794C",
+          "raw_source_line": "ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5fU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 576,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM80961T",
+          "raw_source_line": "ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5hmC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 564,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76792C",
+          "raw_source_line": "ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5hmU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 573,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM16964T",
+          "raw_source_line": "ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM5mC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 561,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM27551C",
+          "raw_source_line": "ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM6mA",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 582,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM28871A",
+          "raw_source_line": "ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADM8oxoG",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 585,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM44605G",
+          "raw_source_line": "ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADMXaoN",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 588,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM18107N",
+          "raw_source_line": "ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "ADR",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 464,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 482,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 536,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DP",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 205,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "read depth at this position for this sample (Integer)",
+          "raw_source_line": "\\item DP : read depth at this position for this sample (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 222,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "read depth at this position for this sample (Integer)",
+          "raw_source_line": "\\item DP : read depth at this position for this sample (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 465,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 483,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 537,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth",
+          "raw_source_line": "DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "read depth at this position for this sample (Integer)",
+              "to": "Read depth"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM[0-9]+[ACGTUN]",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 557,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+          "raw_source_line": "DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5caC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 569,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76793C",
+          "raw_source_line": "DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5caU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 578,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM17477T",
+          "raw_source_line": "DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5fC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 566,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76794C",
+          "raw_source_line": "DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5fU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 575,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM80961T",
+          "raw_source_line": "DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5hmC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 563,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76792C",
+          "raw_source_line": "DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5hmU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 572,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM16964T",
+          "raw_source_line": "DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM5mC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 560,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM27551C",
+          "raw_source_line": "DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM6mA",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 581,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM28871A",
+          "raw_source_line": "DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPM8oxoG",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 584,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM44605G",
+          "raw_source_line": "DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "DPMXaoN",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 587,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM18107N",
+          "raw_source_line": "DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "EC",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 215,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+          "raw_source_line": "\\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 232,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+          "raw_source_line": "\\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 466,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts",
+          "raw_source_line": "EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 484,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts",
+          "raw_source_line": "EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 538,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts",
+          "raw_source_line": "EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+              "to": "Expected alternate allele counts"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "FT",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 206,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+          "raw_source_line": "\\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 223,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+          "raw_source_line": "\\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 467,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''",
+          "raw_source_line": "FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 485,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''",
+          "raw_source_line": "FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 540,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''",
+          "raw_source_line": "FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+              "to": "Filter indicating if this genotype was ``called''"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "GL",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 207,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+          "raw_source_line": "\\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 224,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+          "raw_source_line": "\\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 468,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods",
+          "raw_source_line": "GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 486,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods",
+          "raw_source_line": "GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 541,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods",
+          "raw_source_line": "GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+              "to": "Genotype likelihoods"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "GLE",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.2",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 208,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+          "raw_source_line": "\\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 225,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+          "raw_source_line": "\\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "REMOVED"
+        }
+      ],
+      "summary": "REMOVED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": null,
+      "VCFv4_5_review_disposition": "NOT_REVIEWED_IN_VCF45_ROW_ARTIFACT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "GP",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 210,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+          "raw_source_line": "\\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 227,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+          "raw_source_line": "\\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 469,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities",
+          "raw_source_line": "GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 487,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities",
+          "raw_source_line": "GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 542,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities",
+          "raw_source_line": "GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+              "to": "Genotype posterior probabilities"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "GQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 211,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+          "raw_source_line": "\\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 228,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+          "raw_source_line": "\\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 470,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality",
+          "raw_source_line": "GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 488,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality",
+          "raw_source_line": "GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 543,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality",
+          "raw_source_line": "GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+              "to": "Conditional genotype quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "GT",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 200,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+          "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 217,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+          "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 471,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype",
+          "raw_source_line": "GT\t\t& 1\t\t& String\t& Genotype \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 489,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype",
+          "raw_source_line": "GT\t\t& 1\t\t& String\t& Genotype \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 544,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype",
+          "raw_source_line": "GT\t\t& 1\t\t\t& String\t& Genotype \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+              "to": "Genotype"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "HQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 212,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)",
+          "raw_source_line": "\\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 229,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)",
+          "raw_source_line": "\\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 472,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality",
+          "raw_source_line": "HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 490,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality",
+          "raw_source_line": "HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 545,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality",
+          "raw_source_line": "HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "haplotype qualities, two comma separated phred qualities (Integers)",
+              "to": "Haplotype quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "2"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LA",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 546,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": ".",
+          "type": "Integer",
+          "description": "Reserved",
+          "raw_source_line": "LA\t\t& .\t\t\t& Integer\t& Reserved \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LAA",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 547,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": ".",
+          "type": "Integer",
+          "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+          "raw_source_line": "LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local allele selector: 1-based ALT indices, distinct values; controls local allele universe and order; presence/order dependency is specified in surrounding prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LAD",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 548,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of AD",
+          "raw_source_line": "LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LADF",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 549,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADF",
+          "raw_source_line": "LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LADR",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 550,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADR",
+          "raw_source_line": "LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LEC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 551,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LA",
+          "type": "Integer",
+          "description": "Local-allele representation of EC",
+          "raw_source_line": "LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LEN",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 539,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Length of $<$*$>$ reference block",
+          "raw_source_line": "LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LGL",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 552,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GL",
+          "raw_source_line": "LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LGP",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 553,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GP",
+          "raw_source_line": "LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LPL",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 554,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PL",
+          "raw_source_line": "LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "LPP",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 555,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PP",
+          "raw_source_line": "LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M[0-9]+[ACGTUN]",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 556,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Fraction of bases modified with the given ChEBI ID.",
+          "raw_source_line": "M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5caC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 568,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76793C 5-Carboxylcytosine",
+          "raw_source_line": "M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5caU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 577,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M17477T 5-Carboxyluracil",
+          "raw_source_line": "M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5fC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 565,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76794C 5-Formylcytosine",
+          "raw_source_line": "M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5fU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 574,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M80961T 5-Formyluracil",
+          "raw_source_line": "M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5hmC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 562,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76792C 5-Hydroxymethylcytosine",
+          "raw_source_line": "M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5hmU",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 571,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M16964T 5-Hydroxymethyluracil",
+          "raw_source_line": "M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M5mC",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 559,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M27551C 5-Methylcytosine",
+          "raw_source_line": "M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M6mA",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 580,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M28871A 6-Methyladenine",
+          "raw_source_line": "M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "M8oxoG",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 583,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M44605G 8-Oxoguanine",
+          "raw_source_line": "M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "MQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 216,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+          "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 233,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+          "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 473,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 491,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 589,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+              "to": "RMS mapping quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "MXaoN",
+      "first_present": "VCFv4.5",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 586,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M18107N Xanthosine",
+          "raw_source_line": "MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.4->VCFv4.5",
+      "VCFv4_5_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PL",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 209,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+          "raw_source_line": "\\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 226,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+          "raw_source_line": "\\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 474,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+          "raw_source_line": "PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 492,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+          "raw_source_line": "PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 590,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+          "raw_source_line": "PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+              "to": "Phred-scaled genotype likelihoods rounded to the closest integer"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PP",
+      "first_present": "VCFv4.3",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 475,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+          "raw_source_line": "PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 493,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+          "raw_source_line": "PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 591,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+          "raw_source_line": "PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.2->VCFv4.3",
+      "VCFv4_5_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PQ",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 214,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+          "raw_source_line": "\\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 231,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+          "raw_source_line": "\\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 476,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality",
+          "raw_source_line": "PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 494,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality",
+          "raw_source_line": "PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 592,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality",
+          "raw_source_line": "PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+              "to": "Phasing quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PS",
+      "first_present": "VCFv4.1",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 213,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+          "raw_source_line": "\\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 230,
+          "source_representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+          "raw_source_line": "\\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 477,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set",
+          "raw_source_line": "PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 495,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set",
+          "raw_source_line": "PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 593,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set",
+          "raw_source_line": "PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+              "to": "Phase set"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "type": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "summary": "No reserved-row presence change detected; verify detailed prose semantics independently by version.",
+      "VCFv4_5_semantic_note": "Scalar phase-set identifier; scope and missing-PS convention are defined in prose and differ from PSL's cross-CHROM naming semantics.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PSL",
+      "first_present": "VCFv4.4",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 496,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "String",
+          "description": "Phase set list",
+          "raw_source_line": "PSL\t\t& P\t\t& String\t& Phase set list \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 594,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "String",
+          "description": "Phase set list",
+          "raw_source_line": "PSL\t\t& P\t\t\t& String\t& Phase set list \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.3->VCFv4.4",
+      "VCFv4_5_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PSO",
+      "first_present": "VCFv4.4",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 497,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list ordinal",
+          "raw_source_line": "PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 595,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list ordinal",
+          "raw_source_line": "PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.3->VCFv4.4",
+      "VCFv4_5_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    },
+    {
+      "field_id": "PSQ",
+      "first_present": "VCFv4.4",
+      "last_present": "VCFv4.5",
+      "version_presence": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 498,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list quality",
+          "raw_source_line": "PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 596,
+          "source_representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list quality",
+          "raw_source_line": "PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\"
+        }
+      },
+      "mechanical_version_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "type": "ADDED"
+        }
+      ],
+      "summary": "ADDED VCFv4.3->VCFv4.4",
+      "VCFv4_5_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "VCFv4_5_review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "NOT_MAPPED"
+    }
+  ],
+  "known_cross_row_rules": [
+    "INFO and FORMAT are distinct namespaces; a same-named key does not make the field semantics identical.",
+    "Number=A is per ALT allele; Number=R is REF plus ALT; Number=G is genotype combinations; Number=P is one per allele value in GT; Number=M is one per possible base modification; Number=LA/LR/LG restricts A/R/G to alleles selected by LAA.",
+    "A row in a reserved table defines a field if used; it does not by itself require the field to occur in every record/sample.",
+    "Flags use Number=0 and Type=Flag; they are presence markers, not key=value payloads.",
+    "VCFv4.1/4.2 prose lists do not specify Number/Type table attributes; do not project later values backward.",
+    "The GLE field is present in VCFv4.1/4.2 and removed from the VCFv4.3 reserved FORMAT set.",
+    "PSL/PSO/PSQ are introduced in VCFv4.4 and retained in VCFv4.5.",
+    "VCFv4.5 has an upstream xanthosine alias case inconsistency; see VCF45-FORMAT-XAON-ALIAS-CASE-001."
+  ],
+  "unresolved": [
+    "Complete exact field-by-field normative prose and footnote mapping for every INFO row across all versions, especially END/SVLEN/SVTYPE/CIPOS/CIEND/CN and SV fields.",
+    "Complete exact field-by-field normative prose and footnote mapping for every FORMAT row across all versions, including genotype ordering, GT phasing, local alleles, base modifications, phase-set lists, copy number and gVCF.",
+    "Resolve the xanthosine alias capitalization inconsistency.",
+    "Map every row and field-specific rule to atomic requirement IDs.",
+    "Independent second-person review remains not started."
+  ],
+  "controls": [
+    "No implementation behavior is inferred from this matrix.",
+    "No executable tests are claimed.",
+    "No laboratory qualification is claimed."
+  ]
+}

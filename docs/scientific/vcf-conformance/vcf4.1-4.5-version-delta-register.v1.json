@@ -1,0 +1,631 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-version-delta-register",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_COMPLETE_FOR_ALL_44_TABLES_INDEPENDENT_REVIEW_AND_UPSTREAM_ALIAS_RESOLUTION_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "purpose": "Record observed version transitions and structural table inventory changes across pinned VCF 4.1-4.5 sources. This is an author research index, not a complete semantic crosswalk or conformance claim.",
+  "inputs": [
+    {
+      "path": "docs/scientific/vcf-conformance/table-structure-inventory.v1.json",
+      "blob_sha1": "77a2623393f555c1954bf3ff43aa39498479f355"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.4-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "fdaf878732c34472777c41bc95608ef7dd8df95b"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.4-genotype-sv-breakend-semantic-crosswalk.v1.json",
+      "blob_sha1": "4dff94cfd69b9cae2b96e587050505aef597575f"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json",
+      "blob_sha1": "7a8bee44406cd49ff405b29b061f4be762fcdb90"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/PHASE_A_SOURCE_MANIFEST_2026-11-05.json",
+      "blob_sha1": "c5659737fbf9a4406905d2e395e6d87bf49a407f"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-semantic-section-applicability.v1.json",
+      "blob_sha1": "b9d821264ef54166888ab3bf73537deaed80e571"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-genotype-ordering-version-delta.v1.json",
+      "blob_sha1": "fc2ace92568ed9c22f35eb5eda4bf27effa8e3a8"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-phase-set-list-version-delta.v1.json",
+      "blob_sha1": "0f0a03902eef2ca5bf36e96c1fa771dbfae5b8b7"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json",
+      "blob_sha1": "47b96602735113b41549ebc8065397e2fff50f71"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-base-modification-version-delta.v1.json",
+      "blob_sha1": "ad6e619005be7e8d61547f1f88c77620924be933"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-character-encoding-version-delta.v1.json",
+      "blob_sha1": "f8e0992d8055c2470dd1d577123715fcc7bb00df"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-local-allele-version-delta.v1.json",
+      "blob_sha1": "8a2a91d4e60f57f638bb13067e627b6054eabb1c"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-small-variant-representation-version-delta.v1.json",
+      "blob_sha1": "90f1fc229c2b83fa99bea5aa38b227130a9b0c22"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-breakend-version-delta.v1.json",
+      "blob_sha1": "5227c87498155f2605f228356a8aa2316eb86828"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json",
+      "blob_sha1": "9a71ff092d87f4f47d6c1aff793b9f4fe0909467"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json",
+      "blob_sha1": "1cb7a5dc11bc5ebe6222e8665f1da8dbccdf3583"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+      "blob_sha1": "8134576a46af696754ee406e8a3e327c4044cb4d"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
+      "blob_sha1": "453a2a8103a1642c53d8739abb7f329b142202c9"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "6cbf4a84681f7dd109249834ad5527dca60bea61"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "a8a7af8b9674548d1085f2c3e488c5168226c194"
+    }
+  ],
+  "structural_inventory": [
+    {
+      "version": "VCFv4.1",
+      "source_file": "VCFv4.1.tex",
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "vcf_section_table_count": 35,
+      "row_terminator_line_count": 134,
+      "footnote_marker_lines": 13,
+      "enumerated_list_starts": 13,
+      "explicit_grammar_marker_lines": 0,
+      "interpretation": "Counts are source-navigation metrics only. Row-terminator lines are not semantic row counts or requirement counts."
+    },
+    {
+      "version": "VCFv4.2",
+      "source_file": "VCFv4.2.tex",
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "vcf_section_table_count": 35,
+      "row_terminator_line_count": 134,
+      "footnote_marker_lines": 13,
+      "enumerated_list_starts": 14,
+      "explicit_grammar_marker_lines": 0,
+      "interpretation": "Counts are source-navigation metrics only. Row-terminator lines are not semantic row counts or requirement counts."
+    },
+    {
+      "version": "VCFv4.3",
+      "source_file": "VCFv4.3.tex",
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "vcf_section_table_count": 40,
+      "row_terminator_line_count": 200,
+      "footnote_marker_lines": 19,
+      "enumerated_list_starts": 17,
+      "explicit_grammar_marker_lines": 0,
+      "interpretation": "Counts are source-navigation metrics only. Row-terminator lines are not semantic row counts or requirement counts."
+    },
+    {
+      "version": "VCFv4.4",
+      "source_file": "VCFv4.4.tex",
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "vcf_section_table_count": 41,
+      "row_terminator_line_count": 204,
+      "footnote_marker_lines": 39,
+      "enumerated_list_starts": 20,
+      "explicit_grammar_marker_lines": 0,
+      "interpretation": "Counts are source-navigation metrics only. Row-terminator lines are not semantic row counts or requirement counts."
+    },
+    {
+      "version": "VCFv4.5",
+      "source_file": "VCFv4.5.tex",
+      "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+      "vcf_section_table_count": 44,
+      "row_terminator_line_count": 267,
+      "footnote_marker_lines": 39,
+      "enumerated_list_starts": 20,
+      "explicit_grammar_marker_lines": 0,
+      "interpretation": "Counts are source-navigation metrics only. Row-terminator lines are not semantic row counts or requirement counts."
+    }
+  ],
+  "reserved_row_inventory": {
+    "VCFv4_1": {
+      "INFO": 18,
+      "FORMAT": 13,
+      "representation": "prose enumerations"
+    },
+    "VCFv4_2": {
+      "INFO": 18,
+      "FORMAT": 13,
+      "representation": "prose enumerations"
+    },
+    "VCFv4_3": {
+      "INFO": 21,
+      "FORMAT": 16,
+      "representation": "Number/Type tables"
+    },
+    "VCFv4_4": {
+      "INFO": 21,
+      "FORMAT": 19,
+      "representation": "Number/Type tables"
+    },
+    "VCFv4_5": {
+      "INFO": 21,
+      "FORMAT": 63,
+      "representation": "Number/Type tables; counts from pinned VCFv4.5 table review queue"
+    }
+  },
+  "transitions": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "AUTHOR_SOURCE_DELTA_CANDIDATES_ATOMIC_REVIEW_PENDING",
+      "observed_deltas": [
+        {
+          "from": "VCFv4.1",
+          "to": "VCFv4.2",
+          "topic": "ALT star allele",
+          "finding": "VCFv4.2 adds * as an ALT allele for an allele missing due to an upstream deletion; VCFv4.1's ALT definition does not contain this option.",
+          "source_locators": [
+            "VCFv4.1.tex:166",
+            "VCFv4.2.tex:183"
+          ]
+        },
+        {
+          "from": "VCFv4.1",
+          "to": "VCFv4.2",
+          "topic": "GT and genotype likelihoods",
+          "finding": "Both versions describe / and | as genotype-level unphased/phased separators. Both specify the diploid triangular GL ordering formula, with diploidy assumed when GT is absent. VCFv4.1 and 4.2 also include GLE for heterogeneous ploidy; this is not the same as arbitrary-ploidy canonical Number=G ordering.",
+          "source_locators": [
+            "VCFv4.1.tex:200-210",
+            "VCFv4.2.tex:217-227"
+          ]
+        },
+        {
+          "from": "VCFv4.1",
+          "to": "VCFv4.2",
+          "topic": "PEDIGREE and clonal derivation",
+          "finding": "Both versions describe clonal derivation with PEDIGREE=<Derived=ID2,Original=ID1>, family trio relationships using Child/Mother/Father, and a general Name_0=G0-ID,...,Name_N=GN-ID form. The general form defines Name_0 as derived from N>=1 ancestor genomes.",
+          "source_locators": [
+            "VCFv4.1.tex:867-905",
+            "VCFv4.2.tex:884-922"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "AUTHOR_SOURCE_DELTA_CANDIDATES_ATOMIC_REVIEW_PENDING",
+      "observed_deltas": [
+        {
+          "from": "VCFv4.2",
+          "to": "VCFv4.3",
+          "topic": "Genotype ordering",
+          "finding": "VCFv4.3 replaces the diploid-only closed-form description with general ploidy P ordering pseudocode and an index formula; the source introduces a general combinatorial ordering model.",
+          "source_locators": [
+            "VCFv4.2.tex:224-225",
+            "VCFv4.3.tex:504-535"
+          ]
+        },
+        {
+          "from": "VCFv4.2",
+          "to": "VCFv4.3",
+          "topic": "SV definitions",
+          "finding": "VCFv4.3 introduces explicit Number/Type reserved INFO and FORMAT tables and moves structural-variant definitions into a reorganized source. The table formalization must not be projected back into 4.1/4.2 prose lists.",
+          "source_locators": [
+            "VCFv4.2.tex:250-326",
+            "VCFv4.3.tex:601-870"
+          ]
+        },
+        {
+          "from": "VCFv4.2",
+          "to": "VCFv4.3",
+          "topic": "PEDIGREE header syntax",
+          "finding": "VCFv4.3 changes the PEDIGREE syntax to ID=DerivedID,Original=OriginalID and ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN. The clonal and multiple-ancestor semantics persist, but header key layout changes.",
+          "source_locators": [
+            "VCFv4.2.tex:884-922",
+            "VCFv4.3.tex:1321-1364"
+          ]
+        },
+        {
+          "from": "VCFv4.2",
+          "to": "VCFv4.3",
+          "topic": "Character percent-encoding",
+          "finding": "VCFv4.3 explicitly defines uppercase percent-escape codes for reserved delimiters and control characters. The corresponding specific escape-code rules are absent from VCFv4.1 and VCFv4.2 and must not be back-projected.",
+          "source_locators": [
+            "VCFv4.2.tex: full source scan",
+            "VCFv4.3.tex:84-94"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "AUTHOR_SOURCE_DELTA_CANDIDATES_ATOMIC_REVIEW_PENDING",
+      "observed_deltas": [
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "GT phasing semantics",
+          "finding": "VCFv4.4 changes GT to allele-level phasing indicators: an allele is preceded by its phasing indicator, and the first indicator may be omitted and inferred from the remaining indicators. This is not identical to the earlier genotype-level separator description.",
+          "source_locators": [
+            "VCFv4.3.tex:492-504",
+            "VCFv4.4.tex:514-530"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "SV allele cardinality",
+          "finding": "VCFv4.4 revises SV fields to support multiple symbolic ALT alleles with per-ALT Number=A or paired Number=. vectors; INFO SVLEN becomes Number=A and CIPOS/CIEND become ALT-paired offset lists.",
+          "source_locators": [
+            "VCFv4.3.tex:601-672",
+            "VCFv4.4.tex:666-981"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "BND notation",
+          "finding": "VCFv4.4 disallows symbolic BND ALT records; the change log explicitly directs breakpoint representation to breakend replacement notation. Earlier 4.1-4.3 examples and definitions include SVTYPE=BND.",
+          "source_locators": [
+            "VCFv4.3.tex:601-672; 925-1481",
+            "VCFv4.4.tex:2583-2589"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "Tandem repeats and SV claims",
+          "finding": "VCFv4.4 adds tandem-repeat <CNV:TR> fields and SVCLAIM semantics, EVENTTYPE, and PSL/PSO/PSQ support for derivative-chromosome reconstruction; these are not 4.3 requirements.",
+          "source_locators": [
+            "VCFv4.4.tex:808-980; 1748-1909",
+            "VCFv4.4.tex:2583-2589"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "Copy-number semantics",
+          "finding": "VCFv4.4 changes INFO CN to allele-specific copy number and FORMAT CN to sample total copy number, including non-integer values; 4.3 uses earlier segment/breakend-oriented copy-number descriptions.",
+          "source_locators": [
+            "VCFv4.3.tex:665-679",
+            "VCFv4.4.tex:853-860; 985-989"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "PEDIGREE and haplotype semantics",
+          "finding": "VCFv4.4 retains the VCFv4.3 ID=SampleID PEDIGREE syntax and the haplotype uniqueness/conservation and duplication semantics; source text is moved to the corresponding 4.4 section.",
+          "source_locators": [
+            "VCFv4.3.tex:1321-1373",
+            "VCFv4.4.tex:1630-1682"
+          ]
+        },
+        {
+          "from": "VCFv4.3",
+          "to": "VCFv4.4",
+          "topic": "Character percent-encoding",
+          "finding": "VCFv4.4 retains the VCFv4.3 uppercase percent-escape code set for colon, semicolon, equals, percent, comma, CR, LF and horizontal tab.",
+          "source_locators": [
+            "VCFv4.3.tex:84-94",
+            "VCFv4.4.tex:84-94"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "AUTHOR_SOURCE_DELTA_REGISTERED_ATOMIC_RECONCILIATION_PENDING",
+      "source_comparison": {
+        "source_pair": [
+          {
+            "repository": "samtools/hts-specs",
+            "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+            "file": "VCFv4.4.tex",
+            "blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+            "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+            "raw_source_byte_length": 149282,
+            "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+            "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE"
+          },
+          {
+            "repository": "samtools/hts-specs",
+            "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+            "file": "VCFv4.5.tex",
+            "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+            "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+            "raw_source_byte_length": 164356,
+            "raw_source_archive_path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+            "blob_identity_status": "VERIFIED_AGAINST_GITHUB_FETCH_FILE_RESPONSE"
+          }
+        ],
+        "normative_source_locators": [
+          {
+            "topic": "FORMAT Number cardinality extensions",
+            "from": "VCFv4.4.tex: FORMAT Number definitions and reserved FORMAT table",
+            "to": "VCFv4.5.tex:189-202; 517-598",
+            "finding": "VCFv4.5 adds LA/LR/LG local-allele cardinalities, P cardinality by genotype allele values, and M cardinality by possible base modifications."
+          },
+          {
+            "topic": "Base modification FORMAT field family",
+            "from": "VCFv4.4.tex: reserved FORMAT inventory; no M/DPM/ADM family",
+            "to": "VCFv4.5.tex:199-217; 549-598; 720-742",
+            "finding": "VCFv4.5 reserves M[0-9]+[ACGTUN], DPM[0-9]+[ACGTUN] and ADM[0-9]+[ACGTUN], defines ChEBI-linked semantics, aliases, GT dependency, allele/base order, strand handling, missing/symbolic-allele behavior and unstranded storage conventions."
+          },
+          {
+            "topic": "Local-allele FORMAT representation",
+            "from": "VCFv4.4.tex: reserved FORMAT inventory; no LAA/local-equivalent family",
+            "to": "VCFv4.5.tex:501-502; 535-556; 686-717",
+            "finding": "VCFv4.5 introduces LAA and local equivalents LAD/LADF/LADR/LEC/LGL/LGP/LPL/LPP; LAA is a distinct 1-based ALT index list and is required when local-allele fields are populated. Local/global equivalents must encode identical information when both are present, subject to missing/omitted representation."
+          },
+          {
+            "topic": "General-ploidy/local-copy-number cardinality",
+            "from": "VCFv4.4.tex: prior Number and genotype semantics",
+            "to": "VCFv4.5.tex:198; 593-598; 2731",
+            "finding": "VCFv4.5 adds Number=P for fields with one value per allele value defined in GT; this is distinct from the older Number=G genotype-combination cardinality."
+          },
+          {
+            "topic": "INFO END lifecycle and computed semantics",
+            "from": "VCFv4.4.tex:703 and prior symbolic-allele END usage",
+            "to": "VCFv4.5.tex:480-495; 867; 2733-2734",
+            "finding": "VCFv4.5 deprecates INFO END in favor of SVLEN and FORMAT LEN, while defining END as a computed compatibility field derived from the maximum applicable REF, symbolic-SV/SVLEN and <*>/FORMAT-LEN end positions; computed END contributes to BCF rlen and indexing behavior."
+          },
+          {
+            "topic": "Sample-specific <*> reference blocks",
+            "from": "VCFv4.4.tex:703; END required for <*> records",
+            "to": "VCFv4.5.tex:539; 606; 1848-1862; 2735",
+            "finding": "VCFv4.5 adds FORMAT LEN for sample-specific <*> reference-block lengths, allows reference-only blocks using <*> and LEN, and specifies backward-compatible NON_REF alias and LEN inference from INFO END. Preserve gVCF producer convention provenance separately from core VCF normative text."
+          },
+          {
+            "topic": "SVTYPE lifecycle",
+            "from": "VCFv4.4.tex: reserved SV INFO definitions",
+            "to": "VCFv4.5.tex:871-873; 2765",
+            "finding": "VCFv4.5 marks SVTYPE deprecated as redundant with symbolic ALT definitions and directs readers to the ALT field symbolic structural-variant set."
+          },
+          {
+            "topic": "GT allele-level phasing representation",
+            "from": "VCFv4.4.tex:514-530; existing crosswalk VCFv4.3-to-4.4 GT delta",
+            "to": "VCFv4.5.tex:613-630",
+            "finding": "VCFv4.5 retains the prefix/allele-level phasing representation introduced in 4.4; it must not be collapsed into the earlier genotype-level separator model. Exact 4.4-to-4.5 change status requires a line-by-line equality/delta check."
+          },
+          {
+            "topic": "Header line requirement",
+            "from": "VCFv4.4.tex:313",
+            "to": "VCFv4.5.tex:362; 2736",
+            "finding": "The 4.5 change log describes this as clarification that the header line is mandatory. Treat as clarification unless source comparison demonstrates a changed normative obligation; do not count as a newly introduced rule without that comparison."
+          }
+        ],
+        "change_log_discovery_only": {
+          "source": "VCFv4.5.tex:2729-2737",
+          "status": "CORROBORATIVE_NOT_PRIMARY_REQUIREMENT_SOURCE"
+        }
+      }
+    }
+  ],
+  "unresolved_gates": [
+    "Reconcile every observed delta into atomic, version-scoped requirement records with exact normative source locators; do not use change-log text as the sole requirement source.",
+    "Review every INFO/FORMAT reserved row and surrounding prose for all five versions; preserve prose-list versus Number/Type-table representation differences.",
+    "Complete version comparison for all VCF 4.5 tables and every non-table section, including definitions, grammar, enumerations, footnotes, examples and cross-references.",
+    "Check 4.4-to-4.5 GT, SV INFO/FORMAT and BCF interactions line by line; the listed 4.5 GT item is explicitly a retained-semantics check, not a claimed new delta.",
+    "Acquire and pin VCFv4.0 before making any 4.0 applicability claim.",
+    "Independent second-person review remains not started.",
+    "Resolve the upstream VCFv4.5 xanthosine alias capitalization inconsistency (MXaoN family in the table versus MxaoN family in prose) by authoritative maintainer clarification or correction; preserve both source spellings and history until resolved.",
+    "The new section applicability and reserved-row crosswalk artifacts are author-level inventories; every candidate requirement still needs atomic, per-version APPLICABLE/CHANGED/NOT_APPLICABLE/UNRESOLVED adjudication against exact normative clauses.",
+    "Complete field-by-field normative prose/footnote mapping and atomic requirement linkage for the 21 INFO rows and 64-field union of FORMAT rows (VCF5.3/VCF5.4); the row inventory and mechanical version deltas are already captured.",
+    "Resolve the upstream xanthosine alias capitalization ambiguity before implementing VCFv4.5 base-modification aliases.",
+    "Independent second-person review of all 44 table context and version-delta adjudications remains mandatory."
+  ],
+  "controls": [
+    "Never project a later-version rule backward without direct source evidence.",
+    "Never equate Number=G genotype-combination cardinality with Number=P per-allele-value cardinality.",
+    "Keep VCF text, BCF serialization, gVCF producer conventions and 1000 Genomes producer conventions as separate scopes.",
+    "Keep examples and change logs as discovery/corroboration evidence; derive normative obligations from the normative clauses.",
+    "No requirement is considered implemented, tested or qualified by this artifact."
+  ],
+  "within_version_source_history": [
+    {
+      "source_file": "VCFv4.5.tex",
+      "commit": "e821e4f02ae25c2175f9a366edca1322d6a2de72",
+      "date": "2026-02-24T21:03:35Z",
+      "message": "Change LGL and LGP representation from Integer to Float (#851)",
+      "source_patch_finding": "The upstream patch changes the Number=LG reserved FORMAT row Type for LGL and LGP from Integer to Float at VCFv4.5.tex lines 549-550.",
+      "current_pinned_source_finding": "The pinned SIRALOOM source contains Float for both LGL and LGP, consistent with this upstream change.",
+      "evidence": "https://github.com/samtools/hts-specs/commit/e821e4f02ae25c2175f9a366edca1322d6a2de72",
+      "status": "HISTORY_CONFIRMED_CURRENT_PINNED_BYTES_CONTAIN_FLOAT"
+    },
+    {
+      "source_file": "VCFv4.5.tex",
+      "commit": "44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "date": "2024-06-06T06:50:17Z",
+      "message": "Updated VCFv4.5 to RC2 (#770)",
+      "source_patch_finding": "The same upstream patch adds MXaoN/DPMXaoN/ADMXaoN to the reserved FORMAT table and MxaoN/DPMxaoN/ADMxaoN to the prose alias lists.",
+      "current_pinned_source_finding": "The capitalization discrepancy remains in the pinned VCFv4.5 source at table lines 586-588 and prose lines 724, 734 and 740.",
+      "evidence": "https://github.com/samtools/hts-specs/commit/44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "status": "UPSTREAM_SOURCE_INCONSISTENCY_CONFIRMED_CANONICAL_ALIAS_UNRESOLVED"
+    }
+  ],
+  "blocking_source_ambiguities": [
+    {
+      "id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+      "topic": "Case-sensitive xanthosine aliases",
+      "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
+      "table": "VCF5.4",
+      "table_locator": "VCFv4.5.tex:586-588",
+      "prose_locators": [
+        "VCFv4.5.tex:724",
+        "VCFv4.5.tex:734",
+        "VCFv4.5.tex:740"
+      ],
+      "decision": "Do not guess, normalize or silently accept both spellings."
+    }
+  ],
+  "semantic_section_applicability_artifact": {
+    "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-semantic-section-applicability.v1.json",
+    "status": "AUTHOR_STRUCTURAL_APPLICABILITY_AND_MAJOR_VERSION_DELTAS_RECORDED_CLAUSE_LEVEL_RECONCILIATION_PENDING",
+    "major_semantic_changes": 10,
+    "whole_spec_domains": 10
+  },
+  "reserved_row_crosswalk_artifact": {
+    "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+    "status": "AUTHOR_ROW_INVENTORY_AND_MECHANICAL_DELTA_COMPARISON_COMPLETE_SEMANTIC_ADJUDICATION_PENDING",
+    "transitions": [
+      {
+        "from": "VCFv4.1",
+        "to": "VCFv4.2",
+        "info_added": 0,
+        "format_added": 0,
+        "format_removed": 0
+      },
+      {
+        "from": "VCFv4.2",
+        "to": "VCFv4.3",
+        "info_added": 3,
+        "format_added": 4,
+        "format_removed": 1
+      },
+      {
+        "from": "VCFv4.3",
+        "to": "VCFv4.4",
+        "info_added": 0,
+        "format_added": 3,
+        "format_removed": 0
+      },
+      {
+        "from": "VCFv4.4",
+        "to": "VCFv4.5",
+        "info_added": 0,
+        "format_added": 44,
+        "format_removed": 0
+      }
+    ]
+  },
+  "confirmed_semantic_changes": [
+    {
+      "feature": "GLE FORMAT tag removal",
+      "transition": "VCFv4.2_to_VCFv4.3",
+      "evidence": [
+        "VCFv4.1.tex:208",
+        "VCFv4.2.tex:225",
+        "VCFv4.3.tex:2168"
+      ],
+      "status": "AUTHOR_CONFIRMED_REMOVAL_FROM_RESERVED_SET"
+    },
+    {
+      "feature": "PSL/PSO/PSQ",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.4.tex:496-498",
+        "VCFv4.4.tex:598-635"
+      ],
+      "status": "AUTHOR_CONFIRMED_ADDITION"
+    },
+    {
+      "feature": "Number=P",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.4.tex:2561"
+      ],
+      "status": "AUTHOR_CONFIRMED_ADDITION"
+    },
+    {
+      "feature": "SVLEN Number cardinality",
+      "transition": "VCFv4.3_to_VCFv4.4",
+      "evidence": [
+        "VCFv4.3.tex:635",
+        "VCFv4.4.tex:720-733"
+      ],
+      "status": "AUTHOR_CONFIRMED_CHANGE_FROM_DOT_TO_A"
+    },
+    {
+      "feature": "SVTYPE deprecation",
+      "transition": "VCFv4.3_to_VCFv4.4_and_retained_in_4.5",
+      "evidence": [
+        "VCFv4.4.tex:2583",
+        "VCFv4.5.tex:871-877"
+      ],
+      "status": "AUTHOR_CONFIRMED_DEPRECATION"
+    },
+    {
+      "feature": "Local alleles, base modifications, FORMAT LEN, END deprecation",
+      "transition": "VCFv4.4_to_VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:188-218",
+        "VCFv4.5.tex:501-502",
+        "VCFv4.5.tex:686-758",
+        "VCFv4.5.tex:867",
+        "VCFv4.5.tex:1846-1860"
+      ],
+      "status": "AUTHOR_CONFIRMED_NEW_VCF4_5_FEATURES"
+    }
+  ],
+  "table_version_delta_progress": {
+    "vcf45_tables": 44,
+    "author_context_locator_reconciled": 44,
+    "preliminary_five_version_applicability_matrices": 44,
+    "table_version_deltas_reconciled": 44,
+    "reserved_info_rows_author_mapped": 21,
+    "reserved_format_union_field_ids_author_mapped": 64,
+    "vcf45_format_rows_author_mapped": 63,
+    "open_table_specific_questions": 1,
+    "blocking_source_ambiguities": 1,
+    "independent_table_reviews_completed": 0,
+    "status": "AUTHOR_VERSION_DELTA_RECONCILIATION_COMPLETE_FOR_ALL_44_TABLES_INDEPENDENT_REVIEW_AND_UPSTREAM_ALIAS_RESOLUTION_PENDING"
+  },
+  "specialized_delta_artifacts": [
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-genotype-ordering-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-phase-set-list-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-gvcf-reference-block-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-base-modification-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-character-encoding-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-local-allele-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-small-variant-representation-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-breakend-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-sample-mixture-pedigree-version-delta.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-semantic-delta-adjudication.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.5-table-review-debt-adjudication.v1.json",
+    "docs/scientific/vcf-conformance/vcf4.5-table-semantic-review-queue.v1.json"
+  ],
+  "reserved_field_clause_mapping": {
+    "info": {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-info-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "6cbf4a84681f7dd109249834ad5527dca60bea61",
+      "field_ids": 21,
+      "author_reviewed": 21,
+      "independent_reviewed": 0
+    },
+    "format": {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-format-reserved-field-clause-mapping.v1.json",
+      "blob_sha1": "a8a7af8b9674548d1085f2c3e488c5168226c194",
+      "union_field_ids": 64,
+      "vcf45_rows": 63,
+      "author_reviewed": 63,
+      "independent_reviewed": 0
+    }
+  }
+}

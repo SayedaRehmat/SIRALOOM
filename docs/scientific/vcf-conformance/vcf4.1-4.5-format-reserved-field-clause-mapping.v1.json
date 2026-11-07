@@ -1,0 +1,3483 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-format-reserved-field-clause-mapping",
+  "status": "AUTHOR_RESERVED_ROW_TO_CANONICAL_MAPPING_COMPLETE_FIELD_SPECIFIC_PROSE_MAPPING_UPSTREAM_ALIAS_BLOCKER_AND_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "inputs": [
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-row-version-crosswalk.v1.json",
+      "blob_sha1": "4eccd499ca533742209c6c7e90f33a1dc9d76cde"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.5-info-format-row-semantic-review.v1.json",
+      "blob_sha1": "5516fa0039696ec444bd02424ea7191adf7fd2c8"
+    },
+    {
+      "path": "docs/scientific/vcf-conformance/vcf4.1-4.5-reserved-info-format-field-matrix.v1.json",
+      "blob_sha1": "8134576a46af696754ee406e8a3e327c4044cb4d"
+    }
+  ],
+  "scope": "Union of all reserved FORMAT field IDs across VCFv4.1-4.5. The union contains 64 IDs because GLE is present in VCFv4.1/4.2 and removed in VCFv4.3; VCFv4.5 has 63 reserved FORMAT rows.",
+  "method": "For each field ID, preserve exact per-version row line, prose/table representation, Number/Type where specified and description. Record mechanical additions/removals/changes, attach VCFv4.5 row semantic notes and field-specific context locators. This completes author-level reserved-row interpretation and version inventory, not independent approval or complete whole-source atomic mapping.",
+  "fields": [
+    {
+      "field_id": "AD",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 462,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 480,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 534,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Read depth for each allele",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000164"
+      ]
+    },
+    {
+      "field_id": "ADF",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 463,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 481,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 535,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Read depth for each allele on the forward strand",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000165"
+      ]
+    },
+    {
+      "field_id": "ADM[0-9]+[ACGTUN]",
+      "meaning": "Modified-read depth for the corresponding base modification; Number=M and GT allele ordering apply.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 558,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Read depth for reads with the base modification with the given ChEBI ID."
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Read depth for reads with the base modification with the given ChEBI ID.",
+      "vcf45_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000188"
+      ]
+    },
+    {
+      "field_id": "ADM5caC",
+      "meaning": "Alias for ADM76793C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 570,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76793C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM76793C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000200"
+      ]
+    },
+    {
+      "field_id": "ADM5caU",
+      "meaning": "Alias for ADM17477T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 579,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM17477T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM17477T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000209"
+      ]
+    },
+    {
+      "field_id": "ADM5fC",
+      "meaning": "Alias for ADM76794C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 567,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76794C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM76794C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000197"
+      ]
+    },
+    {
+      "field_id": "ADM5fU",
+      "meaning": "Alias for ADM80961T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 576,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM80961T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM80961T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000206"
+      ]
+    },
+    {
+      "field_id": "ADM5hmC",
+      "meaning": "Alias for ADM76792C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 564,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76792C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM76792C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000194"
+      ]
+    },
+    {
+      "field_id": "ADM5hmU",
+      "meaning": "Alias for ADM16964T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 573,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM16964T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM16964T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000203"
+      ]
+    },
+    {
+      "field_id": "ADM5mC",
+      "meaning": "Alias for ADM27551C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 561,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM27551C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM27551C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000191"
+      ]
+    },
+    {
+      "field_id": "ADM6mA",
+      "meaning": "Alias for ADM28871A; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 582,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM28871A"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM28871A",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000212"
+      ]
+    },
+    {
+      "field_id": "ADM8oxoG",
+      "meaning": "Alias for ADM44605G; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 585,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM44605G"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM44605G",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000215"
+      ]
+    },
+    {
+      "field_id": "ADMXaoN",
+      "meaning": "Alias for ADM18107N; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 588,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM18107N"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for ADM18107N",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000218"
+      ]
+    },
+    {
+      "field_id": "ADR",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 464,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 482,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 536,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Read depth for each allele on the reverse strand",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000166"
+      ]
+    },
+    {
+      "field_id": "DP",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 205,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "read depth at this position for this sample (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 222,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "read depth at this position for this sample (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 465,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 483,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 537,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "read depth at this position for this sample (Integer)",
+              "to": "Read depth"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Read depth",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000167"
+      ]
+    },
+    {
+      "field_id": "DPM[0-9]+[ACGTUN]",
+      "meaning": "Detectable read depth for the corresponding base modification; Number=M and GT allele ordering apply.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 557,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID."
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+      "vcf45_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000187"
+      ]
+    },
+    {
+      "field_id": "DPM5caC",
+      "meaning": "Alias for DPM76793C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 569,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76793C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM76793C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000199"
+      ]
+    },
+    {
+      "field_id": "DPM5caU",
+      "meaning": "Alias for DPM17477T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 578,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM17477T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM17477T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000208"
+      ]
+    },
+    {
+      "field_id": "DPM5fC",
+      "meaning": "Alias for DPM76794C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 566,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76794C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM76794C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000196"
+      ]
+    },
+    {
+      "field_id": "DPM5fU",
+      "meaning": "Alias for DPM80961T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 575,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM80961T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM80961T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000205"
+      ]
+    },
+    {
+      "field_id": "DPM5hmC",
+      "meaning": "Alias for DPM76792C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 563,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76792C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM76792C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000193"
+      ]
+    },
+    {
+      "field_id": "DPM5hmU",
+      "meaning": "Alias for DPM16964T; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 572,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM16964T"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM16964T",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000202"
+      ]
+    },
+    {
+      "field_id": "DPM5mC",
+      "meaning": "Alias for DPM27551C; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 560,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM27551C"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM27551C",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000190"
+      ]
+    },
+    {
+      "field_id": "DPM6mA",
+      "meaning": "Alias for DPM28871A; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 581,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM28871A"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM28871A",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000211"
+      ]
+    },
+    {
+      "field_id": "DPM8oxoG",
+      "meaning": "Alias for DPM44605G; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 584,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM44605G"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM44605G",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000214"
+      ]
+    },
+    {
+      "field_id": "DPMXaoN",
+      "meaning": "Alias for DPM18107N; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 587,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM18107N"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for DPM18107N",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000217"
+      ]
+    },
+    {
+      "field_id": "EC",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 215,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 232,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 466,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 484,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 538,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+              "to": "Expected alternate allele counts"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "A"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Expected alternate allele counts",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000168"
+      ]
+    },
+    {
+      "field_id": "FT",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 206,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 223,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 467,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 485,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 540,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+              "to": "Filter indicating if this genotype was ``called''"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Filter indicating if this genotype was ``called''",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000170"
+      ]
+    },
+    {
+      "field_id": "GL",
+      "meaning": "Genotype likelihoods; Number=G depends on sample ploidy and complete REF+ALT allele set. Apply the version-specific genotype ordering algorithm; VCFv4.3 generalizes beyond the earlier diploid formula.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 207,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 224,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 468,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 486,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 541,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+              "to": "Genotype likelihoods"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:632-683"
+      ],
+      "vcf45_row_description": "Genotype likelihoods",
+      "vcf45_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000171"
+      ]
+    },
+    {
+      "field_id": "GLE",
+      "meaning": "Heterogeneous-ploidy genotype likelihoods under uncertain copy number; present in VCFv4.1/4.2 and removed in VCFv4.3 as unused/ill-defined.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 208,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 225,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "REMOVED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": null,
+      "vcf45_semantic_note": null,
+      "review_status": "HISTORICAL_ROW_RETAINED_REMOVED_IN_4_3",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "HISTORICAL_SEMANTIC_MAPPING_ONLY",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000027",
+        "VCF-REQ-000135"
+      ]
+    },
+    {
+      "field_id": "GP",
+      "meaning": "Genotype posterior probabilities; Number=G cardinality/order follows genotype ordering and ploidy.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 210,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 227,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 469,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 487,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 542,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+              "to": "Genotype posterior probabilities"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Float"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:632-683"
+      ],
+      "vcf45_row_description": "Genotype posterior probabilities",
+      "vcf45_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000172"
+      ]
+    },
+    {
+      "field_id": "GQ",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 211,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 228,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 470,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 488,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 543,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+              "to": "Conditional genotype quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Conditional genotype quality",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000173"
+      ]
+    },
+    {
+      "field_id": "GT",
+      "meaning": "Genotype allele values and separators; VCFv4.4 changes phasing indicators to allele-level prefixes, with first indicator inference. See genotype/SV crosswalk and GT source contexts.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 200,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 217,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 471,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 489,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 544,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+              "to": "Genotype"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "String"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:610-630"
+      ],
+      "vcf45_row_description": "Genotype",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000174"
+      ]
+    },
+    {
+      "field_id": "HQ",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 212,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 229,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 472,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 490,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 545,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "haplotype qualities, two comma separated phred qualities (Integers)",
+              "to": "Haplotype quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "2"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:517-598"
+      ],
+      "vcf45_row_description": "Haplotype quality",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000175"
+      ]
+    },
+    {
+      "field_id": "LA",
+      "meaning": "Reserved local-allele field family marker; interpret through Number=LA and LAA context, not as an independent payload with a guessed meaning.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 546,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": ".",
+          "type": "Integer",
+          "description": "Reserved"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Reserved",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000176"
+      ]
+    },
+    {
+      "field_id": "LAA",
+      "meaning": "Local allele selector: distinct 1-based ALT indices defining the local allele universe and order; required with local fields and ordered immediately after GT.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 547,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": ".",
+          "type": "Integer",
+          "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+      "vcf45_semantic_note": "Local allele selector: 1-based ALT indices, distinct values; controls local allele universe and order; presence/order dependency is specified in surrounding prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000177"
+      ]
+    },
+    {
+      "field_id": "LAD",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 548,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of AD"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of AD",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000178"
+      ]
+    },
+    {
+      "field_id": "LADF",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 549,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADF"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of ADF",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000179"
+      ]
+    },
+    {
+      "field_id": "LADR",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 550,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADR"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of ADR",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000180"
+      ]
+    },
+    {
+      "field_id": "LEC",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 551,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LA",
+          "type": "Integer",
+          "description": "Local-allele representation of EC"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of EC",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000181"
+      ]
+    },
+    {
+      "field_id": "LEN",
+      "meaning": "Per-sample <*> reference-block length; missing LEN is inferred from INFO END when present for backward compatibility.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 539,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Length of $<$*$>$ reference block"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:539",
+        "VCFv4.5.tex:606",
+        "VCFv4.5.tex:1846-1862"
+      ],
+      "vcf45_row_description": "Length of $<$*$>$ reference block",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000169"
+      ]
+    },
+    {
+      "field_id": "LGL",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 552,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GL"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of GL",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000182"
+      ]
+    },
+    {
+      "field_id": "LGP",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 553,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GP"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of GP",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000183"
+      ]
+    },
+    {
+      "field_id": "LPL",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 554,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PL"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of PL",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000184"
+      ]
+    },
+    {
+      "field_id": "LPP",
+      "meaning": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 555,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PP"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:686-718"
+      ],
+      "vcf45_row_description": "Local-allele representation of PP",
+      "vcf45_semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000185"
+      ]
+    },
+    {
+      "field_id": "M[0-9]+[ACGTUN]",
+      "meaning": "Base-modification fraction for the corresponding ChEBI ID; Number=M cardinality and base ordering depend on GT alleles and possible modification bases.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 556,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Fraction of bases modified with the given ChEBI ID."
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Fraction of bases modified with the given ChEBI ID.",
+      "vcf45_semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000186"
+      ]
+    },
+    {
+      "field_id": "M5caC",
+      "meaning": "Alias for M76793C 5-Carboxylcytosine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 568,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76793C 5-Carboxylcytosine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M76793C 5-Carboxylcytosine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000198"
+      ]
+    },
+    {
+      "field_id": "M5caU",
+      "meaning": "Alias for M17477T 5-Carboxyluracil; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 577,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M17477T 5-Carboxyluracil"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M17477T 5-Carboxyluracil",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000207"
+      ]
+    },
+    {
+      "field_id": "M5fC",
+      "meaning": "Alias for M76794C 5-Formylcytosine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 565,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76794C 5-Formylcytosine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M76794C 5-Formylcytosine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000195"
+      ]
+    },
+    {
+      "field_id": "M5fU",
+      "meaning": "Alias for M80961T 5-Formyluracil; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 574,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M80961T 5-Formyluracil"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M80961T 5-Formyluracil",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000204"
+      ]
+    },
+    {
+      "field_id": "M5hmC",
+      "meaning": "Alias for M76792C 5-Hydroxymethylcytosine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 562,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76792C 5-Hydroxymethylcytosine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M76792C 5-Hydroxymethylcytosine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000192"
+      ]
+    },
+    {
+      "field_id": "M5hmU",
+      "meaning": "Alias for M16964T 5-Hydroxymethyluracil; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 571,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M16964T 5-Hydroxymethyluracil"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M16964T 5-Hydroxymethyluracil",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000201"
+      ]
+    },
+    {
+      "field_id": "M5mC",
+      "meaning": "Alias for M27551C 5-Methylcytosine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 559,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M27551C 5-Methylcytosine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M27551C 5-Methylcytosine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000189"
+      ]
+    },
+    {
+      "field_id": "M6mA",
+      "meaning": "Alias for M28871A 6-Methyladenine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 580,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M28871A 6-Methyladenine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M28871A 6-Methyladenine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000210"
+      ]
+    },
+    {
+      "field_id": "M8oxoG",
+      "meaning": "Alias for M44605G 8-Oxoguanine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 583,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M44605G 8-Oxoguanine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M44605G 8-Oxoguanine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000213"
+      ]
+    },
+    {
+      "field_id": "MQ",
+      "meaning": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 216,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 233,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 473,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 491,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 589,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+              "to": "RMS mapping quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "RMS mapping quality",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000219"
+      ]
+    },
+    {
+      "field_id": "MXaoN",
+      "meaning": "Alias for M18107N Xanthosine; Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 586,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M18107N Xanthosine"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.4->VCFv4.5",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758",
+        "VCFv4.5.tex:1878"
+      ],
+      "vcf45_row_description": "Alias for M18107N Xanthosine",
+      "vcf45_semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth).",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000216"
+      ]
+    },
+    {
+      "field_id": "PL",
+      "meaning": "Phred-scaled genotype likelihoods rounded to closest integer; Number=G and same ordering as GL.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 209,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 226,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 474,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 492,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 590,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+              "to": "Phred-scaled genotype likelihoods rounded to the closest integer"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "G"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:632-683"
+      ],
+      "vcf45_row_description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+      "vcf45_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000220"
+      ]
+    },
+    {
+      "field_id": "PP",
+      "meaning": "Phred-scaled genotype posterior probabilities rounded to closest integer; introduced in VCFv4.3, Number=G.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 475,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 493,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 591,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:632-683"
+      ],
+      "vcf45_row_description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+      "vcf45_semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000221"
+      ]
+    },
+    {
+      "field_id": "PQ",
+      "meaning": "Phasing quality measure; field reserved for phasing quality, with definition and modal force preserved per version.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 214,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 231,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 476,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 494,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 592,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+              "to": "Phasing quality"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:763-809"
+      ],
+      "vcf45_row_description": "Phasing quality",
+      "vcf45_semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000222"
+      ]
+    },
+    {
+      "field_id": "PS",
+      "meaning": "Scalar phase-set identifier; semantics differ from PSL's cross-CHROM per-allele list.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "PRESENT",
+          "source_line": 213,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        "VCFv4.2": {
+          "status": "PRESENT",
+          "source_line": 230,
+          "representation": "PROSE_ENUMERATION",
+          "number": null,
+          "type": null,
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        "VCFv4.3": {
+          "status": "PRESENT",
+          "source_line": 477,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 495,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 593,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "DESCRIPTION_OR_ATTRIBUTE_CHANGED",
+          "details": [
+            {
+              "field": "description",
+              "from": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+              "to": "Phase set"
+            }
+          ]
+        },
+        {
+          "transition": "VCFv4.2->VCFv4.3",
+          "change": "NUMBER_TYPE_FORMALIZED",
+          "details": [
+            {
+              "field": "Number",
+              "value": "1"
+            },
+            {
+              "field": "Type",
+              "value": "Integer"
+            }
+          ]
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:763-809"
+      ],
+      "vcf45_row_description": "Phase set",
+      "vcf45_semantic_note": "Scalar phase-set identifier; scope and missing-PS convention are defined in prose and differ from PSL's cross-CHROM naming semantics.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000223"
+      ]
+    },
+    {
+      "field_id": "PSL",
+      "meaning": "Per-GT-allele phase-set list; Number=P; unphased allele positions use missing values; PS and PSL are not interoperable.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 496,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "String",
+          "description": "Phase set list"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 594,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "String",
+          "description": "Phase set list"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:763-809"
+      ],
+      "vcf45_row_description": "Phase set list",
+      "vcf45_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000224"
+      ]
+    },
+    {
+      "field_id": "PSO",
+      "meaning": "Per-allele phase-set ordinal for derivative chromosome traversal; Number=P; linked to PSL and breakend records.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 497,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list ordinal"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 595,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list ordinal"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:763-809"
+      ],
+      "vcf45_row_description": "Phase set list ordinal",
+      "vcf45_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000225"
+      ]
+    },
+    {
+      "field_id": "PSQ",
+      "meaning": "Per-phase-set quality list; Number=P; VCFv4.5 adds explicit SHOULD-level missing-value handling.",
+      "versions": {
+        "VCFv4.1": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.2": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.3": {
+          "status": "NOT_IN_RESERVED_FORMAT_INVENTORY"
+        },
+        "VCFv4.4": {
+          "status": "PRESENT",
+          "source_line": 498,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list quality"
+        },
+        "VCFv4.5": {
+          "status": "PRESENT",
+          "source_line": 596,
+          "representation": "NUMBER_TYPE_TABLE",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list quality"
+        }
+      },
+      "mechanical_changes": [
+        {
+          "transition": "VCFv4.3->VCFv4.4",
+          "change": "ADDED"
+        }
+      ],
+      "semantic_context_locators": [
+        "VCFv4.5.tex:763-809"
+      ],
+      "vcf45_row_description": "Phase set list quality",
+      "vcf45_semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics.",
+      "review_status": "AUTHOR_ROW_CONTEXT_REVIEWED",
+      "independent_review_status": "NOT_STARTED",
+      "atomic_requirement_mapping_status": "MAPPED_TO_CANONICAL_TABLE_ROW",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000226"
+      ]
+    }
+  ],
+  "summary": {
+    "union_field_ids": 64,
+    "vcf45_rows": 63,
+    "historical_GLE_removed_in_4_3": 1,
+    "added_in_4_3": [
+      "AD",
+      "ADF",
+      "ADR",
+      "PP"
+    ],
+    "added_in_4_4": [
+      "PSL",
+      "PSO",
+      "PSQ"
+    ],
+    "added_in_4_5": 44,
+    "vcf45_rows_author_reviewed": 63,
+    "independent_reviewed": 0,
+    "atomic_requirement_mapped": 63,
+    "canonical_vcf45_row_records_mapped": 63,
+    "historical_GLE_semantic_mapped": 1,
+    "total_union_field_ids_mapped": 64
+  },
+  "source_internal_blocker": {
+    "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+    "field_ids": [
+      "MXaoN",
+      "DPMXaoN",
+      "ADMXaoN"
+    ],
+    "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED"
+  },
+  "remaining": [
+    "Independent reviewer must verify all 63 VCFv4.5 FORMAT row definitions and the historical GLE removal.",
+    "Map every FORMAT row and its prose constraints to atomic requirement IDs.",
+    "Resolve the xanthosine alias capitalization ambiguity.",
+    "Add version-specific tests for FORMAT Number cardinality, GT/GL ordering, phasing, local alleles, base modifications, reference blocks and removed fields.",
+    "No implementation or laboratory qualification is claimed."
+  ]
+}

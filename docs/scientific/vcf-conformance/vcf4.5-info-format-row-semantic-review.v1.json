@@ -1,0 +1,1040 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-info-format-row-semantic-review",
+  "status": "AUTHOR_SOURCE_CONTEXT_REVIEW_COMPLETE_INDEPENDENT_REVIEW_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "file": "VCFv4.5.tex",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+  },
+  "scope": "Row-by-row review of the complete reserved INFO and reserved FORMAT tables, reconciled with the immediately governing prose, subsequent field definitions, examples, labels and cross-references. This is an author review record, not independent approval or implementation conformance.",
+  "method": "Every data row is captured with exact source line, ID, Number, Type, description and a contextual semantic disposition. Table metadata/continuation headers are excluded from data-row counts. The row-level interpretation is checked against the full local source context recorded below.",
+  "counts": {
+    "reserved_info_rows": 21,
+    "reserved_format_rows": 63,
+    "total_rows": 84,
+    "independently_reviewed_rows": 0,
+    "implementation_mapped_rows": 0,
+    "executed_test_mapped_rows": 0
+  },
+  "table_context": {
+    "info": {
+      "table_label": "table:reserved-info",
+      "table_lines": [
+        443,
+        481
+      ],
+      "governing_prose": [
+        428,
+        440
+      ],
+      "post_table_definition": [
+        485,
+        495
+      ],
+      "cross_reference": "Section sv-info-keys (lines 841 onward)",
+      "rows": [
+        {
+          "source_line": 460,
+          "id": "AA",
+          "number": "1",
+          "type": "String",
+          "description": "Ancestral allele",
+          "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 461,
+          "id": "AC",
+          "number": "A",
+          "type": "Integer",
+          "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record."
+        },
+        {
+          "source_line": 462,
+          "id": "AD",
+          "number": "R",
+          "type": "Integer",
+          "description": "Total read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD."
+        },
+        {
+          "source_line": 463,
+          "id": "ADF",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD."
+        },
+        {
+          "source_line": 464,
+          "id": "ADR",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=R binds REF followed by every ALT allele; strand-specific keys are separate from total AD."
+        },
+        {
+          "source_line": 465,
+          "id": "AF",
+          "number": "A",
+          "type": "Float",
+          "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+          "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record."
+        },
+        {
+          "source_line": 466,
+          "id": "AN",
+          "number": "1",
+          "type": "Integer",
+          "description": "Total number of alleles in called genotypes",
+          "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 467,
+          "id": "BQ",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS base quality",
+          "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 468,
+          "id": "CIGAR",
+          "number": "A",
+          "type": "String",
+          "description": "Cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=A binds one value per ALT allele in ALT order; this is not one value per record."
+        },
+        {
+          "source_line": 469,
+          "id": "DB",
+          "number": "0",
+          "type": "Flag",
+          "description": "dbSNP membership",
+          "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload."
+        },
+        {
+          "source_line": 470,
+          "id": "DP",
+          "number": "1",
+          "type": "Integer",
+          "description": "Combined depth across samples",
+          "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 471,
+          "id": "END",
+          "number": "1",
+          "type": "Integer",
+          "description": "Deprecated. Present for backwards compatibility with earlier versions of VCF.",
+          "raw_source_line": "END\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Deprecated compatibility field; separate prose defines it as a computed maximum endpoint across REF, symbolic SVLEN and <NON_REF> LEN-derived intervals; it feeds BCF rlen and indexing. Do not treat it as a primary source of variant span when recomputation is required."
+        },
+        {
+          "source_line": 472,
+          "id": "H2",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap2 membership",
+          "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload."
+        },
+        {
+          "source_line": 473,
+          "id": "H3",
+          "number": "0",
+          "type": "Flag",
+          "description": "HapMap3 membership",
+          "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload."
+        },
+        {
+          "source_line": 474,
+          "id": "MQ",
+          "number": "1",
+          "type": "Float",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 475,
+          "id": "MQ0",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of MAPQ == 0 reads",
+          "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 476,
+          "id": "NS",
+          "number": "1",
+          "type": "Integer",
+          "description": "Number of samples with data",
+          "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional INFO definition; row supplies the field's declared Number, Type and meaning, but does not require the field to occur in every record."
+        },
+        {
+          "source_line": 477,
+          "id": "SB",
+          "number": "4",
+          "type": "Integer",
+          "description": "Strand bias",
+          "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=4 is a fixed four-integer vector; retain exact cardinality rather than treating it as a scalar."
+        },
+        {
+          "source_line": 478,
+          "id": "SOMATIC",
+          "number": "0",
+          "type": "Flag",
+          "description": "Somatic mutation (for cancer genomics)",
+          "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload."
+        },
+        {
+          "source_line": 479,
+          "id": "VALIDATED",
+          "number": "0",
+          "type": "Flag",
+          "description": "Validated by follow-up experiment",
+          "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=0/Type=Flag is a presence flag, not a key=value payload."
+        },
+        {
+          "source_line": 480,
+          "id": "1000G",
+          "number": "0",
+          "type": "Flag",
+          "description": "1000 Genomes membership",
+          "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved legacy membership flag in VCF core; its name does not import the 1000 Genomes project's producer conventions or imply cohort-specific semantics."
+        }
+      ]
+    },
+    "format": {
+      "table_label": "table:reserved-genotypes",
+      "table_lines": [
+        517,
+        598
+      ],
+      "governing_prose": [
+        497,
+        515
+      ],
+      "field_definitions": [
+        600,
+        810
+      ],
+      "cross_references": [
+        "Genotype Ordering (lines 632-683)",
+        "Local alleles (lines 686-718)",
+        "base modification fields (lines 720-758)",
+        "PS/PSL/PSO/PSQ phasing (lines 763-809)",
+        "SV FORMAT keys (Section sv-format-keys)",
+        "Number=LA/LR/LG/P/M cardinality definitions (lines 188-218)"
+      ],
+      "rows": [
+        {
+          "source_line": 534,
+          "id": "AD",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele",
+          "raw_source_line": "AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 535,
+          "id": "ADF",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the forward strand",
+          "raw_source_line": "ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 536,
+          "id": "ADR",
+          "number": "R",
+          "type": "Integer",
+          "description": "Read depth for each allele on the reverse strand",
+          "raw_source_line": "ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 537,
+          "id": "DP",
+          "number": "1",
+          "type": "Integer",
+          "description": "Read depth",
+          "raw_source_line": "DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 538,
+          "id": "EC",
+          "number": "A",
+          "type": "Integer",
+          "description": "Expected alternate allele counts",
+          "raw_source_line": "EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 539,
+          "id": "LEN",
+          "number": "1",
+          "type": "Integer",
+          "description": "Length of $<$*$>$ reference block",
+          "raw_source_line": "LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 540,
+          "id": "FT",
+          "number": "1",
+          "type": "String",
+          "description": "Filter indicating if this genotype was ``called''",
+          "raw_source_line": "FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 541,
+          "id": "GL",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype likelihoods",
+          "raw_source_line": "GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied."
+        },
+        {
+          "source_line": 542,
+          "id": "GP",
+          "number": "G",
+          "type": "Float",
+          "description": "Genotype posterior probabilities",
+          "raw_source_line": "GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied."
+        },
+        {
+          "source_line": 543,
+          "id": "GQ",
+          "number": "1",
+          "type": "Integer",
+          "description": "Conditional genotype quality",
+          "raw_source_line": "GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 544,
+          "id": "GT",
+          "number": "1",
+          "type": "String",
+          "description": "Genotype",
+          "raw_source_line": "GT\t\t& 1\t\t\t& String\t& Genotype \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 545,
+          "id": "HQ",
+          "number": "2",
+          "type": "Integer",
+          "description": "Haplotype quality",
+          "raw_source_line": "HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 546,
+          "id": "LA",
+          "number": ".",
+          "type": "Integer",
+          "description": "Reserved",
+          "raw_source_line": "LA\t\t& .\t\t\t& Integer\t& Reserved \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 547,
+          "id": "LAA",
+          "number": ".",
+          "type": "Integer",
+          "description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+          "raw_source_line": "LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local allele selector: 1-based ALT indices, distinct values; controls local allele universe and order; presence/order dependency is specified in surrounding prose."
+        },
+        {
+          "source_line": 548,
+          "id": "LAD",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of AD",
+          "raw_source_line": "LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 549,
+          "id": "LADF",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADF",
+          "raw_source_line": "LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 550,
+          "id": "LADR",
+          "number": "LR",
+          "type": "Integer",
+          "description": "Local-allele representation of ADR",
+          "raw_source_line": "LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 551,
+          "id": "LEC",
+          "number": "LA",
+          "type": "Integer",
+          "description": "Local-allele representation of EC",
+          "raw_source_line": "LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 552,
+          "id": "LGL",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GL",
+          "raw_source_line": "LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 553,
+          "id": "LGP",
+          "number": "LG",
+          "type": "Float",
+          "description": "Local-allele representation of GP",
+          "raw_source_line": "LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 554,
+          "id": "LPL",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PL",
+          "raw_source_line": "LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 555,
+          "id": "LPP",
+          "number": "LG",
+          "type": "Integer",
+          "description": "Local-allele representation of PP",
+          "raw_source_line": "LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Local-allele field; interpret only through LAA and the matching global field semantics, using local allele order and the row's Number code."
+        },
+        {
+          "source_line": 556,
+          "id": "M[0-9]+[ACGTUN]",
+          "number": "M",
+          "type": "Float",
+          "description": "Fraction of bases modified with the given ChEBI ID.",
+          "raw_source_line": "M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation."
+        },
+        {
+          "source_line": 557,
+          "id": "DPM[0-9]+[ACGTUN]",
+          "number": "M",
+          "type": "Integer",
+          "description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+          "raw_source_line": "DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation."
+        },
+        {
+          "source_line": 558,
+          "id": "ADM[0-9]+[ACGTUN]",
+          "number": "M",
+          "type": "Integer",
+          "description": "Read depth for reads with the base modification with the given ChEBI ID.",
+          "raw_source_line": "ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved base-modification key family. Regex reservation applies even to invalid ChEBI IDs; field-specific prose defines fraction/depth semantics, value domain, strand handling and reference-block propagation."
+        },
+        {
+          "source_line": 559,
+          "id": "M5mC",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M27551C 5-Methylcytosine",
+          "raw_source_line": "M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 560,
+          "id": "DPM5mC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM27551C",
+          "raw_source_line": "DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 561,
+          "id": "ADM5mC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM27551C",
+          "raw_source_line": "ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 562,
+          "id": "M5hmC",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76792C 5-Hydroxymethylcytosine",
+          "raw_source_line": "M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 563,
+          "id": "DPM5hmC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76792C",
+          "raw_source_line": "DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 564,
+          "id": "ADM5hmC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76792C",
+          "raw_source_line": "ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 565,
+          "id": "M5fC",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76794C 5-Formylcytosine",
+          "raw_source_line": "M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 566,
+          "id": "DPM5fC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76794C",
+          "raw_source_line": "DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 567,
+          "id": "ADM5fC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76794C",
+          "raw_source_line": "ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 568,
+          "id": "M5caC",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M76793C 5-Carboxylcytosine",
+          "raw_source_line": "M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 569,
+          "id": "DPM5caC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM76793C",
+          "raw_source_line": "DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 570,
+          "id": "ADM5caC",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM76793C",
+          "raw_source_line": "ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 571,
+          "id": "M5hmU",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M16964T 5-Hydroxymethyluracil",
+          "raw_source_line": "M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 572,
+          "id": "DPM5hmU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM16964T",
+          "raw_source_line": "DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 573,
+          "id": "ADM5hmU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM16964T",
+          "raw_source_line": "ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 574,
+          "id": "M5fU",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M80961T 5-Formyluracil",
+          "raw_source_line": "M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 575,
+          "id": "DPM5fU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM80961T",
+          "raw_source_line": "DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 576,
+          "id": "ADM5fU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM80961T",
+          "raw_source_line": "ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 577,
+          "id": "M5caU",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M17477T 5-Carboxyluracil",
+          "raw_source_line": "M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 578,
+          "id": "DPM5caU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM17477T",
+          "raw_source_line": "DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 579,
+          "id": "ADM5caU",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM17477T",
+          "raw_source_line": "ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 580,
+          "id": "M6mA",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M28871A 6-Methyladenine",
+          "raw_source_line": "M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 581,
+          "id": "DPM6mA",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM28871A",
+          "raw_source_line": "DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 582,
+          "id": "ADM6mA",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM28871A",
+          "raw_source_line": "ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 583,
+          "id": "M8oxoG",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M44605G 8-Oxoguanine",
+          "raw_source_line": "M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 584,
+          "id": "DPM8oxoG",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM44605G",
+          "raw_source_line": "DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 585,
+          "id": "ADM8oxoG",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM44605G",
+          "raw_source_line": "ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 586,
+          "id": "MXaoN",
+          "number": "M",
+          "type": "Float",
+          "description": "Alias for M18107N Xanthosine",
+          "raw_source_line": "MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 587,
+          "id": "DPMXaoN",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for DPM18107N",
+          "raw_source_line": "DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 588,
+          "id": "ADMXaoN",
+          "number": "M",
+          "type": "Integer",
+          "description": "Alias for ADM18107N",
+          "raw_source_line": "ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Alias row; preserve exact alias-to-ChEBI mapping and distinguish M (fraction) from DPM (detectable depth) and ADM (modified-read depth)."
+        },
+        {
+          "source_line": 589,
+          "id": "MQ",
+          "number": "1",
+          "type": "Integer",
+          "description": "RMS mapping quality",
+          "raw_source_line": "MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 590,
+          "id": "PL",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+          "raw_source_line": "PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied."
+        },
+        {
+          "source_line": 591,
+          "id": "PP",
+          "number": "G",
+          "type": "Integer",
+          "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+          "raw_source_line": "PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=G: cardinality and ordering depend on sample ploidy and the complete REF+ALT allele set; VCF4.5 ordering algorithm and ploidy fallback must be applied."
+        },
+        {
+          "source_line": 592,
+          "id": "PQ",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phasing quality",
+          "raw_source_line": "PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Reserved optional FORMAT definition; row supplies Number, Type and meaning, while detailed semantics and constraints are in the following prose."
+        },
+        {
+          "source_line": 593,
+          "id": "PS",
+          "number": "1",
+          "type": "Integer",
+          "description": "Phase set",
+          "raw_source_line": "PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Scalar phase-set identifier; scope and missing-PS convention are defined in prose and differ from PSL's cross-CHROM naming semantics."
+        },
+        {
+          "source_line": 594,
+          "id": "PSL",
+          "number": "P",
+          "type": "String",
+          "description": "Phase set list",
+          "raw_source_line": "PSL\t\t& P\t\t\t& String\t& Phase set list \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics."
+        },
+        {
+          "source_line": 595,
+          "id": "PSO",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list ordinal",
+          "raw_source_line": "PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics."
+        },
+        {
+          "source_line": 596,
+          "id": "PSQ",
+          "number": "P",
+          "type": "Integer",
+          "description": "Phase set list quality",
+          "raw_source_line": "PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\",
+          "review_disposition": "AUTHOR_REVIEWED_ROW_AND_CONTEXT",
+          "semantic_note": "Number=P phase-set-list vector; semantics are defined jointly with GT allele order and per-allele phasing; do not collapse to scalar PS semantics."
+        }
+      ]
+    }
+  },
+  "reconciled_semantics": [
+    {
+      "topic": "Reserved-field optionality",
+      "source_lines": [
+        434,
+        435,
+        437,
+        513,
+        515
+      ],
+      "finding": "Reserved keys are optional conventions; a row in a reserved-key table does not mean every record/sample must carry the field. When emitted, metadata declaration and the reserved definition govern its schema and interpretation."
+    },
+    {
+      "topic": "INFO allele cardinalities",
+      "source_lines": [
+        460,
+        480
+      ],
+      "finding": "Number=A is ALT-ordered per alternate allele; Number=R is REF plus ALT ordered; Number=1 is scalar; Number=0/Flag is presence-only; Number=4 is a fixed four-value vector. Preserve these distinctions per row."
+    },
+    {
+      "topic": "END compatibility semantics",
+      "source_lines": [
+        471,
+        485,
+        493
+      ],
+      "finding": "END is explicitly deprecated but retained for backwards compatibility. When present it is computed as the maximum end reference position across REF, symbolic SVLEN and <NON_REF> FORMAT LEN contributions; it is used for BCF rlen/indexing. This is not a blanket rule that END is required."
+    },
+    {
+      "topic": "FORMAT shared sample schema",
+      "source_lines": [
+        497,
+        510
+      ],
+      "finding": "If genotype information is present, the same FORMAT key types/order apply across samples in the record; GT, if present, is first; if any local-allele field is present, LAA must be present and precede fields other than GT; no FORMAT keys are universally required; paired global/local representations must agree or one be missing/omitted."
+    },
+    {
+      "topic": "Genotype ordering",
+      "source_lines": [
+        629,
+        630,
+        632,
+        663,
+        665,
+        683
+      ],
+      "finding": "Number=G values are ordered over nondecreasing allele-index tuples for ploidy P and N alternate alleles, with inclusive loop bounds. The specification supplies nested-loop and recursive algorithms plus the combinatorial index formula; GT ploidy determines P when GT exists, while diploidy is assumed without GT. Worked examples are informative cross-checks, not substitutes for the algorithm."
+    },
+    {
+      "topic": "Local allele semantics",
+      "source_lines": [
+        686,
+        697,
+        701,
+        715,
+        717,
+        718
+      ],
+      "finding": "LAA contains distinct 1-based ALT indices and defines local allele membership and order; REF is implicit as local allele zero. LAA is required when local fields carry data. Local A/R/G fields map to the matching global field over the local allele universe. BCF zero-length vectors are encoded as missing; a missing-valued LAA is treated as an empty vector (REF-only) under the stated condition. Number=LA implementation-defined fields cannot preserve zero-length versus missing at REF-only sites."
+    },
+    {
+      "topic": "Base-modification semantics",
+      "source_lines": [
+        720,
+        744,
+        746,
+        757
+      ],
+      "finding": "M fields are fractions in [0,1]; DPM counts reads able to detect the modification; ADM counts reads with the modification. Regex-matching names are reserved even for invalid ChEBI IDs. Alias names map to specific ChEBI-keyed fields. Type=M fields are intrinsically stranded; ADFM/ADRM are not reserved. Unstranded CpG is represented at C with subsequent G missing; stranded CpG uses both positions, C encoding ADF and G encoding ADR. Reference-block values apply to all applicable covered bases. Example rows remain informative."
+    },
+    {
+      "topic": "Phasing and phase-set vectors",
+      "source_lines": [
+        613,
+        624,
+        765,
+        776,
+        808,
+        809
+      ],
+      "finding": "GT separators are allele-level phasing indicators; first indicator may be omitted and is inferred from the remaining indicators. PSL has one element per GT allele, unphased alleles map to missing entries, names are globally meaningful across CHROM, and PS and PSL cannot co-occur or interoperate. PSO disambiguates derivative-copy traversal; PSQ aligns one quality value per PSL phase set."
+    },
+    {
+      "topic": "Producer conventions separation",
+      "source_lines": [
+        480
+      ],
+      "finding": "1000G is only a reserved INFO flag labelled 1000 Genomes membership in this VCF table. It is not evidence that any 1000 Genomes producer/project convention is normative VCF syntax."
+    },
+    {
+      "topic": "FORMAT Number=LA/LR/LG/P/M definitions",
+      "source_lines": [
+        193,
+        200
+      ],
+      "finding": "LA is A restricted to ALT alleles selected by LAA; LR is R restricted to REF plus selected local ALT alleles; LG is G over the local allele universe; P has one value per allele value in GT; M has one value per possible base modification for the corresponding ChEBI ID. These definitions control cardinality and cannot be inferred from the one-character code alone."
+    },
+    {
+      "topic": "Base-modification cardinality and genotype dependency",
+      "source_lines": [
+        202,
+        218
+      ],
+      "finding": "Number=M cardinality is determined by GT and possible modifications for the corresponding alleles. The key suffix identifies modifiable base(s); U is synonymous with T; any base-modification key requires GT. Values follow eligible base positions on either strand and GT allele order; N modifications encode positive then negative strand; unphased allele values aggregate at the first occurrence; missing and symbolic alleles contribute no relevant bases. Unstranded values use the lowest-POS base with other values missing, with N modifications on the positive strand."
+    }
+  ],
+  "unresolved_questions": [
+    "The reserved tables are not exhaustive of all legal custom fields; metadata-defined arbitrary fields remain allowed subject to VCF grammar and metadata declarations.",
+    "The row review does not establish implementation support, parser correctness, or laboratory qualification.",
+    "BLOCKING UPSTREAM SOURCE INCONSISTENCY (VCF45-FORMAT-XAON-ALIAS-CASE-001): The reserved FORMAT table spells MXaoN/DPMXaoN/ADMXaoN (VCFv4.5.tex:586-588), while prose alias lists spell MxaoN/DPMxaoN/ADMxaoN (lines 724, 734, 740; unstranded example line 218). Upstream commit 44aedcff5032a6a16f271085e2d9b16de1f0ccbf (2024-06-06, VCFv4.5 RC2) introduced both spellings in the same change; no later correction was found in retrieved file history and scoped issue/PR searches returned zero results. The source history does not establish canonical case. Obtain authoritative maintainer clarification or source correction before implementation; do not normalize or silently accept both."
+  ],
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED",
+    "reviewer": null,
+    "approval_count": 0
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED",
+  "source_internal_ambiguities": [
+    {
+      "issue_id": "VCF45-FORMAT-XAON-ALIAS-CASE-001",
+      "severity": "BLOCKING_SPECIFICATION_AMBIGUITY",
+      "status": "OPEN_UPSTREAM_SOURCE_INCONSISTENCY_MAINTAINER_RESOLUTION_REQUIRED",
+      "introduced_by_commit": "44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "evidence_url": "https://github.com/samtools/hts-specs/commit/44aedcff5032a6a16f271085e2d9b16de1f0ccbf",
+      "canonical_spelling": "UNRESOLVED"
+    }
+  ]
+}

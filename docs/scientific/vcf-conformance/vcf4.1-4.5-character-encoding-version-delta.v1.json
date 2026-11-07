@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-character-encoding-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "VCFv4.5 table VCF5.1 and its character encoding, control-character, line-ending and percent-encoding rules.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "NO_DEDICATED_CHARACTER_ENCODING_SECTION_OR_MAPPING_TABLE_FOUND",
+      "note": "This is a section/table scan finding only; it does not establish that no general encoding behavior exists elsewhere."
+    },
+    "VCFv4_2": {
+      "status": "NO_DEDICATED_CHARACTER_ENCODING_SECTION_OR_MAPPING_TABLE_FOUND",
+      "note": "This is a section/table scan finding only; it does not establish that no general encoding behavior exists elsewhere."
+    },
+    "VCFv4_3": {
+      "status": "INTRODUCED",
+      "locator": "VCFv4.3.tex:75-95"
+    },
+    "VCFv4_4": {
+      "status": "RETAINED_NO_MATERIAL_TEXT_CHANGE_FOUND",
+      "locator": "VCFv4.4.tex:75-95"
+    },
+    "VCFv4_5": {
+      "status": "RETAINED_NO_MATERIAL_TEXT_CHANGE_FOUND",
+      "locator": "VCFv4.5.tex:73-93"
+    }
+  },
+  "rules_in_v4_3_plus": [
+    {
+      "rule": "UTF-8",
+      "force": "MUST",
+      "locator": "VCFv4.3.tex:77; VCFv4.4.tex:77; VCFv4.5.tex:75"
+    },
+    {
+      "rule": "No byte order mark",
+      "force": "MUST_NOT",
+      "locator": "VCFv4.3.tex:80; VCFv4.4.tex:80; VCFv4.5.tex:78"
+    },
+    {
+      "rule": "Disallowed non-printable code points U+0000–U+0008, U+000B–U+000C, U+000E–U+001F",
+      "force": "DISALLOWED",
+      "locator": "VCFv4.3.tex:81; VCFv4.4.tex:81; VCFv4.5.tex:79"
+    },
+    {
+      "rule": "Line separators CR+LF or LF only at end of line",
+      "force": "MUST",
+      "locator": "VCFv4.3.tex:82; VCFv4.4.tex:82; VCFv4.5.tex:80"
+    },
+    {
+      "rule": "Characters with special field-delimiter meaning must be percent-encoded for other meanings, using capitalized hex",
+      "force": "MUST",
+      "locator": "VCFv4.3.tex:83; VCFv4.4.tex:83; VCFv4.5.tex:81"
+    }
+  ],
+  "mapping_table": {
+    "locator": "VCFv4.3.tex:86-95; VCFv4.4.tex:86-95; VCFv4.5.tex:84-93",
+    "mappings": [
+      [
+        "%3A",
+        ":"
+      ],
+      [
+        "%3B",
+        ";"
+      ],
+      [
+        "%3D",
+        "="
+      ],
+      [
+        "%25",
+        "%"
+      ],
+      [
+        "%2C",
+        ","
+      ],
+      [
+        "%0D",
+        "CR"
+      ],
+      [
+        "%0A",
+        "LF"
+      ],
+      [
+        "%09",
+        "TAB"
+      ]
+    ],
+    "comparison": "The eight mappings are textually unchanged across VCFv4.3, VCFv4.4 and VCFv4.5 in the reviewed source ranges."
+  },
+  "deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_DEDICATED_SECTION_OR_MAPPING_TABLE_FOUND_IN_EITHER_VERSION"
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "DEDICATED_ENCODING_RULES_AND_MAPPING_TABLE_INTRODUCED",
+      "evidence": "VCFv4.3.tex:75-95"
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SECTION",
+      "evidence": [
+        "VCFv4.3.tex:75-95",
+        "VCFv4.4.tex:75-95"
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SECTION",
+      "evidence": [
+        "VCFv4.4.tex:75-95",
+        "VCFv4.5.tex:73-93"
+      ]
+    }
+  ],
+  "remaining": [
+    "Independent reviewer must verify whether earlier VCF4.1/4.2 grammar or general text imposes overlapping encoding constraints outside a dedicated section.",
+    "Map the eight mapping rows and each normative encoding clause to atomic requirement IDs.",
+    "Add parser tests for UTF-8 multibyte sequences, BOM rejection, prohibited controls, CR/LF boundaries, delimiter escaping and uppercase/lowercase percent-hex behavior.",
+    "No implementation or test execution is claimed."
+  ]
+}

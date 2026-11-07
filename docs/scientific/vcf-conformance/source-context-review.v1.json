@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0.0",
+  "review_id": "siraloom-vcf-source-context-review-2026-11-05-01",
+  "status": "INITIAL_SOURCE_CONTEXT_REVIEW_COMPLETE_SECOND_REVIEW_PENDING",
+  "source_repository": "samtools/hts-specs",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "method": [
+    "Read each cited source line with surrounding subsection context, not as an isolated candidate.",
+    "Distinguish obligations on file producers from requirements on VCF-compliant readers.",
+    "Split independently testable constraints into separate atomic requirements.",
+    "Treat declarative format properties and negative formulations such as 'not allowed' as discovery targets even when no modal token is present.",
+    "Do not infer applicability to VCFv4.0–4.2 from VCFv4.3–4.5; unresolved versions remain unresolved until their own authoritative source is checked."
+  ],
+  "reviewed_contexts": [
+    {
+      "context_id": "CTX-FILEFORMAT-41-45",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "source_ranges": [
+        "VCFv4.1.tex:56-63",
+        "VCFv4.2.tex:56-63",
+        "VCFv4.3.tex:134-146",
+        "VCFv4.4.tex:137-149",
+        "VCFv4.5.tex:135-147"
+      ],
+      "findings": [
+        "The sentence stating that a single fileformat field/line is always required and must be first contains at least two independently testable obligations: presence/uniqueness and first-line position.",
+        "The following example fixes the version-specific literal declaration value; the example is evidence for version identity, not an additional independent requirement.",
+        "The preceding meta-information paragraph states that other meta-information lines may appear in any order except fileformat, supporting the first-line rule and distinguishing it from general metadata ordering."
+      ]
+    },
+    {
+      "context_id": "CTX-ENCODING-43-45",
+      "versions": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "source_ranges": [
+        "VCFv4.3.tex:37-40,75-83",
+        "VCFv4.4.tex:37-40,75-83",
+        "VCFv4.5.tex:35-38,73-81"
+      ],
+      "findings": [
+        "The UTF-8 statement is a declarative format constraint and is not found by the existing modal-word matcher.",
+        "The byte-order-mark prohibition is independently testable.",
+        "The disallowed control-character ranges are a distinct prohibition and must not be conflated with the BOM rule.",
+        "The line-separator sentence defines both the allowed newline encodings and their placement. It is decomposed into allowed LF/CRLF support and prohibition of separator characters inside line content.",
+        "The opening-section zero-length-field prohibition is another non-modal-language discovery case."
+      ]
+    },
+    {
+      "context_id": "CTX-HEADER-DATA-43-45",
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "source_ranges": [
+        "VCFv4.1.tex:155-159",
+        "VCFv4.2.tex:172-176",
+        "VCFv4.3.tex:311-319",
+        "VCFv4.4.tex:325-333",
+        "VCFv4.5.tex:374-382"
+      ],
+      "findings": [
+        "Header and data field tab-delimitation are declarative serialization constraints across the reviewed VCFv4.1–4.5 passages; they are not discovered by a modal-word-only matcher.",
+        "Duplicate sample identifiers are prohibited in the reviewed VCFv4.1–4.5 passages using 'not allowed' wording, which the existing modal matcher does not recognize.",
+        "The header and data-line trailing-tab prohibitions are separately observable and separately testable.",
+        "The requirement for the last data line to end with a line separator is a producer/file conformance constraint distinct from the reader's LF/CRLF support requirement.",
+        "These constraints occur in prose without being represented by the candidate intake as separate atomic records; discovery must inspect source structure and context, not only candidate counts."
+      ]
+    }
+  ],
+  "decomposition_decisions": [
+    {
+      "candidate": "VCFv4.1:L0059 and equivalent fileformat lines in 4.2-4.5",
+      "result": "Retain separate atomic obligations for declaration presence/uniqueness and first-line position; do not treat example text as another requirement."
+    },
+    {
+      "candidate": "VCFv4.3:L0082 and equivalent lines in 4.4-4.5",
+      "result": "Keep newline repertoire/support separate from separator-placement prohibition."
+    },
+    {
+      "candidate": "VCFv4.3:L0039",
+      "result": "Create a non-modal candidate for zero-length-field prohibition."
+    },
+    {
+      "candidate": "VCFv4.3:L0077",
+      "result": "Create a non-modal declarative encoding constraint."
+    },
+    {
+      "candidate": "VCFv4.3:L0080-L0081",
+      "result": "Create separate BOM and control-character prohibitions."
+    },
+    {
+      "candidate": "VCFv4.3:L0313-L0318 and equivalent lines in 4.4-4.5",
+      "result": "Create separate trailing-tab constraints for header and data lines and a final-data-line terminator constraint."
+    },
+    {
+      "candidate": "VCFv4.1:L0155/L0159 and corresponding header/data passages in 4.2–4.5",
+      "result": "Create separate requirements for tab-delimited header fields, tab-delimited data fields, and unique sample identifiers; they are independently testable."
+    }
+  ],
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED",
+    "note": "This is the primary source-context review record. No independent second reviewer has reviewed or approved these decisions."
+  },
+  "implementation_mapping": "NOT_PERFORMED",
+  "test_execution": "NOT_PERFORMED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}

@@ -1,0 +1,1194 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf41-44-reserved-table-and-semantic-crosswalk",
+  "status": "SOURCE_ROW_CROSSWALK_COMPLETE_SEMANTIC_AND_ATOMIC_RECONCILIATION_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "files": {
+      "4.1": {
+        "file": "VCFv4.1.tex",
+        "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+        "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa"
+      },
+      "4.2": {
+        "file": "VCFv4.2.tex",
+        "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+        "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc"
+      },
+      "4.3": {
+        "file": "VCFv4.3.tex",
+        "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+        "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde"
+      },
+      "4.4": {
+        "file": "VCFv4.4.tex",
+        "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+        "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a"
+      }
+    },
+    "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+  },
+  "scope": "Row-level crosswalk of reserved INFO and FORMAT definitions across VCFv4.1–4.4, preserving the source's different representation (prose lists in 4.1/4.2; Number/Type tables in 4.3/4.4). Also records directly observed semantic deltas against adjacent versions. This is not a complete whole-spec semantic review.",
+  "versions": {
+    "VCFv4.1": {
+      "source_file": "VCFv4.1.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "info_reserved": [
+        {
+          "source_line": 171,
+          "id": "AA",
+          "description": "ancestral allele",
+          "raw_source_line": "\\item AA : ancestral allele"
+        },
+        {
+          "source_line": 172,
+          "id": "AC",
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "\\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        {
+          "source_line": 173,
+          "id": "AF",
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+          "raw_source_line": "\\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        {
+          "source_line": 174,
+          "id": "AN",
+          "description": "total number of alleles in called genotypes",
+          "raw_source_line": "\\item AN : total number of alleles in called genotypes"
+        },
+        {
+          "source_line": 175,
+          "id": "BQ",
+          "description": "RMS base quality at this position",
+          "raw_source_line": "\\item BQ : RMS base quality at this position"
+        },
+        {
+          "source_line": 176,
+          "id": "CIGAR",
+          "description": "cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "\\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+        },
+        {
+          "source_line": 177,
+          "id": "DB",
+          "description": "dbSNP membership",
+          "raw_source_line": "\\item DB : dbSNP membership"
+        },
+        {
+          "source_line": 178,
+          "id": "DP",
+          "description": "combined depth across samples, e.g.\\ DP=154",
+          "raw_source_line": "\\item DP : combined depth across samples, e.g.\\ DP=154"
+        },
+        {
+          "source_line": 179,
+          "id": "END",
+          "description": "end position of the variant described in this record (for use with symbolic alleles)",
+          "raw_source_line": "\\item END : end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        {
+          "source_line": 180,
+          "id": "H2",
+          "description": "membership in hapmap2",
+          "raw_source_line": "\\item H2 : membership in hapmap2"
+        },
+        {
+          "source_line": 181,
+          "id": "H3",
+          "description": "membership in hapmap3",
+          "raw_source_line": "\\item H3 : membership in hapmap3"
+        },
+        {
+          "source_line": 182,
+          "id": "MQ",
+          "description": "RMS mapping quality, e.g.\\ MQ=52",
+          "raw_source_line": "\\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+        },
+        {
+          "source_line": 183,
+          "id": "MQ0",
+          "description": "Number of MAPQ == 0 reads covering this record",
+          "raw_source_line": "\\item MQ0 : Number of MAPQ == 0 reads covering this record"
+        },
+        {
+          "source_line": 184,
+          "id": "NS",
+          "description": "Number of samples with data",
+          "raw_source_line": "\\item NS : Number of samples with data"
+        },
+        {
+          "source_line": 185,
+          "id": "SB",
+          "description": "strand bias at this position",
+          "raw_source_line": "\\item SB : strand bias at this position"
+        },
+        {
+          "source_line": 186,
+          "id": "SOMATIC",
+          "description": "indicates that the record is a somatic mutation, for cancer genomics",
+          "raw_source_line": "\\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        {
+          "source_line": 187,
+          "id": "VALIDATED",
+          "description": "validated by follow-up experiment",
+          "raw_source_line": "\\item VALIDATED : validated by follow-up experiment"
+        },
+        {
+          "source_line": 188,
+          "id": "1000G",
+          "description": "membership in 1000 Genomes",
+          "raw_source_line": "\\item 1000G : membership in 1000 Genomes"
+        }
+      ],
+      "format_reserved": [
+        {
+          "source_line": 200,
+          "id": "GT",
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+          "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        {
+          "source_line": 205,
+          "id": "DP",
+          "description": "read depth at this position for this sample (Integer)",
+          "raw_source_line": "\\item DP : read depth at this position for this sample (Integer)"
+        },
+        {
+          "source_line": 206,
+          "id": "FT",
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+          "raw_source_line": "\\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        {
+          "source_line": 207,
+          "id": "GL",
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+          "raw_source_line": "\\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        {
+          "source_line": 208,
+          "id": "GLE",
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+          "raw_source_line": "\\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        {
+          "source_line": 209,
+          "id": "PL",
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+          "raw_source_line": "\\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        {
+          "source_line": 210,
+          "id": "GP",
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+          "raw_source_line": "\\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        {
+          "source_line": 211,
+          "id": "GQ",
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+          "raw_source_line": "\\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        {
+          "source_line": 212,
+          "id": "HQ",
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)",
+          "raw_source_line": "\\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        {
+          "source_line": 213,
+          "id": "PS",
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+          "raw_source_line": "\\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        {
+          "source_line": 214,
+          "id": "PQ",
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+          "raw_source_line": "\\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        {
+          "source_line": 215,
+          "id": "EC",
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+          "raw_source_line": "\\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        {
+          "source_line": 216,
+          "id": "MQ",
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+          "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        }
+      ],
+      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables.",
+      "genotype_separator_definitions": [
+        {
+          "source_line": 202,
+          "id": "$/$",
+          "description": "genotype unphased",
+          "raw_source_line": "\\item $/$ : genotype unphased"
+        },
+        {
+          "source_line": 203,
+          "id": "$\\mid$",
+          "description": "genotype phased",
+          "raw_source_line": "\\item $\\mid$ : genotype phased"
+        }
+      ],
+      "source_sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    "VCFv4.2": {
+      "source_file": "VCFv4.2.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "info_reserved": [
+        {
+          "source_line": 188,
+          "id": "AA",
+          "description": "ancestral allele",
+          "raw_source_line": "\\item AA : ancestral allele"
+        },
+        {
+          "source_line": 189,
+          "id": "AC",
+          "description": "allele count in genotypes, for each ALT allele, in the same order as listed",
+          "raw_source_line": "\\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+        },
+        {
+          "source_line": 190,
+          "id": "AF",
+          "description": "allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes",
+          "raw_source_line": "\\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+        },
+        {
+          "source_line": 191,
+          "id": "AN",
+          "description": "total number of alleles in called genotypes",
+          "raw_source_line": "\\item AN : total number of alleles in called genotypes"
+        },
+        {
+          "source_line": 192,
+          "id": "BQ",
+          "description": "RMS base quality at this position",
+          "raw_source_line": "\\item BQ : RMS base quality at this position"
+        },
+        {
+          "source_line": 193,
+          "id": "CIGAR",
+          "description": "cigar string describing how to align an alternate allele to the reference allele",
+          "raw_source_line": "\\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+        },
+        {
+          "source_line": 194,
+          "id": "DB",
+          "description": "dbSNP membership",
+          "raw_source_line": "\\item DB : dbSNP membership"
+        },
+        {
+          "source_line": 195,
+          "id": "DP",
+          "description": "combined depth across samples, e.g.\\ DP=154",
+          "raw_source_line": "\\item DP : combined depth across samples, e.g.\\ DP=154"
+        },
+        {
+          "source_line": 196,
+          "id": "END",
+          "description": "end position of the variant described in this record (for use with symbolic alleles)",
+          "raw_source_line": "\\item END : end position of the variant described in this record (for use with symbolic alleles)"
+        },
+        {
+          "source_line": 197,
+          "id": "H2",
+          "description": "membership in hapmap2",
+          "raw_source_line": "\\item H2 : membership in hapmap2"
+        },
+        {
+          "source_line": 198,
+          "id": "H3",
+          "description": "membership in hapmap3",
+          "raw_source_line": "\\item H3 : membership in hapmap3"
+        },
+        {
+          "source_line": 199,
+          "id": "MQ",
+          "description": "RMS mapping quality, e.g.\\ MQ=52",
+          "raw_source_line": "\\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+        },
+        {
+          "source_line": 200,
+          "id": "MQ0",
+          "description": "Number of MAPQ == 0 reads covering this record",
+          "raw_source_line": "\\item MQ0 : Number of MAPQ == 0 reads covering this record"
+        },
+        {
+          "source_line": 201,
+          "id": "NS",
+          "description": "Number of samples with data",
+          "raw_source_line": "\\item NS : Number of samples with data"
+        },
+        {
+          "source_line": 202,
+          "id": "SB",
+          "description": "strand bias at this position",
+          "raw_source_line": "\\item SB : strand bias at this position"
+        },
+        {
+          "source_line": 203,
+          "id": "SOMATIC",
+          "description": "indicates that the record is a somatic mutation, for cancer genomics",
+          "raw_source_line": "\\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+        },
+        {
+          "source_line": 204,
+          "id": "VALIDATED",
+          "description": "validated by follow-up experiment",
+          "raw_source_line": "\\item VALIDATED : validated by follow-up experiment"
+        },
+        {
+          "source_line": 205,
+          "id": "1000G",
+          "description": "membership in 1000 Genomes",
+          "raw_source_line": "\\item 1000G : membership in 1000 Genomes"
+        }
+      ],
+      "format_reserved": [
+        {
+          "source_line": 217,
+          "id": "GT",
+          "description": "genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):",
+          "raw_source_line": "\\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+        },
+        {
+          "source_line": 222,
+          "id": "DP",
+          "description": "read depth at this position for this sample (Integer)",
+          "raw_source_line": "\\item DP : read depth at this position for this sample (Integer)"
+        },
+        {
+          "source_line": 223,
+          "id": "FT",
+          "description": "sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)",
+          "raw_source_line": "\\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+        },
+        {
+          "source_line": 224,
+          "id": "GL",
+          "description": "genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j. In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc. For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)",
+          "raw_source_line": "\\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+        },
+        {
+          "source_line": 225,
+          "id": "GLE",
+          "description": "genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)",
+          "raw_source_line": "\\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+        },
+        {
+          "source_line": 226,
+          "id": "PL",
+          "description": "the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)",
+          "raw_source_line": "\\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+        },
+        {
+          "source_line": 227,
+          "id": "GP",
+          "description": "the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)",
+          "raw_source_line": "\\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+        },
+        {
+          "source_line": 228,
+          "id": "GQ",
+          "description": "conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)",
+          "raw_source_line": "\\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+        },
+        {
+          "source_line": 229,
+          "id": "HQ",
+          "description": "haplotype qualities, two comma separated phred qualities (Integers)",
+          "raw_source_line": "\\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+        },
+        {
+          "source_line": 230,
+          "id": "PS",
+          "description": "phase set. A phase set is defined as a set of phased genotypes to which this genotype belongs. Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set. A phase set specifies multi-marker haplotypes for the phased genotypes in the set. All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set. If the genotype in the GT field is unphased, the corresponding PS field is ignored. The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)",
+          "raw_source_line": "\\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+        },
+        {
+          "source_line": 231,
+          "id": "PQ",
+          "description": "phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set). We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)",
+          "raw_source_line": "\\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+        },
+        {
+          "source_line": 232,
+          "id": "EC",
+          "description": "comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)",
+          "raw_source_line": "\\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+        },
+        {
+          "source_line": 233,
+          "id": "MQ",
+          "description": "RMS mapping quality, similar to the version in the INFO field. (Integer)",
+          "raw_source_line": "\\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+        }
+      ],
+      "table_form": "Prose enumerations; no reserved INFO/FORMAT Number/Type tables.",
+      "genotype_separator_definitions": [
+        {
+          "source_line": 219,
+          "id": "$/$",
+          "description": "genotype unphased",
+          "raw_source_line": "\\item $/$ : genotype unphased"
+        },
+        {
+          "source_line": 220,
+          "id": "$\\mid$",
+          "description": "genotype phased",
+          "raw_source_line": "\\item $\\mid$ : genotype phased"
+        }
+      ],
+      "source_sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    "VCFv4.3": {
+      "source_file": "VCFv4.3.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "info_reserved": {
+        "start_line": 378,
+        "end_line": 416,
+        "rows": [
+          {
+            "source_line": 395,
+            "id": "AA",
+            "number": "1",
+            "type": "String",
+            "description": "Ancestral allele",
+            "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "source_line": 396,
+            "id": "AC",
+            "number": "A",
+            "type": "Integer",
+            "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+            "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "source_line": 397,
+            "id": "AD",
+            "number": "R",
+            "type": "Integer",
+            "description": "Total read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "source_line": 398,
+            "id": "ADF",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "source_line": 399,
+            "id": "ADR",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "source_line": 400,
+            "id": "AF",
+            "number": "A",
+            "type": "Float",
+            "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+            "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "source_line": 401,
+            "id": "AN",
+            "number": "1",
+            "type": "Integer",
+            "description": "Total number of alleles in called genotypes",
+            "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "source_line": 402,
+            "id": "BQ",
+            "number": "1",
+            "type": "Float",
+            "description": "RMS base quality",
+            "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "source_line": 403,
+            "id": "CIGAR",
+            "number": "A",
+            "type": "String",
+            "description": "Cigar string describing how to align an alternate allele to the reference allele",
+            "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "source_line": 404,
+            "id": "DB",
+            "number": "0",
+            "type": "Flag",
+            "description": "dbSNP membership",
+            "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "source_line": 405,
+            "id": "DP",
+            "number": "1",
+            "type": "Integer",
+            "description": "Combined depth across samples",
+            "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "source_line": 406,
+            "id": "END",
+            "number": "1",
+            "type": "Integer",
+            "description": "End position on CHROM (used with symbolic alleles; see below)",
+            "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "source_line": 407,
+            "id": "H2",
+            "number": "0",
+            "type": "Flag",
+            "description": "HapMap2 membership",
+            "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "source_line": 408,
+            "id": "H3",
+            "number": "0",
+            "type": "Flag",
+            "description": "HapMap3 membership",
+            "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "source_line": 409,
+            "id": "MQ",
+            "number": "1",
+            "type": "Float",
+            "description": "RMS mapping quality",
+            "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "source_line": 410,
+            "id": "MQ0",
+            "number": "1",
+            "type": "Integer",
+            "description": "Number of MAPQ == 0 reads",
+            "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "source_line": 411,
+            "id": "NS",
+            "number": "1",
+            "type": "Integer",
+            "description": "Number of samples with data",
+            "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "source_line": 412,
+            "id": "SB",
+            "number": "4",
+            "type": "Integer",
+            "description": "Strand bias",
+            "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "source_line": 413,
+            "id": "SOMATIC",
+            "number": "0",
+            "type": "Flag",
+            "description": "Somatic mutation (for cancer genomics)",
+            "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "source_line": 414,
+            "id": "VALIDATED",
+            "number": "0",
+            "type": "Flag",
+            "description": "Validated by follow-up experiment",
+            "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "source_line": 415,
+            "id": "1000G",
+            "number": "0",
+            "type": "Flag",
+            "description": "1000 Genomes membership",
+            "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ]
+      },
+      "format_reserved": {
+        "start_line": 445,
+        "end_line": 478,
+        "rows": [
+          {
+            "source_line": 462,
+            "id": "AD",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "source_line": 463,
+            "id": "ADF",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "source_line": 464,
+            "id": "ADR",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "source_line": 465,
+            "id": "DP",
+            "number": "1",
+            "type": "Integer",
+            "description": "Read depth",
+            "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "source_line": 466,
+            "id": "EC",
+            "number": "A",
+            "type": "Integer",
+            "description": "Expected alternate allele counts",
+            "raw_source_line": "EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "source_line": 467,
+            "id": "FT",
+            "number": "1",
+            "type": "String",
+            "description": "Filter indicating if this genotype was ``called''",
+            "raw_source_line": "FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "source_line": 468,
+            "id": "GL",
+            "number": "G",
+            "type": "Float",
+            "description": "Genotype likelihoods",
+            "raw_source_line": "GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "source_line": 469,
+            "id": "GP",
+            "number": "G",
+            "type": "Float",
+            "description": "Genotype posterior probabilities",
+            "raw_source_line": "GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "source_line": 470,
+            "id": "GQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "Conditional genotype quality",
+            "raw_source_line": "GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "source_line": 471,
+            "id": "GT",
+            "number": "1",
+            "type": "String",
+            "description": "Genotype",
+            "raw_source_line": "GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "source_line": 472,
+            "id": "HQ",
+            "number": "2",
+            "type": "Integer",
+            "description": "Haplotype quality",
+            "raw_source_line": "HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "source_line": 473,
+            "id": "MQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "RMS mapping quality",
+            "raw_source_line": "MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "source_line": 474,
+            "id": "PL",
+            "number": "G",
+            "type": "Integer",
+            "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+            "raw_source_line": "PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "source_line": 475,
+            "id": "PP",
+            "number": "G",
+            "type": "Integer",
+            "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+            "raw_source_line": "PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "source_line": 476,
+            "id": "PQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "Phasing quality",
+            "raw_source_line": "PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "source_line": 477,
+            "id": "PS",
+            "number": "1",
+            "type": "Integer",
+            "description": "Phase set",
+            "raw_source_line": "PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          }
+        ]
+      },
+      "table_form": "Longtable reserved INFO and FORMAT tables.",
+      "source_sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    },
+    "VCFv4.4": {
+      "source_file": "VCFv4.4.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "info_reserved": {
+        "start_line": 394,
+        "end_line": 432,
+        "rows": [
+          {
+            "source_line": 411,
+            "id": "AA",
+            "number": "1",
+            "type": "String",
+            "description": "Ancestral allele",
+            "raw_source_line": "AA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "source_line": 412,
+            "id": "AC",
+            "number": "A",
+            "type": "Integer",
+            "description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+            "raw_source_line": "AC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "source_line": 413,
+            "id": "AD",
+            "number": "R",
+            "type": "Integer",
+            "description": "Total read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "source_line": 414,
+            "id": "ADF",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "source_line": 415,
+            "id": "ADR",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "source_line": 416,
+            "id": "AF",
+            "number": "A",
+            "type": "Float",
+            "description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+            "raw_source_line": "AF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "source_line": 417,
+            "id": "AN",
+            "number": "1",
+            "type": "Integer",
+            "description": "Total number of alleles in called genotypes",
+            "raw_source_line": "AN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "source_line": 418,
+            "id": "BQ",
+            "number": "1",
+            "type": "Float",
+            "description": "RMS base quality",
+            "raw_source_line": "BQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "source_line": 419,
+            "id": "CIGAR",
+            "number": "A",
+            "type": "String",
+            "description": "Cigar string describing how to align an alternate allele to the reference allele",
+            "raw_source_line": "CIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "source_line": 420,
+            "id": "DB",
+            "number": "0",
+            "type": "Flag",
+            "description": "dbSNP membership",
+            "raw_source_line": "DB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "source_line": 421,
+            "id": "DP",
+            "number": "1",
+            "type": "Integer",
+            "description": "Combined depth across samples",
+            "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "source_line": 422,
+            "id": "END",
+            "number": "1",
+            "type": "Integer",
+            "description": "End position on CHROM (used with symbolic alleles; see below)",
+            "raw_source_line": "END\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "source_line": 423,
+            "id": "H2",
+            "number": "0",
+            "type": "Flag",
+            "description": "HapMap2 membership",
+            "raw_source_line": "H2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "source_line": 424,
+            "id": "H3",
+            "number": "0",
+            "type": "Flag",
+            "description": "HapMap3 membership",
+            "raw_source_line": "H3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "source_line": 425,
+            "id": "MQ",
+            "number": "1",
+            "type": "Float",
+            "description": "RMS mapping quality",
+            "raw_source_line": "MQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "source_line": 426,
+            "id": "MQ0",
+            "number": "1",
+            "type": "Integer",
+            "description": "Number of MAPQ == 0 reads",
+            "raw_source_line": "MQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "source_line": 427,
+            "id": "NS",
+            "number": "1",
+            "type": "Integer",
+            "description": "Number of samples with data",
+            "raw_source_line": "NS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "source_line": 428,
+            "id": "SB",
+            "number": "4",
+            "type": "Integer",
+            "description": "Strand bias",
+            "raw_source_line": "SB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "source_line": 429,
+            "id": "SOMATIC",
+            "number": "0",
+            "type": "Flag",
+            "description": "Somatic mutation (for cancer genomics)",
+            "raw_source_line": "SOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "source_line": 430,
+            "id": "VALIDATED",
+            "number": "0",
+            "type": "Flag",
+            "description": "Validated by follow-up experiment",
+            "raw_source_line": "VALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "source_line": 431,
+            "id": "1000G",
+            "number": "0",
+            "type": "Flag",
+            "description": "1000 Genomes membership",
+            "raw_source_line": "1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ]
+      },
+      "format_reserved": {
+        "start_line": 463,
+        "end_line": 500,
+        "rows": [
+          {
+            "source_line": 480,
+            "id": "AD",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele",
+            "raw_source_line": "AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "source_line": 481,
+            "id": "ADF",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the forward strand",
+            "raw_source_line": "ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "source_line": 482,
+            "id": "ADR",
+            "number": "R",
+            "type": "Integer",
+            "description": "Read depth for each allele on the reverse strand",
+            "raw_source_line": "ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "source_line": 483,
+            "id": "DP",
+            "number": "1",
+            "type": "Integer",
+            "description": "Read depth",
+            "raw_source_line": "DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "source_line": 484,
+            "id": "EC",
+            "number": "A",
+            "type": "Integer",
+            "description": "Expected alternate allele counts",
+            "raw_source_line": "EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "source_line": 485,
+            "id": "FT",
+            "number": "1",
+            "type": "String",
+            "description": "Filter indicating if this genotype was ``called''",
+            "raw_source_line": "FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "source_line": 486,
+            "id": "GL",
+            "number": "G",
+            "type": "Float",
+            "description": "Genotype likelihoods",
+            "raw_source_line": "GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "source_line": 487,
+            "id": "GP",
+            "number": "G",
+            "type": "Float",
+            "description": "Genotype posterior probabilities",
+            "raw_source_line": "GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "source_line": 488,
+            "id": "GQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "Conditional genotype quality",
+            "raw_source_line": "GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "source_line": 489,
+            "id": "GT",
+            "number": "1",
+            "type": "String",
+            "description": "Genotype",
+            "raw_source_line": "GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "source_line": 490,
+            "id": "HQ",
+            "number": "2",
+            "type": "Integer",
+            "description": "Haplotype quality",
+            "raw_source_line": "HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "source_line": 491,
+            "id": "MQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "RMS mapping quality",
+            "raw_source_line": "MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "source_line": 492,
+            "id": "PL",
+            "number": "G",
+            "type": "Integer",
+            "description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+            "raw_source_line": "PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "source_line": 493,
+            "id": "PP",
+            "number": "G",
+            "type": "Integer",
+            "description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+            "raw_source_line": "PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "source_line": 494,
+            "id": "PQ",
+            "number": "1",
+            "type": "Integer",
+            "description": "Phasing quality",
+            "raw_source_line": "PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "source_line": 495,
+            "id": "PS",
+            "number": "1",
+            "type": "Integer",
+            "description": "Phase set",
+            "raw_source_line": "PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          },
+          {
+            "source_line": 496,
+            "id": "PSL",
+            "number": "P",
+            "type": "String",
+            "description": "Phase set list",
+            "raw_source_line": "PSL\t\t& P\t\t& String\t& Phase set list \\\\"
+          },
+          {
+            "source_line": 497,
+            "id": "PSO",
+            "number": "P",
+            "type": "Integer",
+            "description": "Phase set list ordinal",
+            "raw_source_line": "PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\"
+          },
+          {
+            "source_line": 498,
+            "id": "PSQ",
+            "number": "P",
+            "type": "Integer",
+            "description": "Phase set list quality",
+            "raw_source_line": "PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\"
+          }
+        ]
+      },
+      "table_form": "Longtable reserved INFO and FORMAT tables.",
+      "source_sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+      "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+    }
+  },
+  "observed_version_deltas": {
+    "VCFv4.1_to_4.2": [
+      {
+        "topic": "ALT allele domain",
+        "finding": "VCFv4.2 explicitly adds the '*' allele for an allele missing due to an upstream deletion; the VCFv4.1 ALT list does not include it.",
+        "sources": {
+          "VCFv4.1": "VCFv4.1.tex:166",
+          "VCFv4.2": "VCFv4.2.tex:183"
+        }
+      },
+      {
+        "topic": "Reserved field organization",
+        "finding": "Both versions present reserved INFO and FORMAT fields as prose enumerations rather than Number/Type tables; do not retroactively assign later table Number/Type values.",
+        "sources": {
+          "VCFv4.1": "VCFv4.1.tex:169-217",
+          "VCFv4.2": "VCFv4.2.tex:186-234"
+        }
+      }
+    ],
+    "VCFv4.2_to_4.3": [
+      {
+        "topic": "Reserved table formalization",
+        "finding": "VCFv4.3 presents reserved INFO and FORMAT definitions in tables with Number and Type columns; the 4.1/4.2 prose lists do not contain those columns."
+      },
+      {
+        "topic": "END/INFO schema",
+        "finding": "VCFv4.3 reserved INFO table records END as Number=1 Integer and describes end position on CHROM for symbolic alleles; its interpretation must be read with the subsequent symbolic-allele section."
+      },
+      {
+        "topic": "FORMAT reserved fields",
+        "finding": "VCFv4.3 FORMAT table has the core AD/ADF/ADR/DP/EC/FT/GL/GP/GQ/GT/HQ/MQ/PL/PP/PQ/PS set; no PSL/PSO/PSQ rows."
+      }
+    ],
+    "VCFv4.3_to_4.4": [
+      {
+        "topic": "INFO reserved rows",
+        "finding": "The INFO reserved table rows, Number, Type and descriptions are unchanged in the source table inventory between 4.3 and 4.4."
+      },
+      {
+        "topic": "FORMAT phase-set list fields",
+        "finding": "VCFv4.4 adds PSL (Number=P, String), PSO (Number=P, Integer), and PSQ (Number=P, Integer) to the FORMAT reserved table; VCFv4.3 has PS but not these three rows."
+      }
+    ],
+    "VCFv4.4_to_4.5": [
+      {
+        "topic": "Local allele fields",
+        "finding": "VCFv4.5 adds LA/LAA and local-allele equivalents LAD/LADF/LADR/LEC/LGL/LGP/LPL/LPP; the table rows must be interpreted jointly with LAA prose and BCF empty-vector caveats."
+      },
+      {
+        "topic": "Base modifications",
+        "finding": "VCFv4.5 adds M/DPM/ADM base-modification key families and aliases, with Number=M and strand-aware interpretation; no such rows appear in 4.4 reserved FORMAT table."
+      },
+      {
+        "topic": "General-ploidy ordering and allele phasing",
+        "finding": "VCFv4.5 contains explicit arbitrary-ploidy genotype-ordering pseudocode and allele-level phasing indicators; earlier versions' diploid triangular formula and genotype-level separator description must not be silently treated as identical."
+      }
+    ]
+  },
+  "counts": {
+    "v41_info_reserved_rows": 18,
+    "v41_format_reserved_rows": 13,
+    "v42_info_reserved_rows": 18,
+    "v42_format_reserved_rows": 13,
+    "v43_info_reserved_rows": 21,
+    "v43_format_reserved_rows": 16,
+    "v44_info_reserved_rows": 21,
+    "v44_format_reserved_rows": 19
+  },
+  "review_findings": [
+    "The source format itself is versioned: 4.1/4.2 enumerate reserved fields in prose and 4.3/4.4 introduce explicit Number/Type tables. The ledger must preserve which attributes were actually specified in each version.",
+    "The 4.1 and 4.2 reserved INFO enumerations contain 18 entries; their FORMAT enumerations are prose lists, not Number/Type tables.",
+    "The 4.3 and 4.4 reserved INFO tables each contain 21 rows; FORMAT tables differ by the three phase-set-list fields added in 4.4.",
+    "Do not assign 4.5 local-allele or base-modification definitions to 4.1–4.4 without source evidence.",
+    "GT separator subitems (slash and vertical bar) were separated from the FORMAT reserved-field inventory; they define GT semantics and are not independent FORMAT keys."
+  ],
+  "review_status": "SOURCE_ROW_CROSSWALKED; FULL_CONTEXT_REVIEW_PENDING",
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED"
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}

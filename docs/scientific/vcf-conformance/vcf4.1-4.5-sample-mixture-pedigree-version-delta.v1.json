@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-sample-mixture-pedigree-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "VCF sample versus genome representation, sample mixture examples, PEDIGREE header syntax, clonal derivation and haplotype identity corresponding to VCFv4.5 tables VCF5.42 and VCF5.43.",
+  "versions": {
+    "VCFv4_1": {
+      "sample_mixture": "VCFv4.1.tex:819-860",
+      "pedigree": "VCFv4.1.tex:861-912",
+      "pedigree_syntax": [
+        "##PEDIGREE=<Derived=ID2,Original=ID1>",
+        "##PEDIGREE=<Name_0=G0-ID,Name_1=G1-ID,...,Name_N=GN-ID>"
+      ],
+      "sample_fields": [
+        "DPADJ",
+        "CNADJ"
+      ],
+      "status": "OLD_PEDIGREE_SYNTAX_AND_ADJUSTED_DEPTH/CN_FIELDS"
+    },
+    "VCFv4_2": {
+      "sample_mixture": "VCFv4.2.tex:836-877",
+      "pedigree": "VCFv4.2.tex:878-931",
+      "pedigree_syntax": [
+        "##PEDIGREE=<Derived=ID2,Original=ID1>",
+        "##PEDIGREE=<Name_0=G0-ID,Name_1=G1-ID,...,Name_N=GN-ID>"
+      ],
+      "sample_fields": [
+        "DPADJ",
+        "CNADJ"
+      ],
+      "status": "RETAINS_VCF4_1_MODEL"
+    },
+    "VCFv4_3": {
+      "sample_mixture": "VCFv4.3.tex:1262-1307",
+      "pedigree": "VCFv4.3.tex:1308-1375",
+      "pedigree_syntax": [
+        "##PEDIGREE=<ID=DerivedID,Original=OriginalID>",
+        "##PEDIGREE=<ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN>"
+      ],
+      "sample_fields": [
+        "DPADJ",
+        "CNADJ"
+      ],
+      "status": "PEDIGREE_HEADER_SYNTAX_CHANGED"
+    },
+    "VCFv4_4": {
+      "sample_mixture": "VCFv4.4.tex:1571-1616",
+      "pedigree": "VCFv4.4.tex:1617-1685",
+      "pedigree_syntax": [
+        "##PEDIGREE=<ID=DerivedID,Original=OriginalID>",
+        "##PEDIGREE=<ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN>"
+      ],
+      "sample_fields": [
+        "AD",
+        "CN"
+      ],
+      "status": "REMOVES_DPADJ_CNADJ_CICNADJ_AND_REUSES_STANDARD_AD_CN"
+    },
+    "VCFv4_5": {
+      "sample_mixture": "VCFv4.5.tex:1731-1774",
+      "pedigree": "VCFv4.5.tex:1776-1845",
+      "pedigree_syntax": [
+        "##PEDIGREE=<ID=DerivedID,Original=OriginalID>",
+        "##PEDIGREE=<ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN>"
+      ],
+      "sample_fields": [
+        "AD",
+        "CN"
+      ],
+      "status": "RETAINS_VCF4_4_MODEL"
+    }
+  },
+  "deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_MATERIAL_SAMPLE_MIXTURE_OR_PEDIGREE_CHANGE_FOUND",
+      "evidence": [
+        "VCFv4.1.tex:819-912",
+        "VCFv4.2.tex:836-931"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "PEDIGREE_HEADER_SYNTAX_CHANGED",
+      "changes": [
+        {
+          "old": "##PEDIGREE=<Derived=ID2,Original=ID1>",
+          "new": "##PEDIGREE=<ID=DerivedID,Original=OriginalID>",
+          "locators": [
+            "VCFv4.2.tex:887",
+            "VCFv4.3.tex:1324"
+          ]
+        },
+        {
+          "old": "##PEDIGREE=<Name_0=G0-ID,Name_1=G1-ID,...,Name_N=GN-ID>",
+          "new": "##PEDIGREE=<ID=SampleID,Name_1=Ancestor1,...,Name_N=AncestorN>",
+          "locators": [
+            "VCFv4.2.tex:919",
+            "VCFv4.3.tex:1360"
+          ]
+        }
+      ],
+      "finding": "The target genome identifier moves into the explicit ID attribute; the old Name_0 field is replaced by ID=SampleID. Parent/ancestor relationships remain conceptually the same. The specification's recommendation to represent derivation relationships in PEDIGREE remains a recommendation."
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "SAMPLE_MIXTURE_EXAMPLE_FIELDS_AND_COPY_NUMBER_SEMANTICS_CHANGED",
+      "changes": [
+        {
+          "finding": "DPADJ, CNADJ and CICNADJ are removed in the VCFv4.4 change log.",
+          "locators": [
+            "VCFv4.4.tex:2583-2590"
+          ]
+        },
+        {
+          "finding": "The sample mixture examples replace FORMAT DPADJ with AD and CNADJ with CN.",
+          "locators": [
+            "VCFv4.3.tex:1283-1302",
+            "VCFv4.4.tex:1592-1610"
+          ]
+        },
+        {
+          "finding": "INFO CN becomes allele-specific copy number and FORMAT CN becomes total copy number for the sample; do not treat CNADJ and CN as semantically interchangeable.",
+          "locators": [
+            "VCFv4.4.tex:853-860",
+            "VCFv4.4.tex:985-989"
+          ]
+        }
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_SAMPLE_MIXTURE_PEDIGREE_SEMANTICS",
+      "evidence": [
+        "VCFv4.4.tex:1571-1685",
+        "VCFv4.5.tex:1731-1845"
+      ]
+    }
+  ],
+  "persistent_semantics": {
+    "sample_genome_distinction": "Present in all five versions; sample metadata can describe multiple genomes/mixtures and should not be conflated with the genome-level biological entity. See the version section locators above.",
+    "clonal_derivation": "PEDIGREE supports derived/original and parent/ancestor genome relationships; the syntax changes in VCFv4.3 as described.",
+    "mutation_quality_score": "The text discusses representing uncertainty about when a variant arose due to insufficient data or sample mixtures in all five versions; preserve its exact normative/recommendation status and do not invent a scoring algorithm.",
+    "haplotype": "A haplotype is a set of variants known to be on the same chromosome in the germline genome; identifiers are unique across the germline genome and conserved along clonal lineages despite mutation/rearrangement/recombination. Duplication creates novel haplotypes while retaining one original ID; these novel haplotypes share a haplotype ancestor in the parent genome. This text is present in all five versions."
+  },
+  "table_interpretation": {
+    "VCF5_42": "Sample/genome mixture and copy-number examples are informative; the surrounding prose defines sample/genome distinction and describes possible deconvolution, not a mandatory deconvolution algorithm.",
+    "VCF5_43": "PEDIGREE and haplotype examples illustrate the syntax and lineage model; preserve the recommendation/requirement force in the prose."
+  },
+  "remaining": [
+    "Independent reviewer must verify PEDIGREE syntax grammar and whether header values are constrained by sample identifiers or genome identifiers in each version.",
+    "Map the old-to-new PEDIGREE syntax migration, removal of DPADJ/CNADJ/CICNADJ and CN semantic changes to atomic requirement IDs.",
+    "Add positive/negative tests for old/new PEDIGREE syntax by version, parent/ancestor cardinality, sample/genome distinction, removed tags, AD/CN sample mixture records and haplotype identity/duplication.",
+    "No implementation or test execution is claimed."
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf-modal-candidate-intake-context-reconciliation",
+  "status": "PRIMARY_CONTEXT_RECONCILIATION_COMPLETE_ATOMIC_TRACEABILITY_PENDING",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "source_documents": [
+    "VCFv4.1.tex",
+    "VCFv4.2.tex",
+    "VCFv4.3.tex",
+    "VCFv4.4.tex",
+    "VCFv4.5.tex"
+  ],
+  "intake_path": "docs/scientific/vcf-conformance/normative-candidate-intake.v1.json",
+  "intake_blob_sha_after_update": "6248d51bffacb993d75673cf85ea12a6b1a6c341",
+  "context_review_artifacts": [
+    "candidate-context-review-vcf4.1.v1.json",
+    "candidate-context-review-vcf4.2.v1.json",
+    "candidate-context-review-vcf4.3.v1.json",
+    "candidate-context-review-vcf4.4-core.v1.json",
+    "candidate-context-review-vcf4.4-sv.v1.json",
+    "candidate-context-review-vcf4.5-core.v1.json",
+    "candidate-context-review-vcf4.5-sv.v1.json"
+  ],
+  "counts": {
+    "intake_candidate_lines": 510,
+    "candidate_ids_matched_to_context_reviews": 510,
+    "missing_context_matches": 0,
+    "duplicate_context_candidate_ids": 0,
+    "primary_context_reviews_reconciled": 510,
+    "independent_second_person_reviews": 0,
+    "atomicity_adjudications_pending": 510,
+    "canonical_ledger_traceability_mappings_pending": 510,
+    "implementation_mappings": 0,
+    "executed_clause_tests": 0
+  },
+  "semantics": {
+    "updated_field": "review_status and reviewer_notes only",
+    "review_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+    "preserved_as_unassessed": [
+      "atomicity_status",
+      "traceability_status",
+      "requirement_ids"
+    ],
+    "nonclaim": "Immediate source-neighbour disposition is not expanded semantic review, atomic decomposition, ledger traceability, independent approval, implementation mapping or executed conformance testing."
+  },
+  "next_actions": [
+    "For VCFv4.5, expand primary context review into atomic decomposition and map every candidate to canonical requirement IDs or explicit exclusions.",
+    "Complete full source-to-requirement traceability for VCFv4.5 definitions, grammar, prose, tables, footnotes, examples and cross-references.",
+    "Then perform the same expanded review and atomization for VCFv4.1 through VCFv4.4, retaining version-specific differences.",
+    "Continue VCFv4.0 original-source acquisition and immutable-byte provenance in parallel."
+  ]
+}

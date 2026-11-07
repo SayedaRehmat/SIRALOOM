@@ -1,0 +1,207 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-modal-candidate-context-review-index",
+  "status": "INITIAL_PRIMARY_CONTEXT_DISPOSITION_RECORDED_FOR_ALL_510_CANDIDATE_LINES_EXTENDED_SEMANTIC_REVIEW_PENDING",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "total_candidates": 510,
+  "reviewed_candidate_lines": 510,
+  "candidate_line_review_scope": "Each extracted modal-language candidate was re-read with its immediate source neighbours and assigned a primary disposition distinguishing normative, recommendation, permission, informative, mixed, or unresolved-scope content. This is an initial line-context disposition, not a completed expanded semantic review.",
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "total": 38,
+      "reviewed": 38,
+      "artifacts": [
+        "candidate-context-review-vcf4.1.v1.json"
+      ],
+      "source_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
+    },
+    {
+      "version": "VCFv4.2",
+      "total": 44,
+      "reviewed": 44,
+      "artifacts": [
+        "candidate-context-review-vcf4.2.v1.json"
+      ],
+      "source_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
+    },
+    {
+      "version": "VCFv4.3",
+      "total": 82,
+      "reviewed": 82,
+      "artifacts": [
+        "candidate-context-review-vcf4.3.v1.json"
+      ],
+      "source_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
+    },
+    {
+      "version": "VCFv4.4",
+      "total": 161,
+      "reviewed": 161,
+      "artifacts": [
+        "candidate-context-review-vcf4.4-core.v1.json",
+        "candidate-context-review-vcf4.4-sv.v1.json"
+      ],
+      "source_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
+    },
+    {
+      "version": "VCFv4.5",
+      "total": 185,
+      "reviewed": 185,
+      "artifacts": [
+        "candidate-context-review-vcf4.5-core.v1.json",
+        "candidate-context-review-vcf4.5-sv.v1.json"
+      ],
+      "source_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+    }
+  ],
+  "additional_source_reviews": [
+    {
+      "artifact": "fixed-record-fields-source-review.v1.json",
+      "scope": "28 source-derived candidate obligations for fixed record fields and conditional genotype columns, across VCFv4.1–4.5; distinct from the modal candidate line count."
+    },
+    {
+      "artifact": "core-header-record-info-format-atomic-review.v1.json",
+      "scope": "Core fixed-field and header compound clauses; split-parent and child candidates; independent review pending."
+    },
+    {
+      "artifact": "core-meta-information-source-review.v1.json",
+      "scope": "Version-specific meta-information source passages and seven initial semantic delta topics."
+    },
+    {
+      "artifact": "core-meta-information-atomic-review.v1.json",
+      "scope": "Meta-information grammar, Number/Type, local allele and base modification candidate decomposition; independent review pending."
+    },
+    {
+      "artifact": "format-reserved-row-source-review.v1.json",
+      "scope": "Reserved genotype/FORMAT rows and adjacent semantic prose, VCFv4.1–4.5."
+    },
+    {
+      "artifact": "core-info-format-row-inventory.v1.json",
+      "scope": "223 reserved INFO/FORMAT entries source-indexed and individually classified; 62 prose enumerations in 4.1–4.2 and 161 longtable rows in 4.3–4.5."
+    },
+    {
+      "artifact": "core-info-format-version-delta.v1.json",
+      "scope": "Reserved INFO/FORMAT inventory and version deltas."
+    },
+    {
+      "artifact": "genotype-format-atomic-candidates.v1.json",
+      "scope": "61 proposed FORMAT/GENOTYPE candidates: 18 initial and 43 expanded candidates covering genotype ordering, phasing, PS/PSL/PSO/PSQ, VCFv4.5 local alleles and base modifications. FMT-GT-017 retained as a split parent; 60 child/independent candidates reconciled into the ledger. Independent review pending."
+    },
+    {
+      "artifact": "vcf4.0-historical-source-provenance.v1.json",
+      "scope": "Historical VCFv4.0 core-source discovery: VCFtools historical index corroborates the IGSR page as the host for the older 4.0 specification; immutable source bytes and SHA-256 remain NOT_CAPTURED, and 1000 Genomes SV conventions remain a separate producer-convention source."
+    },
+    {
+      "artifact": "INDEPENDENT_REVIEW_PACKAGE.v1.md",
+      "scope": "Review protocol and bounded independent-review package for the current 75 proposed ledger records; reviewer appointment and actual independent dispositions remain pending."
+    },
+    {
+      "artifact": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
+      "scope": "Reviewer protocol, ledger inventory findings, readiness disposition and blockers; current 75-record ledger is not ready for a complete-ledger independent review, but may be used for a scoped pilot review with incompleteness disclosed."
+    },
+    {
+      "artifact": "independent-standards-review-readiness.v1.json",
+      "scope": "Readiness audit refreshed for 105 ledger records: 105 source-linked with locators, zero duplicate IDs, zero independent approvals, zero test evidence, and unresolved version applicability 39/39/30/30 for VCF4.1/4.2/4.3/4.4; complete review remains blocked."
+    },
+    {
+      "artifact": "vcf4.5-table-semantic-review-queue.v1.json",
+      "scope": "Structural triage of all 44 VCF-only table environments in pinned VCFv4.5 source, with exact line locators, enclosing sections, semantic review targets and explicit NOT_REVIEWED status; no atomic requirements claimed from this queue."
+    },
+    {
+      "artifact": "vcf4.5-info-format-row-semantic-review.v1.json",
+      "scope": "Row-by-row source-context review of all 21 reserved INFO and 63 reserved FORMAT rows in pinned VCFv4.5; independent review, implementation mapping and tests pending."
+    },
+    {
+      "artifact": "vcf4.5-sv-breakend-atomic-source-review.v1.json",
+      "scope": "Thirty VCFv4.5 structural-variant INFO/FORMAT, tandem-repeat and breakend atomic candidates with exact line locators; all remain IN_REVIEW pending cross-version reconciliation and independent review."
+    },
+    {
+      "artifact": "vcf4.1-4.4-reserved-row-version-crosswalk.v1.json",
+      "scope": "Source-row crosswalk for reserved INFO/FORMAT definitions across VCF4.1-4.4; captures 4.1/4.2 prose lists separately from 4.3/4.4 Number/Type tables and observed adjacent-version deltas. Full context review remains pending."
+    },
+    {
+      "artifact": "vcf4.5-sv-breakend-full-context-review.v1.json",
+      "scope": "Complete VCFv4.5 SV INFO, tandem-repeat, SV FORMAT and breakend sections; 16 contextual findings and 8 cross-reference relationships; independent review pending."
+    },
+    {
+      "artifact": "vcf4.5-pedigree-gvcf-context-review.v1.json",
+      "scope": "VCFv4.5 sample/genome mixture, clonal PEDIGREE/haplotype lineage and gVCF reference-block semantics; independent review pending."
+    },
+    {
+      "artifact": "vcf4.1-4.4-genotype-sv-breakend-semantic-crosswalk.v1.json",
+      "scope": "Version-specific GT/GL ordering, genotype phasing, SV and breakend semantic deltas for VCFv4.1-4.4; source-context crosswalk only, remaining atomization pending."
+    },
+    {
+      "artifact": "vcf4.1-4.4-sv-info-format-source-row-inventory.v1.json",
+      "scope": "Every SV INFO/FORMAT declaration inventoried for VCFv4.1-4.4 with source lines and key semantic deltas; atomization and independent review pending."
+    },
+    {
+      "artifact": "sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/",
+      "scope": "Archived exact VCFv4.1-4.5 .tex source files; committed file Git blob SHA-1 values match authoritative hts-specs blobs and source SHA-256 values are recorded in source manifest."
+    }
+  ],
+  "evidence_counters": {
+    "atomic_requirement_ledger_records": 142,
+    "additional_proposed_candidate_records": "73 FORMAT/GENOTYPE candidates (72 reconciled as IN_REVIEW ledger records, one retained as a split parent); 38 VCFv4.5 SV/breakend candidates; 25 additional VCFv4.5 encoding/pedigree/gVCF candidates; 12 version-specific VCFv4.1-4.5 genotype/phasing candidates.",
+    "independently_second_person_reviewed": 0,
+    "production_code_mappings": 0,
+    "clause_specific_tests_executed": 0,
+    "laboratory_qualified_versions": 0,
+    "vcf40_historical_source_bytes_hashed": false,
+    "complete_ledger_independent_review_ready": false,
+    "scoped_pilot_review_permitted": true,
+    "ledger_required_fields_and_enums_validation": "PASS_142_RECORDS_ZERO_ERRORS_CUSTOM_STRUCTURAL_AUDIT",
+    "source_locator_presence": "PASS_142_RECORDS",
+    "unique_requirement_ids": "PASS_142_OF_142",
+    "scientific_ledger_integrity": {
+      "unique_requirement_ids": "PASS_142_OF_142",
+      "schema_required_fields_and_enums": "PASS_142_OF_142_CUSTOM_STRUCTURAL_AUDIT_NOT_FULL_JSON_SCHEMA_ENGINE",
+      "source_locator_presence": "PASS_142_OF_142",
+      "source_and_excerpt_sha256": "PASS_352_OF_353",
+      "vcf40_source_reference": "1_UNHASHED_PENDING_EXACT_RAW_CAPTURE",
+      "independently_second_person_approved": 0
+    },
+    "vcf45_table_author_context_review": {
+      "indexed": 44,
+      "author_context_reviewed": 44,
+      "independently_reviewed": 0
+    },
+    "archived_pinned_specifications": {
+      "versions": [
+        "VCFv4.1",
+        "VCFv4.2",
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ],
+      "archived_and_blob_verified": 5,
+      "sha256_recorded": 5
+    },
+    "version_applicability_unresolved": {
+      "VCFv4.1": 43,
+      "VCFv4.2": 43,
+      "VCFv4.3": 34,
+      "VCFv4.4": 5,
+      "VCFv4.5": 0
+    }
+  },
+  "next_review_gates": [
+    "Complete VCFv4.5 table-row semantic review and atomization, including remaining definitions, grammar, examples, footnotes, cross-references and unresolved local-allele/base-modification questions.",
+    "Complete row-by-row VCFv4.1-4.4 reserved INFO/FORMAT and SV INFO/FORMAT semantic review; atomize GT/GL/GLE, phase, SVLEN/END, confidence-interval, breakend and copy-number deltas.",
+    "Capture exact historical VCFv4.0 core source bytes from an authoritative archival revision and compute SHA-256; rendered IGSR page content and failed raw-export retrieval do not satisfy this gate.",
+    "Expand the ledger beyond the current 142 candidates to every source-backed atomic requirement across all six target versions.",
+    "Resolve remaining applicability cells for current candidates: VCFv4.1 43; VCFv4.2 43; VCFv4.3 34; VCFv4.4 5. VCFv4.0 remains source-not-pinned for all 142.",
+    "Complete source-file and excerpt hashes for all source references; currently 352/353 are expected after adding the 32 pedigree/encoding source references, with one VCFv4.0 historical source reference blocked.",
+    "Run full JSON Schema validation and complete coverage, ID, locator, cross-reference, hash and version-applicability audits.",
+    "Freeze a versioned snapshot only after all whole-specification and traceability gates pass; submit it for independent review only after snapshot integrity is verified."
+  ],
+  "explicit_nonclaims": [
+    "510/510 immediate-context dispositions do not mean 510 atomic requirements are complete.",
+    "223 reserved INFO/FORMAT entries are not 223 mandatory requirements.",
+    "No implementation, executed conformance testing, VCF version conformance declaration, or laboratory qualification is claimed.",
+    "The 18 FORMAT/genotype candidates are proposals only; they are not approved ledger entries, implementation mappings, or executed tests.",
+    "The 60 newly reconciled FORMAT/GENOTYPE ledger records remain IN_REVIEW; none has independent second-person approval, implementation mapping or executed clause tests.",
+    "VCFv4.0 historical-source discovery is not source capture: no original bytes or SHA-256 are available and the IGSR page is not yet accepted as the normative VCFv4.0 source."
+  ]
+}

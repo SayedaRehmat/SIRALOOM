@@ -1,0 +1,540 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-sv-breakend-atomic-source-review",
+  "status": "AUTHOR_ATOMIZATION_COMPLETE_INDEPENDENT_REVIEW_AND_CROSS_VERSION_RECONCILIATION_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "file": "VCFv4.5.tex",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+  },
+  "scope": "Thirty proposed atomic requirements derived from VCFv4.5 structural-variant INFO/FORMAT definitions, tandem-repeat fields and breakend semantics. These are candidates only; cross-version applicability, independent review, implementation mapping and tests remain open.",
+  "counts": {
+    "candidate_requirements": 30,
+    "info_semantics": 20,
+    "format_semantics": 1,
+    "breakend_semantics": 9,
+    "independently_reviewed": 0,
+    "implementation_mapped": 0,
+    "tests_executed": 0
+  },
+  "requirement_ids": [
+    "VCF-REQ-000076",
+    "VCF-REQ-000077",
+    "VCF-REQ-000078",
+    "VCF-REQ-000079",
+    "VCF-REQ-000080",
+    "VCF-REQ-000081",
+    "VCF-REQ-000082",
+    "VCF-REQ-000083",
+    "VCF-REQ-000084",
+    "VCF-REQ-000085",
+    "VCF-REQ-000086",
+    "VCF-REQ-000087",
+    "VCF-REQ-000088",
+    "VCF-REQ-000089",
+    "VCF-REQ-000090",
+    "VCF-REQ-000091",
+    "VCF-REQ-000092",
+    "VCF-REQ-000093",
+    "VCF-REQ-000094",
+    "VCF-REQ-000095",
+    "VCF-REQ-000096",
+    "VCF-REQ-000097",
+    "VCF-REQ-000098",
+    "VCF-REQ-000099",
+    "VCF-REQ-000100",
+    "VCF-REQ-000101",
+    "VCF-REQ-000102",
+    "VCF-REQ-000103",
+    "VCF-REQ-000104",
+    "VCF-REQ-000105"
+  ],
+  "requirement_index": [
+    {
+      "requirement_id": "VCF-REQ-000076",
+      "title": "Per-allele SV INFO values cover every ALT allele",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 846-848; section-specific normative prose",
+        "start_line": 846,
+        "end_line": 848,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000077",
+      "title": "IMPRECISE applies to structural ALT alleles with unspecified intervals",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 852-858; section-specific normative prose",
+        "start_line": 852,
+        "end_line": 858,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000078",
+      "title": "Precise alleles in IMPRECISE records carry explicit CIPOS",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 858-858; section-specific normative prose",
+        "start_line": 858,
+        "end_line": 858,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000079",
+      "title": "SVLEN is specified for symbolic structural alleles",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 881-890; section-specific normative prose",
+        "start_line": 881,
+        "end_line": 890,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000080",
+      "title": "SVLEN backward-compatibility inference uses END and absolute value",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 892-896; section-specific normative prose",
+        "start_line": 892,
+        "end_line": 896,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000081",
+      "title": "CIPOS entries are ALT-paired offsets spanning zero",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 900-912; section-specific normative prose",
+        "start_line": 900,
+        "end_line": 912,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000082",
+      "title": "CIPOS default and homology interaction",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "RECOMMENDED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 908-910; section-specific normative prose",
+        "start_line": 908,
+        "end_line": 910,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000083",
+      "title": "CIEND entries encode ALT-specific end confidence intervals",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 916-926; section-specific normative prose",
+        "start_line": 916,
+        "end_line": 926,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000084",
+      "title": "MEINFO and METRANS use four values per ALT",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 948-962; section-specific normative prose",
+        "start_line": 948,
+        "end_line": 962,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000085",
+      "title": "EVENT groups records and EVENTTYPE classifies event",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 976-1001; section-specific normative prose",
+        "start_line": 976,
+        "end_line": 1001,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000086",
+      "title": "Reserved EVENTTYPE values are used when appropriate",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "RECOMMENDED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 980-999; section-specific normative prose",
+        "start_line": 980,
+        "end_line": 999,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000087",
+      "title": "CILEN has two confidence-bound values per ALT",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1003-1010; section-specific normative prose",
+        "start_line": 1003,
+        "end_line": 1010,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000088",
+      "title": "CICN has two copy-number bounds per ALT",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1012-1020; section-specific normative prose",
+        "start_line": 1012,
+        "end_line": 1020,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000089",
+      "title": "SVCLAIM distinguishes abundance and adjacency assertions",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1024-1049; section-specific normative prose",
+        "start_line": 1024,
+        "end_line": 1049,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000090",
+      "title": "SVCLAIM permitted values depend on ALT class",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1051-1066; section-specific normative prose",
+        "start_line": 1051,
+        "end_line": 1066,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000091",
+      "title": "RN determines tandem-repeat subfield cardinality",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1070-1080; section-specific normative prose",
+        "start_line": 1070,
+        "end_line": 1080,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000092",
+      "title": "Tandem-repeat sequence lists preserve per-ALT flattened order",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1084-1105; section-specific normative prose",
+        "start_line": 1084,
+        "end_line": 1105,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000093",
+      "title": "Tandem-repeat sequence and length consistency rules",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1096-1105; section-specific normative prose",
+        "start_line": 1096,
+        "end_line": 1105,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000094",
+      "title": "CIRUC and CIRB encode signed confidence offsets",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1107-1124; section-specific normative prose",
+        "start_line": 1107,
+        "end_line": 1124,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000095",
+      "title": "RUB depends on RUC and encodes variable repeat-unit lengths",
+      "domain": "STRUCTURAL_VARIANT_INFO",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1126-1140; section-specific normative prose",
+        "start_line": 1126,
+        "end_line": 1140,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000096",
+      "title": "FORMAT CN requires consistent SVLEN across affected alleles",
+      "domain": "STRUCTURAL_VARIANT_FORMAT",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1142-1162; section-specific normative prose",
+        "start_line": 1142,
+        "end_line": 1162,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000097",
+      "title": "A novel adjacency comprises two mate breakends",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1394-1400; section-specific normative prose",
+        "start_line": 1394,
+        "end_line": 1400,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000098",
+      "title": "Breakend REF and ALT replacement semantics",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1400-1414; section-specific normative prose",
+        "start_line": 1400,
+        "end_line": 1414,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000099",
+      "title": "Breakend bracket placement determines joined-piece orientation",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1413-1424; section-specific normative prose",
+        "start_line": 1413,
+        "end_line": 1424,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000100",
+      "title": "Multiple mates are represented as alternate adjacencies",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1521-1536; section-specific normative prose",
+        "start_line": 1521,
+        "end_line": 1536,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000101",
+      "title": "Partner breakends are distinct from adjacency mates",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1539-1560; section-specific normative prose",
+        "start_line": 1539,
+        "end_line": 1560,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000102",
+      "title": "Telomeric virtual breakends use boundary coordinates",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1563-1584; section-specific normative prose",
+        "start_line": 1563,
+        "end_line": 1584,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000103",
+      "title": "Breakend uncertainty uses leftmost placement and CIPOS",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1648-1677; section-specific normative prose",
+        "start_line": 1648,
+        "end_line": 1677,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000104",
+      "title": "Mate coordinates under uncertainty are conditional, not direct POS copies",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1674-1680; section-specific normative prose",
+        "start_line": 1674,
+        "end_line": 1680,
+        "page": null
+      }
+    },
+    {
+      "requirement_id": "VCF-REQ-000105",
+      "title": "Single breakends have no mate",
+      "domain": "STRUCTURAL_VARIANT_BREAKEND",
+      "normative_force": "REQUIRED",
+      "source_locator": {
+        "locator_type": "LINE_RANGE",
+        "locator_value": "VCFv4.5.tex lines 1682-1706; section-specific normative prose",
+        "start_line": 1682,
+        "end_line": 1706,
+        "page": null
+      }
+    }
+  ],
+  "contextual_findings": [
+    {
+      "topic": "Per-allele missing-value model",
+      "source_lines": [
+        844,
+        848
+      ],
+      "finding": "SV per-allele values cover every ALT including non-SV alleles; missing placeholders are used except string lists, where empty string is specified."
+    },
+    {
+      "topic": "SVLEN/END",
+      "source_lines": [
+        867,
+        896
+      ],
+      "finding": "END is deprecated; SVLEN is primary for symbolic SV length. Legacy inference from END and absolute-value treatment of negative SVLEN are explicit backward-compatibility semantics."
+    },
+    {
+      "topic": "Confidence interval interactions",
+      "source_lines": [
+        900,
+        926
+      ],
+      "finding": "CIPOS and CIEND have ALT-paired offsets and distinct coordinate anchors. CIPOS spans POS; CIEND is relative to END inferred from SVLEN. CIEND absence defaults to CIPOS; CIPOS has an exact default only when both IMPRECISE and CIPOS are absent."
+    },
+    {
+      "topic": "Event vocabulary",
+      "source_lines": [
+        976,
+        1001
+      ],
+      "finding": "EVENT groups records; EVENTTYPE classifies. The reserved event list is a SHOULD-use-when-appropriate vocabulary, while unlisted values are implementation-defined. EVENT is not restricted to SV."
+    },
+    {
+      "topic": "SVCLAIM",
+      "source_lines": [
+        1024,
+        1066
+      ],
+      "finding": "D/J/DJ encode abundance/adjacency/both and have ALT-class-dependent mandatory/optional domains. Scope is each ALT in isolation; do not infer one claim across a complex event."
+    },
+    {
+      "topic": "Tandem-repeat cardinalities",
+      "source_lines": [
+        1070,
+        1140
+      ],
+      "finding": "RN controls flattened list lengths and has missing/default rules; repeat arrays preserve ALT order; RUS/RUL/RUC/RB consistency is partly exact and partly approximate; CIRUC/CIRB intervals have explicit signs and missing-bound semantics; RUB requires RUC."
+    },
+    {
+      "topic": "Breakend grammar and topology",
+      "source_lines": [
+        1394,
+        1424
+      ],
+      "finding": "A novel adjacency has two mate breakends and two records. ALT replacement encodes replacement sequence, mate coordinate and orientation using four bracket forms; the orientation table is interpreted jointly with the prose definitions."
+    },
+    {
+      "topic": "Mate/partner distinction",
+      "source_lines": [
+        1521,
+        1560
+      ],
+      "finding": "Multiple mates become alternate alleles; PARID describes a partner relation distinct from MATEID's adjacency mate relation."
+    },
+    {
+      "topic": "Uncertainty and single breakends",
+      "source_lines": [
+        1648,
+        1706
+      ],
+      "finding": "Homology uncertainty uses leftmost placement plus CIPOS; mate coordinates are conditional under reciprocal uncertainty; single breakends lack mates."
+    }
+  ],
+  "examples_and_nonclaims": [
+    "Worked VCF records, diagrams and table examples are used as semantic cross-checks and are not promoted to standalone normative requirements.",
+    "The 1000G INFO membership flag is not treated as importing 1000 Genomes producer conventions.",
+    "No parser, normalizer, caller or structural-variant reconstruction implementation has been modified or declared conformant.",
+    "No VCFv4.1–4.4 applicability is inferred from VCFv4.5; all candidate applicability cells remain open pending exact source review.",
+    "The VCFv4.5 breakend and structural-variant semantic candidates do not qualify any producer-specific SV dialect or gVCF convention."
+  ],
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED",
+    "reviewer": null,
+    "approval_count": 0
+  },
+  "open_questions": [
+    "Review each candidate's normative force, atomicity and actor/condition.",
+    "Cross-check every semantic clause against VCFv4.1–4.4 and captured VCFv4.0 source.",
+    "Inspect all footnotes and section cross-references in the earlier specifications before setting applicability."
+  ],
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}

@@ -1,0 +1,3841 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf45-atomic-reconciliation-pass2-2026-11-07",
+  "status": "AUTHOR_RECONCILIATION_COMPLETE_INDEPENDENT_REVIEW_PENDING",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source": {
+    "file": "VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "inputs": {
+    "supplemental_registry_path": "docs/scientific/vcf-conformance/VCF45_ATOMIC_CANDIDATE_REGISTRY_PASS1_2026-11-07.json",
+    "supplemental_registry_blob_sha": "d72ac4b4fe3231c9c2418293af6e38a9c006f5ae",
+    "canonical_ledger_blob_sha": "ba7d1bb0544f5d1105a4bd62f757decae13caee8",
+    "canonical_requirement_count": 226,
+    "format_candidate_path": "docs/scientific/vcf-conformance/genotype-format-atomic-candidates.v1.json",
+    "format_candidate_blob_sha": "71d888047d4e82ba373eb6ba470292630c51b0c1",
+    "format_candidate_count": 61
+  },
+  "method": [
+    "Compared each provisional atomic statement and its source scope against all 226 canonical requirement statements, source references, domains and version applicability.",
+    "Compared each provisional atomic statement against all 61 GT/FORMAT candidate statements, including Number=A/R/G/local-allele, phase-set, likelihood, base-modification and genotype semantics.",
+    "Classified exact/subsumed matches separately from partial topical relationships; similarity or shared field names alone were not treated as duplicates.",
+    "Merged duplicate provisional records created by repeated source clauses and consolidated repeated ID constraints with both source locators preserved.",
+    "Retained unresolved source ambiguity records as open review items; no author interpretation is treated as independent approval."
+  ],
+  "counts": {
+    "provisional_records": 161,
+    "canonical_records_reviewed": 226,
+    "format_candidates_reviewed": 61,
+    "subsumed_by_canonical": 3,
+    "exact_duplicates_with_format_candidates": 0,
+    "related_to_canonical": 30,
+    "related_to_format_candidates": 10,
+    "unmapped_source_candidates": 0,
+    "provisional_records_after_pass2": 161,
+    "removed_internal_duplicates": 7,
+    "covered_by_canonical": 3,
+    "source_candidates": 75
+  },
+  "dispositions": {
+    "subsumed_by_canonical": [
+      "VCF-REQ-900098",
+      "VCF-REQ-900165",
+      "VCF-REQ-900166"
+    ],
+    "canonical_partial_overlap": [
+      "VCF-REQ-900090",
+      "VCF-REQ-900095",
+      "VCF-REQ-900101",
+      "VCF-REQ-900102",
+      "VCF-REQ-900103",
+      "VCF-REQ-900104",
+      "VCF-REQ-900105",
+      "VCF-REQ-900106",
+      "VCF-REQ-900107",
+      "VCF-REQ-900116",
+      "VCF-REQ-900117",
+      "VCF-REQ-900118",
+      "VCF-REQ-900119",
+      "VCF-REQ-900120",
+      "VCF-REQ-900121",
+      "VCF-REQ-900138",
+      "VCF-REQ-900139",
+      "VCF-REQ-900140",
+      "VCF-REQ-900141"
+    ],
+    "format_partial_overlap": [
+      "VCF-REQ-900030",
+      "VCF-REQ-900032",
+      "VCF-REQ-900108",
+      "VCF-REQ-900131",
+      "VCF-REQ-900132",
+      "VCF-REQ-900133"
+    ],
+    "direct_duplicate_with_format_candidates": [],
+    "net_new_candidate_records": 158
+  },
+  "limitations": [
+    "This is author-level semantic reconciliation, not independent standards approval.",
+    "A 'no direct duplicate identified' result does not prove that no equivalent requirement exists in unreviewed VCFv4.1–4.4 or VCFv4.0 source material.",
+    "Canonical VCFv4.0 applicability remains source-not-pinned; this pass is strictly a VCFv4.5 source review.",
+    "No canonical requirement IDs were allocated and the canonical 226-record ledger was not modified."
+  ],
+  "records": [
+    {
+      "provisional_requirement_id": "VCF-REQ-900001",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L104",
+            "start_line": 104,
+            "end_line": 104
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900002",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L104",
+            "start_line": 104,
+            "end_line": 104
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900003",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L105",
+            "start_line": 105,
+            "end_line": 105
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900004",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L105",
+            "start_line": 105,
+            "end_line": 105
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900005",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L107",
+            "start_line": 107,
+            "end_line": 107
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900006",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L107",
+            "start_line": 107,
+            "end_line": 107
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900007",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L107",
+            "start_line": 107,
+            "end_line": 107
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900008",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L119",
+            "start_line": 119,
+            "end_line": 119
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900009",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L119",
+            "start_line": 119,
+            "end_line": 119
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900010",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L120",
+            "start_line": 120,
+            "end_line": 120
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900011",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L126",
+            "start_line": 126,
+            "end_line": 126
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900012",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L127",
+            "start_line": 127,
+            "end_line": 127
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900013",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L127",
+            "start_line": 127,
+            "end_line": 127
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900014",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L129",
+            "start_line": 129,
+            "end_line": 129
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900015",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L129",
+            "start_line": 129,
+            "end_line": 129
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900016",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L132",
+            "start_line": 132,
+            "end_line": 132
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900017",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L133",
+            "start_line": 133,
+            "end_line": 133
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900018",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L133",
+            "start_line": 133,
+            "end_line": 133
+          }
+        }
+      ],
+      "normative_force": "MAY_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900019",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L135",
+            "start_line": 135,
+            "end_line": 135
+          }
+        }
+      ],
+      "normative_force": "OPTIONAL",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900020",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L135",
+            "start_line": 135,
+            "end_line": 135
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900021",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L136",
+            "start_line": 136,
+            "end_line": 136
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900022",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L138",
+            "start_line": 138,
+            "end_line": 138
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900023",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900024",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900025",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900026",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900027",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900028",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L151",
+            "start_line": 151,
+            "end_line": 151
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900029",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L159",
+            "start_line": 159,
+            "end_line": 159
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900030",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L164",
+            "start_line": 164,
+            "end_line": 164
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-041",
+        "FMT-GT-058"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900031",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L164",
+            "start_line": 164,
+            "end_line": 164
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900032",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L166",
+            "start_line": 166,
+            "end_line": 166
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-041",
+        "FMT-GT-058"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900033",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L166",
+            "start_line": 166,
+            "end_line": 166
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900034",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L172",
+            "start_line": 172,
+            "end_line": 172
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900035",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L172",
+            "start_line": 172,
+            "end_line": 172
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900036",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L173",
+            "start_line": 173,
+            "end_line": 173
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900037",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L174",
+            "start_line": 174,
+            "end_line": 174
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900038",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L175",
+            "start_line": 175,
+            "end_line": 175
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900039",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L175",
+            "start_line": 175,
+            "end_line": 175
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900040",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L175",
+            "start_line": 175,
+            "end_line": 175
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900041",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L175",
+            "start_line": 175,
+            "end_line": 175
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900042",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L178",
+            "start_line": 178,
+            "end_line": 178
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900043",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L178",
+            "start_line": 178,
+            "end_line": 178
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900044",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900045",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900046",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900047",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L185",
+            "start_line": 185,
+            "end_line": 185
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900049",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L258",
+            "start_line": 258,
+            "end_line": 258
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900050",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L258",
+            "start_line": 258,
+            "end_line": 258
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900051",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L258",
+            "start_line": 258,
+            "end_line": 258
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L419",
+            "start_line": 419,
+            "end_line": 419
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900052",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L259-L265",
+            "start_line": 259,
+            "end_line": 265
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900053",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L268",
+            "start_line": 268,
+            "end_line": 268
+          }
+        }
+      ],
+      "normative_force": "SHOULD_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900054",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L292",
+            "start_line": 292,
+            "end_line": 292
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900055",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L301",
+            "start_line": 301,
+            "end_line": 301
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900056",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L301",
+            "start_line": 301,
+            "end_line": 301
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900057",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L302",
+            "start_line": 302,
+            "end_line": 302
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900058",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L302",
+            "start_line": 302,
+            "end_line": 302
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900059",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L322",
+            "start_line": 322,
+            "end_line": 322
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900060",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L322",
+            "start_line": 322,
+            "end_line": 322
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900061",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L322",
+            "start_line": 322,
+            "end_line": 322
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900062",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L329",
+            "start_line": 329,
+            "end_line": 329
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900063",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L391",
+            "start_line": 391,
+            "end_line": 391
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900064",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L392",
+            "start_line": 392,
+            "end_line": 392
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900065",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L397",
+            "start_line": 397,
+            "end_line": 397
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900066",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L399",
+            "start_line": 399,
+            "end_line": 399
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900067",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L400",
+            "start_line": 400,
+            "end_line": 400
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900068",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L403",
+            "start_line": 403,
+            "end_line": 403
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900069",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L406",
+            "start_line": 406,
+            "end_line": 406
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900070",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L406",
+            "start_line": 406,
+            "end_line": 406
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900071",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L406",
+            "start_line": 406,
+            "end_line": 406
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900072",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L407",
+            "start_line": 407,
+            "end_line": 407
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900073",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L407",
+            "start_line": 407,
+            "end_line": 407
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900074",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L409",
+            "start_line": 409,
+            "end_line": 409
+          }
+        }
+      ],
+      "normative_force": "MAY_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900075",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L411",
+            "start_line": 411,
+            "end_line": 411
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900076",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900077",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900078",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900079",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900080",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900081",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900082",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L417",
+            "start_line": 417,
+            "end_line": 417
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900083",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L418",
+            "start_line": 418,
+            "end_line": 418
+          }
+        }
+      ],
+      "normative_force": "MAY_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900084",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L418",
+            "start_line": 418,
+            "end_line": 418
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L258",
+            "start_line": 258,
+            "end_line": 258
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900085",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L422",
+            "start_line": 422,
+            "end_line": 422
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900086",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L425",
+            "start_line": 425,
+            "end_line": 425
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900087",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L426",
+            "start_line": 426,
+            "end_line": 426
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900088",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L429",
+            "start_line": 429,
+            "end_line": 429
+          }
+        }
+      ],
+      "normative_force": "NOT_STATED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900089",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L433",
+            "start_line": 433,
+            "end_line": 433
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900090",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L433",
+            "start_line": 433,
+            "end_line": 433
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000163"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900091",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L435",
+            "start_line": 435,
+            "end_line": 435
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900092",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L435",
+            "start_line": 435,
+            "end_line": 435
+          }
+        }
+      ],
+      "normative_force": "OPTIONAL",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900093",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L437",
+            "start_line": 437,
+            "end_line": 437
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900094",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L439",
+            "start_line": 439,
+            "end_line": 439
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900095",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L488-L491",
+            "start_line": 488,
+            "end_line": 491
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000106",
+        "VCF-REQ-000129"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900096",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L609",
+            "start_line": 609,
+            "end_line": 609
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900097",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L845",
+            "start_line": 845,
+            "end_line": 845
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900098",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L846",
+            "start_line": 846,
+            "end_line": 846
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "SUBSUMED_BY_CANONICAL_REQUIREMENT",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Existing canonical requirement is broader and subsumes this source clause; retain source traceability only."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900099",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1487",
+            "start_line": 1487,
+            "end_line": 1487
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900100",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1623",
+            "start_line": 1623,
+            "end_line": 1623
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900101",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1889",
+            "start_line": 1889,
+            "end_line": 1889
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000090"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900102",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1889",
+            "start_line": 1889,
+            "end_line": 1889
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000090"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900103",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1900",
+            "start_line": 1900,
+            "end_line": 1900
+          }
+        }
+      ],
+      "normative_force": "SHOULD_NOT",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000090"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900104",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1901",
+            "start_line": 1901,
+            "end_line": 1901
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900105",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1901",
+            "start_line": 1901,
+            "end_line": 1901
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900106",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1903",
+            "start_line": 1903,
+            "end_line": 1903
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900107",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1903",
+            "start_line": 1903,
+            "end_line": 1903
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900108",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1946",
+            "start_line": 1946,
+            "end_line": 1946
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1985",
+            "start_line": 1985,
+            "end_line": 1985
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-013",
+        "FMT-GT-029",
+        "FMT-GT-031"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900109",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1982",
+            "start_line": 1982,
+            "end_line": 1982
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900110",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1983",
+            "start_line": 1983,
+            "end_line": 1983
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900112",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1986",
+            "start_line": 1986,
+            "end_line": 1986
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900113",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1986",
+            "start_line": 1986,
+            "end_line": 1986
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900114",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1988",
+            "start_line": 1988,
+            "end_line": 1988
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900115",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1988",
+            "start_line": 1988,
+            "end_line": 1988
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900116",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900117",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1887",
+            "start_line": 1887,
+            "end_line": 1887
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000109",
+        "VCF-REQ-000110",
+        "VCF-REQ-000111",
+        "VCF-REQ-000112"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900118",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1994",
+            "start_line": 1994,
+            "end_line": 1994
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900119",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1994",
+            "start_line": 1994,
+            "end_line": 1994
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900120",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1995",
+            "start_line": 1995,
+            "end_line": 1995
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900121",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1996",
+            "start_line": 1996,
+            "end_line": 1996
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000091",
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900123",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L404",
+            "start_line": 404,
+            "end_line": 404
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900124",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L610",
+            "start_line": 610,
+            "end_line": 610
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900125",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L610",
+            "start_line": 610,
+            "end_line": 610
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900126",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L273",
+            "start_line": 273,
+            "end_line": 273
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900127",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L274",
+            "start_line": 274,
+            "end_line": 274
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900128",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L275",
+            "start_line": 275,
+            "end_line": 275
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900129",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L276",
+            "start_line": 276,
+            "end_line": 276
+          }
+        }
+      ],
+      "normative_force": "RECOMMENDED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900130",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L825",
+            "start_line": 825,
+            "end_line": 825
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900131",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L827",
+            "start_line": 827,
+            "end_line": 827
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-019"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900132",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L828",
+            "start_line": 828,
+            "end_line": 828
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-019"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900133",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L829",
+            "start_line": 829,
+            "end_line": 829
+          }
+        }
+      ],
+      "normative_force": "MAY",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "format_candidate_ids": [
+        "FMT-GT-019"
+      ],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900134",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L831",
+            "start_line": 831,
+            "end_line": 831
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900135",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L833",
+            "start_line": 833,
+            "end_line": 833
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900136",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L833",
+            "start_line": 833,
+            "end_line": 833
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900137",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L835",
+            "start_line": 835,
+            "end_line": 835
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900138",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1914",
+            "start_line": 1914,
+            "end_line": 1914
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000081",
+        "VCF-REQ-000083"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900139",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1914",
+            "start_line": 1914,
+            "end_line": 1914
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000081",
+        "VCF-REQ-000083"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900140",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1998",
+            "start_line": 1998,
+            "end_line": 1998
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000079",
+        "VCF-REQ-000091",
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900141",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1998",
+            "start_line": 1998,
+            "end_line": 1998
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "RELATED_PARTIAL_OVERLAP_NOT_DUPLICATE",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000079",
+        "VCF-REQ-000091",
+        "VCF-REQ-000093"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Related topic or dependency; semantic obligation is not identical and should remain separately evaluated."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900142",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L409",
+            "start_line": 409,
+            "end_line": 409
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900143",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L409",
+            "start_line": 409,
+            "end_line": 409
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900144",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L416",
+            "start_line": 416,
+            "end_line": 416
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900145",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L392",
+            "start_line": 392,
+            "end_line": 392
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900146",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L392",
+            "start_line": 392,
+            "end_line": 392
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900147",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L397",
+            "start_line": 397,
+            "end_line": 397
+          }
+        }
+      ],
+      "normative_force": "REQUIRED",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900148",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L422",
+            "start_line": 422,
+            "end_line": 422
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900149",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L420",
+            "start_line": 420,
+            "end_line": 420
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900150",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900151",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L421",
+            "start_line": 421,
+            "end_line": 421
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900152",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L408",
+            "start_line": 408,
+            "end_line": 408
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900156",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900157",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900158",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900159",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L427",
+            "start_line": 427,
+            "end_line": 427
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900160",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L434",
+            "start_line": 434,
+            "end_line": 434
+          }
+        }
+      ],
+      "normative_force": "MUST_NOT",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900161",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L137",
+            "start_line": 137,
+            "end_line": 137
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900162",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1887",
+            "start_line": 1887,
+            "end_line": 1887
+          }
+        }
+      ],
+      "normative_force": "SHOULD",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900163",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1989",
+            "start_line": 1989,
+            "end_line": 1989
+          }
+        },
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1887",
+            "start_line": 1887,
+            "end_line": 1887
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900165",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L847",
+            "start_line": 847,
+            "end_line": 847
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "SUBSUMED_BY_CANONICAL_REQUIREMENT",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Existing canonical requirement is broader and subsumes this source clause; retain source traceability only."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900166",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L848",
+            "start_line": 848,
+            "end_line": 848
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "SUBSUMED_BY_CANONICAL_REQUIREMENT",
+      "canonical_requirement_ids": [
+        "VCF-REQ-000076"
+      ],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "Existing canonical requirement is broader and subsumes this source clause; retain source traceability only."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900167",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L174",
+            "start_line": 174,
+            "end_line": 174
+          }
+        }
+      ],
+      "normative_force": "MUST",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    },
+    {
+      "provisional_requirement_id": "VCF-REQ-900168",
+      "source_references": [
+        {
+          "source_file": "VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L828",
+            "start_line": 828,
+            "end_line": 828
+          }
+        }
+      ],
+      "normative_force": "DESCRIPTIVE",
+      "canonical_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "canonical_requirement_ids": [],
+      "format_candidate_disposition": "NO_DIRECT_DUPLICATE_IDENTIFIED",
+      "format_candidate_ids": [],
+      "canonical_promotion": "DO_NOT_PROMOTE_AS_SEPARATE_CANONICAL_ID",
+      "notes": "No direct duplicate identified in the author-level row-by-row reconciliation."
+    }
+  ],
+  "internal_deduplication": [
+    {
+      "removed_provisional_id": "VCF-REQ-900122",
+      "retained_provisional_id": "VCF-REQ-900098",
+      "source_line": 846,
+      "reason": "Same per-ALT all-ALT-alleles obligation; the retained record is itself subsumed by canonical VCF-REQ-000076."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900164",
+      "retained_provisional_id": "VCF-REQ-900107",
+      "source_line": 1903,
+      "reason": "Duplicate of the missing INFO CN condition already represented by the original SHOULD record."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900111",
+      "retained_provisional_id": "VCF-REQ-900108",
+      "source_lines": [
+        1946,
+        1985
+      ],
+      "reason": "Same recommendation to phase non-symbolic tandem-repeat records with the corresponding CNV:TR record; both source locators are retained on one requirement."
+    },
+    {
+      "removed_provisional_id": "VCF-REQ-900048",
+      "retained_provisional_id": "VCF-REQ-900084",
+      "source_lines": [
+        258,
+        418
+      ],
+      "reason": "Case-sensitive ALT ID rule consolidated; both source references retained."
+    },
+    {
+      "removed_provisional_ids": [
+        "VCF-REQ-900153",
+        "VCF-REQ-900154",
+        "VCF-REQ-900155"
+      ],
+      "retained_provisional_ids": [
+        "VCF-REQ-900049",
+        "VCF-REQ-900050",
+        "VCF-REQ-900051"
+      ],
+      "source_lines": [
+        258,
+        419
+      ],
+      "reason": "The same symbolic ALT ID exclusions (whitespace, commas, angle brackets) were repeated in two source locations; each rule retains both references."
+    }
+  ],
+  "pass2_corrections": [
+    "Changed structured optional-field inclusion from NOT_STATED to MAY.",
+    "Changed 'not required to preserve ordering/case' statements to MAY_NOT and separated REF type/requiredness from case-preservation semantics.",
+    "Changed ALT enumeration members from independent MAY permissions to descriptive members under one MUST allowed-set constraint.",
+    "Split CHROM/POS/REF/QUAL/FILTER field descriptors and their independent requiredness, data-type and value constraints.",
+    "Split double-quote escaping from backslash escaping; split log10 likelihood scale from the descriptive negative-value statement.",
+    "Corrected FORMAT FT value referents, QUAL missingness/type/conditional interpretation, and FILTER missingness scope.",
+    "Split INFO CN versus FORMAT CN presence and value semantics; attached line 1887 defining their distinct allele-specific versus overall-copy-number roles.",
+    "Added the <*> POS interval exception, ALT ID syntax constraints, INFO key uniqueness, BCF metadata entry statement, and missing-value behavior from adjacent source lines.",
+    "Retained line 1995 RS/RUS, lines 129-130/301-302 header-tag scope, local-GT, Number=P/PSQ, xanthosine capitalization, and POS/SVLEN catalog wording as explicit review issues."
+  ]
+}

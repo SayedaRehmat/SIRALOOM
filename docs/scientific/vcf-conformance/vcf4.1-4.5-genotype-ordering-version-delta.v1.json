@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-genotype-ordering-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "scope": "GL genotype-likelihood ordering and the VCFv4.5 VCF5.5 illustrative ordering matrix. This does not cover every GT/FORMAT semantic.",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "versions": {
+    "VCFv4_1": {
+      "source": "VCFv4.1.tex",
+      "locator": "203-210",
+      "finding": "GL uses canonical genotype order; without GT, diploidy is assumed. It defines F(j/k)=(k*(k+1)/2)+j and gives diploid biallelic/triallelic examples. GLE is separately defined for heterogeneous ploidy under uncertain copy number.",
+      "gle": "PRESENT",
+      "general_ploidy_algorithm": "NOT_PRESENT_IN_REVIEWED_GENOTYPE_SECTION"
+    },
+    "VCFv4_2": {
+      "source": "VCFv4.2.tex",
+      "locator": "220-227",
+      "finding": "Same GL diploid ordering formula and GLE heterogeneous-ploidy field as VCFv4.1.",
+      "gle": "PRESENT",
+      "general_ploidy_algorithm": "NOT_PRESENT_IN_REVIEWED_GENOTYPE_SECTION"
+    },
+    "VCFv4_3": {
+      "source": "VCFv4.3.tex",
+      "locator": "500-540; 2168",
+      "finding": "GLE is removed (change log: unused and ill-defined). GL retains same-ploidy expectation with diploidy assumed without GT. A general ploidy P/N ordering algorithm is introduced: nested inclusive loops, recursive equivalent and combinatorial genotype-index formula.",
+      "gle": "REMOVED",
+      "general_ploidy_algorithm": "PRESENT"
+    },
+    "VCFv4_4": {
+      "source": "VCFv4.4.tex",
+      "locator": "526-566; 2630",
+      "finding": "The general-ploidy algorithm, recursive equivalent and combinatorial index are retained. GLE remains removed.",
+      "gle": "REMOVED",
+      "general_ploidy_algorithm": "PRESENT"
+    },
+    "VCFv4_5": {
+      "source": "VCFv4.5.tex",
+      "locator": "625-665; table VCF5.5 at 675-681; 2812",
+      "finding": "The same general-ploidy algorithm is retained. VCF5.5 is a diploid triangular-matrix illustration; the normative algorithm is the surrounding prose/pseudocode and inclusive-loop footnote, not the matrix alone.",
+      "gle": "REMOVED",
+      "general_ploidy_algorithm": "PRESENT"
+    }
+  },
+  "deltas": [
+    {
+      "from": "VCFv4.1",
+      "to": "VCFv4.2",
+      "status": "NO_MATERIAL_CHANGE_FOUND_IN_REVIEWED_GL_GLE_TEXT",
+      "evidence": [
+        "VCFv4.1.tex:207-208",
+        "VCFv4.2.tex:224-225"
+      ]
+    },
+    {
+      "from": "VCFv4.2",
+      "to": "VCFv4.3",
+      "status": "MAJOR_SEMANTIC_CHANGE",
+      "changes": [
+        "Remove GLE heterogeneous-ploidy FORMAT tag as unused/ill-defined.",
+        "Introduce general-ploidy GL genotype ordering algorithm and combinatorial index.",
+        "Retain same-ploidy expectation with GT and diploidy assumption when GT absent."
+      ],
+      "evidence": [
+        "VCFv4.2.tex:224-225",
+        "VCFv4.3.tex:500-540",
+        "VCFv4.3.tex:2168"
+      ]
+    },
+    {
+      "from": "VCFv4.3",
+      "to": "VCFv4.4",
+      "status": "NO_CHANGE_FOUND_IN_REVIEWED_ALGORITHM",
+      "evidence": [
+        "VCFv4.3.tex:507-536",
+        "VCFv4.4.tex:533-562"
+      ]
+    },
+    {
+      "from": "VCFv4.4",
+      "to": "VCFv4.5",
+      "status": "NO_CHANGE_FOUND_IN_REVIEWED_ALGORITHM",
+      "evidence": [
+        "VCFv4.4.tex:533-562",
+        "VCFv4.5.tex:632-661"
+      ]
+    }
+  ],
+  "normative_algorithm_clauses": [
+    {
+      "clause": "Ordering domain",
+      "locator": "VCFv4.3.tex:508; VCFv4.4.tex:534; VCFv4.5.tex:633",
+      "finding": "General ploidy P and N alternate alleles; allele values are nondecreasing in the canonical ordering."
+    },
+    {
+      "clause": "Nested-loop algorithm",
+      "locator": "VCFv4.3.tex:509-517; VCFv4.4.tex:535-543; VCFv4.5.tex:634-642",
+      "finding": "Nested loops are used with as many levels as ploidy; inclusive for-loop boundaries are explicitly stated in a footnote."
+    },
+    {
+      "clause": "Recursive equivalent",
+      "locator": "VCFv4.3.tex:520-527; VCFv4.4.tex:546-553; VCFv4.5.tex:645-652",
+      "finding": "Recursive algorithm is stated as an equivalent method."
+    },
+    {
+      "clause": "Index function",
+      "locator": "VCFv4.3.tex:530-536; VCFv4.4.tex:556-562; VCFv4.5.tex:655-661",
+      "finding": "Combinatorial index formula maps a nondecreasing genotype allele tuple to its likelihood-array index."
+    },
+    {
+      "clause": "Diploid matrix example",
+      "locator": "VCFv4.5.tex:675-681",
+      "finding": "Illustrative triangular matrix for P=2; does not replace the general algorithm."
+    }
+  ],
+  "remaining": [
+    "Independent reviewer must verify the algorithm's exact mathematical equivalence, loop boundaries and index formula.",
+    "Map Number=G cardinality and GL/PL/GP requirements to atomic ledger IDs for each version.",
+    "Add executable conformance tests for haploid, diploid, triploid and higher ploidy with multiple alternate alleles, including boundary and missing-GT cases.",
+    "No implementation or test execution is claimed."
+  ]
+}

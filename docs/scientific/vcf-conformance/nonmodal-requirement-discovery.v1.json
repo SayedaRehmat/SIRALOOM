@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0.0",
+  "register_id": "siraloom-vcf-nonmodal-requirement-discovery",
+  "status": "INITIAL_DISCOVERY_REVIEWED_NOT_EXHAUSTIVE",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "purpose": "Record source constraints that a modal-word-only extractor can miss. Entries are source-derived discovery items, not an assertion that the entire specification has been exhaustively reviewed.",
+  "detection_classes": [
+    {
+      "class": "DECLARATIVE_FORMAT_PROPERTY",
+      "examples": [
+        "The character encoding of VCF files is UTF-8."
+      ],
+      "why_missed": "No modal verb; the statement defines a normative format property."
+    },
+    {
+      "class": "NEGATIVE_CONSTRAINT_WITHOUT_MATCHED_MODAL",
+      "examples": [
+        "Zero length fields are not allowed.",
+        "Duplicate sample IDs are not allowed.",
+        "Non-printable characters ... are disallowed."
+      ],
+      "why_missed": "The existing regular expression does not include 'not allowed' or 'disallowed'."
+    },
+    {
+      "class": "STRUCTURAL_DELIMITER_RULE",
+      "examples": [
+        "The header line is tab-delimited.",
+        "All data lines are tab-delimited."
+      ],
+      "why_missed": "Declarative syntax/serialization constraint without a modal token."
+    },
+    {
+      "class": "TERMINATOR_AND_LAYOUT_RULE",
+      "examples": [
+        "The last data line must end with a line separator."
+      ],
+      "why_missed": "Although modal in this example, it is structurally scoped and needs separate discovery from generic line-ending support."
+    },
+    {
+      "class": "TABLE_AND_GRAMMAR_CONSTRAINT",
+      "examples": [
+        "Enumerated values, cardinality restrictions, grammar productions, reserved keys, and table-defined field domains."
+      ],
+      "why_missed": "Requirements may be encoded in formal grammar, tables, enumerations, definitions, footnotes, and examples rather than prose modal sentences."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "NM-0001",
+      "concept": "UTF-8 text encoding",
+      "source_lines": {
+        "VCFv4.3": [
+          77
+        ],
+        "VCFv4.4": [
+          77
+        ],
+        "VCFv4.5": [
+          75
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED",
+      "requirement_id": "VCF-REQ-000006",
+      "status": "IN_REVIEW"
+    },
+    {
+      "finding_id": "NM-0002",
+      "concept": "Zero-length fields prohibited",
+      "source_lines": {
+        "VCFv4.3": [
+          39
+        ],
+        "VCFv4.4": [
+          39
+        ],
+        "VCFv4.5": [
+          37
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED_BY_CURRENT_REGEX",
+      "requirement_id": "VCF-REQ-000009",
+      "status": "IN_REVIEW"
+    },
+    {
+      "finding_id": "NM-0003",
+      "concept": "Header line tab-delimited",
+      "source_lines": {
+        "VCFv4.1": [
+          155
+        ],
+        "VCFv4.2": [
+          172
+        ],
+        "VCFv4.3": [
+          313
+        ],
+        "VCFv4.4": [
+          327
+        ],
+        "VCFv4.5": [
+          376
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED",
+      "requirement_id": "VCF-REQ-000013",
+      "status": "IN_REVIEW"
+    },
+    {
+      "finding_id": "NM-0004",
+      "concept": "Data lines tab-delimited",
+      "source_lines": {
+        "VCFv4.1": [
+          159
+        ],
+        "VCFv4.2": [
+          176
+        ],
+        "VCFv4.3": [
+          317
+        ],
+        "VCFv4.4": [
+          331
+        ],
+        "VCFv4.5": [
+          380
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED",
+      "requirement_id": "VCF-REQ-000014",
+      "status": "IN_REVIEW"
+    },
+    {
+      "finding_id": "NM-0005",
+      "concept": "Sample identifiers unique",
+      "source_lines": {
+        "VCFv4.1": [
+          155
+        ],
+        "VCFv4.2": [
+          172
+        ],
+        "VCFv4.3": [
+          312
+        ],
+        "VCFv4.4": [
+          326
+        ],
+        "VCFv4.5": [
+          375
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED_BY_CURRENT_REGEX",
+      "requirement_id": "VCF-REQ-000015",
+      "status": "IN_REVIEW"
+    },
+    {
+      "finding_id": "NM-0006",
+      "concept": "Non-printable control-character ranges prohibited",
+      "source_lines": {
+        "VCFv4.3": [
+          81
+        ],
+        "VCFv4.4": [
+          81
+        ],
+        "VCFv4.5": [
+          79
+        ]
+      },
+      "candidate_match": "NOT_CAPTURED_BY_CURRENT_REGEX",
+      "requirement_id": "VCF-REQ-000008",
+      "status": "IN_REVIEW"
+    }
+  ],
+  "explicit_exclusions": [
+    "Do not promote examples into requirements unless the example expresses a general constraint supported by normative context.",
+    "Do not infer VCFv4.0–4.2 applicability from later versions.",
+    "Do not treat BCF requirements as VCF requirements.",
+    "Do not treat producer-specific extensions as core VCF normative requirements without separate source classification."
+  ],
+  "remaining_work": [
+    "Systematically inspect all 229 inventoried headings and 61 table captions in their pinned source contexts.",
+    "Extract and atomize every applicable table row, grammar production, enumerated value set, definition, footnote, and cross-reference.",
+    "Review all 510 modal-language candidates against preceding/following paragraphs and structural context.",
+    "Perform explicit per-version delta analysis, including requirements removed, introduced, modified, or unchanged.",
+    "Capture and hash the VCFv4.0 historical source bytes before promoting any VCFv4.0 requirement to source-pinned status.",
+    "Obtain independent second-person review; none is claimed in this register."
+  ],
+  "independent_review": {
+    "status": "NOT_STARTED",
+    "required": true
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED"
+}

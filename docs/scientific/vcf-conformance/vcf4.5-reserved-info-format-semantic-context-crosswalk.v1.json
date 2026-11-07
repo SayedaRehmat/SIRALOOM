@@ -1,0 +1,2261 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf45-reserved-info-format-semantic-context-crosswalk",
+  "status": "AUTHOR_CONTEXT_RANGES_MAPPED_FIELD_SPECIFIC_ATOMIC_RECONCILIATION_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "file": "VCFv4.5.tex",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "scope": "Map each VCFv4.5 reserved INFO and FORMAT table row to the surrounding source prose that defines or qualifies it. The crosswalk is a navigation and semantic-context artifact; it does not claim that every referenced passage has been atomized or independently reviewed.",
+  "method": "Rows were extracted from exact source line ranges 460-480 and 534-596. Context ranges point to the source prose reviewed for each key. Row definitions remain DESCRIPTIVE candidates; additional normative prose is to be atomized separately. Missing context means no field-specific prose was located in the inspected definition span, not proof of absence from the whole specification.",
+  "counts": {
+    "reserved_info_rows": 21,
+    "reserved_format_rows": 63,
+    "total_rows": 84,
+    "rows_with_prose_context": 83,
+    "rows_without_field_specific_prose": 1
+  },
+  "controls": {
+    "reserved_field_does_not_imply_presence": true,
+    "examples_not_automatically_normative": true,
+    "normative_force_must_be_preserved": true,
+    "version_specificity_required": true,
+    "bcf_serialization_separate": true,
+    "gvcf_and_producer_conventions_separate": true
+  },
+  "rows": [
+    {
+      "requirement_id": "VCF-REQ-000143",
+      "domain": "INFO",
+      "key": "AA",
+      "number": "1",
+      "type": "String",
+      "table_row_line": 460,
+      "table_description": "Ancestral allele",
+      "table_row_excerpt_sha256": "5befff19de138cb45734a813723fbe5ea1a35d2d811bd4d44e1b5a8384638ff6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000144",
+      "domain": "INFO",
+      "key": "AC",
+      "number": "A",
+      "type": "Integer",
+      "table_row_line": 461,
+      "table_description": "Allele count in genotypes, for each ALT allele, in the same order as listed",
+      "table_row_excerpt_sha256": "715047ff7d5f337e2683ca07cc7545fbabf6cae0eac00c8a6a6069f38dff78e4",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000145",
+      "domain": "INFO",
+      "key": "AD",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 462,
+      "table_description": "Total read depth for each allele",
+      "table_row_excerpt_sha256": "7fee9f2a52e392022e7f6a850e9ee3c98f0831446ddc8cba49b5ab60c2ee2e2a",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000146",
+      "domain": "INFO",
+      "key": "ADF",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 463,
+      "table_description": "Read depth for each allele on the forward strand",
+      "table_row_excerpt_sha256": "35a446ee804e20a00e6d3e88e1750802d2d786afae384ca7049c45941488f874",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000147",
+      "domain": "INFO",
+      "key": "ADR",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 464,
+      "table_description": "Read depth for each allele on the reverse strand",
+      "table_row_excerpt_sha256": "bf5a5bcce927769d6d8b5cfaa75d7ec829f4d66acb1ceb70a26a7b06c85199bf",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000148",
+      "domain": "INFO",
+      "key": "AF",
+      "number": "A",
+      "type": "Float",
+      "table_row_line": 465,
+      "table_description": "Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes)",
+      "table_row_excerpt_sha256": "b1058b579a5fe8dd7ba23d3be2a4a01260f4f087284537de3b9103ce1ee9f805",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000149",
+      "domain": "INFO",
+      "key": "AN",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 466,
+      "table_description": "Total number of alleles in called genotypes",
+      "table_row_excerpt_sha256": "56d5134ac1583cdd580d2c6d5f6aa4ba134908161f8984ceee4264ddafb392d8",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000150",
+      "domain": "INFO",
+      "key": "BQ",
+      "number": "1",
+      "type": "Float",
+      "table_row_line": 467,
+      "table_description": "RMS base quality",
+      "table_row_excerpt_sha256": "fc39b2fe545815b747897e807ef9c1f7cdab0f729f309b774f78b3dd43cf4c2e",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000151",
+      "domain": "INFO",
+      "key": "CIGAR",
+      "number": "A",
+      "type": "String",
+      "table_row_line": 468,
+      "table_description": "Cigar string describing how to align an alternate allele to the reference allele",
+      "table_row_excerpt_sha256": "c236cec4eeb889054d34161c80c339bdd3077e646a1455358489ddcc6002480e",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000152",
+      "domain": "INFO",
+      "key": "DB",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 469,
+      "table_description": "dbSNP membership",
+      "table_row_excerpt_sha256": "b7669fb1593f4fdc1e09bcc1fa1dfe5bfb1a60666b02bc18f78ecb77c2c27fd1",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000153",
+      "domain": "INFO",
+      "key": "DP",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 470,
+      "table_description": "Combined depth across samples",
+      "table_row_excerpt_sha256": "35401739204f572ef13588d88c900116a271113c2cc282f6b5a91667cd800612",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000154",
+      "domain": "INFO",
+      "key": "END",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 471,
+      "table_description": "Deprecated. Present for backwards compatibility with earlier versions of VCF.",
+      "table_row_excerpt_sha256": "1a3cf6002f07d9854bd139b5855a63bcf0a5680ed607c038cb059006cb4bf9fe",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_rule_and_END_computed_value_context"
+        },
+        {
+          "start_line": 485,
+          "end_line": 493,
+          "role": "reserved_optional_rule_and_END_computed_value_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table marks END deprecated; lines 485-493 add a computed-value definition, backwards-compatibility purpose and BCF/indexing dependencies. These details must be decomposed separately.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000155",
+      "domain": "INFO",
+      "key": "H2",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 472,
+      "table_description": "HapMap2 membership",
+      "table_row_excerpt_sha256": "e99b9cfa7418e14f140882e2160b1cb546f6d08a2c4cd0c58f98361114bf8be6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000156",
+      "domain": "INFO",
+      "key": "H3",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 473,
+      "table_description": "HapMap3 membership",
+      "table_row_excerpt_sha256": "ce1e1cda7a8fb9ee707fa979fd569f35ceb24c5f856555c308ed80c8c418b2f6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000157",
+      "domain": "INFO",
+      "key": "MQ",
+      "number": "1",
+      "type": "Float",
+      "table_row_line": 474,
+      "table_description": "RMS mapping quality",
+      "table_row_excerpt_sha256": "fd6df93d18c5bbbf53c99fbffbb127ac71c6ad260e3f48288356f805d4b38e33",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000158",
+      "domain": "INFO",
+      "key": "MQ0",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 475,
+      "table_description": "Number of MAPQ == 0 reads",
+      "table_row_excerpt_sha256": "c9f2a24a53b06d3f7762e453a33e4b7ca57e3204e1f0c0fca1252c27da78fc51",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000159",
+      "domain": "INFO",
+      "key": "NS",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 476,
+      "table_description": "Number of samples with data",
+      "table_row_excerpt_sha256": "d93c5f7028731a41465f6f2b97ef42b906d66abed41746d9df2416219199b3a3",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000160",
+      "domain": "INFO",
+      "key": "SB",
+      "number": "4",
+      "type": "Integer",
+      "table_row_line": 477,
+      "table_description": "Strand bias",
+      "table_row_excerpt_sha256": "06bc2af1d7165fc53972167cda1f97c50dbfff8d0e6edaf97264578f790e4611",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000161",
+      "domain": "INFO",
+      "key": "SOMATIC",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 478,
+      "table_description": "Somatic mutation (for cancer genomics)",
+      "table_row_excerpt_sha256": "ccab469aa56796bfc4699576a7f9811699c333aed617f3b915760cd1b2cc3720",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000162",
+      "domain": "INFO",
+      "key": "VALIDATED",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 479,
+      "table_description": "Validated by follow-up experiment",
+      "table_row_excerpt_sha256": "98d0e73494b04502ec295b2374710a8652c9964961a687697bf8b850e5fe54cd",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The table row defines a reserved optional field. Its presence is not required solely because the field is reserved.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000163",
+      "domain": "INFO",
+      "key": "1000G",
+      "number": "0",
+      "type": "Flag",
+      "table_row_line": 480,
+      "table_description": "1000 Genomes membership",
+      "table_row_excerpt_sha256": "9b3c478ef481d2286af13586e74e2aac10d75d24929a156d7f57a5f72c2d8124",
+      "semantic_context_ranges": [
+        {
+          "start_line": 433,
+          "end_line": 440,
+          "role": "reserved_optional_key_and_header_definition_context"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The row is present in the VCFv4.5 reserved INFO table; its legacy/project provenance must not be generalized into an emission requirement.",
+      "open_questions": [
+        "Confirm whether a field-specific prose definition or cross-reference exists elsewhere in the complete specification.",
+        "Reconcile Number/Type and semantic behavior against VCFv4.1-4.4 and historical VCFv4.0.",
+        "Keep descriptive field definition separate from any producer/consumer MUST, SHOULD or MAY obligation."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000164",
+      "domain": "FORMAT",
+      "key": "AD",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 534,
+      "table_description": "Read depth for each allele",
+      "table_row_excerpt_sha256": "d41c6584fdf580313cd15123bad684d3bfc7bed137c509366fa5a52c789ee246",
+      "semantic_context_ranges": [
+        {
+          "start_line": 602,
+          "end_line": 602,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000165",
+      "domain": "FORMAT",
+      "key": "ADF",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 535,
+      "table_description": "Read depth for each allele on the forward strand",
+      "table_row_excerpt_sha256": "2ba0af3e35db1ad8f42f64267f6d066cac3287fc93745ca84e6e4fdb051b6708",
+      "semantic_context_ranges": [
+        {
+          "start_line": 602,
+          "end_line": 602,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000166",
+      "domain": "FORMAT",
+      "key": "ADR",
+      "number": "R",
+      "type": "Integer",
+      "table_row_line": 536,
+      "table_description": "Read depth for each allele on the reverse strand",
+      "table_row_excerpt_sha256": "c15da85599f7f711b361d6cfc2fbeba17978236381b80b6bc007f7661484019c",
+      "semantic_context_ranges": [
+        {
+          "start_line": 602,
+          "end_line": 602,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000167",
+      "domain": "FORMAT",
+      "key": "DP",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 537,
+      "table_description": "Read depth",
+      "table_row_excerpt_sha256": "5f1b2b154bcecf021d7df2da0cb077c977c4a1f5ad9903078b802d7024997afa",
+      "semantic_context_ranges": [
+        {
+          "start_line": 603,
+          "end_line": 603,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000168",
+      "domain": "FORMAT",
+      "key": "EC",
+      "number": "A",
+      "type": "Integer",
+      "table_row_line": 538,
+      "table_description": "Expected alternate allele counts",
+      "table_row_excerpt_sha256": "ff279824e46bd883a6b57bb003465460eb236cc538796f8c3ed5cda312b95368",
+      "semantic_context_ranges": [
+        {
+          "start_line": 604,
+          "end_line": 605,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000169",
+      "domain": "FORMAT",
+      "key": "LEN",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 539,
+      "table_description": "Length of $<$*$>$ reference block",
+      "table_row_excerpt_sha256": "95c4b1e1d0337887e6e730b2208932c7894599d80aef8a12be1fd8254aef423e",
+      "semantic_context_ranges": [
+        {
+          "start_line": 606,
+          "end_line": 606,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000170",
+      "domain": "FORMAT",
+      "key": "FT",
+      "number": "1",
+      "type": "String",
+      "table_row_line": 540,
+      "table_description": "Filter indicating if this genotype was ``called''",
+      "table_row_excerpt_sha256": "82e991d8238a4dc2fa04e57199579d018abdb048e8edf96f4bd8cccfdf761d6b",
+      "semantic_context_ranges": [
+        {
+          "start_line": 607,
+          "end_line": 610,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000171",
+      "domain": "FORMAT",
+      "key": "GL",
+      "number": "G",
+      "type": "Float",
+      "table_row_line": 541,
+      "table_description": "Genotype likelihoods",
+      "table_row_excerpt_sha256": "d10837c00a2ed38175cf4f84a94034a34bf109f3b1fa6546b3be48c9044ceed6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 629,
+          "end_line": 663,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "GL prose defines log10 likelihoods, GT-dependent ploidy, diploidy without GT, and the arbitrary-ploidy Number=G ordering algorithm.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000172",
+      "domain": "FORMAT",
+      "key": "GP",
+      "number": "G",
+      "type": "Float",
+      "table_row_line": 542,
+      "table_description": "Genotype posterior probabilities",
+      "table_row_excerpt_sha256": "6c4dad7850f1a7eb544273971fe9469b84bd660a94e20c827e552c01f1ec7492",
+      "semantic_context_ranges": [
+        {
+          "start_line": 612,
+          "end_line": 612,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000173",
+      "domain": "FORMAT",
+      "key": "GQ",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 543,
+      "table_description": "Conditional genotype quality",
+      "table_row_excerpt_sha256": "79b959c494f08b7f4239f575bb84632e070187a1ab18ae6e1cb168e8d8ee8281",
+      "semantic_context_ranges": [
+        {
+          "start_line": 611,
+          "end_line": 611,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000174",
+      "domain": "FORMAT",
+      "key": "GT",
+      "number": "1",
+      "type": "String",
+      "table_row_line": 544,
+      "table_description": "Genotype",
+      "table_row_excerpt_sha256": "3d668a5e380de26868cdd6527e06ee4beb6dd3ced5028c184453c9c9b7860d34",
+      "semantic_context_ranges": [
+        {
+          "start_line": 613,
+          "end_line": 628,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "GT prose includes allele indexing, arbitrary ploidy, partial phasing, first-indicator inference, missing-allele representation and symbolic-SV interpretation; these are distinct candidate obligations.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000175",
+      "domain": "FORMAT",
+      "key": "HQ",
+      "number": "2",
+      "type": "Integer",
+      "table_row_line": 545,
+      "table_description": "Haplotype quality",
+      "table_row_excerpt_sha256": "ca9342675f10a6491fab494343d8354cf0264a906db50cf3d1d20a85c2eeb100",
+      "semantic_context_ranges": [
+        {
+          "start_line": 685,
+          "end_line": 685,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000176",
+      "domain": "FORMAT",
+      "key": "LA",
+      "number": ".",
+      "type": "Integer",
+      "table_row_line": 546,
+      "table_description": "Reserved",
+      "table_row_excerpt_sha256": "89e3a8e83e09831ca7eb147e117dcc8090d901b18ff4cebd3c42f51a1aa2227b",
+      "semantic_context_ranges": [],
+      "context_status": "NO_FIELD_SPECIFIC_PROSE_LOCATED",
+      "notes": "The reserved-key table labels LA as Reserved; no field-specific prose was located in the reviewed FORMAT-definition span. Do not infer additional semantics.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000177",
+      "domain": "FORMAT",
+      "key": "LAA",
+      "number": ".",
+      "type": "Integer",
+      "table_row_line": 547,
+      "table_description": "1-based indices into ALT, indicating which alleles are relevant (local) for the current sample",
+      "table_row_excerpt_sha256": "6ee2e5c0ba26eca98ab771757bc0cfaa5ab94841425ef302fd378e350f2aa056",
+      "semantic_context_ranges": [
+        {
+          "start_line": 686,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "LAA is a one-based ALT-index list; presence, ordering, REF-only/empty-vector behavior and local/non-local equivalence require separate atomization.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000178",
+      "domain": "FORMAT",
+      "key": "LAD",
+      "number": "LR",
+      "type": "Integer",
+      "table_row_line": 548,
+      "table_description": "Local-allele representation of AD",
+      "table_row_excerpt_sha256": "66ed21f453df8461a3e23587972f16434b3de50ec0d99623366116d9fc0a6a5e",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000179",
+      "domain": "FORMAT",
+      "key": "LADF",
+      "number": "LR",
+      "type": "Integer",
+      "table_row_line": 549,
+      "table_description": "Local-allele representation of ADF",
+      "table_row_excerpt_sha256": "20b7576619a0c746fbb975c2adfa15e976fbb82a9d4572bf9c35ad6add11734b",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000180",
+      "domain": "FORMAT",
+      "key": "LADR",
+      "number": "LR",
+      "type": "Integer",
+      "table_row_line": 550,
+      "table_description": "Local-allele representation of ADR",
+      "table_row_excerpt_sha256": "f65bdb2f942538155de5c7718f154f6c9ad04647fc1216cb3f30b90706eaa5fa",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000181",
+      "domain": "FORMAT",
+      "key": "LEC",
+      "number": "LA",
+      "type": "Integer",
+      "table_row_line": 551,
+      "table_description": "Local-allele representation of EC",
+      "table_row_excerpt_sha256": "b266162b7c0d42bdb1ded4b99d87ce51c917e0292e269b1dea1b3fa5a3c27fbe",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000182",
+      "domain": "FORMAT",
+      "key": "LGL",
+      "number": "LG",
+      "type": "Float",
+      "table_row_line": 552,
+      "table_description": "Local-allele representation of GL",
+      "table_row_excerpt_sha256": "0c4a064da6e3d44fb169d3fef11642257a080abf4f053a4f9e872a8dc6835b66",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 717,
+          "end_line": 718,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000183",
+      "domain": "FORMAT",
+      "key": "LGP",
+      "number": "LG",
+      "type": "Float",
+      "table_row_line": 553,
+      "table_description": "Local-allele representation of GP",
+      "table_row_excerpt_sha256": "a4304006dd3ae19d5a81fb590eebf461776ed6105c71877df9165568db85bc54",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000184",
+      "domain": "FORMAT",
+      "key": "LPL",
+      "number": "LG",
+      "type": "Integer",
+      "table_row_line": 554,
+      "table_description": "Local-allele representation of PL",
+      "table_row_excerpt_sha256": "7241b850cda9229649e79c7ea1eef3dae941880222d8d7108c6d41931ffb38d1",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 717,
+          "end_line": 718,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000185",
+      "domain": "FORMAT",
+      "key": "LPP",
+      "number": "LG",
+      "type": "Integer",
+      "table_row_line": 555,
+      "table_description": "Local-allele representation of PP",
+      "table_row_excerpt_sha256": "0f5c3117cbea05c4578e76689dd06c040ac8efadfcb46ba3631f9dd551957d49",
+      "semantic_context_ranges": [
+        {
+          "start_line": 695,
+          "end_line": 697,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000186",
+      "domain": "FORMAT",
+      "key": "M[0-9]+[ACGTUN]",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 556,
+      "table_description": "Fraction of bases modified with the given ChEBI ID.",
+      "table_row_excerpt_sha256": "60d0d2418f76d59d29fe6947c00b1e930fd7e352f861c4af01759fa461a94e43",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000187",
+      "domain": "FORMAT",
+      "key": "DPM[0-9]+[ACGTUN]",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 557,
+      "table_description": "Total read depth for reads able to detect the base modification with the given ChEBI ID.",
+      "table_row_excerpt_sha256": "a56798b991329b8696cec6f3e4b2f7b93fcae36e44b5388c02916186ec8c9502",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000188",
+      "domain": "FORMAT",
+      "key": "ADM[0-9]+[ACGTUN]",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 558,
+      "table_description": "Read depth for reads with the base modification with the given ChEBI ID.",
+      "table_row_excerpt_sha256": "dd8d3c62c16fdeddbfdd3d842bac83842c1e18f01892255fcf86a50e11f87f30",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000189",
+      "domain": "FORMAT",
+      "key": "M5mC",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 559,
+      "table_description": "Alias for M27551C 5-Methylcytosine",
+      "table_row_excerpt_sha256": "0159871080c3a6a856048340558ad2c5035b89c701e9474fa6512db4c4e527bd",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000190",
+      "domain": "FORMAT",
+      "key": "DPM5mC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 560,
+      "table_description": "Alias for DPM27551C",
+      "table_row_excerpt_sha256": "12132584e03ac747485e83f793336ea7e713d40686bad230e697315e8430f5d7",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000191",
+      "domain": "FORMAT",
+      "key": "ADM5mC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 561,
+      "table_description": "Alias for ADM27551C",
+      "table_row_excerpt_sha256": "e606e3b33c76f03ed5aeed2b785adcc535c3f01b7d40e8f8c0961154fcefcf17",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 749,
+          "end_line": 757,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000192",
+      "domain": "FORMAT",
+      "key": "M5hmC",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 562,
+      "table_description": "Alias for M76792C 5-Hydroxymethylcytosine",
+      "table_row_excerpt_sha256": "5a434f0a1b6b8531f8db998b5a261ed90846b3fd99810a1b1afadca83dd0560f",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000193",
+      "domain": "FORMAT",
+      "key": "DPM5hmC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 563,
+      "table_description": "Alias for DPM76792C",
+      "table_row_excerpt_sha256": "9e1c50c2bf79ffebb5ea037093fab84a44d86a55d7585f363e7067a92a9359cc",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000194",
+      "domain": "FORMAT",
+      "key": "ADM5hmC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 564,
+      "table_description": "Alias for ADM76792C",
+      "table_row_excerpt_sha256": "f5aca0873d3606e361bcc9eff9c8aecae9c4e8ae5725fb1956d6f42dff5f0202",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000195",
+      "domain": "FORMAT",
+      "key": "M5fC",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 565,
+      "table_description": "Alias for M76794C 5-Formylcytosine",
+      "table_row_excerpt_sha256": "3c920ffbb2b034829de766fc197027c58a8e25eccd9ba342410e3d14a820d8c6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000196",
+      "domain": "FORMAT",
+      "key": "DPM5fC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 566,
+      "table_description": "Alias for DPM76794C",
+      "table_row_excerpt_sha256": "abc524443b7f33e84d0bff69f87e38bc01d9680138b38f7d8138c48c1009ffb3",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000197",
+      "domain": "FORMAT",
+      "key": "ADM5fC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 567,
+      "table_description": "Alias for ADM76794C",
+      "table_row_excerpt_sha256": "5a88da9f34b6cd4413bf8d7f00fd8f7c54584ed5e224e3714ac797c7cddd59b8",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000198",
+      "domain": "FORMAT",
+      "key": "M5caC",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 568,
+      "table_description": "Alias for M76793C 5-Carboxylcytosine",
+      "table_row_excerpt_sha256": "28557a2be1fe663a1400a7bca96f5a9a583be73c3b69e493088b8e241a59286f",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000199",
+      "domain": "FORMAT",
+      "key": "DPM5caC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 569,
+      "table_description": "Alias for DPM76793C",
+      "table_row_excerpt_sha256": "f839594fb638b1798505e0b87d1b2fc820be82f42262e6b13b06a36943a27fa2",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000200",
+      "domain": "FORMAT",
+      "key": "ADM5caC",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 570,
+      "table_description": "Alias for ADM76793C",
+      "table_row_excerpt_sha256": "a83f6c0e0150cdd4a66a704e152dfcdbcdb99e319daed1974592e8cb64a433c1",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000201",
+      "domain": "FORMAT",
+      "key": "M5hmU",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 571,
+      "table_description": "Alias for M16964T 5-Hydroxymethyluracil",
+      "table_row_excerpt_sha256": "16c48c3d103e8d0ea3ba1fffdf97af5bc9d7adb727d8cd3dcc3cce6075903aec",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000202",
+      "domain": "FORMAT",
+      "key": "DPM5hmU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 572,
+      "table_description": "Alias for DPM16964T",
+      "table_row_excerpt_sha256": "f75ab1468f36bf6cd092ae59ee62123cf64dc00082b46407c7513b6c4b3171f1",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000203",
+      "domain": "FORMAT",
+      "key": "ADM5hmU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 573,
+      "table_description": "Alias for ADM16964T",
+      "table_row_excerpt_sha256": "74209cc8e111dcce22c56d3fc8415a9245657aa1e092acf6b3499ce2272e5530",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000204",
+      "domain": "FORMAT",
+      "key": "M5fU",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 574,
+      "table_description": "Alias for M80961T 5-Formyluracil",
+      "table_row_excerpt_sha256": "3d2f862e772a2aa45887ee342333acb96200f1640c416f8b8242e2ed8d37b51d",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000205",
+      "domain": "FORMAT",
+      "key": "DPM5fU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 575,
+      "table_description": "Alias for DPM80961T",
+      "table_row_excerpt_sha256": "a3591d303ee0671cb416a3990684ce25f1c34e80df6815e5facaa18b8e39c919",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000206",
+      "domain": "FORMAT",
+      "key": "ADM5fU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 576,
+      "table_description": "Alias for ADM80961T",
+      "table_row_excerpt_sha256": "d74814138f9cabf7d5a9ef560995cb6bb32decfd283a3d976a538ba436b9ee79",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000207",
+      "domain": "FORMAT",
+      "key": "M5caU",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 577,
+      "table_description": "Alias for M17477T 5-Carboxyluracil",
+      "table_row_excerpt_sha256": "483ead51f15d84cc14ea51cc1aa01918c69841a88b5f3f5eae4a069bf9f09310",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000208",
+      "domain": "FORMAT",
+      "key": "DPM5caU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 578,
+      "table_description": "Alias for DPM17477T",
+      "table_row_excerpt_sha256": "07d2cdd5ab6d3175c3efc1c99f13898fbbf98b0be73bd18d901eb403fd894dcb",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000209",
+      "domain": "FORMAT",
+      "key": "ADM5caU",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 579,
+      "table_description": "Alias for ADM17477T",
+      "table_row_excerpt_sha256": "d6bf2b8db2cfac0bb72e09a324260b283c912f924d4f1dd55cef0b36c97e2155",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000210",
+      "domain": "FORMAT",
+      "key": "M6mA",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 580,
+      "table_description": "Alias for M28871A 6-Methyladenine",
+      "table_row_excerpt_sha256": "831c751768e4d05e6e2d33401907f660d7ec898ea06a78a554b0419faafe73f5",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000211",
+      "domain": "FORMAT",
+      "key": "DPM6mA",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 581,
+      "table_description": "Alias for DPM28871A",
+      "table_row_excerpt_sha256": "e4b57c13a748e7e62d66bab188b8c6d24ae6f914d7d0e5d57281d8a70bce7b8f",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000212",
+      "domain": "FORMAT",
+      "key": "ADM6mA",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 582,
+      "table_description": "Alias for ADM28871A",
+      "table_row_excerpt_sha256": "d77a279dac39750fe3d804f160f6dc01da8ab78bea75f275a023faff5277d0ed",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000213",
+      "domain": "FORMAT",
+      "key": "M8oxoG",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 583,
+      "table_description": "Alias for M44605G 8-Oxoguanine",
+      "table_row_excerpt_sha256": "c614eb4011f458b9dc72fecb4db05ca83a2f44cd6c72e420f8bd4b8922bdb325",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000214",
+      "domain": "FORMAT",
+      "key": "DPM8oxoG",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 584,
+      "table_description": "Alias for DPM44605G",
+      "table_row_excerpt_sha256": "70ef5c71b6a720c5c3a7e850eaf1acf229fe50889a6b3ced99e084cdbfab094a",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000215",
+      "domain": "FORMAT",
+      "key": "ADM8oxoG",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 585,
+      "table_description": "Alias for ADM44605G",
+      "table_row_excerpt_sha256": "a6541eb61754c5e20a9a0fed5c321052b0029a0c375fc042d5a847bdabad2878",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000216",
+      "domain": "FORMAT",
+      "key": "MXaoN",
+      "number": "M",
+      "type": "Float",
+      "table_row_line": 586,
+      "table_description": "Alias for M18107N Xanthosine",
+      "table_row_excerpt_sha256": "3e6c2c7205a3369ab9e016d9893b9573e2cc1ae53197231e898e3fa070e420a1",
+      "semantic_context_ranges": [
+        {
+          "start_line": 720,
+          "end_line": 729,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000217",
+      "domain": "FORMAT",
+      "key": "DPMXaoN",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 587,
+      "table_description": "Alias for DPM18107N",
+      "table_row_excerpt_sha256": "9bf6b964205eccc411a7aa77156cb52f6c6097c3a44e6ff5438cfd19baa9632b",
+      "semantic_context_ranges": [
+        {
+          "start_line": 730,
+          "end_line": 734,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000218",
+      "domain": "FORMAT",
+      "key": "ADMXaoN",
+      "number": "M",
+      "type": "Integer",
+      "table_row_line": 588,
+      "table_description": "Alias for ADM18107N",
+      "table_row_excerpt_sha256": "c1199eaf06a360eb4cf2122c86070f252cb7d3f87370dbcc224c7cceca71a846",
+      "semantic_context_ranges": [
+        {
+          "start_line": 736,
+          "end_line": 744,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 724,
+          "end_line": 725,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000219",
+      "domain": "FORMAT",
+      "key": "MQ",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 589,
+      "table_description": "RMS mapping quality",
+      "table_row_excerpt_sha256": "ce1815bda718d861e7848e670018e6595be9fe84291c2d11fe457d03d88aa76b",
+      "semantic_context_ranges": [
+        {
+          "start_line": 760,
+          "end_line": 760,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000220",
+      "domain": "FORMAT",
+      "key": "PL",
+      "number": "G",
+      "type": "Integer",
+      "table_row_line": 590,
+      "table_description": "Phred-scaled genotype likelihoods rounded to the closest integer",
+      "table_row_excerpt_sha256": "56ae48f7e416780f73d74488b7cf0911eb63df00a1f2f91bb115c2d17d66da27",
+      "semantic_context_ranges": [
+        {
+          "start_line": 761,
+          "end_line": 761,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 629,
+          "end_line": 663,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000221",
+      "domain": "FORMAT",
+      "key": "PP",
+      "number": "G",
+      "type": "Integer",
+      "table_row_line": 591,
+      "table_description": "Phred-scaled genotype posterior probabilities rounded to the closest integer",
+      "table_row_excerpt_sha256": "88b88ea4dcdffcc7f5f35ae636af052e5d0550fab21b9bdb8ab276b3918132c6",
+      "semantic_context_ranges": [
+        {
+          "start_line": 762,
+          "end_line": 762,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 612,
+          "end_line": 612,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 831,
+          "end_line": 832,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000222",
+      "domain": "FORMAT",
+      "key": "PQ",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 592,
+      "table_description": "Phasing quality",
+      "table_row_excerpt_sha256": "711544de4c5efaeefc9081a3308b360b9f460eb9a0b024221a4305d7421ce021",
+      "semantic_context_ranges": [
+        {
+          "start_line": 763,
+          "end_line": 764,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        },
+        {
+          "start_line": 833,
+          "end_line": 834,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000223",
+      "domain": "FORMAT",
+      "key": "PS",
+      "number": "1",
+      "type": "Integer",
+      "table_row_line": 593,
+      "table_description": "Phase set",
+      "table_row_excerpt_sha256": "dfa6a3cf37916666e4dda137889f82714c5fac024116862a11d8550bf4e85e0f",
+      "semantic_context_ranges": [
+        {
+          "start_line": 765,
+          "end_line": 770,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "The reserved FORMAT row is descriptive; field-specific prose can add independent semantic obligations and must be reviewed separately.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000224",
+      "domain": "FORMAT",
+      "key": "PSL",
+      "number": "P",
+      "type": "String",
+      "table_row_line": 594,
+      "table_description": "Phase set list",
+      "table_row_excerpt_sha256": "beb0759cdf2f7a67796a43cccdba5b1997a7d9fc8b6f630b0f4ea475f2ae11e7",
+      "semantic_context_ranges": [
+        {
+          "start_line": 771,
+          "end_line": 786,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "PSL is per-GT-allele phase-set naming with missing placeholders, cross-chromosome identity, name uniqueness guidance, and incompatibility with PS.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000225",
+      "domain": "FORMAT",
+      "key": "PSO",
+      "number": "P",
+      "type": "Integer",
+      "table_row_line": 595,
+      "table_description": "Phase set list ordinal",
+      "table_row_excerpt_sha256": "c3e0e1aaeb6148ac05adf0c44d3da75c653515a5f1feed4aaa6fcce717b93010",
+      "semantic_context_ranges": [
+        {
+          "start_line": 788,
+          "end_line": 806,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "PSO orders variants along derivative chromosome traversal; source distinguishes SHOULD from paired-breakend MUST behavior.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    },
+    {
+      "requirement_id": "VCF-REQ-000226",
+      "domain": "FORMAT",
+      "key": "PSQ",
+      "number": "P",
+      "type": "Integer",
+      "table_row_line": 596,
+      "table_description": "Phase set list quality",
+      "table_row_excerpt_sha256": "4cd928a500be3c42f1b0eecf14501687ce7434c730756b1fc7818b14fe975f98",
+      "semantic_context_ranges": [
+        {
+          "start_line": 808,
+          "end_line": 809,
+          "role": "field_specific_definition_or_semantic_cross_reference"
+        }
+      ],
+      "context_status": "AUTHOR_CONTEXT_LOCATED_FIELD_SPECIFIC_SEMANTIC_REVIEW_PENDING",
+      "notes": "PSQ aligns phasing-quality values to PSL phase sets and has explicit missing/unknown-quality behavior.",
+      "open_questions": [
+        "Atomize each distinct field-specific semantic clause and preserve normative force, exceptions and actor.",
+        "Reconcile this field's local/global, ploidy, phasing, missingness and Number semantics where applicable.",
+        "Confirm version-specific changes and do not infer presence requirements from reserved status."
+      ]
+    }
+  ]
+}

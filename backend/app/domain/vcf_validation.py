@@ -17,14 +17,45 @@ VCF_CONTIG_NAME_RE = re.compile(
 )
 SYMBOLIC_RE = re.compile(r"^<[^<>,\s]+>$")
 BREAKEND_RE = re.compile(
-    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
-    r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
+    r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[0-9]+(?P=left)|"
+    r"(?P<right>[\[\]])[^:\[\]\s]+:[0-9]+(?P=right)[ACGTNacgtn.]+)$"
 )
+SINGLE_BREAKEND_RE = re.compile(r"^(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)$")
+
+
+def _is_vcf45_breakend_alt(allele: str) -> bool:
+    """Identify paired and single VCFv4.5 breakpoint-notation alleles."""
+    return "[" in allele or "]" in allele or bool(SINGLE_BREAKEND_RE.fullmatch(allele))
+
+
+def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
+    """Identify VCFv4.5 symbolic SVs and paired or single breakend alleles."""
+    if _is_vcf45_breakend_alt(allele):
+        return True
+    match = re.fullmatch(r"<([A-Z]+)(?::[^<>]+)?>", allele)
+    return match is not None and match.group(1) in {"DEL", "INS", "DUP", "INV", "CNV"}
+
+
+def _breakend_remote_coordinate_within_cipos(
+    remote_locus: tuple[str, int], target_record: dict, target_alt_index: int
+) -> bool:
+    """Check a BND remote coordinate against the target ALT's POS/CIPOS interval."""
+    remote_chrom, remote_position = remote_locus
+    if remote_chrom != target_record["chrom"]:
+        return False
+    interval = target_record["cipos_by_alt"].get(target_alt_index, (0, 0))
+    if interval is None:
+        # Explicitly missing CIPOS means the target uncertainty is unresolved.
+        return True
+    lower_offset, upper_offset = interval
+    return target_record["pos"] + lower_offset <= remote_position <= target_record["pos"] + upper_offset
 
 def _alt_identity_key(allele: str) -> tuple[str, ...]:
     """Return VCF allele identity while respecting sequence and contig case rules."""
     if DNA_RE.fullmatch(allele):
         return ("SEQUENCE", allele.upper())
+    if SINGLE_BREAKEND_RE.fullmatch(allele):
+        return ("SINGLE_BREAKEND", allele.upper())
     if BREAKEND_RE.fullmatch(allele):
         if allele[0] in "[]":
             bracket = allele[0]
@@ -56,11 +87,11 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "HQ"), ("FORMAT", "LAD"), ("FORMAT", "LADF"),
     ("FORMAT", "LADR"), ("FORMAT", "LEC"), ("FORMAT", "LPL"),
     ("FORMAT", "LPP"), ("FORMAT", "MQ"), ("FORMAT", "PL"),
-    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
+    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"), ("FORMAT", "NQ"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
-NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ"), ("FORMAT", "CNQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 _CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
@@ -102,6 +133,24 @@ def _reserved_base_modification_format_definition(field_id: str) -> dict[str, st
     return None
 
 
+def _reserved_vcf40_format_definition(field_id: str) -> dict[str, str] | None:
+    """Return the historical VCFv4.0 implicit FORMAT field definition."""
+    reserved = {
+        "GT": ("1", "String"),
+        "DP": ("1", "Integer"),
+        "FT": ("1", "String"),
+        "GL": ("3", "Float"),
+        # VCFv4.0 prose describes GQ and HQ as Numeric. The example header
+        # uses Integer, while the field descriptions permit numeric values.
+        "GQ": ("1", "Numeric"),
+        "HQ": ("2", "Numeric"),
+    }
+    definition = reserved.get(field_id)
+    if definition is None:
+        return None
+    return {"Number": definition[0], "Type": definition[1]}
+
+
 def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
     # VCFv4.5 Table of reserved genotype keys. Enforce the declared wire
     # cardinality/type even when a caller omits a redundant FORMAT header line.
@@ -136,6 +185,15 @@ def _reserved_vcf45_format_definition(field_id: str) -> dict[str, str] | None:
         "PSL": ("P", "String"),
         "PSO": ("P", "Integer"),
         "PSQ": ("P", "Integer"),
+        # VCFv4.5 structural-variant FORMAT keys (section sv-format-keys).
+        "CN": ("1", "Float"),
+        "CICN": ("2", "Float"),
+        "CNQ": ("1", "Float"),
+        "CNL": ("G", "Float"),
+        "CNP": ("G", "Float"),
+        "NQ": ("1", "Integer"),
+        "HAP": ("1", "Integer"),
+        "AHAP": ("1", "Integer"),
     }
     definition = reserved.get(field_id)
     if definition is not None:
@@ -798,6 +856,24 @@ def _parse_field_definition(line: str, kind: str, line_no: int, fileformat: str 
             f"Type={reserved_vcf45_definition['Type']} at line {line_no}",
             code="VCF_HEADER_DEFINITION_INVALID",
         )
+    reserved_vcf40_definition = (
+        _reserved_vcf40_format_definition(identifier)
+        if fileformat == "VCFv4.0" and kind == "FORMAT"
+        else None
+    )
+    if reserved_vcf40_definition is not None:
+        expected_type = reserved_vcf40_definition["Type"]
+        allowed_types = (
+            {"Integer", "Float"} if expected_type == "Numeric" else {expected_type}
+        )
+        if number != reserved_vcf40_definition["Number"] or parsed["Type"] not in allowed_types:
+            expected_type_text = "Integer or Float" if expected_type == "Numeric" else expected_type
+            raise StrictVCFValidationError(
+                f"Reserved VCFv4.0 FORMAT field {identifier!r} requires "
+                f"Number={reserved_vcf40_definition['Number']} and "
+                f"Type={expected_type_text} at line {line_no}",
+                code="VCF_HEADER_DEFINITION_INVALID",
+            )
     return identifier, {"Number": number, "Type": parsed["Type"]}
 
 
@@ -1094,6 +1170,16 @@ def _validate_declared_value(
                     valid = numeric_value >= 0.0
                 if _base_modification_field_kind(key) == "fraction":
                     valid = valid and 0.0 <= numeric_value <= 1.0
+        elif field_type == "Numeric":
+            valid = bool(
+                re.fullmatch(
+                    r"[-+]?(?:[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?|INF(?:INITY)?|NAN)",
+                    item,
+                    flags=re.IGNORECASE,
+                )
+            )
+            if valid and (field_scope, key) in NONNEGATIVE_INTEGER_FIELDS:
+                valid = float(item) >= 0.0
         elif field_type == "Character":
             valid = len(item) == 1 or bool(re.fullmatch(r"%[0-9A-F]{2}", item))
         if not valid:
@@ -1276,31 +1362,51 @@ def _gt_alleles_with_phase(
     ]
 
 
-def _base_modification_allele_count(sequence: str, modified_base: str) -> int:
-    """Count modifiable positions on both strands of one concrete allele."""
+def _base_modification_allele_slots(
+    sequence: str,
+    modified_base: str,
+) -> list[tuple[int, str, str]]:
+    """Enumerate VCFv4.5 Number=M slots as (zero-based offset, strand, base).
+
+    Slots are emitted in allele sequence order. For a specific modified base,
+    the matching base is the positive-strand slot and its complement is the
+    negative-strand slot. N emits positive then negative slots at each
+    sequence position. Ambiguous N sequence symbols do not match a specific
+    base, but still have both slots for modified-base identifier N.
+    """
     base = "T" if modified_base == "U" else modified_base
     if base == "N":
-        return 2 * len(sequence)
+        return [
+            (position, strand, nucleotide)
+            for position, nucleotide in enumerate(sequence)
+            for strand in ("+", "-")
+        ]
     complement = {"A": "T", "T": "A", "C": "G", "G": "C"}[base]
-    return sum(1 for nucleotide in sequence if nucleotide in {base, complement})
+    slots: list[tuple[int, str, str]] = []
+    for position, nucleotide in enumerate(sequence):
+        if nucleotide == base:
+            slots.append((position, "+", nucleotide))
+        elif nucleotide == complement:
+            slots.append((position, "-", nucleotide))
+    return slots
 
 
-def _expected_base_modification_cardinality(
+def _expected_base_modification_slots(
     genotype: str,
     reference: str,
     alternates: list[str],
     field_id: str,
     fileformat: str | None,
     line_no: int,
-) -> int:
-    """Calculate VCFv4.5 Number=M cardinality from GT and allele sequences.
+) -> list[tuple[int, int, str, str]]:
+    """Map each Number=M vector position to (GT allele, sequence offset, strand, base).
 
-    Identical unphased allele values are aggregated at their first occurrence;
-    phased copies remain distinct. Missing and symbolic alleles contribute no
-    modifiable bases, as required by VCFv4.5.
+    GT allele indexes remain global ALT indexes. Repeated identical unphased
+    allele indexes contribute once at first occurrence; phased copies remain
+    separate. Missing and non-sequence alleles contribute no slots.
     """
     seen_unphased_alleles: set[int] = set()
-    expected = 0
+    slots: list[tuple[int, int, str, str]] = []
     modified_base = field_id[-1].upper()
     for allele_token, phase_separator in _gt_alleles_with_phase(
         genotype, fileformat, line_no
@@ -1315,11 +1421,65 @@ def _expected_base_modification_cardinality(
         allele_sequence = (
             reference if allele_index == 0 else alternates[allele_index - 1]
         )
-        if DNA_RE.fullmatch(allele_sequence):
-            expected += _base_modification_allele_count(
+        if not DNA_RE.fullmatch(allele_sequence):
+            continue
+        slots.extend(
+            (allele_index, position, strand, sequence_base)
+            for position, strand, sequence_base in _base_modification_allele_slots(
                 allele_sequence, modified_base
             )
-    return expected
+        )
+    return slots
+
+
+def _expected_base_modification_slots_with_haplotype(
+    genotype: str,
+    reference: str,
+    alternates: list[str],
+    field_id: str,
+    fileformat: str | None,
+    line_no: int,
+) -> list[tuple[int, int, int, str, str]]:
+    """Return (global allele, GT copy index, sequence offset, strand, base)."""
+    seen_unphased_alleles: set[int] = set()
+    slots: list[tuple[int, int, int, str, str]] = []
+    modified_base = field_id[-1].upper()
+    for copy_index, (allele_token, phase_separator) in enumerate(
+        _gt_alleles_with_phase(genotype, fileformat, line_no)
+    ):
+        if allele_token == ".":
+            continue
+        allele_index = int(allele_token)
+        if phase_separator == "/":
+            if allele_index in seen_unphased_alleles:
+                continue
+            seen_unphased_alleles.add(allele_index)
+        allele_sequence = reference if allele_index == 0 else alternates[allele_index - 1]
+        if not DNA_RE.fullmatch(allele_sequence):
+            continue
+        slots.extend(
+            (allele_index, copy_index, position, strand, sequence_base)
+            for position, strand, sequence_base in _base_modification_allele_slots(
+                allele_sequence, modified_base
+            )
+        )
+    return slots
+
+
+def _expected_base_modification_cardinality(
+    genotype: str,
+    reference: str,
+    alternates: list[str],
+    field_id: str,
+    fileformat: str | None,
+    line_no: int,
+) -> int:
+    """Return the number of sequence/strand slots defined by VCFv4.5 Number=M."""
+    return len(
+        _expected_base_modification_slots(
+            genotype, reference, alternates, field_id, fileformat, line_no
+        )
+    )
 
 
 def _validate_record(
@@ -1391,12 +1551,12 @@ def _validate_record(
         []
         if raw_alts == ["."]
         else [
-            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) else allele
+            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) or SINGLE_BREAKEND_RE.fullmatch(allele) else allele
             for allele in raw_alts
         ]
     )
     if any(
-        not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and a != "*"
+        not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and not SINGLE_BREAKEND_RE.fullmatch(a) and a != "*"
         for a in alts
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
@@ -1461,6 +1621,11 @@ def _validate_record(
         keys = fmt.split(":")
         if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
+        if fileformat == "VCFv4.0" and len(fields) > 9 and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data require FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(
                 f"GT must be the first FORMAT key when present at line {line_no}",
@@ -1482,7 +1647,7 @@ def _validate_record(
             )
         if fileformat == "VCFv4.5" and (
             any((format_definitions or {}).get(key, {}).get("Number") in {"LA", "LR", "LG"} for key in keys)
-            or any(key in {"LAA", "LAD", "LADF", "LADR", "LGL", "LGP", "LPL", "LPP"} for key in keys)
+            or any(key in {"LAA", "LAD", "LADF", "LADR", "LEC", "LGL", "LGP", "LPL", "LPP"} for key in keys)
         ):
             if "LAA" not in keys or keys.index("LAA") != (1 if "GT" in keys else 0):
                 raise StrictVCFValidationError(
@@ -1504,6 +1669,10 @@ def _validate_record(
                             f"FORMAT/GT must contain an explicit genotype or missing-value token at line {line_no}, sample {sample_index}",
                             code="VCF_GENOTYPE_INVALID",
                         )
+                    if fileformat == "VCFv4.5" and field_key == "LAA":
+                        # VCFv4.5's REF-only local-allele example uses an
+                        # empty text value; BCF represents this as MISSING.
+                        continue
                     raise StrictVCFValidationError(
                         f"Sample {sample_index} has an empty FORMAT/{field_key or 'value'} field at line {line_no}; use '.' for a missing value",
                         code="VCF_SAMPLE_INVALID",
@@ -1532,7 +1701,17 @@ def _validate_record(
     return chrom, pos, alts
 
 
-def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
+def validate_vcf_strict(
+    path: str | Path,
+    *,
+    reference_contigs: set[str] | None = None,
+    include_base_modification_slot_assignments: bool = False,
+    base_modification_strandedness: str | None = None,
+) -> dict:
+    if base_modification_strandedness not in {None, "stranded", "unstranded"}:
+        raise ValueError(
+            "base_modification_strandedness must be None, 'stranded', or 'unstranded'"
+        )
     source = Path(path)
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
@@ -1551,6 +1730,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     unchecked_info_number_g_fields: set[str] = set()
     unchecked_format_number_g_fields: set[str] = set()
     base_modification_format_fields: set[str] = set()
+    base_modification_slot_assignment_count = 0
+    base_modification_slot_assignments: list[dict[str, object]] = []
+    unstranded_base_modification_observations: list[dict[str, object]] = []
+    unstranded_unphased_observation_count = 0
     vcf45_reference_span_records = 0
     vcf45_max_reference_end = 0
     vcf45_reference_block_sample_count = 0
@@ -1562,7 +1745,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     spanning_deletion_records: list[tuple[str, int, int, int, set[int] | None]] = []
     unresolved_spanning_deletion_records: list[dict[str, int | str]] = []
     breakend_records_by_id: dict[str, dict] = {}
-    breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
+    breakend_links: list[tuple[str, str, int, int, str, tuple[str, int], int]] = []
+    unresolved_breakend_coordinate_links: list[dict[str, object]] = []
+    breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
+    phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -1778,7 +1964,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
-            breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
+            breakend_alt_indexes = [
+                alt_index for alt_index, alt in enumerate(alts)
+                if "[" in alt or "]" in alt
+            ]
+            breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
             if breakend_alts:
                 if info_values.get("SVTYPE") != "BND":
                     raise StrictVCFValidationError(
@@ -1787,54 +1977,122 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
                 mate_value = info_values.get("MATEID")
-                mate_ids = set(mate_value.split(",")) if mate_value else set()
-                # The ALT grammar above already requires one complete bracket
-                # pair. Retain its remote coordinates for MATEID checks after
-                # the whole file has been read; the VCF-defined orientations
-                # are preserved but are not constrained by a local heuristic.
-                remote_loci = [
-                    (match.group(2), int(match.group(3)))
-                    for alt in breakend_alts
-                    for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
-                    if match is not None
-                ]
+                mate_entries = mate_value.split(",") if mate_value not in {None, ""} else []
+                # MATEID is Number=A in VCFv4.5: preserve the positional
+                # association between each ALT allele and its mate record ID.
+                # Earlier VCF versions used other cardinality conventions, so
+                # retain the legacy compact BND-only list interpretation there.
+                if fileformat == "VCFv4.5":
+                    if mate_entries and len(mate_entries) != len(alts):
+                        raise StrictVCFValidationError(
+                            f"VCFv4.5 MATEID cardinality must match all ALT alleles at line {line_no}",
+                            code="VCF_BREAKEND_MATE_INVALID",
+                        )
+                    mate_entries_by_alt = {
+                        alt_index: mate_entries[alt_index]
+                        for alt_index in breakend_alt_indexes
+                        if alt_index < len(mate_entries)
+                    }
+                elif len(mate_entries) == len(alts):
+                    mate_entries_by_alt = {
+                        alt_index: mate_entries[alt_index]
+                        for alt_index in breakend_alt_indexes
+                    }
+                elif len(mate_entries) == len(breakend_alts):
+                    mate_entries_by_alt = dict(zip(breakend_alt_indexes, mate_entries))
+                elif mate_entries:
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
+                        code="VCF_BREAKEND_MATE_INVALID",
+                    )
+                else:
+                    mate_entries_by_alt = {}
+
+                # Retain each ALT's remote locus independently; MATEID and
+                # the remote coordinate are paired by ALT position.
+                remote_loci_by_alt: dict[int, tuple[str, int]] = {}
+                for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
+                    match = re.search(r"([\[\]])([^:\[\]]+):([0-9]+)\1", alt)
+                    if match is not None:
+                        remote_loci_by_alt[alt_index] = (
+                            match.group(2), int(match.group(3))
+                        )
                 if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
-                    not VCF_CONTIG_NAME_RE.fullmatch(contig) for contig, _position in remote_loci
+                    not VCF_CONTIG_NAME_RE.fullmatch(contig)
+                    for contig, _position in remote_loci_by_alt.values()
                 ):
                     raise StrictVCFValidationError(
                         f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
-                if len(remote_loci) != len(breakend_alts):
+                if len(remote_loci_by_alt) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
-                if mate_ids:
+
+                for alt_index in breakend_alt_indexes:
+                    mate_id = mate_entries_by_alt.get(alt_index, ".")
+                    if mate_id in {"", "."}:
+                        continue
                     if not record_ids:
                         raise StrictVCFValidationError(
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    if len(mate_ids) != len(breakend_alts):
-                        raise StrictVCFValidationError(
-                            f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
-                            code="VCF_BREAKEND_MATE_INVALID",
-                        )
                     breakend_links.append((
-                        fields[2], _chrom, _pos, mate_ids, remote_loci, line_no,
+                        fields[2],
+                        _chrom,
+                        _pos,
+                        alt_index,
+                        mate_id,
+                        remote_loci_by_alt[alt_index],
+                        line_no,
                     ))
+
                 for record_id in record_ids:
                     if record_id in breakend_records_by_id:
                         raise StrictVCFValidationError(
                             f"Breakend record ID {record_id!r} is not unique at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
+                    raw_cipos = info_values.get("CIPOS") if fileformat == "VCFv4.5" else None
+                    cipos_entries = raw_cipos.split(",") if raw_cipos not in {None, "."} else []
+                    cipos_by_alt: dict[int, tuple[int, int] | None] = {}
+                    if raw_cipos not in {None, "."} and len(cipos_entries) != 2 * len(alts):
+                        raise StrictVCFValidationError(
+                            f"VCFv4.5 CIPOS must contain exactly two offsets per ALT allele at line {line_no}",
+                            code="VCF_BREAKEND_CIPOS_INVALID",
+                        )
+                    for alt_index in breakend_alt_indexes:
+                        if raw_cipos is None:
+                            # The specification supplies an implicit 0,0 only
+                            # when IMPRECISE is also absent.
+                            cipos_by_alt[alt_index] = (
+                                None if "IMPRECISE" in info_values else (0, 0)
+                            )
+                            continue
+                        if raw_cipos == ".":
+                            cipos_by_alt[alt_index] = None
+                            continue
+                        lower, upper = cipos_entries[2 * alt_index : 2 * alt_index + 2]
+                        if lower == "." or upper == ".":
+                            cipos_by_alt[alt_index] = None
+                            continue
+                        lower_offset, upper_offset = int(lower), int(upper)
+                        if lower_offset > 0 or upper_offset < 0:
+                            raise StrictVCFValidationError(
+                                f"VCFv4.5 CIPOS interval must span zero for ALT {alt_index + 1} at line {line_no}",
+                                code="VCF_BREAKEND_CIPOS_INVALID",
+                            )
+                        cipos_by_alt[alt_index] = (lower_offset, upper_offset)
                     breakend_records_by_id[record_id] = {
                         "chrom": _chrom,
                         "pos": _pos,
-                        "remote_loci": remote_loci,
-                        "mate_ids": mate_ids,
+                        "breakend_alt_indexes": breakend_alt_indexes,
+                        "remote_loci_by_alt": remote_loci_by_alt,
+                        "mate_entries_by_alt": mate_entries_by_alt,
+                        "cipos_by_alt": cipos_by_alt,
                         "line_no": line_no,
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
@@ -1927,11 +2185,47 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     # A missing GT value still carries ploidy: "." is haploid,
                     # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
+                if fileformat == "VCFv4.5" and "PSL" in format_keys and gt_index is not None:
+                    gt_for_phase = sample_values[gt_index]
+                    if gt_for_phase not in {"", "."}:
+                        allele_phase = _gt_alleles_with_phase(gt_for_phase, fileformat, line_no)
+                        psl_raw = (
+                            sample_values[format_keys.index("PSL")]
+                            if format_keys.index("PSL") < len(sample_values)
+                            else "."
+                        )
+                        psl_entries = psl_raw.split(",") if psl_raw not in {"", "."} else ["."] * len(allele_phase)
+                        pso_raw = (
+                            sample_values[format_keys.index("PSO")]
+                            if "PSO" in format_keys and format_keys.index("PSO") < len(sample_values)
+                            else "."
+                        )
+                        pso_entries = pso_raw.split(",") if pso_raw not in {"", "."} else ["."] * len(allele_phase)
+                        sample_name = chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index)
+                        for allele_position, ((allele_token, _separator), phase_set) in enumerate(zip(allele_phase, psl_entries)):
+                            if phase_set in {"", "."}:
+                                continue
+                            allele_is_sv_or_breakend = False
+                            if allele_token != ".":
+                                allele_number = int(allele_token)
+                                if 0 < allele_number <= len(alts):
+                                    allele_text = alts[allele_number - 1]
+                                    allele_is_sv_or_breakend = _is_vcf45_sv_or_breakend_alt(allele_text)
+                            phase_set_observations.setdefault((sample_name, phase_set), []).append({
+                                "line_number": line_no,
+                                "record_index": records + 1,
+                                "allele_position": allele_position,
+                                "pso": pso_entries[allele_position] if allele_position < len(pso_entries) else ".",
+                                "requires_pso": allele_is_sv_or_breakend,
+                            })
                 local_allele_count: int | None = None
                 local_alt_indexes: list[int] = []
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
                     raw_laa = sample_values[format_keys.index("LAA")]
-                    if raw_laa == ".":
+                    if raw_laa in {"", "."}:
+                        # The VCFv4.5 local-allele example uses an empty
+                        # LAA value for the REF-only local allele vector;
+                        # BCF represents the same zero-length vector as MISSING.
                         local_allele_count = 1
                     else:
                         try:
@@ -1964,11 +2258,38 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                                     f"FORMAT/LAA omits a called GT ALT allele at line {line_no}, sample {sample_index}",
                                     code="VCF_LOCAL_ALLELE_INVALID",
                                 )
-                for key, value in zip(format_keys, sample_values):
+                for format_position, key in enumerate(format_keys):
+                    value = sample_values[format_position] if format_position < len(sample_values) else "."
+                    if fileformat == "VCFv4.5" and key == "LAA" and value == "":
+                        # VCFv4.5's REF-only local-allele example uses an
+                        # empty text value; BCF represents this as MISSING.
+                        continue
                     definition = format_definitions.get(key)
+                    if definition is None and fileformat == "VCFv4.0":
+                        definition = _reserved_vcf40_format_definition(key)
                     if definition is None and fileformat == "VCFv4.5":
                         definition = _reserved_vcf45_format_definition(key)
                     if definition is not None:
+                        if (
+                            fileformat == "VCFv4.0"
+                            and key == "GL"
+                            and value not in {None, "."}
+                            and len(alts) != 1
+                        ):
+                            raise StrictVCFValidationError(
+                                f"VCFv4.0 FORMAT/GL is not applicable to multiallelic records at line {line_no}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
+                        if (
+                            fileformat == "VCFv4.5"
+                            and definition["Number"] == "P"
+                            and value not in {None, "."}
+                            and gt_index is None
+                        ):
+                            raise StrictVCFValidationError(
+                                f"Populated VCFv4.5 FORMAT Number=P field {key!r} requires GT to establish per-allele cardinality at line {line_no}, sample {sample_index}",
+                                code="VCF_FIELD_CARDINALITY_INVALID",
+                            )
                         if (
                             definition["Number"] == "G"
                             and genotype_ploidy is None
@@ -1976,22 +2297,22 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         ):
                             unchecked_format_number_g_fields.add(key)
                         base_modification_cardinality = None
+                        base_modification_slots: list[tuple[int, int, str, str]] = []
                         if definition["Number"] == "M":
                             if gt_index is None or gt_index >= len(sample_values):
                                 raise StrictVCFValidationError(
                                     f"VCFv4.5 base-modification field {key!r} has no sample GT at line {line_no}",
                                     code="VCF_BASE_MODIFICATION_GT_MISSING",
                                 )
-                            base_modification_cardinality = (
-                                _expected_base_modification_cardinality(
-                                    sample_values[gt_index],
-                                    fields[3].upper(),
-                                    alts,
-                                    key,
-                                    fileformat,
-                                    line_no,
-                                )
+                            base_modification_slots = _expected_base_modification_slots(
+                                sample_values[gt_index],
+                                fields[3].upper(),
+                                alts,
+                                key,
+                                fileformat,
+                                line_no,
                             )
+                            base_modification_cardinality = len(base_modification_slots)
                         _validate_declared_value(
                             kind=f"FORMAT sample {sample_index}",
                             key=key,
@@ -2003,6 +2324,166 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
                         )
+                        if definition["Number"] == "M" and value not in {None, "."}:
+                            observed_modification_values = value.split(",")
+                            base_modification_slot_assignment_count += len(base_modification_slots)
+                        elif definition["Number"] == "M":
+                            observed_modification_values = ["."] * len(base_modification_slots)
+                        if (
+                            definition["Number"] == "M"
+                            and base_modification_strandedness == "unstranded"
+                        ):
+                            gt_for_modification = sample_values[gt_index]
+                            gt_phase = _gt_alleles_with_phase(
+                                gt_for_modification, fileformat, line_no
+                            )
+                            psl_for_modification = (
+                                sample_values[format_keys.index("PSL")]
+                                if "PSL" in format_keys and format_keys.index("PSL") < len(sample_values)
+                                else None
+                            )
+                            ps_for_modification = (
+                                sample_values[format_keys.index("PS")]
+                                if "PS" in format_keys and format_keys.index("PS") < len(sample_values)
+                                else None
+                            )
+                            psl_positions = (
+                                psl_for_modification.split(",")
+                                if psl_for_modification not in {None, "", "."}
+                                else []
+                            )
+                            haplotype_slots = _expected_base_modification_slots_with_haplotype(
+                                gt_for_modification,
+                                fields[3].upper(),
+                                alts,
+                                key,
+                                fileformat,
+                                line_no,
+                            )
+                            for slot_index, (allele_index, copy_index, sequence_position, strand, sequence_base) in enumerate(haplotype_slots):
+                                _allele_token, phase_separator = gt_phase[copy_index]
+                                all_called_alleles = [
+                                    token for token, _separator in gt_phase
+                                ]
+                                homozygous_unphased = (
+                                    "|" not in gt_for_modification
+                                    and all(token != "." for token in all_called_alleles)
+                                    and len(set(all_called_alleles)) == 1
+                                )
+                                if homozygous_unphased:
+                                    phase_set = "__unphased_homozygous_set__"
+                                elif "|" not in gt_for_modification or phase_separator != "|":
+                                    phase_set = f"__record_{records + 1}_allele_{allele_index}"
+                                elif psl_positions:
+                                    phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else "."
+                                    if phase_set == ".":
+                                        phase_set = f"__record_{records + 1}_allele_{allele_index}"
+                                elif ps_for_modification not in {None, "", "."}:
+                                    phase_set = f"PS:{ps_for_modification}"
+                                else:
+                                    # A phased separator alone does not define a
+                                    # cross-record phase set. Keep this record-local
+                                    # and disclose that cross-record context is unknown.
+                                    phase_set = f"__record_{records + 1}_allele_{allele_index}"
+                                allele_sequence = (
+                                    fields[3].upper()
+                                    if allele_index == 0
+                                    else alts[allele_index - 1]
+                                )
+                                if len(allele_sequence) != len(fields[3]):
+                                    raise StrictVCFValidationError(
+                                        f"Unstranded Number=M cross-record placement cannot be coordinate-mapped for length-changing allele {allele_index} at line {line_no}",
+                                        code="VCF_BASE_MODIFICATION_UNSTRANDED_UNSUPPORTED",
+                                    )
+                                observed_value = (
+                                    observed_modification_values[slot_index]
+                                    if slot_index < len(observed_modification_values)
+                                    else "."
+                                )
+                                if phase_set.startswith("__record_"):
+                                    unstranded_unphased_observation_count += 1
+                                unstranded_base_modification_observations.append({
+                                    "sample": chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index),
+                                    "chrom": _chrom,
+                                    "field_id": key,
+                                    "coordinate": _pos + sequence_position,
+                                    "record_index": records + 1,
+                                    "line_number": line_no,
+                                    "copy_index": copy_index,
+                                    "phase_set": phase_set,
+                                    "phase_known": True,
+                                    "strand": strand,
+                                    "base": sequence_base,
+                                    "value": None if observed_value == "." else observed_value,
+                                })
+                        if definition["Number"] == "M" and include_base_modification_slot_assignments:
+                            sample_name = (
+                                chrom_header[8 + sample_index]
+                                if chrom_header is not None and 8 + sample_index < len(chrom_header)
+                                else None
+                            )
+                            for value_index, (slot, observed_value) in enumerate(
+                                zip(base_modification_slots, observed_modification_values)
+                            ):
+                                allele_index, sequence_position, strand, sequence_base = slot
+                                base_modification_slot_assignments.append({
+                                    "record_index": records + 1,
+                                    "line_number": line_no,
+                                    "chrom": _chrom,
+                                    "pos": _pos,
+                                    "sample_index": sample_index,
+                                    "sample_name": sample_name,
+                                    "field_id": key,
+                                    "value_index": value_index,
+                                    "allele_index": allele_index,
+                                    "allele_sequence_position": sequence_position,
+                                    "sequence_base": sequence_base,
+                                    "strand": strand,
+                                    "value": None if observed_value == "." else observed_value,
+                                })
+                if fileformat == "VCFv4.5" and breakend_alts and record_ids:
+                    record_phase_vectors: dict[str, dict[str, list[str]]] = {}
+                    sample_names = chrom_header[9:] if chrom_header is not None else []
+                    for sample_offset, sample_name in enumerate(sample_names):
+                        sample_values_for_phase = fields[9 + sample_offset].split(":")
+                        gt_value = (
+                            sample_values_for_phase[gt_index]
+                            if gt_index is not None and gt_index < len(sample_values_for_phase)
+                            else "."
+                        )
+                        gt_phase = (
+                            _gt_alleles_with_phase(gt_value, fileformat, line_no)
+                            if gt_value not in {"", "."}
+                            else [(".", "|")]
+                        )
+                        psl_value = (
+                            sample_values_for_phase[format_keys.index("PSL")]
+                            if "PSL" in format_keys and format_keys.index("PSL") < len(sample_values_for_phase)
+                            else "."
+                        )
+                        pso_value = (
+                            sample_values_for_phase[format_keys.index("PSO")]
+                            if "PSO" in format_keys and format_keys.index("PSO") < len(sample_values_for_phase)
+                            else "."
+                        )
+                        psl_entries = (
+                            psl_value.split(",")
+                            if psl_value not in {"", "."}
+                            else ["."] * len(gt_phase)
+                        )
+                        pso_entries = (
+                            pso_value.split(",")
+                            if pso_value not in {"", "."}
+                            else ["."] * len(gt_phase)
+                        )
+                        record_phase_vectors[sample_name] = {
+                            "alleles": [allele for allele, _separator in gt_phase],
+                            "psl": psl_entries,
+                            "pso": pso_entries,
+                        }
+                    for record_id in record_ids:
+                        breakend_phase_vectors_by_record[record_id] = record_phase_vectors
+
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
@@ -2078,7 +2559,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             for alt in alts:
                 if SYMBOLIC_RE.fullmatch(alt) or alt == "*":
                     symbolic += 1
-                if "[" in alt or "]" in alt:
+                if _is_vcf45_breakend_alt(alt):
                     breakends += 1
                 if alt == "<NON_REF>":
                     gvcf_markers += 1
@@ -2088,37 +2569,189 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
             f"Unsupported or missing ##fileformat header: {fileformat!r}; supported standardized VCF versions are VCFv4.0 through VCFv4.5",
             code="VCF_FILEFORMAT_UNSUPPORTED",
         )
+    if base_modification_strandedness is not None and fileformat != "VCFv4.5":
+        raise StrictVCFValidationError(
+            "The base-modification strandedness policy is defined here only for VCFv4.5 Number=M fields.",
+            code="VCF_BASE_MODIFICATION_POLICY_UNSUPPORTED",
+        )
     if not found_header or chrom_header is None:
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
-    for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
+    if fileformat == "VCFv4.5" and base_modification_strandedness == "unstranded":
+        # Compare only observations on the same sample, phase set and phased
+        # GT copy. Unphased alleles cannot be safely joined across records.
+        phased_groups: dict[tuple[str, str, str, str, int], dict[int, list[dict[str, object]]]] = {}
+        for observation in unstranded_base_modification_observations:
+            if not observation["phase_known"]:
+                continue
+            group_key = (
+                str(observation["sample"]),
+                str(observation["chrom"]),
+                str(observation["field_id"]),
+                str(observation["phase_set"]),
+                int(observation["copy_index"]),
+            )
+            phased_groups.setdefault(group_key, {}).setdefault(
+                int(observation["coordinate"]), []
+            ).append(observation)
+        for group_key, by_coordinate in phased_groups.items():
+            field_id = group_key[2]
+            modified_base = field_id[-1].upper()
+            if modified_base == "U":
+                modified_base = "T"
+            if modified_base == "N":
+                for coordinate, observations in by_coordinate.items():
+                    for observation in observations:
+                        if observation["strand"] == "-" and observation["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded N base-modification values must be MISSING on the negative strand at {group_key[1]}:{coordinate}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+                continue
+            complement = {"A": "T", "T": "A", "C": "G", "G": "C"}[modified_base]
+            for coordinate, observations in by_coordinate.items():
+                next_observations = by_coordinate.get(coordinate + 1, [])
+                for lower in observations:
+                    for upper in next_observations:
+                        lower_positive = lower["base"] == modified_base and lower["strand"] == "+"
+                        upper_negative = upper["base"] == complement and upper["strand"] == "-"
+                        lower_negative = lower["base"] == complement and lower["strand"] == "-"
+                        upper_positive = upper["base"] == modified_base and upper["strand"] == "+"
+                        if lower_positive and upper_negative and upper["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded complementary base-modification value must be MISSING at higher POS {group_key[1]}:{coordinate + 1}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+                        if lower_negative and upper_positive and upper["value"] is not None:
+                            raise StrictVCFValidationError(
+                                f"Unstranded complementary base-modification value must be MISSING at higher POS {group_key[1]}:{coordinate + 1}, sample {group_key[0]}",
+                                code="VCF_BASE_MODIFICATION_UNSTRANDED_PLACEMENT",
+                            )
+
+    if fileformat == "VCFv4.5":
+        for (sample_name, phase_set), observations in phase_set_observations.items():
+            phase_set_requires_pso = any(bool(item["requires_pso"]) for item in observations)
+            if phase_set_requires_pso:
+                missing = [item for item in observations if item["pso"] in {"", "."}]
+                if missing:
+                    first = missing[0]
+                    raise StrictVCFValidationError(
+                        f"FORMAT/PSO is required for sample {sample_name!r}, phase set {phase_set!r} because that phase set contains an SV or breakpoint allele; missing at line {first['line_number']}, allele position {first['allele_position'] + 1}",
+                        code="VCF_PHASE_SET_PSO_REQUIRED",
+                    )
+
+    for (
+        source_id,
+        chrom,
+        pos,
+        source_alt_index,
+        mate_id,
+        remote_locus,
+        line_no,
+    ) in breakend_links:
         source_ids = set(source_id.split(";"))
-        for mate_id in mate_ids:
-            mate = breakend_records_by_id.get(mate_id)
-            if mate is None:
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
-                    code="VCF_BREAKEND_MATE_MISSING",
-                )
-            if (mate["chrom"], mate["pos"]) not in remote_loci:
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not match the ALT mate coordinate at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
-                )
-            if not (mate["mate_ids"] & source_ids):
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
-                )
-            if not any(
-                (remote_chrom, remote_pos) == (chrom, pos)
-                for remote_chrom, remote_pos in mate["remote_loci"]
-            ):
-                raise StrictVCFValidationError(
-                    f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
-                )
+        mate = breakend_records_by_id.get(mate_id)
+        if mate is None:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
+                code="VCF_BREAKEND_MATE_MISSING",
+            )
+        source_record = breakend_records_by_id.get(source_id.split(";")[0])
+        if source_record is None or mate["chrom"] != remote_locus[0]:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} does not match the remote contig for ALT allele {source_alt_index + 1} at line {line_no}",
+                code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+            )
+
+        reciprocal_id_alt_indexes = [
+            mate_alt_index
+            for mate_alt_index in mate["breakend_alt_indexes"]
+            if mate["mate_entries_by_alt"].get(mate_alt_index, ".") in source_ids
+        ]
+        if not reciprocal_id_alt_indexes:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
+                code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+            )
+        reciprocal_alt_indexes = [
+            mate_alt_index
+            for mate_alt_index in reciprocal_id_alt_indexes
+            if _breakend_remote_coordinate_within_cipos(remote_locus, mate, mate_alt_index)
+            and _breakend_remote_coordinate_within_cipos(
+                mate["remote_loci_by_alt"].get(mate_alt_index, ("", -1)),
+                source_record,
+                source_alt_index,
+            )
+        ]
+        if not reciprocal_alt_indexes:
+            raise StrictVCFValidationError(
+                f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
+                code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+            )
+        if len(reciprocal_alt_indexes) != 1:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} has an ambiguous reciprocal ALT for record {source_id!r} at line {line_no}",
+                code="VCF_BREAKEND_MATE_AMBIGUOUS",
+            )
+
+        mate_alt_index = reciprocal_alt_indexes[0]
+        unresolved_ends = []
+        if source_record["cipos_by_alt"].get(source_alt_index) is None:
+            unresolved_ends.append("source")
+        if mate["cipos_by_alt"].get(mate_alt_index) is None:
+            unresolved_ends.append("mate")
+        if unresolved_ends:
+            unresolved_breakend_coordinate_links.append({
+                "source_record_id": source_id,
+                "source_alt_index": source_alt_index + 1,
+                "mate_record_id": mate_id,
+                "mate_alt_index": mate_alt_index + 1,
+                "line_number": line_no,
+                "unresolved_cipos_ends": unresolved_ends,
+            })
+
+        if fileformat == "VCFv4.5":
+            source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
+            mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
+            mate_alt_index = reciprocal_alt_indexes[0]
+            for sample_name in set(source_vectors) | set(mate_vectors):
+                source_sample = source_vectors.get(sample_name, {})
+                mate_sample = mate_vectors.get(sample_name, {})
+                source_allele_number = str(source_alt_index + 1)
+                mate_allele_number = str(mate_alt_index + 1)
+                # GT positions encode the ordered chromosome copies. Preserve
+                # that order: sorting would conceal PSL/PSO swaps between
+                # haplotypes in polyploid or repeated-allele genotypes.
+                source_signature = [
+                    (
+                        source_sample.get("psl", [])[position]
+                        if position < len(source_sample.get("psl", []))
+                        else ".",
+                        source_sample.get("pso", [])[position]
+                        if position < len(source_sample.get("pso", []))
+                        else ".",
+                    )
+                    for position, allele in enumerate(source_sample.get("alleles", []))
+                    if allele == source_allele_number
+                ]
+                mate_signature = [
+                    (
+                        mate_sample.get("psl", [])[position]
+                        if position < len(mate_sample.get("psl", []))
+                        else ".",
+                        mate_sample.get("pso", [])[position]
+                        if position < len(mate_sample.get("pso", []))
+                        else ".",
+                    )
+                    for position, allele in enumerate(mate_sample.get("alleles", []))
+                    if allele == mate_allele_number
+                ]
+                if source_signature != mate_signature:
+                    raise StrictVCFValidationError(
+                        f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
+                        code="VCF_BREAKEND_PHASE_SET_MISMATCH",
+                    )
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
@@ -2155,6 +2788,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "multiallelic_records": multiallelic,
         "symbolic_records": symbolic,
         "breakend_records": breakends,
+        "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
+        "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
         "spanning_deletion_records": [
             {
@@ -2171,6 +2806,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
         "unchecked_info_number_g_fields": sorted(unchecked_info_number_g_fields),
         "unchecked_format_number_g_fields": sorted(unchecked_format_number_g_fields),
         "base_modification_format_fields": sorted(base_modification_format_fields),
+        "base_modification_slot_assignment_count": base_modification_slot_assignment_count,
+        "base_modification_strandedness_policy": base_modification_strandedness,
+        "unstranded_base_modification_observation_count": len(unstranded_base_modification_observations),
+        "unstranded_base_modification_unresolved_phase_observation_count": unstranded_unphased_observation_count,
+        **({"base_modification_slot_assignments": base_modification_slot_assignments} if include_base_modification_slot_assignments else {}),
         "vcf45_reference_span_records": vcf45_reference_span_records,
         "vcf45_max_reference_end": vcf45_max_reference_end,
         "vcf45_reference_block_sample_count": vcf45_reference_block_sample_count,
@@ -2184,6 +2824,10 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
              else [])
             + (["VCF_SPANNING_DELETION_CONTEXT_UNRESOLVED"]
                if unresolved_spanning_deletion_records else [])
+            + (["VCF_BASE_MODIFICATION_UNSTRANDED_PHASE_CONTEXT_UNRESOLVED"]
+               if unstranded_unphased_observation_count else [])
+            + (["VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED"]
+               if unresolved_breakend_coordinate_links else [])
         ),
     }
 

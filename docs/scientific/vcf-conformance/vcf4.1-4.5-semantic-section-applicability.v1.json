@@ -1,0 +1,518 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-semantic-section-applicability",
+  "status": "AUTHOR_STRUCTURAL_APPLICABILITY_AND_MAJOR_VERSION_DELTAS_RECORDED_CLAUSE_LEVEL_RECONCILIATION_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "sources": {
+    "VCFv4.1": {
+      "file": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.1.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "blob_sha1": "420cee83a66259600a70de36721763cc374df1e3",
+      "sha256": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+      "byte_length": 95857
+    },
+    "VCFv4.2": {
+      "file": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.2.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88",
+      "sha256": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+      "byte_length": 96701
+    },
+    "VCFv4.3": {
+      "file": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.3.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9",
+      "sha256": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+      "byte_length": 119335
+    },
+    "VCFv4.4": {
+      "file": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.4.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf",
+      "sha256": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+      "byte_length": 149282
+    },
+    "VCFv4.5": {
+      "file": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+      "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+      "blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+      "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+      "byte_length": 164356
+    }
+  },
+  "method": "Section presence and selected field-family presence were checked against the pinned raw TeX sources. Locators point to exact source sections, table rows or change-log entries. A NOT_FOUND status means no corresponding section/key was found in this scan; it is not a claim that all related semantics are absent. Change-log evidence is corroborative and not substituted for normative prose. This is an author-level applicability matrix, not exhaustive clause-by-clause reconciliation.",
+  "sections": {
+    "character_encoding": {
+      "VCFv4_1": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE",
+        "search": "No Character encoding subsection or percent-encoding mapping table found in the source-structure scan."
+      },
+      "VCFv4_2": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE",
+        "search": "No Character encoding subsection or percent-encoding mapping table found in the source-structure scan."
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:75-95"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:75-95"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:73-93"
+      }
+    },
+    "sample_and_pedigree": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.1.tex:125",
+          "VCFv4.1.tex:132"
+        ]
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.2.tex:142",
+          "VCFv4.2.tex:149"
+        ]
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.3.tex:269",
+          "VCFv4.3.tex:281"
+        ]
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.4.tex:283",
+          "VCFv4.4.tex:295"
+        ]
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.5.tex:332",
+          "VCFv4.5.tex:344"
+        ]
+      }
+    },
+    "genotype_fields": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:193"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:210"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:427"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:445"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:497"
+      }
+    },
+    "structural_variant_info": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:233"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:250"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:601"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:666"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:841"
+      }
+    },
+    "structural_variant_format": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:286"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:303"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:672"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:981"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1142"
+      }
+    },
+    "small_variant_representation": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:299-374"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:316-391"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:692-772"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:1003-1083"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1164-1244"
+      }
+    },
+    "breakend_syntax": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:524"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:541"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:925"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:1234"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1394"
+      }
+    },
+    "sample_mixtures": {
+      "VCFv4_1": {
+        "status": "PRESENT",
+        "locator": "VCFv4.1.tex:819"
+      },
+      "VCFv4_2": {
+        "status": "PRESENT",
+        "locator": "VCFv4.2.tex:836"
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:1262"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:1571"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1731"
+      }
+    },
+    "gvcf_reference_blocks": {
+      "VCFv4_1": {
+        "status": "NO_DEDICATED_GVCF_SECTION_FOUND",
+        "search": "No dedicated Representing unspecified alleles and REF-only blocks (gVCF) subsection found."
+      },
+      "VCFv4_2": {
+        "status": "NO_DEDICATED_GVCF_SECTION_FOUND",
+        "search": "No dedicated Representing unspecified alleles and REF-only blocks (gVCF) subsection found."
+      },
+      "VCFv4_3": {
+        "status": "PRESENT",
+        "locator": "VCFv4.3.tex:1428"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:1686"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1846"
+      }
+    },
+    "tandem_repeats": {
+      "VCFv4_1": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_2": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_3": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locator": "VCFv4.4.tex:1748"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locator": "VCFv4.5.tex:1917"
+      }
+    },
+    "local_alleles": {
+      "VCFv4_1": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_2": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_3": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_4": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.5.tex:188-202",
+          "VCFv4.5.tex:686-718"
+        ]
+      }
+    },
+    "base_modifications": {
+      "VCFv4_1": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_2": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_3": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_4": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.5.tex:199-218",
+          "VCFv4.5.tex:720-758"
+        ]
+      }
+    },
+    "phase_set_lists": {
+      "VCFv4_1": {
+        "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND",
+        "note": "PS is present; PSL/PSO/PSQ are not found."
+      },
+      "VCFv4_2": {
+        "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND",
+        "note": "PS is present; PSL/PSO/PSQ are not found."
+      },
+      "VCFv4_3": {
+        "status": "NO_PSL_PSO_PSQ_FIELDS_FOUND",
+        "note": "PS is present; PSL/PSO/PSQ are not found."
+      },
+      "VCFv4_4": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.4.tex:496-498",
+          "VCFv4.4.tex:598-635"
+        ]
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.5.tex:594-596",
+          "VCFv4.5.tex:771-809"
+        ]
+      }
+    },
+    "format_len": {
+      "VCFv4_1": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_2": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_3": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_4": {
+        "status": "NOT_FOUND_IN_PINNED_SOURCE"
+      },
+      "VCFv4_5": {
+        "status": "PRESENT",
+        "locators": [
+          "VCFv4.5.tex:539",
+          "VCFv4.5.tex:606",
+          "VCFv4.5.tex:1848-1860"
+        ]
+      }
+    }
+  },
+  "major_semantic_changes": [
+    {
+      "feature": "GLE reserved FORMAT field",
+      "introduced": "VCFv4.1",
+      "last_present": "VCFv4.2",
+      "removed_in": "VCFv4.3",
+      "evidence": [
+        "VCFv4.1.tex:208",
+        "VCFv4.2.tex:225",
+        "VCFv4.3.tex:2168"
+      ],
+      "finding": "VCFv4.3 change log explicitly says the unused and ill-defined GLE FORMAT tag was removed; it is absent from VCFv4.3/4.4/4.5 reserved FORMAT inventories.",
+      "status": "AUTHOR_CONFIRMED_REMOVAL_FROM_RESERVED_SET"
+    },
+    {
+      "feature": "PSL/PSO/PSQ phase-set list fields",
+      "introduced": "VCFv4.4",
+      "retained_through": "VCFv4.5",
+      "evidence": [
+        "VCFv4.4.tex:496-498",
+        "VCFv4.4.tex:598-635",
+        "VCFv4.5.tex:594-596",
+        "VCFv4.5.tex:771-809"
+      ],
+      "finding": "VCFv4.4 introduces Number=P and PSL/PSO/PSQ for allele-level phasing and derivative chromosome traversal; VCFv4.5 retains these semantics.",
+      "status": "AUTHOR_CONFIRMED_ADDITION_AND_RETENTION"
+    },
+    {
+      "feature": "Number=P",
+      "introduced": "VCFv4.4",
+      "retained_through": "VCFv4.5",
+      "evidence": [
+        "VCFv4.4.tex:2561",
+        "VCFv4.5.tex:2731"
+      ],
+      "finding": "The change logs identify Number=P as added for fields with cardinality matching sample ploidy/local copy number; in VCFv4.5 it applies to per-GT-allele values, distinct from Number=G genotype combinations.",
+      "status": "AUTHOR_CONFIRMED_ADDITION_AND_REFINEMENT"
+    },
+    {
+      "feature": "SVLEN cardinality and meaning",
+      "introduced": "VCFv4.4",
+      "retained_through": "VCFv4.5",
+      "evidence": [
+        "VCFv4.1.tex:253",
+        "VCFv4.2.tex:270",
+        "VCFv4.3.tex:635",
+        "VCFv4.4.tex:720-733",
+        "VCFv4.5.tex:881-894"
+      ],
+      "finding": "Earlier versions use Number=. and describe the difference in length between REF and ALT. VCFv4.4 changes to Number=A and defines one length per ALT for symbolic SV classes; VCFv4.5 retains Number=A and specifies missing values for non-symbolic/breakend alleles plus compatibility inference from END.",
+      "status": "AUTHOR_CONFIRMED_CARDINALITY_AND_SEMANTIC_REFINEMENT"
+    },
+    {
+      "feature": "SVTYPE deprecation",
+      "introduced": "VCFv4.4",
+      "retained_through": "VCFv4.5",
+      "evidence": [
+        "VCFv4.4.tex:2583",
+        "VCFv4.5.tex:871-877"
+      ],
+      "finding": "VCFv4.4 change log records SVTYPE deprecation; VCFv4.5 explicitly explains redundancy with ALT and directs readers to the symbolic ALT set. The change log is corroborative; the VCFv4.5 normative prose is the direct semantic anchor.",
+      "status": "AUTHOR_CONFIRMED_DEPRECATION_WITH_4.5_EXPLICIT_RATIONALE"
+    },
+    {
+      "feature": "Local allele fields and Number=LA/LR/LG",
+      "introduced": "VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:188-202",
+        "VCFv4.5.tex:501-502",
+        "VCFv4.5.tex:535-556",
+        "VCFv4.5.tex:686-718"
+      ],
+      "finding": "Local-allele representation and LAA dependency are introduced in VCFv4.5; no corresponding fields were found in VCFv4.1-4.4 pinned sources.",
+      "status": "AUTHOR_CONFIRMED_VERSION_INTRODUCTION"
+    },
+    {
+      "feature": "Base modification M/DPM/ADM field families",
+      "introduced": "VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:199-218",
+        "VCFv4.5.tex:556-588",
+        "VCFv4.5.tex:720-758"
+      ],
+      "finding": "M/DPM/ADM base-modification field families, ChEBI-linked semantics, aliases and strand/missing/reference-block behavior appear in VCFv4.5; no corresponding fields were found in VCFv4.1-4.4 pinned sources.",
+      "status": "AUTHOR_CONFIRMED_VERSION_INTRODUCTION_WITH_ALIAS_AMBIGUITY"
+    },
+    {
+      "feature": "FORMAT LEN and sample-specific <*> blocks",
+      "introduced": "VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:539",
+        "VCFv4.5.tex:606",
+        "VCFv4.5.tex:1848-1860"
+      ],
+      "finding": "VCFv4.5 adds FORMAT LEN for sample-specific reference block lengths and backward compatibility with INFO END; the gVCF section also defines <NON_REF> as an alias of <*>.",
+      "status": "AUTHOR_CONFIRMED_VERSION_INTRODUCTION"
+    },
+    {
+      "feature": "END deprecation",
+      "introduced": "VCFv4.5",
+      "evidence": [
+        "VCFv4.5.tex:471",
+        "VCFv4.5.tex:485-493",
+        "VCFv4.5.tex:867"
+      ],
+      "finding": "VCFv4.5 marks INFO END deprecated for backwards compatibility and defines computed END behavior from REF, SVLEN and FORMAT LEN contributions; it remains relevant to BCF rlen/indexing.",
+      "status": "AUTHOR_CONFIRMED_VERSION_INTRODUCTION"
+    },
+    {
+      "feature": "Character encoding section and escape mapping table",
+      "introduced": "VCFv4.3",
+      "retained_through": "VCFv4.5",
+      "evidence": [
+        "VCFv4.3.tex:75-95",
+        "VCFv4.4.tex:75-95",
+        "VCFv4.5.tex:73-93"
+      ],
+      "finding": "A dedicated UTF-8, BOM, prohibited control-character, line separator and uppercase percent-encoding section is present from VCFv4.3 onward; no equivalent dedicated section/table was found in VCFv4.1 or VCFv4.2.",
+      "status": "AUTHOR_STRUCTURAL_DELTA_FOUND_NORMATIVE_EFFECT_REVIEW_PENDING"
+    }
+  ],
+  "whole_spec_domains_requiring_atomized_version_comparison": [
+    "VCF header/meta-information grammar and ordering",
+    "CHROM/POS/ID/REF/ALT/QUAL/FILTER/INFO fixed-column semantics",
+    "VCF line grammar, delimiters, escaping, character encoding and data types",
+    "FORMAT/GT syntax, missing alleles, ploidy and genotype ordering",
+    "Reserved INFO/FORMAT rows and field-specific constraints",
+    "SV symbolic alleles, SVLEN/END/CIPOS/CIEND/CN/SVCLAIM and tandem repeats",
+    "Breakend syntax, mates/partners, telomeres, EVENT/EVENTTYPE and single breakends",
+    "Sample/genome mixtures, PEDIGREE, haplotype lineage and gVCF reference blocks",
+    "Examples, footnotes, normative modal force, recommendations and implementation-defined behavior",
+    "VCF versus BCF serialization distinctions"
+  ],
+  "unresolved": [
+    "The structural applicability matrix does not enumerate every atomic requirement or prove that a feature is absent from all contexts merely because its named section/key was not found.",
+    "Map every atomic requirement to each version as APPLICABLE, CHANGED, NOT_APPLICABLE or UNRESOLVED with direct normative locators.",
+    "For VCF4.1/4.2, distinguish historical syntax from later table-based representations without importing Number/Type semantics backward.",
+    "Resolve VCF4.5 xanthosine alias capitalization ambiguity (VCF45-FORMAT-XAON-ALIAS-CASE-001).",
+    "Acquire authoritative VCFv4.0 source bytes before making any VCF4.0 applicability claim.",
+    "Independent second-person review remains not started."
+  ],
+  "controls": [
+    "Do not treat absent dedicated sections as proof that no related rule exists; inspect all surrounding definitions and examples.",
+    "Do not project a later feature backward.",
+    "Do not use the change log as the sole source for a normative requirement.",
+    "Preserve modal force (must/should/may/recommendation/implementation-defined) and actor.",
+    "No parser/validator implementation, executable conformance test or laboratory qualification is claimed."
+  ]
+}

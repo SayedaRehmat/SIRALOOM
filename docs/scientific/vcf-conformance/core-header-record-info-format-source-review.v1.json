@@ -1,0 +1,4251 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-core-header-record-info-format-source-review",
+  "status": "SOURCE_CONTEXT_INDEXED_ATOMIC_REQUIREMENT_DECOMPOSITION_PENDING",
+  "scope": "VCF core header syntax, eight fixed record fields, reserved INFO definitions, reserved FORMAT/genotype definitions and adjacent genotype semantics for VCFv4.1–4.5. VCFv4.0 is not included pending historical raw-source pinning.",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "method": [
+    "Capture exact source line excerpts from the pinned TeX source and retain line numbers and blob identities.",
+    "Represent VCFv4.1–4.2 reserved INFO and FORMAT definitions as prose enumeration entries because these versions do not use the later reserved-key tables in the reviewed passages.",
+    "Represent VCFv4.3–4.5 reserved INFO and FORMAT definitions as individual table rows, preserving Number, Type and Description cells as source text.",
+    "Do not equate a table row with a normative obligation: classify each key's reserved/optional status, field cardinality, type, and normative force in the subsequent atomicity review.",
+    "Retain surrounding fixed-field and genotype prose because table rows alone do not capture field ordering, ploidy, allele-index semantics, missing-value behaviour, genotype ordering, local-allele constraints, or phase semantics."
+  ],
+  "versions": [
+    {
+      "version": "VCFv4.1",
+      "source": {
+        "repository": "samtools/hts-specs",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.1.tex",
+        "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
+      },
+      "header_syntax": {
+        "start_line": 141,
+        "end_line": 155,
+        "lines": [
+          {
+            "line": 141,
+            "text": "\\subsection{Header line syntax}"
+          },
+          {
+            "line": 142,
+            "text": "The header line names the 8 fixed, mandatory columns. These columns are as follows:"
+          },
+          {
+            "line": 143,
+            "text": ""
+          },
+          {
+            "line": 144,
+            "text": "\\begin{enumerate}"
+          },
+          {
+            "line": 145,
+            "text": "  \\item \\#CHROM"
+          },
+          {
+            "line": 146,
+            "text": "  \\item POS"
+          },
+          {
+            "line": 147,
+            "text": "  \\item ID"
+          },
+          {
+            "line": 148,
+            "text": "  \\item REF"
+          },
+          {
+            "line": 149,
+            "text": "  \\item ALT"
+          },
+          {
+            "line": 150,
+            "text": "  \\item QUAL"
+          },
+          {
+            "line": 151,
+            "text": "  \\item FILTER"
+          },
+          {
+            "line": 152,
+            "text": "  \\item INFO"
+          },
+          {
+            "line": 153,
+            "text": "\\end{enumerate}"
+          },
+          {
+            "line": 154,
+            "text": ""
+          },
+          {
+            "line": 155,
+            "text": "If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number of sample IDs. Duplicate sample IDs are not allowed. The header line is tab-delimited."
+          }
+        ]
+      },
+      "fixed_record_fields": {
+        "start_line": 162,
+        "end_line": 169,
+        "lines": [
+          {
+            "line": 162,
+            "text": "  \\item CHROM - chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header). All entries for a specific CHROM should form a contiguous block within the VCF file. (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 163,
+            "text": "  \\item POS - position: The reference position, with the 1st base having position 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM.   It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig.   (Integer, Required)"
+          },
+          {
+            "line": 164,
+            "text": "  \\item ID - identifier: Semicolon-separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). No identifier should be present in more than one data record. If there is no identifier available, then the missing value should be used. (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 165,
+            "text": "  \\item REF - reference base(s): Each base must be one of A,C,G,T,N (case insensitive). Multiple bases are permitted. The value in the POS field refers to the position of the first base in the String. For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings.  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism. Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required)."
+          },
+          {
+            "line": 166,
+            "text": "  \\item ALT - alternate base(s): Comma separated list of alternate non-reference alleles.  These alleles do not have to be called in any of the samples.  Options are base Strings made up of the bases A,C,G,T,N, (case insensitive) or an angle-bracketed ID String (``$<$ID$>$'') or a breakend replacement string as described in the section on breakends. If there are no alternative alleles, then the missing value should be used.  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 167,
+            "text": "  \\item QUAL - quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong). If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant). High QUAL scores indicate high confidence calls. Although traditionally people use integer phred scores, this field is permitted to be a floating point to enable higher resolution for low confidence calls if desired.  If unknown, the missing value should be specified. (Numeric)"
+          },
+          {
+            "line": 168,
+            "text": "  \\item FILTER - filter status: PASS if this position has passed all filters, i.e., a call is made at this position. Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples. `0' is reserved and should not be used as a filter String. If filters have not been applied, then this field should be set to the missing value. (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 169,
+            "text": "  \\item INFO - additional information: (String, no whitespace, semicolons, or equals-signs permitted; commas are permitted only as delimiters for lists of values) INFO fields are encoded as a semicolon-separated series of short keys with optional values in the format: $<$key$>$=$<$data$>$[,data]. If no keys are present, the missing value must be used. Arbitrary keys are permitted, although the following sub-fields are reserved (albeit optional):"
+          }
+        ]
+      },
+      "reserved_info": {
+        "representation": "enumerated prose list",
+        "start_line": 171,
+        "end_line": 188,
+        "lines": [
+          {
+            "line": 171,
+            "text": "  \\item AA : ancestral allele"
+          },
+          {
+            "line": 172,
+            "text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+          },
+          {
+            "line": 173,
+            "text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+          },
+          {
+            "line": 174,
+            "text": "  \\item AN : total number of alleles in called genotypes"
+          },
+          {
+            "line": 175,
+            "text": "  \\item BQ : RMS base quality at this position"
+          },
+          {
+            "line": 176,
+            "text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+          },
+          {
+            "line": 177,
+            "text": "  \\item DB : dbSNP membership"
+          },
+          {
+            "line": 178,
+            "text": "  \\item DP : combined depth across samples, e.g.\\ DP=154"
+          },
+          {
+            "line": 179,
+            "text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)"
+          },
+          {
+            "line": 180,
+            "text": "  \\item H2 : membership in hapmap2"
+          },
+          {
+            "line": 181,
+            "text": "  \\item H3 : membership in hapmap3"
+          },
+          {
+            "line": 182,
+            "text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+          },
+          {
+            "line": 183,
+            "text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record"
+          },
+          {
+            "line": 184,
+            "text": "  \\item NS : Number of samples with data"
+          },
+          {
+            "line": 185,
+            "text": "  \\item SB : strand bias at this position"
+          },
+          {
+            "line": 186,
+            "text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+          },
+          {
+            "line": 187,
+            "text": "  \\item VALIDATED : validated by follow-up experiment"
+          },
+          {
+            "line": 188,
+            "text": "  \\item 1000G : membership in 1000 Genomes"
+          }
+        ]
+      },
+      "reserved_format": {
+        "representation": "enumerated prose list",
+        "start_line": 198,
+        "end_line": 216,
+        "lines": [
+          {
+            "line": 198,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 199,
+            "text": "\\renewcommand{\\labelitemii}{$\\circ$}"
+          },
+          {
+            "line": 200,
+            "text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 201,
+            "text": "\t\\begin{itemize}"
+          },
+          {
+            "line": 202,
+            "text": "\t  \\item $/$ : genotype unphased"
+          },
+          {
+            "line": 203,
+            "text": "\t  \\item $\\mid$ : genotype phased"
+          },
+          {
+            "line": 204,
+            "text": "\t\\end{itemize}"
+          },
+          {
+            "line": 205,
+            "text": "  \\item DP : read depth at this position for this sample (Integer)"
+          },
+          {
+            "line": 206,
+            "text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 207,
+            "text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+          },
+          {
+            "line": 208,
+            "text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+          },
+          {
+            "line": 209,
+            "text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+          },
+          {
+            "line": 210,
+            "text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+          },
+          {
+            "line": 211,
+            "text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+          },
+          {
+            "line": 212,
+            "text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+          },
+          {
+            "line": 213,
+            "text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+          },
+          {
+            "line": 214,
+            "text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+          },
+          {
+            "line": 215,
+            "text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+          },
+          {
+            "line": 216,
+            "text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+          }
+        ]
+      },
+      "format_semantics": {
+        "start_line": 194,
+        "end_line": 221,
+        "lines": [
+          {
+            "line": 194,
+            "text": "If genotype information is present, then the same types of data must be present for all samples. First a FORMAT field is given specifying the data types and order (colon-separated alphanumeric String). This is followed by one field per sample, with the colon-separated data in this field corresponding to the types specified in the format. The first sub-field must always be the genotype (GT) if it is present.  There are no required sub-fields."
+          },
+          {
+            "line": 195,
+            "text": ""
+          },
+          {
+            "line": 196,
+            "text": "As with the INFO field, there are several common, reserved keywords that are standards across the community:"
+          },
+          {
+            "line": 197,
+            "text": ""
+          },
+          {
+            "line": 198,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 199,
+            "text": "\\renewcommand{\\labelitemii}{$\\circ$}"
+          },
+          {
+            "line": 200,
+            "text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 201,
+            "text": "\t\\begin{itemize}"
+          },
+          {
+            "line": 202,
+            "text": "\t  \\item $/$ : genotype unphased"
+          },
+          {
+            "line": 203,
+            "text": "\t  \\item $\\mid$ : genotype phased"
+          },
+          {
+            "line": 204,
+            "text": "\t\\end{itemize}"
+          },
+          {
+            "line": 205,
+            "text": "  \\item DP : read depth at this position for this sample (Integer)"
+          },
+          {
+            "line": 206,
+            "text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 207,
+            "text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+          },
+          {
+            "line": 208,
+            "text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+          },
+          {
+            "line": 209,
+            "text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+          },
+          {
+            "line": 210,
+            "text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+          },
+          {
+            "line": 211,
+            "text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+          },
+          {
+            "line": 212,
+            "text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+          },
+          {
+            "line": 213,
+            "text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+          },
+          {
+            "line": 214,
+            "text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+          },
+          {
+            "line": 215,
+            "text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+          },
+          {
+            "line": 216,
+            "text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+          },
+          {
+            "line": 217,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 218,
+            "text": ""
+          },
+          {
+            "line": 219,
+            "text": "If any of the fields is missing, it is replaced with the missing value. For example if the FORMAT is GT:GQ:DP:HQ then $0\\mid0:.:23:23,34$ indicates that GQ is missing. Trailing fields can be dropped (with the exception of the GT field, which should always be present if specified in the FORMAT field)."
+          },
+          {
+            "line": 220,
+            "text": ""
+          },
+          {
+            "line": 221,
+            "text": "See below for additional genotype fields used to encode structural variants. Additional Genotype fields can be defined in the meta-information. However, software support for such fields is not guaranteed."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 157,
+        "end_line": 160,
+        "lines": [
+          {
+            "line": 157,
+            "text": "\\subsection{Data lines}"
+          },
+          {
+            "line": 158,
+            "text": "\\subsubsection{Fixed fields}"
+          },
+          {
+            "line": 159,
+            "text": "There are 8 fixed fields per record. All data lines are tab-delimited. In all cases, missing values are specified with a dot (`.'). Fixed fields are:"
+          },
+          {
+            "line": 160,
+            "text": ""
+          }
+        ]
+      }
+    },
+    {
+      "version": "VCFv4.2",
+      "source": {
+        "repository": "samtools/hts-specs",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.2.tex",
+        "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
+      },
+      "header_syntax": {
+        "start_line": 158,
+        "end_line": 172,
+        "lines": [
+          {
+            "line": 158,
+            "text": "\\subsection{Header line syntax}"
+          },
+          {
+            "line": 159,
+            "text": "The header line names the 8 fixed, mandatory columns. These columns are as follows:"
+          },
+          {
+            "line": 160,
+            "text": ""
+          },
+          {
+            "line": 161,
+            "text": "\\begin{enumerate}"
+          },
+          {
+            "line": 162,
+            "text": "  \\item \\#CHROM"
+          },
+          {
+            "line": 163,
+            "text": "  \\item POS"
+          },
+          {
+            "line": 164,
+            "text": "  \\item ID"
+          },
+          {
+            "line": 165,
+            "text": "  \\item REF"
+          },
+          {
+            "line": 166,
+            "text": "  \\item ALT"
+          },
+          {
+            "line": 167,
+            "text": "  \\item QUAL"
+          },
+          {
+            "line": 168,
+            "text": "  \\item FILTER"
+          },
+          {
+            "line": 169,
+            "text": "  \\item INFO"
+          },
+          {
+            "line": 170,
+            "text": "\\end{enumerate}"
+          },
+          {
+            "line": 171,
+            "text": ""
+          },
+          {
+            "line": 172,
+            "text": "If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number of sample IDs. Duplicate sample IDs are not allowed. The header line is tab-delimited."
+          }
+        ]
+      },
+      "fixed_record_fields": {
+        "start_line": 179,
+        "end_line": 186,
+        "lines": [
+          {
+            "line": 179,
+            "text": "  \\item CHROM - chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header). All entries for a specific CHROM should form a contiguous block within the VCF file. (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 180,
+            "text": "  \\item POS - position: The reference position, with the 1st base having position 1. Positions are sorted numerically, in increasing order, within each reference sequence CHROM.   It is permitted to have multiple records with the same POS. Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig.   (Integer, Required)"
+          },
+          {
+            "line": 181,
+            "text": "  \\item ID - identifier: Semicolon-separated list of unique identifiers where available. If this is a dbSNP variant it is encouraged to use the rs number(s). No identifier should be present in more than one data record. If there is no identifier available, then the missing value should be used. (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 182,
+            "text": "  \\item REF - reference base(s): Each base must be one of A,C,G,T,N (case insensitive). Multiple bases are permitted. The value in the POS field refers to the position of the first base in the String. For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings.  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism. Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required)."
+          },
+          {
+            "line": 183,
+            "text": "  \\item ALT - alternate base(s): Comma separated list of alternate non-reference alleles.  These alleles do not have to be called in any of the samples. Options are base Strings made up of the bases A,C,G,T,N,*, (case insensitive) or an angle-bracketed ID String (``$<$ID$>$'') or a breakend replacement string as described in the section on breakends. The `*' allele is reserved to indicate that the allele is missing due to a upstream deletion. If there are no alternative alleles, then the missing value should be used.  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 184,
+            "text": "  \\item QUAL - quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong). If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant). If unknown, the missing value should be specified. (Numeric)"
+          },
+          {
+            "line": 185,
+            "text": "  \\item FILTER - filter status: PASS if this position has passed all filters, i.e., a call is made at this position. Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples. `0' is reserved and should not be used as a filter String. If filters have not been applied, then this field should be set to the missing value. (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 186,
+            "text": "  \\item INFO - additional information: (String, no whitespace, semicolons, or equals-signs permitted; commas are permitted only as delimiters for lists of values) INFO fields are encoded as a semicolon-separated series of short keys with optional values in the format: $<$key$>$=$<$data$>$[,data]. If no keys are present, the missing value must be used. Arbitrary keys are permitted, although the following sub-fields are reserved (albeit optional):"
+          }
+        ]
+      },
+      "reserved_info": {
+        "representation": "enumerated prose list",
+        "start_line": 188,
+        "end_line": 205,
+        "lines": [
+          {
+            "line": 188,
+            "text": "  \\item AA : ancestral allele"
+          },
+          {
+            "line": 189,
+            "text": "  \\item AC : allele count in genotypes, for each ALT allele, in the same order as listed"
+          },
+          {
+            "line": 190,
+            "text": "  \\item AF : allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes"
+          },
+          {
+            "line": 191,
+            "text": "  \\item AN : total number of alleles in called genotypes"
+          },
+          {
+            "line": 192,
+            "text": "  \\item BQ : RMS base quality at this position"
+          },
+          {
+            "line": 193,
+            "text": "  \\item CIGAR : cigar string describing how to align an alternate allele to the reference allele"
+          },
+          {
+            "line": 194,
+            "text": "  \\item DB : dbSNP membership"
+          },
+          {
+            "line": 195,
+            "text": "  \\item DP : combined depth across samples, e.g.\\ DP=154"
+          },
+          {
+            "line": 196,
+            "text": "  \\item END : end position of the variant described in this record (for use with symbolic alleles)"
+          },
+          {
+            "line": 197,
+            "text": "  \\item H2 : membership in hapmap2"
+          },
+          {
+            "line": 198,
+            "text": "  \\item H3 : membership in hapmap3"
+          },
+          {
+            "line": 199,
+            "text": "  \\item MQ : RMS mapping quality, e.g.\\ MQ=52"
+          },
+          {
+            "line": 200,
+            "text": "  \\item MQ0 : Number of MAPQ == 0 reads covering this record"
+          },
+          {
+            "line": 201,
+            "text": "  \\item NS : Number of samples with data"
+          },
+          {
+            "line": 202,
+            "text": "  \\item SB : strand bias at this position"
+          },
+          {
+            "line": 203,
+            "text": "  \\item SOMATIC : indicates that the record is a somatic mutation, for cancer genomics"
+          },
+          {
+            "line": 204,
+            "text": "  \\item VALIDATED : validated by follow-up experiment"
+          },
+          {
+            "line": 205,
+            "text": "  \\item 1000G : membership in 1000 Genomes"
+          }
+        ]
+      },
+      "reserved_format": {
+        "representation": "enumerated prose list",
+        "start_line": 215,
+        "end_line": 233,
+        "lines": [
+          {
+            "line": 215,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 216,
+            "text": "\\renewcommand{\\labelitemii}{$\\circ$}"
+          },
+          {
+            "line": 217,
+            "text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 218,
+            "text": "\t\\begin{itemize}"
+          },
+          {
+            "line": 219,
+            "text": "\t  \\item $/$ : genotype unphased"
+          },
+          {
+            "line": 220,
+            "text": "\t  \\item $\\mid$ : genotype phased"
+          },
+          {
+            "line": 221,
+            "text": "\t\\end{itemize}"
+          },
+          {
+            "line": 222,
+            "text": "  \\item DP : read depth at this position for this sample (Integer)"
+          },
+          {
+            "line": 223,
+            "text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 224,
+            "text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+          },
+          {
+            "line": 225,
+            "text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+          },
+          {
+            "line": 226,
+            "text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+          },
+          {
+            "line": 227,
+            "text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+          },
+          {
+            "line": 228,
+            "text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+          },
+          {
+            "line": 229,
+            "text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+          },
+          {
+            "line": 230,
+            "text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+          },
+          {
+            "line": 231,
+            "text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+          },
+          {
+            "line": 232,
+            "text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+          },
+          {
+            "line": 233,
+            "text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+          }
+        ]
+      },
+      "format_semantics": {
+        "start_line": 211,
+        "end_line": 238,
+        "lines": [
+          {
+            "line": 211,
+            "text": "If genotype information is present, then the same types of data must be present for all samples. First a FORMAT field is given specifying the data types and order (colon-separated alphanumeric String). This is followed by one field per sample, with the colon-separated data in this field corresponding to the types specified in the format. The first sub-field must always be the genotype (GT) if it is present.  There are no required sub-fields."
+          },
+          {
+            "line": 212,
+            "text": ""
+          },
+          {
+            "line": 213,
+            "text": "As with the INFO field, there are several common, reserved keywords that are standards across the community:"
+          },
+          {
+            "line": 214,
+            "text": ""
+          },
+          {
+            "line": 215,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 216,
+            "text": "\\renewcommand{\\labelitemii}{$\\circ$}"
+          },
+          {
+            "line": 217,
+            "text": "  \\item GT : genotype, encoded as allele values separated by either of $/$ or $\\mid$. The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on. For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc. For haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, only one allele value should be given; a triploid call might look like $0/0/1$. If a call cannot be made for a sample at a given locus, `.' should be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype). The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 218,
+            "text": "\t\\begin{itemize}"
+          },
+          {
+            "line": 219,
+            "text": "\t  \\item $/$ : genotype unphased"
+          },
+          {
+            "line": 220,
+            "text": "\t  \\item $\\mid$ : genotype phased"
+          },
+          {
+            "line": 221,
+            "text": "\t\\end{itemize}"
+          },
+          {
+            "line": 222,
+            "text": "  \\item DP : read depth at this position for this sample (Integer)"
+          },
+          {
+            "line": 223,
+            "text": "  \\item FT : sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field). Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied. These values should be described in the meta-information in the same way as FILTERs (String, no whitespace or semicolons permitted)"
+          },
+          {
+            "line": 224,
+            "text": "  \\item GL : genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields. In presence of the GT field the same ploidy is expected and the canonical order is used; without GT field, diploidy is assumed. If A is the allele in REF and B,C,... are the alleles as ordered in ALT, the ordering of genotypes for the likelihoods is given by: F(j/k) = (k*(k+1)/2)+j.  In other words, for biallelic sites the ordering is: AA,AB,BB; for triallelic sites the ordering is: AA,AB,BB,AC,BC,CC, etc.  For example: GT:GL 0/1:-323.03,-99.29,-802.53 (Floats)"
+          },
+          {
+            "line": 225,
+            "text": "  \\item GLE : genotype likelihoods of heterogeneous ploidy, used in presence of uncertain copy number. For example: GLE=0:-75.22,1:-223.42,0/0:-323.03,1/0:-99.29,1/1:-802.53 (String)"
+          },
+          {
+            "line": 226,
+            "text": "  \\item PL : the phred-scaled genotype likelihoods rounded to the closest integer (and otherwise defined precisely as the GL field) (Integers)"
+          },
+          {
+            "line": 227,
+            "text": "  \\item GP : the phred-scaled genotype posterior probabilities (and otherwise defined precisely as the GL field); intended to store imputed genotype probabilities (Floats)"
+          },
+          {
+            "line": 228,
+            "text": "  \\item GQ : conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant) (Integer)"
+          },
+          {
+            "line": 229,
+            "text": "  \\item HQ : haplotype qualities, two comma separated phred qualities (Integers)"
+          },
+          {
+            "line": 230,
+            "text": "  \\item PS : phase set.  A phase set is defined as a set of phased genotypes to which this genotype belongs.  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set.  A phase set specifies multi-marker haplotypes for the phased genotypes in the set.  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set.  If the genotype in the GT field is unphased, the corresponding PS field is ignored.  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required). (Non-negative 32-bit Integer)"
+          },
+          {
+            "line": 231,
+            "text": "  \\item PQ : phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set).  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality. (Integer)"
+          },
+          {
+            "line": 232,
+            "text": "  \\item EC : comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field (typically used in association analyses) (Integers)"
+          },
+          {
+            "line": 233,
+            "text": "  \\item MQ : RMS mapping quality, similar to the version in the INFO field. (Integer)"
+          },
+          {
+            "line": 234,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 235,
+            "text": ""
+          },
+          {
+            "line": 236,
+            "text": "If any of the fields is missing, it is replaced with the missing value. For example if the FORMAT is GT:GQ:DP:HQ then $0\\mid0:.:23:23,34$ indicates that GQ is missing. Trailing fields can be dropped (with the exception of the GT field, which should always be present if specified in the FORMAT field)."
+          },
+          {
+            "line": 237,
+            "text": ""
+          },
+          {
+            "line": 238,
+            "text": "See below for additional genotype fields used to encode structural variants. Additional Genotype fields can be defined in the meta-information. However, software support for such fields is not guaranteed."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 174,
+        "end_line": 177,
+        "lines": [
+          {
+            "line": 174,
+            "text": "\\subsection{Data lines}"
+          },
+          {
+            "line": 175,
+            "text": "\\subsubsection{Fixed fields}"
+          },
+          {
+            "line": 176,
+            "text": "There are 8 fixed fields per record. All data lines are tab-delimited. In all cases, missing values are specified with a dot (`.'). Fixed fields are:"
+          },
+          {
+            "line": 177,
+            "text": ""
+          }
+        ]
+      }
+    },
+    {
+      "version": "VCFv4.3",
+      "source": {
+        "repository": "samtools/hts-specs",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.3.tex",
+        "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
+      },
+      "header_syntax": {
+        "start_line": 297,
+        "end_line": 314,
+        "lines": [
+          {
+            "line": 297,
+            "text": "\\subsection{Header line syntax}"
+          },
+          {
+            "line": 298,
+            "text": "\\label{header-line}"
+          },
+          {
+            "line": 299,
+            "text": "The header line names the 8 fixed, mandatory columns. These columns are as follows:"
+          },
+          {
+            "line": 300,
+            "text": "\\begin{center}"
+          },
+          {
+            "line": 301,
+            "text": "       \\#CHROM"
+          },
+          {
+            "line": 302,
+            "text": "\\qquad POS"
+          },
+          {
+            "line": 303,
+            "text": "\\qquad ID"
+          },
+          {
+            "line": 304,
+            "text": "\\qquad REF"
+          },
+          {
+            "line": 305,
+            "text": "\\qquad ALT"
+          },
+          {
+            "line": 306,
+            "text": "\\qquad QUAL"
+          },
+          {
+            "line": 307,
+            "text": "\\qquad FILTER"
+          },
+          {
+            "line": 308,
+            "text": "\\qquad INFO"
+          },
+          {
+            "line": 309,
+            "text": "\\end{center}"
+          },
+          {
+            "line": 310,
+            "text": "\\noindent"
+          },
+          {
+            "line": 311,
+            "text": "If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number of sample IDs."
+          },
+          {
+            "line": 312,
+            "text": "Duplicate sample IDs are not allowed."
+          },
+          {
+            "line": 313,
+            "text": "The header line is tab-delimited and there must be no tab characters at the end of the line."
+          },
+          {
+            "line": 314,
+            "text": ""
+          }
+        ]
+      },
+      "fixed_record_fields": {
+        "start_line": 326,
+        "end_line": 375,
+        "lines": [
+          {
+            "line": 326,
+            "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+          },
+          {
+            "line": 327,
+            "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+          },
+          {
+            "line": 328,
+            "text": "  (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 329,
+            "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+          },
+          {
+            "line": 330,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          },
+          {
+            "line": 331,
+            "text": "  It is permitted to have multiple records with the same POS."
+          },
+          {
+            "line": 332,
+            "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+          },
+          {
+            "line": 333,
+            "text": "  (Integer, Required)"
+          },
+          {
+            "line": 334,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 335,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 336,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 337,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 338,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 339,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 340,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 341,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 342,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the event (which must be reflected in the POS field), unless the event occurs at position 1 on the contig in which case it must include the base after the event; \\pagebreak[1] this padding base is not required (although it is permitted) for e.g.\\ complex substitutions or other events where all alleles have at least one base represented in their Strings."
+          },
+          {
+            "line": 343,
+            "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+          },
+          {
+            "line": 344,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele Strings. (String, Required)."
+          },
+          {
+            "line": 345,
+            "text": ""
+          },
+          {
+            "line": 346,
+            "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+          },
+          {
+            "line": 347,
+            "text": ""
+          },
+          {
+            "line": 348,
+            "text": "  \\item ALT --- alternate base(s): Comma-separated list of alternate non-reference alleles."
+          },
+          {
+            "line": 349,
+            "text": "  These alleles do not have to be called in any of the samples."
+          },
+          {
+            "line": 350,
+            "text": "  Options are base Strings made up of the bases A,C,G,T,N (case insensitive) or the `*' symbol (allele missing due to overlapping deletion) or a MISSING value `.' (no variant) or an angle-bracketed ID String (``$<$ID$>$'') or a breakend replacement string as described in Section \\ref{Breakends}."
+          },
+          {
+            "line": 351,
+            "text": "  If there are no alternative alleles, then the MISSING value must be used."
+          },
+          {
+            "line": 352,
+            "text": "  In other words, the ALT field must be a symbolic allele, or a breakend replacement string, or match the regular expression \\texttt{\\^{}([ACGTNacgtn]+|\\string\\*|\\string\\.)\\$}."
+          },
+          {
+            "line": 353,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+          },
+          {
+            "line": 354,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 355,
+            "text": "  \\item QUAL --- quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong)."
+          },
+          {
+            "line": 356,
+            "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+          },
+          {
+            "line": 357,
+            "text": "  If unknown, the MISSING value must be specified. (Float)"
+          },
+          {
+            "line": 358,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 359,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 360,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          },
+          {
+            "line": 361,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 362,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 363,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          },
+          {
+            "line": 364,
+            "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+          },
+          {
+            "line": 365,
+            "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+          },
+          {
+            "line": 366,
+            "text": "  Space characters are allowed in values."
+          },
+          {
+            "line": 367,
+            "text": ""
+          },
+          {
+            "line": 368,
+            "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+          },
+          {
+            "line": 369,
+            "text": "  Duplicate keys are not allowed."
+          },
+          {
+            "line": 370,
+            "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+          },
+          {
+            "line": 371,
+            "text": ""
+          },
+          {
+            "line": 372,
+            "text": "  The exact format of each INFO key should be specified in the meta-information (as described above)."
+          },
+          {
+            "line": 373,
+            "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+          },
+          {
+            "line": 374,
+            "text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2)."
+          },
+          {
+            "line": 375,
+            "text": "  See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants."
+          }
+        ]
+      },
+      "reserved_info": {
+        "representation": "reserved INFO table",
+        "start_line": 395,
+        "end_line": 415,
+        "lines": [
+          {
+            "line": 395,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 396,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 397,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 398,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 399,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 400,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 401,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 402,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 403,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 404,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 405,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 406,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "line": 407,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 408,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 409,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 410,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 411,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 412,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 413,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 414,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 415,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ],
+        "rows": [
+          {
+            "line": 395,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 396,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 397,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 398,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 399,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 400,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 401,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 402,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 403,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 404,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 405,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 406,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "line": 407,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 408,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 409,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 410,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 411,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 412,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 413,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 414,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 415,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ]
+      },
+      "reserved_format": {
+        "representation": "reserved FORMAT table",
+        "start_line": 462,
+        "end_line": 477,
+        "lines": [
+          {
+            "line": 462,
+            "text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 463,
+            "text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 464,
+            "text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 465,
+            "text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 466,
+            "text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 467,
+            "text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 468,
+            "text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 469,
+            "text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 470,
+            "text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 471,
+            "text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 472,
+            "text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 473,
+            "text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 474,
+            "text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 475,
+            "text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 476,
+            "text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 477,
+            "text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          }
+        ],
+        "rows": [
+          {
+            "line": 462,
+            "text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 463,
+            "text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 464,
+            "text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 465,
+            "text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 466,
+            "text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 467,
+            "text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 468,
+            "text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 469,
+            "text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 470,
+            "text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 471,
+            "text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 472,
+            "text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 473,
+            "text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 474,
+            "text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 475,
+            "text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 476,
+            "text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 477,
+            "text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          }
+        ]
+      },
+      "format_semantics": {
+        "start_line": 482,
+        "end_line": 565,
+        "lines": [
+          {
+            "line": 482,
+            "text": "  \\item AD, ADF, ADR (Integer): Per-sample read depths for each allele; total (AD), on the forward (ADF) and the reverse (ADR) strand."
+          },
+          {
+            "line": 483,
+            "text": "  \\item DP (Integer): Read depth at this position for this sample."
+          },
+          {
+            "line": 484,
+            "text": "  \\item EC (Integer): Comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field."
+          },
+          {
+            "line": 485,
+            "text": "  Typically used in association analyses."
+          },
+          {
+            "line": 486,
+            "text": "  \\item FT (String): Sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field)."
+          },
+          {
+            "line": 487,
+            "text": "  Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied."
+          },
+          {
+            "line": 488,
+            "text": "  These values should be described in the meta-information in the same way as FILTERs."
+          },
+          {
+            "line": 489,
+            "text": "  No whitespace or semicolons permitted."
+          },
+          {
+            "line": 490,
+            "text": "  \\item GQ (Integer): Conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant)."
+          },
+          {
+            "line": 491,
+            "text": "  \\item GP (Float): Genotype posterior probabilities in the range 0 to 1 using the same ordering as the GL field; one use can be to store imputed genotype probabilities."
+          },
+          {
+            "line": 492,
+            "text": "  \\item GT (String): Genotype, encoded as allele values separated by either of $/$ or $\\mid$."
+          },
+          {
+            "line": 493,
+            "text": "  The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on."
+          },
+          {
+            "line": 494,
+            "text": "  For diploid calls examples could be $0/1$, $1\\mid0$, or $1/2$, etc."
+          },
+          {
+            "line": 495,
+            "text": "  Haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondrion, are indicated by having only one allele value."
+          },
+          {
+            "line": 496,
+            "text": "  A triploid call might look like $0/0/1$."
+          },
+          {
+            "line": 497,
+            "text": "  If a call cannot be made for a sample at a given locus, `.' must be specified for each missing allele in the GT field (for example `$./.$' for a diploid genotype and `.' for haploid genotype)."
+          },
+          {
+            "line": 498,
+            "text": "  The meanings of the separators are as follows (see the PS field below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 499,
+            "text": "\t\\begin{itemize}"
+          },
+          {
+            "line": 500,
+            "text": "\t  \\item $/$ : genotype unphased"
+          },
+          {
+            "line": 501,
+            "text": "\t  \\item $\\mid$ : genotype phased"
+          },
+          {
+            "line": 502,
+            "text": "\t\\end{itemize}"
+          },
+          {
+            "line": 503,
+            "text": ""
+          },
+          {
+            "line": 504,
+            "text": "  \\item GL (Float): Genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields."
+          },
+          {
+            "line": 505,
+            "text": "  In presence of the GT field the same ploidy is expected; without GT field, diploidy is assumed."
+          },
+          {
+            "line": 506,
+            "text": ""
+          },
+          {
+            "line": 507,
+            "text": "  \\textsc{Genotype Ordering.} \\label{genotype-fields:genotype-ordering}"
+          },
+          {
+            "line": 508,
+            "text": "  In general case of ploidy P and N alternate alleles (0 is the REF and $1\\ldots N$ the alternate alleles), the ordering of genotypes for the likelihoods can be expressed by the following pseudocode with as many nested loops as ploidy:"
+          },
+          {
+            "line": 509,
+            "text": "  \\footnote{Note that we use inclusive \\texttt{for} loop boundaries.}"
+          },
+          {
+            "line": 510,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 511,
+            "text": "  \\small"
+          },
+          {
+            "line": 512,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 513,
+            "text": "  for $a_P = 0\\ldots N$"
+          },
+          {
+            "line": 514,
+            "text": "    for $a_{P-1} = 0\\ldots a_P$"
+          },
+          {
+            "line": 515,
+            "text": "        $\\ldots$"
+          },
+          {
+            "line": 516,
+            "text": "        for $a_1 = 0\\ldots a_{2}$"
+          },
+          {
+            "line": 517,
+            "text": "            println $a_1 a_2  \\ldots  a_P$"
+          },
+          {
+            "line": 518,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 519,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 520,
+            "text": ""
+          },
+          {
+            "line": 521,
+            "text": "  Alternatively, the same can be achieved recursively with the following pseudocode:"
+          },
+          {
+            "line": 522,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 523,
+            "text": "  \\small"
+          },
+          {
+            "line": 524,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 525,
+            "text": "    Ordering($P$, $N$, suffix=\"\"):"
+          },
+          {
+            "line": 526,
+            "text": "        for $a$ in $0\\ldots N$"
+          },
+          {
+            "line": 527,
+            "text": "            if ($P == 1$) println str($a$) + suffix"
+          },
+          {
+            "line": 528,
+            "text": "            if ($P > 1$) Ordering($P$-1, $a$, str($a$) + suffix)"
+          },
+          {
+            "line": 529,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 530,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 531,
+            "text": ""
+          },
+          {
+            "line": 532,
+            "text": "  Conversely, the index of the value corresponding to the genotype $k_1\\le k_2\\le\\ldots\\le k_P$ is"
+          },
+          {
+            "line": 533,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 534,
+            "text": "  \\small"
+          },
+          {
+            "line": 535,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 536,
+            "text": "    Index($k_1/k_2/\\ldots/k_P$) = $\\sum_{m=1}^{P} {k_m + m - 1 \\choose m}$"
+          },
+          {
+            "line": 537,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 538,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 539,
+            "text": ""
+          },
+          {
+            "line": 540,
+            "text": "  Examples:"
+          },
+          {
+            "line": 541,
+            "text": "    \\begin{itemize}"
+          },
+          {
+            "line": 542,
+            "text": "    \\item for $P$=2 and $N$=1, the ordering is 00,01,11"
+          },
+          {
+            "line": 543,
+            "text": "    \\item for $P$=2 and $N$=2, the ordering is 00,01,11,02,12,22"
+          },
+          {
+            "line": 544,
+            "text": "    \\item for $P$=3 and $N$=2, the ordering is 000, 001, 011, 111, 002, 012, 112, 022, 122, 222"
+          },
+          {
+            "line": 545,
+            "text": "    \\item for $P$=1, the index of the genotype $a$ is $a$"
+          },
+          {
+            "line": 546,
+            "text": "    \\item for $P$=2, the index of the genotype ``$a/b$'', where $a\\le b$, is $b (b+1)/2 + a$"
+          },
+          {
+            "line": 547,
+            "text": "    \\item for $P$=2 and arbitrary $N$, the ordering can be easily derived from a triangular matrix"
+          },
+          {
+            "line": 548,
+            "text": "            \\newline"
+          },
+          {
+            "line": 549,
+            "text": "            \\hbox{\\hskip5em\\footnotesize"
+          },
+          {
+            "line": 550,
+            "text": "            \\begin{tabular}{l|llll}"
+          },
+          {
+            "line": 551,
+            "text": "               $b\\setminus a$ & 0 & 1 & 2 & 3 \\\\ \\hline \\\\[-0.5em]"
+          },
+          {
+            "line": 552,
+            "text": "               0   & 0 &   &   &   \\\\"
+          },
+          {
+            "line": 553,
+            "text": "               1   & 1 & 2 &   &   \\\\"
+          },
+          {
+            "line": 554,
+            "text": "               2   & 3 & 4 & 5 &   \\\\"
+          },
+          {
+            "line": 555,
+            "text": "               3   & 6 & 7 & 8 & 9 "
+          },
+          {
+            "line": 556,
+            "text": "            \\end{tabular}"
+          },
+          {
+            "line": 557,
+            "text": "            }"
+          },
+          {
+            "line": 558,
+            "text": "    \\end{itemize}"
+          },
+          {
+            "line": 559,
+            "text": ""
+          },
+          {
+            "line": 560,
+            "text": "  \\item HQ (Integer): Haplotype qualities, two comma separated phred qualities."
+          },
+          {
+            "line": 561,
+            "text": "  \\item MQ (Integer): RMS mapping quality, similar to the version in the INFO field."
+          },
+          {
+            "line": 562,
+            "text": "  \\item PL (Integer): The phred-scaled genotype likelihoods rounded to the closest integer, and otherwise defined in the same way as the GL field."
+          },
+          {
+            "line": 563,
+            "text": "  \\item PP (Integer): The phred-scaled genotype posterior probabilities rounded to the closest integer, and otherwise defined in the same way as the GP field."
+          },
+          {
+            "line": 564,
+            "text": "  \\item PQ (Integer): Phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set)."
+          },
+          {
+            "line": 565,
+            "text": "  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 315,
+        "end_line": 319,
+        "lines": [
+          {
+            "line": 315,
+            "text": "\\subsection{Data lines}"
+          },
+          {
+            "line": 316,
+            "text": "\\label{data-lines}"
+          },
+          {
+            "line": 317,
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
+          },
+          {
+            "line": 318,
+            "text": "The last data line must end with a line separator."
+          },
+          {
+            "line": 319,
+            "text": "In all cases, missing values are specified with a dot (`.')."
+          }
+        ]
+      }
+    },
+    {
+      "version": "VCFv4.4",
+      "source": {
+        "repository": "samtools/hts-specs",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.4.tex",
+        "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
+      },
+      "header_syntax": {
+        "start_line": 311,
+        "end_line": 328,
+        "lines": [
+          {
+            "line": 311,
+            "text": "\\subsection{Header line syntax}"
+          },
+          {
+            "line": 312,
+            "text": "\\label{header-line}"
+          },
+          {
+            "line": 313,
+            "text": "The header line names the 8 fixed, mandatory columns. These columns are as follows:"
+          },
+          {
+            "line": 314,
+            "text": "\\begin{center}"
+          },
+          {
+            "line": 315,
+            "text": "       \\#CHROM"
+          },
+          {
+            "line": 316,
+            "text": "\\qquad POS"
+          },
+          {
+            "line": 317,
+            "text": "\\qquad ID"
+          },
+          {
+            "line": 318,
+            "text": "\\qquad REF"
+          },
+          {
+            "line": 319,
+            "text": "\\qquad ALT"
+          },
+          {
+            "line": 320,
+            "text": "\\qquad QUAL"
+          },
+          {
+            "line": 321,
+            "text": "\\qquad FILTER"
+          },
+          {
+            "line": 322,
+            "text": "\\qquad INFO"
+          },
+          {
+            "line": 323,
+            "text": "\\end{center}"
+          },
+          {
+            "line": 324,
+            "text": "\\noindent"
+          },
+          {
+            "line": 325,
+            "text": "If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number of sample IDs."
+          },
+          {
+            "line": 326,
+            "text": "Duplicate sample IDs are not allowed."
+          },
+          {
+            "line": 327,
+            "text": "The header line is tab-delimited and there must be no tab characters at the end of the line."
+          },
+          {
+            "line": 328,
+            "text": ""
+          }
+        ]
+      },
+      "fixed_record_fields": {
+        "start_line": 341,
+        "end_line": 392,
+        "lines": [
+          {
+            "line": 341,
+            "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+          },
+          {
+            "line": 342,
+            "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+          },
+          {
+            "line": 343,
+            "text": "  (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 344,
+            "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+          },
+          {
+            "line": 345,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          },
+          {
+            "line": 346,
+            "text": "  It is permitted to have multiple records with the same POS."
+          },
+          {
+            "line": 347,
+            "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+          },
+          {
+            "line": 348,
+            "text": "  (Integer, Required)"
+          },
+          {
+            "line": 349,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 350,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 351,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 352,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 353,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 354,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 355,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 356,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 357,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+          },
+          {
+            "line": 358,
+            "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+          },
+          {
+            "line": 359,
+            "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+          },
+          {
+            "line": 360,
+            "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+          },
+          {
+            "line": 361,
+            "text": ""
+          },
+          {
+            "line": 362,
+            "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+          },
+          {
+            "line": 363,
+            "text": ""
+          },
+          {
+            "line": 364,
+            "text": "  \\item ALT --- alternate base(s): Comma-separated list of alternate non-reference alleles."
+          },
+          {
+            "line": 365,
+            "text": "  \\label{fixed-fields-alt}"
+          },
+          {
+            "line": 366,
+            "text": "  These alleles do not have to be called in any of the samples."
+          },
+          {
+            "line": 367,
+            "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+          },
+          {
+            "line": 368,
+            "text": "  If there are no alternative alleles, then the MISSING value must be used."
+          },
+          {
+            "line": 369,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+          },
+          {
+            "line": 370,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 371,
+            "text": "  \\item QUAL --- quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong)."
+          },
+          {
+            "line": 372,
+            "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+          },
+          {
+            "line": 373,
+            "text": "  If unknown, the MISSING value must be specified. (Float)"
+          },
+          {
+            "line": 374,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 375,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 376,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          },
+          {
+            "line": 377,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 378,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 379,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          },
+          {
+            "line": 380,
+            "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+          },
+          {
+            "line": 381,
+            "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+          },
+          {
+            "line": 382,
+            "text": "  Space characters are allowed in values."
+          },
+          {
+            "line": 383,
+            "text": ""
+          },
+          {
+            "line": 384,
+            "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+          },
+          {
+            "line": 385,
+            "text": "  Duplicate keys are not allowed."
+          },
+          {
+            "line": 386,
+            "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+          },
+          {
+            "line": 387,
+            "text": ""
+          },
+          {
+            "line": 388,
+            "text": "  The exact format of each INFO key should be specified in the meta-information (as described above)."
+          },
+          {
+            "line": 389,
+            "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+          },
+          {
+            "line": 390,
+            "text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2)."
+          },
+          {
+            "line": 391,
+            "text": "  See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants."
+          },
+          {
+            "line": 392,
+            "text": "\\end{enumerate}"
+          }
+        ]
+      },
+      "reserved_info": {
+        "representation": "reserved INFO table",
+        "start_line": 411,
+        "end_line": 431,
+        "lines": [
+          {
+            "line": 411,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 412,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 413,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 414,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 415,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 416,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 417,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 418,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 419,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 420,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 421,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 422,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "line": 423,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 424,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 425,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 426,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 427,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 428,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 429,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 430,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 431,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ],
+        "rows": [
+          {
+            "line": 411,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 412,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 413,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 414,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 415,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 416,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 417,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 418,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 419,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 420,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 421,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 422,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& End position on CHROM (used with symbolic alleles; see below) \\\\"
+          },
+          {
+            "line": 423,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 424,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 425,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 426,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 427,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 428,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 429,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 430,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 431,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ]
+      },
+      "reserved_format": {
+        "representation": "reserved FORMAT table",
+        "start_line": 480,
+        "end_line": 499,
+        "lines": [
+          {
+            "line": 480,
+            "text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 481,
+            "text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 482,
+            "text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 483,
+            "text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 484,
+            "text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 485,
+            "text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 486,
+            "text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 487,
+            "text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 488,
+            "text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 489,
+            "text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 490,
+            "text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 491,
+            "text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 492,
+            "text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 493,
+            "text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 494,
+            "text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 495,
+            "text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          },
+          {
+            "line": 496,
+            "text": "      PSL\t\t& P\t\t& String\t& Phase set list \\\\"
+          },
+          {
+            "line": 497,
+            "text": "      PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\"
+          },
+          {
+            "line": 498,
+            "text": "      PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\"
+          },
+          {
+            "line": 499,
+            "text": ""
+          }
+        ],
+        "rows": [
+          {
+            "line": 480,
+            "text": "      AD\t\t& R\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 481,
+            "text": "      ADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 482,
+            "text": "      ADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 483,
+            "text": "      DP\t\t& 1\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 484,
+            "text": "      EC\t\t& A\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 485,
+            "text": "      FT\t\t& 1\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 486,
+            "text": "      GL\t\t& G\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 487,
+            "text": "      GP\t\t& G\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 488,
+            "text": "      GQ\t\t& 1\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 489,
+            "text": "      GT\t\t& 1\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 490,
+            "text": "      HQ\t\t& 2\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 491,
+            "text": "      MQ\t\t& 1\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 492,
+            "text": "      PL\t\t& G\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 493,
+            "text": "      PP\t\t& G\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 494,
+            "text": "      PQ\t\t& 1\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 495,
+            "text": "      PS\t\t& 1\t\t& Integer\t& Phase set \\\\"
+          },
+          {
+            "line": 496,
+            "text": "      PSL\t\t& P\t\t& String\t& Phase set list \\\\"
+          },
+          {
+            "line": 497,
+            "text": "      PSO\t\t& P\t\t& Integer\t& Phase set list ordinal \\\\"
+          },
+          {
+            "line": 498,
+            "text": "      PSQ\t\t& P\t\t& Integer\t& Phase set list quality \\\\"
+          }
+        ]
+      },
+      "format_semantics": {
+        "start_line": 504,
+        "end_line": 597,
+        "lines": [
+          {
+            "line": 504,
+            "text": "  \\item AD, ADF, ADR (Integer): Per-sample read depths for each allele; total (AD), on the forward (ADF) and the reverse (ADR) strand."
+          },
+          {
+            "line": 505,
+            "text": "  \\item DP (Integer): Read depth at this position for this sample."
+          },
+          {
+            "line": 506,
+            "text": "  \\item EC (Integer): Comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field."
+          },
+          {
+            "line": 507,
+            "text": "  Typically used in association analyses."
+          },
+          {
+            "line": 508,
+            "text": "  \\item FT (String): Sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field)."
+          },
+          {
+            "line": 509,
+            "text": "  Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied."
+          },
+          {
+            "line": 510,
+            "text": "  These values should be described in the meta-information in the same way as FILTERs."
+          },
+          {
+            "line": 511,
+            "text": "  No whitespace or semicolons permitted."
+          },
+          {
+            "line": 512,
+            "text": "  \\item GQ (Integer): Conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant)."
+          },
+          {
+            "line": 513,
+            "text": "  \\item GP (Float): Genotype posterior probabilities in the range 0 to 1 using the same ordering as the GL field; one use can be to store imputed genotype probabilities."
+          },
+          {
+            "line": 514,
+            "text": "  \\item GT (String): Genotype, encoded as allele value preceded by either of $/$ or $\\mid$ depending on whether that allele is considered phased. "
+          },
+          {
+            "line": 515,
+            "text": "    The first phasing indicator may be omitted and is implicitly defined as $/$ if any phasing indicators are $/$ and $\\mid$ otherwise."
+          },
+          {
+            "line": 516,
+            "text": "    The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on."
+          },
+          {
+            "line": 517,
+            "text": "    For diploid calls examples could be $0/1$, $1\\mid0$, $/0/1$, or $1/2$, etc."
+          },
+          {
+            "line": 518,
+            "text": "    Haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondria, should be indicated by having only one allele value."
+          },
+          {
+            "line": 519,
+            "text": "    A triploid call might look like $0/0/1$, and a partially phased triploid call could be $|0/1/2$ to indicate that the first allele is phased with another variant in the VCF."
+          },
+          {
+            "line": 520,
+            "text": "    If a call cannot be made for a sample at a given locus, `$.$' must be specified for each missing allele in the {\\tt GT} field (for example `$./.$' for a diploid genotype and `$.$' for haploid genotype)."
+          },
+          {
+            "line": 521,
+            "text": "    The meanings of the phasing indicators are as follows (see the {\\tt PS} and {\\tt PSL} fields below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 522,
+            "text": "    \\begin{itemize}"
+          },
+          {
+            "line": 523,
+            "text": "      \\item $/$ : allele is unphased"
+          },
+          {
+            "line": 524,
+            "text": "      \\item $\\mid$ : allele is phased (according to the phase-set indicated in {\\tt PS} or {\\tt PSL})"
+          },
+          {
+            "line": 525,
+            "text": "    \\end{itemize}"
+          },
+          {
+            "line": 526,
+            "text": ""
+          },
+          {
+            "line": 527,
+            "text": "    For symbolic structural variant alleles, GT=0 indicates the absence of any of the ALT symbolic structural variants defined in the record."
+          },
+          {
+            "line": 528,
+            "text": "    Implementer should note that merging a VCF record containing only symbolic structural variant ALT alleles with a record containing other alleles will result a change of the meaning of the GT=0 haplotypes from the record containing only symbolic SVs."
+          },
+          {
+            "line": 529,
+            "text": ""
+          },
+          {
+            "line": 530,
+            "text": "  \\item GL (Float): Genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields."
+          },
+          {
+            "line": 531,
+            "text": "  In presence of the GT field the same ploidy is expected; without GT field, diploidy is assumed."
+          },
+          {
+            "line": 532,
+            "text": ""
+          },
+          {
+            "line": 533,
+            "text": "  \\textsc{Genotype Ordering.} \\label{genotype-fields:genotype-ordering}"
+          },
+          {
+            "line": 534,
+            "text": "  In general case of ploidy P and N alternate alleles (0 is the REF and $1\\ldots N$ the alternate alleles), the ordering of genotypes for the likelihoods can be expressed by the following pseudocode with as many nested loops as ploidy:"
+          },
+          {
+            "line": 535,
+            "text": "  \\footnote{Note that we use inclusive \\texttt{for} loop boundaries.}"
+          },
+          {
+            "line": 536,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 537,
+            "text": "  \\small"
+          },
+          {
+            "line": 538,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 539,
+            "text": "  for $a_P = 0\\ldots N$"
+          },
+          {
+            "line": 540,
+            "text": "    for $a_{P-1} = 0\\ldots a_P$"
+          },
+          {
+            "line": 541,
+            "text": "        $\\ldots$"
+          },
+          {
+            "line": 542,
+            "text": "        for $a_1 = 0\\ldots a_{2}$"
+          },
+          {
+            "line": 543,
+            "text": "            println $a_1 a_2  \\ldots  a_P$"
+          },
+          {
+            "line": 544,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 545,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 546,
+            "text": ""
+          },
+          {
+            "line": 547,
+            "text": "  Alternatively, the same can be achieved recursively with the following pseudocode:"
+          },
+          {
+            "line": 548,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 549,
+            "text": "  \\small"
+          },
+          {
+            "line": 550,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 551,
+            "text": "    Ordering($P$, $N$, suffix=\"\"):"
+          },
+          {
+            "line": 552,
+            "text": "        for $a$ in $0\\ldots N$"
+          },
+          {
+            "line": 553,
+            "text": "            if ($P == 1$) println str($a$) + suffix"
+          },
+          {
+            "line": 554,
+            "text": "            if ($P > 1$) Ordering($P$-1, $a$, str($a$) + suffix)"
+          },
+          {
+            "line": 555,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 556,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 557,
+            "text": ""
+          },
+          {
+            "line": 558,
+            "text": "  Conversely, the index of the value corresponding to the genotype $k_1\\le k_2\\le\\ldots\\le k_P$ is"
+          },
+          {
+            "line": 559,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 560,
+            "text": "  \\small"
+          },
+          {
+            "line": 561,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 562,
+            "text": "    Index($k_1/k_2/\\ldots/k_P$) = $\\sum_{m=1}^{P} {k_m + m - 1 \\choose m}$"
+          },
+          {
+            "line": 563,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 564,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 565,
+            "text": ""
+          },
+          {
+            "line": 566,
+            "text": "  Examples:"
+          },
+          {
+            "line": 567,
+            "text": "    \\begin{itemize}"
+          },
+          {
+            "line": 568,
+            "text": "    \\item for $P$=2 and $N$=1, the ordering is 00,01,11"
+          },
+          {
+            "line": 569,
+            "text": "    \\item for $P$=2 and $N$=2, the ordering is 00,01,11,02,12,22"
+          },
+          {
+            "line": 570,
+            "text": "    \\item for $P$=3 and $N$=2, the ordering is 000, 001, 011, 111, 002, 012, 112, 022, 122, 222"
+          },
+          {
+            "line": 571,
+            "text": "    \\item for $P$=1, the index of the genotype $a$ is $a$"
+          },
+          {
+            "line": 572,
+            "text": "    \\item for $P$=2, the index of the genotype ``$a/b$'', where $a\\le b$, is $b (b+1)/2 + a$"
+          },
+          {
+            "line": 573,
+            "text": "    \\item for $P$=2 and arbitrary $N$, the ordering can be easily derived from a triangular matrix"
+          },
+          {
+            "line": 574,
+            "text": "            \\newline"
+          },
+          {
+            "line": 575,
+            "text": "            \\hbox{\\hskip5em\\footnotesize"
+          },
+          {
+            "line": 576,
+            "text": "            \\begin{tabular}{l|llll}"
+          },
+          {
+            "line": 577,
+            "text": "               $b\\setminus a$ & 0 & 1 & 2 & 3 \\\\ \\hline \\\\[-0.5em]"
+          },
+          {
+            "line": 578,
+            "text": "               0   & 0 &   &   &   \\\\"
+          },
+          {
+            "line": 579,
+            "text": "               1   & 1 & 2 &   &   \\\\"
+          },
+          {
+            "line": 580,
+            "text": "               2   & 3 & 4 & 5 &   \\\\"
+          },
+          {
+            "line": 581,
+            "text": "               3   & 6 & 7 & 8 & 9 "
+          },
+          {
+            "line": 582,
+            "text": "            \\end{tabular}"
+          },
+          {
+            "line": 583,
+            "text": "            }"
+          },
+          {
+            "line": 584,
+            "text": "    \\end{itemize}"
+          },
+          {
+            "line": 585,
+            "text": ""
+          },
+          {
+            "line": 586,
+            "text": "  \\item HQ (Integer): Haplotype qualities, two comma separated phred qualities."
+          },
+          {
+            "line": 587,
+            "text": "  \\item MQ (Integer): RMS mapping quality, similar to the version in the INFO field."
+          },
+          {
+            "line": 588,
+            "text": "  \\item PL (Integer): The phred-scaled genotype likelihoods rounded to the closest integer, and otherwise defined in the same way as the GL field."
+          },
+          {
+            "line": 589,
+            "text": "  \\item PP (Integer): The phred-scaled genotype posterior probabilities rounded to the closest integer, and otherwise defined in the same way as the GP field."
+          },
+          {
+            "line": 590,
+            "text": "  \\item PQ (Integer): Phasing quality, the phred-scaled probability that alleles are ordered incorrectly in a heterozygote (against all other members in the phase set)."
+          },
+          {
+            "line": 591,
+            "text": "  We note that we have not yet included the specific measure for precisely defining ``phasing quality''; our intention for now is simply to reserve the PQ tag for future use as a measure of phasing quality."
+          },
+          {
+            "line": 592,
+            "text": "  \\item PS (non-negative 32-bit Integer): Phase set, defined as a set of phased genotypes to which this genotype belongs."
+          },
+          {
+            "line": 593,
+            "text": "  Phased genotypes for an individual that are on the same chromosome and have the same PS value are in the same phased set."
+          },
+          {
+            "line": 594,
+            "text": "  A phase set specifies multi-marker haplotypes for the phased genotypes in the set."
+          },
+          {
+            "line": 595,
+            "text": "  All phased genotypes that do not contain a PS subfield are assumed to belong to the same phased set."
+          },
+          {
+            "line": 596,
+            "text": "  If the genotype in the GT field is unphased, the corresponding PS field is ignored."
+          },
+          {
+            "line": 597,
+            "text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required)."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 329,
+        "end_line": 333,
+        "lines": [
+          {
+            "line": 329,
+            "text": "\\subsection{Data lines}"
+          },
+          {
+            "line": 330,
+            "text": "\\label{data-lines}"
+          },
+          {
+            "line": 331,
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
+          },
+          {
+            "line": 332,
+            "text": "The last data line must end with a line separator."
+          },
+          {
+            "line": 333,
+            "text": "In all cases, missing values are specified with a dot (`.')."
+          }
+        ]
+      }
+    },
+    {
+      "version": "VCFv4.5",
+      "source": {
+        "repository": "samtools/hts-specs",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "file": "VCFv4.5.tex",
+        "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7"
+      },
+      "header_syntax": {
+        "start_line": 360,
+        "end_line": 377,
+        "lines": [
+          {
+            "line": 360,
+            "text": "\\subsection{Header line syntax}"
+          },
+          {
+            "line": 361,
+            "text": "\\label{header-line}"
+          },
+          {
+            "line": 362,
+            "text": "The mandatory header line names the 8 fixed, mandatory columns. These columns are as follows:"
+          },
+          {
+            "line": 363,
+            "text": "\\begin{center}"
+          },
+          {
+            "line": 364,
+            "text": "       \\#CHROM"
+          },
+          {
+            "line": 365,
+            "text": "\\qquad POS"
+          },
+          {
+            "line": 366,
+            "text": "\\qquad ID"
+          },
+          {
+            "line": 367,
+            "text": "\\qquad REF"
+          },
+          {
+            "line": 368,
+            "text": "\\qquad ALT"
+          },
+          {
+            "line": 369,
+            "text": "\\qquad QUAL"
+          },
+          {
+            "line": 370,
+            "text": "\\qquad FILTER"
+          },
+          {
+            "line": 371,
+            "text": "\\qquad INFO"
+          },
+          {
+            "line": 372,
+            "text": "\\end{center}"
+          },
+          {
+            "line": 373,
+            "text": "\\noindent"
+          },
+          {
+            "line": 374,
+            "text": "If genotype data is present in the file, these are followed by a FORMAT column header, then an arbitrary number of sample IDs."
+          },
+          {
+            "line": 375,
+            "text": "Duplicate sample IDs are not allowed."
+          },
+          {
+            "line": 376,
+            "text": "The header line is tab-delimited and there must be no tab characters at the end of the line."
+          },
+          {
+            "line": 377,
+            "text": ""
+          }
+        ]
+      },
+      "fixed_record_fields": {
+        "start_line": 390,
+        "end_line": 441,
+        "lines": [
+          {
+            "line": 390,
+            "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+          },
+          {
+            "line": 391,
+            "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+          },
+          {
+            "line": 392,
+            "text": "  (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 393,
+            "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+          },
+          {
+            "line": 394,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          },
+          {
+            "line": 395,
+            "text": "  It is permitted to have multiple records with the same POS."
+          },
+          {
+            "line": 396,
+            "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+          },
+          {
+            "line": 397,
+            "text": "  (Integer, Required)"
+          },
+          {
+            "line": 398,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 399,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 400,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 401,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 402,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 403,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 404,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 405,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 406,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+          },
+          {
+            "line": 407,
+            "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+          },
+          {
+            "line": 408,
+            "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+          },
+          {
+            "line": 409,
+            "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+          },
+          {
+            "line": 410,
+            "text": ""
+          },
+          {
+            "line": 411,
+            "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+          },
+          {
+            "line": 412,
+            "text": ""
+          },
+          {
+            "line": 413,
+            "text": "  \\item ALT --- alternate base(s): Comma-separated list of alternate non-reference alleles."
+          },
+          {
+            "line": 414,
+            "text": "  \\label{fixed-fields-alt}"
+          },
+          {
+            "line": 415,
+            "text": "  These alleles do not have to be called in any of the samples."
+          },
+          {
+            "line": 416,
+            "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+          },
+          {
+            "line": 417,
+            "text": "  If there are no alternative alleles, then the MISSING value must be used."
+          },
+          {
+            "line": 418,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+          },
+          {
+            "line": 419,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 420,
+            "text": "  \\item QUAL --- quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong)."
+          },
+          {
+            "line": 421,
+            "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+          },
+          {
+            "line": 422,
+            "text": "  If unknown, the MISSING value must be specified. (Float)"
+          },
+          {
+            "line": 423,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 424,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 425,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          },
+          {
+            "line": 426,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 427,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 428,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          },
+          {
+            "line": 429,
+            "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+          },
+          {
+            "line": 430,
+            "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+          },
+          {
+            "line": 431,
+            "text": "  Space characters are allowed in values."
+          },
+          {
+            "line": 432,
+            "text": ""
+          },
+          {
+            "line": 433,
+            "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+          },
+          {
+            "line": 434,
+            "text": "  Duplicate keys are not allowed."
+          },
+          {
+            "line": 435,
+            "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+          },
+          {
+            "line": 436,
+            "text": ""
+          },
+          {
+            "line": 437,
+            "text": "  The exact format of each INFO key should be specified in the meta-information (as described above)."
+          },
+          {
+            "line": 438,
+            "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+          },
+          {
+            "line": 439,
+            "text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2)."
+          },
+          {
+            "line": 440,
+            "text": "  See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants."
+          },
+          {
+            "line": 441,
+            "text": "\\end{enumerate}"
+          }
+        ]
+      },
+      "reserved_info": {
+        "representation": "reserved INFO table",
+        "start_line": 460,
+        "end_line": 480,
+        "lines": [
+          {
+            "line": 460,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 461,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 462,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 463,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 464,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 465,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 466,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 467,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 468,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 469,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 470,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 471,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\"
+          },
+          {
+            "line": 472,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 473,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 474,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 475,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 476,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 477,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 478,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 479,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 480,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ],
+        "rows": [
+          {
+            "line": 460,
+            "text": "\tAA\t\t& 1\t\t& String\t& Ancestral allele \\\\"
+          },
+          {
+            "line": 461,
+            "text": "\tAC\t\t& A\t\t& Integer\t& Allele count in genotypes, for each ALT allele, in the same order as listed  \\\\"
+          },
+          {
+            "line": 462,
+            "text": "\tAD\t\t& R\t\t& Integer\t& Total read depth for each allele \\\\"
+          },
+          {
+            "line": 463,
+            "text": "\tADF\t\t& R\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 464,
+            "text": "\tADR\t\t& R\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 465,
+            "text": "\tAF\t\t& A\t\t& Float\t\t& Allele frequency for each ALT allele in the same order as listed (estimated from primary data, not called genotypes) \\\\"
+          },
+          {
+            "line": 466,
+            "text": "\tAN\t\t& 1\t\t& Integer\t& Total number of alleles in called genotypes \\\\"
+          },
+          {
+            "line": 467,
+            "text": "\tBQ   \t\t& 1\t\t& Float\t\t& RMS base quality \\\\"
+          },
+          {
+            "line": 468,
+            "text": "\tCIGAR\t\t& A\t\t& String\t& Cigar string describing how to align an alternate allele to the reference allele \\\\"
+          },
+          {
+            "line": 469,
+            "text": "\tDB\t\t& 0\t\t& Flag\t\t& dbSNP membership \\\\"
+          },
+          {
+            "line": 470,
+            "text": "\tDP\t\t& 1\t\t& Integer\t& Combined depth across samples \\\\"
+          },
+          {
+            "line": 471,
+            "text": "\tEND\t\t& 1\t\t& Integer\t& Deprecated. Present for backwards compatibility with earlier versions of VCF. \\\\"
+          },
+          {
+            "line": 472,
+            "text": "\tH2\t\t& 0\t\t& Flag\t\t& HapMap2 membership \\\\"
+          },
+          {
+            "line": 473,
+            "text": "\tH3\t\t& 0\t\t& Flag\t\t& HapMap3 membership \\\\"
+          },
+          {
+            "line": 474,
+            "text": "\tMQ\t\t& 1\t\t& Float\t\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 475,
+            "text": "\tMQ0   \t\t& 1\t\t& Integer\t& Number of MAPQ == 0 reads \\\\"
+          },
+          {
+            "line": 476,
+            "text": "\tNS\t\t& 1\t\t& Integer\t& Number of samples with data \\\\"
+          },
+          {
+            "line": 477,
+            "text": "\tSB\t\t& 4\t\t& Integer\t& Strand bias \\\\"
+          },
+          {
+            "line": 478,
+            "text": "\tSOMATIC\t\t& 0\t\t& Flag\t\t& Somatic mutation (for cancer genomics) \\\\"
+          },
+          {
+            "line": 479,
+            "text": "\tVALIDATED\t& 0\t\t& Flag\t\t& Validated by follow-up experiment \\\\"
+          },
+          {
+            "line": 480,
+            "text": "\t1000G\t\t& 0\t\t& Flag\t\t& 1000 Genomes membership \\\\"
+          }
+        ]
+      },
+      "reserved_format": {
+        "representation": "reserved FORMAT table",
+        "start_line": 534,
+        "end_line": 596,
+        "lines": [
+          {
+            "line": 534,
+            "text": "      AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 535,
+            "text": "      ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 536,
+            "text": "      ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 537,
+            "text": "      DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 538,
+            "text": "      EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 539,
+            "text": "      LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\"
+          },
+          {
+            "line": 540,
+            "text": "      FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 541,
+            "text": "      GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 542,
+            "text": "      GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 543,
+            "text": "      GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 544,
+            "text": "      GT\t\t& 1\t\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 545,
+            "text": "      HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 546,
+            "text": "      LA\t\t& .\t\t\t& Integer\t& Reserved \\\\"
+          },
+          {
+            "line": 547,
+            "text": "      LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\"
+          },
+          {
+            "line": 548,
+            "text": "      LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\"
+          },
+          {
+            "line": 549,
+            "text": "      LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\"
+          },
+          {
+            "line": 550,
+            "text": "      LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\"
+          },
+          {
+            "line": 551,
+            "text": "      LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\"
+          },
+          {
+            "line": 552,
+            "text": "      LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\"
+          },
+          {
+            "line": 553,
+            "text": "      LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\"
+          },
+          {
+            "line": 554,
+            "text": "      LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\"
+          },
+          {
+            "line": 555,
+            "text": "      LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\"
+          },
+          {
+            "line": 556,
+            "text": "      M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 557,
+            "text": "      DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 558,
+            "text": "      ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 559,
+            "text": "      M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\"
+          },
+          {
+            "line": 560,
+            "text": "      DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\"
+          },
+          {
+            "line": 561,
+            "text": "      ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\"
+          },
+          {
+            "line": 562,
+            "text": "      M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\"
+          },
+          {
+            "line": 563,
+            "text": "      DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\"
+          },
+          {
+            "line": 564,
+            "text": "      ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\"
+          },
+          {
+            "line": 565,
+            "text": "      M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\"
+          },
+          {
+            "line": 566,
+            "text": "      DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\"
+          },
+          {
+            "line": 567,
+            "text": "      ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\"
+          },
+          {
+            "line": 568,
+            "text": "      M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\"
+          },
+          {
+            "line": 569,
+            "text": "      DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\"
+          },
+          {
+            "line": 570,
+            "text": "      ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\"
+          },
+          {
+            "line": 571,
+            "text": "      M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\"
+          },
+          {
+            "line": 572,
+            "text": "      DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\"
+          },
+          {
+            "line": 573,
+            "text": "      ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\"
+          },
+          {
+            "line": 574,
+            "text": "      M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\"
+          },
+          {
+            "line": 575,
+            "text": "      DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\"
+          },
+          {
+            "line": 576,
+            "text": "      ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\"
+          },
+          {
+            "line": 577,
+            "text": "      M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\"
+          },
+          {
+            "line": 578,
+            "text": "      DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\"
+          },
+          {
+            "line": 579,
+            "text": "      ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\"
+          },
+          {
+            "line": 580,
+            "text": "      M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\"
+          },
+          {
+            "line": 581,
+            "text": "      DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\"
+          },
+          {
+            "line": 582,
+            "text": "      ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\"
+          },
+          {
+            "line": 583,
+            "text": "      M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\"
+          },
+          {
+            "line": 584,
+            "text": "      DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\"
+          },
+          {
+            "line": 585,
+            "text": "      ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\"
+          },
+          {
+            "line": 586,
+            "text": "      MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\"
+          },
+          {
+            "line": 587,
+            "text": "      DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\"
+          },
+          {
+            "line": 588,
+            "text": "      ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\"
+          },
+          {
+            "line": 589,
+            "text": "      MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 590,
+            "text": "      PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 591,
+            "text": "      PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 592,
+            "text": "      PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 593,
+            "text": "      PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\"
+          },
+          {
+            "line": 594,
+            "text": "      PSL\t\t& P\t\t\t& String\t& Phase set list \\\\"
+          },
+          {
+            "line": 595,
+            "text": "      PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\"
+          },
+          {
+            "line": 596,
+            "text": "      PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\"
+          }
+        ],
+        "rows": [
+          {
+            "line": 534,
+            "text": "      AD\t\t& R\t\t\t& Integer\t& Read depth for each allele \\\\"
+          },
+          {
+            "line": 535,
+            "text": "      ADF\t\t& R\t\t\t& Integer\t& Read depth for each allele on the forward strand \\\\"
+          },
+          {
+            "line": 536,
+            "text": "      ADR\t\t& R\t\t\t& Integer\t& Read depth for each allele on the reverse strand \\\\"
+          },
+          {
+            "line": 537,
+            "text": "      DP\t\t& 1\t\t\t& Integer\t& Read depth \\\\"
+          },
+          {
+            "line": 538,
+            "text": "      EC\t\t& A\t\t\t& Integer\t& Expected alternate allele counts \\\\"
+          },
+          {
+            "line": 539,
+            "text": "      LEN\t\t& 1\t\t\t& Integer\t& Length of $<$*$>$ reference block \\\\"
+          },
+          {
+            "line": 540,
+            "text": "      FT\t\t& 1\t\t\t& String\t& Filter indicating if this genotype was ``called'' \\\\"
+          },
+          {
+            "line": 541,
+            "text": "      GL\t\t& G\t\t\t& Float\t\t& Genotype likelihoods \\\\"
+          },
+          {
+            "line": 542,
+            "text": "      GP\t\t& G\t\t\t& Float\t\t& Genotype posterior probabilities \\\\"
+          },
+          {
+            "line": 543,
+            "text": "      GQ\t\t& 1\t\t\t& Integer\t& Conditional genotype quality \\\\"
+          },
+          {
+            "line": 544,
+            "text": "      GT\t\t& 1\t\t\t& String\t& Genotype \\\\"
+          },
+          {
+            "line": 545,
+            "text": "      HQ\t\t& 2\t\t\t& Integer\t& Haplotype quality \\\\"
+          },
+          {
+            "line": 546,
+            "text": "      LA\t\t& .\t\t\t& Integer\t& Reserved \\\\"
+          },
+          {
+            "line": 547,
+            "text": "      LAA\t\t& .\t\t\t& Integer\t& 1-based indices into ALT, indicating which alleles are relevant (local) for the current sample \\\\"
+          },
+          {
+            "line": 548,
+            "text": "      LAD\t\t& LR    \t& Integer\t& Local-allele representation of AD \\\\"
+          },
+          {
+            "line": 549,
+            "text": "      LADF\t\t& LR    \t& Integer\t& Local-allele representation of ADF \\\\"
+          },
+          {
+            "line": 550,
+            "text": "      LADR\t\t& LR    \t& Integer\t& Local-allele representation of ADR \\\\"
+          },
+          {
+            "line": 551,
+            "text": "      LEC\t\t& LA     \t& Integer\t& Local-allele representation of EC \\\\"
+          },
+          {
+            "line": 552,
+            "text": "      LGL\t\t& LG    \t& Float\t\t& Local-allele representation of GL \\\\"
+          },
+          {
+            "line": 553,
+            "text": "      LGP\t\t& LG    \t& Float\t\t& Local-allele representation of GP \\\\"
+          },
+          {
+            "line": 554,
+            "text": "      LPL\t\t& LG    \t& Integer\t& Local-allele representation of PL \\\\"
+          },
+          {
+            "line": 555,
+            "text": "      LPP\t\t& LG    \t& Integer\t& Local-allele representation of PP \\\\"
+          },
+          {
+            "line": 556,
+            "text": "      M[0-9]+[ACGTUN]   & M & Float     & Fraction of bases modified with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 557,
+            "text": "      DPM[0-9]+[ACGTUN]\t& M & Integer   & Total read depth for reads able to detect the base modification with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 558,
+            "text": "      ADM[0-9]+[ACGTUN]\t& M & Integer   & Read depth for reads with the base modification with the given ChEBI ID. \\\\"
+          },
+          {
+            "line": 559,
+            "text": "      M5mC   \t& M         & Float     & Alias for M27551C 5-Methylcytosine \\\\"
+          },
+          {
+            "line": 560,
+            "text": "      DPM5mC   \t& M         & Integer   & Alias for DPM27551C \\\\"
+          },
+          {
+            "line": 561,
+            "text": "      ADM5mC   \t& M         & Integer   & Alias for ADM27551C \\\\"
+          },
+          {
+            "line": 562,
+            "text": "      M5hmC   \t& M         & Float     & Alias for M76792C 5-Hydroxymethylcytosine \\\\"
+          },
+          {
+            "line": 563,
+            "text": "      DPM5hmC   & M         & Integer   & Alias for DPM76792C \\\\"
+          },
+          {
+            "line": 564,
+            "text": "      ADM5hmC   & M         & Integer   & Alias for ADM76792C \\\\"
+          },
+          {
+            "line": 565,
+            "text": "      M5fC   \t& M         & Float     & Alias for M76794C 5-Formylcytosine \\\\"
+          },
+          {
+            "line": 566,
+            "text": "      DPM5fC   \t& M         & Integer   & Alias for DPM76794C \\\\"
+          },
+          {
+            "line": 567,
+            "text": "      ADM5fC   \t& M         & Integer   & Alias for ADM76794C \\\\"
+          },
+          {
+            "line": 568,
+            "text": "      M5caC   \t& M         & Float     & Alias for M76793C 5-Carboxylcytosine \\\\"
+          },
+          {
+            "line": 569,
+            "text": "      DPM5caC   & M         & Integer   & Alias for DPM76793C \\\\"
+          },
+          {
+            "line": 570,
+            "text": "      ADM5caC   & M         & Integer   & Alias for ADM76793C \\\\"
+          },
+          {
+            "line": 571,
+            "text": "      M5hmU   \t& M         & Float     & Alias for M16964T 5-Hydroxymethyluracil \\\\"
+          },
+          {
+            "line": 572,
+            "text": "      DPM5hmU   & M         & Integer   & Alias for DPM16964T \\\\"
+          },
+          {
+            "line": 573,
+            "text": "      ADM5hmU\t& M         & Integer   & Alias for ADM16964T \\\\"
+          },
+          {
+            "line": 574,
+            "text": "      M5fU   \t& M         & Float     & Alias for M80961T 5-Formyluracil \\\\"
+          },
+          {
+            "line": 575,
+            "text": "      DPM5fU  \t& M         & Integer   & Alias for DPM80961T \\\\"
+          },
+          {
+            "line": 576,
+            "text": "      ADM5fU  \t& M         & Integer   & Alias for ADM80961T \\\\"
+          },
+          {
+            "line": 577,
+            "text": "      M5caU   \t& M         & Float     & Alias for M17477T 5-Carboxyluracil \\\\"
+          },
+          {
+            "line": 578,
+            "text": "      DPM5caU   & M         & Integer   & Alias for DPM17477T \\\\"
+          },
+          {
+            "line": 579,
+            "text": "      ADM5caU   & M         & Integer   & Alias for ADM17477T \\\\"
+          },
+          {
+            "line": 580,
+            "text": "      M6mA   \t& M         & Float     & Alias for M28871A 6-Methyladenine \\\\"
+          },
+          {
+            "line": 581,
+            "text": "      DPM6mA   \t& M         & Integer   & Alias for DPM28871A \\\\"
+          },
+          {
+            "line": 582,
+            "text": "      ADM6mA   \t& M         & Integer   & Alias for ADM28871A \\\\"
+          },
+          {
+            "line": 583,
+            "text": "      M8oxoG   \t& M         & Float     & Alias for M44605G 8-Oxoguanine \\\\"
+          },
+          {
+            "line": 584,
+            "text": "      DPM8oxoG  & M         & Integer   & Alias for DPM44605G \\\\"
+          },
+          {
+            "line": 585,
+            "text": "      ADM8oxoG  & M         & Integer   & Alias for ADM44605G \\\\"
+          },
+          {
+            "line": 586,
+            "text": "      MXaoN   \t& M         & Float     & Alias for M18107N Xanthosine \\\\"
+          },
+          {
+            "line": 587,
+            "text": "      DPMXaoN   & M         & Integer   & Alias for DPM18107N \\\\"
+          },
+          {
+            "line": 588,
+            "text": "      ADMXaoN   & M         & Integer   & Alias for ADM18107N \\\\"
+          },
+          {
+            "line": 589,
+            "text": "      MQ\t\t& 1\t\t\t& Integer\t& RMS mapping quality \\\\"
+          },
+          {
+            "line": 590,
+            "text": "      PL\t\t& G\t\t\t& Integer\t& Phred-scaled genotype likelihoods rounded to the closest integer \\\\"
+          },
+          {
+            "line": 591,
+            "text": "      PP\t\t& G\t\t\t& Integer\t& Phred-scaled genotype posterior probabilities rounded to the closest integer \\\\"
+          },
+          {
+            "line": 592,
+            "text": "      PQ\t\t& 1\t\t\t& Integer\t& Phasing quality \\\\"
+          },
+          {
+            "line": 593,
+            "text": "      PS\t\t& 1\t\t\t& Integer\t& Phase set \\\\"
+          },
+          {
+            "line": 594,
+            "text": "      PSL\t\t& P\t\t\t& String\t& Phase set list \\\\"
+          },
+          {
+            "line": 595,
+            "text": "      PSO\t\t& P\t\t\t& Integer\t& Phase set list ordinal \\\\"
+          },
+          {
+            "line": 596,
+            "text": "      PSQ\t\t& P\t\t\t& Integer\t& Phase set list quality \\\\"
+          }
+        ]
+      },
+      "format_semantics": {
+        "start_line": 602,
+        "end_line": 690,
+        "lines": [
+          {
+            "line": 602,
+            "text": "  \\item AD, ADF, ADR (Integer): Per-sample read depths for each allele; total (AD), on the forward (ADF) and the reverse (ADR) strand."
+          },
+          {
+            "line": 603,
+            "text": "  \\item DP (Integer): Read depth at this position for this sample."
+          },
+          {
+            "line": 604,
+            "text": "  \\item EC (Integer): Comma separated list of expected alternate allele counts for each alternate allele in the same order as listed in the ALT field."
+          },
+          {
+            "line": 605,
+            "text": "  Typically used in association analyses."
+          },
+          {
+            "line": 606,
+            "text": "  \\item LEN (Integer): length of the $<$*$>$ reference block for this sample."
+          },
+          {
+            "line": 607,
+            "text": "  \\item FT (String): Sample genotype filter indicating if this genotype was ``called'' (similar in concept to the FILTER field)."
+          },
+          {
+            "line": 608,
+            "text": "  Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied."
+          },
+          {
+            "line": 609,
+            "text": "  These values should be described in the meta-information in the same way as FILTERs."
+          },
+          {
+            "line": 610,
+            "text": "  No whitespace or semicolons permitted."
+          },
+          {
+            "line": 611,
+            "text": "  \\item GQ (Integer): Conditional genotype quality, encoded as a phred quality $-10log_{10}$ p(genotype call is wrong, conditioned on the site's being variant)."
+          },
+          {
+            "line": 612,
+            "text": "  \\item GP (Float): Genotype posterior probabilities in the range 0 to 1 using the same ordering as the GL field; one use can be to store imputed genotype probabilities."
+          },
+          {
+            "line": 613,
+            "text": "  \\item GT (String): Genotype, encoded as allele value preceded by either of $/$ or $\\mid$ depending on whether that allele is considered phased. "
+          },
+          {
+            "line": 614,
+            "text": "    The first phasing indicator may be omitted and is implicitly defined as $/$ if any phasing indicators are $/$ and $\\mid$ otherwise."
+          },
+          {
+            "line": 615,
+            "text": "    The allele values are 0 for the reference allele (what is in the REF field), 1 for the first allele listed in ALT, 2 for the second allele list in ALT and so on."
+          },
+          {
+            "line": 616,
+            "text": "    For diploid calls examples could be $0/1$, $1\\mid0$, $/0/1$, or $1/2$, etc."
+          },
+          {
+            "line": 617,
+            "text": "    Haploid calls, e.g.\\ on Y, male non-pseudoautosomal X, or mitochondria, should be indicated by having only one allele value."
+          },
+          {
+            "line": 618,
+            "text": "    A triploid call might look like $0/0/1$, and a partially phased triploid call could be $|0/1/2$ to indicate that the first allele is phased with another variant in the VCF."
+          },
+          {
+            "line": 619,
+            "text": "    If a call cannot be made for a sample at a given locus, `$.$' must be specified for each missing allele in the {\\tt GT} field (for example `$./.$' for a diploid genotype and `$.$' for haploid genotype)."
+          },
+          {
+            "line": 620,
+            "text": "    The meanings of the phasing indicators are as follows (see the {\\tt PS} and {\\tt PSL} fields below for more details on incorporating phasing information into the genotypes):"
+          },
+          {
+            "line": 621,
+            "text": "    \\begin{itemize}"
+          },
+          {
+            "line": 622,
+            "text": "      \\item $/$ : allele is unphased"
+          },
+          {
+            "line": 623,
+            "text": "      \\item $\\mid$ : allele is phased (according to the phase-set indicated in {\\tt PS} or {\\tt PSL})"
+          },
+          {
+            "line": 624,
+            "text": "    \\end{itemize}"
+          },
+          {
+            "line": 625,
+            "text": ""
+          },
+          {
+            "line": 626,
+            "text": "    For symbolic structural variant alleles, GT=0 indicates the absence of any of the ALT symbolic structural variants defined in the record."
+          },
+          {
+            "line": 627,
+            "text": "    Implementer should note that merging a VCF record containing only symbolic structural variant ALT alleles with a record containing other alleles will result a change of the meaning of the GT=0 haplotypes from the record containing only symbolic SVs."
+          },
+          {
+            "line": 628,
+            "text": ""
+          },
+          {
+            "line": 629,
+            "text": "  \\item GL (Float): Genotype likelihoods comprised of comma separated floating point $log_{10}$-scaled likelihoods for all possible genotypes given the set of alleles defined in the REF and ALT fields."
+          },
+          {
+            "line": 630,
+            "text": "  In presence of the GT field the same ploidy is expected; without GT field, diploidy is assumed."
+          },
+          {
+            "line": 631,
+            "text": ""
+          },
+          {
+            "line": 632,
+            "text": "  \\textsc{Genotype Ordering.} \\label{genotype-fields:genotype-ordering}"
+          },
+          {
+            "line": 633,
+            "text": "  In general case of ploidy P and N alternate alleles (0 is the REF and $1\\ldots N$ the alternate alleles), the ordering of genotypes for the likelihoods can be expressed by the following pseudocode with as many nested loops as ploidy:"
+          },
+          {
+            "line": 634,
+            "text": "  \\footnote{Note that we use inclusive \\texttt{for} loop boundaries.}"
+          },
+          {
+            "line": 635,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 636,
+            "text": "  \\small"
+          },
+          {
+            "line": 637,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 638,
+            "text": "  for $a_P = 0\\ldots N$"
+          },
+          {
+            "line": 639,
+            "text": "    for $a_{P-1} = 0\\ldots a_P$"
+          },
+          {
+            "line": 640,
+            "text": "        $\\ldots$"
+          },
+          {
+            "line": 641,
+            "text": "        for $a_1 = 0\\ldots a_{2}$"
+          },
+          {
+            "line": 642,
+            "text": "            println $a_1 a_2  \\ldots  a_P$"
+          },
+          {
+            "line": 643,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 644,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 645,
+            "text": ""
+          },
+          {
+            "line": 646,
+            "text": "  Alternatively, the same can be achieved recursively with the following pseudocode:"
+          },
+          {
+            "line": 647,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 648,
+            "text": "  \\small"
+          },
+          {
+            "line": 649,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 650,
+            "text": "    Ordering($P$, $N$, suffix=\"\"):"
+          },
+          {
+            "line": 651,
+            "text": "        for $a$ in $0\\ldots N$"
+          },
+          {
+            "line": 652,
+            "text": "            if ($P == 1$) println str($a$) + suffix"
+          },
+          {
+            "line": 653,
+            "text": "            if ($P > 1$) Ordering($P$-1, $a$, str($a$) + suffix)"
+          },
+          {
+            "line": 654,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 655,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 656,
+            "text": ""
+          },
+          {
+            "line": 657,
+            "text": "  Conversely, the index of the value corresponding to the genotype $k_1\\le k_2\\le\\ldots\\le k_P$ is"
+          },
+          {
+            "line": 658,
+            "text": "  \\begingroup"
+          },
+          {
+            "line": 659,
+            "text": "  \\small"
+          },
+          {
+            "line": 660,
+            "text": "  \\begin{lstlisting}"
+          },
+          {
+            "line": 661,
+            "text": "    Index($k_1/k_2/\\ldots/k_P$) = $\\sum_{m=1}^{P} {k_m + m - 1 \\choose m}$"
+          },
+          {
+            "line": 662,
+            "text": "  \\end{lstlisting}"
+          },
+          {
+            "line": 663,
+            "text": "  \\endgroup"
+          },
+          {
+            "line": 664,
+            "text": ""
+          },
+          {
+            "line": 665,
+            "text": "  Examples:"
+          },
+          {
+            "line": 666,
+            "text": "    \\begin{itemize}"
+          },
+          {
+            "line": 667,
+            "text": "    \\item for $P$=2 and $N$=1, the ordering is 00,01,11"
+          },
+          {
+            "line": 668,
+            "text": "    \\item for $P$=2 and $N$=2, the ordering is 00,01,11,02,12,22"
+          },
+          {
+            "line": 669,
+            "text": "    \\item for $P$=3 and $N$=2, the ordering is 000, 001, 011, 111, 002, 012, 112, 022, 122, 222"
+          },
+          {
+            "line": 670,
+            "text": "    \\item for $P$=1, the index of the genotype $a$ is $a$"
+          },
+          {
+            "line": 671,
+            "text": "    \\item for $P$=2, the index of the genotype ``$a/b$'', where $a\\le b$, is $b (b+1)/2 + a$"
+          },
+          {
+            "line": 672,
+            "text": "    \\item for $P$=2 and arbitrary $N$, the ordering can be easily derived from a triangular matrix"
+          },
+          {
+            "line": 673,
+            "text": "            \\newline"
+          },
+          {
+            "line": 674,
+            "text": "            \\hbox{\\hskip5em\\footnotesize"
+          },
+          {
+            "line": 675,
+            "text": "            \\begin{tabular}{l|llll}"
+          },
+          {
+            "line": 676,
+            "text": "               $b\\setminus a$ & 0 & 1 & 2 & 3 \\\\ \\hline \\\\[-0.5em]"
+          },
+          {
+            "line": 677,
+            "text": "               0   & 0 &   &   &   \\\\"
+          },
+          {
+            "line": 678,
+            "text": "               1   & 1 & 2 &   &   \\\\"
+          },
+          {
+            "line": 679,
+            "text": "               2   & 3 & 4 & 5 &   \\\\"
+          },
+          {
+            "line": 680,
+            "text": "               3   & 6 & 7 & 8 & 9 "
+          },
+          {
+            "line": 681,
+            "text": "            \\end{tabular}"
+          },
+          {
+            "line": 682,
+            "text": "            }"
+          },
+          {
+            "line": 683,
+            "text": "    \\end{itemize}"
+          },
+          {
+            "line": 684,
+            "text": ""
+          },
+          {
+            "line": 685,
+            "text": "  \\item HQ (Integer): Haplotype qualities, two comma separated phred qualities."
+          },
+          {
+            "line": 686,
+            "text": "  \\item LAA is a list of $n$ distinct integers, giving the 1-based indices of the ALT alleles that are observed in the sample."
+          },
+          {
+            "line": 687,
+            "text": "  "
+          },
+          {
+            "line": 688,
+            "text": "  In callsets with many samples, sites may grow to include numerous alternate alleles at the same POS."
+          },
+          {
+            "line": 689,
+            "text": "  Usually, few of these alleles are actually observed in any one sample, but each genotype must supply fields like PL and AD for all of the alleles---a very inefficient representation as PL's size is quadratic in the allele count."
+          },
+          {
+            "line": 690,
+            "text": "  Similarly, in rare sites, which can be the bulk of the sites, the vast majority of the samples are reference."
+          }
+        ]
+      },
+      "data_line_preamble": {
+        "start_line": 378,
+        "end_line": 382,
+        "lines": [
+          {
+            "line": 378,
+            "text": "\\subsection{Data lines}"
+          },
+          {
+            "line": 379,
+            "text": "\\label{data-lines}"
+          },
+          {
+            "line": 380,
+            "text": "All data lines are tab-delimited with no tab character at the end of the line."
+          },
+          {
+            "line": 381,
+            "text": "The last data line must end with a line separator."
+          },
+          {
+            "line": 382,
+            "text": "In all cases, missing values are specified with a dot (`.')."
+          }
+        ]
+      }
+    }
+  ]
+}

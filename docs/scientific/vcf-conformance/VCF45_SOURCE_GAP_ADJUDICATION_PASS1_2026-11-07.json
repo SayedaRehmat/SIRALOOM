@@ -1,0 +1,3020 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.5-94-source-gap-author-adjudication-pass1",
+  "status": "AUTHOR_ADJUDICATION_PASS1_INDEPENDENT_REVIEW_REQUIRED",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source": {
+    "file": "VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "input_artifacts": {
+    "gap_register": "docs/scientific/vcf-conformance/VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json",
+    "canonical_ledger_blob_sha": "ba7d1bb0544f5d1105a4bd62f757decae13caee8",
+    "supplemental_cardinality_addendum": "vcf4.5-cardinality-local-allele-atomic-addendum.v1.json"
+  },
+  "method": "Every one of the 94 candidate lines lacking an exact source-locator overlap was assigned an author-level semantic disposition. Existing semantic coverage was mapped only where the existing atomic statement directly expresses the same rule. Recommendations and permissions were retained as normative candidate material with their original modality. Explanatory/narrative lines were excluded only as standalone validator requirements, not removed from source traceability. Ambiguous and partially overlapping items remain explicitly open.",
+  "counts": {
+    "candidate_lines": 94,
+    "SEMANTICALLY_COVERED_EXISTING": 7,
+    "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD": 75,
+    "EXPLANATORY_EXAMPLE_ONLY": 1,
+    "SOURCE_SCOPE_AMBIGUITY_OPEN": 1,
+    "DEFINITIONAL_VOCABULARY_NOT_STANDALONE_VALIDATOR_RULE": 1,
+    "INFORMATIVE_SEMANTIC_WARNING": 1,
+    "IMPLEMENTATION_GUIDANCE_NOT_FILE_REQUIREMENT": 1,
+    "EXISTING_SUPPLEMENTAL_CANDIDATE_NOT_CANONICAL": 1,
+    "EXAMPLE_CONTEXT_REQUIRES_REVIEW": 1,
+    "INFORMATIVE_NARRATIVE_ONLY": 3,
+    "SUPPORTING_EXAMPLE_FOR_CANDIDATE": 1,
+    "PARTIAL_SEMANTIC_OVERLAP_REQUIRES_SCOPE_CHECK": 1,
+    "canonical_ledger_records_added": 0,
+    "independent_reviews": 0,
+    "implementation_mappings": 0,
+    "executed_conformance_tests": 0
+  },
+  "decision_policy": [
+    "MUST/SHOULD/MAY semantics are not collapsed; SHOULD recommendations and MAY permissions remain part of the source-to-requirement record.",
+    "A source-line locator gap does not prove semantic absence from the canonical ledger; explicit semantic mappings are recorded where justified.",
+    "A supplemental candidate is not treated as canonical-ledger approval.",
+    "Explanatory examples and narrative are excluded only from standalone validator obligations; they remain available for test design and interpretive context.",
+    "No new canonical requirement IDs are allocated in this pass."
+  ],
+  "decisions": [
+    {
+      "candidate_id": "VCFv4.5:L0081",
+      "source_line": 81,
+      "source_text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:",
+      "source_context": [
+        {
+          "line": 80,
+          "text": "Line separators must be CR+LF or LF and they are allowed only as line separators at end of line."
+        },
+        {
+          "line": 81,
+          "text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:"
+        },
+        {
+          "line": 82,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ENCODING",
+      "primary_review_note": "Literal use of characters with syntax meaning requires capitalized percent encoding; linked encoding table needed.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000114",
+        "VCF-REQ-000115",
+        "VCF-REQ-000116",
+        "VCF-REQ-000117",
+        "VCF-REQ-000118",
+        "VCF-REQ-000119",
+        "VCF-REQ-000120",
+        "VCF-REQ-000121"
+      ],
+      "decision_note": "The general capitalized percent-encoding rule is operationalized by the eight character-specific encoding requirements covering the reserved delimiters and control characters in the immediately following source table.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0104",
+      "source_line": 104,
+      "source_text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines}).",
+      "source_context": [
+        {
+          "line": 103,
+          "text": "\\subsection{Meta-information lines}"
+        },
+        {
+          "line": 104,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 105,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_HEADER_ORDER",
+      "primary_review_note": "Meta-information lines begin ## and precede header/data.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Distinct from the requirement that ##fileformat is the first line: this line also orders all file meta-information before #CHROM and data records.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0105",
+      "source_line": 105,
+      "source_text": "They may be either \\emph{unstructured} or \\emph{structured}.",
+      "source_context": [
+        {
+          "line": 104,
+          "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+        },
+        {
+          "line": 105,
+          "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+        },
+        {
+          "line": 106,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMITTED_ALTERNATIVES",
+      "primary_review_note": "Unstructured and structured metadata forms both allowed.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Preserve both structured and unstructured metadata as permitted alternatives; this is a normative acceptance boundary, not a reason to reject either form.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0107",
+      "source_line": 107,
+      "source_text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:",
+      "source_context": [
+        {
+          "line": 106,
+          "text": ""
+        },
+        {
+          "line": 107,
+          "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+        },
+        {
+          "line": 108,
+          "text": "\\begin{quote}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_GRAMMAR",
+      "primary_review_note": "Unstructured value cannot be empty or begin with '<'; key/value separated by '='.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Decompose into grammar and value constraints: key=value delimiter; value non-empty; value must not begin with '<'; preserve any key lexical constraints from later lines separately.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0119",
+      "source_line": 119,
+      "source_text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix.",
+      "source_context": [
+        {
+          "line": 118,
+          "text": "\\end{quote}"
+        },
+        {
+          "line": 119,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 120,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_UNIQUENESS",
+      "primary_review_note": "Structured lines require unique ID within the same metadata line type.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Atomic uniqueness scope is per structured metadata type/key prefix; do not conflate with sample IDs or INFO/FORMAT data-key uniqueness.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0120",
+      "source_line": 120,
+      "source_text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included.",
+      "source_context": [
+        {
+          "line": 119,
+          "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+        },
+        {
+          "line": 120,
+          "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included."
+        },
+        {
+          "line": 121,
+          "text": "For example:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Optional fields may be included in structured metadata.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Permission for optional attributes on structured metadata declarations; acceptance must not reject permitted optional attributes.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0125",
+      "source_line": 125,
+      "source_text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided.",
+      "source_context": [
+        {
+          "line": 124,
+          "text": "\\end{verbatim}"
+        },
+        {
+          "line": 125,
+          "text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 126,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "INFORMATIVE_EXAMPLE",
+      "primary_review_note": "Source/Version fields in example; no independent obligation.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "EXPLANATORY_EXAMPLE_ONLY",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0126",
+      "source_line": 126,
+      "source_text": "The values of optional fields must be written as quoted strings, even for numeric values.",
+      "source_context": [
+        {
+          "line": 125,
+          "text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided."
+        },
+        {
+          "line": 126,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 127,
+          "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_SERIALIZATION",
+      "primary_review_note": "Optional field values must be quoted strings, even numeric.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Quoted-string serialization for optional structured metadata attribute values, including numeric-looking values.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0127",
+      "source_line": 127,
+      "source_text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field.",
+      "source_context": [
+        {
+          "line": 126,
+          "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+        },
+        {
+          "line": 127,
+          "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+        },
+        {
+          "line": 128,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMISSION_AND_REQUIRED_DEFAULT",
+      "primary_review_note": "Other structured lines may be used; ID is their only required field.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Extension permission for undefined structured metadata line types; only ID is required. Preserve extension behavior separately from known ##INFO/##FORMAT schemas.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0129",
+      "source_line": 129,
+      "source_text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file.",
+      "source_context": [
+        {
+          "line": 128,
+          "text": ""
+        },
+        {
+          "line": 129,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 130,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+      "primary_review_note": "Reference/contig tags recommended in VCF and required in BCF.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Split modality by encoding: recommended in textual VCF, required in BCF. Preserve reference and contig descriptor scope.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0130",
+      "source_line": 130,
+      "source_text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above).",
+      "source_context": [
+        {
+          "line": 129,
+          "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+        },
+        {
+          "line": 130,
+          "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+        },
+        {
+          "line": 131,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "AMBIGUOUS_SCOPE_REQUIRES_ADJUDICATION",
+      "primary_review_note": "All tags optional statement needs interpretation against preceding VCF/BCF split; no inferred resolution.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "AMBIGUOUS_SCOPE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SOURCE_SCOPE_AMBIGUITY_OPEN",
+      "existing_requirement_ids": [],
+      "decision_note": "The statement that SQ-derived tags are optional must be reconciled with the preceding VCF recommendation/BCF requirement. The scope of 'all tags' is not sufficiently explicit to derive a single VCF/BCF obligation without examining the full contig schema and binary encoding context.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0132",
+      "source_line": 132,
+      "source_text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields.",
+      "source_context": [
+        {
+          "line": 131,
+          "text": ""
+        },
+        {
+          "line": 132,
+          "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+        },
+        {
+          "line": 133,
+          "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Human-readable field order recommended, not required.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level field ordering recommendation for readability; do not turn into a hard rejection rule.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0133",
+      "source_line": 133,
+      "source_text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering.",
+      "source_context": [
+        {
+          "line": 132,
+          "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+        },
+        {
+          "line": 133,
+          "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+        },
+        {
+          "line": 134,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ORDER_INDEPENDENCE",
+      "primary_review_note": "Implementations must not rely on structured field ordering and need not preserve it.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "MUST-level parser behavior: do not depend on structured metadata attribute order; preservation of source order is not required.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0135",
+      "source_line": 135,
+      "source_text": "Meta-information lines are optional, but if they are present then they must be completely well-formed.",
+      "source_context": [
+        {
+          "line": 134,
+          "text": ""
+        },
+        {
+          "line": 135,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 136,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "MIXED_OPTIONALITY_AND_WELL_FORMEDNESS",
+      "primary_review_note": "Metadata lines optional; if present, well-formedness required.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Split optional presence from mandatory well-formedness when present; optionality does not waive syntax validation.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0136",
+      "source_line": 136,
+      "source_text": "Other than \\verb|##fileformat|, they may appear in any order.",
+      "source_context": [
+        {
+          "line": 135,
+          "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+        },
+        {
+          "line": 136,
+          "text": "Other than \\verb|##fileformat|, they may appear in any order."
+        },
+        {
+          "line": 137,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ORDERING_PERMISSION",
+      "primary_review_note": "Other than fileformat, metadata lines may appear in any order.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Except for ##fileformat, metadata line ordering is unrestricted; reconcile with line 104 and the first-line requirement.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0138",
+      "source_line": 138,
+      "source_text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file.",
+      "source_context": [
+        {
+          "line": 137,
+          "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+        },
+        {
+          "line": 138,
+          "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+        },
+        {
+          "line": 139,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Metadata descriptions for entries used in body recommended.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level recommendation to describe body entries in metadata; not a MUST-level completeness requirement.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0151",
+      "source_line": 151,
+      "source_text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:",
+      "source_context": [
+        {
+          "line": 150,
+          "text": "\\subsubsection{Information field format}"
+        },
+        {
+          "line": 151,
+          "text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:"
+        },
+        {
+          "line": 152,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "MIXED_REQUIRED_AND_RECOMMENDED_SCHEMA",
+      "primary_review_note": "INFO ID/Number/Type/Description required; Source/Version recommended.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Split required INFO declaration attributes (ID, Number, Type, Description) from recommended Source/Version attributes.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0159",
+      "source_line": 159,
+      "source_text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on.",
+      "source_context": [
+        {
+          "line": 158,
+          "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+        },
+        {
+          "line": 159,
+          "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+        },
+        {
+          "line": 160,
+          "text": "There are also certain special characters used to define special cases:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_CARDINALITY",
+      "primary_review_note": "Numeric Number must match the fixed number of values.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "General fixed-integer Number cardinality semantics; keep separate from special Number symbols A/R/G/M/P and their ordering/cardinality rules.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0164",
+      "source_line": 164,
+      "source_text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines}).",
+      "source_context": [
+        {
+          "line": 163,
+          "text": "  \\item A: The field has one value per alternate allele."
+        },
+        {
+          "line": 164,
+          "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+        },
+        {
+          "line": 165,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=A values follow ALT order.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "General Number=A ordering: one value per ALT allele in ALT column order.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0166",
+      "source_line": 166,
+      "source_text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column.",
+      "source_context": [
+        {
+          "line": 165,
+          "text": "  \\item R: The field has one value for each possible allele, including the reference."
+        },
+        {
+          "line": 166,
+          "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+        },
+        {
+          "line": 167,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=R values REF first then ALT order.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "General Number=R ordering: REF first, then ALT alleles in ALT order.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0168",
+      "source_line": 168,
+      "source_text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering}).",
+      "source_context": [
+        {
+          "line": 167,
+          "text": "  \\item G: The field has one value for each possible genotype."
+        },
+        {
+          "line": 168,
+          "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+        },
+        {
+          "line": 169,
+          "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_VALUE_ORDER",
+      "primary_review_note": "Number=G values follow genotype ordering.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000136"
+      ],
+      "decision_note": "Number=G value ordering is the genotype ordering specified by the general arbitrary-ploidy ordering requirement. The cardinality definition remains separately represented by the Number=G declaration context.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0172",
+      "source_line": 172,
+      "source_text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case.",
+      "source_context": [
+        {
+          "line": 171,
+          "text": ""
+        },
+        {
+          "line": 172,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 173,
+          "text": "The Description value must be surrounded by double-quotes."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_FLAG_SCHEMA",
+      "primary_review_note": "Flag has no value and Number=0.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Flag fields contain no value entry and must declare Number=0; preserve as generic type/cardinality rule.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0173",
+      "source_line": 173,
+      "source_text": "The Description value must be surrounded by double-quotes.",
+      "source_context": [
+        {
+          "line": 172,
+          "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+        },
+        {
+          "line": 173,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 174,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_QUOTING",
+      "primary_review_note": "Description double-quoted.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "INFO Description serialization requires double quotes.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0174",
+      "source_line": 174,
+      "source_text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$.",
+      "source_context": [
+        {
+          "line": 173,
+          "text": "The Description value must be surrounded by double-quotes."
+        },
+        {
+          "line": 174,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 175,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ESCAPING",
+      "primary_review_note": "Embedded double quote/backslash escaping required.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Escape rules for embedded double quotes and backslashes in structured metadata values.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0175",
+      "source_line": 175,
+      "source_text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use.",
+      "source_context": [
+        {
+          "line": 174,
+          "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+        },
+        {
+          "line": 175,
+          "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+        },
+        {
+          "line": 176,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_QUOTING_AND_SEMANTICS",
+      "primary_review_note": "Source and Version quoted; source case-insensitive and version exact.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Source and Version values must be quoted; Source denotes annotation source case-insensitively, while Version denotes exact version. Decompose quoting and semantic interpretation.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0178",
+      "source_line": 178,
+      "source_text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:",
+      "source_context": [
+        {
+          "line": 177,
+          "text": "\\subsubsection{Filter field format}"
+        },
+        {
+          "line": 178,
+          "text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:"
+        },
+        {
+          "line": 179,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_FILTER_METADATA_SCHEMA",
+      "primary_review_note": "FILTER structured lines require ID and Description.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "FILTER metadata schema: required ID and Description; these declarations define valid FILTER values.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0185",
+      "source_line": 185,
+      "source_text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:",
+      "source_context": [
+        {
+          "line": 184,
+          "text": "\\subsubsection{Individual format field format}"
+        },
+        {
+          "line": 185,
+          "text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:"
+        },
+        {
+          "line": 186,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_FORMAT_METADATA_SCHEMA",
+      "primary_review_note": "FORMAT structured lines require ID/Number/Type/Description.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "FORMAT metadata schema: required ID, Number, Type and Description; definitions govern per-sample genotype fields.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0258",
+      "source_line": 258,
+      "source_text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})",
+      "source_context": [
+        {
+          "line": 257,
+          "text": "In symbolic alternate alleles for structural variants, the ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes."
+        },
+        {
+          "line": 258,
+          "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})"
+        },
+        {
+          "line": 259,
+          "text": "The first level type must be one of the following:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_LEXICAL_CONSTRAINT",
+      "primary_review_note": "Structural ALT IDs case-sensitive and contain no whitespace, commas or angle brackets.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "ALT symbolic-allele ID lexical constraints and case sensitivity; retain distinction from general INFO/FORMAT key lexical grammar.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0259",
+      "source_line": 259,
+      "source_text": "The first level type must be one of the following:",
+      "source_context": [
+        {
+          "line": 258,
+          "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})"
+        },
+        {
+          "line": 259,
+          "text": "The first level type must be one of the following:"
+        },
+        {
+          "line": 260,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ENUMERATED_DOMAIN",
+      "primary_review_note": "First-level structural ALT type restricted to enumerated values.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Enumerated allowed first-level structural-variant type domain; the following list is part of the constraint and must be captured as a complete closed set.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0265",
+      "source_line": 265,
+      "source_text": "  \\item CNV Region of uniform copy number (may be deletion, duplication or copy number neutral)",
+      "source_context": [
+        {
+          "line": 264,
+          "text": "  \\item INV Inversion of reference sequence"
+        },
+        {
+          "line": 265,
+          "text": "  \\item CNV Region of uniform copy number (may be deletion, duplication or copy number neutral)"
+        },
+        {
+          "line": 266,
+          "text": "\\end{itemize}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "DESCRIPTIVE_ENUMERATION",
+      "primary_review_note": "CNV is one enumerated type.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "DEFINITIONAL_VOCABULARY_NOT_STANDALONE_VALIDATOR_RULE",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0268",
+      "source_line": 268,
+      "source_text": "The CNV symbolic allele should not be used when a more specific one (e.g. DEL, CNV:TR) can be applied.",
+      "source_context": [
+        {
+          "line": 267,
+          "text": ""
+        },
+        {
+          "line": 268,
+          "text": "The CNV symbolic allele should not be used when a more specific one (e.g. DEL, CNV:TR) can be applied."
+        },
+        {
+          "line": 269,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "CNV symbolic allele should not be used when a more specific category applies.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level preference for specific symbolic allele classes over generic CNV; preserve recommendation strength.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0272",
+      "source_line": 272,
+      "source_text": "The following subtypes are recommended:",
+      "source_context": [
+        {
+          "line": 271,
+          "text": "The presence of a subtype does not change either the copy number or breakpoint interpretation of a symbolic structural variant allele."
+        },
+        {
+          "line": 272,
+          "text": "The following subtypes are recommended:"
+        },
+        {
+          "line": 273,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Structural variant subtypes are recommended, not mandatory.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Recommended subtype list; capture the complete enumerated recommendations and do not promote them to MUST.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0292",
+      "source_line": 292,
+      "source_text": "Breakpoint assemblies for structural variations may use an external file:",
+      "source_context": [
+        {
+          "line": 291,
+          "text": "\\subsubsection{Assembly field format}"
+        },
+        {
+          "line": 292,
+          "text": "Breakpoint assemblies for structural variations may use an external file:"
+        },
+        {
+          "line": 293,
+          "text": "\\begin{verbatim}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Breakpoint assemblies may use external file.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Permission to reference an external assembly FASTA; capture URL semantics and BKPTID linkage from the following context.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0301",
+      "source_line": 301,
+      "source_text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file.",
+      "source_context": [
+        {
+          "line": 300,
+          "text": "\\label{sec-contig-field}"
+        },
+        {
+          "line": 301,
+          "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+        },
+        {
+          "line": 302,
+          "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+      "primary_review_note": "Contig tags recommended in VCF and required in BCF.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Split VCF recommendation and BCF requirement for contig declarations; reconcile separately from line 129's reference-and-contig metadata statement.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0302",
+      "source_line": 302,
+      "source_text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with",
+      "source_context": [
+        {
+          "line": 301,
+          "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+        },
+        {
+          "line": 302,
+          "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+        },
+        {
+          "line": 303,
+          "text": "the following ones reserved:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_STRUCTURED_SCHEMA",
+      "primary_review_note": "Contig field must include ID; optional attributes may be included; full grammar needs continuation review.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Contig structured metadata requires ID and permits additional attributes; enumerate reserved attributes from the following table.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0322",
+      "source_line": 322,
+      "source_text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'.",
+      "source_context": [
+        {
+          "line": 321,
+          "text": "Contig names follow the same rules as the SAM format's reference sequence names:"
+        },
+        {
+          "line": 322,
+          "text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'."
+        },
+        {
+          "line": 323,
+          "text": "Thus they match the following regular expression:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_LEXICAL_GRAMMAR",
+      "primary_review_note": "Contig name printable ASCII range with enumerated excluded characters and prohibited initial '*'/'='.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Contig identifier character set and prohibited characters/prefixes; preserve exact ASCII range and exceptions.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0329",
+      "source_line": 329,
+      "source_text": "The contig names must not use a reserved symbolic allele name.",
+      "source_context": [
+        {
+          "line": 328,
+          "text": "In particular, excluding commas facilitates parsing \\verb|##contig| lines, and excluding the characters `\\verb|<>[]|' and initial~`{\\tt *}' avoids clashes with symbolic alleles."
+        },
+        {
+          "line": 329,
+          "text": "The contig names must not use a reserved symbolic allele name."
+        },
+        {
+          "line": 330,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "Contig names must not use reserved symbolic allele name.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Prohibit contig names that collide with reserved symbolic allele names.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0391",
+      "source_line": 391,
+      "source_text": "  All entries for a specific CHROM must form a contiguous block within the VCF file.",
+      "source_context": [
+        {
+          "line": 390,
+          "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+        },
+        {
+          "line": 391,
+          "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+        },
+        {
+          "line": 392,
+          "text": "  (String, no whitespace permitted, Required)."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ORDERING",
+      "primary_review_note": "CHROM blocks contiguous.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "All records for each CHROM must be contiguous; this is distinct from sorting POS within a CHROM.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0392",
+      "source_line": 392,
+      "source_text": "  (String, no whitespace permitted, Required).",
+      "source_context": [
+        {
+          "line": 391,
+          "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+        },
+        {
+          "line": 392,
+          "text": "  (String, no whitespace permitted, Required)."
+        },
+        {
+          "line": 393,
+          "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+      "primary_review_note": "CHROM required String, no whitespace.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "CHROM fixed-field type and lexical constraints: String, no whitespace, required.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0397",
+      "source_line": 397,
+      "source_text": "  (Integer, Required)",
+      "source_context": [
+        {
+          "line": 396,
+          "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+        },
+        {
+          "line": 397,
+          "text": "  (Integer, Required)"
+        },
+        {
+          "line": 398,
+          "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+      "primary_review_note": "POS required Integer.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "POS fixed-field type and presence: Integer, required; combine with the coordinate-origin and ordering statements only where atomicity permits.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0399",
+      "source_line": 399,
+      "source_text": "  If this is a dbSNP variant the rs number(s) should be used.",
+      "source_context": [
+        {
+          "line": 398,
+          "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+        },
+        {
+          "line": 399,
+          "text": "  If this is a dbSNP variant the rs number(s) should be used."
+        },
+        {
+          "line": 400,
+          "text": "  No identifier should be present in more than one data record."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "dbSNP rs identifiers should be used.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level dbSNP identifier convention; do not require rs identifiers for non-dbSNP variants.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0400",
+      "source_line": 400,
+      "source_text": "  No identifier should be present in more than one data record.",
+      "source_context": [
+        {
+          "line": 399,
+          "text": "  If this is a dbSNP variant the rs number(s) should be used."
+        },
+        {
+          "line": 400,
+          "text": "  No identifier should be present in more than one data record."
+        },
+        {
+          "line": 401,
+          "text": "  If there is no identifier available, then the MISSING value should be used."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_UNIQUENESS",
+      "primary_review_note": "Identifier must not occur in more than one data record.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Global uniqueness of record identifiers across data records; distinguish from uniqueness of IDs within one ID list.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0401",
+      "source_line": 401,
+      "source_text": "  If there is no identifier available, then the MISSING value should be used.",
+      "source_context": [
+        {
+          "line": 400,
+          "text": "  No identifier should be present in more than one data record."
+        },
+        {
+          "line": 401,
+          "text": "  If there is no identifier available, then the MISSING value should be used."
+        },
+        {
+          "line": 402,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "No ID uses MISSING.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000009"
+      ],
+      "decision_note": "The field-specific missing-ID rule is covered by the general VCF missing-value representation rule; retain the ID-specific context in the traceability map.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0403",
+      "source_line": 403,
+      "source_text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
+      "source_context": [
+        {
+          "line": 402,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        },
+        {
+          "line": 403,
+          "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+        },
+        {
+          "line": 404,
+          "text": "  Multiple bases are permitted."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_LEXICAL_DOMAIN",
+      "primary_review_note": "REF bases A,C,G,T,N case-insensitive.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "REF alphabet restriction A/C/G/T/N, case-insensitive.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0406",
+      "source_line": 406,
+      "source_text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings.",
+      "source_context": [
+        {
+          "line": 405,
+          "text": "  The value in the POS field refers to the position of the first base in the String."
+        },
+        {
+          "line": 406,
+          "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+        },
+        {
+          "line": 407,
+          "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "MIXED_NORMATIVE_AND_EXCEPTION",
+      "primary_review_note": "Indel padding, position-1 exception and complex-allele exception; split.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Conditional padding rule for simple insertions/deletions, with position-1 exception and explicit exemption for alleles that are already non-empty.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0407",
+      "source_line": 407,
+      "source_text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism.",
+      "source_context": [
+        {
+          "line": 406,
+          "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+        },
+        {
+          "line": 407,
+          "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+        },
+        {
+          "line": 408,
+          "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ALLELE_REPRESENTATION",
+      "primary_review_note": "Symbolic ALT requires padding and preceding-base POS.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Symbolic ALT padding requirement and POS interpretation; keep separate from the '*' spanning-deletion exception on line 408.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0409",
+      "source_line": 409,
+      "source_text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required).",
+      "source_context": [
+        {
+          "line": 408,
+          "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+        },
+        {
+          "line": 409,
+          "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+        },
+        {
+          "line": 410,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "IMPLEMENTATION_PERMISSION",
+      "primary_review_note": "Tools need not preserve REF case.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Permission for tools not to preserve REF letter case; this is not permission to alter allele identity.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0411",
+      "source_line": 411,
+      "source_text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)",
+      "source_context": [
+        {
+          "line": 410,
+          "text": ""
+        },
+        {
+          "line": 411,
+          "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+        },
+        {
+          "line": 412,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_REFERENCE_ALPHABET_POLICY",
+      "primary_review_note": "Disallowed IUPAC ambiguity in reference reduced to alphabetically first concrete base.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Policy for disallowed IUPAC ambiguity codes in the reference: reduce to first alphabetically concrete base; preserve as source-level rule and separately assess clinical pipeline appropriateness.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0416",
+      "source_line": 416,
+      "source_text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}.",
+      "source_context": [
+        {
+          "line": 415,
+          "text": "  These alleles do not have to be called in any of the samples."
+        },
+        {
+          "line": 416,
+          "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+        },
+        {
+          "line": 417,
+          "text": "  If there are no alternative alleles, then the MISSING value must be used."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_ALT_GRAMMAR",
+      "primary_review_note": "ALT allele must match one of enumerated sequence, *, ., symbolic, <*>, or breakend forms; each delegated grammar must be reviewed.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "ALT allowed-form grammar; decompose the listed forms (sequence, '*', '.', symbolic ID, '<*>', breakend replacement) and their local constraints.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0417",
+      "source_line": 417,
+      "source_text": "  If there are no alternative alleles, then the MISSING value must be used.",
+      "source_context": [
+        {
+          "line": 416,
+          "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+        },
+        {
+          "line": 417,
+          "text": "  If there are no alternative alleles, then the MISSING value must be used."
+        },
+        {
+          "line": 418,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "No ALT alleles represented by MISSING.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "When no alternate alleles exist, ALT must be the missing-value marker; keep distinct from a sample genotype missing call.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0418",
+      "source_line": 418,
+      "source_text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive.",
+      "source_context": [
+        {
+          "line": 417,
+          "text": "  If there are no alternative alleles, then the MISSING value must be used."
+        },
+        {
+          "line": 418,
+          "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+        },
+        {
+          "line": 419,
+          "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "IMPLEMENTATION_PERMISSION_AND_CASE_SENSITIVITY",
+      "primary_review_note": "Tools need not preserve allele case; IDs remain case-sensitive.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Tool permission not to preserve sequence-letter case, while symbolic IDs remain case-sensitive.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0422",
+      "source_line": 422,
+      "source_text": "  If unknown, the MISSING value must be specified. (Float)",
+      "source_context": [
+        {
+          "line": 421,
+          "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+        },
+        {
+          "line": 422,
+          "text": "  If unknown, the MISSING value must be specified. (Float)"
+        },
+        {
+          "line": 423,
+          "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE_AND_TYPE",
+      "primary_review_note": "Unknown QUAL uses MISSING; QUAL is Float.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "QUAL unknown-value representation and Float type; distinguish QUAL semantics from FILTER missingness.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0425",
+      "source_line": 425,
+      "source_text": "  `0' is reserved and must not be used as a filter String.",
+      "source_context": [
+        {
+          "line": 424,
+          "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+        },
+        {
+          "line": 425,
+          "text": "  `0' is reserved and must not be used as a filter String."
+        },
+        {
+          "line": 426,
+          "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_PROHIBITION",
+      "primary_review_note": "FILTER identifier 0 must not be used.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "The string '0' is reserved and prohibited as a FILTER value.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0426",
+      "source_line": 426,
+      "source_text": "  If filters have not been applied, then this field must be set to the MISSING value.",
+      "source_context": [
+        {
+          "line": 425,
+          "text": "  `0' is reserved and must not be used as a filter String."
+        },
+        {
+          "line": 426,
+          "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+        },
+        {
+          "line": 427,
+          "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_MISSING_VALUE",
+      "primary_review_note": "If filters not applied, FILTER is MISSING.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "When filters have not been applied, FILTER must be missing marker '.', not PASS.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0429",
+      "source_line": 429,
+      "source_text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]].",
+      "source_context": [
+        {
+          "line": 428,
+          "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+        },
+        {
+          "line": 429,
+          "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+        },
+        {
+          "line": 430,
+          "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_INFO_GRAMMAR",
+      "primary_review_note": "INFO subfield is key with optional value list; adjacent lines specify delimiter restrictions.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "INFO field subfield grammar: key optionally followed by '=' and comma-separated values; preserve empty/flag semantics.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0433",
+      "source_line": 433,
+      "source_text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
+      "source_context": [
+        {
+          "line": 432,
+          "text": ""
+        },
+        {
+          "line": 433,
+          "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+        },
+        {
+          "line": 434,
+          "text": "  Duplicate keys are not allowed."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_KEY_GRAMMAR",
+      "primary_review_note": "INFO key regex plus special 1000G legacy exception.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "INFO key lexical regular expression, including the special legacy exception 1000G; duplicate-key prohibition is adjacent line 434.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0435",
+      "source_line": 435,
+      "source_text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional).",
+      "source_context": [
+        {
+          "line": 434,
+          "text": "  Duplicate keys are not allowed."
+        },
+        {
+          "line": 435,
+          "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+        },
+        {
+          "line": 436,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMISSION_AND_OPTIONALITY",
+      "primary_review_note": "Arbitrary INFO keys permitted; reserved keys optional.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Arbitrary INFO keys are permitted subject to reserved-key semantics; reserved keys remain optional.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0437",
+      "source_line": 437,
+      "source_text": "  The exact format of each INFO key should be specified in the meta-information (as described above).",
+      "source_context": [
+        {
+          "line": 436,
+          "text": ""
+        },
+        {
+          "line": 437,
+          "text": "  The exact format of each INFO key should be specified in the meta-information (as described above)."
+        },
+        {
+          "line": 438,
+          "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Exact INFO key format should be specified in metadata.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level recommendation to declare exact INFO key formats in metadata.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0439",
+      "source_line": 439,
+      "source_text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2).",
+      "source_context": [
+        {
+          "line": 438,
+          "text": "  Example of a complete INFO field: {\\tt DP=154;MQ=52;H2}."
+        },
+        {
+          "line": 439,
+          "text": "  Keys without corresponding values may be used to indicate group membership (e.g.\\ H2 indicates the SNP is found in HapMap 2)."
+        },
+        {
+          "line": 440,
+          "text": "  See Section~\\ref{sv-info-keys} for additional reserved INFO keys used to encode structural variants."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "PERMISSION",
+      "primary_review_note": "Keys without values may indicate group membership.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Permission for valueless INFO keys to encode group membership; preserve Flag-like semantics without assuming every valueless key is reserved.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0488",
+      "source_line": 488,
+      "source_text": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:",
+      "source_context": [
+        {
+          "line": 487,
+          "text": ""
+        },
+        {
+          "line": 488,
+          "text": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:"
+        },
+        {
+          "line": 489,
+          "text": "the position of the final base of the REF allele,"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_DERIVED_VALUE",
+      "primary_review_note": "Computed END, when present, must be maximum of defined endpoint components; list components atomically from following lines.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "END computed value must be the maximum of the three specified end-position sources; distinct from END deprecation and backwards compatibility.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0502",
+      "source_line": 502,
+      "source_text": "If any local-allele field is present, LAA must also be present and precede all fields other than GT.",
+      "source_context": [
+        {
+          "line": 501,
+          "text": "The first key must always be the genotype (GT) if it is present."
+        },
+        {
+          "line": 502,
+          "text": "If any local-allele field is present, LAA must also be present and precede all fields other than GT."
+        },
+        {
+          "line": 503,
+          "text": "There are no required keys."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "NORMATIVE_LOCAL_ALLELE_DEPENDENCY",
+      "primary_review_note": "If any local-allele field occurs, LAA is required and precedes all fields except GT.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000053"
+      ],
+      "decision_note": "This is the same conditional LAA-presence and FORMAT-order obligation already atomized from the later local-allele section.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0609",
+      "source_line": 609,
+      "source_text": "  These values should be described in the meta-information in the same way as FILTERs.",
+      "source_context": [
+        {
+          "line": 608,
+          "text": "  Again, use PASS to indicate that all filters have been passed, a semicolon-separated list of codes for filters that fail, or `.' to indicate that filters have not been applied."
+        },
+        {
+          "line": 609,
+          "text": "  These values should be described in the meta-information in the same way as FILTERs."
+        },
+        {
+          "line": 610,
+          "text": "  No whitespace or semicolons permitted."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-core.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "FORMAT filter values should be described in metadata like FILTER values.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level recommendation that genotype FILTER values be declared in metadata analogously to FILTER values.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0627",
+      "source_line": 627,
+      "source_text": "    Implementer should note that merging a VCF record containing only symbolic structural variant ALT alleles with a record containing other alleles will result a change of the meaning of the GT=0 haplotypes from the record containing only symbolic SVs.",
+      "source_context": [
+        {
+          "line": 626,
+          "text": "    For symbolic structural variant alleles, GT=0 indicates the absence of any of the ALT symbolic structural variants defined in the record."
+        },
+        {
+          "line": 627,
+          "text": "    Implementer should note that merging a VCF record containing only symbolic structural variant ALT alleles with a record containing other alleles will result a change of the meaning of the GT=0 haplotypes from the record containing only symbolic SVs."
+        },
+        {
+          "line": 628,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "INFORMATIVE_IMPLEMENTER_WARNING",
+      "primary_review_note": "Merging symbolic-only SV records with other alleles changes GT=0 interpretation; warning, not direct syntax constraint.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "INFORMATIVE_SEMANTIC_WARNING",
+      "existing_requirement_ids": [],
+      "decision_note": "Explains a semantic hazard of merging symbolic-SV-only records with other alleles. Preserve as implementer guidance and use it to design merge/equivalence tests, but the sentence is not itself a file-level MUST/SHOULD requirement.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0713",
+      "source_line": 713,
+      "source_text": "  Due to BCF encoding empty vectors as missing, implementation-defined Number=LA local-allele fields should not be used if distinguishing between zero-length data and missing data is required at REF-only sites.",
+      "source_context": [
+        {
+          "line": 712,
+          "text": ""
+        },
+        {
+          "line": 713,
+          "text": "  Due to BCF encoding empty vectors as missing, implementation-defined Number=LA local-allele fields should not be used if distinguishing between zero-length data and missing data is required at REF-only sites."
+        },
+        {
+          "line": 714,
+          "text": "  "
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION_WITH_BCF_LIMITATION",
+      "primary_review_note": "Implementation-defined Number=LA local fields should not be used if zero-length versus missing must be distinguished at REF-only sites due to BCF representation.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000054"
+      ],
+      "decision_note": "This BCF empty-vector versus missing-value limitation is already represented by the LAA/BCF missing-vector requirement. Preserve this second source occurrence as corroborating context.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0715",
+      "source_line": 715,
+      "source_text": "  It is recommended that VCF libraries provide an API in which local allele encoding can be abstracted away from the API consumer and values accessed through their corresponding non-local key.",
+      "source_context": [
+        {
+          "line": 714,
+          "text": "  "
+        },
+        {
+          "line": 715,
+          "text": "  It is recommended that VCF libraries provide an API in which local allele encoding can be abstracted away from the API consumer and values accessed through their corresponding non-local key."
+        },
+        {
+          "line": 716,
+          "text": "  "
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "API_RECOMMENDATION",
+      "primary_review_note": "VCF libraries are recommended to abstract local allele encoding through API.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "IMPLEMENTATION_GUIDANCE_NOT_FILE_REQUIREMENT",
+      "existing_requirement_ids": [],
+      "decision_note": "Library API abstraction recommendation; retain in implementation/interoperability guidance, not the file-format validation ledger.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0726",
+      "source_line": 726,
+      "source_text": "  Values must be between 0 and 1 and indicate how prevalent the modified base is in the sample.",
+      "source_context": [
+        {
+          "line": 725,
+          "text": "  "
+        },
+        {
+          "line": 726,
+          "text": "  Values must be between 0 and 1 and indicate how prevalent the modified base is in the sample."
+        },
+        {
+          "line": 727,
+          "text": "  "
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "NORMATIVE_VALUE_RANGE",
+      "primary_review_note": "Base-modification fraction values must be in [0,1] and indicate prevalence in sample.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "EXISTING_SUPPLEMENTAL_CANDIDATE_NOT_CANONICAL",
+      "existing_requirement_ids": [
+        "VCF-REQ-000256"
+      ],
+      "decision_note": "The M fraction 0..1 constraint is already present as supplemental candidate VCF-REQ-000256; it is not yet promoted into the canonical ledger.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0770",
+      "source_line": 770,
+      "source_text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required).",
+      "source_context": [
+        {
+          "line": 769,
+          "text": "  If the genotype in the GT field is unphased, the corresponding PS field is ignored."
+        },
+        {
+          "line": 770,
+          "text": "  The recommended convention is to use the position of the first variant in the set as the PS identifier (although this is not required)."
+        },
+        {
+          "line": 771,
+          "text": "  \\item PSL (List of Strings): The list of phase sets, one for each allele value specified in the {\\tt GT}. "
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "First variant position as PS identifier is recommended, not required.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000030"
+      ],
+      "decision_note": "The recommended first-variant-position PS identifier convention is already represented, including its non-mandatory status.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0825",
+      "source_line": 825,
+      "source_text": "Several tag names follow conventions which should be used for implementation-defined tag as well:",
+      "source_context": [
+        {
+          "line": 824,
+          "text": "\\subsection{VCF tag naming conventions}"
+        },
+        {
+          "line": 825,
+          "text": "Several tag names follow conventions which should be used for implementation-defined tag as well:"
+        },
+        {
+          "line": 826,
+          "text": "\\begin{itemize}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Naming conventions should also be used for implementation-defined tags; exact conventions require adjacent subsection review.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level convention for implementation-defined tags; capture the complete named tag conventions from the following lines.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L0845",
+      "source_line": 845,
+      "source_text": "In general, when these keys are used by imprecise variants, the values should be best estimates.",
+      "source_context": [
+        {
+          "line": 844,
+          "text": "The following INFO keys are reserved for encoding structural variants."
+        },
+        {
+          "line": 845,
+          "text": "In general, when these keys are used by imprecise variants, the values should be best estimates."
+        },
+        {
+          "line": 846,
+          "text": "When present, per allele values must be specified for all ALT alleles (including non-structural alleles)."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Imprecise SV values should be best estimates.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level best-estimate recommendation for imprecise variant values; do not enforce as exact numeric equality.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1187",
+      "source_line": 1187,
+      "source_text": "Note that the positions must be sorted in increasing order:",
+      "source_context": [
+        {
+          "line": 1186,
+          "text": ""
+        },
+        {
+          "line": 1187,
+          "text": "Note that the positions must be sorted in increasing order:"
+        },
+        {
+          "line": 1188,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "INFORMATIVE_EXAMPLE",
+      "primary_review_note": "Example repeats POS sorting; no separate requirement beyond core POS rule.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "EXAMPLE_CONTEXT_REQUIRES_REVIEW",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1487",
+      "source_line": 1487,
+      "source_text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:",
+      "source_context": [
+        {
+          "line": 1486,
+          "text": ""
+        },
+        {
+          "line": 1487,
+          "text": "\\textbf{Note}: In the special case of the complete insertion of a sequence between two base pairs, it is recommended to use the shorthand notation described below:"
+        },
+        {
+          "line": 1488,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Shorthand recommended for complete insertion case.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level shorthand recommendation for complete insertion between base pairs; cross-reference the detailed breakend replacement notation section.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1623",
+      "source_line": 1623,
+      "source_text": "Either one uses the short hand notation described previously (recommended for simple cases):",
+      "source_context": [
+        {
+          "line": 1622,
+          "text": "can be described equivalently in two ways."
+        },
+        {
+          "line": 1623,
+          "text": "Either one uses the short hand notation described previously (recommended for simple cases):"
+        },
+        {
+          "line": 1624,
+          "text": "\\end{samepage}"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Short-hand representation recommended for simple inversion.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level shorthand recommendation for simple breakend cases; reconcile whether this is a duplicate of line 1487 or a separate context-specific recommendation.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1732",
+      "source_line": 1732,
+      "source_text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell.",
+      "source_context": [
+        {
+          "line": 1731,
+          "text": "\\subsubsection{Sample mixtures}"
+        },
+        {
+          "line": 1732,
+          "text": "It may be extremely difficult to obtain clinically perfect samples, with only one type of cell."
+        },
+        {
+          "line": 1733,
+          "text": "Let's imagine that two samples are taken from a cancer patient: healthy blood, and some tumor tissue with an estimated 30\\% stromal contamination."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Sample-mixture narrative.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "INFORMATIVE_NARRATIVE_ONLY",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1783",
+      "source_line": 1783,
+      "source_text": "In general there may be several tumor genomes from the same patient in the VCF file.",
+      "source_context": [
+        {
+          "line": 1782,
+          "text": ""
+        },
+        {
+          "line": 1783,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1784,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Multiple tumor genomes are described as possible; no file-format obligation.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "INFORMATIVE_NARRATIVE_ONLY",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1784",
+      "source_line": 1784,
+      "source_text": "Some of these may be secondary tumors derived from an original primary tumor.",
+      "source_context": [
+        {
+          "line": 1783,
+          "text": "In general there may be several tumor genomes from the same patient in the VCF file."
+        },
+        {
+          "line": 1784,
+          "text": "Some of these may be secondary tumors derived from an original primary tumor."
+        },
+        {
+          "line": 1785,
+          "text": "We suggest the derivation relationships between genomes in a cancer VCF file be represented in the header with PEDIGREE tags."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "INFORMATIVE_NARRATIVE",
+      "primary_review_note": "Secondary tumors described as possible; no file-format obligation.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "INFORMATIVE_OR_EXPLANATORY",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "INFORMATIVE_NARRATIVE_ONLY",
+      "existing_requirement_ids": [],
+      "decision_note": "Retain as source context and traceability evidence, but do not create an independent file-validation requirement from this sentence alone.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1889",
+      "source_line": 1889,
+      "source_text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively.",
+      "source_context": [
+        {
+          "line": 1888,
+          "text": "POS and INFO SVLEN specify the genomic interval over which the copy number is defined."
+        },
+        {
+          "line": 1889,
+          "text": "$<$DEL$>$ and $<$DUP$>$ copy number (SVCLAIM=D) alleles should be treated as $<$CNV$>$ alleles that implicitly define INFO CN=0 and CN=2, respectively."
+        },
+        {
+          "line": 1890,
+          "text": "As with all symbolic structural variants, the starting position of the interval is the base immediately after POS."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION_AND_SEMANTIC_MAPPING",
+      "primary_review_note": "DEL/DUP copy-number alleles should be treated as CNV alleles with implicit INFO CN 0/2.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level semantic mapping: DEL/DUP with SVCLAIM=D correspond to CNV alleles with implicit INFO CN 0/2; preserve the normative modality and both values.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1899",
+      "source_line": 1899,
+      "source_text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN.",
+      "source_context": [
+        {
+          "line": 1898,
+          "text": ""
+        },
+        {
+          "line": 1899,
+          "text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN."
+        },
+        {
+          "line": 1900,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "CNV alleles in same record should share SVLEN.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SEMANTICALLY_COVERED_EXISTING",
+      "existing_requirement_ids": [
+        "VCF-REQ-000096"
+      ],
+      "decision_note": "The same-record CNV allele SVLEN consistency rule is already represented in the existing CN FORMAT/SVLEN requirement; add this source locator as corroborating context during the next canonical merge.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1900",
+      "source_line": 1900,
+      "source_text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles.",
+      "source_context": [
+        {
+          "line": 1899,
+          "text": "All $<$CNV$>$ alleles in the same VCF record should have the same SVLEN."
+        },
+        {
+          "line": 1900,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        },
+        {
+          "line": 1901,
+          "text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Copy-number ALT alleles should not be mixed with other ALT alleles.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level prohibition/preference against mixing copy-number ALT alleles with other ALT alleles to avoid genotype ambiguity.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1901",
+      "source_line": 1901,
+      "source_text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically.",
+      "source_context": [
+        {
+          "line": 1900,
+          "text": "To eliminate genotype ambiguity, copy number ALT alleles should not be mixed with other ALT alleles."
+        },
+        {
+          "line": 1901,
+          "text": "When only copy number ALT alleles are present in a VCF record, GT=0 is equivalent to a $<$CNV$>$ ALT allele with INFO CN of 1 and should be treated identically."
+        },
+        {
+          "line": 1902,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION_AND_SEMANTIC_EQUIVALENCE",
+      "primary_review_note": "GT=0 equivalent to CNV ALT with INFO CN=1 in copy-number-only records; should be treated identically.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Semantic equivalence for GT=0 when only copy-number ALT alleles are present: equivalent to CNV ALT with INFO CN=1.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1903",
+      "source_line": 1903,
+      "source_text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field.",
+      "source_context": [
+        {
+          "line": 1902,
+          "text": ""
+        },
+        {
+          "line": 1903,
+          "text": "If only total copy number is known, the copy number of the segment should be defined with a single $<$CNV$>$ ALT allele with a missing INFO CN field."
+        },
+        {
+          "line": 1904,
+          "text": "In the above example this corresponds to the following:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "If only total CN known, use one CNV ALT and missing INFO CN.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Recommended representation when only total copy number is known: one CNV ALT and missing INFO CN.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1914",
+      "source_line": 1914,
+      "source_text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields.",
+      "source_context": [
+        {
+          "line": 1913,
+          "text": "Copy number segmentation can be base-pair accurate with even 1bp changes deletions resulting in new copy number segments, be at a highly granular megabase level of resolution, or anywhere in between."
+        },
+        {
+          "line": 1914,
+          "text": "When the bounds of a copy number segment is not known precisely, this should be encoded in the CIPOS and CILEN INFO fields."
+        },
+        {
+          "line": 1915,
+          "text": ""
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Uncertain segment bounds should be encoded with CIPOS and CILEN.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level encoding of imprecise copy-number segment bounds through CIPOS and CILEN.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1946",
+      "source_line": 1946,
+      "source_text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example.",
+      "source_context": [
+        {
+          "line": 1945,
+          "text": "A tandem repeat allele can be described by both a $<$CNV:TR$>$ 'summary' record as well as non-symbolic records."
+        },
+        {
+          "line": 1946,
+          "text": "When possible, these records should be phased with their corresponding $<$CNV:TR$>$ record as outlined in the following example."
+        },
+        {
+          "line": 1947,
+          "text": "In the following example, the reference genome contains a $(CAG)_{10}$ repeat at positions 101 to 130 inclusive, the first allele expands this to $(CAG)_{30}$ and the second allele is missing a $G$ from the 6th repeat unit $(CAG)_{5}(CA)_{1}(CAG)_{4}$:"
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "When possible, phase tandem-repeat records with corresponding CNV:TR record.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Conditional SHOULD to phase tandem-repeat summary and corresponding CNV:TR record when possible.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1982",
+      "source_line": 1982,
+      "source_text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1.",
+      "source_context": [
+        {
+          "line": 1981,
+          "text": "    It is not the length of the $<$CNV:TR$>$ allele."
+        },
+        {
+          "line": 1982,
+          "text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1."
+        },
+        {
+          "line": 1983,
+          "text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Novel CNV:TR SVLEN should be 1.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level SVLEN=1 convention for novel CNV:TR alleles.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1983",
+      "source_line": 1983,
+      "source_text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence.",
+      "source_context": [
+        {
+          "line": 1982,
+          "text": "    \\item The SVLEN of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be 1."
+        },
+        {
+          "line": 1983,
+          "text": "    \\item The POS of the $<$CNV:TR$>$ allele of a novel (with respect to the reference) tandem repeat should be the base immediately preceding the inserted tandem repeat sequence."
+        },
+        {
+          "line": 1984,
+          "text": "    \\item Both a $<$CNV:TR$>$ and one or more non-symbolic records encoding the tandem repeat can be present."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Novel CNV:TR POS should be base preceding inserted repeat.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level POS convention immediately preceding the inserted tandem-repeat sequence for novel CNV:TR alleles.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1985",
+      "source_line": 1985,
+      "source_text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible.",
+      "source_context": [
+        {
+          "line": 1984,
+          "text": "    \\item Both a $<$CNV:TR$>$ and one or more non-symbolic records encoding the tandem repeat can be present."
+        },
+        {
+          "line": 1985,
+          "text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible."
+        },
+        {
+          "line": 1986,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "CNV:TR and equivalent non-symbolic records should be phased if possible.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Conditional SHOULD to phase CNV:TR summary and non-symbolic tandem-repeat records when possible.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1986",
+      "source_line": 1986,
+      "source_text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly.",
+      "source_context": [
+        {
+          "line": 1985,
+          "text": "    \\item $<$CNV:TR$>$ and the non-symbolic records encoding the tandem repeat should be phased if possible."
+        },
+        {
+          "line": 1986,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        },
+        {
+          "line": 1987,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION_WITH_EXPLICIT_TOLERANCE",
+      "primary_review_note": "CNV:TR should approximately encode sequence; exact encoding not required.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level approximate sequence representation with explicit allowance that the summary need not reproduce the exact sequence.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1987",
+      "source_line": 1987,
+      "source_text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record.",
+      "source_context": [
+        {
+          "line": 1986,
+          "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+        },
+        {
+          "line": 1987,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        },
+        {
+          "line": 1988,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "PERMISSION_AND_EXAMPLE",
+      "primary_review_note": "SNVs/indels may be omitted in CNV:TR record.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "SUPPORTING_EXAMPLE_FOR_CANDIDATE",
+      "existing_requirement_ids": [
+        "VCFv4.5:L1986"
+      ],
+      "decision_note": "The SNV/indel omission example explains the explicit tolerance in the preceding approximate-sequence recommendation; do not create a duplicate independent requirement.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1988",
+      "source_line": 1988,
+      "source_text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid).",
+      "source_context": [
+        {
+          "line": 1987,
+          "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+        },
+        {
+          "line": 1988,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        },
+        {
+          "line": 1989,
+          "text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "CONDITIONAL_RECOMMENDATION",
+      "primary_review_note": "Callers without allele-specific tandem-repeat reporting should use one CNV:TR ALT and missing GT.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Conditional caller recommendation for non-allele-specific repeat callers: one CNV:TR ALT and missing GT; preserve the caller capability condition.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1989",
+      "source_line": 1989,
+      "source_text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
+      "source_context": [
+        {
+          "line": 1988,
+          "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+        },
+        {
+          "line": 1989,
+          "text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length."
+        },
+        {
+          "line": 1990,
+          "text": "\tNote that CN FORMAT field represents the overall copy number and the INFO CN the allele-specific copy number."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "MIXED_RECOMMENDATION_AND_NORMATIVE_CONSTRAINT",
+      "primary_review_note": "INFO/FORMAT CN should be present for CNV:TR; when present must equal sample allelic length/reference allelic length. Split force and value semantics.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "Split into a SHOULD to include INFO/FORMAT CN fields and a MUST semantic constraint on their ratio when present; retain the distinction between overall FORMAT CN and allele-specific INFO CN.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1994",
+      "source_line": 1994,
+      "source_text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large.",
+      "source_context": [
+        {
+          "line": 1993,
+          "text": "\tConceptually, this a mechanism to encode a list-of-list with flat list format used in VCF."
+        },
+        {
+          "line": 1994,
+          "text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large."
+        },
+        {
+          "line": 1995,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "STRs should use RUS; VNTRs should use RUL.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level choice of RUS for STRs and RUL for VNTRs to limit record size.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1995",
+      "source_line": 1995,
+      "source_text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present).",
+      "source_context": [
+        {
+          "line": 1994,
+          "text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large."
+        },
+        {
+          "line": 1995,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        },
+        {
+          "line": 1996,
+          "text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "RUL should be omitted when RUS is present.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level omission of redundant RUL when RUS is present; note the source parenthetical says RS, which appears inconsistent with the RUS key and requires source-author/independent review.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1996",
+      "source_line": 1996,
+      "source_text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$.",
+      "source_context": [
+        {
+          "line": 1995,
+          "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+        },
+        {
+          "line": 1996,
+          "text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$."
+        },
+        {
+          "line": 1997,
+          "text": "    \\item Support for multiple levels of repeat nesting (such as STRs within VNTRs) is limited to the RUL repeat unit length field which allows the overall length of each top-level repeat unit to be encoded."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "NORMATIVE_CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "RUS or RUL must be specified for each CNV:TR.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "MUST-level conditional schema: each CNV:TR record must specify RUS or RUL.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L1998",
+      "source_line": 1998,
+      "source_text": "    \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers.",
+      "source_context": [
+        {
+          "line": 1997,
+          "text": "    \\item Support for multiple levels of repeat nesting (such as STRs within VNTRs) is limited to the RUL repeat unit length field which allows the overall length of each top-level repeat unit to be encoded."
+        },
+        {
+          "line": 1998,
+          "text": "    \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers."
+        },
+        {
+          "line": 1999,
+          "text": "    \\item Variant normalisation has limited utility in regions of low complexity as almost identical haplotypes can have very different normalised representations."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "RECOMMENDATION",
+      "primary_review_note": "Catalog-based POS and SVLEN should match STR/VNTR catalog sizes.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "RECOMMENDATION_PERMISSION_OR_IMPLEMENTATION_GUIDANCE",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "NEW_ATOMIC_CANDIDATE_REQUIRES_LEDGER_SCHEMA_RECORD",
+      "existing_requirement_ids": [],
+      "decision_note": "SHOULD-level catalog-based POS and SVLEN matching recommendation.",
+      "canonical_ledger_change": false
+    },
+    {
+      "candidate_id": "VCFv4.5:L2027",
+      "source_line": 2027,
+      "source_text": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1.",
+      "source_context": [
+        {
+          "line": 2026,
+          "text": "\\begin{itemize}"
+        },
+        {
+          "line": 2027,
+          "text": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1."
+        },
+        {
+          "line": 2028,
+          "text": "\t\\item The confidence interval bounds are relative to the nominal value."
+        }
+      ],
+      "context_artifact": "candidate-context-review-vcf4.5-sv.v1.json",
+      "primary_disposition": "CONDITIONAL_REQUIREMENT",
+      "primary_review_note": "RN is only required if at least one CNV:TR allele has RN greater than 1.",
+      "atomicity": "DECOMPOSITION_REQUIRED_OR_EXPLICITLY_SINGLE",
+      "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+      "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+      "current_requirement_ids": [],
+      "required_next_action": "Manually determine whether the source statement is already covered by an existing atomic requirement, requires decomposition into one or more new requirements, is informative/implementation guidance, or is excluded with a source-grounded rationale.",
+      "adjudication_status": "PARTIAL_SEMANTIC_OVERLAP_REQUIRES_SCOPE_CHECK",
+      "existing_requirement_ids": [
+        "VCF-REQ-000091"
+      ],
+      "decision_note": "The existing RN rule assumes RN=1 for CNV:TR when absent and derives per-allele cardinalities. This line states the precise condition under which RN may be omitted (only when no allele has RN>1); preserve as a distinct conditional obligation unless independent review confirms full equivalence.",
+      "canonical_ledger_change": false
+    }
+  ],
+  "open_high_priority": [
+    {
+      "topic": "VCFv4.5 local-GT example mismatch",
+      "status": "OPEN_SOURCE_INTERNAL_INCONSISTENCY",
+      "detail": "Local example GT 2/4 and paired global example GT 2/2 do not establish an unambiguous local/global GT projection. Preserve raw GT and LAA separately; do not infer equivalence from this pair."
+    },
+    {
+      "topic": "Number=P versus PSQ cardinality",
+      "status": "OPEN_SEMANTIC_AMBIGUITY",
+      "detail": "Number=P is defined per allele value in GT, while PSQ is described as one value per phase set in PSL. Repeated phase-set identifiers make naive length equality unsafe; field-specific semantics need an explicit source-grounded interpretation."
+    },
+    {
+      "topic": "Xanthosine alias capitalization",
+      "status": "OPEN_SOURCE_INTERNAL_INCONSISTENCY",
+      "detail": "Reserved-key table and prose use inconsistent capitalization for the xanthosine M/DPM/ADM key families. Do not silently canonicalize aliases."
+    },
+    {
+      "topic": "Contig/SQ optionality",
+      "status": "OPEN_SCOPE_AMBIGUITY",
+      "detail": "Lines 129-130 and 301-302 require separate VCF versus BCF modality and interpretation of 'all tags are optional'."
+    },
+    {
+      "topic": "CNV:TR RUL/RUS note",
+      "status": "OPEN_SOURCE_INTERNAL_INCONSISTENCY",
+      "detail": "Line 1995 says RUL is redundant when RS is present, while the key named in the preceding line and tandem-repeat context is RUS. Preserve the literal source text and request independent adjudication."
+    }
+  ],
+  "next_steps": [
+    "Convert NEW_ATOMIC_CANDIDATE dispositions into atomic records in a separate supplemental candidate artifact, preserving exact normative force, conditional scope, version applicability and source locators.",
+    "Resolve PARTIAL_SEMANTIC_OVERLAP and SOURCE_SCOPE_AMBIGUITY items before canonical ledger integration.",
+    "Add corroborating source locators to existing canonical requirements only after confirming no source/version scope mismatch.",
+    "Complete VCFv4.5 grammar, definitions, footnotes, examples and cross-reference coverage, then independently review."
+  ]
+}

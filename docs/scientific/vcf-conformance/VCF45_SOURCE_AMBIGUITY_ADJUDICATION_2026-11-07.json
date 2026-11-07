@@ -1,0 +1,227 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.5-source-ambiguity-adjudication",
+  "status": "AUTHOR_PASS2_ADJUDICATION_WITH_OPEN_SOURCE_AMBIGUITIES_INDEPENDENT_REVIEW_REQUIRED",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "source": {
+    "file": "VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "issues": [
+    {
+      "id": "VCF45-AMB-001",
+      "topic": "Local-allele example GT mismatch",
+      "source_ranges": [
+        {
+          "start_line": 613,
+          "end_line": 624,
+          "role": "global GT allele-index definition"
+        },
+        {
+          "start_line": 686,
+          "end_line": 697,
+          "role": "LAA/local allele definitions and example"
+        },
+        {
+          "start_line": 701,
+          "end_line": 710,
+          "role": "paired local/global examples"
+        }
+      ],
+      "observations": [
+        "The general GT definition at line 615 defines 0 as REF and positive values as one-based indices into ALT.",
+        "The local-allele prose defines LAA as one-based indices into ALT and says it defines the local allele set and interpretation order; it does not explicitly redefine GT indices as local ordinals.",
+        "At POS=1, ALT=A,C,T,<*>, LAA=2,4 and the local representation has GT=2/4. This is consistent with GT retaining global ALT indices while LAA selects the local allele subset.",
+        "The paired global representation at the same POS has GT=2/2, which is inconsistent with the local representation and with the allele subset [REF,C,<*>].",
+        "The corresponding LAD/LPL values map to global AD/PL positions for REF, ALT 2 and ALT 4, supporting the interpretation that GT=2/4 is the intended genotype and the paired global GT=2/2 is likely a source example error."
+      ],
+      "provisional_interpretation": "GT allele indices remain global ALT indices in local-allele records; LAA selects and orders the subset used by local-allele fields such as LAD/LPL. The POS=1 global example GT=2/2 is inconsistent; GT=2/4 appears to be the internally consistent counterpart.",
+      "disposition": "SOURCE_EXAMPLE_INCONSISTENCY_IDENTIFIED_NOT_FORMALLY_CORRECTED",
+      "implementation_guard": "Do not remap GT values through LAA. Preserve raw GT and LAA independently. Local-field projections may use the LAA-selected local allele order. Do not use the inconsistent POS=1 paired example as a conformance oracle until corrected by source maintainer or independent standards reviewer.",
+      "required_confirmation": "Independent standards review or upstream erratum confirming global GT indexing and correcting the paired global example."
+    },
+    {
+      "id": "VCF45-AMB-002",
+      "topic": "Number=P versus PSQ cardinality",
+      "source_ranges": [
+        {
+          "start_line": 192,
+          "end_line": 200,
+          "role": "general Number definitions"
+        },
+        {
+          "start_line": 765,
+          "end_line": 776,
+          "role": "PS and PSL semantics"
+        },
+        {
+          "start_line": 788,
+          "end_line": 792,
+          "role": "PSO semantics"
+        },
+        {
+          "start_line": 808,
+          "end_line": 809,
+          "role": "PSQ definition and missingness"
+        },
+        {
+          "start_line": 594,
+          "end_line": 596,
+          "role": "reserved PSQ Number/Type row"
+        }
+      ],
+      "observations": [
+        "The general Number=P definition at line 198 says one value for each allele value defined in GT.",
+        "PSL is defined at line 771 as a list with one phase-set value for each allele value in GT; unphased positions use MISSING at line 772.",
+        "PSQ is defined at line 808 as one PQ value for each phase set in PSL, and line 809 requires MISSING when the corresponding PSL value is missing or phasing quality is unknown.",
+        "The reserved FORMAT table declares PSQ Number=P, so the general Number=P rule applies to PSQ.",
+        "The phrase 'one for each phase set in PSL' is ambiguous if read as one per distinct phase-set identifier, but the Number=P definition and corresponding-position missingness establish a positional list interpretation."
+      ],
+      "provisional_interpretation": "PSQ is positional with PSL: one PSQ element for each PSL list position, hence one per GT allele value, including positions where PSL is MISSING. Repeated phase-set identifiers do not collapse multiple allele positions into one PSQ element. A MISSING PSL position requires a MISSING PSQ value.",
+      "disposition": "SEMANTICALLY_RESOLVED_BY_CROSS_REFERENCE_PENDING_INDEPENDENT_CONFIRMATION",
+      "implementation_guard": "Validate len(PSL)=len(PSQ)=number of GT allele values when these fields are present; validate positional missingness. Do not deduplicate repeated phase-set identifiers before cardinality validation. Keep this rule scoped to PSQ Number=P, not a general claim that every phase-set name is unique per allele.",
+      "required_confirmation": "Independent standards reviewer should confirm that 'phase set in PSL' means a PSL list element/position, not a distinct unique phase-set identifier."
+    },
+    {
+      "id": "VCF45-AMB-003",
+      "topic": "Xanthosine alias capitalization mismatch",
+      "source_ranges": [
+        {
+          "start_line": 258,
+          "end_line": 258,
+          "role": "ID case sensitivity"
+        },
+        {
+          "start_line": 556,
+          "end_line": 588,
+          "role": "reserved FORMAT table alias spellings"
+        },
+        {
+          "start_line": 720,
+          "end_line": 742,
+          "role": "base-modification prose alias spellings"
+        }
+      ],
+      "observations": [
+        "The reserved table spells the xanthosine aliases MXaoN, DPMXaoN and ADMXaoN (lines 586-588).",
+        "The prose recommends MxaoN, DPMxaoN and ADMxaoN (lines 724, 734 and 740).",
+        "The specification states that IDs are case sensitive (line 258), so the spellings are not interchangeable by case-folding.",
+        "The inconsistency affects all three alias families: M, DPM and ADM."
+      ],
+      "provisional_interpretation": "No canonical spelling can be selected from the source alone. Preserve the exact table and prose spellings as conflicting source evidence. Do not silently case-fold, rewrite, or treat the two forms as equivalent in a strict conformance validator.",
+      "disposition": "SOURCE_INTERNAL_CASE_CONFLICT_UNRESOLVED",
+      "implementation_guard": "Preserve literal IDs. A non-blocking diagnostic may report the conflicting documented alias spellings; acceptance/rejection policy for either spelling must remain a versioned lab decision until upstream clarification.",
+      "required_confirmation": "Upstream specification maintainer or independent standards reviewer must identify the intended case-sensitive alias spelling and issue a source correction."
+    },
+    {
+      "id": "VCF45-AMB-004",
+      "topic": "RUL omission parenthetical uses RS instead of RUS",
+      "source_ranges": [
+        {
+          "start_line": 1994,
+          "end_line": 1996,
+          "role": "RUS/RUL recommendations and omission rule"
+        }
+      ],
+      "observations": [
+        "Line 1994 recommends RUS for STRs and RUL for VNTRs.",
+        "Line 1995 says RUL should be omitted when RUS is present.",
+        "The parenthetical explanation on the same line says RUL is redundant when RS is present, not RUS.",
+        "The source does not define RS as an alias for RUS in this local context; silently replacing RS would alter the literal source."
+      ],
+      "provisional_interpretation": "The main clause is recorded as the SHOULD recommendation to omit RUL when RUS is present. The parenthetical RS token remains a separate unresolved source inconsistency; no correction is inferred.",
+      "disposition": "SOURCE_INTERNAL_REFERENCE_MISMATCH_UNRESOLVED",
+      "implementation_guard": "Do not rewrite RS to RUS, treat RS as a defined alias, or derive additional validator behavior from the parenthetical until an upstream correction or independent standards decision is available.",
+      "required_confirmation": "Independent reviewer or specification maintainer must confirm whether RS is a typographical error or a distinct identifier."
+    },
+    {
+      "id": "VCF45-AMB-005",
+      "topic": "Reference/contig header-tag presence versus optional SQ-derived attributes",
+      "source_ranges": [
+        {
+          "start_line": 129,
+          "end_line": 130,
+          "role": "VCF recommendation, BCF requirement and SQ-derived tag optionality"
+        },
+        {
+          "start_line": 135,
+          "end_line": 137,
+          "role": "VCF meta-information optionality and BCF all-entries statement"
+        },
+        {
+          "start_line": 301,
+          "end_line": 303,
+          "role": "contig header-tag presence and contig ID/optional attributes"
+        }
+      ],
+      "observations": [
+        "Line 129 recommends VCF headers include tags describing the reference and contigs and says BCF requires such tags.",
+        "Line 130 says these SQ-based tags are all optional, but does not unambiguously state whether optionality applies to individual SQ attributes or to presence of the header tags themselves.",
+        "Line 135 says VCF meta-information lines are optional if absent but must be well-formed when present; line 137 says BCF requires all entries to be present, without a fully explicit referent for 'all entries'.",
+        "Line 301 repeats the VCF recommendation and BCF requirement for contig-description tags.",
+        "Line 302 explicitly requires ID in a structured contig declaration and permits additional optional attributes; this clarifies attributes once a contig declaration exists, but does not unambiguously resolve the global presence scope in lines 129-130 and 301."
+      ],
+      "provisional_interpretation": "Keep separate versioned statements for VCF recommendation and BCF requirement to include reference/contig description tags; when a ##contig declaration exists, its ID attribute is required and its additional attributes are optional. Do not infer that all SQ-derived tags are mandatory or that all are optional as a group. The scope of 'all tags are optional' and BCF 'all entries' remains unresolved.",
+      "disposition": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not enforce a VCF contig-header presence MUST from these passages alone. Do not drop the BCF requirement or the required ID attribute of a present ##contig declaration. Preserve the lab's versioned decision separately from source interpretation.",
+      "required_confirmation": "Independent VCF/BCF standards reviewer or upstream maintainer must resolve the referents of 'these tags' and 'all entries' and distinguish tag presence from optional SQ/contig attributes."
+    },
+    {
+      "id": "VCF45-AMB-006",
+      "topic": "CNV:TR reference-catalog POS/SVLEN mapping",
+      "source_ranges": [
+        {
+          "start_line": 1997,
+          "end_line": 1998,
+          "role": "repeat nesting and reference-catalog coordinate/size recommendation"
+        }
+      ],
+      "observations": [
+        "Line 1998 says POS and SVLEN of <CNV:TR> records should match STR/VNTR reference catalog sizes for catalog-based callers.",
+        "POS is a genomic coordinate while SVLEN is a length; the phrase 'reference catalog sizes' does not separately identify the catalog field corresponding to each VCF field."
+      ],
+      "provisional_interpretation": "The candidate decomposition records separate POS and SVLEN recommendations to keep the fields independently testable, but the precise catalog-field mapping is not asserted as source fact.",
+      "disposition": "SOURCE_TERM_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not enforce an inferred POS-to-catalog-coordinate or SVLEN-to-catalog-length schema until the catalog semantics are confirmed. Preserve the original combined source wording.",
+      "required_confirmation": "Independent standards reviewer or catalog maintainer must specify the intended POS and SVLEN catalog comparators."
+    },
+    {
+      "id": "VCF45-AMB-007",
+      "topic": "LAA presence condition differs between FORMAT ordering and detailed local-allele definition",
+      "source_ranges": [
+        {
+          "start_line": 501,
+          "end_line": 502,
+          "role": "FORMAT field order and conditional LAA presence"
+        },
+        {
+          "start_line": 686,
+          "end_line": 696,
+          "role": "LAA definition, use and detailed non-omitted/non-MISSING presence condition"
+        }
+      ],
+      "observations": [
+        "The FORMAT ordering passage says that if any local-allele field is present, LAA must also be present and precede all fields other than GT (VCFv4.5.tex:502).",
+        "The detailed LAA definition says LAA is required when interpreting local-allele fields and must be present if any local-allele fields are neither omitted nor MISSING (VCFv4.5.tex:692-696).",
+        "The two passages differ in the stated condition. The source does not explicitly define whether 'field is present' in the earlier sentence means that the FORMAT key exists or that its value is neither omitted nor MISSING.",
+        "The FORMAT ordering obligation is independently testable from the LAA-presence obligation and should not remain combined in one atomic candidate."
+      ],
+      "provisional_interpretation": "Retain both literal source clauses and separate the ordering obligation from LAA presence. Do not silently broaden or narrow the presence condition; represent the discrepancy as unresolved until independent standards review or upstream clarification.",
+      "disposition": "SOURCE_SCOPE_AMBIGUITY_RETAINED",
+      "implementation_guard": "Do not collapse field-key presence, omitted values, MISSING values and FORMAT ordering into one validator predicate. Keep the presence condition unresolved and do not select a broad or narrow acceptance rule from author interpretation alone.",
+      "required_confirmation": "Independent VCFv4.5 standards reviewer or upstream specification maintainer should clarify the intended relationship between the FORMAT ordering sentence and the detailed LAA definition."
+    }
+  ],
+  "cross_cutting_controls": [
+    "These are source interpretation findings, not independent approval.",
+    "No production parser/validator behavior is changed by this artifact.",
+    "No canonical ledger records are added or edited.",
+    "All implementation consequences remain provisional until independent review and conformance tests.",
+    "Pass-2 context review does not correct upstream source text; all unresolved source conflicts remain literal and version-pinned.",
+    "The 900-series supplemental registry may contain covered/subsumed records and must not be promoted wholesale.",
+    "No independent reviewer has approved the provisional interpretations.",
+    "The LAA presence-scope discrepancy between VCFv4.5 lines 502 and 692-696 is retained as VCF45-AMB-007."
+  ]
+}

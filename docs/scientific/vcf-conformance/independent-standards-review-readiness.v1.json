@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf-independent-standards-review-readiness",
+  "assessed_at_utc": "2026-11-05T15:42:00+05:00",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "assessed_ledger": "atomic-requirements.v1.json",
+  "disposition": "NOT_READY_FOR_COMPLETE_LEDGER_INDEPENDENT_REVIEW",
+  "permitted_use": "SCOPED_PILOT_REVIEW_ONLY_WITH_INCOMPLETENESS_DISCLOSED",
+  "inventory": {
+    "atomic_ledger_records": 226,
+    "duplicate_requirement_ids": 0,
+    "records_with_source_references": 226,
+    "records_with_source_locator_values": 226,
+    "records_in_review": 226,
+    "independently_second_person_approved": 0,
+    "records_with_test_evidence_entries": 0,
+    "test_evidence_entries": 0,
+    "records_without_open_question_entries": 43,
+    "vcf40_source_not_pinned_records": 226,
+    "unresolved_applicability_cells_by_version": {
+      "VCFv4.1": 127,
+      "VCFv4.2": 127,
+      "VCFv4.3": 118,
+      "VCFv4.4": 89,
+      "VCFv4.5": 0
+    },
+    "source_references_total": 437,
+    "source_references_with_source_and_excerpt_sha256": 436,
+    "source_references_pending_vcf40_raw_source": 1,
+    "source_references_without_hash_by_version": {
+      "VCFv4.0": 1,
+      "VCFv4.1": 0,
+      "VCFv4.2": 0,
+      "VCFv4.3": 0,
+      "VCFv4.4": 0,
+      "VCFv4.5": 0
+    },
+    "vcf45_indexed_tables": 44,
+    "vcf45_tables_with_author_context_disposition": 44,
+    "independent_table_reviews": 0,
+    "genotype_and_sv_crosswalks": "AUTHOR_CONTEXT_CROSSWALKS_EXIST; ATOMIC_RECONCILIATION_INCOMPLETE",
+    "source_references_without_excerpt_hash_by_version": {
+      "VCFv4.0": 1,
+      "VCFv4.1": 0,
+      "VCFv4.2": 0,
+      "VCFv4.3": 0,
+      "VCFv4.4": 0,
+      "VCFv4.5": 0
+    }
+  },
+  "critical_blockers": [
+    "The ledger now contains 226 candidates, including 84 new VCFv4.5 reserved INFO/FORMAT row definitions. It remains a partial candidate set; other tables, grammar, definitions, examples, footnotes and cross-references still require atomic decomposition.",
+    "Whole-specification coverage remains incomplete. VCFv4.5 has author-context dispositions for all 44 indexed VCF-specific tables, but not every row is atomized; grammar, definitions, enumerations, non-modal constraints, footnotes, examples and cross-references remain incomplete.",
+    "VCFv4.1-4.4 candidate applicability remains unresolved in 43, 43, 34 and 5 cells respectively; these counts concern the current candidate ledger only.",
+    "Independent second-person review has not started; zero requirements are independently approved.",
+    "No production implementation mappings or executed clause-specific tests are present."
+  ],
+  "source_separation": {
+    "core_vcf40": "IGSR/1000 Genomes historical core page corroborated as a VCFv4.0 source candidate; exact source bytes and SHA-256 not captured; not accepted as pinned normative source.",
+    "thousand_genomes_sv": "Separate producer/project convention source; do not merge into core VCFv4.0 normative requirements."
+  },
+  "reviewer_protocol": "INDEPENDENT_STANDARDS_REVIEW_PACKET_2026-11-05.md",
+  "explicit_nonclaims": [
+    "No whole-specification completeness claim.",
+    "No independent approval.",
+    "No implementation conformance claim.",
+    "No executed clause-specific test claim.",
+    "No laboratory qualification claim."
+  ],
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+  "ledger_blob_sha": "ba7d1bb0544f5d1105a4bd62f757decae13caee8",
+  "source_hash_consistency_audit": {
+    "status": "INDEPENDENT_BYTE_LEVEL_RECOMPUTATION_AND_LEDGER_RECONCILIATION_COMPLETE",
+    "audited_at_utc": "2026-11-05",
+    "ledger_source_references_with_archived_spec_file": 436,
+    "references_reconciled_to_byte_verified_sha256": 436,
+    "references_remaining_with_mismatched_source_sha256": 0,
+    "per_file_sha256": {
+      "VCFv4.1": "7d29ef8f93745f246202da3e32107ea13b036bbefcb31f7971a3ce31f1045baa",
+      "VCFv4.2": "66dbd167e8fb309708e0956ffbb12808bd338a703fbf034d80d1ead56ae480cc",
+      "VCFv4.3": "332d8b910ac9952bfba04374118f8c4f318ea996d5017599e68f80379fd61cde",
+      "VCFv4.4": "4c88884cf6b016efcec691d5186432a2e0b679396204d14770e89839ef536e1a",
+      "VCFv4.5": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+    },
+    "per_file_utf8_byte_length": {
+      "VCFv4.1": 95857,
+      "VCFv4.2": 96701,
+      "VCFv4.3": 119335,
+      "VCFv4.4": 149282,
+      "VCFv4.5": 164356
+    },
+    "archive_identity_check": "The five archived source Git blob SHA-1 values reported by GitHub match the pinned upstream hts-specs source blob IDs. Exact file bytes were retrieved using Base64 encoding and decoded to byte arrays before SHA-256 calculation.",
+    "calculation_method": "SHA-256 over exact decoded source-file bytes; no Unicode decoding, newline conversion, trimming, or text reserialization. Implementation checked against the standard abc known-answer vector.",
+    "limitation": "This verifies the exact committed SIRALOOM source blobs and their Git blob identity against the pinned upstream hts-specs source blob IDs. It does not independently verify the upstream repository commit signature in this run. VCFv4.0 remains unhashed and SOURCE_NOT_PINNED.",
+    "note": "Source-file hashes corrected in all ledger references with VCFv4.1–4.5 source_file values. Excerpt hashes and locators were not changed."
+  },
+  "audit_note": "The 84 VCFv4.5 reserved INFO/FORMAT candidates now have source-row excerpt hashes and an 84-row prose-context crosswalk. This remains author research, not independent approval or implementation conformance.",
+  "excerpt_hashing_method": {
+    "algorithm": "SHA-256",
+    "encoding": "UTF-8",
+    "scope": "Exact single source-row line identified by the TABLE_ROW locator",
+    "byte_selection": "The line's UTF-8 bytes excluding the line terminator; original indentation, tabs, spaces and punctuation are preserved.",
+    "status": "APPLIED_TO_ALL_84_NEW_VCF45_RESERVED_INFO_FORMAT_ROW_CANDIDATES",
+    "limitation": "This is the declared method for the new row candidates. Earlier excerpt hashes retain their existing captured method; a future audit should document or normalize their extraction method separately."
+  },
+  "reserved_field_context_crosswalk": {
+    "artifact": "vcf4.5-reserved-info-format-semantic-context-crosswalk.v1.json",
+    "status": "AUTHOR_CONTEXT_RANGES_MAPPED_FIELD_SPECIFIC_ATOMIC_RECONCILIATION_PENDING",
+    "reserved_info_rows": 21,
+    "reserved_format_rows": 63,
+    "total_rows": 84,
+    "rows_with_prose_context": 83,
+    "rows_without_field_specific_prose": 1,
+    "independent_reviews": 0,
+    "note": "The single row without field-specific prose in the inspected definition span is FORMAT LA, described as Reserved. This is not proof that no relevant context exists elsewhere in the full specification."
+  }
+}

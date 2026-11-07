@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.5-phase-set-list-version-delta",
+  "status": "AUTHOR_VERSION_DELTA_RECONCILED_INDEPENDENT_REVIEW_PENDING",
+  "generated_at_utc": "2026-11-06T00:00:00Z",
+  "source_revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+  "scope": "PSL, PSO and PSQ FORMAT fields represented by VCFv4.5 tables VCF5.8 and VCF5.9, including their relationship to PS and GT.",
+  "versions": {
+    "VCFv4_1": {
+      "status": "NOT_FOUND_IN_REVIEWED_RESERVED_FORMAT_AND_GENOTYPE_CONTEXT",
+      "locator": "VCFv4.1.tex:193-222",
+      "note": "PS is present; PSL/PSO/PSQ are not present in the reviewed source context."
+    },
+    "VCFv4_2": {
+      "status": "NOT_FOUND_IN_REVIEWED_RESERVED_FORMAT_AND_GENOTYPE_CONTEXT",
+      "locator": "VCFv4.2.tex:210-239",
+      "note": "PS is present; PSL/PSO/PSQ are not present in the reviewed source context."
+    },
+    "VCFv4_3": {
+      "status": "NOT_FOUND_IN_REVIEWED_RESERVED_FORMAT_AND_GENOTYPE_CONTEXT",
+      "locator": "VCFv4.3.tex:427-478; 550-556",
+      "note": "PS is present; PSL/PSO/PSQ are not present in the reviewed source context."
+    },
+    "VCFv4_4": {
+      "status": "INTRODUCED",
+      "table_rows": "VCFv4.4.tex:496-498",
+      "definitions": "VCFv4.4.tex:598-635",
+      "change_log": "VCFv4.4.tex:2561; 2570"
+    },
+    "VCFv4_5": {
+      "status": "RETAINED_WITH_PSQ_MISSING_VALUE_CLARIFICATION",
+      "table_rows": "VCFv4.5.tex:594-596",
+      "definitions": "VCFv4.5.tex:771-809"
+    }
+  },
+  "field_semantics": {
+    "PSL": {
+      "definition": "A list of phase sets, one for each allele value specified in GT.",
+      "rules": [
+        "Unphased alleles (without a preceding | separator) must have '.' in the corresponding list position.",
+        "Unlike PS (defined per CHROM), same phase-set names on different CHROM values are considered the same phase set.",
+        "When uniqueness cannot be guaranteed across a VCF, a CHROM*POS*ALLELE-NUMBER naming convention is recommended; the '*' delimiter is explained by a footnote.",
+        "A sample genotype must not contain both PS and PSL.",
+        "PS and PSL are not interoperable."
+      ],
+      "locators": [
+        "VCFv4.4.tex:598-603",
+        "VCFv4.5.tex:771-776"
+      ],
+      "delta": "VCFv4.5 changes 'allele specified in GT' to 'allele value specified in GT'; no material semantic change was identified in the reviewed clause."
+    },
+    "PSO": {
+      "definition": "A list of phase-set ordinals defining the order in which variants are encountered when traversing a derivative chromosome.",
+      "rules": [
+        "Missing value '.' represents a missing PSO value.",
+        "For each phase-set name, PSO should be defined if any allele with that name on any record is symbolic SV or in breakend notation.",
+        "Variants in breakend notation must have the same PSL and PSO on both records."
+      ],
+      "locators": [
+        "VCFv4.4.tex:615-619",
+        "VCFv4.5.tex:788-792"
+      ],
+      "delta": "No material wording or semantic change identified in the reviewed clauses."
+    },
+    "PSQ": {
+      "definition": "List of PQ values, one for each phase set in PSL, encoded like PQ.",
+      "rules": [
+        "In VCFv4.5, the missing value '.' should be used when the corresponding PSL value is missing or when phasing quality is unknown."
+      ],
+      "locators": [
+        "VCFv4.4.tex:635",
+        "VCFv4.5.tex:808-809"
+      ],
+      "delta": "VCFv4.5 adds an explicit missing-value rule for PSQ; preserve its SHOULD force rather than converting it to MUST."
+    }
+  },
+  "number_p": {
+    "introduced_in": "VCFv4.4",
+    "evidence": [
+      "VCFv4.4.tex:496-498",
+      "VCFv4.4.tex:2561"
+    ],
+    "retained_in": "VCFv4.5",
+    "evidence_45": [
+      "VCFv4.5.tex:594-596",
+      "VCFv4.5.tex:2731"
+    ],
+    "meaning": "Number=P cardinality follows sample ploidy/local copy number; it is distinct from Number=G genotype-combination cardinality."
+  },
+  "example_interpretation": {
+    "PSL_example": "VCFv4.4.tex:604-613; VCFv4.5.tex:779-786",
+    "PSO_derivative_chromosome_example": "VCFv4.4.tex:621-633; VCFv4.5.tex:794-806",
+    "status": "INFORMATIVE_EXAMPLES; normative obligations are derived from field definitions and modal prose, not example rows."
+  },
+  "remaining": [
+    "Independent reviewer must confirm PS/PSL non-interoperability, cross-CHROM scope and per-GT-allele indexing.",
+    "Map PSL/PSO/PSQ to atomic requirement IDs and preserve SHOULD/MUST distinctions.",
+    "Add tests for missing/unphased alleles, duplicate phase-set names, cross-CHROM identity, PS/PSL conflict, PSO for breakends and PSQ missing/unknown quality.",
+    "No implementation or test execution is claimed."
+  ]
+}

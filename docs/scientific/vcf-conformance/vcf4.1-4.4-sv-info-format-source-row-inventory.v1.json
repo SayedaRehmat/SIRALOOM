@@ -1,0 +1,1180 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.1-4.4-sv-info-format-source-row-inventory.v1",
+  "status": "AUTHOR_SOURCE_ROW_INVENTORY_AND_KEY_FIELD_DELTA_REVIEW_COMPLETE_ATOMIC_REQUIREMENT_RECONCILIATION_PENDING",
+  "source": {
+    "repository": "samtools/hts-specs",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b"
+  },
+  "scope": "Every ##INFO and ##FORMAT declaration in the dedicated structural-variant INFO and FORMAT definition sections of VCFv4.1, VCFv4.2, VCFv4.3 and VCFv4.4, with exact source line and declaration text. This inventory does not include general reserved INFO/FORMAT tables, and does not yet atomize all surrounding prose.",
+  "versions": {
+    "VCFv4.1": {
+      "source": {
+        "file": "VCFv4.1.tex",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "git_blob_sha1": "420cee83a66259600a70de36721763cc374df1e3"
+      },
+      "section_ranges": {
+        "info": [
+          233,
+          285
+        ],
+        "format": [
+          286,
+          467
+        ]
+      },
+      "info_rows": [
+        {
+          "line": 239,
+          "raw": "##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+          "id": "IMPRECISE"
+        },
+        {
+          "line": 240,
+          "raw": "##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+          "id": "NOVEL"
+        },
+        {
+          "line": 241,
+          "raw": "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+          "id": "END"
+        },
+        {
+          "line": 247,
+          "raw": "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+          "id": "SVTYPE"
+        },
+        {
+          "line": 253,
+          "raw": "##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+          "id": "SVLEN"
+        },
+        {
+          "line": 259,
+          "raw": "##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+          "id": "CIPOS"
+        },
+        {
+          "line": 260,
+          "raw": "##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+          "id": "CIEND"
+        },
+        {
+          "line": 261,
+          "raw": "##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMLEN"
+        },
+        {
+          "line": 262,
+          "raw": "##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMSEQ"
+        },
+        {
+          "line": 263,
+          "raw": "##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+          "id": "BKPTID"
+        },
+        {
+          "line": 269,
+          "raw": "##INFO=<ID=MEINFO,Number=4,Type=String,Description=\"Mobile element info of the form NAME,START,END,POLARITY\">",
+          "id": "MEINFO"
+        },
+        {
+          "line": 270,
+          "raw": "##INFO=<ID=METRANS,Number=4,Type=String,Description=\"Mobile element transduction info of the form CHR,START,END,POLARITY\">",
+          "id": "METRANS"
+        },
+        {
+          "line": 271,
+          "raw": "##INFO=<ID=DGVID,Number=1,Type=String,Description=\"ID of this element in Database of Genomic Variation\">",
+          "id": "DGVID"
+        },
+        {
+          "line": 272,
+          "raw": "##INFO=<ID=DBVARID,Number=1,Type=String,Description=\"ID of this element in DBVAR\">",
+          "id": "DBVARID"
+        },
+        {
+          "line": 273,
+          "raw": "##INFO=<ID=DBRIPID,Number=1,Type=String,Description=\"ID of this element in DBRIP\">",
+          "id": "DBRIPID"
+        },
+        {
+          "line": 274,
+          "raw": "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">",
+          "id": "MATEID"
+        },
+        {
+          "line": 275,
+          "raw": "##INFO=<ID=PARID,Number=1,Type=String,Description=\"ID of partner breakend\">",
+          "id": "PARID"
+        },
+        {
+          "line": 276,
+          "raw": "##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">",
+          "id": "EVENT"
+        },
+        {
+          "line": 277,
+          "raw": "##INFO=<ID=CILEN,Number=2,Type=Integer,Description=\"Confidence interval around the inserted material between breakends\">",
+          "id": "CILEN"
+        },
+        {
+          "line": 278,
+          "raw": "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Read Depth of segment containing breakend\">",
+          "id": "DP"
+        },
+        {
+          "line": 279,
+          "raw": "##INFO=<ID=DPADJ,Number=.,Type=Integer,Description=\"Read Depth of adjacency\">",
+          "id": "DPADJ"
+        },
+        {
+          "line": 280,
+          "raw": "##INFO=<ID=CN,Number=1,Type=Integer,Description=\"Copy number of segment containing breakend\">",
+          "id": "CN"
+        },
+        {
+          "line": 281,
+          "raw": "##INFO=<ID=CNADJ,Number=.,Type=Integer,Description=\"Copy number of adjacency\">",
+          "id": "CNADJ"
+        },
+        {
+          "line": 282,
+          "raw": "##INFO=<ID=CICN,Number=2,Type=Integer,Description=\"Confidence interval around copy number for the segment\">",
+          "id": "CICN"
+        },
+        {
+          "line": 283,
+          "raw": "##INFO=<ID=CICNADJ,Number=.,Type=Integer,Description=\"Confidence interval around copy number for the adjacency\">",
+          "id": "CICNADJ"
+        }
+      ],
+      "format_rows": [
+        {
+          "line": 289,
+          "raw": "##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+          "id": "CN"
+        },
+        {
+          "line": 290,
+          "raw": "##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+          "id": "CNQ"
+        },
+        {
+          "line": 291,
+          "raw": "##FORMAT=<ID=CNL,Number=.,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+          "id": "CNL"
+        },
+        {
+          "line": 292,
+          "raw": "##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+          "id": "NQ"
+        },
+        {
+          "line": 293,
+          "raw": "##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+          "id": "HAP"
+        },
+        {
+          "line": 294,
+          "raw": "##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+          "id": "AHAP"
+        }
+      ]
+    },
+    "VCFv4.2": {
+      "source": {
+        "file": "VCFv4.2.tex",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "git_blob_sha1": "70e595cdad351b3fb12e121850d7e6c8c5f67c88"
+      },
+      "section_ranges": {
+        "info": [
+          250,
+          302
+        ],
+        "format": [
+          303,
+          484
+        ]
+      },
+      "info_rows": [
+        {
+          "line": 256,
+          "raw": "##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+          "id": "IMPRECISE"
+        },
+        {
+          "line": 257,
+          "raw": "##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+          "id": "NOVEL"
+        },
+        {
+          "line": 258,
+          "raw": "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+          "id": "END"
+        },
+        {
+          "line": 264,
+          "raw": "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+          "id": "SVTYPE"
+        },
+        {
+          "line": 270,
+          "raw": "##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+          "id": "SVLEN"
+        },
+        {
+          "line": 276,
+          "raw": "##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+          "id": "CIPOS"
+        },
+        {
+          "line": 277,
+          "raw": "##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+          "id": "CIEND"
+        },
+        {
+          "line": 278,
+          "raw": "##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMLEN"
+        },
+        {
+          "line": 279,
+          "raw": "##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMSEQ"
+        },
+        {
+          "line": 280,
+          "raw": "##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+          "id": "BKPTID"
+        },
+        {
+          "line": 286,
+          "raw": "##INFO=<ID=MEINFO,Number=4,Type=String,Description=\"Mobile element info of the form NAME,START,END,POLARITY\">",
+          "id": "MEINFO"
+        },
+        {
+          "line": 287,
+          "raw": "##INFO=<ID=METRANS,Number=4,Type=String,Description=\"Mobile element transduction info of the form CHR,START,END,POLARITY\">",
+          "id": "METRANS"
+        },
+        {
+          "line": 288,
+          "raw": "##INFO=<ID=DGVID,Number=1,Type=String,Description=\"ID of this element in Database of Genomic Variation\">",
+          "id": "DGVID"
+        },
+        {
+          "line": 289,
+          "raw": "##INFO=<ID=DBVARID,Number=1,Type=String,Description=\"ID of this element in DBVAR\">",
+          "id": "DBVARID"
+        },
+        {
+          "line": 290,
+          "raw": "##INFO=<ID=DBRIPID,Number=1,Type=String,Description=\"ID of this element in DBRIP\">",
+          "id": "DBRIPID"
+        },
+        {
+          "line": 291,
+          "raw": "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">",
+          "id": "MATEID"
+        },
+        {
+          "line": 292,
+          "raw": "##INFO=<ID=PARID,Number=1,Type=String,Description=\"ID of partner breakend\">",
+          "id": "PARID"
+        },
+        {
+          "line": 293,
+          "raw": "##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">",
+          "id": "EVENT"
+        },
+        {
+          "line": 294,
+          "raw": "##INFO=<ID=CILEN,Number=2,Type=Integer,Description=\"Confidence interval around the inserted material between breakends\">",
+          "id": "CILEN"
+        },
+        {
+          "line": 295,
+          "raw": "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Read Depth of segment containing breakend\">",
+          "id": "DP"
+        },
+        {
+          "line": 296,
+          "raw": "##INFO=<ID=DPADJ,Number=.,Type=Integer,Description=\"Read Depth of adjacency\">",
+          "id": "DPADJ"
+        },
+        {
+          "line": 297,
+          "raw": "##INFO=<ID=CN,Number=1,Type=Integer,Description=\"Copy number of segment containing breakend\">",
+          "id": "CN"
+        },
+        {
+          "line": 298,
+          "raw": "##INFO=<ID=CNADJ,Number=.,Type=Integer,Description=\"Copy number of adjacency\">",
+          "id": "CNADJ"
+        },
+        {
+          "line": 299,
+          "raw": "##INFO=<ID=CICN,Number=2,Type=Integer,Description=\"Confidence interval around copy number for the segment\">",
+          "id": "CICN"
+        },
+        {
+          "line": 300,
+          "raw": "##INFO=<ID=CICNADJ,Number=.,Type=Integer,Description=\"Confidence interval around copy number for the adjacency\">",
+          "id": "CICNADJ"
+        }
+      ],
+      "format_rows": [
+        {
+          "line": 306,
+          "raw": "##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+          "id": "CN"
+        },
+        {
+          "line": 307,
+          "raw": "##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+          "id": "CNQ"
+        },
+        {
+          "line": 308,
+          "raw": "##FORMAT=<ID=CNL,Number=.,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+          "id": "CNL"
+        },
+        {
+          "line": 309,
+          "raw": "##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+          "id": "NQ"
+        },
+        {
+          "line": 310,
+          "raw": "##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+          "id": "HAP"
+        },
+        {
+          "line": 311,
+          "raw": "##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+          "id": "AHAP"
+        }
+      ]
+    },
+    "VCFv4.3": {
+      "source": {
+        "file": "VCFv4.3.tex",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "git_blob_sha1": "01671b89e21fc1bca414b639a4ea483194f127a9"
+      },
+      "section_ranges": {
+        "info": [
+          601,
+          671
+        ],
+        "format": [
+          672,
+          869
+        ]
+      },
+      "info_rows": [
+        {
+          "line": 609,
+          "raw": "##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+          "id": "IMPRECISE"
+        },
+        {
+          "line": 610,
+          "raw": "##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+          "id": "NOVEL"
+        },
+        {
+          "line": 611,
+          "raw": "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">",
+          "id": "END"
+        },
+        {
+          "line": 618,
+          "raw": "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+          "id": "SVTYPE"
+        },
+        {
+          "line": 635,
+          "raw": "##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Difference in length between REF and ALT alleles\">",
+          "id": "SVLEN"
+        },
+        {
+          "line": 642,
+          "raw": "##INFO=<ID=CIPOS,Number=2,Type=Integer,Description=\"Confidence interval around POS for imprecise variants\">",
+          "id": "CIPOS"
+        },
+        {
+          "line": 643,
+          "raw": "##INFO=<ID=CIEND,Number=2,Type=Integer,Description=\"Confidence interval around END for imprecise variants\">",
+          "id": "CIEND"
+        },
+        {
+          "line": 644,
+          "raw": "##INFO=<ID=HOMLEN,Number=.,Type=Integer,Description=\"Length of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMLEN"
+        },
+        {
+          "line": 645,
+          "raw": "##INFO=<ID=HOMSEQ,Number=.,Type=String,Description=\"Sequence of base pair identical micro-homology at event breakpoints\">",
+          "id": "HOMSEQ"
+        },
+        {
+          "line": 646,
+          "raw": "##INFO=<ID=BKPTID,Number=.,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+          "id": "BKPTID"
+        },
+        {
+          "line": 654,
+          "raw": "##INFO=<ID=MEINFO,Number=4,Type=String,Description=\"Mobile element info of the form NAME,START,END,POLARITY\">",
+          "id": "MEINFO"
+        },
+        {
+          "line": 655,
+          "raw": "##INFO=<ID=METRANS,Number=4,Type=String,Description=\"Mobile element transduction info of the form CHR,START,END,POLARITY\">",
+          "id": "METRANS"
+        },
+        {
+          "line": 656,
+          "raw": "##INFO=<ID=DGVID,Number=1,Type=String,Description=\"ID of this element in Database of Genomic Variation\">",
+          "id": "DGVID"
+        },
+        {
+          "line": 657,
+          "raw": "##INFO=<ID=DBVARID,Number=1,Type=String,Description=\"ID of this element in DBVAR\">",
+          "id": "DBVARID"
+        },
+        {
+          "line": 658,
+          "raw": "##INFO=<ID=DBRIPID,Number=1,Type=String,Description=\"ID of this element in DBRIP\">",
+          "id": "DBRIPID"
+        },
+        {
+          "line": 659,
+          "raw": "##INFO=<ID=MATEID,Number=.,Type=String,Description=\"ID of mate breakends\">",
+          "id": "MATEID"
+        },
+        {
+          "line": 660,
+          "raw": "##INFO=<ID=PARID,Number=1,Type=String,Description=\"ID of partner breakend\">",
+          "id": "PARID"
+        },
+        {
+          "line": 661,
+          "raw": "##INFO=<ID=EVENT,Number=1,Type=String,Description=\"ID of event associated to breakend\">",
+          "id": "EVENT"
+        },
+        {
+          "line": 662,
+          "raw": "##INFO=<ID=CILEN,Number=2,Type=Integer,Description=\"Confidence interval around the inserted material between breakends\">",
+          "id": "CILEN"
+        },
+        {
+          "line": 663,
+          "raw": "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Read Depth of segment containing breakend\">",
+          "id": "DP"
+        },
+        {
+          "line": 664,
+          "raw": "##INFO=<ID=DPADJ,Number=.,Type=Integer,Description=\"Read Depth of adjacency\">",
+          "id": "DPADJ"
+        },
+        {
+          "line": 665,
+          "raw": "##INFO=<ID=CN,Number=1,Type=Integer,Description=\"Copy number of segment containing breakend\">",
+          "id": "CN"
+        },
+        {
+          "line": 666,
+          "raw": "##INFO=<ID=CNADJ,Number=.,Type=Integer,Description=\"Copy number of adjacency\">",
+          "id": "CNADJ"
+        },
+        {
+          "line": 667,
+          "raw": "##INFO=<ID=CICN,Number=2,Type=Integer,Description=\"Confidence interval around copy number for the segment\">",
+          "id": "CICN"
+        },
+        {
+          "line": 668,
+          "raw": "##INFO=<ID=CICNADJ,Number=.,Type=Integer,Description=\"Confidence interval around copy number for the adjacency\">",
+          "id": "CICNADJ"
+        }
+      ],
+      "format_rows": [
+        {
+          "line": 676,
+          "raw": "##FORMAT=<ID=CN,Number=1,Type=Integer,Description=\"Copy number genotype for imprecise events\">",
+          "id": "CN"
+        },
+        {
+          "line": 677,
+          "raw": "##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality for imprecise events\">",
+          "id": "CNQ"
+        },
+        {
+          "line": 678,
+          "raw": "##FORMAT=<ID=CNL,Number=G,Type=Float,Description=\"Copy number genotype likelihood for imprecise events\">",
+          "id": "CNL"
+        },
+        {
+          "line": 679,
+          "raw": "##FORMAT=<ID=CNP,Number=G,Type=Float,Description=\"Copy number posterior probabilities\">",
+          "id": "CNP"
+        },
+        {
+          "line": 680,
+          "raw": "##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+          "id": "NQ"
+        },
+        {
+          "line": 681,
+          "raw": "##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+          "id": "HAP"
+        },
+        {
+          "line": 682,
+          "raw": "##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+          "id": "AHAP"
+        }
+      ]
+    },
+    "VCFv4.4": {
+      "source": {
+        "file": "VCFv4.4.tex",
+        "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+        "git_blob_sha1": "31cb66283ea40c3df51e488c5fffe826fd8dedaf"
+      },
+      "section_ranges": {
+        "info": [
+          666,
+          980
+        ],
+        "format": [
+          981,
+          1180
+        ]
+      },
+      "info_rows": [
+        {
+          "line": 677,
+          "raw": "##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise structural variation\">",
+          "id": "IMPRECISE"
+        },
+        {
+          "line": 687,
+          "raw": "##INFO=<ID=NOVEL,Number=0,Type=Flag,Description=\"Indicates a novel structural variation\">",
+          "id": "NOVEL"
+        },
+        {
+          "line": 688,
+          "raw": "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the longest variant described in this record\">",
+          "id": "END"
+        },
+        {
+          "line": 710,
+          "raw": "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">",
+          "id": "SVTYPE"
+        },
+        {
+          "line": 720,
+          "raw": "##INFO=<ID=SVLEN,Number=A,Type=Integer,Description=\"Length of structural variant\">",
+          "id": "SVLEN"
+        },
+        {
+          "line": 739,
+          "raw": "##INFO=<ID=CIPOS,Number=.,Type=Integer,Description=\"Confidence interval around POS for symbolic structural variants\">",
+          "id": "CIPOS"
+        },
+        {
+          "line": 755,
+          "raw": "##INFO=<ID=CIEND,Number=.,Type=Integer,Description=\"Confidence interval around END for symbolic structural variants\">",
+          "id": "CIEND"
+        },
+        {
+          "line": 769,
+          "raw": "##INFO=<ID=HOMLEN,Number=A,Type=Integer,Description=\"Length of base pair identical micro-homology at breakpoints\">",
+          "id": "HOMLEN"
+        },
+        {
+          "line": 774,
+          "raw": "##INFO=<ID=HOMSEQ,Number=A,Type=String,Description=\"Sequence of base pair identical micro-homology at breakpoints\">",
+          "id": "HOMSEQ"
+        },
+        {
+          "line": 779,
+          "raw": "##INFO=<ID=BKPTID,Number=A,Type=String,Description=\"ID of the assembled alternate allele in the assembly file\">",
+          "id": "BKPTID"
+        },
+        {
+          "line": 787,
+          "raw": "##INFO=<ID=MEINFO,Number=.,Type=String,Description=\"Mobile element info of the form NAME,START,END,POLARITY\">",
+          "id": "MEINFO"
+        },
+        {
+          "line": 796,
+          "raw": "##INFO=<ID=METRANS,Number=.,Type=String,Description=\"Mobile element transduction info of the form CHR,START,END,POLARITY\">",
+          "id": "METRANS"
+        },
+        {
+          "line": 805,
+          "raw": "##INFO=<ID=DGVID,Number=A,Type=String,Description=\"ID of this element in Database of Genomic Variation\">",
+          "id": "DGVID"
+        },
+        {
+          "line": 806,
+          "raw": "##INFO=<ID=DBVARID,Number=A,Type=String,Description=\"ID of this element in DBVAR\">",
+          "id": "DBVARID"
+        },
+        {
+          "line": 807,
+          "raw": "##INFO=<ID=DBRIPID,Number=A,Type=String,Description=\"ID of this element in DBRIP\">",
+          "id": "DBRIPID"
+        },
+        {
+          "line": 808,
+          "raw": "##INFO=<ID=MATEID,Number=A,Type=String,Description=\"ID of mate breakend\">",
+          "id": "MATEID"
+        },
+        {
+          "line": 809,
+          "raw": "##INFO=<ID=PARID,Number=A,Type=String,Description=\"ID of partner breakend\">",
+          "id": "PARID"
+        },
+        {
+          "line": 810,
+          "raw": "##INFO=<ID=EVENT,Number=A,Type=String,Description=\"ID of associated event\">",
+          "id": "EVENT"
+        },
+        {
+          "line": 811,
+          "raw": "##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description=\"Type of associated event\">",
+          "id": "EVENTTYPE"
+        },
+        {
+          "line": 844,
+          "raw": "##INFO=<ID=CILEN,Number=.,Type=Integer,Description=\"Confidence interval for the SVLEN field\">",
+          "id": "CILEN"
+        },
+        {
+          "line": 853,
+          "raw": "##INFO=<ID=CN,Number=A,Type=Float,Description=\"Copy number of CNV/breakpoint\">",
+          "id": "CN"
+        },
+        {
+          "line": 854,
+          "raw": "##INFO=<ID=CICN,Number=.,Type=Float,Description=\"Confidence interval around copy number\">",
+          "id": "CICN"
+        },
+        {
+          "line": 863,
+          "raw": "##INFO=<ID=SVCLAIM,Number=A,Type=String,Description=\"Claim made by the structural variant call. Valid values are D, J, DJ for abundance, adjacency and both respectively\">",
+          "id": "SVCLAIM"
+        },
+        {
+          "line": 909,
+          "raw": "##INFO=<ID=RN,Number=A,Type=Integer,Description=\"Total number of repeat sequences in this allele\">",
+          "id": "RN"
+        },
+        {
+          "line": 923,
+          "raw": "##INFO=<ID=RUS,Number=.,Type=String,Description=\"Repeat unit sequence of the corresponding repeat sequence\">",
+          "id": "RUS"
+        },
+        {
+          "line": 924,
+          "raw": "##INFO=<ID=RUL,Number=.,Type=Integer,Description=\"Repeat unit length of the corresponding repeat sequence\">",
+          "id": "RUL"
+        },
+        {
+          "line": 925,
+          "raw": "##INFO=<ID=RUC,Number=.,Type=Float,Description=\"Repeat unit count of corresponding repeat sequence\">",
+          "id": "RUC"
+        },
+        {
+          "line": 926,
+          "raw": "##INFO=<ID=RB,Number=.,Type=Integer,Description=\"Total number of bases in the corresponding repeat sequence\">",
+          "id": "RB"
+        },
+        {
+          "line": 948,
+          "raw": "##INFO=<ID=CIRUC,Number=.,Type=Float,Description=\"Confidence interval around RUC\">",
+          "id": "CIRUC"
+        },
+        {
+          "line": 949,
+          "raw": "##INFO=<ID=CIRB,Number=.,Type=Integer,Description=\"Confidence interval around RB\">",
+          "id": "CIRB"
+        },
+        {
+          "line": 967,
+          "raw": "##INFO=<ID=RUB,Number=.,Type=Integer,Description=\"Number of bases in each individual repeat unit\">",
+          "id": "RUB"
+        }
+      ],
+      "format_rows": [
+        {
+          "line": 985,
+          "raw": "##FORMAT=<ID=CN,Number=1,Type=Float,Description=\"Copy number\">",
+          "id": "CN"
+        },
+        {
+          "line": 986,
+          "raw": "##FORMAT=<ID=CICN,Number=2,Type=Float,Description=\"Confidence interval around copy number\">",
+          "id": "CICN"
+        },
+        {
+          "line": 987,
+          "raw": "##FORMAT=<ID=CNQ,Number=1,Type=Float,Description=\"Copy number genotype quality\">",
+          "id": "CNQ"
+        },
+        {
+          "line": 988,
+          "raw": "##FORMAT=<ID=CNL,Number=G,Type=Float,Description=\"Copy number genotype likelihood\">",
+          "id": "CNL"
+        },
+        {
+          "line": 989,
+          "raw": "##FORMAT=<ID=CNP,Number=G,Type=Float,Description=\"Copy number posterior probabilities\">",
+          "id": "CNP"
+        },
+        {
+          "line": 990,
+          "raw": "##FORMAT=<ID=NQ,Number=1,Type=Integer,Description=\"Phred style probability score that the variant is novel\">",
+          "id": "NQ"
+        },
+        {
+          "line": 991,
+          "raw": "##FORMAT=<ID=HAP,Number=1,Type=Integer,Description=\"Unique haplotype identifier\">",
+          "id": "HAP"
+        },
+        {
+          "line": 992,
+          "raw": "##FORMAT=<ID=AHAP,Number=1,Type=Integer,Description=\"Unique identifier of ancestral haplotype\">",
+          "id": "AHAP"
+        }
+      ]
+    }
+  },
+  "cross_version_presence": {
+    "info_keys": [
+      "BKPTID",
+      "CICN",
+      "CICNADJ",
+      "CIEND",
+      "CILEN",
+      "CIPOS",
+      "CIRB",
+      "CIRUC",
+      "CN",
+      "CNADJ",
+      "DBRIPID",
+      "DBVARID",
+      "DGVID",
+      "DP",
+      "DPADJ",
+      "END",
+      "EVENT",
+      "EVENTTYPE",
+      "HOMLEN",
+      "HOMSEQ",
+      "IMPRECISE",
+      "MATEID",
+      "MEINFO",
+      "METRANS",
+      "NOVEL",
+      "PARID",
+      "RB",
+      "RN",
+      "RUB",
+      "RUC",
+      "RUL",
+      "RUS",
+      "SVCLAIM",
+      "SVLEN",
+      "SVTYPE"
+    ],
+    "format_keys": [
+      "AHAP",
+      "CICN",
+      "CN",
+      "CNL",
+      "CNP",
+      "CNQ",
+      "HAP",
+      "NQ"
+    ],
+    "info_presence": {
+      "VCFv4.1": [
+        "IMPRECISE",
+        "NOVEL",
+        "END",
+        "SVTYPE",
+        "SVLEN",
+        "CIPOS",
+        "CIEND",
+        "HOMLEN",
+        "HOMSEQ",
+        "BKPTID",
+        "MEINFO",
+        "METRANS",
+        "DGVID",
+        "DBVARID",
+        "DBRIPID",
+        "MATEID",
+        "PARID",
+        "EVENT",
+        "CILEN",
+        "DP",
+        "DPADJ",
+        "CN",
+        "CNADJ",
+        "CICN",
+        "CICNADJ"
+      ],
+      "VCFv4.2": [
+        "IMPRECISE",
+        "NOVEL",
+        "END",
+        "SVTYPE",
+        "SVLEN",
+        "CIPOS",
+        "CIEND",
+        "HOMLEN",
+        "HOMSEQ",
+        "BKPTID",
+        "MEINFO",
+        "METRANS",
+        "DGVID",
+        "DBVARID",
+        "DBRIPID",
+        "MATEID",
+        "PARID",
+        "EVENT",
+        "CILEN",
+        "DP",
+        "DPADJ",
+        "CN",
+        "CNADJ",
+        "CICN",
+        "CICNADJ"
+      ],
+      "VCFv4.3": [
+        "IMPRECISE",
+        "NOVEL",
+        "END",
+        "SVTYPE",
+        "SVLEN",
+        "CIPOS",
+        "CIEND",
+        "HOMLEN",
+        "HOMSEQ",
+        "BKPTID",
+        "MEINFO",
+        "METRANS",
+        "DGVID",
+        "DBVARID",
+        "DBRIPID",
+        "MATEID",
+        "PARID",
+        "EVENT",
+        "CILEN",
+        "DP",
+        "DPADJ",
+        "CN",
+        "CNADJ",
+        "CICN",
+        "CICNADJ"
+      ],
+      "VCFv4.4": [
+        "IMPRECISE",
+        "NOVEL",
+        "END",
+        "SVTYPE",
+        "SVLEN",
+        "CIPOS",
+        "CIEND",
+        "HOMLEN",
+        "HOMSEQ",
+        "BKPTID",
+        "MEINFO",
+        "METRANS",
+        "DGVID",
+        "DBVARID",
+        "DBRIPID",
+        "MATEID",
+        "PARID",
+        "EVENT",
+        "EVENTTYPE",
+        "CILEN",
+        "CN",
+        "CICN",
+        "SVCLAIM",
+        "RN",
+        "RUS",
+        "RUL",
+        "RUC",
+        "RB",
+        "CIRUC",
+        "CIRB",
+        "RUB"
+      ]
+    },
+    "format_presence": {
+      "VCFv4.1": [
+        "CN",
+        "CNQ",
+        "CNL",
+        "NQ",
+        "HAP",
+        "AHAP"
+      ],
+      "VCFv4.2": [
+        "CN",
+        "CNQ",
+        "CNL",
+        "NQ",
+        "HAP",
+        "AHAP"
+      ],
+      "VCFv4.3": [
+        "CN",
+        "CNQ",
+        "CNL",
+        "CNP",
+        "NQ",
+        "HAP",
+        "AHAP"
+      ],
+      "VCFv4.4": [
+        "CN",
+        "CICN",
+        "CNQ",
+        "CNL",
+        "CNP",
+        "NQ",
+        "HAP",
+        "AHAP"
+      ]
+    }
+  },
+  "observed_deltas": [
+    "VCFv4.1 and VCFv4.2 use Number=2 for CIPOS/CIEND and retain signed SVLEN with Number=.; these are not the 4.4 per-ALT paired-vector definitions.",
+    "VCFv4.1 and VCFv4.2 include SVTYPE=BND and breakend INFO fields in their SV encoding model.",
+    "VCFv4.3 continues the earlier SV field definitions and has no VCFv4.4 SVCLAIM, EVENTTYPE, or tandem-repeat field family.",
+    "VCFv4.4 changes SVLEN to Number=A and defines CIPOS/CIEND as successive ALT-specific offset pairs; MATEID/PARID/EVENT/EVENTTYPE become Number=A fields.",
+    "VCFv4.4 introduces SVCLAIM, tandem-repeat INFO fields (RN/RUS/RUL/RUC/RB/CIRB/CIRUC/RUB), and revised copy-number semantics.",
+    "VCFv4.4 SV FORMAT CN/CNQ/CNL/CNP declarations differ from 4.1-4.3 and support float copy number and genotype-indexed CNL/CNP."
+  ],
+  "limitations": [
+    "A source declaration row is not necessarily a mandatory field occurrence in every record.",
+    "Description strings are not a substitute for the surrounding semantic clauses; full-context review remains required.",
+    "The VCFv4.4 change log is used only to discover candidate deltas; section definitions are the primary source.",
+    "No VCFv4.0 applicability is asserted.",
+    "The row inventory captures every field declaration in the dedicated SV INFO/FORMAT sections; row-specific normative clauses still require atomization and cross-version applicability mapping."
+  ],
+  "independent_review": {
+    "required": true,
+    "status": "NOT_STARTED"
+  },
+  "implementation_mapping": "NOT_STARTED",
+  "test_execution": "NOT_STARTED",
+  "laboratory_qualification": "NOT_CLAIMED",
+  "field_semantic_deltas": [
+    {
+      "field": "END",
+      "versions": [
+        "4.1",
+        "4.2"
+      ],
+      "finding": "END is described as the end position of the variant; for precise variants it is POS + length(REF) - 1, and for imprecise variants it is the corresponding best estimate.",
+      "sources": [
+        "VCFv4.1.tex:241-245",
+        "VCFv4.2.tex:258-262"
+      ]
+    },
+    {
+      "field": "SVLEN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "SVLEN is Number=. Integer and describes the difference in length between REF and ALT; negative deletion values appear in the version examples. It is not yet the VCFv4.4 positive class-specific Number=A definition.",
+      "sources": [
+        "VCFv4.1.tex:253-258",
+        "VCFv4.2.tex:270-275",
+        "VCFv4.3.tex:635-641"
+      ]
+    },
+    {
+      "field": "SVLEN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "SVLEN is Number=A Integer, one value per ALT; required for symbolic SV alleles and defined as positive inserted/duplicated/inverted/deleted length or CNV segment length. Legacy negative values are interpreted by absolute value.",
+      "sources": [
+        "VCFv4.4.tex:720-738"
+      ]
+    },
+    {
+      "field": "CIPOS/CIEND",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Both are Number=2 Integer confidence intervals for imprecise variants; they are not yet the VCFv4.4 per-ALT successive offset-pair arrays.",
+      "sources": [
+        "VCFv4.1.tex:259-260",
+        "VCFv4.2.tex:276-277",
+        "VCFv4.3.tex:642-643"
+      ]
+    },
+    {
+      "field": "CIPOS/CIEND",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "Both use Number=. Integer; when present they contain successive pairs per ALT. CIPOS offsets are relative to POS; CIEND offsets are relative to END inferred from SVLEN. CIEND missing defaults to CIPOS.",
+      "sources": [
+        "VCFv4.4.tex:739-765"
+      ]
+    },
+    {
+      "field": "SVTYPE",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "SVTYPE is an active Number=1 String structural-variant type key, with type values including BND in the earlier breakend model.",
+      "sources": [
+        "VCFv4.1.tex:247-252",
+        "VCFv4.2.tex:264-269",
+        "VCFv4.3.tex:618-634"
+      ]
+    },
+    {
+      "field": "SVTYPE",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "SVTYPE remains in the reserved declaration but is explicitly deprecated in the VCFv4.4 change log as redundant with ALT; do not treat its declaration as a requirement to emit it.",
+      "sources": [
+        "VCFv4.4.tex:710-719",
+        "VCFv4.4.tex:2583-2589"
+      ]
+    },
+    {
+      "field": "MATEID/PARID/EVENT",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "MATEID is Number=. and PARID/EVENT are Number=1 in the source declarations; they have record/event-level semantics rather than the VCFv4.4 per-ALT schema.",
+      "sources": [
+        "VCFv4.1.tex:274-276",
+        "VCFv4.2.tex:291-293",
+        "VCFv4.3.tex:659-661"
+      ]
+    },
+    {
+      "field": "MATEID/PARID/EVENT/EVENTTYPE",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "MATEID, PARID and EVENT become Number=A, and EVENTTYPE is introduced as Number=A; each ALT's relationships/classification are represented in ALT order.",
+      "sources": [
+        "VCFv4.4.tex:808-812"
+      ]
+    },
+    {
+      "field": "CILEN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "CILEN is Number=2 Integer and describes the confidence interval around inserted material between breakends.",
+      "sources": [
+        "VCFv4.1.tex:277",
+        "VCFv4.2.tex:294",
+        "VCFv4.3.tex:662"
+      ]
+    },
+    {
+      "field": "CILEN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "CILEN is Number=. Integer and describes the confidence interval for SVLEN, with successive pairs per ALT.",
+      "sources": [
+        "VCFv4.4.tex:844-852"
+      ]
+    },
+    {
+      "field": "CN and FORMAT CN",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Earlier INFO CN is a scalar Integer copy number of the segment containing a breakend; FORMAT CN is an Integer copy-number genotype for imprecise events. CNADJ/DPADJ/CICNADJ are present in earlier INFO field sets.",
+      "sources": [
+        "VCFv4.1.tex:278-294",
+        "VCFv4.2.tex:295-311",
+        "VCFv4.3.tex:663-682"
+      ]
+    },
+    {
+      "field": "CN and FORMAT CN",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "INFO CN becomes Number=A Float copy number of CNV/breakpoint; FORMAT CN becomes Number=1 Float total copy number. CNL and CNP are Number=G Float genotype-indexed vectors, with CNP introduced in 4.3. The earlier CNADJ/DPADJ/CICNADJ keys are absent from 4.4 SV field declarations.",
+      "sources": [
+        "VCFv4.4.tex:853-860",
+        "VCFv4.4.tex:985-992"
+      ]
+    },
+    {
+      "field": "Tandem repeats and SVCLAIM",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "4.4 adds SVCLAIM and tandem-repeat fields RN/RUS/RUL/RUC/RB/CIRUC/CIRB/RUB; no corresponding field family exists in 4.1-4.3.",
+      "sources": [
+        "VCFv4.4.tex:863-975"
+      ]
+    },
+    {
+      "field": "BND",
+      "versions": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "finding": "Earlier versions include BND in the symbolic SV type model and use SVTYPE=BND for single breakends in examples and prose.",
+      "sources": [
+        "VCFv4.1.tex:247-252; 777-794",
+        "VCFv4.2.tex:264-269; 794-811",
+        "VCFv4.3.tex:601-672; 1213-1233"
+      ]
+    },
+    {
+      "field": "BND",
+      "versions": [
+        "4.4"
+      ],
+      "finding": "The VCFv4.4 change log disallows BND ALT records and directs use of breakpoint notation; this is a version-specific change.",
+      "sources": [
+        "VCFv4.4.tex:2583-2589"
+      ]
+    }
+  ],
+  "review_status": "AUTHOR_ROW_AND_DELTA_REVIEW_COMPLETE; INDEPENDENT_REVIEW_PENDING"
+}
