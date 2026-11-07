@@ -98,6 +98,7 @@ def test_family_matrix_does_not_infer_reference_for_absent_variant_or_no_call():
     assert proband_calls[str(observed_variant)]["quality_metrics"] == {
         "DP": "42", "GQ": "99", "AD": [20, 22],
     }
+    assert proband_calls[str(observed_variant)]["quality_assessment_status"] == "NOT_ASSESSED_REQUIRES_LAB_QC_POLICY"
     assert proband_calls[str(observed_variant)]["source_record_sha256"] == "c" * 64
     assert matrix["interpretation_status"] == "NOT_PERFORMED"
     assert matrix["biological_relatedness_status"] == "NOT_ESTABLISHED"
@@ -528,3 +529,21 @@ def test_matrix_marks_ploidy_as_provenance_only_and_rejects_malformed_record_dig
     assert matrix["callability_status"] == "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY"
     assert matrix["ploidy_status"] == "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED"
     assert matrix["qualification_status"] == "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED"
+
+
+def test_matrix_rejects_calls_from_a_different_vcf_sample_column():
+    member_id, variant_id = uuid4(), uuid4()
+    sample = _sample(member_id, "FATHER", {
+        variant_id: {
+            "sample_name": "MOTHER",
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+        },
+    })
+    with pytest.raises(ValueError, match="does not match the reviewed binding sample column"):
+        build_family_genotype_matrix(
+            case_id=uuid4(),
+            variant_ids=[variant_id],
+            samples=[sample],
+            relationships=[],
+        )
