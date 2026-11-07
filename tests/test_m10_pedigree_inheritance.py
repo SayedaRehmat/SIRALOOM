@@ -448,7 +448,9 @@ def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplica
         id=member_id, member_identifier="PROBAND", sex="UNKNOWN",
         affected_status="AFFECTED",
     )
-    obs = [FamilyObservation("PROBAND", "UNKNOWN", "AFFECTED", "0/1", "HET")]
+    # Manual SegregationObservation values are deliberately excluded from
+    # source-derived inheritance assessment until a verified family matrix is bound.
+    obs = []
     observation_fingerprint = fingerprint(obs)
     assessment = InheritanceAssessment(
         id=uuid4(), analysis_id=analysis_id, variant_id=variant_id, model="AD",
@@ -458,7 +460,7 @@ def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplica
         created_by=str(principal.user_id),
     )
     payload = {
-        "model": "AD", "status": "REQUIRES_REVIEW", "observations_available": 1,
+        "model": "AD", "status": "INSUFFICIENT_DATA", "observations_available": 0,
         "observation_fingerprint": observation_fingerprint,
         "reviewer_note": "review context", "interpretation": "REQUIRES_HUMAN_REVIEW",
     }
