@@ -19,7 +19,17 @@ from backend.app.domain.execution_persistence import (
     register_environment_profile,
     register_tool_execution,
 )
-from backend.app.domain.tool_execution import ToolIdentity
+from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
+from backend.app.domain.tool_execution import (
+    InputArtifact,
+    OutputArtifact,
+    ToolExecutionProvenance,
+    ToolExecutionRequest,
+    ToolExecutionResult,
+    ToolIdentity,
+    current_platform_id,
+    sha256_file,
+)
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Organization, User
 
@@ -412,3 +422,111 @@ def test_success_rejects_output_artifact_from_another_analysis(db):
                 "sha256": "c" * 64,
             }],
         )
+
+
+def test_persistent_executor_records_real_process_result_and_published_output(db, tmp_path):
+    organization, user, case, analysis = _lab(db)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    executable = tmp_path / "fake-bcftools"
+    executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
+    executable.chmod(0o755)
+    input_path = workspace / "input.vcf"
+    input_path.write_text("##fileformat=VCFv4.2\\n", encoding="utf-8")
+    output_path = workspace / "normalized.vcf.gz"
+
+    executable_digest = sha256_file(executable)
+    profile = ToolIdentity(
+        tool_id="bcftools",
+        version="1.25",
+        profile_id="bcftools-1.25-htslib-1.25-linux-amd64",
+        executable=str(executable),
+        executable_sha256=executable_digest,
+        platform=current_platform_id(),
+        qualification_status="SOFTWARE_QUALIFIED",
+        version_args=("--version",),
+        version_output_contains="bcftools 1.25",
+        supported_operations=("normalize",),
+        runtime_path=(str(tmp_path),),
+    )
+    environment_profile = replace(
+        _profile(organization.id),
+        tool_executable_sha256=((profile.profile_id, executable_digest),),
+        workspace_root=str(workspace),
+    )
+    environment = register_environment_profile(
+        db, environment_profile, organization_id=organization.id
+    )
+    db.commit()
+
+    class FakeExecutor:
+        def execute(self, supplied_profile, request):
+            output_path.write_bytes(b"normalized VCF bytes")
+            output_digest = hashlib.sha256(output_path.read_bytes()).hexdigest()
+            provenance = ToolExecutionProvenance(
+                execution_id=request.execution_id,
+                organization_id=request.organization_id,
+                workflow_id=request.workflow_id,
+                operation=request.operation,
+                tool_id=supplied_profile.tool_id,
+                tool_version=supplied_profile.version,
+                profile_id=supplied_profile.profile_id,
+                executable_sha256=supplied_profile.executable_sha256,
+                resource_bindings=(),
+                input_sha256=({"name": "input.vcf", "sha256": sha256_file(input_path)},),
+                output_sha256=({"name": "normalized.vcf.gz", "sha256": output_digest},),
+                argv=(supplied_profile.executable, *request.argv),
+                exit_code=0,
+                started_at=datetime.now(timezone.utc).isoformat(),
+                completed_at=datetime.now(timezone.utc).isoformat(),
+                duration_seconds=0.01,
+                stdout_sha256="e" * 64,
+                stderr_sha256="f" * 64,
+                platform=supplied_profile.platform,
+                runtime_image_digest=supplied_profile.runtime_image_digest,
+                environment_sha256="d" * 64,
+            )
+            return ToolExecutionResult(provenance=provenance, stdout="", stderr="")
+
+    def publish(request, result, execution_record_id):
+        artifact = Artifact(
+            id=uuid4(),
+            analysis_id=analysis.id,
+            case_id=case.id,
+            artifact_type="NORMALIZED_VCF",
+            filename="normalized.vcf.gz",
+            media_type="application/gzip",
+            size_bytes=output_path.stat().st_size,
+            sha256=sha256_file(output_path),
+            storage_uri="file:///durable/normalized.vcf.gz",
+        )
+        db.add(artifact)
+        db.flush()
+        return {"normalized.vcf.gz": artifact.id}
+
+    service = PersistentToolExecutionService(
+        db,
+        organization_id=organization.id,
+        analysis_id=analysis.id,
+        environment_registration_id=environment.id,
+        worker_id="worker-test",
+        executor=FakeExecutor(),
+    )
+    request = ToolExecutionRequest(
+        execution_id="normalization-execution-001",
+        organization_id=str(organization.id),
+        workflow_id="normalize",
+        operation="normalize",
+        argv=("norm", "-f", str(input_path), "-o", str(output_path)),
+        workspace=str(workspace),
+        inputs=(InputArtifact("input.vcf", str(input_path), sha256_file(input_path)),),
+        outputs=(OutputArtifact("normalized.vcf.gz", str(output_path)),),
+    )
+
+    result = service.execute(profile, request, artifact_publisher=publish)
+
+    assert result.record_id in service.execution_record_ids
+    persisted = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["ToolExecutionRecord"]).ToolExecutionRecord, result.record_id)
+    assert persisted.status == "SUCCEEDED"
+    assert persisted.output_manifest[0]["artifact_id"]
+    assert persisted.provenance["tool_id"] == "bcftools"
