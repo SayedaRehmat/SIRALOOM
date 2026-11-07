@@ -541,7 +541,7 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
     from backend.app.domain.vcf_tools import normalize_vcf_with_bcftools
     from backend.app.infrastructure.db.models import ToolExecutionRecord
 
-    executable_text = shutil.which(settings.bcftools_executable)
+    executable_text = shutil.which(settings.bcftools_executable) or shutil.which("bcftools")
     if not executable_text:
         pytest.skip("Pinned BCFtools is not installed in this test environment.")
     executable = Path(executable_text).resolve()
@@ -605,6 +605,7 @@ def test_persistent_executor_runs_real_bcftools_normalization_and_index_lifecycl
         workflow_id="normalize",
         expected_bcftools_version=settings.bcftools_version,
         timeout_seconds=120,
+        bcftools_executable=str(executable),
     )
 
     assert output_path.is_file() and output_path.stat().st_size > 0
