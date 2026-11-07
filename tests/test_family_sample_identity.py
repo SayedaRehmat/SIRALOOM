@@ -83,7 +83,7 @@ def _context():
         id=specimen_id, case_id=case_id, metadata_json={"vcf_sample_name": "FAM-01"},
     )
     artifact = SimpleNamespace(
-        id=artifact_id, case_id=case_id, artifact_type="VCF", sha256="a" * 64,
+        id=artifact_id, case_id=case_id, artifact_type="VCF", sha256="a" * 64, specimen_id=specimen_id,
     )
     analysis = SimpleNamespace(
         id=analysis_id, case_id=case_id,
