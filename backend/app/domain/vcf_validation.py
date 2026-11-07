@@ -2106,7 +2106,7 @@ def validate_vcf_strict(
                             else "."
                         )
                         pso_entries = pso_raw.split(",") if pso_raw not in {"", "."} else ["."] * len(allele_phase)
-                        sample_name = chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index)
+                        sample_name = chrom_header[9 + sample_index] if chrom_header is not None and 9 + sample_index < len(chrom_header) else str(sample_index)
                         for allele_position, ((allele_token, _separator), phase_set) in enumerate(zip(allele_phase, psl_entries)):
                             if phase_set in {"", "."}:
                                 continue
@@ -2305,7 +2305,7 @@ def validate_vcf_strict(
                                 if phase_set.startswith("__record_"):
                                     unstranded_unphased_observation_count += 1
                                 unstranded_base_modification_observations.append({
-                                    "sample": chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index),
+                                    "sample": chrom_header[9 + sample_index] if chrom_header is not None and 9 + sample_index < len(chrom_header) else str(sample_index),
                                     "chrom": _chrom,
                                     "field_id": key,
                                     "coordinate": _pos + sequence_position,
@@ -2320,8 +2320,8 @@ def validate_vcf_strict(
                                 })
                             if include_base_modification_slot_assignments:
                                 sample_name = (
-                                    chrom_header[8 + sample_index]
-                                    if chrom_header is not None and 8 + sample_index < len(chrom_header)
+                                    chrom_header[9 + sample_index]
+                                    if chrom_header is not None and 9 + sample_index < len(chrom_header)
                                     else None
                                 )
                                 for value_index, (slot, observed_value) in enumerate(
