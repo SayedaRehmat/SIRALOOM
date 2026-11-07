@@ -69,6 +69,7 @@ def _family_sample(member_id, identifier, specimen_id, analysis_id, artifact_id,
             "completed_at": "2026-11-07T00:01:00+00:00",
         },
         "normalized_partition_count": 1,
+        "normalized_partition_input_artifact_ids": [f"normalized-{analysis_id}"],
         "ploidy_evidence": None,
         "identity_evidence": [
             {"evidence_type": "CHAIN_OF_CUSTODY", "review_status": "ACCEPTED", "result": "PASS"},
@@ -168,6 +169,7 @@ def test_known_answer_three_member_family_preserves_genotypes_quality_phase_and_
     assert matrix["callability_status"] == "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY"
     assert matrix["ploidy_status"] == "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED"
     assert matrix["qualification_status"] == "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED"
+    assert matrix["provenance_completeness_status"] == "COMPLETE"
     assert all(
         sample["identity_interpretation"].endswith("BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED")
         for sample in matrix["samples"]
