@@ -4,6 +4,7 @@ import pytest
 
 from backend.app.domain.family_genotype_matrix import build_family_genotype_matrix
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
+from backend.app.domain.vcf_tools import route_vcf_records
 
 
 def _write_member_vcf(path, sample_name, records):
@@ -20,8 +21,15 @@ def _write_member_vcf(path, sample_name, records):
 
 
 def _parsed_calls(path, sample_name):
+    # Exercise the production intake router: it stamps each eligible source
+    # record with an immutable source-record SHA-256 lineage payload before
+    # normalization. The matrix must receive that lineage from normalized calls.
+    routed_dir = path.parent / f\"{path.stem}-{sample_name}-routed\"
+    routing = route_vcf_records(path, routed_dir)
+    assert routing[\"sequence_records\"] > 0
+    routed_vcf = routed_dir / \"sequence-input.vcf\"
     calls = {}
-    for record in parse_vcf(str(path), sample_name=sample_name):
+    for record in parse_vcf(str(routed_vcf), sample_name=sample_name):
         call = record.sample_calls[sample_name]
         calls[(record.chrom, record.pos, record.ref, record.alt)] = call
     return calls
@@ -44,6 +52,14 @@ def _family_sample(member_id, identifier, specimen_id, analysis_id, artifact_id,
         "binding_id": uuid4(),
         "binding_fingerprint": "b" * 64,
         "normalization_step_status": "SUCCEEDED",
+        "normalization_step_provenance": {
+            "step_id": "normalize", "attempt": 1,
+            "input_artifacts": [str(artifact_id)],
+            "output_artifacts": [f\"normalized-{analysis_id}\"],
+            "metadata": {"normalization_version": "6.0"},
+            "started_at": "2026-11-07T00:00:00+00:00",
+            "completed_at": "2026-11-07T00:01:00+00:00",
+        },
         "normalized_partition_count": 1,
         "ploidy_evidence": None,
         "identity_evidence": [
@@ -118,6 +134,11 @@ def test_known_answer_three_member_family_preserves_genotypes_quality_phase_and_
         return next(row for row in by_member[member]["calls"] if row["variant_id"] == str(variant_ids[key]))
 
     assert call("PROBAND", ("1", 100, "A", "G"))["call_state"] == "CALL_PRESENT"
+    for sample in matrix["samples"]:
+        for row in sample["calls"]:
+            if row["call_state"] != "NO_RECORD":
+                assert row["source_record_sha256_status"] == "PRESENT_VALID_SHA256"
+                assert len(row["source_record_sha256"]) == 64
     assert call("FATHER", ("1", 100, "A", "G"))["normalized_genotype"] == "0/1"
     assert call("MOTHER", ("1", 100, "A", "G"))["normalized_genotype"] == "0/0"
     phased = call("PROBAND", ("1", 200, "C", "T"))
