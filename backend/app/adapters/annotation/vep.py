@@ -472,6 +472,7 @@ class VEPProvider(ScientificResourceProvider):
                     "provider_version": self.provider_version,
                     "observed_at": result.metadata.get("observed_at"),
                     "response_sha256": result.response_sha256,
+                    "raw_response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
                     "annotation_options": result.metadata.get("annotation_options", []),
