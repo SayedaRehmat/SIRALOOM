@@ -23,6 +23,7 @@ def _sample(member_id, identifier, calls):
         "specimen_id": uuid4(),
         "analysis_id": uuid4(),
         "analysis_version": 1,
+        "analysis_reference_build": "GRCh38",
         "artifact_id": uuid4(),
         "artifact_sha256": "a" * 64,
         "sample_name": identifier,
