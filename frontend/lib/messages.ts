@@ -1043,7 +1043,8 @@ export type TranslationKey =
   | "phenotype.timelineUnknownTime"
   | "familyIdentity.interpretationNotPerformed"
   | "familyIdentity.noEvidenceArtifact"
-  | "phenotype.severity";
+  | "phenotype.severity"
+  | "phenotype.ageAtAssessmentUnit";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -2084,6 +2085,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "phenotype.noTimeline": "No phenotype observations are available for the timeline.",
     "phenotype.timelineUnknownTime": "Observation time not recorded",
     "phenotype.severity": "Severity",
+    "phenotype.ageAtAssessmentUnit": "Age-at-assessment unit",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3122,5 +3124,6 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "phenotype.noTimeline": "لا توجد ملاحظات أنماط ظاهرية للخط الزمني.",
     "phenotype.timelineUnknownTime": "لم يتم تسجيل وقت الملاحظة",
     "phenotype.severity": "الشدة",
+    "phenotype.ageAtAssessmentUnit": "وحدة العمر عند التقييم",
   },
 };
