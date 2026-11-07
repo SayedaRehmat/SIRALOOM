@@ -162,3 +162,30 @@ def test_vcf44_psl_phase_set_is_global_across_chromosomes(tmp_path: Path):
     )
     assert [event["ordinal"] for event in traversal["ordered_events"]] == [3, 4]
     assert [event["occurrences"][0]["chrom"] for event in traversal["ordered_events"]] == ["1", "2"]
+
+
+@pytest.mark.parametrize(
+    "definition",
+    [
+        '##FORMAT=<ID=PSO,Number=1,Type=Integer,Description="Phase set list ordinal">',
+        '##FORMAT=<ID=PSO,Number=P,Type=String,Description="Phase set list ordinal">',
+    ],
+)
+def test_vcf44_reserved_pso_header_must_match_number_p_integer(
+    tmp_path: Path, definition: str
+):
+    path = tmp_path / "vcf44-reserved-pso-header-mismatch.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+        f"{definition}\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\tsv1\tA\t<DEL>\t.\tPASS\tEND=20;SVTYPE=DEL\tGT:PSL:PSO\t0|1:.,phase:.,2\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
