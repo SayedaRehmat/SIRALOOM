@@ -31,18 +31,21 @@ This audit inspects the current-main source, model definitions, migrations, test
 
 ### P0 — inheritance cannot currently calculate compatibility
 1. `FamilyObservation` contains member identifier, sex, affected status, genotype and zygosity only. It does not carry pedigree edges, biological relationship type, phase, allele identity, genotype quality/callability, sample identity, ploidy, penetrance, disease mechanism, age of onset or source provenance.
-2. `assess_inheritance` constructs these limited observations from segregation rows and does not pass phase, allele_observed, relationship topology or the captured pedigree snapshot into the model assessment.
-3. `assess_model` explicitly implements data sufficiency only. It is correct and safer than the retired heuristic; do not add model compatibility until the required clinical and technical contracts exist.
-4. The assessment fingerprint is calculated from the limited FamilyObservation set. Since phase and pedigree edges are excluded, a change to those facts cannot invalidate an assessment fingerprint. Before real inference is implemented, fingerprint must cover every consumed fact and relevant resource/policy version.
-5. Assessment model aliases collapse X-linked inheritance into one `X_LINKED` category; disease-specific X-linked dominant/recessive mechanism and PAR/ploidy policy are absent.
+2. `assess_inheritance` constructs these limited observations from manually recorded segregation rows and does not pass phase, allele_observed, relationship topology or the captured pedigree snapshot into the model assessment.
+3. The VCF pipeline's sample-call partition metadata contains phase and dosage, but the inheritance endpoint does not consume it. It instead accepts independently editable GT/zygosity/phase strings, creating a source-of-truth divergence risk.
+4. `assess_model` explicitly implements data sufficiency only. It is correct and safer than the retired heuristic; do not add model compatibility until the required clinical and technical contracts exist.
+5. The assessment fingerprint is calculated from the limited FamilyObservation set. Since phase and pedigree edges are excluded, a change to those facts cannot invalidate an assessment fingerprint. Before real inference is implemented, fingerprint must cover every consumed fact and relevant resource/policy version.
+6. Assessment model aliases collapse X-linked inheritance into one `X_LINKED` category; disease-specific X-linked dominant/recessive mechanism and PAR/ploidy policy are absent.
 
 ### P0 — pedigree/sample identity is insufficient for segregation
 1. `PedigreeMember` has one nullable `specimen_id`, a free-text sex field, free-text relationship-to-proband, and affected status. There is no dedicated VCF sample-column identity mapping.
 2. `Specimen` has a case-local identifier and metadata but no enforced link to a VCF sample name. One member can reference only one specimen in the current model; longitudinal/repeat specimens and multiple assays are not represented by a normalized member-specimen-sample mapping.
-3. `sampled` can disagree with `specimen_id`; no invariant currently enforces consistency.
-4. Segregation input accepts genotype/zygosity/phase as free text. The endpoint does not establish that the values were extracted from the analysis VCF, are technically callable, pass genotype QC, or match the family member's specimen/sample.
-5. Missing genotype and no-call must remain unknown, never be coerced to 0/0/reference. Genotype calls must be tied to validated artifact, sample, caller, FORMAT fields, QC and ploidy.
-6. Trio/de novo interpretation requires validated sample identity and relatedness evidence; pedigree assertions alone cannot confirm biological parentage.
+3. The VCF normalization workflow already parses and persists sample-specific genotype evidence, including sample name, GT, zygosity, normalized/source genotype, phase, phase set, FORMAT values, per-ALT dosage, missing-allele count, and source-record SHA-256. It stores these calls in bounded `AnalysisPartition.metadata_json.sample_calls` records. This is useful source evidence and must be reused rather than re-parsed independently.
+4. However, each analysis selects one `vcf_sample_name` from `analysis.configuration`; the parser explicitly rejects an unselected multi-sample VCF. `get_analysis_sample_calls` returns one call per canonical variant, not a member/sample-indexed family genotype matrix. There is no family-analysis aggregate joining the proband and relatives' separate sample analyses.
+5. `sampled` can disagree with `specimen_id`; no invariant currently enforces consistency. The single specimen FK cannot model repeated specimens/assays for a family member.
+6. Segregation input accepts genotype/zygosity/phase as free text and is not bound to the normalized partition call, source artifact SHA, selected sample name, genotype quality, or sample identity evidence. It can therefore diverge from the actual normalized call.
+7. Missing genotype and no-call must remain unknown, never be coerced to 0/0/reference. Genotype calls must be tied to validated artifact, sample, caller, FORMAT fields, QC and ploidy.
+8. Trio/de novo interpretation requires validated sample identity and relatedness evidence; pedigree assertions alone cannot confirm biological parentage.
 
 ### P1 — pedigree domain completeness
 1. Current API creates members and parent-child edges but has no member/relationship update, supersession, or deletion workflow. It cannot correct an erroneous family structure with an auditable lifecycle.
