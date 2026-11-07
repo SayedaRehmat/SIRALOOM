@@ -160,10 +160,11 @@ def test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso(
     )
     assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 3]
     assert [event["event_kind"] for event in traversal["ordered_events"]] == [
-        "RECIPROCAL_BREAKEND_EVENT",
+        "ORDINAL_TIE_UNRESOLVED",
         "RECIPROCAL_BREAKEND_EVENT",
     ]
     assert [len(event["occurrences"]) for event in traversal["ordered_events"]] == [2, 2]
+    assert traversal["traversal_status"] == "UNRESOLVED_ORDINAL_TIES"
 
 
 def test_vcf45_local_gt_2_4_remains_global_alt_indexes_not_local_indexes(
