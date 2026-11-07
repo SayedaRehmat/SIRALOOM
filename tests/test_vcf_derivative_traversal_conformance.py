@@ -296,7 +296,7 @@ def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
         + common + event_type + sample_x + "\n"
         + "2\t321682\tbndV\tT\tT]13:123456]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;PARID=bndX"
         + common + event_type + sample_v + "\n"
-        + "13\t123456\tbndU\tC\tC[2:321682[\t.\tPASS\tSVTYPE=BND;MATEID=bndV;PARID=bndY"
+        + "13\t123456\tbndU\tC\t[2:321682[C\t.\tPASS\tSVTYPE=BND;MATEID=bndV;PARID=bndY"
         + common + event_type + sample_u + "\n"
         + "13\t123457\tbndY\tA\t]2:321681]A\t.\tPASS\tSVTYPE=BND;MATEID=bndX;PARID=bndU"
         + common + event_type + sample_y + "\n",
