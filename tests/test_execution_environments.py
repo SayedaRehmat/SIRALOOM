@@ -111,6 +111,26 @@ def test_registry_rejects_environment_without_qualification():
         profile.assert_tool_compatible(_tool())
 
 
+def test_qualified_environment_requires_and_enforces_executable_digest():
+    profile = _environment(uuid4())
+    with pytest.raises(ExecutionEnvironmentError, match="approved executable SHA-256"):
+        ExecutionEnvironmentProfile(
+            **{
+                **profile.__dict__,
+                "tool_executable_sha256": (),
+            }
+        ).validate()
+
+    changed_tool = ToolIdentity(
+        **{
+            **_tool().__dict__,
+            "executable_sha256": "b" * 64,
+        }
+    )
+    with pytest.raises(ExecutionEnvironmentError, match="approved executable digest"):
+        profile.assert_tool_compatible(changed_tool)
+
+
 def test_registry_rejects_tool_profile_not_explicitly_approved():
     profile = _environment(uuid4())
     incompatible_tool = ToolIdentity(
