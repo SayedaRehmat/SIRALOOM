@@ -204,6 +204,9 @@ jobs:
         run: |
           cp .env.production.example .env
           touch /tmp/siraloom-firebase-admin.json
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml config --format json > /tmp/siraloom-compose-dev.json
+          python -c 'import json; c=json.load(open("/tmp/siraloom-compose-dev.json")); assert c["services"]["api"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["beat"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["worker"]["build"]["dockerfile"] == "docker/backend.Dockerfile"'
           docker compose -f docker-compose.production.yml config --quiet
           docker compose -f docker-compose.production.yml config --format json > /tmp/siraloom-compose.json
           python -c 'import json; c=json.load(open("/tmp/siraloom-compose.json")); assert c["services"]["api"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["beat"]["build"]["dockerfile"] == "docker/backend-api.Dockerfile"; assert c["services"]["worker"]["build"]["dockerfile"] == "docker/backend.Dockerfile"; print("API/Beat are tool-neutral; scientific worker retains BCFtools")'
