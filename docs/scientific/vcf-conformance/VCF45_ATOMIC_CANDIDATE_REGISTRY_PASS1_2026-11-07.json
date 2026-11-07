@@ -9,7 +9,7 @@
       "VCFv4.5.tex@510c107"
     ],
     "candidate_lines_reviewed": 75,
-    "atomic_requirements_created": 166,
+    "atomic_requirements_created": 165,
     "atomic_requirements_independently_reviewed": 0,
     "requirements_with_code_mapping": 0,
     "requirements_with_executed_tests": 0,
@@ -8216,20 +8216,20 @@
       "requirement_id": "VCF-REQ-900090",
       "title": "Source L433 — The literal legacy INFO key 1000G is permitted as a special exception to th",
       "requirement_domain": "INFO",
-      "source_class": "VCF_NORMATIVE",
+      "source_class": "VCF_INFORMATIVE",
       "requirement_kind": "GRAMMAR_RULE",
-      "normative_force": "MAY",
-      "atomic_statement": "The literal legacy INFO key 1000G is permitted as a special exception to the general INFO-key regular expression.",
+      "normative_force": "DESCRIPTIVE",
+      "atomic_statement": "1000G is the specified legacy special-case INFO key.",
       "actor": "VCF/BCF producer or implementation as scoped by the condition",
       "condition": "As applicable to source candidate VCF45-CAND-050 at VCFv4.5.tex line 433.",
-      "required_or_prohibited_behavior": "The literal legacy INFO key 1000G is permitted as a special exception to the general INFO-key regular expression.",
+      "required_or_prohibited_behavior": "1000G is the specified legacy special-case INFO key.",
       "exceptions": [],
       "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
       "source_references": [
         {
           "source_id": "HTS-SPECS-VCF45-510c107",
           "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_class": "VCF_INFORMATIVE_SOURCE",
           "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
           "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
           "source_file": "VCFv4.5.tex",
@@ -9031,7 +9031,7 @@
       "tests": [],
       "review": {
         "status": "IN_REVIEW",
-        "review_rationale": "Exact semantic duplicate of canonical VCF-REQ-000076 (per-ALT value coverage including non-structural ALT alleles); retained only for crosswalk provenance, not a net-new promotion candidate.",
+        "review_rationale": "This per-ALT coverage clause is subsumed by canonical VCF-REQ-000076, which also specifies missing placeholders and empty-string behavior for string lists; do not promote as a separate canonical requirement.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -10729,6 +10729,22 @@
             "start_line": 1989,
             "end_line": 1989
           }
+        },
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1887",
+            "start_line": 1887,
+            "end_line": 1887
+          }
         }
       ],
       "version_applicability": {
@@ -11152,98 +11168,6 @@
       "review": {
         "status": "IN_REVIEW",
         "review_rationale": "Provisional source-line decomposition; duplicate reconciliation and independent review pending.",
-        "reviewer_role": "Research candidate author",
-        "reviewer_reference": null,
-        "reviewed_at_utc": null,
-        "independent_second_review_required": true,
-        "second_review_status": "NOT_STARTED"
-      },
-      "evidence": [],
-      "related_requirement_ids": [],
-      "open_questions": []
-    },
-    {
-      "requirement_id": "VCF-REQ-900122",
-      "title": "Source L846 — Per-allele values cover all ALT alleles",
-      "requirement_domain": "HEADER",
-      "source_class": "VCF_NORMATIVE",
-      "requirement_kind": "PROSE_RULE",
-      "normative_force": "MUST",
-      "atomic_statement": "When present, per-allele values are specified for all ALT alleles, including non-structural ALT alleles.",
-      "actor": "VCF/BCF producer or implementation as scoped by the condition",
-      "condition": "As applicable to source candidate VCF45-CAND-057 at VCFv4.5.tex line 845.",
-      "required_or_prohibited_behavior": "When present, per-allele values are specified for all ALT alleles, including non-structural ALT alleles.",
-      "exceptions": [],
-      "observable_acceptance_condition": "A focused positive, negative, or boundary test can evaluate this single statement under its stated condition.",
-      "source_references": [
-        {
-          "source_id": "HTS-SPECS-VCF45-510c107",
-          "version": "VCFv4.5",
-          "source_class": "VCF_NORMATIVE_SOURCE",
-          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
-          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
-          "source_file": "VCFv4.5.tex",
-          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
-          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
-          "locator": {
-            "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:L846",
-            "start_line": 846,
-            "end_line": 846
-          }
-        }
-      ],
-      "version_applicability": {
-        "VCFv4.0": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific source reconciliation pending.",
-          "exceptions": []
-        },
-        "VCFv4.1": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific source reconciliation pending.",
-          "exceptions": []
-        },
-        "VCFv4.2": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific source reconciliation pending.",
-          "exceptions": []
-        },
-        "VCFv4.3": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific source reconciliation pending.",
-          "exceptions": []
-        },
-        "VCFv4.4": {
-          "status": "UNRESOLVED",
-          "source_reference_ids": [],
-          "delta_summary": "Version-specific source reconciliation pending.",
-          "exceptions": []
-        },
-        "VCFv4.5": {
-          "status": "APPLICABLE",
-          "source_reference_ids": [
-            "HTS-SPECS-VCF45-510c107"
-          ],
-          "delta_summary": null,
-          "exceptions": []
-        }
-      },
-      "implementation": {
-        "status": "NOT_AUDITED",
-        "code_symbols": [],
-        "implementation_commit": null,
-        "owner_workstream": "VCFv4.5 conformance",
-        "rationale": "No implementation audit performed."
-      },
-      "tests": [],
-      "review": {
-        "status": "IN_REVIEW",
-        "review_rationale": "Adjacent source clause required to preserve the complete two-line conditional rule from the source context; independent review pending.",
         "reviewer_role": "Research candidate author",
         "reviewer_reference": null,
         "reviewed_at_utc": null,
@@ -14318,6 +14242,22 @@
             "locator_value": "VCFv4.5.tex:L427",
             "start_line": 427,
             "end_line": 427
+          }
+        },
+        {
+          "source_id": "HTS-SPECS-VCF45-510c107",
+          "version": "VCFv4.5",
+          "source_class": "VCF_NORMATIVE_SOURCE",
+          "source_uri": "https://github.com/samtools/hts-specs/blob/510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+          "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7",
+          "source_file": "VCFv4.5.tex",
+          "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+          "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
+          "locator": {
+            "locator_type": "LINE_RANGE",
+            "locator_value": "VCFv4.5.tex:L1887",
+            "start_line": 1887,
+            "end_line": 1887
           }
         }
       ],
