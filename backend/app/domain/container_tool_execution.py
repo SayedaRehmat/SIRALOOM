@@ -283,10 +283,12 @@ class LinuxContainerToolExecutor:
             except subprocess.TimeoutExpired:
                 timed_out = True
                 try:
-                    self.runner(
+                    kill_result = self.runner(
                         [runtime, "kill", container_name],
                         capture_output=True, text=True, timeout=15, check=False,
                     )
+                    if kill_result.returncode != 0:
+                        runtime_kill_error = "runtime kill command returned a non-zero status"
                 except (OSError, subprocess.TimeoutExpired) as exc:
                     # A failed runtime kill is not silently accepted. The
                     # force-remove and subsequent ps verification below get a
