@@ -123,13 +123,19 @@ def test_vcf44_psq_missing_value_must_follow_missing_psl_position(tmp_path: Path
     assert exc.value.code == "VCF_PHASE_SET_INVALID"
 
 
-def test_vcf44_pso_ordinal_cannot_be_reused_across_distinct_records(
+def test_vcf44_pso_ordinal_tie_is_preserved_as_unresolved(
     tmp_path: Path,
 ):
     path = tmp_path / "vcf44-pso-duplicate-ordinal.vcf"
     _write_vcf44_phase_set_file(path, ("3", "3", "3", "3"))
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
+    )
 
-    assert exc.value.code == "VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE"
+    assert traversal["traversal_status"] == "UNRESOLVED_ORDINAL_TIES"
+    assert traversal["unresolved_ordinal_tie_count"] == 1
+    assert traversal["ordered_events"][0]["event_kind"] == "ORDINAL_TIE_UNRESOLVED"
+    assert result["phase_set_traversal_unresolved_count"] == 1
