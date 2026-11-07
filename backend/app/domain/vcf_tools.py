@@ -988,7 +988,7 @@ def _validate_vcf_index_record_counts(
                 for raw_line in query_lines:
                     if not raw_line or raw_line.startswith(b"#"):
                         continue
-                    fields = raw_line.split(b"\\t", 1)
+                    fields = raw_line.split(b"\t", 1)
                     if not fields or fields[0].decode("utf-8", errors="replace") != contig:
                         raise VCFToolError(
                             f"index-backed query for contig {contig!r} returned a record from another contig."
@@ -1034,7 +1034,7 @@ def _validate_vcf_index_record_counts(
                     for raw_line in query_output:
                         if not raw_line or raw_line.startswith(b"#"):
                             continue
-                        fields = raw_line.split(b"\\t", 1)
+                        fields = raw_line.split(b"\t", 1)
                         if not fields or fields[0].decode("utf-8", errors="replace") != contig:
                             raise VCFToolError(
                                 f"index-backed query for contig {contig!r} returned a record from another contig."
