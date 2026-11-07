@@ -23,13 +23,14 @@
     "canonical_ledger_records": 226,
     "vcf45_reserved_info_rows": 21,
     "vcf45_reserved_info_rows_mapped": 21,
-    "vcf45_reserved_format_rows": 64,
-    "vcf45_reserved_format_rows_mapped": 64,
+    "vcf45_reserved_format_rows": 63,
+    "vcf45_reserved_format_rows_mapped": 63,
     "historical_GLE_rows": 1,
     "historical_GLE_semantic_mapped": 1,
-    "total_vcf45_reserved_rows_mapped": 85,
+    "total_vcf45_reserved_rows_mapped": 84,
     "canonical_ids_allocated": 0,
-    "canonical_records_modified": 0
+    "canonical_records_modified": 0,
+    "total_union_field_ids_mapped": 85
   },
   "info_rows": [
     {
