@@ -6,6 +6,7 @@ import { useLanguage } from "../lib/i18n";
 type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = {
   caseId: string;
+  variantId: string;
   canWrite: boolean;
   canReview: boolean;
   apiFetch: ApiFetch;
@@ -66,6 +67,7 @@ type IdentityEvidence = {
 
 export default function FamilySampleIdentityWorkbench({
   caseId,
+  variantId,
   canWrite,
   canReview,
   apiFetch,
@@ -76,6 +78,9 @@ export default function FamilySampleIdentityWorkbench({
   const [analyses, setAnalyses] = useState<AnalysisCandidate[]>([]);
   const [artifacts, setArtifacts] = useState<CaseArtifact[]>([]);
   const [bindings, setBindings] = useState<Binding[]>([]);
+  const [selectedBindingIds, setSelectedBindingIds] = useState<string[]>([]);
+  const [matrix, setMatrix] = useState<any>(null);
+  const [matrixLoading, setMatrixLoading] = useState(false);
   const [evidenceByBinding, setEvidenceByBinding] = useState<Record<string, IdentityEvidence[]>>({});
   const [memberId, setMemberId] = useState("");
   const [specimenId, setSpecimenId] = useState("");
@@ -131,6 +136,11 @@ export default function FamilySampleIdentityWorkbench({
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  useEffect(() => {
+    setSelectedBindingIds(bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).map((binding) => binding.binding_id));
+    setMatrix(null);
+  }, [bindings, supersededBindingIds, variantId]);
+
   const selectedAnalysis = useMemo(
     () => analyses.find((analysis) => analysis.analysis_id === analysisId) ?? null,
     [analyses, analysisId],
@@ -141,6 +151,25 @@ export default function FamilySampleIdentityWorkbench({
     () => new Set(bindings.map((binding) => binding.supersedes_binding_id).filter(Boolean)),
     [bindings],
   );
+
+  const loadMatrix = async () => {
+    if (!variantId || selectedBindingIds.length === 0) return;
+    setMatrixLoading(true);
+    setError("");
+    try {
+      const result = await apiFetch(`/cases/${caseId}/pedigree/genotype-matrix`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ binding_ids: selectedBindingIds, variant_ids: [variantId] }),
+      });
+      setMatrix(result);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t("familyIdentity.errorAction"));
+      setMatrix(null);
+    } finally {
+      setMatrixLoading(false);
+    }
+  };
 
   const resetBindingForm = () => {
     setMemberId("");
@@ -308,6 +337,71 @@ export default function FamilySampleIdentityWorkbench({
         {notice && <p className="configuration-notice" role="status">{notice}</p>}
         {loading && <p className="quiet">{t("familyIdentity.loading")}</p>}
         {!loading && bindings.length === 0 && <p className="quiet">{t("familyIdentity.noBindings")}</p>}
+        <div className="clinical-card">
+          <h4>{t("familyIdentity.genotypeMatrix")}</h4>
+          <p className="quiet">{t("familyIdentity.interpretationNotPerformed")}</p>
+          <p className="context-row"><span>{t("familyIdentity.matrixVariant")}</span><strong>{variantId || "—"}</strong></p>
+          {bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).length === 0
+            ? <p className="quiet">{t("familyIdentity.noVerifiedBindings")}</p>
+            : <div className="pedigree-member-list">
+              {bindings.filter((binding) => binding.binding_status === "VERIFIED" && !supersededBindingIds.has(binding.binding_id)).map((binding) => (
+                <label className="inline-check" key={binding.binding_id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedBindingIds.includes(binding.binding_id)}
+                    onChange={(event) => setSelectedBindingIds((current) => event.target.checked
+                      ? [...new Set([...current, binding.binding_id])]
+                      : current.filter((id) => id !== binding.binding_id))}
+                  />
+                  {members.find((member) => member.id === binding.member_id)?.member_identifier ?? binding.member_id}
+                  {" · "}{specimens.find((specimen) => specimen.specimen_id === binding.specimen_id)?.specimen_identifier ?? binding.specimen_id}
+                  {" · "}{binding.sample_name}
+                </label>
+              ))}
+            </div>}
+          <button className="secondary" type="button" onClick={() => void loadMatrix()} disabled={matrixLoading || !variantId || selectedBindingIds.length === 0}>
+            {matrixLoading ? t("familyIdentity.loading") : t("familyIdentity.loadMatrix")}
+          </button>
+          {matrix && <>
+            <p className="quiet">{t("familyIdentity.callability")}: {matrix.callability_status} · {t("familyIdentity.matrixFingerprint")}: {matrix.matrix_fingerprint}</p>
+            <div className="resources-table-wrap">
+              <table className="resources-table">
+                <thead><tr>
+                  <th>{t("familyIdentity.member")}</th>
+                  <th>{t("familyIdentity.specimen")}</th>
+                  <th>{t("familyIdentity.sampleColumn")}</th>
+                  <th>{t("familyIdentity.callState")}</th>
+                  <th>{t("familyIdentity.genotype")}</th>
+                  <th>{t("familyIdentity.zygosity")}</th>
+                  <th>{t("familyIdentity.phase")}</th>
+                  <th>{t("familyIdentity.phaseSet")}</th>
+                  <th>{t("familyIdentity.depth")}</th>
+                  <th>{t("familyIdentity.genotypeQuality")}</th>
+                  <th>{t("familyIdentity.alleleDepth")}</th>
+                  <th>{t("familyIdentity.callability")}</th>
+                </tr></thead>
+                <tbody>
+                  {(matrix.samples ?? []).flatMap((sample: any) => (sample.calls ?? []).map((call: any) => (
+                    <tr key={`${sample.binding_id}-${call.variant_id}`}>
+                      <td>{sample.member_identifier}</td>
+                      <td>{specimens.find((specimen) => specimen.specimen_id === sample.specimen_id)?.specimen_identifier ?? sample.specimen_id}</td>
+                      <td>{sample.vcf_sample_name}</td>
+                      <td><span className="badge neutral">{call.call_state}</span></td>
+                      <td>{call.normalized_genotype ?? call.source_genotype ?? call.call_state}</td>
+                      <td>{call.zygosity ?? "UNKNOWN"}</td>
+                      <td>{call.phase ?? "UNSPECIFIED"}</td>
+                      <td>{call.phase_set ?? "—"}</td>
+                      <td>{call.quality_metrics?.DP ?? "—"}</td>
+                      <td>{call.quality_metrics?.GQ ?? "—"}</td>
+                      <td>{Array.isArray(call.quality_metrics?.AD) ? call.quality_metrics.AD.join("/") : call.quality_metrics?.AD ?? "—"}</td>
+                      <td>{call.callability ?? "NOT_ASSESSED"}</td>
+                    </tr>
+                  )))}
+                </tbody>
+              </table>
+            </div>
+          </>}
+        </div>
         <div className="pedigree-member-list">
           {bindings.map((binding) => {
             const member = members.find((row) => row.id === binding.member_id);
