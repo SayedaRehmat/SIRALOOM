@@ -176,3 +176,69 @@ def test_vcf45_local_gt_2_4_remains_global_alt_indexes_not_local_indexes(
         encoding="utf-8",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+def test_vcf45_psq_repeated_phase_set_positions_may_have_distinct_values(
+    tmp_path: Path,
+):
+    path = tmp_path / "psq-repeated-set-distinct-position-values.vcf"
+    _write(
+        path,
+        format_keys="GT:PSL:PSQ",
+        sample="|0|1:shared,shared:12,37",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf45_pso_tracking_is_sample_and_phase_set_scoped(
+    tmp_path: Path,
+):
+    path = tmp_path / "pso-sample-phase-set-scope.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2\\n"
+        "1\\t5\\tdel1\\tA\\t<DEL>\\t.\\tPASS\\tEND=8\\tGT:PSL:PSO\\t0|1:alpha,alpha:3,4\\t0|1:beta,beta:.,4\\n"
+        "1\\t9\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:alpha,alpha:5,6\\t0|1:beta,beta:7,8\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_PHASE_SET_PSO_REQUIRED"
+
+
+def test_vcf45_pso_does_not_leak_between_samples_or_distinct_phase_sets(
+    tmp_path: Path,
+):
+    path = tmp_path / "pso-sample-phase-set-isolation.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2\\n"
+        "1\\t5\\tdel1\\tA\\t<DEL>\\t.\\tPASS\\tEND=8\\tGT:PSL:PSO\\t0|1:alpha,alpha:3,4\\t0|1:beta,beta:5,6\\n"
+        "1\\t9\\tsnv1\\tA\\tC\\t.\\tPASS\\t.\\tGT:PSL:PSO\\t0|1:alpha,alpha:5,6\\t0|1:beta,beta:7,8\\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 2
+
+
+def test_vcf45_reciprocal_breakend_phase_check_is_per_sample(
+    tmp_path: Path,
+):
+    path = tmp_path / "breakend-phase-mismatch-second-sample.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\tSAMPLE2\\n"
+        "1\\t5\\tbnd1\\tA\\tA]2:10]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd2\\tGT:PSL:PSO\\t0|1:a,a:3,3\\t0|1:b,b:4,4\\n"
+        "2\\t10\\tbnd2\\tA\\tA]1:5]\\t.\\tPASS\\tSVTYPE=BND;MATEID=bnd1\\tGT:PSL:PSO\\t0|1:a,a:3,3\\t0|1:b,b:4,5\\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BREAKEND_PHASE_SET_MISMATCH"
