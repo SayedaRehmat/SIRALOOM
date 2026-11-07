@@ -29,8 +29,10 @@ from backend.app.infrastructure.db.models import (
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("crash_boundary", ["after_tool", "after_commit"])
 def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_once(
     tmp_path: Path,
+    crash_boundary: str,
 ):
     database_url = os.environ.get("DATABASE_URL", "")
     redis_url = os.environ.get("REDIS_URL", "")
@@ -201,6 +203,7 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
                 marker_prefix,
                 str(artifact_root),
                 str(scratch_root),
+                crash_boundary,
             ],
             task_id=str(dispatch_id),
             queue=queue_name,
@@ -226,7 +229,8 @@ def test_real_prefork_artifact_validation_worker_loss_redelivers_and_commits_onc
         result = json.loads(result_payload)
         assert result["delivery_redelivered"] is True
         assert result["result"]["status"] == "VALID_SITE_ONLY"
-        assert redis.get(f"{marker_prefix}:first-attempt") == "started"
+        assert redis.get(f"{marker_prefix}:first-attempt") == crash_boundary
+        assert result["crash_boundary"] == crash_boundary
 
         with Session(engine) as db:
             artifact = db.get(Artifact, artifact_id)
