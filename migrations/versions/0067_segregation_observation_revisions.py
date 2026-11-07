@@ -32,7 +32,6 @@ def upgrade():
         sa.ForeignKeyConstraint(["recorded_by"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("root_observation_id", "version", name="uq_segregation_observation_revision_version"),
-        sa.UniqueConstraint("root_observation_id", "observation_fingerprint", name="uq_segregation_observation_revision_fingerprint"),
         sa.UniqueConstraint("supersedes_revision_id", name="uq_segregation_observation_revision_successor"),
     )
     op.create_index(
