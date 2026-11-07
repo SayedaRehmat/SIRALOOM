@@ -1723,8 +1723,8 @@ def validate_vcf_strict(
     spanning_deletion_records: list[tuple[str, int, int, int, set[int] | None]] = []
     unresolved_spanning_deletion_records: list[dict[str, int | str]] = []
     breakend_records_by_id: dict[str, dict] = {}
-    breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
-    breakend_phase_vectors_by_record: dict[str, dict[str, tuple[str, str]]] = {}
+    breakend_links: list[tuple[str, str, int, int, str, tuple[str, int], int]] = []
+    breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
     phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
@@ -1941,7 +1941,11 @@ def validate_vcf_strict(
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
-            breakend_alts = [alt for alt in alts if "[" in alt or "]" in alt]
+            breakend_alt_indexes = [
+                alt_index for alt_index, alt in enumerate(alts)
+                if "[" in alt or "]" in alt
+            ]
+            breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
             if breakend_alts:
                 if info_values.get("SVTYPE") != "BND":
                     raise StrictVCFValidationError(
@@ -1950,43 +1954,79 @@ def validate_vcf_strict(
                     )
                 record_ids = set() if fields[2] == "." else set(fields[2].split(";"))
                 mate_value = info_values.get("MATEID")
-                mate_ids = set(mate_value.split(",")) if mate_value else set()
-                # The ALT grammar above already requires one complete bracket
-                # pair. Retain its remote coordinates for MATEID checks after
-                # the whole file has been read; the VCF-defined orientations
-                # are preserved but are not constrained by a local heuristic.
-                remote_loci = [
-                    (match.group(2), int(match.group(3)))
-                    for alt in breakend_alts
-                    for match in [re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)]
-                    if match is not None
-                ]
+                mate_entries = mate_value.split(",") if mate_value not in {None, ""} else []
+                # MATEID is Number=A in VCFv4.5: preserve the positional
+                # association between each ALT allele and its mate record ID.
+                # Earlier VCF versions used other cardinality conventions, so
+                # retain the legacy compact BND-only list interpretation there.
+                if fileformat == "VCFv4.5":
+                    if mate_entries and len(mate_entries) != len(alts):
+                        raise StrictVCFValidationError(
+                            f"VCFv4.5 MATEID cardinality must match all ALT alleles at line {line_no}",
+                            code="VCF_BREAKEND_MATE_INVALID",
+                        )
+                    mate_entries_by_alt = {
+                        alt_index: mate_entries[alt_index]
+                        for alt_index in breakend_alt_indexes
+                        if alt_index < len(mate_entries)
+                    }
+                elif len(mate_entries) == len(alts):
+                    mate_entries_by_alt = {
+                        alt_index: mate_entries[alt_index]
+                        for alt_index in breakend_alt_indexes
+                    }
+                elif len(mate_entries) == len(breakend_alts):
+                    mate_entries_by_alt = dict(zip(breakend_alt_indexes, mate_entries))
+                elif mate_entries:
+                    raise StrictVCFValidationError(
+                        f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
+                        code="VCF_BREAKEND_MATE_INVALID",
+                    )
+                else:
+                    mate_entries_by_alt = {}
+
+                # Retain each ALT's remote locus independently; MATEID and
+                # the remote coordinate are paired by ALT position.
+                remote_loci_by_alt: dict[int, tuple[str, int]] = {}
+                for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
+                    match = re.search(r"([\[\]])([^:\[\]]+):([1-9][0-9]*)\1", alt)
+                    if match is not None:
+                        remote_loci_by_alt[alt_index] = (
+                            match.group(2), int(match.group(3))
+                        )
                 if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"} and any(
-                    not VCF_CONTIG_NAME_RE.fullmatch(contig) for contig, _position in remote_loci
+                    not VCF_CONTIG_NAME_RE.fullmatch(contig)
+                    for contig, _position in remote_loci_by_alt.values()
                 ):
                     raise StrictVCFValidationError(
                         f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
-                if len(remote_loci) != len(breakend_alts):
+                if len(remote_loci_by_alt) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
                         code="VCF_BREAKEND_ALT_INVALID",
                     )
-                if mate_ids:
+
+                for alt_index in breakend_alt_indexes:
+                    mate_id = mate_entries_by_alt.get(alt_index, ".")
+                    if mate_id in {"", "."}:
+                        continue
                     if not record_ids:
                         raise StrictVCFValidationError(
                             f"Breakend with INFO/MATEID requires a non-missing record ID at line {line_no}",
                             code="VCF_BREAKEND_MATE_INVALID",
                         )
-                    if len(mate_ids) != len(breakend_alts):
-                        raise StrictVCFValidationError(
-                            f"Breakend MATEID cardinality does not match breakend ALT alleles at line {line_no}",
-                            code="VCF_BREAKEND_MATE_INVALID",
-                        )
                     breakend_links.append((
-                        fields[2], _chrom, _pos, mate_ids, remote_loci, line_no,
+                        fields[2],
+                        _chrom,
+                        _pos,
+                        alt_index,
+                        mate_id,
+                        remote_loci_by_alt[alt_index],
+                        line_no,
                     ))
+
                 for record_id in record_ids:
                     if record_id in breakend_records_by_id:
                         raise StrictVCFValidationError(
@@ -1996,8 +2036,9 @@ def validate_vcf_strict(
                     breakend_records_by_id[record_id] = {
                         "chrom": _chrom,
                         "pos": _pos,
-                        "remote_loci": remote_loci,
-                        "mate_ids": mate_ids,
+                        "breakend_alt_indexes": breakend_alt_indexes,
+                        "remote_loci_by_alt": remote_loci_by_alt,
+                        "mate_entries_by_alt": mate_entries_by_alt,
                         "line_no": line_no,
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
@@ -2344,10 +2385,20 @@ def validate_vcf_strict(
                                         "value": None if observed_value == "." else observed_value,
                                     })
                 if fileformat == "VCFv4.5" and breakend_alts and record_ids:
-                    record_phase_vectors: dict[str, tuple[str, str]] = {}
+                    record_phase_vectors: dict[str, dict[str, list[str]]] = {}
                     sample_names = chrom_header[9:] if chrom_header is not None else []
                     for sample_offset, sample_name in enumerate(sample_names):
                         sample_values_for_phase = fields[9 + sample_offset].split(":")
+                        gt_value = (
+                            sample_values_for_phase[gt_index]
+                            if gt_index is not None and gt_index < len(sample_values_for_phase)
+                            else "."
+                        )
+                        gt_phase = (
+                            _gt_alleles_with_phase(gt_value, fileformat, line_no)
+                            if gt_value not in {"", "."}
+                            else [(".", "|")]
+                        )
                         psl_value = (
                             sample_values_for_phase[format_keys.index("PSL")]
                             if "PSL" in format_keys and format_keys.index("PSL") < len(sample_values_for_phase)
@@ -2358,7 +2409,21 @@ def validate_vcf_strict(
                             if "PSO" in format_keys and format_keys.index("PSO") < len(sample_values_for_phase)
                             else "."
                         )
-                        record_phase_vectors[sample_name] = (psl_value, pso_value)
+                        psl_entries = (
+                            psl_value.split(",")
+                            if psl_value not in {"", "."}
+                            else ["."] * len(gt_phase)
+                        )
+                        pso_entries = (
+                            pso_value.split(",")
+                            if pso_value not in {"", "."}
+                            else ["."] * len(gt_phase)
+                        )
+                        record_phase_vectors[sample_name] = {
+                            "alleles": [allele for allele, _separator in gt_phase],
+                            "psl": psl_entries,
+                            "pso": pso_entries,
+                        }
                     for record_id in record_ids:
                         breakend_phase_vectors_by_record[record_id] = record_phase_vectors
 
@@ -2514,44 +2579,83 @@ def validate_vcf_strict(
                         code="VCF_PHASE_SET_PSO_REQUIRED",
                     )
 
-    for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
+    for (
+        source_id,
+        chrom,
+        pos,
+        source_alt_index,
+        mate_id,
+        remote_locus,
+        line_no,
+    ) in breakend_links:
         source_ids = set(source_id.split(";"))
-        for mate_id in mate_ids:
-            mate = breakend_records_by_id.get(mate_id)
-            if mate is None:
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
-                    code="VCF_BREAKEND_MATE_MISSING",
+        mate = breakend_records_by_id.get(mate_id)
+        if mate is None:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} has no corresponding record at line {line_no}",
+                code="VCF_BREAKEND_MATE_MISSING",
+            )
+        if (mate["chrom"], mate["pos"]) != remote_locus:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} does not match the remote coordinate for ALT allele {source_alt_index + 1} at line {line_no}",
+                code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+            )
+
+        reciprocal_alt_indexes = [
+            mate_alt_index
+            for mate_alt_index in mate["breakend_alt_indexes"]
+            if mate["mate_entries_by_alt"].get(mate_alt_index, ".") in source_ids
+            and mate["remote_loci_by_alt"].get(mate_alt_index) == (chrom, pos)
+        ]
+        if not reciprocal_alt_indexes:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} does not have a reciprocal ALT pointing to record {source_id!r} at line {line_no}",
+                code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
+            )
+        if len(reciprocal_alt_indexes) != 1:
+            raise StrictVCFValidationError(
+                f"Breakend MATEID {mate_id!r} has an ambiguous reciprocal ALT for record {source_id!r} at line {line_no}",
+                code="VCF_BREAKEND_MATE_AMBIGUOUS",
+            )
+
+        if fileformat == "VCFv4.5":
+            source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
+            mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
+            mate_alt_index = reciprocal_alt_indexes[0]
+            for sample_name in set(source_vectors) | set(mate_vectors):
+                source_sample = source_vectors.get(sample_name, {})
+                mate_sample = mate_vectors.get(sample_name, {})
+                source_allele_number = str(source_alt_index + 1)
+                mate_allele_number = str(mate_alt_index + 1)
+                source_signature = sorted(
+                    (
+                        source_sample.get("psl", [])[position]
+                        if position < len(source_sample.get("psl", []))
+                        else ".",
+                        source_sample.get("pso", [])[position]
+                        if position < len(source_sample.get("pso", []))
+                        else ".",
+                    )
+                    for position, allele in enumerate(source_sample.get("alleles", []))
+                    if allele == source_allele_number
                 )
-            if (mate["chrom"], mate["pos"]) not in remote_loci:
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not match the ALT mate coordinate at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
+                mate_signature = sorted(
+                    (
+                        mate_sample.get("psl", [])[position]
+                        if position < len(mate_sample.get("psl", []))
+                        else ".",
+                        mate_sample.get("pso", [])[position]
+                        if position < len(mate_sample.get("pso", []))
+                        else ".",
+                    )
+                    for position, allele in enumerate(mate_sample.get("alleles", []))
+                    if allele == mate_allele_number
                 )
-            if not (mate["mate_ids"] & source_ids):
-                raise StrictVCFValidationError(
-                    f"Breakend MATEID {mate_id!r} does not refer back to record {source_id!r} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_NOT_RECIPROCAL",
-                )
-            if not any(
-                (remote_chrom, remote_pos) == (chrom, pos)
-                for remote_chrom, remote_pos in mate["remote_loci"]
-            ):
-                raise StrictVCFValidationError(
-                    f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
-                    code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
-                )
-            if fileformat == "VCFv4.5":
-                source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
-                mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
-                for sample_name in set(source_vectors) | set(mate_vectors):
-                    source_psl, source_pso = source_vectors.get(sample_name, (".", "."))
-                    mate_psl, mate_pso = mate_vectors.get(sample_name, (".", "."))
-                    if (source_psl, source_pso) != (mate_psl, mate_pso):
-                        raise StrictVCFValidationError(
-                            f"Breakend records {source_id!r} and {mate_id!r} must carry identical FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
-                            code="VCF_BREAKEND_PHASE_SET_MISMATCH",
-                        )
+                if source_signature != mate_signature:
+                    raise StrictVCFValidationError(
+                        f"Breakend ALT alleles {source_alt_index + 1} and {mate_alt_index + 1} in records {source_id!r} and {mate_id!r} must carry matching per-allele FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
+                        code="VCF_BREAKEND_PHASE_SET_MISMATCH",
+                    )
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
