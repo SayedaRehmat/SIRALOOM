@@ -492,20 +492,23 @@ def artifact_validation_worker_loss(
     marker_prefix: str,
     artifact_root: str,
     scratch_root: str,
+    crash_boundary: str,
 ):
-    """Kill a real prefork child during validation, then replay the same task.
+    """Kill a real prefork child at a validation publication boundary.
 
-    The production task has already committed its RUNNING dispatch state before
-    validate_persisted_artifact is invoked. The first child exits abruptly at
-    that boundary. The redelivered child executes the real persisted-artifact
-    validator and records the final result.
+    Supported boundaries:
+    - after_tool: after real VCF/BCFtools validation returns, before DB commit;
+    - after_commit: after artifact status/audit commit, before dispatch completion.
     """
+    import importlib
     import json
     import os
     from pathlib import Path
 
-    import importlib
     from backend.app.infrastructure.artifacts.store import ArtifactStore
+
+    if crash_boundary not in {"after_tool", "after_commit"}:
+        raise ValueError(f"Unsupported crash boundary: {crash_boundary}")
 
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
     marker = lambda suffix: f"{marker_prefix}:{suffix}"
@@ -513,6 +516,7 @@ def artifact_validation_worker_loss(
         "backend.app.domain.artifact_validation"
     )
     original_validate = validation_module.validate_persisted_artifact
+    original_validate_vcf = validation_module.validate_vcf
     original_store_resolver = validation_module.artifact_store_for_uri
     original_scratch_root = settings.worker_scratch_root
 
@@ -521,12 +525,23 @@ def artifact_validation_worker_loss(
     )
     settings.worker_scratch_root = scratch_root
 
-    def crash_once(artifact_uuid):
-        if redis.set(marker("first-attempt"), "started", nx=True, ex=600):
+    def terminate_after_tool(path):
+        result = original_validate_vcf(path)
+        if redis.set(marker("first-attempt"), "after_tool", nx=True, ex=600):
             os._exit(73)
-        return original_validate(artifact_uuid)
+        return result
 
-    validation_module.validate_persisted_artifact = crash_once
+    def terminate_after_commit(artifact_uuid):
+        result = original_validate(artifact_uuid)
+        if redis.set(marker("first-attempt"), "after_commit", nx=True, ex=600):
+            os._exit(73)
+        return result
+
+    if crash_boundary == "after_tool":
+        validation_module.validate_vcf = terminate_after_tool
+    else:
+        validation_module.validate_persisted_artifact = terminate_after_commit
+
     production_queue = importlib.import_module(
         "backend.app.infrastructure.queue.celery_app"
     )
@@ -542,11 +557,13 @@ def artifact_validation_worker_loss(
         payload = {
             "result": result,
             "delivery_redelivered": bool(delivery.get("redelivered")),
+            "crash_boundary": crash_boundary,
         }
         redis.set(marker("result"), json.dumps(payload), ex=600)
         return payload
     finally:
         production_task.pop_request()
         validation_module.validate_persisted_artifact = original_validate
+        validation_module.validate_vcf = original_validate_vcf
         validation_module.artifact_store_for_uri = original_store_resolver
         settings.worker_scratch_root = original_scratch_root
