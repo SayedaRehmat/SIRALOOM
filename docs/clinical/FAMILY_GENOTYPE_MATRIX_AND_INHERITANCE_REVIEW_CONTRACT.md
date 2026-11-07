@@ -29,7 +29,7 @@ Each member/variant row preserves:
 - Call state: NO_RECORD, GENOTYPE_UNAVAILABLE, NO_CALL, PARTIAL_NO_CALL, CALL_PRESENT, OTHER_ALT_PRESENT, OTHER_ALT_AND_MISSING, or invalid-call states.
 - Callability and genotype-quality assessment status.
 
-Absence from a variant-only VCF is NO_RECORD, never 0/0. Missing GT is never converted to reference. Malformed source-record hashes invalidate the call projection. A call with low GQ remains an observed call with its source metrics preserved; the matrix does not silently apply an unapproved threshold.
+Absence from a variant-only VCF is NO_RECORD, never 0/0. Missing GT is never converted to reference. Malformed source-record hashes invalidate the call projection. A call with a missing source-record hash remains visible as an observed genotype but makes the matrix provenance status `INCOMPLETE_REQUIRES_REVIEW`; it cannot be attached to an inheritance assessment. A call with low GQ remains an observed call with its source metrics preserved; the matrix does not silently apply an unapproved threshold.
 
 Callability remains NOT_ASSESSED until a laboratory-approved, versioned policy establishes target-region coverage, assay-specific thresholds, sex-chromosome handling, mapping/allele-balance requirements and no-call semantics. Genotype quality likewise remains NOT_ASSESSED_REQUIRES_LAB_QC_POLICY.
 
@@ -47,7 +47,7 @@ Even a verified specimen-level ploidy record does not establish locus-specific p
 
 ## 4. Reproducibility and immutable snapshots
 
-The canonical matrix fingerprint covers the schema version, case, requested canonical variants, ordered family samples, member/specimen/analysis/artifact provenance, source digest, exact sample name, binding fingerprint, identity evidence, normalization provenance, ploidy evidence, genotype/quality/phase/callability states and recorded relationship snapshot.
+The canonical matrix fingerprint covers the schema version, case, requested canonical variants, ordered family samples, member/specimen/analysis/artifact provenance, source digest, exact sample name, binding fingerprint, identity evidence, normalization provenance, ploidy evidence, genotype/quality/phase/callability states, provenance-completeness state and recorded relationship snapshot. `COMPLETE` requires a valid source-artifact SHA-256, a successful normalization attempt whose source input and normalized partition input artifacts are represented in its output provenance, and a valid source-record SHA-256 for every observed record (a genuine `NO_RECORD` has no record digest to require). Otherwise the matrix is `INCOMPLETE_REQUIRES_REVIEW`. The inheritance endpoint rejects an incomplete matrix instead of creating source-bound inheritance evidence from it.
 
 Inheritance review can accept explicit binding IDs. The API requires exactly one active verified proband binding from the analysis being reviewed. It rebuilds the matrix from current source-bound records and persists the complete matrix payload in family_genotype_matrix_snapshots, keyed by (case_id, matrix_fingerprint).
 
@@ -76,7 +76,8 @@ Before inheritance compatibility can be implemented, the clinical engine must ha
 ## 6. Qualification coverage
 
 The current fixture/test additions cover:
-- Three-member proband/father/mother family calls from separate VCFs.
+- Three-member proband/father/mother family calls from separate VCFs, routed through the production source-lineage router.
+- A CI integration test that runs the pinned BCFtools normalizer against the repository GRCh38 reference fixture, verifies source-to-normalized ALT reconciliation, checks the exact source-record SHA-256, and builds the matrix from the normalized output (skipped only when the pinned executable/reference fixture is unavailable).
 - Exact sample-column selection and sample-swap rejection.
 - Source/normalized genotype, multiallelic projection and other-ALT states.
 - No-record, no-call and partial no-call distinctions.
