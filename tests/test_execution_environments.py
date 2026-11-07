@@ -64,6 +64,7 @@ def _environment(
         storage_profile_ids=("lab-a-artifacts",),
         supported_tool_profile_ids=("bcftools-1.25-htslib-1.25-linux-amd64",),
         network_policy="OFFLINE",
+        tool_executable_sha256=(("bcftools-1.25-htslib-1.25-linux-amd64", "a" * 64),),
         agent_id="agent-a" if executor_kind == "REMOTE_AGENT" else None,
         agent_version="1.0.0" if executor_kind == "REMOTE_AGENT" else None,
         agent_last_seen_at=agent_last_seen_at,
