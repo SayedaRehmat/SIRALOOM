@@ -643,6 +643,7 @@ export type TranslationKey =
   | "reports.reportHelp"
   | "reports.pdf"
   | "reports.signout"
+  | "reports.validationDisclaimer"
   | "reports.authorizationChecking"
   | "reports.authorizationUnavailable"
   | "reports.writeRoleHelp"
