@@ -2213,6 +2213,20 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
 
 
 @pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_plus_tandem_repeat_rn_definition_is_number_a_integer(tmp_path: Path, version: str):
+    path = tmp_path / f"{version}-rn-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        ['##INFO=<ID=RN,Number=1,Type=Integer,Description="Wrong RN declaration">'],
+        "1\t10\t.\tA\t<CNV:TR>\t.\tPASS\tRN=2\n",
+        version=version,
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
+
+
 def test_vcf43_reserved_cipos_header_must_match_number_two(tmp_path: Path):
     path = tmp_path / "vcf43-cipos-wrong-header-definition.vcf"
     write_vcf_with_metadata(
