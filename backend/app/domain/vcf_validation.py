@@ -1674,6 +1674,8 @@ def validate_vcf_strict(
     unresolved_spanning_deletion_records: list[dict[str, int | str]] = []
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, set[str], list[tuple[str, int]], int]] = []
+    breakend_phase_vectors_by_record: dict[str, dict[str, tuple[str, str]]] = {}
+    phase_set_observations: dict[tuple[str, str], list[dict[str, object]]] = {}
     record_ids_seen: set[str] = set()
     current_chrom: str | None = None
     closed_chroms: set[str] = set()
@@ -2038,6 +2040,43 @@ def validate_vcf_strict(
                     # A missing GT value still carries ploidy: "." is haploid,
                     # "./." is diploid, and so on.
                     genotype_ploidy = len(_gt_allele_tokens(sample_values[gt_index], fileformat, line_no))
+                if fileformat == "VCFv4.5" and "PSL" in format_keys and gt_index is not None:
+                    gt_for_phase = sample_values[gt_index]
+                    if gt_for_phase not in {"", "."}:
+                        allele_phase = _gt_alleles_with_phase(gt_for_phase, fileformat, line_no)
+                        psl_raw = (
+                            sample_values[format_keys.index("PSL")]
+                            if format_keys.index("PSL") < len(sample_values)
+                            else "."
+                        )
+                        psl_entries = psl_raw.split(",") if psl_raw not in {"", "."} else ["."] * len(allele_phase)
+                        pso_raw = (
+                            sample_values[format_keys.index("PSO")]
+                            if "PSO" in format_keys and format_keys.index("PSO") < len(sample_values)
+                            else "."
+                        )
+                        pso_entries = pso_raw.split(",") if pso_raw not in {"", "."} else ["."] * len(allele_phase)
+                        sample_name = chrom_header[8 + sample_index] if chrom_header is not None and 8 + sample_index < len(chrom_header) else str(sample_index)
+                        for allele_position, ((allele_token, _separator), phase_set) in enumerate(zip(allele_phase, psl_entries)):
+                            if phase_set in {"", "."}:
+                                continue
+                            allele_is_sv_or_breakend = False
+                            if allele_token != ".":
+                                allele_number = int(allele_token)
+                                if 0 < allele_number <= len(alts):
+                                    allele_text = alts[allele_number - 1]
+                                    allele_is_sv_or_breakend = (
+                                        SYMBOLIC_RE.fullmatch(allele_text) is not None
+                                        or "[" in allele_text
+                                        or "]" in allele_text
+                                    )
+                            phase_set_observations.setdefault((sample_name, phase_set), []).append({
+                                "line_number": line_no,
+                                "record_index": records + 1,
+                                "allele_position": allele_position,
+                                "pso": pso_entries[allele_position] if allele_position < len(pso_entries) else ".",
+                                "requires_pso": allele_is_sv_or_breakend,
+                            })
                 local_allele_count: int | None = None
                 local_alt_indexes: list[int] = []
                 if fileformat == "VCFv4.5" and "LAA" in format_keys and format_keys.index("LAA") < len(sample_values):
@@ -2171,6 +2210,25 @@ def validate_vcf_strict(
                                         "strand": strand,
                                         "value": None if observed_value == "." else observed_value,
                                     })
+                if fileformat == "VCFv4.5" and breakend_alts and record_ids:
+                    record_phase_vectors: dict[str, tuple[str, str]] = {}
+                    sample_names = chrom_header[9:] if chrom_header is not None else []
+                    for sample_offset, sample_name in enumerate(sample_names):
+                        sample_values_for_phase = fields[9 + sample_offset].split(":")
+                        psl_value = (
+                            sample_values_for_phase[format_keys.index("PSL")]
+                            if "PSL" in format_keys and format_keys.index("PSL") < len(sample_values_for_phase)
+                            else "."
+                        )
+                        pso_value = (
+                            sample_values_for_phase[format_keys.index("PSO")]
+                            if "PSO" in format_keys and format_keys.index("PSO") < len(sample_values_for_phase)
+                            else "."
+                        )
+                        record_phase_vectors[sample_name] = (psl_value, pso_value)
+                    for record_id in record_ids:
+                        breakend_phase_vectors_by_record[record_id] = record_phase_vectors
+
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
                         format_keys=format_keys,
@@ -2260,6 +2318,18 @@ def validate_vcf_strict(
         raise StrictVCFValidationError("VCF is missing the #CHROM header", code="VCF_HEADER_INVALID")
     if records == 0:
         raise StrictVCFValidationError("VCF contains no variant records", code="VCF_EMPTY")
+    if fileformat == "VCFv4.5":
+        for (sample_name, phase_set), observations in phase_set_observations.items():
+            phase_set_requires_pso = any(bool(item["requires_pso"]) for item in observations)
+            if phase_set_requires_pso:
+                missing = [item for item in observations if item["pso"] in {"", "."}]
+                if missing:
+                    first = missing[0]
+                    raise StrictVCFValidationError(
+                        f"FORMAT/PSO is required for sample {sample_name!r}, phase set {phase_set!r} because that phase set contains an SV or breakpoint allele; missing at line {first['line_number']}, allele position {first['allele_position'] + 1}",
+                        code="VCF_PHASE_SET_PSO_REQUIRED",
+                    )
+
     for source_id, chrom, pos, mate_ids, remote_loci, line_no in breakend_links:
         source_ids = set(source_id.split(";"))
         for mate_id in mate_ids:
@@ -2287,6 +2357,17 @@ def validate_vcf_strict(
                     f"Breakend mate record {mate_id!r} does not point back to {chrom}:{pos} at line {line_no}",
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
+            if fileformat == "VCFv4.5":
+                source_vectors = breakend_phase_vectors_by_record.get(source_id, {})
+                mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
+                for sample_name in set(source_vectors) | set(mate_vectors):
+                    source_psl, source_pso = source_vectors.get(sample_name, (".", "."))
+                    mate_psl, mate_pso = mate_vectors.get(sample_name, (".", "."))
+                    if (source_psl, source_pso) != (mate_psl, mate_pso):
+                        raise StrictVCFValidationError(
+                            f"Breakend records {source_id!r} and {mate_id!r} must carry identical FORMAT/PSL and FORMAT/PSO values for sample {sample_name!r}",
+                            code="VCF_BREAKEND_PHASE_SET_MISMATCH",
+                        )
     for chrom, pos, line_no, record_index, star_carriers in spanning_deletion_records:
         if star_carriers is not None and not star_carriers:
             continue
