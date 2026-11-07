@@ -489,3 +489,42 @@ def test_family_matrix_rejects_inconsistent_missing_allele_count():
         case_id=case_id, variant_ids=[variant_id], samples=[sample], relationships=[],
     )
     assert matrix["samples"][0]["calls"][0]["call_state"] == "INVALID_CALL"
+
+
+def test_matrix_marks_ploidy_as_provenance_only_and_rejects_malformed_record_digest():
+    case_id, member_id, variant_id = uuid4(), uuid4(), uuid4()
+    sample = _sample(member_id, "PROBAND", {
+        variant_id: {
+            "sample_name": "PROBAND",
+            "genotype": "0/1",
+            "normalized_genotype": "0/1",
+            "source_record_sha256": "not-a-sha256",
+        },
+    })
+    sample["is_proband"] = True
+    sample["analysis_reference_build"] = "GRCh38"
+    sample["ploidy_evidence"] = {
+        "version": 2,
+        "status": "VERIFIED",
+        "reference_build": "GRCh37",
+        "revision_fingerprint": "d" * 64,
+        "region_copy_number": {"chrX": 2},
+        "source_type": "LAB_VALIDATED",
+        "evidence_reference": "PLOIDY-QC-002",
+    }
+
+    matrix = build_family_genotype_matrix(
+        case_id=case_id,
+        variant_ids=[variant_id],
+        samples=[sample],
+        relationships=[],
+    )
+
+    row = matrix["samples"][0]["calls"][0]
+    assert row["call_state"] == "INVALID_CALL"
+    assert row["source_record_sha256_status"] == "INVALID_SHA256"
+    assert matrix["samples"][0]["ploidy_evidence_status"] == "REFERENCE_BUILD_MISMATCH"
+    assert matrix["samples"][0]["ploidy_interpretation_status"] == "REQUIRES_LOCUS_SPECIFIC_LAB_POLICY"
+    assert matrix["callability_status"] == "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY"
+    assert matrix["ploidy_status"] == "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED"
+    assert matrix["qualification_status"] == "PROVENANCE_PROJECTION_ONLY_NOT_CLINICALLY_QUALIFIED"
