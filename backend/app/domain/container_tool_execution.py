@@ -150,15 +150,31 @@ class LinuxContainerToolExecutor:
             "--mount", f"type=bind,src={workspace},dst=/workspace",
         ]
         argv = list(request.argv)
+        input_mount_names: set[str] = set()
         for item in request.inputs:
             host = Path(item.path).resolve(strict=True)
+            if host.is_relative_to(workspace):
+                raise ToolExecutionContractError(
+                    "Inputs inside the writable workspace cannot be guaranteed read-only; stage them outside the workspace."
+                )
             name = self._safe_mount_name(item.name)
+            if name in input_mount_names:
+                raise ToolExecutionContractError("Input names collide after safe mount-name normalization.")
+            input_mount_names.add(name)
             target = f"/inputs/{name}"
             mounts.extend(["--mount", f"type=bind,src={host},dst={target},readonly"])
             argv = [arg.replace(item.path, target) for arg in argv]
+        resource_mount_names: set[str] = set()
         for item in request.resources:
             host = Path(item.path or "").resolve(strict=True)
+            if host == workspace or host.is_relative_to(workspace):
+                raise ToolExecutionContractError(
+                    "Scientific resources inside the writable workspace cannot be guaranteed read-only."
+                )
             name = self._safe_mount_name(item.resource_id)
+            if name in resource_mount_names:
+                raise ToolExecutionContractError("Resource IDs collide after safe mount-name normalization.")
+            resource_mount_names.add(name)
             target = f"/resources/{name}"
             mounts.extend(["--mount", f"type=bind,src={host},dst={target},readonly"])
             argv = [arg.replace(item.path or "", target) for arg in argv]
