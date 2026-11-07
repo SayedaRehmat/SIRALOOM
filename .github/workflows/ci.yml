@@ -2,7 +2,9 @@ name: SIRALOOM CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - "main"
+      - "research/vcf-conformance-phase-a-20261105"
   pull_request:
 
 jobs:
