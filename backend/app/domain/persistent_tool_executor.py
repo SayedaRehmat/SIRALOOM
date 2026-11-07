@@ -52,7 +52,8 @@ class PersistentToolExecutionService:
         db: Session,
         *,
         organization_id: UUID,
-        analysis_id: UUID,
+        analysis_id: UUID | None = None,
+        case_id: UUID | None = None,
         environment_registration_id: UUID,
         worker_id: str,
         executor: LocalProcessToolExecutor | None = None,
@@ -61,8 +62,11 @@ class PersistentToolExecutionService:
         if not worker_id.strip():
             raise ExecutionPersistenceError("Persistent execution requires a stable worker identity.")
         self.db = db
+        if analysis_id is None and case_id is None:
+            raise ExecutionPersistenceError("Persistent execution requires a case or analysis ID.")
         self.organization_id = organization_id
         self.analysis_id = analysis_id
+        self.case_id = case_id
         self.environment_registration_id = environment_registration_id
         self.worker_id = worker_id
         self.executor = executor or LocalProcessToolExecutor()
@@ -115,6 +119,7 @@ class PersistentToolExecutionService:
         fingerprint = execution_request_fingerprint(
             organization_id=self.organization_id,
             analysis_id=self.analysis_id,
+            case_id=self.case_id,
             execution_id=request.execution_id,
             environment_registration_id=self.environment_registration_id,
             tool=profile,
@@ -122,14 +127,19 @@ class PersistentToolExecutionService:
             request_snapshot=request_snapshot,
             input_manifest=input_manifest,
         )
-        idempotency_key = hashlib.sha256(
-            f"{self.organization_id}:{self.analysis_id}:{request.execution_id}".encode("utf-8")
-        ).hexdigest()
+        # Preserve the pre-0064 idempotency namespace for analysis-scoped
+        # callers so existing retries/replays retain their original identity.
+        if self.analysis_id is not None and self.case_id is None:
+            idempotency_identity = f"{self.organization_id}:{self.analysis_id}:{request.execution_id}"
+        else:
+            idempotency_identity = f"{self.organization_id}:case:{self.case_id}:analysis:{self.analysis_id}:{request.execution_id}"
+        idempotency_key = hashlib.sha256(idempotency_identity.encode("utf-8")).hexdigest()
 
         record = register_tool_execution(
             self.db,
             organization_id=self.organization_id,
             analysis_id=self.analysis_id,
+            case_id=self.case_id,
             execution_id=request.execution_id,
             idempotency_key=idempotency_key,
             request_fingerprint=fingerprint,

@@ -197,6 +197,50 @@ def test_environment_registration_rejects_cross_tenant_owner_binding(db):
         )
 
 
+def test_case_scoped_execution_can_be_registered_before_analysis_exists(db):
+    organization, _user, case, _analysis = _lab(db)
+    environment = register_environment_profile(
+        db, _profile(organization.id), organization_id=organization.id
+    )
+    tool = _tool()
+    request_snapshot = {
+        "execution_id": "intake-validation-001",
+        "operation": "validate",
+        "argv": ["bcftools", "view", "--header-only"],
+    }
+    input_manifest = [{"name": "uploaded.vcf.gz", "sha256": "b" * 64}]
+    fingerprint = execution_request_fingerprint(
+        organization_id=organization.id,
+        analysis_id=None,
+        case_id=case.id,
+        execution_id="intake-validation-001",
+        environment_registration_id=environment.id,
+        tool=tool,
+        operation="validate",
+        request_snapshot=request_snapshot,
+        input_manifest=input_manifest,
+    )
+
+    record = register_tool_execution(
+        db,
+        organization_id=organization.id,
+        case_id=case.id,
+        analysis_id=None,
+        execution_id="intake-validation-001",
+        idempotency_key="intake-idem-001",
+        request_fingerprint=fingerprint,
+        environment_registration_id=environment.id,
+        tool=tool,
+        operation="validate",
+        request_snapshot=request_snapshot,
+        input_manifest=input_manifest,
+    )
+
+    assert record.case_id == case.id
+    assert record.analysis_id is None
+    assert record.status == "PENDING"
+
+
 def test_execution_registration_is_tenant_scoped_and_idempotent(db):
     organization, _user, _case, analysis = _lab(db)
     _environment, _tool_identity, snapshot, record = _register(db, organization, analysis)

@@ -1361,7 +1361,8 @@ class ToolExecutionRecord(Base):
     idempotency_key: Mapped[str] = mapped_column(Text, nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
-    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    analysis_id: Mapped[UUID | None] = mapped_column(ForeignKey("analyses.id"))
     environment_registration_id: Mapped[UUID] = mapped_column(
         ForeignKey("execution_environment_registrations.id"), nullable=False
     )
@@ -1411,6 +1412,7 @@ class ToolExecutionRecord(Base):
             "(provenance IS NOT NULL AND exit_code = 0 AND completed_at IS NOT NULL)",
             name="ck_tool_execution_success_has_provenance",
         ),
+        Index("ix_tool_execution_case_created", "case_id", "created_at"),
         Index("ix_tool_execution_analysis_created", "analysis_id", "created_at"),
         Index("ix_tool_execution_org_status_created", "organization_id", "status", "created_at"),
     )
