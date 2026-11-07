@@ -2,6 +2,8 @@ import hashlib
 import json
 import shutil
 import subprocess
+from types import SimpleNamespace
+from uuid import uuid4
 from pathlib import Path
 
 import pytest
@@ -13,6 +15,7 @@ from backend.app.domain.vcf_tools import (
     VCFToolError,
     classify_records,
     normalize_vcf_with_bcftools,
+    _run_bcftools_command,
 )
 
 
@@ -1347,3 +1350,51 @@ def test_normalization_uses_selected_executable_and_rejects_htslib_drift(tmp_pat
         )
 
     assert commands == [[str(selected), "--version"]]
+
+
+def test_bcftools_adapter_routes_command_through_persistent_executor(tmp_path):
+    executable = tmp_path / "bcftools"
+    executable.write_text("#!/bin/sh\\necho 'bcftools 1.25'\\n", encoding="utf-8")
+    executable.chmod(0o755)
+    input_path = tmp_path / "input.vcf"
+    input_path.write_text("##fileformat=VCFv4.2\\n", encoding="utf-8")
+    output_path = tmp_path / "output.vcf.gz"
+    calls = []
+
+    class FakePersistentExecution:
+        organization_id = uuid4()
+        analysis_id = uuid4()
+        environment_registration_id = uuid4()
+        db = SimpleNamespace(get=lambda _model, _identifier: SimpleNamespace(
+            profile_json={"runtime_image_digest": None}
+        ))
+
+        def execute(self, profile, request):
+            calls.append((profile, request))
+            return SimpleNamespace(result=SimpleNamespace(
+                provenance=SimpleNamespace(exit_code=0),
+                stdout="",
+                stderr="",
+            ))
+
+    completed = _run_bcftools_command(
+        [str(executable), "norm", "--no-version", "-o", str(output_path), str(input_path)],
+        persistent_execution=FakePersistentExecution(),
+        workflow_id="normalize",
+        operation="normalize",
+        workspace=tmp_path,
+        input_paths=[input_path],
+        output_paths=[output_path],
+        timeout_seconds=60,
+    )
+
+    assert completed.returncode == 0
+    assert len(calls) == 1
+    profile, request = calls[0]
+    assert profile.tool_id == "bcftools"
+    assert profile.profile_id == settings.bcftools_profile_id
+    assert profile.executable_sha256 == hashlib.sha256(executable.read_bytes()).hexdigest()
+    assert request.workflow_id == "normalize"
+    assert request.operation == "normalize"
+    assert request.inputs[0].sha256 == hashlib.sha256(input_path.read_bytes()).hexdigest()
+    assert request.outputs[0].path == str(output_path)
