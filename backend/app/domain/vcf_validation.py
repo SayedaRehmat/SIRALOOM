@@ -1969,6 +1969,7 @@ def validate_vcf_strict(
     breakend_records_by_id: dict[str, dict] = {}
     breakend_links: list[tuple[str, str, int, int, str, tuple[str, int], int]] = []
     unresolved_breakend_coordinate_links: list[dict[str, object]] = []
+    unresolved_breakend_adjacencies: list[dict[str, object]] = []
     breakend_adjacencies: list[dict[str, object]] = []
     breakend_adjacency_keys: set[tuple[tuple[int, int], tuple[int, int]]] = set()
     breakend_phase_vectors_by_record: dict[str, dict[str, dict[str, list[str]]]] = {}
@@ -2211,6 +2212,22 @@ def validate_vcf_strict(
                 if "[" in alt or "]" in alt
             ]
             breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
+            single_breakend_alt_indexes = [
+                alt_index
+                for alt_index, alt in enumerate(alts)
+                if _is_vcf45_breakend_alt(alt) and alt_index not in breakend_alt_indexes
+            ]
+            for alt_index in single_breakend_alt_indexes:
+                unresolved_breakend_adjacencies.append({
+                    "record_id": fields[2],
+                    "line_number": line_no,
+                    "chrom": _chrom,
+                    "pos": _pos,
+                    "alt_index": alt_index + 1,
+                    "alt": alts[alt_index],
+                    "status": "UNRESOLVED",
+                    "reason_code": "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE",
+                })
             if breakend_alts:
                 # Resolve remote loci and classify external assembly contigs before
                 # legacy SVTYPE checks so valid-but-unresolvable syntax is not
@@ -2291,6 +2308,21 @@ def validate_vcf_strict(
                 for alt_index in breakend_alt_indexes:
                     mate_id = mate_entries_by_alt.get(alt_index, ".")
                     if mate_id in {"", "."}:
+                        unresolved_breakend_adjacencies.append({
+                            "record_id": fields[2],
+                            "line_number": line_no,
+                            "chrom": _chrom,
+                            "pos": _pos,
+                            "alt_index": alt_index + 1,
+                            "alt": alts[alt_index],
+                            "remote_locus": {
+                                "chrom": remote_loci_by_alt[alt_index][0],
+                                "pos": remote_loci_by_alt[alt_index][1],
+                            },
+                            "orientation": orientation_by_alt.get(alt_index),
+                            "status": "UNRESOLVED",
+                            "reason_code": "VCF_BREAKEND_MATE_ID_MISSING",
+                        })
                         continue
                     if not record_ids:
                         raise StrictVCFValidationError(
@@ -3234,6 +3266,16 @@ def validate_vcf_strict(
                     "ordered_events": ordered_events,
                 })
 
+    unresolved_breakend_adjacencies_by_endpoint: dict[tuple[int, int], list[dict[str, object]]] = {}
+    for unresolved_adjacency in unresolved_breakend_adjacencies:
+        unresolved_endpoint_key = (
+            int(unresolved_adjacency["line_number"]),
+            int(unresolved_adjacency["alt_index"]),
+        )
+        unresolved_breakend_adjacencies_by_endpoint.setdefault(
+            unresolved_endpoint_key, []
+        ).append(unresolved_adjacency)
+
     breakend_adjacencies_by_endpoint: dict[tuple[int, int], list[dict[str, object]]] = {}
     for adjacency in breakend_adjacencies:
         for endpoint in (adjacency["source"], adjacency["mate"]):
@@ -3268,9 +3310,18 @@ def validate_vcf_strict(
                             observed_adjacency_ids.add(str(adjacency["adjacency_id"]))
                     else:
                         unresolved_adjacency_count += 1
-                        unresolved_reason_codes.add(
-                            "VCF_DERIVATIVE_BREAKEND_ADJACENCY_UNRESOLVED"
+                        unresolved_entries = unresolved_breakend_adjacencies_by_endpoint.get(
+                            (int(occurrence["line_number"]), int(allele_index)),
+                            [],
                         )
+                        if unresolved_entries:
+                            unresolved_reason_codes.update(
+                                str(item["reason_code"]) for item in unresolved_entries
+                            )
+                        else:
+                            unresolved_reason_codes.add(
+                                "VCF_DERIVATIVE_BREAKEND_ADJACENCY_UNRESOLVED"
+                            )
                 event_occurrences.append({
                     **occurrence,
                     "breakend_adjacency_ids": [
@@ -3364,6 +3415,8 @@ def validate_vcf_strict(
             {key: value for key, value in adjacency.items() if key != "key"}
             for adjacency in breakend_adjacencies
         ],
+        "unresolved_breakend_adjacencies": unresolved_breakend_adjacencies,
+        "unresolved_breakend_adjacency_count": len(unresolved_breakend_adjacencies),
         "unresolved_breakend_coordinate_count": len(unresolved_breakend_coordinate_links),
         "unresolved_breakend_coordinate_links": unresolved_breakend_coordinate_links,
         "gvcf_markers": gvcf_markers,
