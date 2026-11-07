@@ -91,7 +91,7 @@ def test_vcf45_pso_is_required_on_every_occurrence_of_phase_set_with_sv_allele(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:set,set:.,3\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:set,set:3,3\n"
         "1\t9\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:set,set:.,.\n",
         encoding="utf-8",
     )
@@ -110,7 +110,7 @@ def test_vcf45_pso_is_accepted_when_defined_across_entire_sv_phase_set(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:set,set:.,3\n"
+        "1\t5\tdel1\tA\t<DEL>\t.\tPASS\tEND=8\tGT:PSL:PSO\t0|1:set,set:3,3\n"
         "1\t9\tsnv1\tA\tC\t.\tPASS\t.\tGT:PSL:PSO\t0|1:set,set:.,4\n",
         encoding="utf-8",
     )
