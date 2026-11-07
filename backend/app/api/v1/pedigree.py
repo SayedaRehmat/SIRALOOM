@@ -676,6 +676,8 @@ def review_sample_identity_evidence(
         if prior_revision.review_status == body.decision and prior_revision.review_reason == body.reason.strip():
             return _sample_identity_evidence_payload(prior_revision)
         raise HTTPException(409, "This identity evidence already has a conflicting review revision")
+    if previous.recorded_by == principal.user_id:
+        raise HTTPException(403, "Independent reviewer required; the evidence recorder cannot review their own identity evidence")
 
     payload = {
         "schema_version": 1, "case_id": str(previous.case_id), "binding_id": str(previous.binding_id),
@@ -814,6 +816,8 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         if prior_revision.binding_status == body.decision and prior_revision.review_reason == body.reason.strip():
             return _sample_binding_payload(prior_revision)
         raise HTTPException(409, "This binding already has a conflicting review revision")
+    if previous.recorded_by == principal.user_id:
+        raise HTTPException(403, "Independent reviewer required; the binding recorder cannot approve their own identity claim")
     if body.decision == "VERIFIED":
         analysis = db.get(Analysis, previous.analysis_id)
         if analysis is None or (analysis.configuration or {}).get("input_artifact_id") != str(previous.artifact_id):
