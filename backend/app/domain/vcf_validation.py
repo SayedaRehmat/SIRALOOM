@@ -56,11 +56,11 @@ NONNEGATIVE_INTEGER_FIELDS = frozenset({
     ("FORMAT", "HQ"), ("FORMAT", "LAD"), ("FORMAT", "LADF"),
     ("FORMAT", "LADR"), ("FORMAT", "LEC"), ("FORMAT", "LPL"),
     ("FORMAT", "LPP"), ("FORMAT", "MQ"), ("FORMAT", "PL"),
-    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"),
+    ("FORMAT", "PP"), ("FORMAT", "PQ"), ("FORMAT", "PS"), ("FORMAT", "NQ"),
     ("FORMAT", "PSO"), ("FORMAT", "PSQ"),
 })
-PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP")})
-NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ")})
+PROBABILITY_FLOAT_FIELDS = frozenset({("INFO", "AF"), ("FORMAT", "GP"), ("FORMAT", "CNP")})
+NONNEGATIVE_FLOAT_FIELDS = frozenset({("INFO", "BQ"), ("INFO", "MQ"), ("FORMAT", "CNQ")})
 _CONTIG_ID = re.compile(r'(?:^|,)ID=(?:"([^"]+)"|([^,>]+))')
 _CONTIG_LENGTH = re.compile(r'(?:^|,)length=([0-9]+)(?:,|>)')
 _CONTIG_MD5 = re.compile(r'(?:^|,)md5=([^,>]+)(?:,|>)')
