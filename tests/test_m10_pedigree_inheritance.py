@@ -242,6 +242,7 @@ def test_segregation_write_overrides_client_pedigree_snapshot(monkeypatch):
 
     row = next(item for item in db.added if isinstance(item, SegregationObservation))
     assert row.metadata_json["pedigree_context_snapshot"] == expected_snapshot
+    assert row.source == "MANUALLY_REPORTED"
     assert db.committed is True
     assert lock_permissions == ["write"]
 
@@ -420,7 +421,8 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
         principal,
     )
 
-    assert result["results"][0]["status"] == "REQUIRES_REVIEW"
+    assert result["results"][0]["status"] == "INSUFFICIENT_DATA"
+    assert result["results"][0]["observations_available"] == 0
     assert lock_permissions == ["review"]
     assert "score" not in result["results"][0]
     assert "score" not in result
@@ -430,7 +432,7 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
     assert assessment.score is None
     assert evidence.source_version == "M11_OBSERVATIONS_ONLY"
     assert "score" not in evidence.payload
-    assert evidence.payload["status"] == "REQUIRES_REVIEW"
+    assert evidence.payload["status"] == "INSUFFICIENT_DATA"
 
 
 def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplicate_audit(monkeypatch):
@@ -600,3 +602,18 @@ def test_m10_supported_models_are_explicit():
 def test_m10_assessment_request_bounds_model_count(models):
     with pytest.raises(ValidationError):
         AssessmentInput(models=models)
+
+
+def test_assessment_api_rejects_mitochondrial_model_outside_trial_scope(monkeypatch):
+    analysis_id, variant_id = uuid4(), uuid4()
+    analysis = SimpleNamespace(id=analysis_id, case_id=uuid4())
+    monkeypatch.setattr(
+        pedigree, "get_accessible_analysis",
+        lambda *_args, **_kwargs: analysis,
+    )
+    monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    with pytest.raises(Exception, match="Mitochondrial interpretation is outside"):
+        pedigree.assess_inheritance(
+            analysis_id, variant_id, AssessmentInput(models=["MITOCHONDRIAL"]),
+            SimpleNamespace(), SimpleNamespace(user_id=uuid4()),
+        )
