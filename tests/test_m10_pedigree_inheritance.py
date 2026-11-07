@@ -653,6 +653,7 @@ def test_inheritance_assessment_binds_verified_family_matrix_fingerprint_and_sta
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
     matrix_fingerprint = "f" * 64
     family_matrix = {
+        "schema_version": 1,
         "matrix_fingerprint": matrix_fingerprint,
         "samples": [{
             "member_id": str(member_id),
@@ -755,6 +756,7 @@ def test_inheritance_assessment_rejects_matrix_without_target_proband_binding(mo
         pedigree,
         "get_family_genotype_matrix",
         lambda *_args: {
+            "schema_version": 1,
             "matrix_fingerprint": "e" * 64,
             "samples": [{
                 "member_id": str(uuid4()),
@@ -812,6 +814,7 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
         pedigree,
         "get_family_genotype_matrix",
         lambda *_args: {
+            "schema_version": 1,
             "matrix_fingerprint": fingerprint_value["value"],
             "samples": [{
                 "member_id": str(stable_member_id),
@@ -842,6 +845,7 @@ def test_de_novo_review_remains_unresolved_when_parent_relationship_is_only_repo
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
     principal = SimpleNamespace(user_id=uuid4())
     matrix = {
+        "schema_version": 1,
         "matrix_fingerprint": "9" * 64,
         "relationships_as_recorded": [{
             "parent_member_identifier": "FATHER",
