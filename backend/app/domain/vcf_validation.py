@@ -2358,7 +2358,7 @@ def validate_vcf_strict(
                     code="VCF_BREAKEND_MATE_COORDINATE_MISMATCH",
                 )
             if fileformat == "VCFv4.5":
-                source_vectors = breakend_phase_vectors_by_record.get(source_id, {})
+                source_vectors = breakend_phase_vectors_by_record.get(source_id.split(";")[0], {})
                 mate_vectors = breakend_phase_vectors_by_record.get(mate_id, {})
                 for sample_name in set(source_vectors) | set(mate_vectors):
                     source_psl, source_pso = source_vectors.get(sample_name, (".", "."))
