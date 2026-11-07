@@ -167,12 +167,12 @@ def test_all_reserved_local_allele_pairs_project_in_laa_order(
 
 
 @pytest.mark.parametrize(
-    ("standard_key", "local_key", "number", "field_type", "standard_values", "local_values"),
+    ("standard_key", "local_key", "number", "field_type", "standard_values", "local_values", "expected_code"),
     [
-        ("AD", "LAD", "R", "Integer", "10,20,30", "10,20"),
-        ("EC", "LEC", "A", "Integer", "20,30", "20"),
-        ("PL", "LPL", "G", "Integer", "0,1,2,3,4,5", "0,3"),
-        ("GL", "LGL", "G", "Float", "-0.1,-0.2,-0.3,-0.4,-0.5,-0.6", "-0.1,-0.4"),
+        ("AD", "LAD", "R", "Integer", "10,20,30", "10,20", "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"),
+        ("EC", "LEC", "A", "Integer", "20,30", "20", "VCF_LOCAL_FIELD_EQUIVALENCE_INVALID"),
+        ("PL", "LPL", "G", "Integer", "0,1,2,3,4,5", "0,3", "VCF_FIELD_CARDINALITY_INVALID"),
+        ("GL", "LGL", "G", "Float", "-0.1,-0.2,-0.3,-0.4,-0.5,-0.6", "-0.1,-0.4", "VCF_FIELD_CARDINALITY_INVALID"),
     ],
 )
 def test_local_allele_projection_rejects_cardinality_mismatch(
@@ -183,6 +183,7 @@ def test_local_allele_projection_rejects_cardinality_mismatch(
     field_type: str,
     standard_values: str,
     local_values: str,
+    expected_code: str,
 ):
     local_number = {"A": "LA", "R": "LR", "G": "LG"}[number]
     path = tmp_path / f"{standard_key.lower()}-local-projection-mismatch.vcf"
@@ -198,4 +199,4 @@ def test_local_allele_projection_rejects_cardinality_mismatch(
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
+    assert exc.value.code == expected_code
