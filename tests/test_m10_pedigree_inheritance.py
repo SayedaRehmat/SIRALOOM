@@ -842,6 +842,16 @@ def test_matrix_fingerprint_replay_is_idempotent_and_new_matrix_creates_new_asse
     assert revised["family_matrix_fingerprint"] == "b" * 64
     assert db.scalar(select(func.count(InheritanceAssessment.id))) == 2
     assert db.scalar(select(func.count(FamilyGenotypeMatrixSnapshot.id))) == 2
+    original_snapshot = db.scalar(select(FamilyGenotypeMatrixSnapshot).where(
+        FamilyGenotypeMatrixSnapshot.matrix_fingerprint == "a" * 64,
+    ))
+    revised_snapshot = db.scalar(select(FamilyGenotypeMatrixSnapshot).where(
+        FamilyGenotypeMatrixSnapshot.matrix_fingerprint == "b" * 64,
+    ))
+    assert original_snapshot is not None and revised_snapshot is not None
+    assert original_snapshot.matrix_payload["matrix_fingerprint"] == "a" * 64
+    assert revised_snapshot.matrix_payload["matrix_fingerprint"] == "b" * 64
+    assert db.scalar(select(func.count(Evidence.id))) == 2
     db.close()
 
 
