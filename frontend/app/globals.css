@@ -53,6 +53,14 @@ h1 span { color: var(--accent-2); font-weight: 500; }
 
 .workspace-grid { display: grid; grid-template-columns: 1.05fr 1.3fr 1.1fr; gap: 14px; }
 .clinical-card { margin-top: 14px; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); }
+.phenotype-timeline { list-style: none; display: grid; gap: 10px; margin: 14px 0 0; padding: 0; }
+.phenotype-timeline-item { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 12px; min-width: 0; }
+.phenotype-timeline-item:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 12px; bottom: -12px; border-left: 1px solid var(--border); }
+.phenotype-timeline-marker { z-index: 1; width: 10px; height: 10px; margin-top: 5px; border: 2px solid var(--border); border-radius: 50%; background: var(--surface); }
+.phenotype-timeline-content { min-width: 0; padding: 0 0 12px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.phenotype-timeline-content .panel-head { align-items: flex-start; gap: 10px; }
+.phenotype-timeline-content .panel-head strong { min-width: 0; overflow-wrap: anywhere; }
+.phenotype-timeline-content .context-row strong { white-space: normal; overflow-wrap: anywhere; }
 .clinical-card h4 { margin: 0 0 10px; font-size: 13px; }
 .clinical-card .m10-form-grid { margin-top: 8px; padding-top: 0; border-top: 0; }
 .clinical-card label { text-transform: none; letter-spacing: normal; font-weight: 600; }
