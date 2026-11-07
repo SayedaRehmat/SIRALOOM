@@ -149,7 +149,7 @@ class _FakeToolExecutor:
         for line in input_path.read_text(encoding="utf-8").splitlines():
             if not line or line.startswith("#"):
                 continue
-            fields = line.split("\\t")
+            fields = line.split("\t")
             records.append({
                 "input": line,
                 "start": int(fields[1]),
@@ -174,7 +174,7 @@ class _FakeToolExecutor:
                 }],
             })
         output_path.write_text(
-            "".join(json.dumps(item, separators=(",", ":")) + "\\n" for item in records),
+            "".join(json.dumps(item, separators=(",", ":")) + "\n" for item in records),
             encoding="utf-8",
         )
         return ToolExecutionResult(
@@ -205,9 +205,9 @@ def _manifested_toolchain(tmp_path, binary, *, vep_version=None, assembly="GRCh3
     manifest = tmp_path / "vep-cache-manifest.json"
     manifest.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
     fasta = tmp_path / "reference.fa"
-    fasta.write_text(">1\\nACGTACGT\\n", encoding="utf-8")
+    fasta.write_text(">1\nACGTACGT\n", encoding="utf-8")
     fai = tmp_path / "reference.fa.fai"
-    fai.write_text("1\\t8\\t3\\t8\\t9\\n", encoding="utf-8")
+    fai.write_text("1\t8\t3\t8\t9\n", encoding="utf-8")
     toolchain = _base_toolchain(vep_binary=str(binary))
     toolchain.update({
         "cache_dir": str(cache_dir),
