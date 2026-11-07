@@ -111,7 +111,8 @@ def build_family_genotype_matrix(
             "binding_id": str(sample["binding_id"]),
             "binding_fingerprint": sample["binding_fingerprint"],
             "binding_status": "VERIFIED",
-            "identity_interpretation": "SAMPLE_BINDING_REVIEWED; BIOLOGICAL_IDENTITY_AND_RELATEDNESS_NOT_ESTABLISHED",
+            "identity_interpretation": "CHAIN_OF_CUSTODY_AND_SAMPLE_IDENTITY_QC_ACCEPTED; BIOLOGICAL_RELATEDNESS_NOT_ESTABLISHED",
+            "identity_evidence": sample["identity_evidence"],
             "normalization_step_status": sample["normalization_step_status"],
             "normalized_partition_count": sample["normalized_partition_count"],
             "ploidy_evidence": sample.get("ploidy_evidence") or {
