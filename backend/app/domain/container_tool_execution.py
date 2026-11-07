@@ -48,13 +48,20 @@ class ContainerResourceLimits:
     container_user: str
 
     def validate(self, environment: ExecutionEnvironmentProfile) -> None:
-        if not math.isfinite(self.cpu_cores) or self.cpu_cores <= 0 or self.cpu_cores > environment.capacity.cpu_cores:
+        if (
+            isinstance(self.cpu_cores, bool)
+            or not isinstance(self.cpu_cores, (int, float))
+            or not math.isfinite(self.cpu_cores)
+            or not math.isfinite(environment.capacity.cpu_cores)
+            or self.cpu_cores <= 0
+            or self.cpu_cores > environment.capacity.cpu_cores
+        ):
             raise ToolExecutionContractError("Container CPU limit is absent or exceeds qualified environment capacity.")
         if isinstance(self.memory_bytes, bool) or not isinstance(self.memory_bytes, int) or self.memory_bytes <= 0 or self.memory_bytes > environment.capacity.memory_bytes:
             raise ToolExecutionContractError("Container memory limit is absent or exceeds qualified environment capacity.")
         if isinstance(self.pids_limit, bool) or not isinstance(self.pids_limit, int) or self.pids_limit < 1 or self.pids_limit > 65536:
             raise ToolExecutionContractError("Container process limit must be between 1 and 65536.")
-        if not re.fullmatch(r"[0-9]+:[0-9]+", self.container_user):
+        if not isinstance(self.container_user, str) or not re.fullmatch(r"[0-9]+:[0-9]+", self.container_user):
             raise ToolExecutionContractError("Container user must be an explicit numeric uid:gid pair.")
 
 
