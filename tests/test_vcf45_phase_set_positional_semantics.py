@@ -10,7 +10,7 @@ from backend.app.domain.vcf_validation import (
 
 def _write(path: Path, *, format_keys: str, sample: str) -> None:
     path.write_text(
-        "##fileformat=VCFv4.5\n"
+        f"##fileformat={version}\n"
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
         f"1\t10\t.\tA\tC,G\t.\tPASS\t.\t{format_keys}\t{sample}\n",
@@ -357,8 +357,9 @@ def test_vcf45_missing_breakend_cipos_is_reported_as_unresolved_evidence(
     assert result["unresolved_breakend_coordinate_count"] == 2
     assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
 
-def test_vcf45_telomeric_breakend_remote_position_zero_is_valid(tmp_path: Path):
-    path = tmp_path / "breakend-telomere-zero.vcf"
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf44_and_vcf45_telomeric_breakend_remote_position_zero_is_valid(tmp_path: Path, version: str):
+    path = tmp_path / f"breakend-telomere-zero-{version}.vcf"
     path.write_text(
         "##fileformat=VCFv4.5\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
