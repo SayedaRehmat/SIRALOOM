@@ -951,52 +951,41 @@ def _validate_vcf_index_record_counts(
 
     indexed_digests: dict[str, str] = {}
     for contig in sorted(sequential):
-        with tempfile.TemporaryDirectory(
-            prefix=f".siraloom-index-query-{contig}-",
-            dir=str(execution_workspace),
-        ) as query_dir:
-            query_path = Path(query_dir) / "indexed-query.vcf"
-            query_command = [
-                bcftools_executable,
-                "view",
-                "--no-header",
-                "--regions-overlap",
-                "0",
-                "--regions",
-                contig,
-                "-o",
-                str(query_path),
-                str(vcf_path),
-            ]
-            try:
-                queried = _run_bcftools_command(
-                    query_command,
-                    persistent_execution=persistent_execution,
-                    workflow_id=workflow_id,
-                    operation="validate",
-                    workspace=Path(query_dir),
-                    input_paths=[vcf_path],
-                    output_paths=[query_path],
-                    timeout_seconds=max(1, int(timeout_seconds)),
-                )
-            except subprocess.TimeoutExpired as exc:
-                raise VCFToolError(
-                    f"Timed out while querying index-backed records for contig {contig!r}."
-                ) from exc
-            except OSError as exc:
-                raise VCFToolUnavailable(
-                    f"Unable to execute index-backed query for contig {contig!r}: {exc}"
-                ) from exc
-            if queried.returncode != 0:
-                detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
-                raise VCFToolError(
-                    f"index-backed record query failed for contig {contig!r}: {detail}"
-                )
-
-            digest = hashlib.sha256()
-            count = 0
-            with query_path.open("rb") as query_output:
-                for raw_line in query_output:
+        digest = hashlib.sha256()
+        count = 0
+        if persistent_execution is None:
+            # Preserve the original streaming stdout path for callers without a
+            # registered execution environment.
+            with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
+                try:
+                    queried = subprocess.run(
+                        [
+                            bcftools_executable, "view", "--no-header",
+                            "--regions-overlap", "0", "--regions", contig, str(vcf_path),
+                        ],
+                        stdout=query_output,
+                        stderr=query_error,
+                        timeout=max(1, int(timeout_seconds)),
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise VCFToolError(
+                        f"Timed out while querying index-backed records for contig {contig!r}."
+                    ) from exc
+                except OSError as exc:
+                    raise VCFToolUnavailable(
+                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
+                    ) from exc
+                if queried.returncode != 0:
+                    query_error.seek(0)
+                    detail = query_error.read().decode("utf-8", errors="replace").strip()
+                    raise VCFToolError(
+                        f"index-backed record query failed for contig {contig!r}: "
+                        f"{detail or 'unknown bcftools view error'}"
+                    )
+                query_output.seek(0)
+                query_lines = query_output
+                for raw_line in query_lines:
                     if not raw_line or raw_line.startswith(b"#"):
                         continue
                     fields = raw_line.split(b"\\t", 1)
@@ -1006,18 +995,64 @@ def _validate_vcf_index_record_counts(
                         )
                     digest.update(raw_line)
                     count += 1
-            if count != sequential_counts[contig]:
-                raise VCFToolError(
-                    f"index-backed query count mismatch for contig {contig!r}: "
-                    f"indexed={count}, sequential={sequential_counts[contig]}."
-                )
-            expected_digest = sequential[contig]["digest"].hexdigest()
-            actual_digest = digest.hexdigest()
-            if actual_digest != expected_digest:
-                raise VCFToolError(
-                    f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
-                )
-            indexed_digests[contig] = actual_digest
+        else:
+            with tempfile.TemporaryDirectory(
+                prefix=f".siraloom-index-query-{contig}-",
+                dir=str(execution_workspace),
+            ) as query_dir:
+                query_path = Path(query_dir) / "indexed-query.vcf"
+                query_command = [
+                    bcftools_executable, "view", "--no-header",
+                    "--regions-overlap", "0", "--regions", contig,
+                    "-o", str(query_path), str(vcf_path),
+                ]
+                try:
+                    queried = _run_bcftools_command(
+                        query_command,
+                        persistent_execution=persistent_execution,
+                        workflow_id=workflow_id,
+                        operation="validate",
+                        workspace=Path(query_dir),
+                        input_paths=[vcf_path],
+                        output_paths=[query_path],
+                        timeout_seconds=max(1, int(timeout_seconds)),
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    raise VCFToolError(
+                        f"Timed out while querying index-backed records for contig {contig!r}."
+                    ) from exc
+                except OSError as exc:
+                    raise VCFToolUnavailable(
+                        f"Unable to execute index-backed query for contig {contig!r}: {exc}"
+                    ) from exc
+                if queried.returncode != 0:
+                    detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
+                    raise VCFToolError(
+                        f"index-backed record query failed for contig {contig!r}: {detail}"
+                    )
+                with query_path.open("rb") as query_output:
+                    for raw_line in query_output:
+                        if not raw_line or raw_line.startswith(b"#"):
+                            continue
+                        fields = raw_line.split(b"\\t", 1)
+                        if not fields or fields[0].decode("utf-8", errors="replace") != contig:
+                            raise VCFToolError(
+                                f"index-backed query for contig {contig!r} returned a record from another contig."
+                            )
+                        digest.update(raw_line)
+                        count += 1
+        if count != sequential_counts[contig]:
+            raise VCFToolError(
+                f"index-backed query count mismatch for contig {contig!r}: "
+                f"indexed={count}, sequential={sequential_counts[contig]}."
+            )
+        expected_digest = sequential[contig]["digest"].hexdigest()
+        actual_digest = digest.hexdigest()
+        if actual_digest != expected_digest:
+            raise VCFToolError(
+                f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
+            )
+        indexed_digests[contig] = actual_digest
 
     return {
         "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
