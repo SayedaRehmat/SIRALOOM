@@ -31,7 +31,6 @@ from backend.app.domain.execution_persistence import (
     complete_tool_execution,
 )
 from backend.app.domain.tool_execution import (
-    LocalProcessToolExecutor,
     ToolExecutionError,
     ToolExecutionRequest,
     ToolExecutionResult,
