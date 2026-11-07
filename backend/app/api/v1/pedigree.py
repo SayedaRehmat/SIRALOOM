@@ -32,6 +32,7 @@ from backend.app.infrastructure.db.models import (
     PedigreeSampleBinding,
     SegregationObservation,
     Specimen,
+    WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
 from backend.app.domain.sample_call import get_analysis_sample_calls
@@ -238,6 +239,7 @@ def _sample_binding_payload(row):
         "binding_id": str(row.id), "case_id": str(row.case_id),
         "member_id": str(row.pedigree_member_id), "specimen_id": str(row.specimen_id),
         "analysis_id": str(row.analysis_id), "artifact_id": str(row.artifact_id),
+        "source_artifact_sha256": row.source_artifact_sha256,
         "sample_name": row.sample_name, "binding_status": row.binding_status,
         "binding_method": row.binding_method, "evidence_reference": row.evidence_reference,
         "review_reason": row.review_reason, "version": row.version,
@@ -299,7 +301,7 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     payload = {
         "schema_version": 1, "case_id": str(case_id), "member_id": str(member.id),
         "specimen_id": str(specimen.id), "analysis_id": str(analysis.id),
-        "artifact_id": str(artifact.id), "sample_name": body.sample_name.strip(),
+        "artifact_id": str(artifact.id), "source_artifact_sha256": artifact.sha256, "sample_name": body.sample_name.strip(),
         "binding_status": "UNVERIFIED", "binding_method": body.binding_method.strip(),
         "evidence_reference": body.evidence_reference, "version": 1,
         "supersedes_binding_id": None,
@@ -307,7 +309,7 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
     row = PedigreeSampleBinding(
         id=uuid4(), case_id=case_id, pedigree_member_id=member.id,
         specimen_id=specimen.id, analysis_id=analysis.id, artifact_id=artifact.id,
-        sample_name=body.sample_name.strip(), binding_status="UNVERIFIED",
+        source_artifact_sha256=artifact.sha256, sample_name=body.sample_name.strip(), binding_status="UNVERIFIED",
         binding_method=body.binding_method.strip(), evidence_reference=body.evidence_reference,
         version=1, binding_fingerprint=_sample_binding_fingerprint(payload),
         recorded_by=principal.user_id,
@@ -349,19 +351,30 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         selected_sample = (analysis.configuration or {}).get("vcf_sample_name")
         if selected_sample != previous.sample_name:
             raise HTTPException(409, "Binding sample name differs from the analysis-selected sample")
-        partitions = db.scalars(select(AnalysisPartition).where(
-            AnalysisPartition.analysis_id == previous.analysis_id,
-            AnalysisPartition.step_id == "normalize",
-            AnalysisPartition.status == "SUCCEEDED",
-        )).all()
+        artifact = db.get(Artifact, previous.artifact_id)
+        if artifact is None or artifact.case_id != case_id:
+            raise HTTPException(409, "The bound source VCF artifact is no longer available in this case")
+        if artifact.sha256 != previous.source_artifact_sha256:
+            raise HTTPException(409, "The source VCF digest differs from the immutable identity claim")
+        normalization_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == previous.analysis_id,
+            WorkflowStep.step_id == "normalize",
+        ))
+        if (
+            normalization_step is None
+            or normalization_step.status != "SUCCEEDED"
+            or str(previous.artifact_id) not in (normalization_step.input_artifacts or [])
+        ):
+            raise HTTPException(409, "No successful normalization provenance links this source VCF to the analysis")
         calls = get_analysis_sample_calls(db, previous.analysis_id)
-        if not partitions or not any(call.get("sample_name") == previous.sample_name for call in calls.values()):
-            raise HTTPException(409, "No normalized calls tie this sample name to the selected source artifact")
+        if not any(call.get("sample_name") == previous.sample_name for call in calls.values()):
+            raise HTTPException(409, "No normalized calls contain the analysis-selected VCF sample")
     version = previous.version + 1
     payload = {
         "schema_version": 1, "case_id": str(previous.case_id),
         "member_id": str(previous.pedigree_member_id), "specimen_id": str(previous.specimen_id),
         "analysis_id": str(previous.analysis_id), "artifact_id": str(previous.artifact_id),
+        "source_artifact_sha256": previous.source_artifact_sha256,
         "sample_name": previous.sample_name, "binding_status": body.decision,
         "binding_method": previous.binding_method, "evidence_reference": previous.evidence_reference,
         "review_reason": body.reason.strip(), "version": version,
@@ -370,7 +383,7 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
     row = PedigreeSampleBinding(
         id=uuid4(), case_id=previous.case_id, pedigree_member_id=previous.pedigree_member_id,
         specimen_id=previous.specimen_id, analysis_id=previous.analysis_id, artifact_id=previous.artifact_id,
-        sample_name=previous.sample_name, binding_status=body.decision,
+        source_artifact_sha256=previous.source_artifact_sha256, sample_name=previous.sample_name, binding_status=body.decision,
         binding_method=previous.binding_method, evidence_reference=previous.evidence_reference,
         review_reason=body.reason.strip(), version=version, supersedes_binding_id=previous.id,
         binding_fingerprint=_sample_binding_fingerprint(payload), recorded_by=principal.user_id,
