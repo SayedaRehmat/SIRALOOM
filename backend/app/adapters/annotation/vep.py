@@ -270,6 +270,12 @@ class VEPProvider(ScientificResourceProvider):
             f"{v.chromosome}:{v.position}:{v.reference}:{v.alternate}": v
             for v in variants
         }
+        if len(by_key) != len(variants):
+            raise VEPProviderError(
+                "VEP input batch contains duplicate normalized allele identities."
+            )
+
+        seen_keys: set[str] = set()
         for record in result.payload:
             start = record.get("start")
             seq_region = record.get("seq_region_name")
@@ -277,9 +283,16 @@ class VEPProvider(ScientificResourceProvider):
             ref = allele_string.split("/", 1)[0] if "/" in allele_string else None
             alt = allele_string.split("/", 1)[1] if "/" in allele_string else None
             key = f"{seq_region}:{start}:{ref}:{alt}" if ref and alt else None
-            original = by_key.get(key) if key else None
-            if original is None:
-                continue
+            if key is None or key not in by_key:
+                raise VEPProviderError(
+                    "VEP returned an annotation for an allele outside the requested batch."
+                )
+            if key in seen_keys:
+                raise VEPProviderError(
+                    f"VEP returned more than one annotation record for allele {key}."
+                )
+            seen_keys.add(key)
+            original = by_key[key]
 
             transcripts = record.get("transcript_consequences") or []
             selected, selection_status = self._select_display_transcript(transcripts)
