@@ -29,7 +29,6 @@ from backend.app.domain.tool_execution import (
     ToolExecutionRequest,
     ToolIdentity,
     current_platform_id,
-    sha256_resource_path,
 )
 
 
