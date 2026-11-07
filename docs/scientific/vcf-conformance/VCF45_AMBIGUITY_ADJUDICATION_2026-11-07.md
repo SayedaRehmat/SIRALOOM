@@ -32,15 +32,31 @@ An independent comment by `ecrum19` on upstream [samtools/hts-specs issue #871](
 
 **Decision:** do not reinterpret GT as local-vector indexes. Preserve global ALT allele indexes in GT; apply LAA only to the local A/R/G FORMAT vectors. Treat the source's local-row GT=2/4 as the apparent example typo; the consistent value is GT=2/2. A regression fixture now uses GT=2/2 with LAA=2,4 and checks local/global LAD/AD and LPL/PL projection equivalence.
 
-## 3. PSL, PSO and PSQ positional semantics
+## 3. PSL, PSO and PSQ — separate positional and cross-record obligations
 
-The source states that PSL contains one phase-set entry for each allele value in GT, with `.` at unphased allele positions. PSO is a list of phase-set ordinals; its tandem-duplication example gives three PSO values aligned with the three GT/PSL positions. PSQ is a list of phase-set qualities corresponding to the phase sets in PSL, and its missing-value rule explicitly follows the corresponding PSL value.
+The pinned source establishes these distinct rules:
 
-**Decision for executable conformance:** treat PSL, PSO and PSQ as parallel Number=P vectors aligned by GT allele position. A repeated phase-set name at two GT positions still occupies two positions in each vector. Require `.` in PSO/PSQ wherever the corresponding PSL position is missing. The validator already enforces Number=P cardinality and missing alignment; new tests now exercise the source PSO example, repeated PSL names with PSQ, and missing-position failures.
+- **PSL:** one phase-set entry for each GT allele value; unphased allele positions use `. `. Phase-set names are global across CHROM. A given sample-genotype cannot populate both PS and PSL. A PS identifier cannot be referenced by PSL in another record.
+- **PSO:** one ordinal per GT allele position (Number=P). The ordinal describes the order in which variants are encountered on a derivative chromosome for a given phase-set name. PSO should be defined for a phase-set name if any allele carrying that name on any record is a symbolic structural variant or uses breakpoint notation. Breakpoint-notation variants must have the same PSL and PSO on both records.
+- **PSQ:** Number=P and described as a list of phase-set qualities, one for each phase set in PSL. Its MISSING rule follows a missing PSL value or unknown phasing quality.
 
-This interpretation follows the source examples and Number=P definition. It does not infer that PSO is a unique-name keyed map.
+The existing implementation checks per-record Number=P cardinality, PSL's unphased-position MISSING rule, PSO/PSQ dependency on populated PSL, and MISSING alignment. The conformance fixtures cover the tandem-duplication example, repeated PSL names, and missing-position cases.
 
-## 4. Number=M production validation and biological slot mapping
+**Outstanding interpretation:** the source combines a Number=P positional definition with PSQ prose phrased as “one for each phase set in PSL.” Repeated phase-set names make it important to establish whether “each phase set” means each PSL position/occurrence or each distinct phase-set identifier. The current tests exercise positional values, but that fixture is not standards-owner adjudication. Do not promote the positional interpretation to a settled normative decision.
+
+**Outstanding implementation gap:** current checks are record-local. They do not yet enforce the cross-record PSO obligation for a phase set that contains an SV/breakpoint allele elsewhere, nor the requirement that the two breakend records carry identical PSL and PSO. Those require a sample-aware, phase-set-aware cross-record index and explicit tests for missing/mismatched mate data. They must not be described as implemented.
+
+## 4. Unstranded Number=M placement — explicit cross-record policy required
+
+The source says unstranded modification information is stored at the lowest POS, with the corresponding other value MISSING or omitted. Its CpG example places the unstranded 5mC measurement at the C-containing record and leaves the subsequent G's M5mC value missing. For N modifications, the positive-strand value is stored and the negative-strand value is MISSING.
+
+The current production implementation maps Number=M values to per-record allele-sequence offsets and strands. That is necessary but not sufficient to enforce the unstranded storage convention across records.
+
+**Critical input distinction:** VCF Number=M does not itself declare whether a measurement is strand-specific or unstranded. The validator must not infer an unstranded assay from a missing value, a complementary base, or a neighbouring record. A future cross-record validator must be explicitly enabled by a caller-supplied unstranded representation policy (or equivalent validated assay metadata), retain the default behavior for strand-specific files, and scope comparisons by sample, contig, modification field/ChEBI identity and compatible allele/haplotype context. It must also distinguish a true MISSING value from an omitted trailing field and must not compare unrelated alleles merely because they are adjacent.
+
+Acceptance tests must include: same-record CpG positions; CpG positions split across adjacent records; reverse-complement orientation; multiple samples; multiallelic and phased genotypes; missing and symbolic alleles; record-order/coordinate boundary cases; and explicit proof that strand-specific mode does not apply the unstranded omission rule. Until this policy and its cross-record evidence model are implemented, unstranded placement remains unsupported by strict validation and must be reported as such rather than inferred.
+
+## 5. Number=M production validation and biological slot mapping
 
 The production `validate_vcf_strict` path now derives an ordered slot map for every populated Number=M FORMAT value, rather than calculating only a count:
 
@@ -56,7 +72,7 @@ Tests exercise the normative CGA/M5mC example, reverse sequence orientation, A/T
 
 **Evidence boundary:** the validator now enforces and exposes the documentation-defined value-to-slot assignment. It cannot independently establish whether a caller's reported fraction/depth is experimentally true; that requires the underlying read-level or assay evidence. This is a limit of the evidence carried by VCF, not a gap in applying the VCF positional semantics.
 
-## 5. Independent review status and acceptance criteria
+## 6. Independent review status and acceptance criteria
 
 No independent standards review has been obtained by this change. PR #293 remains the review vehicle; no reviewer identity was supplied or assigned. This document must not be represented as independent approval.
 
@@ -64,12 +80,13 @@ Required external decisions:
 
 1. Confirm canonical xanthosine alias spelling or publish an erratum.
 2. Confirm the local-row GT=2/2 correction identified in upstream issue #871.
-3. Confirm per-position PSO/PSQ alignment, especially repeated phase-set names and missing positions; upstream issue #868 also requests examples for Number=P/PSL/PSO/PSQ.
-4. Review Number=M strand/base slot derivation and ambiguous sequence handling.
+3. Resolve PSQ's per-PSL-phase-set wording against Number=P when phase-set names repeat; upstream issue #868 requests clearer examples.
+4. Define and review the cross-record PSO requirements for SV/breakpoint phase sets and reciprocal breakend consistency.
+5. Review Number=M strand/base slot derivation and ambiguous sequence handling, including the explicit unstranded cross-record policy above.
 
 Until those decisions are recorded with reviewer identity, date, source citations and disposition, VCFv4.5 remains unqualified.
 
-## 6. Pinned-source locators
+## 7. Pinned-source locators
 
 The adjudication above is grounded in the archived source and can be checked against the immutable upstream source revision:
 
