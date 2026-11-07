@@ -2254,6 +2254,28 @@ def test_vcf44_plus_reserved_mateid_header_must_match_number_a(tmp_path: Path, v
     assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
 
 
+@pytest.mark.parametrize(
+    ("version", "wrong_type"),
+    [("VCFv4.3", "Float"), ("VCFv4.4", "Integer")],
+)
+def test_vcf43_vcf44_copy_number_format_type_is_version_specific(
+    tmp_path: Path, version: str, wrong_type: str
+):
+    path = tmp_path / f"{version}-cn-wrong-type.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            f'##FORMAT=<ID=CN,Number=1,Type={wrong_type},Description="Wrong CN type">',
+        ],
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:CN\t0/1:2\n",
+        version=version,
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+
+
 def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
     path = tmp_path / "vcf43-ad-wrong-header-definition.vcf"
     write_vcf_with_metadata(
