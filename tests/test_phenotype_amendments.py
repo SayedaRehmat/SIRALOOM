@@ -70,7 +70,7 @@ def test_phenotype_amendment_migration_creates_append_only_event_table(tmp_path,
     monkeypatch.setenv("DATABASE_URL", url)
     config = Config(str(Path(__file__).parents[1] / "alembic.ini"))
     config.set_main_option("sqlalchemy.url", url)
-    command.upgrade(config, "0060_phenotype_observation_amendments")
+    command.upgrade(config, "0062_phenotype_observation_amendments")
     engine = create_engine(url)
     with engine.connect() as connection:
         columns = {column["name"] for column in inspect(connection).get_columns("phenotype_observation_amendments")}
