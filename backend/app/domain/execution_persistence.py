@@ -223,6 +223,21 @@ def register_tool_execution(
             "Tool executable SHA-256 does not match the environment's approved executable digest."
         )
 
+    expected_fingerprint = execution_request_fingerprint(
+        organization_id=organization_id,
+        analysis_id=analysis_id,
+        execution_id=execution_id,
+        environment_registration_id=environment_registration_id,
+        tool=tool,
+        operation=operation,
+        request_snapshot=request_snapshot,
+        input_manifest=input_manifest,
+    )
+    if request_fingerprint != expected_fingerprint:
+        raise ExecutionPersistenceError(
+            "Request fingerprint does not match the immutable execution request contents."
+        )
+
     existing = db.scalar(
         select(ToolExecutionRecord).where(
             ToolExecutionRecord.organization_id == organization_id,
@@ -252,21 +267,6 @@ def register_tool_execution(
     )
     if duplicate_execution is not None:
         raise ExecutionPersistenceError("Execution ID is already registered under another idempotency key.")
-
-    expected_fingerprint = execution_request_fingerprint(
-        organization_id=organization_id,
-        analysis_id=analysis_id,
-        execution_id=execution_id,
-        environment_registration_id=environment_registration_id,
-        tool=tool,
-        operation=operation,
-        request_snapshot=request_snapshot,
-        input_manifest=input_manifest,
-    )
-    if request_fingerprint != expected_fingerprint:
-        raise ExecutionPersistenceError(
-            "Request fingerprint does not match the immutable execution request contents."
-        )
 
     safe_inputs = _json_safe(input_manifest)
     if not isinstance(safe_inputs, list):
