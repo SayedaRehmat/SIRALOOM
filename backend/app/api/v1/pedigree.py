@@ -589,11 +589,6 @@ def create_sample_identity_evidence(
             or previous_evidence.evidence_type != body.evidence_type
         ):
             raise HTTPException(404, "Prior identity evidence not found for this binding and evidence type")
-        prior_successor = db.scalar(select(PedigreeSampleIdentityEvidence).where(
-            PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous_evidence.id,
-        ))
-        if prior_successor is not None:
-            raise HTTPException(409, "Prior identity evidence already has a successor revision")
         evidence_version = previous_evidence.version + 1
 
     payload = {
@@ -612,6 +607,12 @@ def create_sample_identity_evidence(
     ))
     if existing is not None:
         return _sample_identity_evidence_payload(existing)
+    if previous_evidence is not None:
+        prior_successor = db.scalar(select(PedigreeSampleIdentityEvidence).where(
+            PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous_evidence.id,
+        ))
+        if prior_successor is not None:
+            raise HTTPException(409, "Prior identity evidence already has a conflicting successor revision")
     row = PedigreeSampleIdentityEvidence(
         id=uuid4(), case_id=case_id, binding_id=binding.id,
         evidence_type=body.evidence_type, result=body.result,
