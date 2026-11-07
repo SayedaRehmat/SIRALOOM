@@ -121,3 +121,15 @@ def test_vcf44_psq_missing_value_must_follow_missing_psl_position(tmp_path: Path
         validate_vcf_strict(path)
 
     assert exc.value.code == "VCF_PHASE_SET_INVALID"
+
+
+def test_vcf44_pso_ordinal_cannot_be_reused_across_distinct_records(
+    tmp_path: Path,
+):
+    path = tmp_path / "vcf44-pso-duplicate-ordinal.vcf"
+    _write_vcf44_phase_set_file(path, ("3", "3", "3", "3"))
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE"
