@@ -1007,7 +1007,9 @@ export type TranslationKey =
   | "familyIdentity.evidenceStatus"
   | "familyIdentity.noAnalysisCandidates"
   | "familyIdentity.selectedSampleMissing"
-  | "familyIdentity.independentReviewer";
+  | "familyIdentity.independentReviewer"
+  | "familyIdentity.analysisStatus"
+  | "familyIdentity.superseded";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -2012,6 +2014,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.noAnalysisCandidates": "No analysis has a selected source VCF and exact sample column.",
     "familyIdentity.selectedSampleMissing": "The selected analysis has no exact VCF sample-column selection.",
     "familyIdentity.independentReviewer": "An independent reviewer must review evidence and binding claims.",
+    "familyIdentity.analysisStatus": "Analysis status",
+    "familyIdentity.superseded": "Superseded",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3014,5 +3018,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.noAnalysisCandidates": "لا يوجد تحليل يحدد ملف VCF المصدر وعمود العينة المطابق.",
     "familyIdentity.selectedSampleMissing": "لا يحتوي التحليل المحدد على اختيار دقيق لعمود عينة VCF.",
     "familyIdentity.independentReviewer": "يجب أن يراجع شخص مستقل أدلة الهوية وادعاءات الربط.",
+    "familyIdentity.analysisStatus": "حالة التحليل",
+    "familyIdentity.superseded": "مستبدل بإصدار أحدث",
   },
 };
