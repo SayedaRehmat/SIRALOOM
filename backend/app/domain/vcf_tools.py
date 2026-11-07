@@ -873,6 +873,9 @@ def _validate_vcf_index_record_counts(
     *,
     bcftools_executable: str,
     timeout_seconds: int,
+    persistent_execution=None,
+    workflow_id: str = "normalize",
+    workspace: Path | None = None,
 ) -> dict:
     """Verify indexed per-contig record streams against the staged BGZF file.
 
@@ -882,13 +885,17 @@ def _validate_vcf_index_record_counts(
     sequential BGZF scans. Query output is streamed to temporary files so
     WES/WGS-scale VCFs are not accumulated in process memory.
     """
+    execution_workspace = workspace or vcf_path.parent
     try:
-        stats = subprocess.run(
+        stats = _run_bcftools_command(
             [bcftools_executable, "index", "--stats", str(vcf_path)],
-            capture_output=True,
-            text=True,
-            timeout=max(1, int(timeout_seconds)),
-            check=False,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=execution_workspace,
+            input_paths=[vcf_path],
+            output_paths=[],
+            timeout_seconds=max(1, int(timeout_seconds)),
         )
     except subprocess.TimeoutExpired as exc:
         raise VCFToolUnavailable("Timed out while validating VCF index record counts.") from exc
@@ -944,23 +951,33 @@ def _validate_vcf_index_record_counts(
 
     indexed_digests: dict[str, str] = {}
     for contig in sorted(sequential):
-        with tempfile.TemporaryFile(mode="w+b") as query_output, tempfile.TemporaryFile(mode="w+b") as query_error:
+        with tempfile.TemporaryDirectory(
+            prefix=f".siraloom-index-query-{contig}-",
+            dir=str(execution_workspace),
+        ) as query_dir:
+            query_path = Path(query_dir) / "indexed-query.vcf"
+            query_command = [
+                bcftools_executable,
+                "view",
+                "--no-header",
+                "--regions-overlap",
+                "0",
+                "--regions",
+                contig,
+                "-o",
+                str(query_path),
+                str(vcf_path),
+            ]
             try:
-                queried = subprocess.run(
-                    [
-                        bcftools_executable,
-                        "view",
-                        "--no-header",
-                        "--regions-overlap",
-                        "0",
-                        "--regions",
-                        contig,
-                        str(vcf_path),
-                    ],
-                    stdout=query_output,
-                    stderr=query_error,
-                    timeout=max(1, int(timeout_seconds)),
-                    check=False,
+                queried = _run_bcftools_command(
+                    query_command,
+                    persistent_execution=persistent_execution,
+                    workflow_id=workflow_id,
+                    operation="validate",
+                    workspace=Path(query_dir),
+                    input_paths=[vcf_path],
+                    output_paths=[query_path],
+                    timeout_seconds=max(1, int(timeout_seconds)),
                 )
             except subprocess.TimeoutExpired as exc:
                 raise VCFToolError(
@@ -971,17 +988,16 @@ def _validate_vcf_index_record_counts(
                     f"Unable to execute index-backed query for contig {contig!r}: {exc}"
                 ) from exc
             if queried.returncode != 0:
-                query_error.seek(0)
-                detail = query_error.read().decode("utf-8", errors="replace").strip()
+                detail = (queried.stderr or queried.stdout or "unknown bcftools view error").strip()
                 raise VCFToolError(
-                    f"index-backed record query failed for contig {contig!r}: "
-                    f"{detail or 'unknown bcftools view error'}"
+                    f"index-backed record query failed for contig {contig!r}: {detail}"
                 )
 
-            query_output.seek(0)
             digest = hashlib.sha256()
             count = 0
-            for raw_line in query_output:
+            with query_path.open("rb") as query_output:
+                query_lines = query_output
+                for raw_line in query_lines:
                 if not raw_line or raw_line.startswith(b"#"):
                     continue
                 fields = raw_line.split(b"\t", 1)
@@ -998,11 +1014,11 @@ def _validate_vcf_index_record_counts(
                 )
             expected_digest = sequential[contig]["digest"].hexdigest()
             actual_digest = digest.hexdigest()
-            if actual_digest != expected_digest:
-                raise VCFToolError(
-                    f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
-                )
-            indexed_digests[contig] = actual_digest
+                if actual_digest != expected_digest:
+                    raise VCFToolError(
+                        f"index-backed query records disagree with the sequential VCF stream for contig {contig!r}."
+                    )
+                indexed_digests[contig] = actual_digest
 
     return {
         "method": "INDEXED_QUERY_SHA256_VS_SEQUENTIAL_BGZF_SCAN",
@@ -1808,6 +1824,9 @@ def normalize_vcf_with_bcftools(
             sorted_path,
             bcftools_executable=bcftools_executable,
             timeout_seconds=120,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            workspace=work,
         )
 
         # Flush staged files before publication. The private directory is on the
