@@ -1011,6 +1011,22 @@ export type TranslationKey =
   | "familyIdentity.analysisStatus"
   | "familyIdentity.superseded"
   | "familyIdentity.evidenceArtifact"
+  | "familyIdentity.genotypeMatrix"
+  | "familyIdentity.selectVerifiedBindings"
+  | "familyIdentity.loadMatrix"
+  | "familyIdentity.noVerifiedBindings"
+  | "familyIdentity.matrixVariant"
+  | "familyIdentity.callState"
+  | "familyIdentity.genotype"
+  | "familyIdentity.zygosity"
+  | "familyIdentity.phase"
+  | "familyIdentity.phaseSet"
+  | "familyIdentity.depth"
+  | "familyIdentity.genotypeQuality"
+  | "familyIdentity.alleleDepth"
+  | "familyIdentity.callability"
+  | "familyIdentity.matrixFingerprint"
+  | "familyIdentity.interpretationNotPerformed";
   | "familyIdentity.noEvidenceArtifact";
 
 
@@ -2020,6 +2036,22 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.superseded": "Superseded",
     "familyIdentity.evidenceArtifact": "Evidence source artifact",
     "familyIdentity.noEvidenceArtifact": "No attached artifact",
+    "familyIdentity.genotypeMatrix": "Family genotype matrix",
+    "familyIdentity.selectVerifiedBindings": "Select verified family sample bindings",
+    "familyIdentity.loadMatrix": "Load matrix for current variant",
+    "familyIdentity.noVerifiedBindings": "No active verified sample bindings are available.",
+    "familyIdentity.matrixVariant": "Variant under review",
+    "familyIdentity.callState": "Call state",
+    "familyIdentity.genotype": "Genotype",
+    "familyIdentity.zygosity": "Zygosity",
+    "familyIdentity.phase": "Phase",
+    "familyIdentity.phaseSet": "Phase set",
+    "familyIdentity.depth": "Read depth (DP)",
+    "familyIdentity.genotypeQuality": "Genotype quality (GQ)",
+    "familyIdentity.alleleDepth": "Allele depths (AD)",
+    "familyIdentity.callability": "Callability",
+    "familyIdentity.matrixFingerprint": "Matrix fingerprint",
+    "familyIdentity.interpretationNotPerformed": "No inheritance or clinical interpretation is performed by this matrix.",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -3026,5 +3058,21 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "familyIdentity.superseded": "مستبدل بإصدار أحدث",
     "familyIdentity.evidenceArtifact": "ملف مصدر الدليل",
     "familyIdentity.noEvidenceArtifact": "لا يوجد ملف مرفق",
+    "familyIdentity.genotypeMatrix": "مصفوفة الأنماط الجينية للأسرة",
+    "familyIdentity.selectVerifiedBindings": "حدد روابط عينات الأسرة الموثقة",
+    "familyIdentity.loadMatrix": "تحميل المصفوفة للمتغير الحالي",
+    "familyIdentity.noVerifiedBindings": "لا توجد روابط عينات موثقة ونشطة.",
+    "familyIdentity.matrixVariant": "المتغير قيد المراجعة",
+    "familyIdentity.callState": "حالة الاستدعاء",
+    "familyIdentity.genotype": "النمط الجيني",
+    "familyIdentity.zygosity": "حالة الزيجوت",
+    "familyIdentity.phase": "الطور",
+    "familyIdentity.phaseSet": "مجموعة الطور",
+    "familyIdentity.depth": "عمق القراءة (DP)",
+    "familyIdentity.genotypeQuality": "جودة النمط الجيني (GQ)",
+    "familyIdentity.alleleDepth": "أعماق الأليلات (AD)",
+    "familyIdentity.callability": "قابلية الاستدعاء",
+    "familyIdentity.matrixFingerprint": "بصمة المصفوفة",
+    "familyIdentity.interpretationNotPerformed": "لا تنفذ هذه المصفوفة أي تفسير وراثي أو سريري.",
   },
 };
