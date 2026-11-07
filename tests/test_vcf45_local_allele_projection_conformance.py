@@ -19,16 +19,14 @@ def _write_local_likelihood_vcf(
     local_key: str = "LPL",
     field_type: str = "Integer",
 ) -> None:
-    number = "G" if standard_key in {"PL", "GL"} else "G"
-    local_number = "LG"
     path.write_text(
-        "##fileformat=VCFv4.5\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
-        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
-        f'##FORMAT=<ID={standard_key},Number={number},Type={field_type},Description="Standard genotype values">\n'
-        f'##FORMAT=<ID={local_key},Number={local_number},Type={field_type},Description="Local genotype values">\n'
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        f"1\t2\t.\tA\tC,G\t.\tPASS\t.\tGT:LAA:{standard_key}:{local_key}\t{gt}:{laa}:{standard_values}:{local_values}\n",
+        "##fileformat=VCFv4.5\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\\n'
+        f'##FORMAT=<ID={standard_key},Number=G,Type={field_type},Description="Standard genotype values">\\n'
+        f'##FORMAT=<ID={local_key},Number=LG,Type={field_type},Description="Local genotype values">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        f"1\\t2\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:LAA:{standard_key}:{local_key}\\t{gt}:{laa}:{standard_values}:{local_values}\\n",
         encoding="utf-8",
     )
 
@@ -36,11 +34,12 @@ def _write_local_likelihood_vcf(
 @pytest.mark.parametrize(
     ("gt", "standard_values", "local_values"),
     [
-        # All GT alleles are REF to avoid asserting the unresolved GT/LAA index interpretation.\n        # Haploid local genotype order: 0,2 -> global Number=G indexes 0,2.
+        # GT is all-REF so this tests ploidy/order without resolving GT/LAA index semantics.
+        # Haploid local order 0,2 maps to global Number=G indexes 0,2.
         ("0", "0,1,2", "0,2"),
-        # Diploid local genotype order: 00,02,22 -> global indexes 0,3,5.
+        # Diploid local order 00,02,22 maps to global indexes 0,3,5.
         ("0/0", "0,1,2,3,4,5", "0,3,5"),
-        # Triploid local genotype order: 000,002,022,222 -> global indexes 0,4,7,9.
+        # Triploid local order 000,002,022,222 maps to global indexes 0,4,7,9.
         ("0/0/0", "0,1,2,3,4,5,6,7,8,9", "0,4,7,9"),
     ],
 )
@@ -55,7 +54,6 @@ def test_local_pl_projection_uses_vcf_genotype_order_for_haploid_diploid_and_tri
         standard_values=standard_values,
         local_values=local_values,
     )
-
     assert validate_vcf_strict(path)["records"] == 1
 
 
@@ -66,10 +64,9 @@ def test_local_pl_projection_preserves_laa_order_instead_of_sorting_alt_indices(
         gt="0/0",
         laa="2,1",
         standard_values="0,1,2,3,4,5",
-        # Local genotype order maps to global indices 0,3,5,1,4,2.
+        # Local order maps to global indexes 0,3,5,1,4,2.
         local_values="0,3,5,1,4,2",
     )
-
     assert validate_vcf_strict(path)["records"] == 1
 
 
@@ -87,7 +84,7 @@ def test_local_pl_projection_preserves_missing_value_positions(tmp_path: Path):
     invalid = tmp_path / "local-pl-missing-position-mismatch.vcf"
     _write_local_likelihood_vcf(
         invalid,
-        gt="0/2",
+        gt="0/0",
         laa="2",
         standard_values="0,1,2,.,4,5",
         local_values="0,3,5",
@@ -110,12 +107,11 @@ def test_missing_whole_standard_or_local_likelihood_field_is_permitted(
     path = tmp_path / "local-pl-whole-field-missing.vcf"
     _write_local_likelihood_vcf(
         path,
-        gt="0/2",
+        gt="0/0",
         laa="2",
         standard_values=standard_values,
         local_values=local_values,
     )
-
     assert validate_vcf_strict(path)["records"] == 1
 
 
@@ -123,7 +119,7 @@ def test_local_gl_projection_uses_vcf_genotype_order_and_float_values(tmp_path: 
     path = tmp_path / "local-gl-projection.vcf"
     _write_local_likelihood_vcf(
         path,
-        gt="0/2",
+        gt="0/0",
         laa="2",
         standard_key="GL",
         local_key="LGL",
@@ -131,5 +127,4 @@ def test_local_gl_projection_uses_vcf_genotype_order_and_float_values(tmp_path: 
         standard_values="-0.1,-0.2,-0.3,-0.4,-0.5,-0.6",
         local_values="-0.1,-0.4,-0.6",
     )
-
     assert validate_vcf_strict(path)["records"] == 1
