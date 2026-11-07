@@ -175,9 +175,16 @@ class ToolIdentity:
             raise ToolExecutionContractError("Approved runtime PATH must contain at least one directory.")
         for item in self.runtime_path:
             path = Path(item)
-            if not path.is_absolute() or not path.is_dir():
+            if not path.is_absolute():
                 raise ToolExecutionContractError(
-                    f"Approved runtime PATH entry must be an existing absolute directory: {item!r}."
+                    f"Approved runtime PATH entry must be absolute: {item!r}."
+                )
+            # A container profile's PATH belongs to the image, not the host.
+            # Local-process profiles still require every directory to exist on
+            # the executing host.
+            if self.runtime_image_digest is None and not path.is_dir():
+                raise ToolExecutionContractError(
+                    f"Approved host runtime PATH entry must be an existing directory: {item!r}."
                 )
         protected_runtime_environment = {
             "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL",
