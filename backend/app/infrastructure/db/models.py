@@ -848,9 +848,11 @@ class PedigreeSampleBinding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     __table_args__ = (
         UniqueConstraint("case_id", "binding_fingerprint", name="uq_pedigree_sample_binding_fingerprint"),
+        UniqueConstraint("supersedes_binding_id", name="uq_pedigree_sample_binding_successor"),
         UniqueConstraint("case_id", "pedigree_member_id", "specimen_id", "analysis_id", "artifact_id", "sample_name", "version", name="uq_pedigree_sample_binding_version"),
         CheckConstraint("binding_status IN ('UNVERIFIED', 'VERIFIED', 'REJECTED')", name="ck_pedigree_sample_binding_status"),
         CheckConstraint("version > 0", name="ck_pedigree_sample_binding_version_positive"),
+        CheckConstraint("length(source_artifact_sha256) = 64", name="ck_pedigree_sample_binding_source_sha256_length"),
         CheckConstraint(
             "(binding_status = 'UNVERIFIED' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
             "(binding_status IN ('VERIFIED', 'REJECTED') AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND review_reason IS NOT NULL)",
