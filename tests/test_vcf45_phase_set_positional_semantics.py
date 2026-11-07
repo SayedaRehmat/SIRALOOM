@@ -148,8 +148,8 @@ def test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso(
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT:PSL:PSO\t0|1:set,set:3,3\n"
-        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t0|1:set,set:3,3\n",
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\tGT:PSL:PSO\t0|1:set,set:2,3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\tGT:PSL:PSO\t0|1:set,set:2,3\n",
         encoding="utf-8",
     )
     result = validate_vcf_strict(path)
@@ -158,9 +158,12 @@ def test_vcf45_breakend_mates_accept_identical_sample_psl_and_pso(
         item for item in result["phase_set_traversal_orders"]
         if item["sample"] == "SAMPLE1" and item["phase_set"] == "set"
     )
-    assert len(traversal["ordered_events"]) == 1
-    assert traversal["ordered_events"][0]["ordinal"] == 3
-    assert len(traversal["ordered_events"][0]["occurrences"]) == 2
+    assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 3]
+    assert [event["event_kind"] for event in traversal["ordered_events"]] == [
+        "RECIPROCAL_BREAKEND_EVENT",
+        "RECIPROCAL_BREAKEND_EVENT",
+    ]
+    assert [len(event["occurrences"]) for event in traversal["ordered_events"]] == [2, 2]
 
 
 def test_vcf45_local_gt_2_4_remains_global_alt_indexes_not_local_indexes(
@@ -485,7 +488,7 @@ def test_vcf45_multiallelic_breakend_mates_compare_only_corresponding_alt_phase_
     assert validate_vcf_strict(path)["records"] == 3
 
 
-def test_vcf45_pso_ordinal_cannot_be_reused_by_distinct_variant_events(
+def test_vcf45_pso_ordinal_tie_is_preserved_as_unresolved(
     tmp_path: Path,
 ):
     path = tmp_path / "pso-duplicate-ordinal-across-events.vcf"
@@ -500,10 +503,15 @@ def test_vcf45_pso_ordinal_cannot_be_reused_by_distinct_variant_events(
         encoding="utf-8",
     )
 
-    with pytest.raises(StrictVCFValidationError) as exc:
-        validate_vcf_strict(path)
-
-    assert exc.value.code == "VCF_PHASE_SET_PSO_ORDINAL_DUPLICATE"
+    result = validate_vcf_strict(path)
+    traversal = next(
+        item for item in result["phase_set_traversal_orders"]
+        if item["sample"] == "SAMPLE1" and item["phase_set"] == "set"
+    )
+    assert traversal["traversal_status"] == "UNRESOLVED_ORDINAL_TIES"
+    assert traversal["unresolved_ordinal_tie_count"] == 1
+    assert traversal["ordered_events"][0]["event_kind"] == "ORDINAL_TIE_UNRESOLVED"
+    assert result["phase_set_traversal_unresolved_count"] == 1
 
 
 def test_vcf45_pso_order_is_not_inferred_from_vcf_coordinate_order(
