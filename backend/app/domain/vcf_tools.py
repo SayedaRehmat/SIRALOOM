@@ -11,6 +11,7 @@ import struct
 import zlib
 import subprocess
 import tempfile
+from uuid import uuid4
 from contextlib import ExitStack
 from functools import lru_cache
 from pathlib import Path
@@ -718,6 +719,7 @@ def _run_bcftools_command(
     input_paths: list[Path],
     output_paths: list[Path],
     timeout_seconds: int,
+    execution_id_override: str | None = None,
 ):
     """Run one BCFtools command through the durable common executor when configured."""
     if persistent_execution is None:
@@ -745,7 +747,9 @@ def _run_bcftools_command(
         platform=current_platform_id(),
         qualification_status="SOFTWARE_QUALIFIED",
         version_args=("--version",),
-        version_output_contains=f"bcftools {settings.bcftools_version}",
+        version_output_contains=(
+            f"bcftools {settings.bcftools_version}\\nUsing htslib {settings.htslib_version}"
+        ),
         supported_operations=("validate", "normalize", "sort", "index", "convert", "split_multiallelic"),
         runtime_image_digest=environment.profile_json.get("runtime_image_digest"),
         runtime_path=tuple(
@@ -779,7 +783,7 @@ def _run_bcftools_command(
         "inputs": [(item.name, item.sha256) for item in inputs],
         "outputs": [item.name for item in outputs],
     }
-    execution_id = hashlib.sha256(
+    execution_id = execution_id_override or hashlib.sha256(
         json.dumps(canonical_material, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()[:32]
     request = ToolExecutionRequest(
@@ -815,7 +819,13 @@ def has_multiallelic_records(path: str | Path) -> bool:
     return False
 
 
-def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> dict:
+def split_multiallelic_vcf(
+    input_path: str | Path,
+    output_path: str | Path,
+    *,
+    persistent_execution=None,
+    workflow_id: str = "normalize",
+) -> dict:
     """
     Split multiallelic records into biallelic records without doing reference-aware
     normalization. bcftools performs genotype/allele bookkeeping; SIRALOOM's
@@ -842,12 +852,15 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
         "--multi-overlaps", ".",
         "-o", str(output_path), str(input_path),
     ]
-    completed = subprocess.run(
+    completed = _run_bcftools_command(
         command,
-        capture_output=True,
-        text=True,
-        timeout=300,
-        check=False,
+        persistent_execution=persistent_execution,
+        workflow_id=workflow_id,
+        operation="split_multiallelic",
+        workspace=output_path.parent,
+        input_paths=[input_path],
+        output_paths=[output_path],
+        timeout_seconds=300,
     )
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout or "unknown bcftools error").strip()
@@ -864,6 +877,10 @@ def split_multiallelic_vcf(input_path: str | Path, output_path: str | Path) -> d
         "multiallelic_mode": MULTIALLELIC_POLICY,
         "multiallelic_overlap_policy": MULTIALLELIC_OVERLAP_POLICY,
         "stderr": (completed.stderr or "").strip(),
+        "tool_execution_record_ids": (
+            [str(item) for item in persistent_execution.execution_record_ids]
+            if persistent_execution is not None else []
+        ),
     }
 
 
