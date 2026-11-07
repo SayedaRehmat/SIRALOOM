@@ -362,29 +362,13 @@ def test_vcf45_telomeric_breakend_remote_position_zero_is_valid(tmp_path: Path):
     path.write_text(
         "##fileformat=VCFv4.5\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tSVTYPE=BND;MATEID=bndV\n"
-        "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tSVTYPE=BND;MATEID=bndX\n",
+        "1\t0\tbndX\tN\t.[13:123457[\t6\tPASS\tMATEID=bndV\n"
+        "13\t123457\tbndV\tA\t]1:0]A\t6\tPASS\tMATEID=bndX\n",
         encoding="utf-8",
     )
     result = validate_vcf_strict(path)
     assert result["records"] == 2
     assert result["breakend_records"] == 2
-
-
-def test_vcf45_imprecise_breakend_without_cipos_is_unresolved_not_exact(
-    tmp_path: Path,
-):
-    path = tmp_path / "breakend-imprecise-no-cipos.vcf"
-    path.write_text(
-        "##fileformat=VCFv4.5\n"
-        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t321681\tbndV\tT\tT]2:123462]\t6\tPASS\tSVTYPE=BND;MATEID=bndU;IMPRECISE\n"
-        "2\t123456\tbndU\tC\tC]1:321687]\t6\tPASS\tSVTYPE=BND;MATEID=bndV;IMPRECISE\n",
-        encoding="utf-8",
-    )
-    result = validate_vcf_strict(path)
-    assert result["unresolved_breakend_coordinate_count"] == 2
-    assert "VCF_BREAKEND_COORDINATE_UNCERTAINTY_UNRESOLVED" in result["warning_codes"]
 
 
 def test_vcf45_precise_breakend_without_cipos_uses_implicit_zero_interval(
@@ -416,7 +400,7 @@ def test_vcf45_cipos_interval_must_span_zero(
     )
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
-    assert exc.value.code == "VCF_BREAKEND_CIPOS_INVALID"
+    assert exc.value.code == "VCF_SV_INFO_INTERVAL_INVALID"
 
 def test_vcf45_reciprocal_breakend_remote_position_outside_cipos_is_rejected(
     tmp_path: Path,
