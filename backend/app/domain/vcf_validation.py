@@ -2359,31 +2359,31 @@ def validate_vcf_strict(
                                     "base": sequence_base,
                                     "value": None if observed_value == "." else observed_value,
                                 })
-                            if include_base_modification_slot_assignments:
-                                sample_name = (
-                                    chrom_header[8 + sample_index]
-                                    if chrom_header is not None and 8 + sample_index < len(chrom_header)
-                                    else None
-                                )
-                                for value_index, (slot, observed_value) in enumerate(
-                                    zip(base_modification_slots, observed_modification_values)
-                                ):
-                                    allele_index, sequence_position, strand, sequence_base = slot
-                                    base_modification_slot_assignments.append({
-                                        "record_index": records + 1,
-                                        "line_number": line_no,
-                                        "chrom": _chrom,
-                                        "pos": _pos,
-                                        "sample_index": sample_index,
-                                        "sample_name": sample_name,
-                                        "field_id": key,
-                                        "value_index": value_index,
-                                        "allele_index": allele_index,
-                                        "allele_sequence_position": sequence_position,
-                                        "sequence_base": sequence_base,
-                                        "strand": strand,
-                                        "value": None if observed_value == "." else observed_value,
-                                    })
+                        if definition["Number"] == "M" and include_base_modification_slot_assignments:
+                            sample_name = (
+                                chrom_header[8 + sample_index]
+                                if chrom_header is not None and 8 + sample_index < len(chrom_header)
+                                else None
+                            )
+                            for value_index, (slot, observed_value) in enumerate(
+                                zip(base_modification_slots, observed_modification_values)
+                            ):
+                                allele_index, sequence_position, strand, sequence_base = slot
+                                base_modification_slot_assignments.append({
+                                    "record_index": records + 1,
+                                    "line_number": line_no,
+                                    "chrom": _chrom,
+                                    "pos": _pos,
+                                    "sample_index": sample_index,
+                                    "sample_name": sample_name,
+                                    "field_id": key,
+                                    "value_index": value_index,
+                                    "allele_index": allele_index,
+                                    "allele_sequence_position": sequence_position,
+                                    "sequence_base": sequence_base,
+                                    "strand": strand,
+                                    "value": None if observed_value == "." else observed_value,
+                                })
                 if fileformat == "VCFv4.5" and breakend_alts and record_ids:
                     record_phase_vectors: dict[str, dict[str, list[str]]] = {}
                     sample_names = chrom_header[9:] if chrom_header is not None else []
