@@ -72,3 +72,37 @@ It must remain a separate producer/project-convention source. Its rules must not
 - No SHA-256 was computed for the original VCFv4.0 specification.
 - The IGSR page has not been promoted from a corroborated candidate to a qualified normative source.
 - No VCFv4.0 requirement is promoted to source-pinned status.
+
+
+## 5. Targeted VCFv4.0 FORMAT source-context review — 2026-11-07
+
+A direct inspection of the detailed IGSR VCFv4.0 page returned 245 rendered lines. The page remains a mutable rendered HTML candidate, not an immutable source capture. The following exact rendered-page locations were reviewed for the VCFv4.0 FORMAT tests now present on the PR merge base:
+
+| Rendered line(s) | Source statement | Validation consequence |
+|---|---|---|
+| 0–2 | Page identifies VCFv4.0 and points to a separate 1000 Genomes SV conventions page | Keep core VCF and 1000 Genomes SV extensions separate |
+| 23–26 | Example header declares GT as Number=1/String, GQ as Number=1/Integer, DP as Number=1/Integer and HQ as Number=2/Integer | Historical examples support these reserved field cardinalities/types |
+| 43 | INFO/FILTER/FORMAT metadata lines are optional, but if present must be completely well-formed | Absence of redundant declarations is not itself invalid |
+| 54–58 | FORMAT fields are described with ID, Number, Type and Description; supported Types are Integer, Float, Character and String | FORMAT declaration syntax/type domain |
+| 108 | First FORMAT sub-field must always be GT | GT ordering is required when genotype data are present |
+| 112 | All samples must have GT call information; missing calls are represented with missing allele tokens | VCFv4.0 sample genotype data require a GT field |
+| 115–116 | DP is Integer; FT is an alphanumeric String | DP/FT implicit field typing |
+| 117 | GL consists of three floating-point log10 likelihoods for AA, AB and BB and is not applicable when the site is not biallelic | VCFv4.0 GL is Number=3/Float and populated GL is not valid on multiallelic records |
+| 118–119 | GQ is Numeric; HQ is two comma-separated phred qualities and Numeric | With no explicit header declaration, accept numeric values; when a declaration is supplied, enforce its declared Integer/Float type |
+| 120 | Trailing fields may be dropped except GT, which should always be present | Preserve GT as a non-droppable FORMAT value |
+
+The current PR merge-base tests cover five VCFv4.0 failures: one multiallelic GL case and four reserved FORMAT header-definition mismatches. Their expected behavior is supported by the rendered source passages above. The GQ/HQ prose says “Numeric” while the example header uses Integer; the tests use decimal values in the absence of explicit declarations. The validator therefore uses an internal Numeric type for implicit GQ/HQ values and accepts Integer or Float in explicit GQ/HQ declarations. This interpretation remains provisional pending an immutable historical source.
+
+### VCFv4.5 Number=P cardinality dependency
+
+The pinned repository source `VCFv4.5.tex` lines 195–200 defines Number=LA/LR/LG and states at line 198 that a Number=P field has one value for each allele value defined in GT. The populated-Number=P-without-GT validator guard is treated as a strict cardinality-validation dependency: without GT, a populated Number=P value cannot be checked against the source-defined cardinality. A missing Number=P value remains unresolved and is not rejected solely because GT is absent. This guard is not promoted as a separate source-level statement that every VCFv4.5 sample must globally contain GT.
+
+### Implementation disposition
+
+A narrowly scoped validator patch has been committed on this research branch:
+- VCFv4.0 implicit reserved FORMAT definitions for GT, DP, FT, GL, GQ and HQ;
+- VCFv4.0 header Number/Type checks for those reserved fields;
+- VCFv4.0 rejection of populated GL on non-biallelic records;
+- VCFv4.5 rejection of populated Number=P values when GT is absent, while allowing a missing Number=P value to remain unresolved.
+
+The implementation change is provisional until the historical VCFv4.0 source bytes are captured and hashed, the full test run passes, and independent standards review is completed. It does not change the source qualification status or claim VCFv4.0 laboratory conformance.
