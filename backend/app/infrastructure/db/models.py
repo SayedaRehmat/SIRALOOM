@@ -824,6 +824,42 @@ class PedigreeMember(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("case_id", "member_identifier"),)
 
+class PedigreeSampleBinding(Base):
+    """Immutable, versioned claim linking a family member to a specimen and VCF sample."""
+    __tablename__ = "pedigree_sample_bindings"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    pedigree_member_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_members.id"), nullable=False)
+    specimen_id: Mapped[UUID] = mapped_column(ForeignKey("specimens.id"), nullable=False)
+    analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
+    artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"), nullable=False)
+    sample_name: Mapped[str] = mapped_column(Text, nullable=False)
+    binding_status: Mapped[str] = mapped_column(Text, nullable=False, default="UNVERIFIED")
+    binding_method: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_reference: Mapped[str | None] = mapped_column(Text)
+    review_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    supersedes_binding_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_sample_bindings.id"))
+    binding_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "binding_fingerprint", name="uq_pedigree_sample_binding_fingerprint"),
+        UniqueConstraint("case_id", "pedigree_member_id", "specimen_id", "analysis_id", "artifact_id", "sample_name", "version", name="uq_pedigree_sample_binding_version"),
+        CheckConstraint("binding_status IN ('UNVERIFIED', 'VERIFIED', 'REJECTED')", name="ck_pedigree_sample_binding_status"),
+        CheckConstraint("version > 0", name="ck_pedigree_sample_binding_version_positive"),
+        CheckConstraint(
+            "(binding_status = 'UNVERIFIED' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
+            "(binding_status IN ('VERIFIED', 'REJECTED') AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND review_reason IS NOT NULL)",
+            name="ck_pedigree_sample_binding_review_provenance",
+        ),
+        Index("ix_pedigree_sample_bindings_member_specimen", "case_id", "pedigree_member_id", "specimen_id"),
+        Index("ix_pedigree_sample_bindings_analysis_artifact", "analysis_id", "artifact_id"),
+    )
+
+
 class PedigreeRelationship(Base):
     __tablename__ = "pedigree_relationships"
     id: Mapped[UUID] = mapped_column(primary_key=True)
