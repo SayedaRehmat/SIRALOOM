@@ -122,6 +122,24 @@ def create(
                 detail="assay_id must identify an active, same-organization assay with QC rules",
             )
 
+    analysis_configuration = dict(payload.configuration or {})
+    configured_strandedness = analysis_configuration.get("base_modification_strandedness")
+    if configured_strandedness not in {None, "stranded", "unstranded"}:
+        raise HTTPException(
+            status_code=400,
+            detail="base_modification_strandedness must be 'stranded', 'unstranded', or omitted",
+        )
+    if (
+        payload.base_modification_strandedness is not None
+        and configured_strandedness not in {None, payload.base_modification_strandedness}
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Conflicting base_modification_strandedness values were supplied",
+        )
+    if payload.base_modification_strandedness is not None:
+        analysis_configuration["base_modification_strandedness"] = payload.base_modification_strandedness
+
     try:
         analysis = create_analysis(
             db,
@@ -132,14 +150,7 @@ def create(
             workflow_id=payload.workflow_id,
             workflow_version=payload.workflow_version,
             reference_build=payload.reference_build,
-            configuration={
-                **payload.configuration,
-                **(
-                    {"base_modification_strandedness": payload.base_modification_strandedness}
-                    if payload.base_modification_strandedness is not None
-                    else {}
-                ),
-            },
+            configuration=analysis_configuration,
             created_by=principal.user_id,
             resource_profile_id=payload.resource_profile_id,
             commit=False,
