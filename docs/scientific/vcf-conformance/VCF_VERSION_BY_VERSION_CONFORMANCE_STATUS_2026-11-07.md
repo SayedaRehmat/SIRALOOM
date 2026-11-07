@@ -82,7 +82,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 
 **Unsupported / blocked:** VCFv4.5-only Number=M base-modification semantics and the VCFv4.5 local-allele model must not be back-applied to VCFv4.4. External assembly contigs remain a reference-package capability limitation for VCFv4.3+.
 
-**Unresolved:** Production cross-record PSO/BND logic is now applied to VCFv4.4 and VCFv4.5. New VCFv4.4 tests cover phase-set-wide PSO obligations, reciprocal BND PSL/PSO equality, MATEID Number=A cardinality, Number=P requiring GT, and telomeric remote coordinate zero. These tests still require exact-head CI execution and full requirement mapping. Full reserved INFO/FORMAT and SV/breakend semantic reconciliation, dedicated corpus execution, and requirement-level traceability remain pending.
+**Unresolved:** Production cross-record PSO/BND logic is now applied to VCFv4.4 and VCFv4.5. New VCFv4.4 tests cover phase-set-wide PSO obligations, duplicate ordinal rejection, reciprocal BND PSL/PSO equality and one-event traversal output, PSQ positional/missing-value rules, MATEID Number=A cardinality, Number=P requiring GT, and telomeric remote coordinate zero. These tests still require exact-head CI execution and full requirement mapping. Full reserved INFO/FORMAT and SV/breakend semantic reconciliation, dedicated corpus execution, and requirement-level traceability remain pending.
 
 ### VCFv4.5
 
@@ -109,7 +109,7 @@ This report separates parser behavior, executable test evidence, explicit capabi
 - VCF itself does not prove experimental truth of base-modification fractions/depth; assay/read-level evidence is outside this validator's input evidence.
 
 **Unresolved:**
-- Derivative chromosome reconstruction and global PSO ordinal uniqueness/monotonicity are not implemented.
+- Global PSO ordinal uniqueness across distinct variant events is enforced; reciprocal BND records are recognized as one event and the ordered traversal is emitted as phase_set_traversal_orders in the persisted validation profile and ARTIFACT_VALIDATED audit payload. Derivative chromosome reconstruction and independent proof of monotonicity against the actual derivative chromosome are not implemented.
 - Strict reciprocal BND PSL/PSO equality remains an implementation interpretation requiring standards-owner review.
 - Xanthosine alias capitalization remains inconsistent in the pinned source; both spellings are retained without normalization.
 - The local-row GT value in the VCFv4.5 LAA example remains an apparent source typo; global GT indexing is preserved.
@@ -135,7 +135,7 @@ The next cross-version implementation gate is to complete semantic/atomic reconc
 - The same-record unstranded Number=M negative regression (populated complementary-strand slot must be rejected under the explicit unstranded assay policy) is present in tests/test_vcf45_number_m_conformance.py. It has not yet been executed by GitHub Actions.
 - The VCFv4.5 phase-set test helper's undefined version variable was corrected; it now accepts an explicit VCF version (default VCFv4.5). VCFv4.4 PSQ positional and missing-value regressions were added in tests/test_vcf44_phase_set_conformance.py. These new tests have not yet been executed by GitHub Actions.
 - The GitHub commit-workflow query returned no full SIRALOOM CI run for implementation baseline 15feffa75bb8fecaec2f3d53ba7729f420cd4d5e or the subsequent report-only commits. No backend or conformance result is inferred from the absence of a run or from deployment status.
-- Do not infer success from the previous green commit or from schema validation. The final exact commit must have a full successful run of backend tests, VCFv4.5 conformance tests, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
+- Do not infer success from the previous green commit or from schema validation. The CI workflow now has separate VCFv4.0, VCFv4.1/4.2, VCFv4.3, VCFv4.4 and VCFv4.5 conformance steps, plus workflow_dispatch for future manual qualification. The final exact commit must have a full successful run of backend tests, every version-specific conformance step, PostgreSQL integration, frontend tests/build, and container/toolchain checks.
 
 ## 5. Release decision
 
