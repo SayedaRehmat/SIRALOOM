@@ -132,6 +132,13 @@ class LinuxContainerToolExecutor:
             version = self._run_checked([runtime, "--version"])
         if self.environment.runtime_version not in version:
             raise ToolExecutionContractError("Installed container runtime version does not match the qualified environment.")
+        cgroup_version = self._run_checked(
+            [runtime, "info", "--format", "{{.CgroupVersion}}" if self.environment.runtime_kind == "DOCKER" else "{{.Host.CgroupVersion}}"]
+        )
+        if cgroup_version not in {"1", "2"}:
+            raise ToolExecutionContractError(
+                "Container runtime does not expose a verifiable Linux cgroup v1/v2 controller for resource enforcement."
+            )
         image_ref = self.environment.runtime_image_reference
         digest = self.environment.runtime_image_digest
         if not image_ref or not digest or not image_ref.endswith("@" + digest):
