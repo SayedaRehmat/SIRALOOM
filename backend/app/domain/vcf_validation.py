@@ -2266,7 +2266,17 @@ def validate_vcf_strict(
                             )
                             for slot_index, (allele_index, copy_index, sequence_position, strand, sequence_base) in enumerate(haplotype_slots):
                                 _allele_token, phase_separator = gt_phase[copy_index]
-                                if "|" not in gt_for_modification or phase_separator != "|":
+                                all_called_alleles = [
+                                    token for token, _separator in gt_phase
+                                ]
+                                homozygous_unphased = (
+                                    "|" not in gt_for_modification
+                                    and all(token != "." for token in all_called_alleles)
+                                    and len(set(all_called_alleles)) == 1
+                                )
+                                if homozygous_unphased:
+                                    phase_set = "__unphased_homozygous_set__"
+                                elif "|" not in gt_for_modification or phase_separator != "|":
                                     phase_set = f"__record_{records + 1}_allele_{allele_index}"
                                 elif psl_positions:
                                     phase_set = psl_positions[copy_index] if copy_index < len(psl_positions) else "."
