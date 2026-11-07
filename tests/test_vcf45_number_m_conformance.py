@@ -144,3 +144,56 @@ def test_number_m_U_is_synonymous_with_T(tmp_path: Path):
         values="0.7",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_number_m_all_missing_gt_alleles_require_no_values(tmp_path: Path):
+    path = tmp_path / "number-m-all-missing-gt.vcf"
+    _write_number_m_vcf(
+        path,
+        reference="CGA",
+        alternate=".",
+        genotype="./.",
+        field_id="M5mC",
+        values=".",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+@pytest.mark.parametrize(
+    ("field_id", "field_type", "values"),
+    [
+        ("M5mC", "Float", "1.1,0.2"),
+        ("M5mC", "Float", "-0.1,0.2"),
+        ("DPM5mC", "Integer", "-1,2"),
+        ("ADM5mC", "Integer", "1,-2"),
+    ],
+)
+def test_number_m_fraction_and_depth_values_enforce_specified_ranges(
+    tmp_path: Path, field_id: str, field_type: str, values: str
+):
+    path = tmp_path / f"number-m-invalid-values-{field_id}.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        f'##FORMAT=<ID={field_id},Number=M,Type={field_type},Description="Base modification value">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        f"1\t2\t.\tCGA\t.\t.\tPASS\t.\tGT:{field_id}\t0/0:{values}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_VALUE_INVALID"
+
+
+def test_number_m_requires_gt_format_key(tmp_path: Path):
+    path = tmp_path / "number-m-without-gt-key.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=M5mC,Number=M,Type=Float,Description="Base modification fraction">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tC\t.\t.\tPASS\t.\tM5mC\t0.5\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_BASE_MODIFICATION_GT_MISSING"
