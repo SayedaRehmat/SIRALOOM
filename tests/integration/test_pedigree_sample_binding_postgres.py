@@ -175,6 +175,7 @@ def test_postgres_binding_and_identity_evidence_successor_races_have_one_winner(
                 specimen_identifier=f"SP-{specimen_id}", specimen_type="BLOOD",
                 metadata_json={},
             ))
+            db.flush()
             db.add(PedigreeMember(
                 id=member_id, case_id=case_id, member_identifier="PROBAND",
                 sex="UNKNOWN", affected_status="AFFECTED", is_proband=True,
