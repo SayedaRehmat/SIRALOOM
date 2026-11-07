@@ -2182,6 +2182,26 @@ def validate_vcf_strict(
             ]
             breakend_alts = [alts[alt_index] for alt_index in breakend_alt_indexes]
             if breakend_alts:
+                # Resolve remote loci and classify external assembly contigs before
+                # legacy SVTYPE checks so valid-but-unresolvable syntax is not
+                # misreported as an invalid BND record.
+                remote_loci_by_alt: dict[int, tuple[str, int]] = {}
+                for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
+                    match = re.search(r"([\[\]])([^:\[\]]+):([0-9]+)\1", alt)
+                    if match is not None:
+                        remote_loci_by_alt[alt_index] = (match.group(2), int(match.group(3)))
+                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
+                    for remote_contig, _remote_position in remote_loci_by_alt.values():
+                        if re.fullmatch(r"<[^<>,\s]+>", remote_contig):
+                            raise StrictVCFValidationError(
+                                f"External assembly mate contig {remote_contig!r} is valid VCF syntax but unsupported by the configured reference-package contract at line {line_no}",
+                                code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
+                            )
+                        if not VCF_CONTIG_NAME_RE.fullmatch(remote_contig):
+                            raise StrictVCFValidationError(
+                                f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
+                                code="VCF_BREAKEND_ALT_INVALID",
+                            )
                 # VCFv4.4/4.5 deprecates INFO/SVTYPE; breakpoint notation itself
                 # identifies a BND. Earlier supported versions retain the
                 # explicit SVTYPE=BND requirement used by earlier VCFv4.0–4.3 source contracts.
@@ -2227,27 +2247,7 @@ def validate_vcf_strict(
                 else:
                     mate_entries_by_alt = {}
 
-                # Retain each ALT's remote locus independently; MATEID and
-                # the remote coordinate are paired by ALT position.
-                remote_loci_by_alt: dict[int, tuple[str, int]] = {}
-                for alt_index, alt in zip(breakend_alt_indexes, breakend_alts):
-                    match = re.search(r"([\[\]])([^:\[\]]+):([0-9]+)\1", alt)
-                    if match is not None:
-                        remote_loci_by_alt[alt_index] = (
-                            match.group(2), int(match.group(3))
-                        )
-                if fileformat in {"VCFv4.3", "VCFv4.4", "VCFv4.5"}:
-                    for remote_contig, _remote_position in remote_loci_by_alt.values():
-                        if re.fullmatch(r"<[^<>,\s]+>", remote_contig):
-                            raise StrictVCFValidationError(
-                                f"External assembly mate contig {remote_contig!r} is valid VCF syntax but unsupported by the configured reference-package contract at line {line_no}",
-                                code="VCF_EXTERNAL_ASSEMBLY_CONTIG_UNSUPPORTED",
-                            )
-                        if not VCF_CONTIG_NAME_RE.fullmatch(remote_contig):
-                            raise StrictVCFValidationError(
-                                f"Breakend mate contig violates the VCFv4.3+ SAM reference-name grammar at line {line_no}",
-                                code="VCF_BREAKEND_ALT_INVALID",
-                            )
+
                 if len(remote_loci_by_alt) != len(breakend_alts):
                     raise StrictVCFValidationError(
                         f"Breakend ALT does not contain one unambiguous mate locus at line {line_no}",
