@@ -19,6 +19,7 @@ from backend.app.auth.authorization import (
 )
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.case_change import create_case_change_candidates
+from backend.app.domain.family_genotype_matrix import build_family_genotype_matrix
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -32,6 +33,8 @@ from backend.app.infrastructure.db.models import (
     PedigreeSampleBinding,
     SegregationObservation,
     Specimen,
+    SpecimenPloidyEvidenceRevision,
+    Variant,
     WorkflowStep,
 )
 from backend.app.infrastructure.db.session import get_db
@@ -66,6 +69,11 @@ class MemberInput(BaseModel):
     sampled: bool = False
     specimen_id: UUID | None = None
     metadata: dict = Field(default_factory=dict)
+
+class GenotypeMatrixInput(BaseModel):
+    binding_ids: list[UUID] = Field(min_length=1, max_length=50)
+    variant_ids: list[UUID] = Field(min_length=1, max_length=500)
+
 
 class SampleBindingInput(BaseModel):
     member_id: UUID
@@ -418,6 +426,151 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
     )
     db.commit()
     return _sample_binding_payload(row)
+
+
+@router.post("/cases/{case_id}/pedigree/genotype-matrix")
+def get_family_genotype_matrix(
+    case_id: UUID,
+    body: GenotypeMatrixInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Compose normalized sample calls from explicitly selected verified family bindings."""
+    if len(set(body.binding_ids)) != len(body.binding_ids):
+        raise HTTPException(422, "Binding IDs must be unique")
+    if len(set(body.variant_ids)) != len(body.variant_ids):
+        raise HTTPException(422, "Variant IDs must be unique")
+
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "read")
+
+    variants = {}
+    for variant_id in body.variant_ids:
+        variant = db.get(Variant, variant_id)
+        if variant is None:
+            raise HTTPException(404, "Canonical variant not found")
+        variants[variant_id] = variant
+
+    samples = []
+    selected_member_ids = set()
+    for binding_id in body.binding_ids:
+        binding = db.get(PedigreeSampleBinding, binding_id)
+        if binding is None or binding.case_id != case_id:
+            raise HTTPException(404, "Sample binding not found in this case")
+        if binding.binding_status != "VERIFIED":
+            raise HTTPException(409, "Only reviewed VERIFIED sample bindings can enter the family genotype matrix")
+        successor = db.scalar(select(PedigreeSampleBinding).where(
+            PedigreeSampleBinding.supersedes_binding_id == binding.id,
+        ))
+        if successor is not None:
+            raise HTTPException(409, "A superseded sample binding cannot be used in a current genotype matrix")
+        if binding.pedigree_member_id in selected_member_ids:
+            raise HTTPException(422, "Select at most one specimen/analysis binding per family member")
+        selected_member_ids.add(binding.pedigree_member_id)
+
+        member = db.get(PedigreeMember, binding.pedigree_member_id)
+        specimen = db.get(Specimen, binding.specimen_id)
+        analysis = db.get(Analysis, binding.analysis_id)
+        artifact = db.get(Artifact, binding.artifact_id)
+        if (
+            member is None or member.case_id != case_id
+            or specimen is None or specimen.case_id != case_id
+            or analysis is None or analysis.case_id != case_id
+            or artifact is None or artifact.case_id != case_id
+        ):
+            raise HTTPException(409, "A selected sample binding references inconsistent case-scoped records")
+        if artifact.sha256 != binding.source_artifact_sha256:
+            raise HTTPException(409, "Source VCF digest no longer matches the reviewed sample binding")
+        configuration = analysis.configuration or {}
+        if (
+            configuration.get("input_artifact_id") != str(artifact.id)
+            or configuration.get("vcf_sample_name") != binding.sample_name
+        ):
+            raise HTTPException(409, "Analysis input artifact or VCF sample selection differs from the reviewed binding")
+        if artifact.specimen_id is not None and artifact.specimen_id != specimen.id:
+            raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
+
+        normalization_step = db.scalar(select(WorkflowStep).where(
+            WorkflowStep.analysis_id == analysis.id,
+            WorkflowStep.step_id == "normalize",
+        ))
+        if (
+            normalization_step is None
+            or normalization_step.status != "SUCCEEDED"
+            or str(artifact.id) not in (normalization_step.input_artifacts or [])
+        ):
+            raise HTTPException(409, "The source VCF has no successful normalization provenance for this analysis")
+        partitions = db.scalars(select(AnalysisPartition).where(
+            AnalysisPartition.analysis_id == analysis.id,
+            AnalysisPartition.step_id == "normalize",
+        ).order_by(AnalysisPartition.ordinal)).all()
+        calls = get_analysis_sample_calls(db, analysis.id)
+        if not calls or any(call.get("sample_name") != binding.sample_name for call in calls.values()):
+            raise HTTPException(409, "Normalized sample calls do not consistently identify the selected VCF sample")
+        for variant in variants.values():
+            if variant.genome_build != analysis.reference_build:
+                raise HTTPException(409, "Requested variant assembly does not match every selected family analysis")
+
+        ploidy_rows = db.scalars(select(SpecimenPloidyEvidenceRevision).where(
+            SpecimenPloidyEvidenceRevision.specimen_id == specimen.id,
+        ).order_by(SpecimenPloidyEvidenceRevision.version.desc())).all()
+        ploidy_evidence = None
+        if ploidy_rows:
+            latest = ploidy_rows[0]
+            ploidy_evidence = {
+                "version": latest.version,
+                "status": latest.status,
+                "reference_build": latest.reference_build,
+                "revision_fingerprint": latest.revision_fingerprint,
+                "region_copy_number": latest.region_copy_number,
+                "source_type": latest.source_type,
+                "evidence_reference": latest.evidence_reference,
+            }
+
+        samples.append({
+            "member_id": member.id,
+            "member_identifier": member.member_identifier,
+            "relationship_to_proband": member.relationship_to_proband,
+            "sex": member.sex,
+            "affected_status": member.affected_status,
+            "specimen_id": specimen.id,
+            "analysis_id": analysis.id,
+            "analysis_version": analysis.analysis_version,
+            "artifact_id": artifact.id,
+            "artifact_sha256": artifact.sha256,
+            "sample_name": binding.sample_name,
+            "binding_id": binding.id,
+            "binding_fingerprint": binding.binding_fingerprint,
+            "normalization_step_status": normalization_step.status,
+            "normalized_partition_count": len(partitions),
+            "ploidy_evidence": ploidy_evidence,
+            "calls": calls,
+        })
+
+    members = db.scalars(select(PedigreeMember).where(
+        PedigreeMember.case_id == case_id,
+    )).all()
+    member_identifiers = {member.id: member.member_identifier for member in members}
+    relationships = db.scalars(select(PedigreeRelationship).where(
+        PedigreeRelationship.case_id == case_id,
+    )).all()
+    relationship_snapshot = [{
+        "parent_member_identifier": member_identifiers.get(item.parent_member_id, "UNKNOWN_MEMBER"),
+        "child_member_identifier": member_identifiers.get(item.child_member_id, "UNKNOWN_MEMBER"),
+        "relationship_type": item.relationship_type,
+        "metadata": item.metadata_json or {},
+        "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
+    } for item in relationships]
+
+    return build_family_genotype_matrix(
+        case_id=case_id,
+        variant_ids=body.variant_ids,
+        samples=samples,
+        relationships=relationship_snapshot,
+    )
 
 
 @router.get("/cases/{case_id}/pedigree")
