@@ -478,3 +478,75 @@ def vcf_normalization_worker_loss(
     finally:
         production_task.pop_request()
         workflow_module.run_variant_analysis = original_workflow
+
+
+@celery_app.task(
+    bind=True,
+    name="siraloom.test_artifact_validation_worker_loss",
+    acks_late=True,
+    reject_on_worker_lost=True,
+)
+def artifact_validation_worker_loss(
+    self,
+    artifact_id: str,
+    marker_prefix: str,
+    artifact_root: str,
+    scratch_root: str,
+):
+    """Kill a real prefork child during validation, then replay the same task.
+
+    The production task has already committed its RUNNING dispatch state before
+    validate_persisted_artifact is invoked. The first child exits abruptly at
+    that boundary. The redelivered child executes the real persisted-artifact
+    validator and records the final result.
+    """
+    import json
+    import os
+    from pathlib import Path
+
+    import importlib
+    from backend.app.infrastructure.artifacts.store import ArtifactStore
+
+    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    marker = lambda suffix: f"{marker_prefix}:{suffix}"
+    validation_module = importlib.import_module(
+        "backend.app.domain.artifact_validation"
+    )
+    original_validate = validation_module.validate_persisted_artifact
+    original_store_resolver = validation_module.artifact_store_for_uri
+    original_scratch_root = settings.worker_scratch_root
+
+    validation_module.artifact_store_for_uri = (
+        lambda *args, **kwargs: ArtifactStore(Path(artifact_root))
+    )
+    settings.worker_scratch_root = scratch_root
+
+    def crash_once(artifact_uuid):
+        if redis.set(marker("first-attempt"), "started", nx=True, ex=600):
+            os._exit(73)
+        return original_validate(artifact_uuid)
+
+    validation_module.validate_persisted_artifact = crash_once
+    production_queue = importlib.import_module(
+        "backend.app.infrastructure.queue.celery_app"
+    )
+    production_task = production_queue.run_artifact_validation_task
+    delivery = dict(self.request.delivery_info or {})
+    production_task.push_request(
+        id=self.request.id,
+        retries=self.request.retries,
+        delivery_info=delivery,
+    )
+    try:
+        result = production_task.run(artifact_id)
+        payload = {
+            "result": result,
+            "delivery_redelivered": bool(delivery.get("redelivered")),
+        }
+        redis.set(marker("result"), json.dumps(payload), ex=600)
+        return payload
+    finally:
+        production_task.pop_request()
+        validation_module.validate_persisted_artifact = original_validate
+        validation_module.artifact_store_for_uri = original_store_resolver
+        settings.worker_scratch_root = original_scratch_root
