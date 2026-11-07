@@ -528,3 +528,62 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 4. After the VCFv4.5 source-to-ledger gate, perform expanded row-by-row semantic reconciliation and atomization for VCFv4.1–4.4, preserving version deltas.
 5. Continue original VCFv4.0 source-byte acquisition and provenance qualification in parallel.
 6. Resolve the six backend CI failures in their owning implementation workstream; do not mix implementation changes into this documentation-only research branch.
+
+
+## 16. VCFv4.5 source-gap adjudication and ambiguity analysis — 2026-11-07
+
+### 16.1 First-pass adjudication of the 94 exact-locator gaps
+
+- Re-read the 94 source-line gaps against the complete recovered 226-record canonical ledger, the pinned VCFv4.5 source bytes, and the existing VCFv4.5 core/SV context-review artifacts.
+- Added `VCF45_SOURCE_GAP_ADJUDICATION_PASS1_2026-11-07.json`.
+- Author-level dispositions across all 94 lines:
+  - 7 semantically covered by existing canonical requirements;
+  - 1 covered only by existing supplemental candidate `VCF-REQ-000256` (not canonical);
+  - 1 partially overlaps `VCF-REQ-000091` and remains scope-review required;
+  - 1 source-scope ambiguity remains open;
+  - 75 source lines require new atomic candidate records;
+  - 1 implementation/API recommendation retained outside the file-validation ledger;
+  - 1 informative semantic warning retained for implementation/test guidance;
+  - 1 explanatory example only;
+  - 1 supporting example for an adjacent recommendation;
+  - 1 definition/vocabulary item not treated as a standalone validator rule;
+  - 1 example-context line remains open pending contextual adjudication;
+  - 3 informative narrative lines excluded from standalone validator obligations.
+- Existing requirement mappings are explicit and limited to directly supported semantics: percent-encoding family to `VCF-REQ-000114`–`000121`; Number=G genotype ordering to `000136`; generic missing marker to `000009`; conditional LAA presence to `000053`; BCF empty-vector behavior to `000054`; PS identifier convention to `000030`; and same-record CNV SVLEN consistency to `000096`.
+- The M fraction range at source line 726 is linked to supplemental `VCF-REQ-000256`, not misreported as canonical.
+- The 75 unmatched source lines are retained in `VCF45_NEW_ATOMIC_CANDIDATE_WORKLIST_2026-11-07.json`. This is a worklist, not a canonical requirement artifact: zero of its 75 source-line candidates has yet been fully atomicized, no new canonical IDs have been allocated, and implementation/tests remain unaudited/uncreated.
+- No canonical ledger records were added, deleted or rewritten in this pass.
+
+### 16.2 Local-allele GT example inconsistency
+
+- Added `VCF45_SOURCE_AMBIGUITY_ADJUDICATION_2026-11-07.json`.
+- The general GT definition (line 615) defines positive GT values as one-based indices into ALT. LAA (lines 686–696) selects and orders the local allele subset for local-allele fields.
+- At POS=1, ALT=A,C,T,<*>, LAA=2,4, and the local representation GT=2/4 is consistent with global ALT indices. Its LAD/LPL values also project to the corresponding global AD/PL positions for REF, ALT 2 and ALT 4.
+- The paired global representation at the same POS says GT=2/2, which is inconsistent with the local representation. The other paired examples do not show this mismatch.
+- Provisional interpretation: GT remains globally ALT-indexed; LAA does not remap GT values. The paired global GT=2/2 is likely a source example error, with GT=2/4 the internally consistent value. This is not an upstream correction or independent approval.
+- Implementation guard: preserve raw GT and LAA independently; do not use the inconsistent pair as an equivalence oracle pending upstream/independent confirmation.
+
+### 16.3 Number=P versus PSQ
+
+- The general Number=P definition (line 198) specifies one value per GT allele value. PSL (line 771) is one positional item per GT allele value, with MISSING for unphased allele positions (line 772). The reserved PSQ table row declares Number=P, and PSQ line 809 requires MISSING where the corresponding PSL value is MISSING.
+- Provisional interpretation: PSQ is positionally aligned to PSL, with one value per PSL list position/GT allele value, including missing positions. Repeated phase-set identifiers do not collapse positions into one item.
+- This interpretation reconciles the Number=P definition and the field-specific missingness statement. Independent standards review is still required before treating the ambiguity as closed.
+- Implementation guard: do not deduplicate phase-set names before cardinality validation; validate positional correspondence only after independent confirmation.
+
+### 16.4 Xanthosine alias capitalization
+
+- The reserved FORMAT table spells `MXaoN`, `DPMXaoN`, and `ADMXaoN` (lines 586–588); prose recommends `MxaoN`, `DPMxaoN`, and `ADMxaoN` (lines 724, 734 and 740).
+- IDs are case-sensitive (line 258), so these spellings are not equivalent by case-folding.
+- Disposition: unresolved source-internal capitalization conflict. Do not normalize or silently accept both forms as equivalent in a strict validator without upstream clarification.
+
+### 16.5 Additional source inconsistency found
+
+- Tandem-repeat line 1995 says RUL should be omitted when RUS is present but gives the parenthetical “redundant when RS is present”. Preserve the literal source and obtain independent adjudication; do not silently rewrite RS to RUS.
+- Contig/header lines 129–130 and 301–302 also require scope review: VCF recommendation versus BCF requirement and the statement that “all tags are optional” must be reconciled at the correct metadata-attribute level.
+
+### 16.6 Scope and verification boundary
+
+- This pass adjudicates source-line traceability gaps at author-review level. It does not complete the 75 candidate atomic decompositions, all VCFv4.5 prose/grammar/footnote/example/cross-reference coverage, independent review, implementation mapping or executable conformance tests.
+- No VCFv4.1–4.4 expanded reconciliation was performed in this update.
+- No new VCFv4.0 immutable source bytes or digest were acquired in this update; VCFv4.0 remains `SOURCE_NOT_PINNED`.
+- No production parser, validator, normalizer or CI code was changed. No tests were run in this update.
