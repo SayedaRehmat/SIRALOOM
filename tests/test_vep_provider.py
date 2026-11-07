@@ -381,16 +381,26 @@ def test_vep_does_not_select_first_or_ambiguous_transcript(transcripts, expected
     assert consequence["transcript_selection"]["status"] == expected_status
 
 
-def test_vep_rejects_malformed_transcript_consequence_response():
+@pytest.mark.parametrize(
+    "field",
+    [
+        "transcript_consequences",
+        "intergenic_consequences",
+        "regulatory_feature_consequences",
+        "motif_feature_consequences",
+        "colocated_variants",
+    ],
+)
+def test_vep_rejects_malformed_consequence_collection_response(field):
     provider = VEPProvider.from_execution_contract(_contract())
     result = ProviderRawResult(
         "annotate",
-        [{"transcript_consequences": {"transcript_id": "ENST1"}}],
+        [{field: {"unexpected": "object-not-list"}}],
         "fixture-sha256",
         {},
     )
 
-    with pytest.raises(VEPProviderError, match="list of objects"):
+    with pytest.raises(VEPProviderError, match=f"VEP {field} must be a list of objects"):
         provider.validate_response(result)
 
 
