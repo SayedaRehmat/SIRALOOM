@@ -457,6 +457,7 @@ export default function FamilySampleIdentityWorkbench({
                   <th>{t("familyIdentity.phaseSet")}</th>
                   <th>{t("familyIdentity.depth")}</th>
                   <th>{t("familyIdentity.genotypeQuality")}</th>
+                  <th>{t("familyIdentity.qualityAssessment")}</th>
                   <th>{t("familyIdentity.alleleDepth")}</th>
                   <th>{t("familyIdentity.callability")}</th>
                 </tr></thead>
@@ -473,11 +474,12 @@ export default function FamilySampleIdentityWorkbench({
                       <td>{call.selected_alt_dosage ?? "—"}</td>
                       <td>{sample.normalization_step_status ?? "—"}</td>
                       <td>{(sample.identity_evidence ?? []).map((item: any) => `${item.evidence_type}: ${item.review_status}/${item.result}`).join(" · ") || "—"}</td>
-                      <td>{sample.ploidy_evidence?.status ?? "NOT_ASSESSED"}</td>
+                      <td>{sample.ploidy_evidence_status ?? sample.ploidy_evidence?.status ?? "NOT_ASSESSED"}</td>
                       <td>{call.phase ?? "UNSPECIFIED"}</td>
                       <td>{call.phase_set ?? "—"}</td>
                       <td>{call.quality_metrics?.DP ?? "—"}</td>
                       <td>{call.quality_metrics?.GQ ?? "—"}</td>
+                      <td>{call.quality_assessment_status ?? "NOT_ASSESSED"}</td>
                       <td>{Array.isArray(call.quality_metrics?.AD) ? call.quality_metrics.AD.join("/") : call.quality_metrics?.AD ?? "—"}</td>
                       <td>{call.callability ?? "NOT_ASSESSED"}</td>
                     </tr>
