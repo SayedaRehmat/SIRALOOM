@@ -451,6 +451,214 @@ def supersede_sample_binding(
     return _sample_binding_payload(row)
 
 
+def _sample_identity_evidence_payload(row):
+    return {
+        "evidence_id": str(row.id),
+        "case_id": str(row.case_id),
+        "binding_id": str(row.binding_id),
+        "evidence_type": row.evidence_type,
+        "result": row.result,
+        "method": row.method,
+        "method_version": row.method_version,
+        "evidence_reference": row.evidence_reference,
+        "source_artifact_id": str(row.source_artifact_id) if row.source_artifact_id else None,
+        "metrics": row.metrics_json or {},
+        "review_status": row.review_status,
+        "review_reason": row.review_reason,
+        "version": row.version,
+        "supersedes_evidence_id": str(row.supersedes_evidence_id) if row.supersedes_evidence_id else None,
+        "recorded_by": str(row.recorded_by),
+        "reviewed_by": str(row.reviewed_by) if row.reviewed_by else None,
+        "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
+    }
+
+
+def _sample_identity_evidence_fingerprint(payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _active_sample_identity_evidence(db: Session, binding_id: UUID):
+    rows = db.scalars(select(PedigreeSampleIdentityEvidence).where(
+        PedigreeSampleIdentityEvidence.binding_id == binding_id,
+    )).all()
+    superseded_ids = {
+        row.supersedes_evidence_id for row in rows if row.supersedes_evidence_id is not None
+    }
+    return [row for row in rows if row.id not in superseded_ids]
+
+
+def _require_sample_identity_evidence(db: Session, binding_id: UUID) -> list[dict]:
+    active = _active_sample_identity_evidence(db, binding_id)
+    summary = []
+    for evidence_type in ("CHAIN_OF_CUSTODY", "SAMPLE_IDENTITY_QC"):
+        matching = [row for row in active if row.evidence_type == evidence_type]
+        if (
+            len(matching) != 1
+            or matching[0].review_status != "ACCEPTED"
+            or matching[0].result != "PASS"
+        ):
+            raise HTTPException(
+                409,
+                f"Binding verification requires exactly one reviewer-accepted PASS {evidence_type} record",
+            )
+        row = matching[0]
+        summary.append({
+            "evidence_type": row.evidence_type,
+            "result": row.result,
+            "method": row.method,
+            "method_version": row.method_version,
+            "evidence_reference": row.evidence_reference,
+            "evidence_fingerprint": row.evidence_fingerprint,
+            "review_status": row.review_status,
+            "reviewed_by": str(row.reviewed_by),
+            "reviewed_at": row.reviewed_at.isoformat() if row.reviewed_at else None,
+        })
+    return summary
+
+
+@router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence", status_code=201)
+def create_sample_identity_evidence(
+    case_id: UUID,
+    binding_id: UUID,
+    body: SampleIdentityEvidenceInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Record immutable laboratory chain-of-custody or sample-identity QC evidence."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    binding = db.get(PedigreeSampleBinding, binding_id)
+    if binding is None or binding.case_id != case_id:
+        raise HTTPException(404, "Sample binding not found")
+    if binding.binding_status != "UNVERIFIED":
+        raise HTTPException(409, "Identity evidence can only be attached to an unverified binding")
+    successor = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == binding.id,
+    ))
+    if successor is not None:
+        raise HTTPException(409, "Cannot add evidence to a superseded sample binding")
+    if body.source_artifact_id is not None:
+        evidence_artifact = db.get(Artifact, body.source_artifact_id)
+        if evidence_artifact is None or evidence_artifact.case_id != case_id:
+            raise HTTPException(404, "Identity evidence artifact not found in this case")
+
+    payload = {
+        "schema_version": 1, "case_id": str(case_id), "binding_id": str(binding.id),
+        "evidence_type": body.evidence_type, "result": body.result,
+        "method": body.method.strip(), "method_version": body.method_version.strip(),
+        "evidence_reference": body.evidence_reference.strip(),
+        "source_artifact_id": str(body.source_artifact_id) if body.source_artifact_id else None,
+        "metrics": body.metrics, "review_status": "PENDING", "version": 1,
+        "supersedes_evidence_id": None,
+    }
+    evidence_fingerprint = _sample_identity_evidence_fingerprint(payload)
+    existing = db.scalar(select(PedigreeSampleIdentityEvidence).where(
+        PedigreeSampleIdentityEvidence.case_id == case_id,
+        PedigreeSampleIdentityEvidence.evidence_fingerprint == evidence_fingerprint,
+    ))
+    if existing is not None:
+        return _sample_identity_evidence_payload(existing)
+    row = PedigreeSampleIdentityEvidence(
+        id=uuid4(), case_id=case_id, binding_id=binding.id,
+        evidence_type=body.evidence_type, result=body.result,
+        method=body.method.strip(), method_version=body.method_version.strip(),
+        evidence_reference=body.evidence_reference.strip(),
+        source_artifact_id=body.source_artifact_id, metrics_json=body.metrics,
+        review_status="PENDING", version=1, evidence_fingerprint=evidence_fingerprint,
+        recorded_by=principal.user_id,
+    )
+    db.add(row)
+    AuditService(db).record(
+        event_type="PEDIGREE_SAMPLE_IDENTITY_EVIDENCE_RECORDED", case_id=case_id,
+        analysis_id=binding.analysis_id, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PEDIGREE_SAMPLE_IDENTITY_EVIDENCE", subject_id=str(row.id),
+        operation="CREATE_PENDING", after_state=_sample_identity_evidence_payload(row),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason="Laboratory sample identity evidence changed; dependent analyses may require reanalysis.",
+        metadata={"change_type": "SAMPLE_IDENTITY_EVIDENCE_RECORDED", "evidence_id": str(row.id)},
+    )
+    db.commit()
+    return _sample_identity_evidence_payload(row)
+
+
+@router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/identity-evidence/{evidence_id}/review", status_code=201)
+def review_sample_identity_evidence(
+    case_id: UUID,
+    binding_id: UUID,
+    evidence_id: UUID,
+    body: SampleIdentityEvidenceReviewInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    """Append reviewer acceptance/rejection of laboratory identity evidence."""
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "review")
+    require_role(principal, REVIEW_ROLES)
+    binding = db.get(PedigreeSampleBinding, binding_id)
+    if binding is None or binding.case_id != case_id:
+        raise HTTPException(404, "Sample binding not found")
+    previous = db.get(PedigreeSampleIdentityEvidence, evidence_id)
+    if previous is None or previous.case_id != case_id or previous.binding_id != binding_id:
+        raise HTTPException(404, "Identity evidence not found for this binding")
+    if previous.review_status != "PENDING":
+        raise HTTPException(409, "Only pending identity evidence can be reviewed")
+    prior_revision = db.scalar(select(PedigreeSampleIdentityEvidence).where(
+        PedigreeSampleIdentityEvidence.supersedes_evidence_id == previous.id,
+    ))
+    if prior_revision is not None:
+        if prior_revision.review_status == body.decision and prior_revision.review_reason == body.reason.strip():
+            return _sample_identity_evidence_payload(prior_revision)
+        raise HTTPException(409, "This identity evidence already has a conflicting review revision")
+
+    payload = {
+        "schema_version": 1, "case_id": str(previous.case_id), "binding_id": str(previous.binding_id),
+        "evidence_type": previous.evidence_type, "result": previous.result,
+        "method": previous.method, "method_version": previous.method_version,
+        "evidence_reference": previous.evidence_reference,
+        "source_artifact_id": str(previous.source_artifact_id) if previous.source_artifact_id else None,
+        "metrics": previous.metrics_json or {}, "review_status": body.decision,
+        "review_reason": body.reason.strip(), "version": previous.version + 1,
+        "supersedes_evidence_id": str(previous.id),
+    }
+    row = PedigreeSampleIdentityEvidence(
+        id=uuid4(), case_id=previous.case_id, binding_id=previous.binding_id,
+        evidence_type=previous.evidence_type, result=previous.result,
+        method=previous.method, method_version=previous.method_version,
+        evidence_reference=previous.evidence_reference, source_artifact_id=previous.source_artifact_id,
+        metrics_json=previous.metrics_json or {}, review_status=body.decision,
+        review_reason=body.reason.strip(), version=previous.version + 1,
+        supersedes_evidence_id=previous.id,
+        evidence_fingerprint=_sample_identity_evidence_fingerprint(payload),
+        recorded_by=principal.user_id, reviewed_by=principal.user_id,
+        reviewed_at=datetime.now(UTC),
+    )
+    db.add(row)
+    AuditService(db).record(
+        event_type="PEDIGREE_SAMPLE_IDENTITY_EVIDENCE_REVIEWED", case_id=case_id,
+        analysis_id=binding.analysis_id, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="PEDIGREE_SAMPLE_IDENTITY_EVIDENCE", subject_id=str(row.id),
+        operation=body.decision, before_state=_sample_identity_evidence_payload(previous),
+        after_state=_sample_identity_evidence_payload(row), reason=body.reason.strip(),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason="Laboratory sample identity evidence review changed; dependent analyses may require reanalysis.",
+        metadata={"change_type": "SAMPLE_IDENTITY_EVIDENCE_REVIEWED", "evidence_id": str(row.id)},
+    )
+    db.commit()
+    return _sample_identity_evidence_payload(row)
+
+
 @router.post("/cases/{case_id}/pedigree/sample-bindings/{binding_id}/review", status_code=201)
 def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingReviewInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     """Append a reviewed identity revision; never mutate the prior claim."""
