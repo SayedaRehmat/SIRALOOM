@@ -602,7 +602,7 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
 ### 17.2 Output and decomposition
 
 - All 75 input source-line candidates have at least one mapped provisional requirement record in the crosswalk.
-- The supplemental registry contains 139 requirement records, each with a provisional ID in the `VCF-REQ-900001`–`VCF-REQ-900139` range. These identifiers are not canonical allocations.
+- The supplemental registry contains 141 requirement records, each with a provisional ID in the `VCF-REQ-900001`–`VCF-REQ-900141` range. These identifiers are not canonical allocations.
 - Clearly compound clauses were split by independently verifiable behavior and/or distinct modality. Examples include:
   - unstructured metadata grammar and value constraints;
   - structured metadata ID presence and uniqueness;
@@ -612,13 +612,13 @@ At the latest branch comparison, the research branch is 280 commits ahead and 3 
   - REF/ALT padding conditions and symbolic-allele exceptions;
   - symbolic SV type/subtype enumerations and tag suffix conventions;
   - computed END as the maximum across the REF, symbolic-SV/SVLEN, and <*>/FORMAT-LEN endpoints;
-  - conditional CNV and tandem-repeat recommendations and requirements.
+  - conditional CNV and tandem-repeat recommendations and requirements, including separate CIPOS/CILEN uncertainty obligations and POS/SVLEN catalog-matching recommendations.
 - Adjacent source clauses needed to preserve full semantics were explicitly included where identified, including lines 404, 610, 846 and the source continuation ranges for symbolic SV types, subtype recommendations, tag suffix conventions and END.
 - Every record has a VCFv4.5 pinned-source reference with line-range locator, source revision, blob SHA-1 and SHA-256. VCFv4.0–4.4 applicability remains UNRESOLVED rather than inferred from VCFv4.5.
 
 ### 17.3 Validation boundary
 
-- A structural contract check against the fetched ledger schema found 139 unique requirement IDs, all schema-required requirement fields present, no unexpected root/requirement properties, valid enumerated values, six version-applicability entries per record, valid source digest formats and ordered integer source line locators.
+- A structural contract check against the fetched ledger schema found 141 unique requirement IDs, all schema-required requirement fields present, no unexpected root/requirement properties, valid enumerated values, six version-applicability entries per record, valid source digest formats and ordered integer source line locators.
 - All 75 worklist candidates are mapped; zero are unmapped.
 - This was a programmatic structural/schema-contract check, not execution of a full JSON Schema 2020-12 validator. Formal JSON Schema validation remains required before promotion.
 - The records remain IN_REVIEW; independent second review has not occurred. No duplicate reconciliation against the 226 canonical requirements or the 61 GT/FORMAT candidates has yet been completed.
