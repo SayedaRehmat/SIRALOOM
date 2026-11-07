@@ -126,6 +126,7 @@ The validator's genotype-order generator and index mapping implement this orderi
 The following issues remain outside a claim of complete GT qualification:
 
 - The local GT/LAA example contradiction above requires adjudication.
+- The exact positional correspondence interpretation for PSQ/PSO relative to PSL remains provisional. The validator enforces Number=P cardinality, PSL presence dependencies and MISSING alignment, but does not claim that this resolves every positional interpretation in the specification.
 - The full GT/PS/PSL/PSO/PSQ rule set still requires an independent row-by-row standards review across all VCF versions.
 - Conformance tests establish implemented cases, not exhaustive proof for every mixed-ploidy, partial-phase and missing-value combination.
 
