@@ -85,3 +85,19 @@ def test_vcf45_local_field_and_missing_laa_values_can_both_be_missing(
         sample="0/0:.:.",
     )
     assert validate_vcf_strict(path)["records"] == 1
+
+
+
+def test_vcf45_empty_laa_text_value_is_ref_only_as_in_spec_example(tmp_path: Path):
+    path = tmp_path / "laa-empty-vector-spec-example.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=LAA,Number=.,Type=Integer,Description="Local ALT indices">\n'
+        '##FORMAT=<ID=LAD,Number=LR,Type=Integer,Description="Local allele depths">\n'
+        '##FORMAT=<ID=LPL,Number=LG,Type=Integer,Description="Local genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t2\t.\tG\tA,T,<*>\t.\tPASS\t.\tGT:LAA:LAD:LPL\t0/0::30:0\n",
+        encoding="utf-8",
+    )
+    assert validate_vcf_strict(path)["records"] == 1
