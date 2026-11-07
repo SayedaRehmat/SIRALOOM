@@ -705,6 +705,7 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         calls = get_analysis_sample_calls(db, previous.analysis_id)
         if not any(call.get("sample_name") == previous.sample_name for call in calls.values()):
             raise HTTPException(409, "No normalized calls contain the analysis-selected VCF sample")
+        accepted_identity_evidence = _require_sample_identity_evidence(db, previous.id)
     version = previous.version + 1
     payload = {
         "schema_version": 1, "case_id": str(previous.case_id),
@@ -732,6 +733,7 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
         subject_type="PEDIGREE_SAMPLE_BINDING", subject_id=str(row.id),
         operation=body.decision, before_state=_sample_binding_payload(previous),
         after_state=_sample_binding_payload(row), reason=body.reason.strip(),
+        payload={"accepted_identity_evidence": accepted_identity_evidence} if body.decision == "VERIFIED" else {},
     )
     create_case_change_candidates(
         db, case=case, trigger_type="PEDIGREE_UPDATE",
@@ -824,6 +826,7 @@ def get_family_genotype_matrix(
         calls = get_analysis_sample_calls(db, analysis.id)
         if not calls or any(call.get("sample_name") != binding.sample_name for call in calls.values()):
             raise HTTPException(409, "Normalized sample calls do not consistently identify the selected VCF sample")
+        identity_evidence = _require_sample_identity_evidence(db, binding.id)
         for variant in variants.values():
             if variant.genome_build != analysis.reference_build:
                 raise HTTPException(409, "Requested variant assembly does not match every selected family analysis")
@@ -861,6 +864,7 @@ def get_family_genotype_matrix(
             "normalization_step_status": normalization_step.status,
             "normalized_partition_count": len(partitions),
             "ploidy_evidence": ploidy_evidence,
+            "identity_evidence": identity_evidence,
             "calls": calls,
         })
 
