@@ -46,6 +46,20 @@ jobs:
           GNOMAD_ENABLED: "false"
           FIREBASE_AUTH_REQUIRED: "false"
         run: uv run --locked pytest -q
+      - name: Targeted PSO/BND and derivative traversal regressions
+        env:
+          DATABASE_URL: sqlite:///./ci.db
+          REDIS_URL: redis://localhost:6379/0
+          GENEBE_ENABLED: "false"
+          GNOMAD_ENABLED: "false"
+          FIREBASE_AUTH_REQUIRED: "false"
+        run: >-
+          uv run --locked pytest -q
+          tests/test_vcf44_breakend_phase_conformance.py
+          tests/test_vcf44_phase_set_conformance.py
+          tests/test_vcf45_phase_set_positional_semantics.py
+          tests/test_vcf_validation.py
+          -k "breakend or phase_set or pso or psl"
       - name: Complete VCFv4.0 conformance suite
         env:
           DATABASE_URL: sqlite:///./ci.db
