@@ -83,6 +83,12 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
         def __init__(self):
             self.rows = [[proband, father], [relationship]]
 
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
         def scalars(self, _query):
             return self.rows.pop(0)
 
@@ -384,6 +390,12 @@ def test_assessment_api_persists_neutral_review_state_without_a_score(monkeypatc
             self.added = []
             self.committed = False
 
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
         def scalars(self, _query):
             return self.rows.pop(0)
 
@@ -483,6 +495,12 @@ def test_identical_inheritance_assessment_retry_reuses_rows_and_does_not_duplica
             self.scalar_results = [assessment, evidence]
             self.added = []
             self.committed = False
+
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
 
         def scalars(self, _query):
             return self.rows.pop(0)
@@ -649,6 +667,12 @@ def test_inheritance_assessment_binds_verified_family_matrix_fingerprint_and_sta
             self.added = []
             self.committed = False
 
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
         def scalars(self, _query):
             return self.rows.pop(0)
 
@@ -714,6 +738,12 @@ def test_inheritance_assessment_rejects_matrix_without_target_proband_binding(mo
     analysis = SimpleNamespace(id=analysis_id, case_id=case_id)
 
     class FakeDb:
+        def get(self, _model, object_id, **_kwargs):
+            return SimpleNamespace(id=object_id)
+
+        def refresh(self, *_args, **_kwargs):
+            pass
+
         def scalars(self, _query):
             return []
 
