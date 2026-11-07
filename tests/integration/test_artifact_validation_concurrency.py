@@ -39,7 +39,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
     engine = create_engine(database_url, pool_pre_ping=True)
     SessionFactory = sessionmaker(bind=engine, expire_on_commit=False)
     organization_id, user_id, case_id, specimen_id = (uuid4() for _ in range(4))
-    artifact_ids = [uuid4(), uuid4()]
+    artifact_ids: list = []
     artifact_root = tmp_path / "artifact-store"
     scratch_root = tmp_path / "worker-scratch"
     store = ArtifactStore(artifact_root)
@@ -117,7 +117,7 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
             db.commit()
 
         with Session(engine) as db:
-            for artifact_id, source in zip(artifact_ids, source_paths):
+            for source in source_paths:
                 artifact = store.put_file(
                     db=db,
                     case_id=case_id,
@@ -130,8 +130,8 @@ def test_concurrent_vcf_validation_serializes_case_intake_refresh(
                     metadata={"ingestion": {"file_kind": "VCF"}},
                     validation_status="PENDING",
                 )
-                artifact.id = artifact_id
                 artifact.specimen_id = specimen_id
+                artifact_ids.append(artifact.id)
             db.commit()
 
         with ThreadPoolExecutor(max_workers=2) as pool:
