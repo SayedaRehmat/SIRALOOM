@@ -44,7 +44,8 @@ def test_vcf44_reciprocal_breakend_phase_vectors_accept_matching_values(tmp_path
     )
     assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 3]
     assert [event["event_kind"] for event in traversal["ordered_events"]] == [
-        "RECIPROCAL_BREAKEND_EVENT",
+        "ORDINAL_TIE_UNRESOLVED",
         "RECIPROCAL_BREAKEND_EVENT",
     ]
     assert [len(event["occurrences"]) for event in traversal["ordered_events"]] == [2, 2]
+    assert traversal["traversal_status"] == "UNRESOLVED_ORDINAL_TIES"
