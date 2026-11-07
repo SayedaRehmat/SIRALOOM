@@ -15,6 +15,7 @@ def test_complex_reciprocal_translocation_reconstructs_pso_event_order_and_four_
     path = tmp_path / f"{version}-complex-reciprocal-translocation.vcf"
     path.write_text(
         f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
         '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
         '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
         '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
@@ -74,10 +75,11 @@ def test_multiallelic_mate_record_with_indistinguishable_reciprocal_alts_is_unre
     path = tmp_path / "ambiguous-multiallelic-mate-record.vcf"
     path.write_text(
         "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
         '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tMATEID=bnd2\n"
-        "2\t10\tbnd2\tA\tA]1:5],C]1:5]\t.\tPASS\tMATEID=bnd1,bnd1\n",
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2\n"
+        "2\t10\tbnd2\tA\tA]1:5],C]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1,bnd1\n",
         encoding="utf-8",
     )
 
@@ -93,11 +95,12 @@ def test_paired_breakend_without_mateid_returns_durable_unresolved_adjacency(
     path = tmp_path / "paired-breakend-without-mateid.vcf"
     path.write_text(
         "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
         '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
         '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
-        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\t.\tGT:PSL:PSO\t0|1:.,phase:.,1\n",
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND\tGT:PSL:PSO\t0|1:.,phase:.,1\n",
         encoding="utf-8",
     )
 
