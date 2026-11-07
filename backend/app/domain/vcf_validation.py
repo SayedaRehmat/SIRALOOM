@@ -385,6 +385,19 @@ def _reserved_vcf45_info_definition(field_id: str) -> dict[str, str] | None:
         "PARID": ("A", "String"),
         "EVENT": ("A", "String"),
         "EVENTTYPE": ("A", "String"),
+        # VCFv4.5 tandem-repeat and additional SV INFO definitions.
+        "CILEN": (".", "Integer"),
+        "CN": ("A", "Float"),
+        "CICN": (".", "Float"),
+        "SVCLAIM": ("A", "String"),
+        "RN": ("A", "Integer"),
+        "RUS": (".", "String"),
+        "RUL": (".", "Integer"),
+        "RUC": (".", "Float"),
+        "RB": (".", "Integer"),
+        "CIRUC": (".", "Float"),
+        "CIRB": (".", "Integer"),
+        "RUB": (".", "Integer"),
     }
     definition = reserved.get(field_id)
     if definition is None:
