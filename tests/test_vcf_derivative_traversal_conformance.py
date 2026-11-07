@@ -229,3 +229,98 @@ def test_single_breakend_is_preserved_as_unresolved_without_mate_across_versions
         "VCF_DERIVATIVE_SINGLE_BREAKEND_HAS_NO_MATE"
     )
     assert result["breakend_adjacencies"] == []
+
+
+@pytest.mark.parametrize(
+    "version", ["VCFv4.1", "VCFv4.2", "VCFv4.3", "VCFv4.4", "VCFv4.5"]
+)
+def test_parid_partner_edges_are_distinct_from_mate_adjacencies_across_versions(
+    tmp_path: Path, version: str
+):
+    path = tmp_path / f"{version}-parid-partner-graph.vcf"
+    header = (
+        f"##fileformat={version}\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=PARID,Number=A,Type=String,Description="ID of partner breakend">\n'
+        '##INFO=<ID=EVENT,Number=A,Type=String,Description="ID of associated event">\n'
+        '##INFO=<ID=EVENTTYPE,Number=A,Type=String,Description="Type of associated event">\n'
+    )
+    if version in {"VCFv4.4", "VCFv4.5"}:
+        header += (
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+            '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\n'
+            '##FORMAT=<ID=PSO,Number=P,Type=Integer,Description="Phase set ordinals">\n'
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        )
+        sample_v = "\tGT:PSL:PSO\t0|1:.,phase:.,2"
+        sample_u = "\tGT:PSL:PSO\t0|1:.,phase:.,2"
+        sample_x = "\tGT:PSL:PSO\t0|1:.,phase:.,3"
+        sample_y = "\tGT:PSL:PSO\t0|1:.,phase:.,3"
+    else:
+        header += "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        sample_v = sample_u = sample_x = sample_y = ""
+
+    common = ";EVENT=TRA1;EVENTTYPE=TRA:BALANCED"
+    path.write_text(
+        header
+        + "2\t321682\tbndV\tT\tT]13:123456]\t.\tPASS\tSVTYPE=BND;MATEID=bndU;PARID=bndX"
+        + common + sample_v + "\n"
+        + "13\t123456\tbndU\tC\tC[2:321682[\t.\tPASS\tSVTYPE=BND;MATEID=bndV;PARID=bndY"
+        + common + sample_u + "\n"
+        + "2\t321681\tbndX\tG\tG[13:123457[\t.\tPASS\tSVTYPE=BND;MATEID=bndY;PARID=bndV"
+        + common + sample_x + "\n"
+        + "13\t123457\tbndY\tA\t]2:321681]A\t.\tPASS\tSVTYPE=BND;MATEID=bndX;PARID=bndU"
+        + common + sample_y + "\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert len(result["breakend_adjacencies"]) == 2
+    assert len(result["breakend_partner_links"]) == 2
+    assert len(result["unresolved_breakend_partner_links"]) == 0
+    event_group = result["breakend_event_groups"][0]
+    assert event_group["event_id"] == "TRA1"
+    assert len(event_group["adjacency_ids"]) == 2
+    assert len(event_group["partner_link_ids"]) == 2
+
+    if version in {"VCFv4.4", "VCFv4.5"}:
+        traversal = next(
+            item for item in result["derivative_chromosome_traversals"]
+            if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
+        )
+        assert traversal["event_order_status"] == "RECONSTRUCTED"
+        assert traversal["adjacency_status"] == "COMPLETE_FOR_OBSERVED_BREAKEND_RELATIONSHIPS"
+        assert traversal["derivative_graph_status"] == "CONNECTED_MATEID_PARID_GRAPH"
+        assert len(traversal["derivative_graph_nodes"]) == 4
+        assert len(traversal["derivative_graph_edges"]) == 4
+        assert len(traversal["derivative_graph_components"]) == 1
+        assert traversal["sequence_status"] == "UNRESOLVED_INSUFFICIENT_REFERENCE_SEGMENT_EVIDENCE"
+
+
+def test_nonreciprocal_parid_is_preserved_as_unresolved_partner_evidence(
+    tmp_path: Path,
+):
+    path = tmp_path / "nonreciprocal-parid.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.5\n"
+        '##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">\n'
+        '##INFO=<ID=MATEID,Number=A,Type=String,Description="ID of mate breakend">\n'
+        '##INFO=<ID=PARID,Number=A,Type=String,Description="ID of partner breakend">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "1\t5\tbnd1\tA\tA]2:10]\t.\tPASS\tSVTYPE=BND;MATEID=bnd2;PARID=bnd3\n"
+        "2\t10\tbnd2\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd1\n"
+        "3\t20\tbnd3\tA\tA]1:5]\t.\tPASS\tSVTYPE=BND;MATEID=bnd4\n"
+        "1\t30\tbnd4\tA\tA]3:20]\t.\tPASS\tSVTYPE=BND;MATEID=bnd3\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+
+    assert result["breakend_adjacencies"]
+    assert result["breakend_partner_links"] == []
+    assert result["unresolved_breakend_partner_link_count"] == 1
+    assert result["unresolved_breakend_partner_links"][0]["reason_code"] == (
+        "VCF_BREAKEND_PARID_NOT_RECIPROCAL"
+    )
