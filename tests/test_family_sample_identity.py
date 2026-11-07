@@ -709,3 +709,34 @@ def test_sample_binding_context_exposes_exact_analysis_source_and_selected_sampl
     assert result["analyses"][0]["binding_candidate_status"] == "READY"
     assert result["analyses"][0]["selected_sample_name"] == "FAM-P"
     assert result["analyses"][0]["source_vcf"]["sha256"] == "a" * 64
+
+
+def test_identity_evidence_rejects_duplicate_active_evidence_type(monkeypatch):
+    _patch_auth(monkeypatch)
+    case, member, specimen, analysis, artifact, principal = _context()
+    binding = SimpleNamespace(
+        id=uuid4(), case_id=case.id, analysis_id=analysis.id, binding_status="UNVERIFIED",
+    )
+    active = SimpleNamespace(
+        id=uuid4(), case_id=case.id, binding_id=binding.id,
+        evidence_type="SAMPLE_IDENTITY_QC", result="PASS",
+        review_status="ACCEPTED", supersedes_evidence_id=None,
+    )
+    db = _BindingDB(
+        case=case, member=member, specimen=specimen, analysis=analysis,
+        artifact=artifact, previous=binding, evidence=active,
+    )
+    db.query_rows = [[active]]
+    with pytest.raises(HTTPException) as exc:
+        pedigree.create_sample_identity_evidence(
+            case.id, binding.id,
+            pedigree.SampleIdentityEvidenceInput(
+                evidence_type="SAMPLE_IDENTITY_QC", result="PASS",
+                method="SNP_FINGERPRINT_CONCORDANCE", method_version="2",
+                evidence_reference="IDENTITY-QC-REPORT-2",
+            ),
+            db, principal,
+        )
+    assert exc.value.status_code == 409
+    assert "append a correction" in exc.value.detail
+    assert db.added == []
