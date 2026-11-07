@@ -74,6 +74,18 @@ class ExecutionEnvironmentProfile:
     qualification_status: str = "DISCOVERED"
 
     def validate(self) -> None:
+        if self.owner_scope not in {"SIRALOOM", "LABORATORY"}:
+            raise ExecutionEnvironmentError("Unknown execution environment owner scope.")
+        if self.executor_kind not in {"LOCAL_PROCESS", "CONTAINER", "REMOTE_AGENT"}:
+            raise ExecutionEnvironmentError("Unknown execution environment executor kind.")
+        if self.scheduler not in {"NONE", "DOCKER_COMPOSE", "KUBERNETES", "SLURM"}:
+            raise ExecutionEnvironmentError("Unknown execution environment scheduler.")
+        if self.runtime_kind not in {"HOST", "DOCKER", "PODMAN", "OCI"}:
+            raise ExecutionEnvironmentError("Unknown execution environment runtime kind.")
+        if self.network_policy not in {"OFFLINE", "ALLOWLISTED_EGRESS"}:
+            raise ExecutionEnvironmentError("Unknown execution environment network policy.")
+        if self.executor_kind == "CONTAINER" and self.runtime_kind == "HOST":
+            raise ExecutionEnvironmentError("Container execution requires a container runtime.")
         required = {
             "environment_id": self.environment_id,
             "profile_version": self.profile_version,
@@ -165,9 +177,9 @@ class ExecutionEnvironmentProfile:
             raise ExecutionEnvironmentError(
                 f"Tool platform {tool.platform!r} does not match environment platform {self.platform!r}."
             )
-        if self.runtime_image_digest is not None and tool.runtime_image_digest != self.runtime_image_digest:
+        if tool.runtime_image_digest != self.runtime_image_digest:
             raise ExecutionEnvironmentError(
-                "Tool runtime image digest does not match the qualified environment image."
+                "Tool runtime image digest does not exactly match the qualified environment runtime."
             )
 
     def snapshot(self) -> dict:
