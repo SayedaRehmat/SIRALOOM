@@ -2212,22 +2212,7 @@ def validate_vcf_strict(
                 _validate_vcf45_structural_info(info_values, alts, line_no)
             event_values = info_values.get("EVENT", "").split(",")
             event_type_values = info_values.get("EVENTTYPE", "").split(",")
-            event_by_alt = {
-                alt_index: value
-                for alt_index, value in enumerate(event_values)
-                if value not in {"", "."}
-            }
-            event_type_by_alt = {
-                alt_index: value
-                for alt_index, value in enumerate(event_type_values)
-                if value not in {"", "."}
-            }
             parid_values = info_values.get("PARID", "").split(",")
-            parid_by_alt = {
-                alt_index: value
-                for alt_index, value in enumerate(parid_values)
-                if value not in {"", "."}
-            }
             breakend_alt_indexes = [
                 alt_index for alt_index, alt in enumerate(alts)
                 if "[" in alt or "]" in alt
@@ -2293,6 +2278,44 @@ def validate_vcf_strict(
                     *breakend_alt_indexes,
                     *single_breakend_alt_indexes,
                 ]
+                if fileformat in {"VCFv4.1", "VCFv4.2", "VCFv4.3"}:
+                    # VCFv4.1-v4.3 define EVENT and PARID as record-level
+                    # Number=1 values. Apply the single value to each
+                    # breakend ALT on the record; do not treat it as a
+                    # Number=A vector.
+                    event_by_alt = (
+                        {
+                            alt_index: event_values[0]
+                            for alt_index in all_breakend_alt_indexes
+                        }
+                        if event_values and event_values[0] not in {"", "."}
+                        else {}
+                    )
+                    parid_by_alt = (
+                        {
+                            alt_index: parid_values[0]
+                            for alt_index in all_breakend_alt_indexes
+                        }
+                        if parid_values and parid_values[0] not in {"", "."}
+                        else {}
+                    )
+                    event_type_by_alt = {}
+                else:
+                    event_by_alt = {
+                        alt_index: value
+                        for alt_index, value in enumerate(event_values)
+                        if value not in {"", "."}
+                    }
+                    event_type_by_alt = {
+                        alt_index: value
+                        for alt_index, value in enumerate(event_type_values)
+                        if value not in {"", "."}
+                    }
+                    parid_by_alt = {
+                        alt_index: value
+                        for alt_index, value in enumerate(parid_values)
+                        if value not in {"", "."}
+                    }
                 if parid_by_alt and not record_ids:
                     for alt_index, parid in parid_by_alt.items():
                         if alt_index in all_breakend_alt_indexes:
