@@ -55,3 +55,17 @@ def test_vcf44_mateid_number_a_requires_one_entry_per_alt(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_INFO_CARDINALITY_INVALID"
+
+
+def test_vcf44_format_number_p_requires_gt_to_establish_ploidy(tmp_path: Path):
+    path = tmp_path / "vcf44-number-p-without-gt.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\n"
+        '##FORMAT=<ID=ALLELE_PHASE,Number=P,Type=String,Description="Per-allele phase annotation">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tALLELE_PHASE\tfirst,second\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FIELD_CARDINALITY_INVALID"
