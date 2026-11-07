@@ -291,31 +291,32 @@ class VEPProvider(ScientificResourceProvider):
                     )
                 execution_record_id = None
                 try:
-                    # Start VEP in its own process group so a timeout can terminate
-                # the entire local toolchain, not merely the immediate process.
-                # This prevents an expired workflow lease from leaving a child VEP
-                # process running indefinitely after SIRALOOM has abandoned it.
-                completed = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
-                )
-                try:
-                    stdout, stderr = completed.communicate(timeout=300)
-                except subprocess.TimeoutExpired as exc:
+                    # Preserve process-group termination for the legacy unregistered
+                    # execution mode. Qualified lab workflows use the common executor.
+                    completed = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        start_new_session=True,
+                    )
                     try:
-                        os.killpg(completed.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    completed.wait()
-                    raise VEPProviderError("VEP execution timed out and its process group was terminated.", retryable=True) from exc
-            except FileNotFoundError as exc:
-                raise VEPProviderError(
-                    f"VEP executable was not found: {self.binary}",
-                    retryable=False,
-                ) from exc
+                        stdout, stderr = completed.communicate(timeout=300)
+                    except subprocess.TimeoutExpired as exc:
+                        try:
+                            os.killpg(completed.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        completed.wait()
+                        raise VEPProviderError(
+                            "VEP execution timed out and its process group was terminated.",
+                            retryable=True,
+                        ) from exc
+                except FileNotFoundError as exc:
+                    raise VEPProviderError(
+                        f"VEP executable was not found: {self.binary}",
+                        retryable=False,
+                    ) from exc
                 except subprocess.TimeoutExpired as exc:
                     raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
 
