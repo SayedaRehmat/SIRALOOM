@@ -833,6 +833,7 @@ class PedigreeSampleBinding(Base):
     specimen_id: Mapped[UUID] = mapped_column(ForeignKey("specimens.id"), nullable=False)
     analysis_id: Mapped[UUID] = mapped_column(ForeignKey("analyses.id"), nullable=False)
     artifact_id: Mapped[UUID] = mapped_column(ForeignKey("artifacts.id"), nullable=False)
+    source_artifact_sha256: Mapped[str] = mapped_column(Text, nullable=False)
     sample_name: Mapped[str] = mapped_column(Text, nullable=False)
     binding_status: Mapped[str] = mapped_column(Text, nullable=False, default="UNVERIFIED")
     binding_method: Mapped[str] = mapped_column(Text, nullable=False)
