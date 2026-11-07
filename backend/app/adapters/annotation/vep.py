@@ -98,7 +98,10 @@ class VEPProvider(ScientificResourceProvider):
         }
         self.execution_timeout_seconds = int(toolchain.get("execution_timeout_seconds") or 1800)
         self.max_output_bytes = int(toolchain.get("max_output_bytes") or 65536)
-        self.scratch_root = str(toolchain.get("scratch_root") or settings.worker_scratch_root)
+        self.scratch_root = str(settings.worker_scratch_root)
+        configured_scratch_root = str(toolchain.get("scratch_root") or self.scratch_root)
+        if Path(configured_scratch_root).resolve(strict=False) != Path(self.scratch_root).resolve(strict=False):
+            raise VEPProviderError("VEP tool profile scratch_root must match the governed worker scratch root.")
         self.extra_args = [str(x) for x in (toolchain.get("extra_args") or [])]
         self._runtime_checks: dict[str, dict[str, Any]] = {}
         self._tool_identity_cache: ToolIdentity | None = None
@@ -660,8 +663,14 @@ class VEPProvider(ScientificResourceProvider):
         try:
             normalized = self.normalize_result(raw, inputs=request.payload)
         except VEPProviderError as exc:
-            if exc.execution_provenance is None:
-                exc.execution_provenance = raw.metadata.get("tool_execution_provenance")
+            failure_provenance = dict(exc.execution_provenance or {})
+            failure_provenance.update({
+                "raw_response_path": raw.metadata.get("raw_response_path"),
+                "workspace_path": raw.metadata.get("workspace_path"),
+                "raw_response_sha256": raw.response_sha256,
+                "tool_execution_provenance": raw.metadata.get("tool_execution_provenance"),
+            })
+            exc.execution_provenance = failure_provenance
             raise
         return list(normalized.observations)
 
