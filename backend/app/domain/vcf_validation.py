@@ -20,13 +20,12 @@ BREAKEND_RE = re.compile(
     r"^(?:[ACGTNacgtn.]+(?P<left>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=left)|"
     r"(?P<right>[\[\]])[^:\[\]\s]+:[1-9][0-9]*(?P=right)[ACGTNacgtn.]+)$"
 )
+SINGLE_BREAKEND_RE = re.compile(r"^(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)$")
 
 
 def _is_vcf45_breakend_alt(allele: str) -> bool:
     """Identify paired and single VCFv4.5 breakpoint-notation alleles."""
-    return "[" in allele or "]" in allele or bool(
-        re.fullmatch(r"(?:\.[ACGTNacgtn]+|[ACGTNacgtn]+\.)", allele)
-    )
+    return "[" in allele or "]" in allele or bool(SINGLE_BREAKEND_RE.fullmatch(allele))
 
 
 def _is_vcf45_sv_or_breakend_alt(allele: str) -> bool:
@@ -55,6 +54,8 @@ def _alt_identity_key(allele: str) -> tuple[str, ...]:
     """Return VCF allele identity while respecting sequence and contig case rules."""
     if DNA_RE.fullmatch(allele):
         return ("SEQUENCE", allele.upper())
+    if SINGLE_BREAKEND_RE.fullmatch(allele):
+        return ("SINGLE_BREAKEND", allele.upper())
     if BREAKEND_RE.fullmatch(allele):
         if allele[0] in "[]":
             bracket = allele[0]
@@ -1550,12 +1551,12 @@ def _validate_record(
         []
         if raw_alts == ["."]
         else [
-            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) else allele
+            allele.upper() if re.fullmatch(r"[ACGTNacgtn]+", allele) or SINGLE_BREAKEND_RE.fullmatch(allele) else allele
             for allele in raw_alts
         ]
     )
     if any(
-        not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and a != "*"
+        not DNA_RE.fullmatch(a) and not SYMBOLIC_RE.fullmatch(a) and not BREAKEND_RE.fullmatch(a) and not SINGLE_BREAKEND_RE.fullmatch(a) and a != "*"
         for a in alts
     ):
         raise StrictVCFValidationError(f"Malformed ALT at line {line_no}: {alt!r}", code="VCF_ALT_INVALID")
