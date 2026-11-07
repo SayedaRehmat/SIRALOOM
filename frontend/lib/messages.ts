@@ -962,7 +962,52 @@ export type TranslationKey =
   | "review.reviewDisposition"
   | "review.doNotReport"
   | "review.notDetermined"
-  | "reports.validationDisclaimer";
+  | "familyIdentity.title"
+  | "familyIdentity.description"
+  | "familyIdentity.biologicalWarning"
+  | "familyIdentity.member"
+  | "familyIdentity.specimen"
+  | "familyIdentity.analysis"
+  | "familyIdentity.sampleColumn"
+  | "familyIdentity.sourceVcf"
+  | "familyIdentity.sourceDigest"
+  | "familyIdentity.bindingMethod"
+  | "familyIdentity.evidenceReference"
+  | "familyIdentity.createBinding"
+  | "familyIdentity.createSuccessor"
+  | "familyIdentity.bindings"
+  | "familyIdentity.noBindings"
+  | "familyIdentity.identityEvidence"
+  | "familyIdentity.evidenceType"
+  | "familyIdentity.chainOfCustody"
+  | "familyIdentity.sampleIdentityQc"
+  | "familyIdentity.result"
+  | "familyIdentity.method"
+  | "familyIdentity.methodVersion"
+  | "familyIdentity.evidenceRef"
+  | "familyIdentity.addEvidence"
+  | "familyIdentity.reviewReason"
+  | "familyIdentity.accept"
+  | "familyIdentity.reject"
+  | "familyIdentity.verify"
+  | "familyIdentity.rejectBinding"
+  | "familyIdentity.refresh"
+  | "familyIdentity.loading"
+  | "familyIdentity.saving"
+  | "familyIdentity.unverified"
+  | "familyIdentity.noEvidence"
+  | "familyIdentity.errorLoad"
+  | "familyIdentity.errorAction"
+  | "familyIdentity.readOnlyRole"
+  | "familyIdentity.pendingReview"
+  | "familyIdentity.correctEvidence"
+  | "familyIdentity.normalizationStatus"
+  | "familyIdentity.revision"
+  | "familyIdentity.bindingStatus"
+  | "familyIdentity.evidenceStatus"
+  | "familyIdentity.noAnalysisCandidates"
+  | "familyIdentity.selectedSampleMissing"
+  | "familyIdentity.independentReviewer";
 
 
 export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> = {
@@ -1921,6 +1966,52 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.usedStorage": "Used",
     "resources.freeStorage": "Free",
     "resources.storageWritable": "Writable",
+    "familyIdentity.title": "Family sample identity",
+    "familyIdentity.description": "Record and review the exact family-member, specimen, analysis, source VCF and VCF sample-column association. Identity evidence is separately reviewed.",
+    "familyIdentity.biologicalWarning": "An accepted sample-column association is not proof of biological identity, parentage or relatedness. Do not infer family relationships from names, ethnicity or the sample label.",
+    "familyIdentity.member": "Family member",
+    "familyIdentity.specimen": "Specimen",
+    "familyIdentity.analysis": "Analysis",
+    "familyIdentity.sampleColumn": "Exact VCF sample column",
+    "familyIdentity.sourceVcf": "Source VCF",
+    "familyIdentity.sourceDigest": "Source VCF SHA-256",
+    "familyIdentity.bindingMethod": "Binding method",
+    "familyIdentity.evidenceReference": "Laboratory accession / evidence reference",
+    "familyIdentity.createBinding": "Record unverified binding",
+    "familyIdentity.createSuccessor": "Append corrected binding revision",
+    "familyIdentity.bindings": "Sample bindings",
+    "familyIdentity.noBindings": "No sample bindings recorded.",
+    "familyIdentity.identityEvidence": "Identity and chain-of-custody evidence",
+    "familyIdentity.evidenceType": "Evidence type",
+    "familyIdentity.chainOfCustody": "Chain of custody",
+    "familyIdentity.sampleIdentityQc": "Sample identity QC",
+    "familyIdentity.result": "Result",
+    "familyIdentity.method": "Method",
+    "familyIdentity.methodVersion": "Method version",
+    "familyIdentity.evidenceRef": "Evidence reference",
+    "familyIdentity.addEvidence": "Record evidence",
+    "familyIdentity.reviewReason": "Reviewer reason",
+    "familyIdentity.accept": "Accept",
+    "familyIdentity.reject": "Reject",
+    "familyIdentity.verify": "Verify binding",
+    "familyIdentity.rejectBinding": "Reject binding",
+    "familyIdentity.refresh": "Refresh",
+    "familyIdentity.loading": "Loading…",
+    "familyIdentity.saving": "Saving…",
+    "familyIdentity.unverified": "Unverified",
+    "familyIdentity.noEvidence": "No identity evidence recorded.",
+    "familyIdentity.errorLoad": "Unable to load family sample identity records.",
+    "familyIdentity.errorAction": "Unable to complete the identity action.",
+    "familyIdentity.readOnlyRole": "Your role is read-only for identity records.",
+    "familyIdentity.pendingReview": "Pending independent review",
+    "familyIdentity.correctEvidence": "Correct evidence (new revision)",
+    "familyIdentity.normalizationStatus": "Normalization provenance",
+    "familyIdentity.revision": "Revision",
+    "familyIdentity.bindingStatus": "Binding status",
+    "familyIdentity.evidenceStatus": "Evidence status",
+    "familyIdentity.noAnalysisCandidates": "No analysis has a selected source VCF and exact sample column.",
+    "familyIdentity.selectedSampleMissing": "The selected analysis has no exact VCF sample-column selection.",
+    "familyIdentity.independentReviewer": "An independent reviewer must review evidence and binding claims.",
   },
   ar: {
     "review.pending": "قيد الانتظار",
@@ -2877,5 +2968,51 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "resources.usedStorage": "المستخدم",
     "resources.freeStorage": "المتاح",
     "resources.storageWritable": "قابل للكتابة",
+    "familyIdentity.title": "هوية عينة الأسرة",
+    "familyIdentity.description": "سجّل وراجع الارتباط الدقيق بين فرد الأسرة والعينة والتحليل وملف VCF المصدر وعمود العينة. تتم مراجعة أدلة الهوية بشكل مستقل.",
+    "familyIdentity.biologicalWarning": "قبول ارتباط عمود العينة لا يثبت الهوية البيولوجية أو النسب أو القرابة. لا تستنتج العلاقات الأسرية من الأسماء أو الأصل أو اسم العينة.",
+    "familyIdentity.member": "فرد الأسرة",
+    "familyIdentity.specimen": "العينة",
+    "familyIdentity.analysis": "التحليل",
+    "familyIdentity.sampleColumn": "عمود عينة VCF المطابق تمامًا",
+    "familyIdentity.sourceVcf": "ملف VCF المصدر",
+    "familyIdentity.sourceDigest": "بصمة SHA-256 لملف VCF",
+    "familyIdentity.bindingMethod": "طريقة الربط",
+    "familyIdentity.evidenceReference": "رقم العينة / مرجع الدليل المخبري",
+    "familyIdentity.createBinding": "تسجيل ربط غير موثّق",
+    "familyIdentity.createSuccessor": "إضافة مراجعة تصحيحية",
+    "familyIdentity.bindings": "روابط العينات",
+    "familyIdentity.noBindings": "لم يتم تسجيل روابط عينات.",
+    "familyIdentity.identityEvidence": "أدلة الهوية وسلسلة الحيازة",
+    "familyIdentity.evidenceType": "نوع الدليل",
+    "familyIdentity.chainOfCustody": "سلسلة الحيازة",
+    "familyIdentity.sampleIdentityQc": "فحص هوية العينة",
+    "familyIdentity.result": "النتيجة",
+    "familyIdentity.method": "الطريقة",
+    "familyIdentity.methodVersion": "إصدار الطريقة",
+    "familyIdentity.evidenceRef": "مرجع الدليل",
+    "familyIdentity.addEvidence": "تسجيل الدليل",
+    "familyIdentity.reviewReason": "سبب المراجع",
+    "familyIdentity.accept": "قبول",
+    "familyIdentity.reject": "رفض",
+    "familyIdentity.verify": "توثيق الربط",
+    "familyIdentity.rejectBinding": "رفض الربط",
+    "familyIdentity.refresh": "تحديث",
+    "familyIdentity.loading": "جارٍ التحميل…",
+    "familyIdentity.saving": "جارٍ الحفظ…",
+    "familyIdentity.unverified": "غير موثّق",
+    "familyIdentity.noEvidence": "لم يتم تسجيل أدلة الهوية.",
+    "familyIdentity.errorLoad": "تعذر تحميل سجلات هوية عينات الأسرة.",
+    "familyIdentity.errorAction": "تعذر تنفيذ إجراء الهوية.",
+    "familyIdentity.readOnlyRole": "دورك للقراءة فقط في سجلات الهوية.",
+    "familyIdentity.pendingReview": "بانتظار مراجعة مستقلة",
+    "familyIdentity.correctEvidence": "تصحيح الدليل (إصدار جديد)",
+    "familyIdentity.normalizationStatus": "مصدر التطبيع",
+    "familyIdentity.revision": "الإصدار",
+    "familyIdentity.bindingStatus": "حالة الربط",
+    "familyIdentity.evidenceStatus": "حالة الدليل",
+    "familyIdentity.noAnalysisCandidates": "لا يوجد تحليل يحدد ملف VCF المصدر وعمود العينة المطابق.",
+    "familyIdentity.selectedSampleMissing": "لا يحتوي التحليل المحدد على اختيار دقيق لعمود عينة VCF.",
+    "familyIdentity.independentReviewer": "يجب أن يراجع شخص مستقل أدلة الهوية وادعاءات الربط.",
   },
 };
