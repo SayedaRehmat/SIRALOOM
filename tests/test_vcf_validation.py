@@ -2212,7 +2212,8 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
     assert exc.value.code == "VCF_CONTIG_HEADER_INVALID"
 
 
-@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])\ndef test_vcf43_plus_external_breakend_mate_contig_is_valid_syntax_but_unsupported(tmp_path: Path, version: str):
+@pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf43_plus_external_breakend_mate_contig_is_valid_syntax_but_unsupported(tmp_path: Path, version: str):
     path = tmp_path / "vcf45-external-breakend-mate-contig.vcf"
     write_vcf(
         path,
