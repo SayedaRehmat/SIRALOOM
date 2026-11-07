@@ -1492,11 +1492,6 @@ def _validate_record(
                 f"GT must be the first FORMAT key when present at line {line_no}",
                 code="VCF_FORMAT_INVALID",
             )
-        if fileformat == "VCFv4.0" and "GL" in keys and len(alts) > 1:
-            raise StrictVCFValidationError(
-                f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}",
-                code="VCF_FIELD_CARDINALITY_INVALID",
-            )
         base_modification_keys = [
             key
             for key in keys
@@ -1870,6 +1865,16 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     }
             format_keys = fields[8].split(":") if len(fields) > 8 else []
             gt_index = format_keys.index("GT") if "GT" in format_keys else None
+            if fileformat == "VCFv4.0" and "GL" in format_keys and len(alts) != 1:
+                gl_index = format_keys.index("GL")
+                for sample_index, sample in enumerate(fields[9:], start=1):
+                    gl_values = sample.split(":")
+                    gl_value = gl_values[gl_index] if gl_index < len(gl_values) else "."
+                    if gl_value not in {"", "."}:
+                        raise StrictVCFValidationError(
+                            f"VCFv4.0 FORMAT/GL is defined only for biallelic records at line {line_no}, sample {sample_index}",
+                            code="VCF_FIELD_CARDINALITY_INVALID",
+                        )
             for sample_index, sample in enumerate(fields[9:], start=1):
                 sample_values = sample.split(":")
                 if "PSL" in format_keys:
