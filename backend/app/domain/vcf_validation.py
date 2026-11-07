@@ -3692,8 +3692,8 @@ def validate_vcf_strict(
         if unresolved_event_group_count:
             unresolved_reason_codes.add("VCF_DERIVATIVE_EVENT_GROUP_INCONSISTENT")
         graph_is_connected = len(graph_components) <= 1 and bool(graph_nodes_by_id)
-        if unresolved_partner_count:
-            derivative_graph_status = "UNRESOLVED_PARID_PARTNER_GRAPH"
+        if unresolved_partner_count or unresolved_adjacency_count or unresolved_event_group_count:
+            derivative_graph_status = "PARTIAL_OR_UNRESOLVED_DERIVATIVE_GRAPH"
         elif graph_is_connected and related_partner_links:
             derivative_graph_status = "CONNECTED_MATEID_PARID_GRAPH"
         elif graph_is_connected and related_adjacencies:
