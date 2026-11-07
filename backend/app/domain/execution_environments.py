@@ -8,7 +8,7 @@ infrastructure work and are not implied by this module.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import re
 from typing import Literal
