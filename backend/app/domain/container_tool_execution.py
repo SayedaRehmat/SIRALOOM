@@ -152,7 +152,7 @@ class LinuxContainerToolExecutor:
         if self.environment.runtime_version not in version:
             raise ToolExecutionContractError("Installed container runtime version does not match the qualified environment.")
         cgroup_version = self._run_checked(
-            [runtime, "info", "--format", "{{.CgroupVersion}}" if self.environment.runtime_kind == "DOCKER" else "{{.Host.CgroupVersion}}"]
+            [runtime, "info", "--format", "{{.CgroupVersion}}" if self.environment.runtime_kind == "DOCKER" else "{{.Host.CgroupsVersion}}"]
         )
         if cgroup_version not in {"1", "2", "v1", "v2"}:
             raise ToolExecutionContractError(
