@@ -85,3 +85,39 @@ def test_vcf44_reserved_psl_header_must_match_number_p(tmp_path: Path):
     with pytest.raises(StrictVCFValidationError) as exc:
         validate_vcf_strict(path)
     assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+
+
+
+def test_vcf44_psq_values_remain_positionally_aligned_for_repeated_psl_names(
+    tmp_path: Path,
+):
+    path = tmp_path / "vcf44-psq-repeated-phase-set-positions.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:PSL:PSQ\\t|0|1:shared,shared:12,37\\n",
+        encoding="utf-8",
+    )
+
+    assert validate_vcf_strict(path)["records"] == 1
+
+
+def test_vcf44_psq_missing_value_must_follow_missing_psl_position(tmp_path: Path):
+    path = tmp_path / "vcf44-psq-missing-phase-set-position.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.4\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=PSL,Number=P,Type=String,Description="Phase set list">\\n'
+        '##FORMAT=<ID=PSQ,Number=P,Type=Integer,Description="Phase set list quality">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\tC,G\\t.\\tPASS\\t.\\tGT:PSL:PSQ\\t0/1|2:.,set,set:5,.,7\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+
+    assert exc.value.code == "VCF_PHASE_SET_INVALID"
