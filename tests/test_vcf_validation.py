@@ -2227,6 +2227,34 @@ def test_vcf44_plus_tandem_repeat_rn_definition_is_number_a_integer(tmp_path: Pa
     assert exc.value.code == "VCF_RESERVED_INFO_DEFINITION_MISMATCH"
 
 
+def test_vcf45_undeclared_custom_info_field_is_rejected(tmp_path: Path):
+    path = tmp_path / "vcf45-undeclared-info.vcf"
+    write_vcf(path, "1\t10\t.\tA\tC\t.\tPASS\tCUSTOM_TAG=value\n", version="VCFv4.5")
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_INFO_UNDECLARED"
+
+
+def test_vcf45_undeclared_custom_format_field_is_rejected(tmp_path: Path):
+    path = tmp_path / "vcf45-undeclared-format.vcf"
+    write_vcf(
+        path,
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:CUSTOM_TAG\t0/1:value\n",
+        version="VCFv4.5",
+        columns="#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_FORMAT_UNDECLARED"
+
+
+def test_vcf41_reserved_info_prose_fields_remain_recognized_without_typed_header(tmp_path: Path):
+    path = tmp_path / "vcf41-reserved-info-prose.vcf"
+    write_vcf(path, "1\t10\t.\tA\tC\t.\tPASS\tAC=1\n", version="VCFv4.1")
+    result = validate_vcf_strict(path)
+    assert result["records"] == 1
+
+
 def test_vcf43_reserved_cipos_header_must_match_number_two(tmp_path: Path):
     path = tmp_path / "vcf43-cipos-wrong-header-definition.vcf"
     write_vcf_with_metadata(
