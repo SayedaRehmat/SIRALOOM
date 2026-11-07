@@ -228,7 +228,7 @@ def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
                     "relationship_to_proband": member.relationship_to_proband,
                     "sex": member.sex,
                     "affected_status": member.affected_status,
-                    "is_proband": member.is_proband,
+                    "is_proband": bool(getattr(member, "is_proband", False)),
                     "sampled": member.sampled,
                     "specimen_identifier": (
                         specimens[member.specimen_id].specimen_identifier
@@ -1099,7 +1099,7 @@ def get_family_genotype_matrix(
                 "region_copy_number": latest.region_copy_number,
                 "source_type": latest.source_type,
                 "evidence_reference": latest.evidence_reference,
-                "recorded_by": str(latest.recorded_by),
+                "recorded_by": str(latest.recorded_by) if getattr(latest, "recorded_by", None) else None,
                 "recorded_at": latest.recorded_at.isoformat() if latest.recorded_at else None,
                 "reviewed_by": str(latest.reviewed_by) if latest.reviewed_by else None,
                 "reviewed_at": latest.reviewed_at.isoformat() if latest.reviewed_at else None,
@@ -1271,12 +1271,6 @@ def add_segregation(analysis_id: UUID,variant_id: UUID,body: SegregationInput,db
 def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,db: Session=Depends(get_db),principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id,db,principal, "review")
     require_role(principal, REVIEW_ROLES)
-    # Acquire locks in the shared case -> analysis order before the matrix
-    # projection reuses the already-locked case row.
-    case = db.get(Case, analysis.case_id, with_for_update=True)
-    if case is None:
-        raise HTTPException(404, "Case not found")
-    db.refresh(case, with_for_update=True)
     models = []
     for raw_model in body.models:
         try:
@@ -1288,6 +1282,13 @@ def assess_inheritance(analysis_id: UUID,variant_id: UUID,body: AssessmentInput,
         if model in models:
             raise HTTPException(400, f"Duplicate inheritance model: {model}")
         models.append(model)
+    # Lock case before analysis and matrix projection to serialize this
+    # review against concurrent family-binding changes. Model validation above
+    # intentionally runs before any database read.
+    case = db.get(Case, analysis.case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
     analysis = _lock_analysis_for_pedigree(db, analysis_id, principal, "review")
     get_analysis_variant(analysis,variant_id,db)
     rows=list(db.scalars(select(SegregationObservation).where(SegregationObservation.analysis_id==analysis_id,SegregationObservation.variant_id==variant_id)))
