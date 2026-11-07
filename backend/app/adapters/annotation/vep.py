@@ -466,13 +466,17 @@ class VEPProvider(ScientificResourceProvider):
                 },
                 "_siraloom_annotation_provenance": {
                     "provider": self.provider_id,
-                    "provider_version": self.contract.provider_version,
+                    "provider_version": self.vep_version,
                     "observed_at": result.metadata.get("observed_at"),
                     "response_sha256": result.response_sha256,
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
                     "annotation_options": result.metadata.get("annotation_options", []),
                     "runtime_check": result.metadata.get("runtime_check"),
+                    "tool_execution_provenance": result.metadata.get("tool_execution_provenance"),
+                    "raw_response_path": result.metadata.get("raw_response_path"),
+                    "workspace_path": result.metadata.get("workspace_path"),
+                    "reference_package_checksum": result.metadata.get("reference_package_checksum"),
                 },
             })
 
