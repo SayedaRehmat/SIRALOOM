@@ -26,6 +26,7 @@ type AnalysisCandidate = {
   analysis_id: string;
   analysis_status: string;
   reference_build?: string | null;
+  assay_id?: string | null;
   selected_sample_name?: string | null;
   source_vcf?: SourceVcf | null;
   binding_candidate_status: string;
@@ -429,6 +430,7 @@ export default function FamilySampleIdentityWorkbench({
                   </div>
                   <span className="badge neutral">{binding.binding_status} · {t("familyIdentity.revision")} {binding.version}</span>
                 </div>
+                <div className="context-row"><span>{t("familyIdentity.assay")}</span><strong>{analysis?.assay_id ?? "—"}</strong></div>
                 <div className="context-row"><span>{t("familyIdentity.sourceVcf")}</span><strong>{analysis?.source_vcf?.filename ?? binding.artifact_id}</strong></div>
                 <div className="context-row"><span>{t("familyIdentity.sourceDigest")}</span><strong>{binding.source_artifact_sha256}</strong></div>
                 <div className="context-row"><span>{t("familyIdentity.analysisStatus")}</span><strong>{analysis?.analysis_status ?? "—"}</strong></div>
