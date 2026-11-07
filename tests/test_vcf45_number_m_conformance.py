@@ -218,7 +218,7 @@ def test_production_validator_maps_each_number_m_value_to_its_biological_slot(
     assert result["base_modification_slot_assignments"] == [
         {
             "record_index": 1,
-            "line_number": 4,
+            "line_number": 5,
             "chrom": "1",
             "pos": 2,
             "sample_index": 1,
