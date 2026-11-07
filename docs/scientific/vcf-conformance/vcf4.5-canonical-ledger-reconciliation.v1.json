@@ -1,0 +1,420 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "vcf4.5-canonical-ledger-and-gt-candidate-reconciliation",
+  "status": "AUTHOR_RECONCILIATION_IN_REVIEW",
+  "branch": "research/vcf-conformance-phase-a-20261105",
+  "baseline": {
+    "canonical_ledger_path": "docs/scientific/vcf-conformance/atomic-requirements.v1.json",
+    "canonical_ledger_blob_sha": "ba7d1bb0544f5d1105a4bd62f757decae13caee8",
+    "canonical_ledger_requirement_count": 226,
+    "canonical_ledger_id_range": [
+      "VCF-REQ-000001",
+      "VCF-REQ-000226"
+    ],
+    "gt_candidate_path": "docs/scientific/vcf-conformance/genotype-format-atomic-candidates.v1.json",
+    "gt_candidate_blob_sha": "71d888047d4e82ba373eb6ba470292630c51b0c1",
+    "gt_candidate_count": 61,
+    "addendum_path": "docs/scientific/vcf-conformance/vcf4.5-cardinality-local-allele-atomic-addendum.v1.json",
+    "addendum_requirement_count": 34,
+    "addendum_updated_blob_sha": "018fe4bdf743366d38f5ec231fab7657363086f5"
+  },
+  "method": "Each supplemental VCF-REQ-000227..000260 candidate was compared against the recovered canonical ledger and the 61 GT/FORMAT candidates. Exact/overlap mappings are recorded to prevent duplicate insertion. Unmatched normative candidates remain candidates pending independent review and source-context verification. Implementation guidance is kept distinct from file-validation requirements.",
+  "mappings": [
+    {
+      "supplemental_requirement_id": "VCF-REQ-227",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000072"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-058"
+      ],
+      "status": "OVERLAP_SPLIT",
+      "disposition_note": "Existing ledger and GT candidate combine LA and LR semantics; preserve separate cardinality tests in the addendum crosswalk."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-228",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000072"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-058"
+      ],
+      "status": "OVERLAP_SPLIT",
+      "disposition_note": "Existing ledger and GT candidate combine LA and LR semantics; preserve separate cardinality tests in the addendum crosswalk."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-229",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000073"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-059"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "LG restriction to the LAA-selected allele set is already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-230",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000051"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-037"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Distinct one-based ALT indices in LAA are already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-231",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000052"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-038"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "LAA ordering of local alleles is already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-232",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000053"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-017",
+        "FMT-GT-039"
+      ],
+      "status": "PARTIAL",
+      "disposition_note": "LAA presence and FORMAT ordering are split across candidate artifacts; retain the narrower non-omitted/non-MISSING condition and separately verify ordering."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-233",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000054"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-040"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "BCF zero-length-vector/MISSING LAA behavior is already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-234",
+      "canonical_ledger_requirement_ids": [],
+      "gt_format_candidate_ids": [],
+      "status": "NEW_CANDIDATE",
+      "disposition_note": "GQ retaining genotype-quality semantics under local-allele encoding is not captured by the existing GQ table-definition row."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-235",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000055"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-041"
+      ],
+      "status": "OVERLAP",
+      "disposition_note": "The broad global/local equivalent semantics are already represented; retain the addendum's focused equivalence test cases."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-236",
+      "canonical_ledger_requirement_ids": [],
+      "gt_format_candidate_ids": [],
+      "status": "IMPLEMENTATION_GUIDANCE",
+      "disposition_note": "A SHOULD-level recommendation for library API abstraction; retain in implementation/interoperability guidance and do not conflate it with a file-validation rule."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-237",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000060",
+        "VCF-REQ-000075"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-046",
+        "FMT-GT-061"
+      ],
+      "status": "OVERLAP_SPLIT",
+      "disposition_note": "General Number=M and genotype-dependent cardinality are represented in separate ledger candidates."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-238",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000059"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-045"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Base-modification FORMAT keys requiring GT are already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-239",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000058"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-044"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "U/T suffix equivalence is already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-240",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000061"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-047"
+      ],
+      "status": "OVERLAP_SPLIT",
+      "disposition_note": "Existing candidate combines per-allele count and sequence ordering; preserve separate validation dimensions."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-241",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000061"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-047"
+      ],
+      "status": "OVERLAP_SPLIT",
+      "disposition_note": "Existing candidate combines per-allele count and sequence ordering; preserve separate validation dimensions."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-242",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000062"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-048"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "N-modification positive/negative strand adjacency is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-243",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000063"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-049"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Base-modification value order following GT allele order and phasing is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-244",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000064"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-050"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Unphased allele aggregation at first occurrence is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-245",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000065"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-051"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Missing and symbolic alleles contributing no base-modification values is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-246",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000066"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-052"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Unstranded base-modification storage at lowest POS is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-247",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000067"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-053"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Unstranded N-modification positive-strand/MISSING convention is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-248",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000074"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-060"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Number=P cardinality per GT allele value is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-249",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000043",
+        "VCF-REQ-000139"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-029"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "PSL position cardinality per GT allele value is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-250",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000044",
+        "VCF-REQ-000139"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-030"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Unphased PSL positions using MISSING are represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-251",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000041",
+        "VCF-REQ-000140"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-027"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "PS and PSL mutual exclusion is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-252",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000046",
+        "VCF-REQ-000141"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-032"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "PSO derivative-chromosome traversal order is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-253",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000047",
+        "VCF-REQ-000141"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-033"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "SHOULD-level PSO definition for SV/breakend-containing phase sets is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-254",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000048",
+        "VCF-REQ-000142"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-034"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "Paired breakend PSL/PSO equality is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-255",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000050"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-036"
+      ],
+      "status": "VERSION_DELTA",
+      "disposition_note": "PSQ missing-value clarification is already represented; keep VCFv4.4 applicability CHANGED rather than treating the v4.5 clarification as unchanged."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-256",
+      "canonical_ledger_requirement_ids": [],
+      "gt_format_candidate_ids": [],
+      "status": "NEW_CANDIDATE",
+      "disposition_note": "M fraction range 0..1 is a distinct source-backed validation constraint; source locator repaired to VCFv4.5.tex line 726."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-257",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000068",
+        "VCF-REQ-000069",
+        "VCF-REQ-000070"
+      ],
+      "gt_format_candidate_ids": [
+        "FMT-GT-054",
+        "FMT-GT-055",
+        "FMT-GT-056"
+      ],
+      "status": "DIRECT",
+      "disposition_note": "M/DPM/ADM key-family reservation despite unknown ChEBI IDs is represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-258",
+      "canonical_ledger_requirement_ids": [],
+      "gt_format_candidate_ids": [],
+      "status": "NEW_CANDIDATE",
+      "disposition_note": "SHOULD-level named-alias preference is not represented in the canonical ledger; exact family-specific source lines 724, 734 and 740 are now recorded."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-259",
+      "canonical_ledger_requirement_ids": [
+        "VCF-REQ-000130"
+      ],
+      "gt_format_candidate_ids": [],
+      "status": "DIRECT",
+      "disposition_note": "Reference-block propagation of base-modification annotations is already represented."
+    },
+    {
+      "supplemental_requirement_id": "VCF-REQ-260",
+      "canonical_ledger_requirement_ids": [],
+      "gt_format_candidate_ids": [],
+      "status": "NEW_CANDIDATE",
+      "disposition_note": "The explicit non-reservation of ADFM/ADRM is a distinct negative reserved-key boundary; source locator repaired to line 742."
+    }
+  ],
+  "counts": {
+    "supplemental_candidates": 34,
+    "mapped_or_overlapping_existing_ledger": 29,
+    "new_normative_or_semantic_candidates": 4,
+    "implementation_guidance_candidates": 1,
+    "mappings_to_existing_gt_candidates": 28
+  },
+  "integration_decision": {
+    "canonical_ledger_modified": false,
+    "reason": "Do not append duplicates or freeze unresolved candidates into the canonical ledger. Preserve the 34-record addendum, record explicit mappings, and promote only the four unmatched normative candidates after independent source review. The library API SHOULD recommendation remains in implementation guidance.",
+    "new_candidates_for_review": [
+      "VCF-REQ-000234",
+      "VCF-REQ-000256",
+      "VCF-REQ-000258",
+      "VCF-REQ-000260"
+    ],
+    "implementation_guidance": [
+      "VCF-REQ-000236"
+    ],
+    "unresolved_semantic_issues": [
+      "VCFv4.5 local-GT example mismatch (local 2/4 versus paired global 2/2)",
+      "Number=P general cardinality versus PSQ per-phase-set cardinality with repeated phase-set identifiers",
+      "Xanthosine alias capitalization discrepancy between reserved-key rows and prose"
+    ]
+  },
+  "controls": [
+    "The addendum remains preserved as a separate source-derived candidate artifact.",
+    "No supplemental candidate is counted as a net-new canonical requirement solely because it has a new identifier.",
+    "No implementation status, test status, or independent-review status is promoted by this reconciliation.",
+    "VCFv4.0 remains SOURCE_NOT_PINNED; no predecessor applicability is inferred from VCFv4.1-4.5."
+  ]
+}
