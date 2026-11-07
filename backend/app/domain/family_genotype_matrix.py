@@ -24,9 +24,6 @@ def _call_state(call: dict[str, Any] | None) -> str:
 
     projection_status = call.get("projection_status") or call.get("projected_status")
     projection_states = {
-        "AVAILABLE": "CALL_PRESENT",
-        "NO_CALL": "NO_CALL",
-        "PARTIAL_CALL": "PARTIAL_NO_CALL",
         "GENOTYPE_UNAVAILABLE": "GENOTYPE_UNAVAILABLE",
         "CONTAINS_OTHER_ALT": "OTHER_ALT_PRESENT",
         "CONTAINS_OTHER_ALT_AND_MISSING": "OTHER_ALT_AND_MISSING",
@@ -40,19 +37,27 @@ def _call_state(call: dict[str, Any] | None) -> str:
     genotype = call.get("projected_genotype") or call.get("normalized_genotype") or call.get("genotype")
     if not isinstance(genotype, str) or not genotype:
         return "GENOTYPE_UNAVAILABLE"
-    if not re.fullmatch(r"(?:\d+|\.)(?:[/|](?:\d+|\.))*", genotype):
+
+    # VCFv4.4+ permits a leading phase indicator before the first allele.
+    genotype_body = genotype[1:] if genotype[:1] in {"/", "|"} else genotype
+    if not re.fullmatch(r"(?:\d+|\.)(?:[/|](?:\d+|\.))*", genotype_body):
         return "INVALID_CALL"
-    alleles = re.split(r"[/|]", genotype)
-    try:
-        missing_alleles = int(call.get("missing_allele_count") or 0)
-    except (TypeError, ValueError):
-        return "INVALID_CALL"
-    if missing_alleles < 0 or missing_alleles != sum(allele == "." for allele in alleles):
-        return "INVALID_CALL"
+    alleles = re.split(r"[/|]", genotype_body)
+    observed_missing = sum(allele == "." for allele in alleles)
+    raw_missing = call.get("missing_allele_count")
+    if raw_missing is None:
+        missing_alleles = observed_missing
+    else:
+        try:
+            missing_alleles = int(raw_missing)
+        except (TypeError, ValueError):
+            return "INVALID_CALL"
+        if missing_alleles < 0 or missing_alleles != observed_missing:
+            return "INVALID_CALL"
+
     if missing_alleles > 0:
         return "NO_CALL" if missing_alleles == len(alleles) else "PARTIAL_NO_CALL"
     return "CALL_PRESENT"
-
 
 def _quality_metrics(format_values: Any) -> dict[str, Any]:
     if not isinstance(format_values, dict):
