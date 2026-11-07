@@ -2917,9 +2917,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:7-2",
-            "start_line": "7",
-            "end_line": "2"
+            "locator_value": "VCFv4.5.tex line 726; M base-modification fraction value range",
+            "start_line": 726,
+            "end_line": 726
           }
         }
       ],
@@ -3101,9 +3101,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:7-2",
-            "start_line": "7",
-            "end_line": "2"
+            "locator_value": "VCFv4.5.tex lines 724, 734 and 740; named aliases for M, DPM and ADM families",
+            "start_line": 724,
+            "end_line": 740
           }
         }
       ],
@@ -3193,9 +3193,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:7-2",
-            "start_line": "7",
-            "end_line": "2"
+            "locator_value": "VCFv4.5.tex line 728; base-modification information in reference-block records",
+            "start_line": 728,
+            "end_line": 728
           }
         }
       ],
@@ -3285,9 +3285,9 @@
           "source_sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5",
           "locator": {
             "locator_type": "LINE_RANGE",
-            "locator_value": "VCFv4.5.tex:7-4",
-            "start_line": "7",
-            "end_line": "4"
+            "locator_value": "VCFv4.5.tex line 742; ADFM and ADRM are not reserved fields",
+            "start_line": 742,
+            "end_line": 742
           }
         }
       ],
