@@ -2213,6 +2213,38 @@ def test_vcf43_plus_contig_header_id_must_follow_sam_reference_name_grammar(tmp_
 
 
 @pytest.mark.parametrize("version", ["VCFv4.4", "VCFv4.5"])
+def test_vcf43_reserved_ad_header_must_match_number_r_integer(tmp_path: Path):
+    path = tmp_path / "vcf43-ad-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=AD,Number=A,Type=String,Description="Wrong AD declaration">',
+        ],
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:AD\t0/1:10,5\n",
+        version="VCFv4.3",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+
+
+def test_vcf41_reserved_ps_header_must_be_integer(tmp_path: Path):
+    path = tmp_path / "vcf41-ps-wrong-header-definition.vcf"
+    write_vcf_with_metadata(
+        path,
+        [
+            '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">',
+            '##FORMAT=<ID=PS,Number=1,Type=String,Description="Wrong PS declaration">',
+        ],
+        "1\t10\t.\tA\tC\t.\tPASS\t.\tGT:PS\t0|1:10\n",
+        version="VCFv4.1",
+    )
+    with pytest.raises(StrictVCFValidationError) as exc:
+        validate_vcf_strict(path)
+    assert exc.value.code == "VCF_RESERVED_FORMAT_DEFINITION_MISMATCH"
+
+
 def test_vcf43_plus_external_breakend_mate_contig_is_valid_syntax_but_unsupported(tmp_path: Path, version: str):
     path = tmp_path / "vcf45-external-breakend-mate-contig.vcf"
     write_vcf(
