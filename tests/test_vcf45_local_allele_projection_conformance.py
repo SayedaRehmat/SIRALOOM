@@ -36,12 +36,12 @@ def _write_local_likelihood_vcf(
 @pytest.mark.parametrize(
     ("gt", "standard_values", "local_values"),
     [
-        # Haploid local genotype order: 0,2 -> global Number=G indexes 0,2.
-        ("2", "0,1,2", "0,2"),
+        # All GT alleles are REF to avoid asserting the unresolved GT/LAA index interpretation.\n        # Haploid local genotype order: 0,2 -> global Number=G indexes 0,2.
+        ("0", "0,1,2", "0,2"),
         # Diploid local genotype order: 00,02,22 -> global indexes 0,3,5.
-        ("0/2", "0,1,2,3,4,5", "0,3,5"),
+        ("0/0", "0,1,2,3,4,5", "0,3,5"),
         # Triploid local genotype order: 000,002,022,222 -> global indexes 0,4,7,9.
-        ("0/2/2", "0,1,2,3,4,5,6,7,8,9", "0,4,7,9"),
+        ("0/0/0", "0,1,2,3,4,5,6,7,8,9", "0,4,7,9"),
     ],
 )
 def test_local_pl_projection_uses_vcf_genotype_order_for_haploid_diploid_and_triploid(
@@ -63,7 +63,7 @@ def test_local_pl_projection_preserves_laa_order_instead_of_sorting_alt_indices(
     path = tmp_path / "local-pl-reversed-laa-order.vcf"
     _write_local_likelihood_vcf(
         path,
-        gt="0/2",
+        gt="0/0",
         laa="2,1",
         standard_values="0,1,2,3,4,5",
         # Local genotype order maps to global indices 0,3,5,1,4,2.
