@@ -140,6 +140,8 @@ class ToolIdentity:
     version_output_contains: str = ""
     supported_operations: tuple[str, ...] = ("validate", "normalize", "annotate", "align", "call", "index", "convert", "benchmark")
     runtime_image_digest: str | None = None
+    runtime_path: tuple[str, ...] = ("/usr/bin", "/bin")
+    runtime_environment: Mapping[str, str] = field(default_factory=dict)
 
     def validate(self) -> None:
         required = {
@@ -169,6 +171,29 @@ class ToolIdentity:
             raise ToolExecutionContractError(
                 "Runtime image digest must use the sha256:<64 lowercase hex> format."
             )
+        if not self.runtime_path:
+            raise ToolExecutionContractError("Approved runtime PATH must contain at least one directory.")
+        for item in self.runtime_path:
+            path = Path(item)
+            if not path.is_absolute() or not path.is_dir():
+                raise ToolExecutionContractError(
+                    f"Approved runtime PATH entry must be an existing absolute directory: {item!r}."
+                )
+        protected_runtime_environment = {
+            "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL",
+            "IFS", "PYTHONPATH", "PYTHONHOME", "LD_PRELOAD", "LD_LIBRARY_PATH",
+            "BASH_ENV", "ENV",
+        }
+        for key, value in self.runtime_environment.items():
+            if (
+                not str(key).replace("_", "").isalnum()
+                or str(key).upper() in protected_runtime_environment
+                or str(key).upper().startswith("LD_")
+                or "\\x00" in str(value)
+            ):
+                raise ToolExecutionContractError(
+                    f"Approved runtime environment contains an invalid or protected variable: {key!r}."
+                )
         if not self.version_args:
             raise ToolExecutionContractError("Tool version attestation arguments are required.")
         if not self.version_output_contains:
@@ -276,8 +301,9 @@ class ToolExecutionRequest:
         if any(not str(key).replace("_", "").isalnum() for key in self.environment):
             raise ToolExecutionContractError("Environment variable names must be simple identifiers.")
         protected_environment = {
-            "PATH", "HOME", "IFS", "PYTHONPATH", "PYTHONHOME",
-            "LD_PRELOAD", "LD_LIBRARY_PATH", "BASH_ENV", "ENV",
+            "PATH", "HOME", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL",
+            "IFS", "PYTHONPATH", "PYTHONHOME", "LD_PRELOAD",
+            "LD_LIBRARY_PATH", "BASH_ENV", "ENV",
         }
         overridden = sorted(
             str(key) for key in self.environment
@@ -288,6 +314,15 @@ class ToolExecutionRequest:
             raise ToolExecutionContractError(
                 "Execution request cannot override protected variable(s): "
                 + ", ".join(overridden)
+            )
+        profile_overrides = sorted(
+            str(key) for key in self.environment
+            if str(key) in profile.runtime_environment
+        )
+        if profile_overrides:
+            raise ToolExecutionContractError(
+                "Execution request cannot override approved tool-profile variable(s): "
+                + ", ".join(profile_overrides)
             )
         if any("\x00" in str(value) for value in self.environment.values()):
             raise ToolExecutionContractError("Environment values must not contain NUL bytes.")
@@ -315,6 +350,7 @@ class ToolExecutionProvenance:
     stderr_sha256: str
     platform: str
     runtime_image_digest: str | None
+    environment_sha256: str
 
 
 @dataclass(frozen=True)
@@ -345,6 +381,25 @@ class LocalProcessToolExecutor:
         if executable_digest != profile.executable_sha256.lower():
             raise ToolExecutionContractError("Tool executable SHA-256 does not match the approved profile.")
 
+        workspace = Path(request.workspace).resolve(strict=True)
+        runtime_path = tuple(dict.fromkeys(
+            str(Path(item).resolve(strict=True)) for item in profile.runtime_path
+        ))
+        env = {
+            "PATH": os.pathsep.join(runtime_path),
+            "HOME": str(workspace),
+            "TMPDIR": str(workspace),
+            "TEMP": str(workspace),
+            "TMP": str(workspace),
+            "LANG": "C",
+            "LC_ALL": "C",
+        }
+        env.update({str(key): str(value) for key, value in profile.runtime_environment.items()})
+        env.update({str(key): str(value) for key, value in request.environment.items()})
+        environment_sha256 = hashlib.sha256(
+            json.dumps(sorted(env.items()), separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+
         try:
             version_check = subprocess.run(
                 [str(executable), *profile.version_args],
@@ -352,7 +407,7 @@ class LocalProcessToolExecutor:
                 text=True,
                 timeout=30,
                 check=False,
-                env={"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"},
+                env=env,
             )
         except subprocess.TimeoutExpired as exc:
             raise ToolExecutionError(
@@ -370,9 +425,6 @@ class LocalProcessToolExecutor:
                 "Runtime executable version does not match the approved tool profile."
             )
 
-        workspace = Path(request.workspace).resolve(strict=True)
-        env = {"PATH": "/usr/bin:/bin", "LANG": "C", "LC_ALL": "C"}
-        env.update({str(key): str(value) for key, value in request.environment.items()})
         command = [str(executable), *request.argv]
         started = datetime.now(timezone.utc)
         monotonic_start = time.monotonic()
@@ -465,6 +517,7 @@ class LocalProcessToolExecutor:
             stderr_sha256=stderr_digest,
             platform=profile.platform,
             runtime_image_digest=profile.runtime_image_digest,
+            environment_sha256=environment_sha256,
         )
 
         if timed_out:
