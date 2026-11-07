@@ -314,6 +314,8 @@ def create_sample_binding(case_id: UUID, body: SampleBindingInput, db: Session =
         raise HTTPException(404, "Analysis not found in this case")
     if artifact is None or artifact.case_id != case_id or artifact.artifact_type not in {"VCF", "SOURCE_VCF"}:
         raise HTTPException(404, "Source VCF artifact not found in this case")
+    if artifact.specimen_id is not None and artifact.specimen_id != specimen.id:
+        raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
     configured_sample = (analysis.configuration or {}).get("vcf_sample_name")
     if not configured_sample or configured_sample != body.sample_name.strip():
         raise HTTPException(409, "Sample name must exactly match the analysis-selected VCF sample")
@@ -635,6 +637,13 @@ def review_sample_identity_evidence(
     binding = db.get(PedigreeSampleBinding, binding_id)
     if binding is None or binding.case_id != case_id:
         raise HTTPException(404, "Sample binding not found")
+    if binding.binding_status != "UNVERIFIED":
+        raise HTTPException(409, "Identity evidence review requires an unverified active binding")
+    binding_successor = db.scalar(select(PedigreeSampleBinding).where(
+        PedigreeSampleBinding.supersedes_binding_id == binding.id,
+    ))
+    if binding_successor is not None:
+        raise HTTPException(409, "Cannot review identity evidence attached to a superseded binding")
     previous = db.get(PedigreeSampleIdentityEvidence, evidence_id)
     if previous is None or previous.case_id != case_id or previous.binding_id != binding_id:
         raise HTTPException(404, "Identity evidence not found for this binding")
@@ -720,6 +729,8 @@ def review_sample_binding(case_id: UUID, binding_id: UUID, body: SampleBindingRe
             raise HTTPException(409, "The bound source VCF artifact is no longer available in this case")
         if artifact.sha256 != previous.source_artifact_sha256:
             raise HTTPException(409, "The source VCF digest differs from the immutable identity claim")
+        if artifact.specimen_id is not None and artifact.specimen_id != previous.specimen_id:
+            raise HTTPException(409, "Source VCF artifact is linked to a different specimen")
         normalization_step = db.scalar(select(WorkflowStep).where(
             WorkflowStep.analysis_id == previous.analysis_id,
             WorkflowStep.step_id == "normalize",
