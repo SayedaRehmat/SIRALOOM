@@ -42,5 +42,9 @@ def test_vcf44_reciprocal_breakend_phase_vectors_accept_matching_values(tmp_path
         item for item in result["phase_set_traversal_orders"]
         if item["sample"] == "SAMPLE1" and item["phase_set"] == "phase"
     )
-    assert [event["ordinal"] for event in traversal["ordered_events"]] == [3]
-    assert len(traversal["ordered_events"][0]["occurrences"]) == 2
+    assert [event["ordinal"] for event in traversal["ordered_events"]] == [2, 3]
+    assert [event["event_kind"] for event in traversal["ordered_events"]] == [
+        "RECIPROCAL_BREAKEND_EVENT",
+        "RECIPROCAL_BREAKEND_EVENT",
+    ]
+    assert [len(event["occurrences"]) for event in traversal["ordered_events"]] == [2, 2]
