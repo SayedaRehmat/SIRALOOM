@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import hashlib
 import shutil
 from uuid import uuid4
@@ -322,11 +323,15 @@ def test_independent_low_quality_parent_known_answer_preserves_metrics_without_c
 def test_family_matrix_consumes_real_bcftools_normalized_output_with_verified_source_lineage(tmp_path):
     executable = settings.bcftools_executable
     if not (Path(executable).is_file() or shutil.which(executable)):
+        if os.getenv("CI", "").lower() == "true":
+            pytest.fail("CI must provide the pinned BCFtools executable for normalized-family qualification")
         pytest.skip("Pinned bcftools executable is unavailable in this test environment")
 
     reference = Path(__file__).resolve().parents[1] / "fixtures" / "20k" / "GRCh38_test.fa"
     reference_index = Path(str(reference) + ".fai")
     if not reference.is_file() or not reference_index.is_file():
+        if os.getenv("CI", "").lower() == "true":
+            pytest.fail("CI must provide the pinned GRCh38 reference and FAI for normalized-family qualification")
         pytest.skip("Pinned GRCh38 test reference and FAI fixture are unavailable")
 
     source = tmp_path / "family-source.vcf"
