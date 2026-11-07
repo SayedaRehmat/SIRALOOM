@@ -863,6 +863,49 @@ class PedigreeSampleBinding(Base):
     )
 
 
+class PedigreeSampleIdentityEvidence(Base):
+    """Append-only laboratory chain-of-custody and sample-identity QC evidence."""
+    __tablename__ = "pedigree_sample_identity_evidence"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    binding_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_sample_bindings.id"), nullable=False)
+    evidence_type: Mapped[str] = mapped_column(Text, nullable=False)
+    result: Mapped[str] = mapped_column(Text, nullable=False)
+    method: Mapped[str] = mapped_column(Text, nullable=False)
+    method_version: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    source_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    metrics_json: Mapped[dict] = mapped_column("metrics", JSON, nullable=False, default=dict)
+    review_status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    review_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    supersedes_evidence_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_sample_identity_evidence.id"))
+    evidence_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    reviewed_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", "evidence_fingerprint", name="uq_pedigree_sample_identity_evidence_fingerprint"),
+        UniqueConstraint("supersedes_evidence_id", name="uq_pedigree_sample_identity_evidence_successor"),
+        UniqueConstraint("binding_id", "evidence_type", "version", name="uq_pedigree_sample_identity_evidence_version"),
+        CheckConstraint(
+            "evidence_type IN ('CHAIN_OF_CUSTODY', 'SAMPLE_IDENTITY_QC')",
+            name="ck_pedigree_sample_identity_evidence_type",
+        ),
+        CheckConstraint("result IN ('PASS', 'FAIL', 'INDETERMINATE')", name="ck_pedigree_sample_identity_evidence_result"),
+        CheckConstraint("review_status IN ('PENDING', 'ACCEPTED', 'REJECTED')", name="ck_pedigree_sample_identity_evidence_review_status"),
+        CheckConstraint("version > 0", name="ck_pedigree_sample_identity_evidence_positive_version"),
+        CheckConstraint(
+            "(review_status = 'PENDING' AND reviewed_by IS NULL AND reviewed_at IS NULL) OR "
+            "(review_status IN ('ACCEPTED', 'REJECTED') AND reviewed_by IS NOT NULL "
+            "AND reviewed_at IS NOT NULL AND review_reason IS NOT NULL)",
+            name="ck_pedigree_sample_identity_evidence_review_provenance",
+        ),
+        Index("ix_pedigree_sample_identity_evidence_binding_type", "case_id", "binding_id", "evidence_type", "version"),
+    )
+
+
 class PedigreeRelationship(Base):
     __tablename__ = "pedigree_relationships"
     id: Mapped[UUID] = mapped_column(primary_key=True)
