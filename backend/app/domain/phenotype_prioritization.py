@@ -7,6 +7,7 @@ an independently reviewed known-answer cohort and laboratory policy approve it.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, is_dataclass
 from typing import Any, Iterable
 
@@ -85,11 +86,10 @@ def prioritize_disease_context(
         status = str(item.get("phenotype_status") or "").strip().upper()
         submitted = str(item.get("canonical_hpo_id") or "").strip().upper()
         if status == "PRESENT" and submitted:
-            observed[submitted] = {
-                "hpo_id": submitted,
-                "observation_id": str(item.get("id") or ""),
-                "status": status,
-            }
+            observed.setdefault(submitted, {"hpo_id": submitted, "observation_ids": [], "status": status})
+            observation_id = str(item.get("id") or "")
+            if observation_id and observation_id not in observed[submitted]["observation_ids"]:
+                observed[submitted]["observation_ids"].append(observation_id)
         else:
             non_matching_states.append({
                 "hpo_id": str(item.get("canonical_hpo_id") or item.get("hpo_id") or ""),
@@ -154,6 +154,7 @@ def prioritize_disease_context(
                     continue
                 record = {
                     "patient_hpo_id": patient_term,
+                    "patient_observation_ids": sorted(observed[patient_term]["observation_ids"]),
                     "disease_hpo_id": disease_term,
                     "match_type": match_type,
                     "hpoa_qualifier": str(assertion.get("qualifier") or "").upper(),
