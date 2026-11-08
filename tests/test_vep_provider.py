@@ -10,6 +10,7 @@ from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import sha256_resource_path
 
 
 def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep"):
@@ -494,7 +495,10 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
     toolchain["execution_profile_id"] = "vep-115-linux-amd64"
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
-    provider.verify_local_runtime = lambda _assembly: {"status": "VERIFIED"}
+    provider._runtime_checks["GRCh38"] = {
+        "status": "VERIFIED",
+        "cache_resource_sha256": sha256_resource_path(Path(toolchain["cache_dir"])),
+    }
 
     environment = SimpleNamespace(profile_json={"runtime_image_digest": None})
     calls = []
@@ -549,5 +553,16 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     assert tool_request.operation == "annotate"
     assert tool_request.inputs[0].name == "vep-input.vcf"
     assert tool_request.outputs[0].name == "vep-output.json"
+    cache_binding = next(
+        item for item in tool_request.resources
+        if item.resource_id.startswith("ensembl-vep-cache:")
+    )
+    manifest_binding = next(
+        item for item in tool_request.resources
+        if item.resource_id.startswith("ensembl-vep-cache-manifest:")
+    )
+    assert cache_binding.path == toolchain["cache_dir"]
+    assert cache_binding.sha256 == sha256_resource_path(Path(toolchain["cache_dir"]))
+    assert manifest_binding.path == toolchain["cache_manifest"]
     assert result.metadata["tool_execution_record_id"]
     assert result.payload[0]["allele_string"] == "A/G"
