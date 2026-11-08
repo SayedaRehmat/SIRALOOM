@@ -37,6 +37,7 @@ def normalize_clingen_moi_label(value: str | None) -> str | None:
         "autosomal recessive inheritance": "AUTOSOMAL_RECESSIVE",
         "autosomal semidominant": "AUTOSOMAL_SEMIDOMINANT",
         "autosomal semidominant inheritance": "AUTOSOMAL_SEMIDOMINANT",
+        "semidominant": "AUTOSOMAL_SEMIDOMINANT",
         "x linked dominant": "X_LINKED_DOMINANT",
         "x linked dominant inheritance": "X_LINKED_DOMINANT",
         "x linked recessive": "X_LINKED_RECESSIVE",
@@ -47,7 +48,17 @@ def normalize_clingen_moi_label(value: str | None) -> str | None:
         "y linked inheritance": "Y_LINKED",
         "de novo": "DE_NOVO",
     }
-    return mapping.get(normalized)
+    if normalized in mapping:
+        return mapping[normalized]
+    if normalized.startswith("autosomal dominant"):
+        return "AUTOSOMAL_DOMINANT"
+    if normalized.startswith("autosomal recessive"):
+        return "AUTOSOMAL_RECESSIVE"
+    if normalized.startswith("x linked dominant"):
+        return "X_LINKED_DOMINANT"
+    if normalized.startswith("x linked recessive"):
+        return "X_LINKED_RECESSIVE"
+    return None
 
 
 _MATRIX_CALL_STATES = {
