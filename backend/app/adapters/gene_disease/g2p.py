@@ -115,8 +115,11 @@ class G2PProvider:
         self._records = self._parse()
 
     @classmethod
-    def from_execution_contract(cls, resolved: Any) -> "G2PProvider":
-        contract = resolved.contract
+    def from_resource_contract(cls, contract: Any) -> "G2PProvider":
+        if contract.provider_id != cls.provider_id:
+            raise G2PError("G2P resource contract provider identity does not match")
+        if contract.provider_version != cls.provider_version:
+            raise G2PError("G2P resource contract provider version does not match")
         if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
             raise G2PError("G2P execution requires a governed local export")
         toolchain = dict(contract.toolchain or {})
@@ -126,6 +129,10 @@ class G2PProvider:
             expected_sha256=str(toolchain.get("sha256") or toolchain.get("checksum") or ""),
             release=str(release or ""),
         )
+
+    @classmethod
+    def from_execution_contract(cls, resolved: Any) -> "G2PProvider":
+        return cls.from_resource_contract(resolved.contract)
 
     @staticmethod
     def _sha256(path: Path) -> str:
