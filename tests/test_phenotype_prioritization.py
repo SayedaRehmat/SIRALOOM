@@ -60,6 +60,7 @@ def test_context_order_uses_only_present_proband_terms_and_preserves_provenance(
             {"id": "u1", "canonical_hpo_id": "HP:0000001", "phenotype_status": "UNKNOWN"},
         ],
         gene_disease_records=[_association()],
+        hpoa_provenance={"resource_id": "hpoa-resource", "resource_version": "2026-09-02", "resource_sha256": "f" * 64},
         annotations_by_disease={
             "mondo:0000001": [
                 Hpoa("HP:0000001", frequency="1/2"),
@@ -92,6 +93,7 @@ def test_context_order_is_deterministic_for_equal_match_counts():
             _association("GENE2", "MONDO:0000002", "r2"),
             _association("GENE1", "MONDO:0000001", "r1"),
         ],
+        hpoa_provenance={"resource_id": "hpoa-resource", "resource_version": "2026-09-02", "resource_sha256": "f" * 64},
         annotations_by_disease={
             "mondo:0000001": [Hpoa("HP:0000001")],
             "mondo:0000002": [Hpoa("HP:0000001")],
@@ -118,6 +120,7 @@ def test_context_order_fails_closed_without_governed_association_contract(associ
             patient_observations=[],
             gene_disease_records=[association],
             annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+            hpoa_provenance={"resource_id": "hpoa-resource", "resource_version": "2026-09-02", "resource_sha256": "f" * 64},
             hpo_ontology=Ontology(),
         )
 
@@ -127,6 +130,7 @@ def test_no_exact_disease_identifier_crosswalk_is_inferred():
         patient_observations=[{"canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"}],
         gene_disease_records=[_association(disease_id="MONDO:0000001")],
         annotations_by_disease={"orpha:123": [Hpoa("HP:0000001")]},
+        hpoa_provenance={"resource_id": "hpoa-resource", "resource_version": "2026-09-02", "resource_sha256": "f" * 64},
         hpo_ontology=Ontology(),
     )
     assert result["candidates"] == []
