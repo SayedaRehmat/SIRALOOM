@@ -205,3 +205,34 @@ def test_candidate_keeps_clingen_validity_and_penetrance_provenance_distinct_fro
     assert candidate["inheritance"]["mode_sources"]["g2p_allelic_requirement"] == "biallelic_autosomal"
     assert candidate["inheritance"]["penetrance_provenance"]["source"] == "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"
     assert candidate["inheritance"]["qualification_status"] == "REQUIRES_INDEPENDENT_QUALIFICATION"
+
+
+def test_disputed_or_refuted_source_assertions_do_not_rank_ahead_of_supported_context():
+    supported = {
+        **_association("GENE2", "MONDO:0000002", "supported"),
+        "g2p_confidence": "strong",
+        "validity_status": "Definitive",
+    }
+    conflicting = {
+        **_association("GENE1", "MONDO:0000001", "refuted"),
+        "g2p_confidence": "refuted",
+        "validity_status": "Definitive",
+    }
+    result = prioritize_disease_context(
+        patient_observations=[{"canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"}],
+        gene_disease_records=[conflicting, supported],
+        annotations_by_disease={
+            "mondo:0000001": [Hpoa("HP:0000001"), Hpoa("HP:0000002")],
+            "mondo:0000002": [Hpoa("HP:0000001")],
+        },
+        hpoa_provenance={
+            "resource_id": "00000000-0000-0000-0000-000000000002",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+        },
+        hpo_ontology=Ontology(),
+    )
+    assert result["candidates"][0]["gene"] == "GENE2"
+    assert result["candidates"][0]["association_evidence_state"] == "SUPPORTED_SOURCE_CONTEXT_ONLY"
+    assert result["candidates"][1]["gene"] == "GENE1"
+    assert result["candidates"][1]["association_evidence_state"] == "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW"
