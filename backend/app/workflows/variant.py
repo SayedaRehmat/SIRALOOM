@@ -4353,6 +4353,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "resource_name": g2p_resource.name,
                             "resource_version": g2p_execution.resource_version,
                             "resource_sha256": g2p_provider.sha256,
+                            "response_sha256": g2p_response_sha256,
                             "source_url": G2PProvider.source_url,
                             "download_url": G2PProvider.download_url,
                             "archive_url": G2PProvider.archive_url,
