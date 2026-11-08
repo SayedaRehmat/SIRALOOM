@@ -696,6 +696,7 @@ export type TranslationKey =
   | "review.candidateOrder"
   | "review.matchedPhenotypeCount"
   | "review.associationValidity"
+  | "review.associationEvidenceState"
   | "review.g2pConfidence"
   | "review.molecularMechanism"
   | "review.inheritanceModes"
@@ -1369,6 +1370,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.candidateOrder": "Contextual order",
     "review.matchedPhenotypeCount": "Distinct matched patient phenotype terms",
     "review.associationValidity": "Gene–disease validity (ClinGen)",
+    "review.associationEvidenceState": "Source evidence state",
     "review.g2pConfidence": "G2P curation confidence",
     "review.molecularMechanism": "Curated molecular mechanism",
     "review.inheritanceModes": "Source-reported inheritance modes",
@@ -2461,6 +2463,7 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.candidateOrder": "الترتيب السياقي",
     "review.matchedPhenotypeCount": "عدد مصطلحات المريض الظاهرية المتطابقة والمميزة",
     "review.associationValidity": "صلاحية علاقة الجين بالمرض (ClinGen)",
+    "review.associationEvidenceState": "حالة أدلة المصادر",
     "review.g2pConfidence": "ثقة مراجعة G2P",
     "review.molecularMechanism": "الآلية الجزيئية المنسوبة في المصدر",
     "review.inheritanceModes": "أنماط الوراثة الواردة في المصادر",
