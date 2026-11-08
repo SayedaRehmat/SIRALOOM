@@ -115,3 +115,14 @@ def test_g2p_allelic_requirement_mapping_preserves_dominant_recessive_and_unknow
         release="v21.0.0",
     )
     assert provider.query_gene(gene="GENE1")[0].inheritance_modes == expected
+
+
+def test_g2p_is_an_executable_governed_provider():
+    from backend.app.domain.provider_registry import register_builtin_providers
+
+    provider = register_builtin_providers().require(
+        provider_id=G2PProvider.provider_id,
+        provider_version=G2PProvider.provider_version,
+    )
+    assert provider.descriptor.capabilities
+    assert any(capability.value == "GENE_DISEASE" for capability in provider.descriptor.capabilities)
