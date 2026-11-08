@@ -30,7 +30,9 @@ from backend.app.infrastructure.db.models import (
     FamilyGenotypeMatrixSnapshot,
     InheritanceAssessment,
     PedigreeMember,
+    PedigreeMemberRevision,
     PedigreeRelationship,
+    PedigreeRelationshipRevision,
     PedigreeSampleBinding,
     PedigreeSampleIdentityEvidence,
     SegregationObservation,
@@ -114,6 +116,25 @@ class RelationshipInput(BaseModel):
     relationship_type: str = Field(default="PARENT_CHILD", max_length=50)
     metadata: dict = Field(default_factory=dict)
 
+class PedigreeMemberRevisionInput(BaseModel):
+    reason: str = Field(min_length=1, max_length=5000)
+    revision_type: str = Field(default="CORRECTED", pattern=r"^(CORRECTED|RETRACTED)$")
+    relationship_to_proband: str | None = Field(default=None, max_length=100)
+    sex: str | None = Field(default=None, max_length=30)
+    affected_status: str | None = Field(default=None, pattern=r"^(AFFECTED|UNAFFECTED|UNKNOWN)$")
+    is_proband: bool | None = None
+    sampled: bool | None = None
+    specimen_id: UUID | None = None
+    metadata: dict | None = None
+
+
+class PedigreeRelationshipRevisionInput(BaseModel):
+    reason: str = Field(min_length=1, max_length=5000)
+    revision_type: str = Field(default="CORRECTED", pattern=r"^(CORRECTED|RETRACTED)$")
+    relationship_type: str | None = Field(default=None, min_length=1, max_length=50)
+    metadata: dict | None = None
+
+
 class SegregationInput(BaseModel):
     pedigree_member_id: UUID
     genotype: str | None = Field(default=None, max_length=50)
@@ -143,6 +164,85 @@ def _member(m):
 
 def _relationship(r):
     return {"id":str(r.id),"parent_member_id":str(r.parent_member_id),"child_member_id":str(r.child_member_id),"relationship_type":r.relationship_type,"metadata":r.metadata_json or {}}
+
+def _latest_member_revision(db: Session, member_id: UUID):
+    return db.scalar(
+        select(PedigreeMemberRevision)
+        .where(PedigreeMemberRevision.member_id == member_id)
+        .order_by(PedigreeMemberRevision.version.desc())
+    )
+
+
+def _latest_relationship_revision(db: Session, relationship_id: UUID):
+    return db.scalar(
+        select(PedigreeRelationshipRevision)
+        .where(PedigreeRelationshipRevision.relationship_id == relationship_id)
+        .order_by(PedigreeRelationshipRevision.version.desc())
+    )
+
+
+def _current_member_state(db: Session, member: PedigreeMember) -> dict:
+    state = _member(member)
+    revision = _latest_member_revision(db, member.id)
+    if revision is not None:
+        state.update(revision.payload or {})
+        state["revision_id"] = str(revision.id)
+        state["revision_version"] = revision.version
+        state["revision_reason"] = revision.reason
+        state["revision_type"] = revision.revision_type
+    else:
+        state.update({"revision_id": None, "revision_version": 1, "revision_reason": None, "revision_type": "ORIGINAL"})
+    state["status"] = "RETRACTED" if state.get("revision_type") == "RETRACTED" else "ACTIVE"
+    return state
+
+
+def _current_relationship_state(db: Session, relationship: PedigreeRelationship) -> dict:
+    state = _relationship(relationship)
+    revision = _latest_relationship_revision(db, relationship.id)
+    if revision is not None:
+        state.update(revision.payload or {})
+        state["revision_id"] = str(revision.id)
+        state["revision_version"] = revision.version
+        state["revision_reason"] = revision.reason
+        state["revision_type"] = revision.revision_type
+    else:
+        state.update({"revision_id": None, "revision_version": 1, "revision_reason": None, "revision_type": "ORIGINAL"})
+    state["status"] = "RETRACTED" if state.get("revision_type") == "RETRACTED" else "ACTIVE"
+    return state
+
+
+def _revision_fingerprint(payload: dict) -> str:
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _current_pedigree(db: Session, case_id: UUID):
+    members = list(db.scalars(
+        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationships = list(db.scalars(
+        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at)
+    ))
+    member_states = {row.id: _current_member_state(db, row) for row in members}
+    relationship_states = {row.id: _current_relationship_state(db, row) for row in relationships}
+    active_members = [state for state in member_states.values() if state["status"] == "ACTIVE"]
+    active_relationships = [
+        state for state in relationship_states.values()
+        if state["status"] == "ACTIVE"
+        and state["parent_member_id"] in {m["id"] for m in active_members}
+        and state["child_member_id"] in {m["id"] for m in active_members}
+    ]
+    return active_members, active_relationships, list(member_states.values()), list(relationship_states.values())
+
+
+def _validate_projected_proband(members: list[dict]) -> None:
+    probands = [member for member in members if member.get("is_proband")]
+    if len(probands) > 1:
+        raise HTTPException(409, "A case can have only one active designated proband")
+
+
 
 def _seg(o, member=None):
     return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {}}
@@ -1185,13 +1285,25 @@ def get_family_genotype_matrix(
 
 @router.get("/cases/{case_id}/pedigree")
 def get_pedigree(case_id: UUID, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
-    case=db.get(Case,case_id)
-    if not case: raise HTTPException(404,"Case not found")
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "Case not found")
     require_case_permission(case, principal, db, "read")
-    members=list(db.scalars(select(PedigreeMember).where(PedigreeMember.case_id==case_id).order_by(PedigreeMember.created_at,PedigreeMember.member_identifier)))
-    rels=list(db.scalars(select(PedigreeRelationship).where(PedigreeRelationship.case_id==case_id).order_by(PedigreeRelationship.created_at)))
-    _validate_pedigree_lineage(members, rels, case_id, db)
-    return {"case_id":str(case_id),"members":[_member(m) for m in members],"relationships":[_relationship(r) for r in rels]}
+    members, relationships, member_history, relationship_history = _current_pedigree(db, case_id)
+    _validate_projected_proband(members)
+    _validate_pedigree_lineage(
+        [type("MemberProjection", (), {"id": UUID(item["id"]), "specimen_id": UUID(item["specimen_id"]) if item.get("specimen_id") else None}) for item in members],
+        [type("RelationshipProjection", (), {"parent_member_id": UUID(item["parent_member_id"]), "child_member_id": UUID(item["child_member_id"])}) for item in relationships],
+        case_id,
+        db,
+    )
+    return {
+        "case_id": str(case_id),
+        "members": members,
+        "relationships": relationships,
+        "member_history": member_history,
+        "relationship_history": relationship_history,
+    }
 
 @router.post("/cases/{case_id}/pedigree/members",status_code=201)
 def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), principal: Principal=Depends(get_current_principal)):
@@ -1254,6 +1366,238 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
         metadata={"change_type": "RELATIONSHIP_ADDED", "relationship_id": str(row.id)},
     )
     db.commit(); return _relationship(row)
+
+
+@router.post("/cases/{case_id}/pedigree/members/{member_id}/revisions", status_code=201)
+def revise_pedigree_member(
+    case_id: UUID,
+    member_id: UUID,
+    body: PedigreeMemberRevisionInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    member = db.get(PedigreeMember, member_id)
+    if member is None or member.case_id != case_id:
+        raise HTTPException(404, "Pedigree member not found in this case")
+    latest = _latest_member_revision(db, member_id)
+    current = _current_member_state(db, member)
+    if current["status"] == "RETRACTED":
+        raise HTTPException(409, "A retracted pedigree member cannot be revised")
+    changes = body.model_dump(exclude_unset=True, exclude={"reason", "revision_type"})
+    if body.revision_type == "RETRACTED":
+        if changes:
+            raise HTTPException(422, "A retraction cannot include member field corrections")
+        binding = db.scalar(select(PedigreeSampleBinding.id).where(
+            PedigreeSampleBinding.case_id == case_id,
+            PedigreeSampleBinding.pedigree_member_id == member_id,
+        ).limit(1))
+        segregation = db.scalar(select(SegregationObservation.id).where(
+            SegregationObservation.pedigree_member_id == member_id,
+        ).limit(1))
+        active_relationship = any(
+            item["status"] == "ACTIVE" and (
+                item["parent_member_id"] == str(member_id)
+                or item["child_member_id"] == str(member_id)
+            )
+            for item in _current_pedigree(db, case_id)[1]
+        )
+        if binding or segregation or active_relationship:
+            raise HTTPException(
+                409,
+                "Member is referenced by sample identity, segregation, or an active relationship; retract those records through their governed lifecycle first",
+            )
+        next_state = dict(current)
+    else:
+        if not changes:
+            raise HTTPException(422, "At least one member field must be corrected")
+        next_state = {key: current.get(key) for key in (
+            "relationship_to_proband", "sex", "affected_status", "is_proband",
+            "sampled", "specimen_id", "metadata",
+        )}
+        next_state.update(changes)
+        if next_state.get("specimen_id") is not None:
+            specimen = db.get(Specimen, next_state["specimen_id"])
+            if specimen is None or specimen.case_id != case_id:
+                raise HTTPException(404, "Specimen not found in this case")
+            next_state["sampled"] = True
+            next_state["specimen_id"] = str(specimen.id)
+        if next_state.get("affected_status") is None:
+            raise HTTPException(422, "Affected status cannot be null")
+        projected = []
+        for row in db.scalars(select(PedigreeMember).where(PedigreeMember.case_id == case_id)):
+            state = _current_member_state(db, row)
+            if row.id == member_id:
+                state.update(next_state)
+            if state["status"] == "ACTIVE":
+                projected.append(state)
+        _validate_projected_proband(projected)
+
+    canonical_payload = {
+        "schema_version": 1,
+        "case_id": str(case_id),
+        "member_id": str(member_id),
+        "revision_type": body.revision_type,
+        "payload": next_state,
+        "reason": body.reason.strip(),
+    }
+    if not body.reason.strip():
+        raise HTTPException(422, "A non-empty correction reason is required")
+    revision_fingerprint = _revision_fingerprint(canonical_payload)
+    existing = db.scalar(select(PedigreeMemberRevision).where(
+        PedigreeMemberRevision.case_id == case_id,
+        PedigreeMemberRevision.revision_fingerprint == revision_fingerprint,
+    ))
+    if existing is not None:
+        return {
+            "id": str(existing.id), "member_id": str(member_id),
+            "revision_version": existing.version, "revision_type": existing.revision_type,
+            "reason": existing.reason, "payload": existing.payload,
+        }
+    revision = PedigreeMemberRevision(
+        id=uuid4(), case_id=case_id, member_id=member_id,
+        supersedes_revision_id=latest.id if latest else None,
+        version=(latest.version + 1) if latest else 2,
+        revision_type=body.revision_type, reason=body.reason.strip(),
+        payload=next_state, revision_fingerprint=revision_fingerprint,
+        recorded_by=principal.user_id,
+    )
+    db.add(revision)
+    AuditService(db).record(
+        event_type="PEDIGREE_MEMBER_REVISED",
+        case_id=case_id, analysis_id=None, actor_type="HUMAN",
+        actor_id=str(principal.user_id), subject_type="PEDIGREE_MEMBER",
+        subject_id=str(member_id), operation=f"CREATE_VERSION_{revision.version}",
+        before_state=current, after_state={**next_state, "status": body.revision_type},
+        reason=body.reason.strip(),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason=f"Pedigree member {member.member_identifier} was corrected; completed analyses may require reanalysis.",
+        metadata={"change_type": "MEMBER_REVISED", "member_id": str(member_id), "revision_id": str(revision.id)},
+    )
+    db.commit()
+    return {
+        "id": str(revision.id), "member_id": str(member_id),
+        "revision_version": revision.version, "revision_type": revision.revision_type,
+        "reason": revision.reason, "payload": revision.payload,
+    }
+
+
+@router.post("/cases/{case_id}/pedigree/relationships/{relationship_id}/revisions", status_code=201)
+def revise_pedigree_relationship(
+    case_id: UUID,
+    relationship_id: UUID,
+    body: PedigreeRelationshipRevisionInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    require_role(principal, CASE_WRITE_ROLES)
+    relationship = db.get(PedigreeRelationship, relationship_id)
+    if relationship is None or relationship.case_id != case_id:
+        raise HTTPException(404, "Pedigree relationship not found in this case")
+    latest = _latest_relationship_revision(db, relationship_id)
+    current = _current_relationship_state(db, relationship)
+    if current["status"] == "RETRACTED":
+        raise HTTPException(409, "A retracted relationship cannot be revised")
+    changes = body.model_dump(exclude_unset=True, exclude={"reason", "revision_type"})
+    if body.revision_type == "RETRACTED":
+        if changes:
+            raise HTTPException(422, "A retraction cannot include relationship field corrections")
+        next_state = dict(current)
+    else:
+        if not changes:
+            raise HTTPException(422, "At least one relationship field must be corrected")
+        next_state = {
+            "parent_member_id": current["parent_member_id"],
+            "child_member_id": current["child_member_id"],
+            "relationship_type": current["relationship_type"],
+            "metadata": current.get("metadata") or {},
+        }
+        next_state.update(changes)
+        parent_id = UUID(next_state["parent_member_id"])
+        child_id = UUID(next_state["child_member_id"])
+        if parent_id == child_id:
+            raise HTTPException(422, "A pedigree member cannot be their own parent")
+        active_members, active_relationships, _, _ = _current_pedigree(db, case_id)
+        active_ids = {item["id"] for item in active_members}
+        if str(parent_id) not in active_ids or str(child_id) not in active_ids:
+            raise HTTPException(409, "Relationship endpoints must be active members in this case")
+        graph_without_target = [
+            type("RelationshipProjection", (), {
+                "parent_member_id": UUID(item["parent_member_id"]),
+                "child_member_id": UUID(item["child_member_id"]),
+            })
+            for item in active_relationships if item["id"] != str(relationship_id)
+        ]
+        if _would_create_pedigree_cycle(graph_without_target, parent_id, child_id):
+            raise HTTPException(409, "Corrected pedigree relationship would create a parentage cycle")
+        if any(
+            item["id"] != str(relationship_id)
+            and item["parent_member_id"] == str(parent_id)
+            and item["child_member_id"] == str(child_id)
+            for item in active_relationships
+        ):
+            raise HTTPException(409, "An active relationship already exists for these members")
+
+    if not body.reason.strip():
+        raise HTTPException(422, "A non-empty correction reason is required")
+    canonical_payload = {
+        "schema_version": 1, "case_id": str(case_id),
+        "relationship_id": str(relationship_id),
+        "revision_type": body.revision_type, "payload": next_state,
+        "reason": body.reason.strip(),
+    }
+    revision_fingerprint = _revision_fingerprint(canonical_payload)
+    existing = db.scalar(select(PedigreeRelationshipRevision).where(
+        PedigreeRelationshipRevision.case_id == case_id,
+        PedigreeRelationshipRevision.revision_fingerprint == revision_fingerprint,
+    ))
+    if existing is not None:
+        return {
+            "id": str(existing.id), "relationship_id": str(relationship_id),
+            "revision_version": existing.version, "revision_type": existing.revision_type,
+            "reason": existing.reason, "payload": existing.payload,
+        }
+    revision = PedigreeRelationshipRevision(
+        id=uuid4(), case_id=case_id, relationship_id=relationship_id,
+        supersedes_revision_id=latest.id if latest else None,
+        version=(latest.version + 1) if latest else 2,
+        revision_type=body.revision_type, reason=body.reason.strip(),
+        payload=next_state, revision_fingerprint=revision_fingerprint,
+        recorded_by=principal.user_id,
+    )
+    db.add(revision)
+    AuditService(db).record(
+        event_type="PEDIGREE_RELATIONSHIP_REVISED",
+        case_id=case_id, analysis_id=None, actor_type="HUMAN",
+        actor_id=str(principal.user_id), subject_type="PEDIGREE_RELATIONSHIP",
+        subject_id=str(relationship_id), operation=f"CREATE_VERSION_{revision.version}",
+        before_state=current, after_state={**next_state, "status": body.revision_type},
+        reason=body.reason.strip(),
+    )
+    create_case_change_candidates(
+        db, case=case, trigger_type="PEDIGREE_UPDATE",
+        reason=f"Pedigree relationship {relationship_id} was corrected; completed analyses may require reanalysis.",
+        metadata={"change_type": "RELATIONSHIP_REVISED", "relationship_id": str(relationship_id), "revision_id": str(revision.id)},
+    )
+    db.commit()
+    return {
+        "id": str(revision.id), "relationship_id": str(relationship_id),
+        "revision_version": revision.version, "revision_type": revision.revision_type,
+        "reason": revision.reason, "payload": revision.payload,
+    }
+
 
 @router.get("/analyses/{analysis_id}/variants/{variant_id}/segregation")
 def get_segregation(
