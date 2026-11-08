@@ -1557,7 +1557,13 @@ def revise_pedigree_member(
                 409,
                 "Member is referenced by sample identity, segregation, or an active relationship; retract those records through their governed lifecycle first",
             )
-        next_state = dict(current)
+        next_state = {
+            key: current.get(key)
+            for key in (
+                "relationship_to_proband", "sex", "affected_status",
+                "is_proband", "sampled", "specimen_id", "metadata",
+            )
+        }
     else:
         if not changes:
             raise HTTPException(422, "At least one member field must be corrected")
@@ -1675,7 +1681,12 @@ def revise_pedigree_relationship(
     if body.revision_type == "RETRACTED":
         if changes:
             raise HTTPException(422, "A retraction cannot include relationship field corrections")
-        next_state = dict(current)
+        next_state = {
+            "parent_member_id": current["parent_member_id"],
+            "child_member_id": current["child_member_id"],
+            "relationship_type": current["relationship_type"],
+            "metadata": current.get("metadata") or {},
+        }
     else:
         if not changes:
             raise HTTPException(422, "At least one relationship field must be corrected")
