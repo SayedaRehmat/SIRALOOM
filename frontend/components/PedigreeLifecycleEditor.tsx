@@ -41,7 +41,7 @@ export default function PedigreeLifecycleEditor({
   const allRelationships = relationshipHistory.length ? relationshipHistory : relationships;
   const selectedMember = allMembers.find((item) => item.id === memberId) ?? null;
   const selectedRelationship = allRelationships.find((item) => item.id === relationshipId) ?? null;
-  const memberLabel = (id: string) => members.find((item) => item.id === id)?.member_identifier ?? id;
+  const memberLabel = (id: string) => allMembers.find((item) => item.id === id)?.member_identifier ?? id;
 
   const beginMemberEdit = () => {
     if (!selectedMember) return;
