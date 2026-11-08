@@ -47,15 +47,19 @@ def resolve_toolchain_profile(
         raise ToolchainProfileError(f"Unknown BCFtools/HTSlib profile: {profile_id!r}.")
     profile = matches[0]
     from backend.app.domain.scientific_tool_profiles import (
+        ScientificToolProfileError,
         resolve_scientific_tool_profile,
     )
-    generic_profile = resolve_scientific_tool_profile(
-        profile_id,
-        tool_id="bcftools",
-        platform=str(profile.get("platform") or ""),
-        execution_method="OCI_CONTAINER",
-        registry_path=CONFIG_ROOT / "configs" / "bioinformatics" / "scientific-tool-profiles.v1.json",
-    )
+    try:
+        generic_profile = resolve_scientific_tool_profile(
+            profile_id,
+            tool_id="bcftools",
+            platform=str(profile.get("platform") or ""),
+            execution_method="OCI_CONTAINER",
+            registry_path=CONFIG_ROOT / "configs" / "bioinformatics" / "scientific-tool-profiles.v1.json",
+        )
+    except ScientificToolProfileError as exc:
+        raise ToolchainProfileError(str(exc)) from exc
     if (
         generic_profile.get("version") != profile.get("bcftools_version")
         or not any(
