@@ -448,7 +448,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     name="Fixture ClinGen Gene-Disease Validity",
                     provider="ClinGen Gene-Disease Validity",
                     resource_type="EVIDENCE",
-                    version="fixture-v1",
+                    version="2026-09-01",
                     genome_build=None,
                     access_method="LOCAL",
                     license_text="Test fixture only",
@@ -471,6 +471,11 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                         location=str(path),
                         dataset="fixture-v1",
                         execution_scope="ORGANIZATION_MANAGED",
+                        toolchain=(
+                            {"release": "2026-09-01"}
+                            if provider_id == "ClinGen Gene-Disease Validity"
+                            else None
+                        ),
                     )
                     db.add(ResourceQualification(
                         id=qualification_id,
