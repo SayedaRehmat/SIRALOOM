@@ -41,12 +41,29 @@ class ClinGenGeneDiseaseValidityProvider:
     provider_version = "GeneValidity"
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
-    def __init__(self, *, resource_path: str, delimiter: str | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        resource_path: str,
+        delimiter: str | None = None,
+        expected_sha256: str | None = None,
+    ) -> None:
         self.path = Path(resource_path)
         self.delimiter = delimiter
+        self._records_by_gene: dict[str, tuple[GeneDiseaseAssertion, ...]] | None = None
+        self.sha256: str | None = None
+        expected = str(expected_sha256 or "").strip().lower().removeprefix("sha256:")
+        if expected_sha256 is not None and (len(expected) != 64 or any(ch not in "0123456789abcdef" for ch in expected)):
+            raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity requires a valid SHA-256 pin")
+        if expected_sha256 is not None:
+            if not self.path.is_file():
+                raise ClinGenGeneDiseaseValidityError(f"ClinGen Gene-Disease Validity file not found: {self.path}")
+            self.sha256 = hashlib.sha256(self.path.read_bytes()).hexdigest()
+            if self.sha256 != expected:
+                raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity checksum does not match the approved resource")
 
     @classmethod
-    def from_execution_contract(cls, resolved: Any):
+    def from_execution_contract(cls, resolved: Any, *, expected_sha256: str | None = None):
         contract = resolved.contract
         if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
             raise ClinGenGeneDiseaseValidityError(
@@ -57,16 +74,19 @@ class ClinGenGeneDiseaseValidityProvider:
         delimiter = (contract.toolchain or {}).get("delimiter")
         if delimiter not in {None, ",", "\t"}:
             raise ClinGenGeneDiseaseValidityError("delimiter must be ',' or '\\t'")
-        return cls(resource_path=contract.location, delimiter="\t" if delimiter == "\t" else delimiter)
+        return cls(
+            resource_path=contract.location,
+            delimiter="\t" if delimiter == "\t" else delimiter,
+            expected_sha256=expected_sha256,
+        )
 
-    def query_gene(self, *, gene: str) -> list[GeneDiseaseAssertion]:
-        wanted = str(gene or "").strip().upper()
-        if not wanted:
-            return []
+    def _load_index(self) -> dict[str, tuple[GeneDiseaseAssertion, ...]]:
+        if self._records_by_gene is not None:
+            return self._records_by_gene
         if not self.path.is_file():
             raise ClinGenGeneDiseaseValidityError(f"ClinGen Gene-Disease Validity file not found: {self.path}")
-
-        out: list[GeneDiseaseAssertion] = []
+        if self.sha256 is None:
+            self.sha256 = hashlib.sha256(self.path.read_bytes()).hexdigest()
         raw_text = self.path.read_text(encoding="utf-8-sig")
         # Some governed transfers preserve newline characters as the literal two-character sequence \\n        # Normalize that transport artifact before CSV parsing.
         raw_text = raw_text.replace("\\n", "\n")
@@ -97,33 +117,41 @@ class ClinGenGeneDiseaseValidityProvider:
             raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity header not found")
 
         headers = [x.strip() for x in rows[header_index]]
+        indexed: dict[str, list[GeneDiseaseAssertion]] = {}
         for row in rows[header_index + 1:]:
             if not row or row[0].startswith("+"):
                 continue
             if len(row) < len(headers):
                 row = row + [""] * (len(headers) - len(row))
             data = {headers[i]: row[i].strip() for i in range(len(headers))}
-            if data.get("GENE SYMBOL", "").upper() != wanted:
+            gene_symbol = data.get("GENE SYMBOL", "").upper()
+            if not gene_symbol:
                 continue
             canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
             digest = hashlib.sha256(canonical).hexdigest()
             report = data.get("ONLINE REPORT") or None
-            record_id = report.rsplit("/", 1)[-1] if report else f"{wanted}:{data.get('DISEASE ID','')}"
-            out.append(
-                GeneDiseaseAssertion(
-                    gene=wanted,
-                    hgnc_id=data.get("GENE ID (HGNC)") or None,
-                    disease=data.get("DISEASE LABEL", ""),
-                    mondo_id=data.get("DISEASE ID (MONDO)") or None,
-                    moi=data.get("MOI") or None,
-                    sop=data.get("SOP") or None,
-                    classification=data.get("CLASSIFICATION") or None,
-                    online_report=report,
-                    classification_date=data.get("CLASSIFICATION DATE") or None,
-                    expert_panel=data.get("GCEP") or None,
-                    source_record_id=f"ClinGen-GDV:{record_id}",
-                    payload=data,
-                    record_sha256=digest,
-                )
+            record_id = report.rsplit("/", 1)[-1] if report else f"{gene_symbol}:{data.get('DISEASE ID (MONDO)','')}"
+            assertion = GeneDiseaseAssertion(
+                gene=gene_symbol,
+                hgnc_id=data.get("GENE ID (HGNC)") or None,
+                disease=data.get("DISEASE LABEL", ""),
+                mondo_id=data.get("DISEASE ID (MONDO)") or None,
+                moi=data.get("MOI") or None,
+                sop=data.get("SOP") or None,
+                classification=data.get("CLASSIFICATION") or None,
+                online_report=report,
+                classification_date=data.get("CLASSIFICATION DATE") or None,
+                expert_panel=data.get("GCEP") or None,
+                source_record_id=f"ClinGen-GDV:{record_id}",
+                payload=data,
+                record_sha256=digest,
             )
-        return out
+            indexed.setdefault(gene_symbol, []).append(assertion)
+        self._records_by_gene = {gene: tuple(records) for gene, records in indexed.items()}
+        return self._records_by_gene
+
+    def query_gene(self, *, gene: str) -> list[GeneDiseaseAssertion]:
+        wanted = str(gene or "").strip().upper()
+        if not wanted:
+            return []
+        return list(self._load_index().get(wanted, ()))
