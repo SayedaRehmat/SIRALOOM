@@ -10,6 +10,7 @@ from backend.app.adapters.annotation.vep import VEPProvider, VEPProviderError
 from backend.app.domain.provider_contract import ProviderRawResult
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.schemas import CanonicalVariant
+from backend.app.domain.tool_execution import sha256_resource_path
 
 
 def _contract(*, access_method="LOCAL", toolchain=None, vep_binary="/opt/vep/vep"):
@@ -558,9 +559,7 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
         if item.resource_id.startswith("ensembl-vep-cache-manifest:")
     )
     assert cache_binding.path == toolchain["cache_dir"]
-    assert cache_binding.sha256 == __import__(
-        "backend.app.domain.tool_execution", fromlist=["sha256_resource_path"]
-    ).sha256_resource_path(Path(toolchain["cache_dir"]))
+    assert cache_binding.sha256 == sha256_resource_path(Path(toolchain["cache_dir"]))
     assert manifest_binding.path == toolchain["cache_manifest"]
     assert result.metadata["tool_execution_record_id"]
     assert result.payload[0]["allele_string"] == "A/G"
