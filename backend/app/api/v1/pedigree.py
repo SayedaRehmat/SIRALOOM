@@ -299,6 +299,37 @@ def _current_pedigree(db: Session, case_id: UUID):
     return active_members, active_relationships, list(member_states.values()), list(relationship_states.values())
 
 
+def _validate_member_specimen_assignment(
+    db: Session,
+    case_id: UUID,
+    specimen_id: UUID,
+    member_id: UUID | None = None,
+    current_specimen_id: str | None = None,
+) -> Specimen:
+    specimen = db.get(Specimen, specimen_id)
+    if specimen is None or specimen.case_id != case_id:
+        raise HTTPException(404, "Specimen not found in this case")
+    if current_specimen_id and current_specimen_id != str(specimen_id):
+        existing_binding = db.scalar(select(PedigreeSampleBinding.id).where(
+            PedigreeSampleBinding.case_id == case_id,
+            PedigreeSampleBinding.pedigree_member_id == member_id,
+        ).limit(1)) if member_id else None
+        if existing_binding:
+            raise HTTPException(
+                409,
+                "A member with recorded sample-identity bindings cannot change specimen assignment; correct the identity binding through its versioned lifecycle first",
+            )
+    active_members, _, _, _ = _current_pedigree(db, case_id)
+    if any(
+        item["id"] != str(member_id)
+        and item.get("specimen_id") == str(specimen_id)
+        for item in active_members
+    ):
+        raise HTTPException(409, "Specimen is already assigned to another active pedigree member")
+    return specimen
+
+
+
 def _revision_fingerprint(payload: dict) -> str:
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -1405,9 +1436,7 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
     if body.specimen_id:
-        specimen = db.get(Specimen, body.specimen_id)
-        if not specimen or specimen.case_id != case_id:
-            raise HTTPException(status_code=404, detail="Specimen not found in this case")
+        _validate_member_specimen_assignment(db, case_id, body.specimen_id)
     if db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.member_identifier==body.member_identifier.strip())):
         raise HTTPException(409,"Pedigree member identifier already exists")
     if body.is_proband and db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.is_proband.is_(True))):
@@ -1513,9 +1542,10 @@ def revise_pedigree_member(
         next_state.update(changes)
         if next_state.get("specimen_id") is not None:
             specimen_id = UUID(str(next_state["specimen_id"]))
-            specimen = db.get(Specimen, specimen_id)
-            if specimen is None or specimen.case_id != case_id:
-                raise HTTPException(404, "Specimen not found in this case")
+            specimen = _validate_member_specimen_assignment(
+                db, case_id, specimen_id, member_id=member_id,
+                current_specimen_id=current.get("specimen_id"),
+            )
             next_state["sampled"] = True
             next_state["specimen_id"] = str(specimen.id)
         else:
