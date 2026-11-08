@@ -220,7 +220,7 @@ jobs:
             work=$(mktemp -d)
             trap "rm -rf \"$work\"" EXIT
             printf ">chr1\\nAAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT\\n" > "$work/ref.fa"
-            bcftools faidx "$work/ref.fa"
+            printf "chr1\\t40\\t6\\t40\\t41\\n" > "$work/ref.fa.fai"
             printf "##fileformat=VCFv4.2\\n##contig=<ID=chr1,length=40>\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\nchr1\\t11\\t.\\tC\\tCA,CAA\\t50\\tPASS\\t.\\n" > "$work/input.vcf"
             bcftools norm -f "$work/ref.fa" -m -any -Oz -o "$work/output.vcf.gz" "$work/input.vcf"
             bcftools index --csi "$work/output.vcf.gz"
