@@ -279,7 +279,7 @@ def _validate_projected_proband(members: list[dict]) -> None:
 
 
 def _seg(o, member=None):
-    return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {},"created_at":o.created_at.isoformat() if o.created_at else None}
+    return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {},"created_at":o.created_at.isoformat() if o.created_at else None,"recorded_by":(o.metadata_json or {}).get("recorded_by")}
 
 def _validate_observation_members(rows, members):
     if any(row.pedigree_member_id not in members for row in rows):
@@ -1810,6 +1810,7 @@ def add_segregation(
         root_metadata = {
             **payload["metadata"],
             "observation_fingerprint": observation_fingerprint,
+            "recorded_by": str(principal.user_id),
         }
         row = SegregationObservation(
             id=uuid4(),
