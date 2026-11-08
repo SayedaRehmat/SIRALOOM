@@ -166,6 +166,12 @@ def _member(m):
 def _relationship(r):
     return {"id":str(r.id),"parent_member_id":str(r.parent_member_id),"child_member_id":str(r.child_member_id),"relationship_type":r.relationship_type,"metadata":r.metadata_json or {},"created_at":getattr(r, "created_at", None).isoformat() if getattr(r, "created_at", None) else None}
 
+def _scalar_rows(db: Session, statement) -> list:
+    result = db.scalars(statement)
+    return result.all() if hasattr(result, "all") else list(result)
+
+
+
 def _latest_member_revision(db: Session, member_id: UUID):
     return db.scalar(
         select(PedigreeMemberRevision)
@@ -294,44 +300,32 @@ def _relationship_state_from_revisions(relationship: PedigreeRelationship, revis
 
 
 def _current_member_state(db: Session, member: PedigreeMember) -> dict:
-    revisions = list(db.scalars(
-        select(PedigreeMemberRevision)
+    revisions = _scalar_rows(db, select(PedigreeMemberRevision)
         .where(PedigreeMemberRevision.member_id == member.id)
-        .order_by(PedigreeMemberRevision.version)
-    ))
+        .order_by(PedigreeMemberRevision.version))
     return _member_state_from_revisions(member, revisions)
 
 
 def _current_relationship_state(db: Session, relationship: PedigreeRelationship) -> dict:
-    revisions = list(db.scalars(
-        select(PedigreeRelationshipRevision)
+    revisions = _scalar_rows(db, select(PedigreeRelationshipRevision)
         .where(PedigreeRelationshipRevision.relationship_id == relationship.id)
-        .order_by(PedigreeRelationshipRevision.version)
-    ))
+        .order_by(PedigreeRelationshipRevision.version))
     return _relationship_state_from_revisions(relationship, revisions)
 
 
 def _current_pedigree(db: Session, case_id: UUID):
-    member_rows = list(db.scalars(
-        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
-        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
-    ))
-    relationship_rows = list(db.scalars(
-        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
-        .order_by(PedigreeRelationship.created_at)
-    ))
+    member_rows = _scalar_rows(db, select(PedigreeMember).where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier))
+    relationship_rows = _scalar_rows(db, select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at))
     member_ids = [item.id for item in member_rows]
     relationship_ids = [item.id for item in relationship_rows]
-    member_revisions = list(db.scalars(
-        select(PedigreeMemberRevision)
+    member_revisions = _scalar_rows(db, select(PedigreeMemberRevision)
         .where(PedigreeMemberRevision.member_id.in_(member_ids))
-        .order_by(PedigreeMemberRevision.member_id, PedigreeMemberRevision.version)
-    )) if member_ids else []
-    relationship_revisions = list(db.scalars(
-        select(PedigreeRelationshipRevision)
+        .order_by(PedigreeMemberRevision.member_id, PedigreeMemberRevision.version)) if member_ids else []
+    relationship_revisions = _scalar_rows(db, select(PedigreeRelationshipRevision)
         .where(PedigreeRelationshipRevision.relationship_id.in_(relationship_ids))
-        .order_by(PedigreeRelationshipRevision.relationship_id, PedigreeRelationshipRevision.version)
-    )) if relationship_ids else []
+        .order_by(PedigreeRelationshipRevision.relationship_id, PedigreeRelationshipRevision.version)) if relationship_ids else []
     member_revision_map = {}
     for item in member_revisions:
         member_revision_map.setdefault(item.member_id, []).append(item)
@@ -348,6 +342,17 @@ def _current_pedigree(db: Session, case_id: UUID):
     }
     active_members = [state for state in member_states.values() if state["status"] == "ACTIVE"]
     active_member_ids = {member["id"] for member in active_members}
+    for state in relationship_states.values():
+        if (
+            state["parent_member_id"] not in member_states
+            or state["child_member_id"] not in member_states
+        ):
+            raise HTTPException(409, "Pedigree relationship references a member outside this case")
+        if state["status"] == "ACTIVE" and (
+            member_states[state["parent_member_id"]]["status"] != "ACTIVE"
+            or member_states[state["child_member_id"]]["status"] != "ACTIVE"
+        ):
+            raise HTTPException(409, "Active pedigree relationship references a retracted member")
     active_relationships = [
         state for state in relationship_states.values()
         if state["status"] == "ACTIVE"
