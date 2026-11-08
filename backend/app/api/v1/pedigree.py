@@ -1319,8 +1319,7 @@ def get_family_genotype_matrix(
             raise HTTPException(404, "Canonical variant not found")
         variants[variant_id] = variant
 
-    _, _, member_history, _ = _current_pedigree(db, case_id)
-    member_state_by_id = {UUID(item["id"]): item for item in member_history}
+    member_state_by_id = None
     samples = []
     for binding_id in body.binding_ids:
         binding = db.get(PedigreeSampleBinding, binding_id)
@@ -1333,6 +1332,9 @@ def get_family_genotype_matrix(
         ))
         if successor is not None:
             raise HTTPException(409, "A superseded sample binding cannot be used in a current genotype matrix")
+        if member_state_by_id is None:
+            _, _, member_history, _ = _current_pedigree(db, case_id)
+            member_state_by_id = {UUID(item["id"]): item for item in member_history}
         member = db.get(PedigreeMember, binding.pedigree_member_id)
         specimen = db.get(Specimen, binding.specimen_id)
         analysis = db.get(Analysis, binding.analysis_id)
