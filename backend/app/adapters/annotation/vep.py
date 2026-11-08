@@ -29,7 +29,6 @@ from backend.app.domain.tool_execution import (
     ToolExecutionRequest,
     ToolIdentity,
     current_platform_id,
-    sha256_resource_path,
 )
 
 
@@ -228,14 +227,18 @@ class VEPProvider(ScientificResourceProvider):
                     runtime_path=runtime_path,
                 )
                 input_digest = tool_sha256_file(input_vcf)
-                cache_tree_digest = str(
-                    (self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or ""
-                )
+                cache_runtime_check = self._runtime_checks.get(build) or {}
+                cache_tree_digest = str(cache_runtime_check.get("cache_tree_sha256") or "")
+                cache_resource_sha256 = str(cache_runtime_check.get("cache_resource_sha256") or "").lower()
+                if not re.fullmatch(r"[0-9a-f]{64}", cache_resource_sha256):
+                    raise VEPProviderError(
+                        "Persistent VEP execution requires a verified cache-directory resource digest."
+                    )
                 resource_bindings = (
                     ScientificResourceBinding(
                         resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{build}",
                         version=self.cache_version,
-                        sha256=sha256_resource_path(Path(self.cache_dir)),
+                        sha256=cache_resource_sha256,
                         assembly=build,
                         path=self.cache_dir,
                     ),
@@ -671,7 +674,7 @@ class VEPProvider(ScientificResourceProvider):
             ScientificResourceBinding(
                 resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{assembly}",
                 version=self.cache_version,
-                sha256=sha256_resource_path(Path(self.cache_dir)),
+                sha256=cache_manifest_check["resource_sha256"],
                 assembly=assembly,
                 path=self.cache_dir,
             ),
@@ -719,6 +722,7 @@ class VEPProvider(ScientificResourceProvider):
             "vep_binary_sha256": binary_sha256_after,
             "cache_manifest_sha256": cache_manifest_check["manifest_sha256"],
             "cache_tree_sha256": cache_manifest_check["tree_sha256"],
+            "cache_resource_sha256": cache_manifest_check["resource_sha256"],
             "cache_artifact_sha256": cache_manifest_check["source_artifact_sha256"],
             "cache_info_sha256": hashlib.sha256(cache_output.encode("utf-8")).hexdigest(),
             "verified_at": datetime.now(timezone.utc).isoformat(),
@@ -815,6 +819,7 @@ class VEPProvider(ScientificResourceProvider):
                 "VEP cache file set does not match its manifest "
                 f"(missing={len(set(expected) - actual_paths)}, extra={len(actual_paths - set(expected))})."
             )
+        sorted_entries = sorted(actual_entries, key=lambda item: item["path"])
         canonical = json.dumps(
             {
                 "schema": "siraloom.vep-cache-manifest.v1",
@@ -822,14 +827,20 @@ class VEPProvider(ScientificResourceProvider):
                 "species": self.species,
                 "assembly": assembly,
                 "source_artifact_sha256": source_artifact_sha256,
-                "files": sorted(actual_entries, key=lambda item: item["path"]),
+                "files": sorted_entries,
             },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        resource_canonical = json.dumps(
+            sorted_entries,
             sort_keys=True,
             separators=(",", ":"),
         ).encode("utf-8")
         return {
             "manifest_sha256": manifest_sha256,
             "tree_sha256": hashlib.sha256(canonical).hexdigest(),
+            "resource_sha256": hashlib.sha256(resource_canonical).hexdigest(),
             "source_artifact_sha256": source_artifact_sha256,
         }
 
