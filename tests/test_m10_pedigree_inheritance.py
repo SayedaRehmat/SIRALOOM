@@ -76,6 +76,7 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
         specimen_id=None, metadata_json={},
     )
     relationship = SimpleNamespace(
+        id=uuid4(), case_id=case_id,
         parent_member_id=father_id, child_member_id=proband_id,
         relationship_type="PARENT_CHILD", metadata_json={},
     )
