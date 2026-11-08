@@ -160,10 +160,10 @@ class AssessmentInput(BaseModel):
 
 
 def _member(m):
-    return {"id":str(m.id),"member_identifier":m.member_identifier,"relationship_to_proband":m.relationship_to_proband,"sex":m.sex,"affected_status":m.affected_status,"is_proband":m.is_proband,"sampled":m.sampled,"specimen_id":str(m.specimen_id) if m.specimen_id else None,"metadata":m.metadata_json or {},"created_at":m.created_at.isoformat() if m.created_at else None}
+    return {"id":str(m.id),"member_identifier":m.member_identifier,"relationship_to_proband":m.relationship_to_proband,"sex":m.sex,"affected_status":m.affected_status,"is_proband":m.is_proband,"sampled":m.sampled,"specimen_id":str(m.specimen_id) if m.specimen_id else None,"metadata":m.metadata_json or {},"created_at":getattr(m, "created_at", None).isoformat() if getattr(m, "created_at", None) else None}
 
 def _relationship(r):
-    return {"id":str(r.id),"parent_member_id":str(r.parent_member_id),"child_member_id":str(r.child_member_id),"relationship_type":r.relationship_type,"metadata":r.metadata_json or {},"created_at":r.created_at.isoformat() if r.created_at else None}
+    return {"id":str(r.id),"parent_member_id":str(r.parent_member_id),"child_member_id":str(r.child_member_id),"relationship_type":r.relationship_type,"metadata":r.metadata_json or {},"created_at":getattr(r, "created_at", None).isoformat() if getattr(r, "created_at", None) else None}
 
 def _latest_member_revision(db: Session, member_id: UUID):
     return db.scalar(
@@ -1500,9 +1500,10 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
         _validate_member_specimen_assignment(db, case_id, body.specimen_id)
     if db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.member_identifier==body.member_identifier.strip())):
         raise HTTPException(409,"Pedigree member identifier already exists")
-    active_members, _, _, _ = _current_pedigree(db, case_id)
-    if body.is_proband and any(member.get("is_proband") for member in active_members):
-        raise HTTPException(409, "A case can have only one active designated proband")
+    if body.is_proband:
+        active_members, _, _, _ = _current_pedigree(db, case_id)
+        if any(member.get("is_proband") for member in active_members):
+            raise HTTPException(409, "A case can have only one active designated proband")
     row=PedigreeMember(id=uuid4(),case_id=case_id,member_identifier=body.member_identifier.strip(),relationship_to_proband=body.relationship_to_proband,sex=body.sex,affected_status=body.affected_status,is_proband=body.is_proband,sampled=body.sampled,specimen_id=body.specimen_id,metadata_json=body.metadata)
     db.add(row)
     AuditService(db).record(event_type="PEDIGREE_MEMBER_ADDED",case_id=case_id,analysis_id=None,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="PEDIGREE_MEMBER",subject_id=str(row.id),operation="CREATE",after_state=_member(row))
