@@ -298,7 +298,7 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                 name="ClinGen Gene-Disease Validity",
                 provider="ClinGen Gene-Disease Validity",
                 resource_type="EVIDENCE",
-                version="GeneValidity",
+                version="2026-11-08",
             )
             g2p = _resource(
                 db,
