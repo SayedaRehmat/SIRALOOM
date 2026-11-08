@@ -104,10 +104,10 @@ jobs:
           export BCFTOOLS_PREFIX="$MAMBA_ROOT_PREFIX/envs/bcftools-arm64-build"
           bash scripts/build_bcftools_from_profile.sh
       - name: Qualify reference-backed normalization, multiallelic splitting and CSI
-        env:
-          BCFTOOLS_BIN: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-arm64-build/bin/bcftools
         run: |
           set -euo pipefail
+          BCFTOOLS_BIN="$MAMBA_ROOT_PREFIX/envs/bcftools-arm64-build/bin/bcftools"
+          test -x "$BCFTOOLS_BIN"
           test "$(uname -m)" = "aarch64"
           work="$RUNNER_TEMP/bcftools-arm64-smoke"
           mkdir -p "$work"
