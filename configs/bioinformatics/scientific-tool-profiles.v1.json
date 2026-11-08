@@ -573,7 +573,7 @@
     {
       "id": "vep-115-linux-amd64",
       "tool_id": "ensembl-vep",
-      "version": "115",
+      "version": "115.2",
       "platform": "linux-64",
       "architecture": "x86_64",
       "status": "CANDIDATE",
@@ -594,7 +594,7 @@
         },
         {
           "name": "vep-cache",
-          "version": "115",
+          "version": "115.2",
           "required": true,
           "assembly_scoped": true
         },
@@ -609,7 +609,7 @@
         "version_args": [
           "--version"
         ],
-        "version_output_contains": "115",
+        "version_output_contains": "115.2",
         "sha256_policy": "required-runtime-attestation"
       },
       "resource_requirements": {
