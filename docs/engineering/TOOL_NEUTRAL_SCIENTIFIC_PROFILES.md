@@ -44,7 +44,7 @@ The registry contains an independent `vep-115-linux-amd64` candidate for Ensembl
 
 VEP does not inherit BCFtools' HTSlib pair, conda lock, build script, executable name, or worker queue. Its dependencies are explicitly identified as Perl runtime, Ensembl VEP Perl modules, version-matched cache, and optional assembly-matched FASTA.
 
-The profile remains `CANDIDATE`: a reproducible Perl/module environment lock and complete VEP image qualification have not been produced. The VEP adapter now takes its qualification status from this registry rather than hardcoding `SOFTWARE_QUALIFIED`. A candidate VEP profile therefore fails the common `ToolIdentity.validate()` production execution gate.
+The profile remains `CANDIDATE`: a reproducible Perl/module environment lock and complete VEP image qualification have not been produced. The VEP adapter now takes its qualification status from this registry rather than hardcoding `SOFTWARE_QUALIFIED`. A candidate VEP profile therefore fails the common `ToolIdentity.validate()` production execution gate. Once a VEP profile ID is configured, the adapter also refuses to fall back to its legacy unregistered local-process path when no persistent execution service is assigned.
 
 ## Resolution policy
 
