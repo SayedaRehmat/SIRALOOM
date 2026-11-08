@@ -166,3 +166,42 @@ def test_snapshot_proband_member_id_is_included_but_sibling_id_is_excluded():
     assert result["candidates"][0]["matched_terms"][0]["patient_observation_ids"] == [
         "proband-observation"
     ]
+
+
+def test_candidate_keeps_clingen_validity_and_penetrance_provenance_distinct_from_g2p():
+    association = {
+        **_association(),
+        "validity_status": "Definitive",
+        "g2p_confidence": "definitive",
+        "validity_provenance": {
+            "resource_id": "00000000-0000-0000-0000-000000000003",
+            "resource_name": "ClinGen Gene-Disease Validity",
+            "resource_version": "GeneValidity",
+            "resource_sha256": "c" * 64,
+            "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+            "matched_assertion_count": 1,
+        },
+        "inheritance_mode_sources": {
+            "g2p_allelic_requirement": "biallelic_autosomal",
+            "clingen_moi_assertions": ["Autosomal recessive inheritance"],
+        },
+        "inheritance_mode_conflict": False,
+    }
+    result = prioritize_disease_context(
+        patient_observations=[{"canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"}],
+        gene_disease_records=[association],
+        annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+        hpoa_provenance={
+            "resource_id": "00000000-0000-0000-0000-000000000002",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+        },
+        hpo_ontology=Ontology(),
+    )
+    candidate = result["candidates"][0]
+    assert candidate["association_validity"] == "Definitive"
+    assert candidate["g2p_confidence"] == "definitive"
+    assert candidate["association_validity_provenance"]["source"] == "CLINGEN_GENE_DISEASE_VALIDITY"
+    assert candidate["inheritance"]["mode_sources"]["g2p_allelic_requirement"] == "biallelic_autosomal"
+    assert candidate["inheritance"]["penetrance_provenance"]["source"] == "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"
+    assert candidate["inheritance"]["qualification_status"] == "REQUIRES_INDEPENDENT_QUALIFICATION"
