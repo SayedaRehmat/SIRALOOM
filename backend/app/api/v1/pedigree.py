@@ -309,11 +309,11 @@ def _validate_member_specimen_assignment(
     specimen = db.get(Specimen, specimen_id)
     if specimen is None or specimen.case_id != case_id:
         raise HTTPException(404, "Specimen not found in this case")
-    if current_specimen_id and current_specimen_id != str(specimen_id):
+    if member_id and current_specimen_id != str(specimen_id):
         existing_binding = db.scalar(select(PedigreeSampleBinding.id).where(
             PedigreeSampleBinding.case_id == case_id,
             PedigreeSampleBinding.pedigree_member_id == member_id,
-        ).limit(1)) if member_id else None
+        ).limit(1))
         if existing_binding:
             raise HTTPException(
                 409,
@@ -1540,6 +1540,16 @@ def revise_pedigree_member(
             "sampled", "specimen_id", "metadata",
         )}
         next_state.update(changes)
+        if "specimen_id" in changes and next_state.get("specimen_id") is None and current.get("specimen_id"):
+            existing_binding = db.scalar(select(PedigreeSampleBinding.id).where(
+                PedigreeSampleBinding.case_id == case_id,
+                PedigreeSampleBinding.pedigree_member_id == member_id,
+            ).limit(1))
+            if existing_binding:
+                raise HTTPException(
+                    409,
+                    "A member with recorded sample-identity bindings cannot clear specimen assignment; correct the identity binding through its versioned lifecycle first",
+                )
         if next_state.get("specimen_id") is not None:
             specimen_id = UUID(str(next_state["specimen_id"]))
             specimen = _validate_member_specimen_assignment(
