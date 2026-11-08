@@ -36,6 +36,16 @@ Both the default 1.25 image and source-built profile images pin builder and runt
 | Blocked candidate | 1.21.3 | 1.21.3 | `bioinformatics.bcftools.1_21_3` | BLOCKED_COMPATIBILITY; VCF 4.5 FORMAT/LEN regression |
 | Legacy | 1.19 | 1.19 | none | QUARANTINED_LEGACY; never production-selectable |
 
+The three ARM64 counterparts are registered separately as non-production candidates:
+
+| ARM64 candidate | BCFtools | HTSlib | Queue | Current eligibility |
+|---|---:|---:|---|---|
+| `bcftools-1.24.1-htslib-1.24.1-linux-aarch64-source` | 1.24.1 | 1.24.1 | `bioinformatics.bcftools.1_24_1.arm64` | CANDIDATE |
+| `bcftools-1.23.3-htslib-1.23.3-linux-aarch64-source` | 1.23.3 | 1.23.3 | `bioinformatics.bcftools.1_23_3.arm64` | CANDIDATE |
+| `bcftools-1.22.3-htslib-1.22.4-linux-aarch64-source` | 1.22.3 | 1.22.4 | `bioinformatics.bcftools.1_22_4.arm64` | CANDIDATE |
+
+Each ARM64 profile has a distinct profile ID, platform-specific lock path and worker queue. The native ARM64 workflow resolves and qualifies these candidates independently; it never changes the x86_64 profile IDs, locks or statuses. Candidate status is deliberately not production-selectable. The image qualification job temporarily promotes only a disposable copy of the registry inside the local test image build; the committed registry remains CANDIDATE until the complete evidence is reviewed and explicitly promoted.
+
 A profile is selectable only after its registry status is SOFTWARE_QUALIFIED. The three source-built profiles above have passed source, lock, VCF smoke, full backend, non-root runtime-image and profile-routing/reanalysis software checks on Linux AMD64. This does not establish clinical validation or compatibility with ARM64 and every possible lab host. The 1.21.3 profile remains blocked by its unresolved VCF 4.5 FORMAT/LEN regression. The 1.19 record is retained solely to make the legacy exclusion explicit. The 1.22.3/1.22.4 pair is intentional: the patched HTSlib release is 1.22.4 while the corresponding BCFtools release is 1.22.3.
 
 ## Supported build platform
