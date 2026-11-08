@@ -253,3 +253,66 @@ def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():
     assert record.payload["rcv_accessions"] == ["RCV000000001.2", "RCV000000002.7"]
     assert record.payload["vcv"]["accession"] == "VCV000000001"
     assert record.payload["interpretive_use"] == "DIRECT_CLINVAR_RELEASE_EVIDENCE_REQUIRES_REVIEW"
+
+
+def test_phenotype_prioritization_becomes_neutral_reviewable_evidence():
+    engine = EvidenceEngine()
+    records = engine.build_from_phenotype_prioritization(
+        variant_id=uuid4(),
+        prioritization={
+            "method": "HPOA_EXACT_AND_IS_A_CONTEXT_ORDER_V1",
+            "clinical_prioritization_validated": False,
+            "human_review_required": True,
+            "candidates": [
+                {
+                    "gene": "GENE1",
+                    "disease_id": "MONDO:0000001",
+                    "disease_name": "Example disease",
+                    "contextual_order": 1,
+                    "matched_patient_term_count": 2,
+                    "matched_terms": [{"patient_hpo_id": "HP:0000001", "patient_observation_ids": ["obs-1"]}],
+                    "potential_discordances": [],
+                    "unmatched_present_patient_terms": [],
+                    "association_validity": "STRONG",
+                    "molecular_mechanism": "loss_of_function",
+                    "inheritance": {
+                        "modes": ["AUTOSOMAL_RECESSIVE"],
+                        "penetrance": {"status": "UNKNOWN"},
+                        "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
+                    },
+                    "association_provenance": {
+                        "resource_id": "ClinGen-Gene-Disease",
+                        "resource_version": "2026-10",
+                        "source_record_id": "GENE1:MONDO:0000001",
+                        "resource_sha256": "a" * 64,
+                    },
+                    "hpoa_provenance": {
+                        "resource_id": "HPOA",
+                        "resource_release": "2026-09-02",
+                        "resource_sha256": "b" * 64,
+                        "ontology_release": "2026-09-01",
+                        "ontology_sha256": "c" * 64,
+                    },
+                }
+            ],
+        },
+    )
+    assert [record.evidence_type for record in records] == ["PHENOTYPE", "GENE_DISEASE"]
+    assert all(record.direction == "NEUTRAL" for record in records)
+    assert records[0].payload["contextual_order"] == 1
+    assert records[0].payload["clinical_prioritization_validated"] is False
+    assert records[1].source_record_id == "GENE1:MONDO:0000001"
+    assert records[1].payload["molecular_mechanism"] == "loss_of_function"
+
+
+def test_phenotype_prioritization_evidence_rejects_unreviewed_or_classification_like_payload():
+    engine = EvidenceEngine()
+    with pytest.raises(Exception, match="explicitly unvalidated"):
+        engine.build_from_phenotype_prioritization(
+            variant_id=uuid4(),
+            prioritization={
+                "clinical_prioritization_validated": True,
+                "human_review_required": True,
+                "candidates": [],
+            },
+        )
