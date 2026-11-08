@@ -134,7 +134,7 @@ def resolve_scientific_tool_profile(
         )
     if require_qualified and profile["status"] != "SOFTWARE_QUALIFIED":
         raise ScientificToolProfileError(
-            f"Scientific tool profile {profile_id!r} is {profile['status']}; "
+            f"Scientific tool profile {profile_id!r} is {profile['status']} and is not software-qualified; "
             "only SOFTWARE_QUALIFIED profiles are selectable for production."
         )
     installation = profile["installation"]
