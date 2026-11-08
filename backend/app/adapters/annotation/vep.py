@@ -30,6 +30,9 @@ from backend.app.domain.tool_execution import (
     ToolIdentity,
     current_platform_id,
 )
+from backend.app.domain.scientific_tool_profiles import (
+    resolve_scientific_tool_profile,
+)
 
 
 class VEPProviderError(RuntimeError):
@@ -212,6 +215,17 @@ class VEPProvider(ScientificResourceProvider):
                     item for item in dict.fromkeys((str(Path(self.binary).parent), "/usr/bin", "/bin"))
                     if Path(item).is_dir()
                 )
+                scientific_profile = resolve_scientific_tool_profile(
+                    execution_profile_id,
+                    tool_id="ensembl-vep",
+                    platform=current_platform_id(),
+                    execution_method="OCI_CONTAINER",
+                    require_qualified=False,
+                )
+                if scientific_profile.get("version") != expected_version_match:
+                    raise VEPProviderError(
+                        "Persistent VEP profile version does not match the governed toolchain version."
+                    )
                 profile = ToolIdentity(
                     tool_id="ensembl-vep",
                     version=expected_version_match,
@@ -219,7 +233,7 @@ class VEPProvider(ScientificResourceProvider):
                     executable=self.binary,
                     executable_sha256=self.expected_binary_sha256,
                     platform=current_platform_id(),
-                    qualification_status="SOFTWARE_QUALIFIED",
+                    qualification_status=str(scientific_profile["status"]),
                     version_args=("--version",),
                     version_output_contains=expected_version_match,
                     supported_operations=("annotate",),
