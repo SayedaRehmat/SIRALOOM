@@ -24,7 +24,8 @@ type Props = {
 };
 
 export default function PedigreeLifecycleEditor({
-  caseId, members, relationships, specimens, canWrite, apiFetch, onChanged,
+  caseId, members, relationships, specimens, canWrite, apiFetch,
+  memberHistory = [], relationshipHistory = [], onChanged,
 }: Props) {
   const { t } = useLanguage();
   const [memberId, setMemberId] = useState("");
