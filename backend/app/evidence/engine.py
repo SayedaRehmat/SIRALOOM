@@ -446,6 +446,7 @@ class EvidenceEngine:
                 source_version=resource_version,
                 payload=gene_disease_payload,
                 resource_id=UUID(str(association["resource_id"])) if association.get("resource_id") else None,
+                request_fingerprint=association.get("request_fingerprint"),
                 response_sha256=association.get("resource_sha256"),
                 request_metadata=dict(association),
             )
