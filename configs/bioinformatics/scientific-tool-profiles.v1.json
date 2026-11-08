@@ -594,7 +594,7 @@
         },
         {
           "name": "vep-cache",
-          "version": "115.2",
+          "version": "115",
           "required": true,
           "assembly_scoped": true
         },
