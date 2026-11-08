@@ -308,6 +308,7 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                 resource_type="GENE_DISEASE",
                 version="v21.0.0",
             )
+            g2p.license_text = "Gene2Phenotype data terms; institutional research use."
             g2p.metadata_json = {
                 "execution": {
                     "provider_version": "G2P_CSV",
