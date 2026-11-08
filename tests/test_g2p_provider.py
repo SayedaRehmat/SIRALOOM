@@ -79,7 +79,7 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
     with pytest.raises(G2PError, match="checksum"):
         G2PProvider(resource_path=str(path), expected_sha256="0" * 64, release="v21.0.0")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    with pytest.raises(G2PError, match="semantic version"):
+    with pytest.raises(G2PError, match="release"):
         G2PProvider(resource_path=str(path), expected_sha256=digest, release="latest")
     malformed = _write(
         tmp_path / "bad.csv",
@@ -97,7 +97,7 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
         ("biallelic_autosomal", ("AUTOSOMAL_RECESSIVE",)),
         ("monoallelic_X_hemizygous", ("X_LINKED_RECESSIVE",)),
         ("monoallelic_X_heterozygous", ("X_LINKED_DOMINANT",)),
-        ("semidominant", ("AUTOSOMAL_DOMINANT", "AUTOSOMAL_RECESSIVE")),
+        ("semidominant", ("AUTOSOMAL_SEMIDOMINANT",)),
         ("unrecognized_requirement", ("UNKNOWN",)),
     ],
 )
