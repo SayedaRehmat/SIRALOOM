@@ -24,7 +24,6 @@ SUPPORTED_DISEASE_MODES = {
     "X_LINKED_RECESSIVE",
     "Y_LINKED",
     "MITOCHONDRIAL",
-    "DE_NOVO",
     "UNKNOWN",
 }
 def normalize_clingen_moi_label(value: str | None) -> str | None:
@@ -46,7 +45,6 @@ def normalize_clingen_moi_label(value: str | None) -> str | None:
         "mitochondrial inheritance": "MITOCHONDRIAL",
         "y linked": "Y_LINKED",
         "y linked inheritance": "Y_LINKED",
-        "de novo": "DE_NOVO",
     }
     if normalized in mapping:
         return mapping[normalized]
