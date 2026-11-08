@@ -46,6 +46,27 @@ def resolve_toolchain_profile(
     if len(matches) != 1:
         raise ToolchainProfileError(f"Unknown BCFtools/HTSlib profile: {profile_id!r}.")
     profile = matches[0]
+    from backend.app.domain.scientific_tool_profiles import (
+        resolve_scientific_tool_profile,
+    )
+    generic_profile = resolve_scientific_tool_profile(
+        profile_id,
+        tool_id="bcftools",
+        platform=str(profile.get("platform") or ""),
+        execution_method="OCI_CONTAINER",
+        registry_path=CONFIG_ROOT / "configs" / "bioinformatics" / "scientific-tool-profiles.v1.json",
+    )
+    if (
+        generic_profile.get("version") != profile.get("bcftools_version")
+        or not any(
+            dependency.get("name") == "HTSlib"
+            and dependency.get("version") == profile.get("htslib_version")
+            for dependency in generic_profile.get("dependencies", [])
+        )
+    ):
+        raise ToolchainProfileError(
+            f"Generic scientific profile {profile_id!r} disagrees with the BCFtools/HTSlib registry."
+        )
     if profile.get("status") != "SOFTWARE_QUALIFIED":
         raise ToolchainProfileError(
             f"BCFtools/HTSlib profile {profile_id!r} is not software-qualified for production."
