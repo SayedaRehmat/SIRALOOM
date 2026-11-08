@@ -43,6 +43,8 @@ def test_g2p_provider_pins_release_checksum_and_preserves_model_fields(tmp_path)
     assert model.phenotypes == ("HP:0001250", "HP:0001263")
     assert model.cross_cutting_modifiers == ("consanguinity",)
     assert model.record_sha256
+    assert model.inheritance_modes == ("AUTOSOMAL_RECESSIVE",)
+    assert model.penetrance == {"status": "NOT_RECORDED", "source": "NOT_RECORDED_IN_G2P"}
 
 
 def test_g2p_provider_requires_local_execution_and_explicit_resource_pins(tmp_path):
@@ -86,3 +88,30 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
     )
     with pytest.raises(G2PError, match="MONDO"):
         G2PProvider(resource_path=str(malformed), expected_sha256=hashlib.sha256(malformed.read_bytes()).hexdigest(), release="v21.0.0")
+
+
+@pytest.mark.parametrize(
+    ("allelic_requirement", "expected"),
+    [
+        ("monoallelic_autosomal", ("AUTOSOMAL_DOMINANT",)),
+        ("biallelic_autosomal", ("AUTOSOMAL_RECESSIVE",)),
+        ("monoallelic_X_hemizygous", ("X_LINKED_RECESSIVE",)),
+        ("monoallelic_X_heterozygous", ("X_LINKED_DOMINANT",)),
+        ("semidominant", ("AUTOSOMAL_DOMINANT", "AUTOSOMAL_RECESSIVE")),
+        ("unrecognized_requirement", ("UNKNOWN",)),
+    ],
+)
+def test_g2p_allelic_requirement_mapping_preserves_dominant_recessive_and_unknown(
+    tmp_path, allelic_requirement, expected
+):
+    path = _write(
+        tmp_path / "g2p.csv",
+        "G2P00123,GENE1,Example disorder,MONDO:0000001,"
+        f"{allelic_requirement},loss of function,definitive,PMID:123,,,,,\n",
+    )
+    provider = G2PProvider(
+        resource_path=str(path),
+        expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        release="v21.0.0",
+    )
+    assert provider.query_gene(gene="GENE1")[0].inheritance_modes == expected
