@@ -181,7 +181,26 @@ def _latest_relationship_revision(db: Session, relationship_id: UUID):
     )
 
 
+def _validate_revision_chain(revisions: list, entity_label: str) -> None:
+    previous_id = None
+    for expected_version, revision in enumerate(revisions, start=2):
+        if (
+            revision.version != expected_version
+            or revision.supersedes_revision_id != previous_id
+            or not revision.reason
+            or not revision.reason.strip()
+            or len(revision.revision_fingerprint or "") != 64
+        ):
+            raise HTTPException(
+                409,
+                f"{entity_label} revision history is incomplete or inconsistent; manual review is required",
+            )
+        previous_id = revision.id
+
+
+
 def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dict:
+    _validate_revision_chain(revisions, "Pedigree member")
     state = _member(member)
     history = [{
         "id": str(member.id), "version": 1, "revision_type": "ORIGINAL",
@@ -209,6 +228,7 @@ def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dic
 
 
 def _relationship_state_from_revisions(relationship: PedigreeRelationship, revisions: list) -> dict:
+    _validate_revision_chain(revisions, "Pedigree relationship")
     state = _relationship(relationship)
     history = [{
         "id": str(relationship.id), "version": 1, "revision_type": "ORIGINAL",
