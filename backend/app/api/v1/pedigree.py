@@ -1546,6 +1546,8 @@ def revise_pedigree_member(
             "sampled", "specimen_id", "metadata",
         )}
         next_state.update(changes)
+        if "metadata" in changes and changes["metadata"] is None:
+            raise HTTPException(422, "Member metadata must be an object")
         if "specimen_id" in changes and next_state.get("specimen_id") is None and current.get("specimen_id"):
             existing_binding = db.scalar(select(PedigreeSampleBinding.id).where(
                 PedigreeSampleBinding.case_id == case_id,
@@ -1664,6 +1666,11 @@ def revise_pedigree_relationship(
             "metadata": current.get("metadata") or {},
         }
         next_state.update(changes)
+        if "metadata" in changes and changes["metadata"] is None:
+            raise HTTPException(422, "Relationship metadata must be an object")
+        if not isinstance(next_state.get("relationship_type"), str) or not next_state["relationship_type"].strip():
+            raise HTTPException(422, "Relationship type must be non-empty")
+        next_state["relationship_type"] = next_state["relationship_type"].strip()
         parent_id = UUID(next_state["parent_member_id"])
         child_id = UUID(next_state["child_member_id"])
         if parent_id == child_id:
