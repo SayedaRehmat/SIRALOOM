@@ -47,6 +47,7 @@ function EvidenceCard({e}:{e:Evidence}){
    <p>{t("review.matchedPhenotypeCount")}: {candidateContext.matched_patient_term_count??0}</p>
    {Array.isArray(candidateContext.matched_terms)&&candidateContext.matched_terms.length>0&&<ul>{candidateContext.matched_terms.map((item:any,index:number)=><li key={`${item.patient_hpo_id||"patient"}-${item.assertion_hpo_id||"assertion"}-${index}`}>{item.patient_hpo_id||"—"} → {item.assertion_hpo_id||"—"} ({pretty(item.match_type||item.match_kind||"ontology match")})</li>)}</ul>}
    <p>{t("review.associationValidity")}: {pretty(candidateContext.association_validity||"NOT_RECORDED")}</p>
+   <p>{t("review.associationEvidenceState")}: {pretty(candidateContext.association_evidence_state||"UNRESOLVED_REQUIRES_REVIEW")}</p>
    <p>{t("review.g2pConfidence")}: {pretty(candidateContext.g2p_confidence||"NOT_RECORDED")}</p>
    <p>{t("review.molecularMechanism")}: {pretty(candidateContext.molecular_mechanism||"NOT_RECORDED")}</p>
    <p>{t("review.inheritanceModes")}: {Array.isArray(candidateContext.inheritance?.modes)?candidateContext.inheritance.modes.map(pretty).join(", "):"—"}</p>
