@@ -622,7 +622,8 @@
         "method": "externally-provisioned-perl-runtime-and-vep-cache",
         "dependency_lock": null,
         "cache_manifest": "required",
-        "cache_sha256": "required"
+        "cache_sha256": "required",
+        "source_lock": "configs/bioinformatics/profiles/vep-115.2-source.lock.json"
       },
       "routing": {
         "worker_queue": null,
@@ -630,7 +631,71 @@
       },
       "qualification": {
         "status": "CANDIDATE",
-        "evidence_scope": "Provider tests and persistent-executor integration only; no reproducible version-by-architecture environment lock or complete VEP container qualification."
+        "evidence_scope": "Immutable upstream source commit identities pinned only. Perl distribution, transitive CPAN dependencies, BioPerl, Bio::DB::HTS, architecture-specific OCI base images, cache manifests, scientific fixtures and recovery remain unqualified."
+      }
+    },
+    {
+      "id": "vep-115-linux-arm64",
+      "tool_id": "ensembl-vep",
+      "version": "115.2",
+      "platform": "linux-aarch64",
+      "architecture": "aarch64",
+      "status": "CANDIDATE",
+      "execution_methods": [
+        "LOCAL_PROCESS",
+        "OCI_CONTAINER"
+      ],
+      "dependencies": [
+        {
+          "name": "perl-runtime",
+          "version": "not-yet-pinned",
+          "required": true
+        },
+        {
+          "name": "ensembl-vep-perl-modules",
+          "version": "not-yet-pinned",
+          "required": true
+        },
+        {
+          "name": "vep-cache",
+          "version": "115",
+          "required": true,
+          "assembly_scoped": true
+        },
+        {
+          "name": "reference-fasta",
+          "version": "assembly-matched",
+          "required": false
+        }
+      ],
+      "executable_identity": {
+        "name": "vep",
+        "version_args": [
+          "--version"
+        ],
+        "version_output_contains": "115.2",
+        "sha256_policy": "required-runtime-attestation"
+      },
+      "resource_requirements": {
+        "cache_mount": "read-only",
+        "reference_mount": "read-only-when-configured",
+        "network": "offline-cache-mode",
+        "cpu_memory": "must-be-declared-by-laboratory-environment"
+      },
+      "installation": {
+        "method": "externally-provisioned-perl-runtime-and-vep-cache",
+        "dependency_lock": null,
+        "cache_manifest": "required",
+        "cache_sha256": "required",
+        "source_lock": "configs/bioinformatics/profiles/vep-115.2-source.lock.json"
+      },
+      "routing": {
+        "worker_queue": null,
+        "profile_registry": "configs/bioinformatics/scientific-tool-profiles.v1.json"
+      },
+      "qualification": {
+        "status": "CANDIDATE",
+        "evidence_scope": "Immutable upstream source commit identities pinned only. Perl distribution, transitive CPAN dependencies, BioPerl, Bio::DB::HTS, architecture-specific OCI base images, cache manifests, scientific fixtures and recovery remain unqualified."
       }
     }
   ]
