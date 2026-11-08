@@ -297,6 +297,35 @@ def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
     assert "# platform: linux-64" in lock
 
 
+
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "source_id"),
+    [
+        ("bcftools-1.24.1-htslib-1.24.1-linux-aarch64-source", "1.24.1", "1.24.1", "bcftools-1.24.1-htslib-1.24.1-linux-64-source"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-aarch64-source", "1.23.3", "1.23.3", "bcftools-1.23.3-htslib-1.23.3-linux-64-source"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-aarch64-source", "1.22.3", "1.22.4", "bcftools-1.22.3-htslib-1.22.4-linux-64-source"),
+    ],
+)
+def test_arm64_profiles_are_distinct_candidates_and_not_production_selectable(
+    profile_id, bcftools_version, htslib_version, source_id
+):
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
+    assert profile["status"] == "CANDIDATE"
+    assert profile["platform"] == "linux-aarch64"
+    assert profile["architecture_candidate_for"] == source_id
+    assert profile["bcftools_version"] == bcftools_version
+    assert profile["htslib_version"] == htslib_version
+    assert profile["worker_queue"].endswith(".arm64")
+    assert profile["environment_file"] == "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml"
+    with pytest.raises(ToolchainProfileError, match="not software-qualified"):
+        resolve_toolchain_profile(
+            profile_id,
+            bcftools_version=bcftools_version,
+            htslib_version=htslib_version,
+        )
+
+
 def test_profile_registry_does_not_allow_candidate_profiles(tmp_path):
     payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
     payload["profiles"][0]["status"] = "CANDIDATE"
