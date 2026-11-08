@@ -489,6 +489,30 @@ def test_vep_rejects_analysis_assembly_different_from_resource_assembly(monkeypa
     assert calls == []
 
 
+def test_registered_vep_profile_cannot_fall_back_to_unregistered_local_process(monkeypatch, tmp_path):
+    binary = tmp_path / "vep"
+    binary.write_text("fixture VEP executable identity", encoding="utf-8")
+    toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
+    toolchain["execution_profile_id"] = "vep-115-linux-amd64"
+    provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
+    provider._runtime_checks["GRCh38"] = {
+        "status": "VERIFIED",
+        "cache_resource_sha256": "d" * 64,
+    }
+    monkeypatch.setattr(
+        "backend.app.adapters.annotation.vep.subprocess.Popen",
+        lambda *_args, **_kwargs: pytest.fail("registered VEP profile must not use local fallback"),
+    )
+    variant = CanonicalVariant(
+        genome_build="GRCh38", chromosome="1", position=100, reference="A", alternate="G"
+    )
+    request = provider.prepare_request(
+        "annotate", {"variants": [variant], "genome_build": "GRCh38"}
+    )
+    with pytest.raises(VEPProviderError, match="cannot fall back to unregistered local execution"):
+        provider.execute(request)
+
+
 def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkeypatch, tmp_path):
     binary = tmp_path / "vep"
     binary.write_text("fixture VEP executable identity", encoding="utf-8")
@@ -550,6 +574,10 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     profile, tool_request = calls[0]
     assert profile.tool_id == "ensembl-vep"
     assert profile.profile_id == "vep-115-linux-amd64"
+    assert profile.qualification_status == "CANDIDATE"
+    from backend.app.domain.tool_execution import ToolExecutionContractError
+    with pytest.raises(ToolExecutionContractError, match="Only software-qualified"):
+        profile.validate()
     assert tool_request.operation == "annotate"
     assert tool_request.inputs[0].name == "vep-input.vcf"
     assert tool_request.outputs[0].name == "vep-output.json"
