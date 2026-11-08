@@ -1,0 +1,21 @@
+channels:
+  - conda-forge
+channel_priority: strict
+dependencies:
+  - python=3.12
+  - c-compiler
+  - binutils
+  - make
+  - pkg-config
+  - autoconf
+  - automake
+  - libtool
+  - zlib
+  - bzip2
+  - xz
+  - curl
+  - openssl
+  - libcurl
+  - libdeflate
+  - gsl
+  - perl
