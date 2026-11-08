@@ -1,0 +1,246 @@
+{
+  "id": "PAVS:A0000005",
+  "subject": {
+    "id": "PAVS:A0000005",
+    "sex": "FEMALE",
+    "extensions": [
+      {
+        "name": "consanguinity",
+        "value": {
+          "ontologyClass": {
+            "id": "HP:0025820",
+            "label": "Offspring of consanguineous parents"
+          }
+        }
+      },
+      {
+        "name": "familyHistory",
+        "value": {
+          "ontologyClass": {
+            "id": "HP:0032316",
+            "label": "Positive family history"
+          }
+        }
+      },
+      {
+        "name": "geographicOrigin",
+        "value": {
+          "id": "GAZ:00005279",
+          "label": "Saudi Arabia"
+        }
+      }
+    ]
+  },
+  "phenotypicFeatures": [
+    {
+      "type": {
+        "id": "HP:0001290",
+        "label": "Generalized hypotonia"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0002650",
+        "label": "Scoliosis"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001385",
+        "label": "Hip dysplasia"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001762",
+        "label": "Talipes equinovarus"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0000767",
+        "label": "Pectus excavatum"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001270",
+        "label": "Motor delay"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001252",
+        "label": "Hypotonia"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HANCESTRO:0852",
+        "label": "Middle Eastern"
+      },
+      "excluded": false
+    }
+  ],
+  "metaData": {
+    "created": "2026-02-24",
+    "createdBy": "PAVS pipeline",
+    "submittedBy": "Robert Hoehndorf",
+    "resources": [
+      {
+        "id": "hp",
+        "name": "Human Phenotype Ontology",
+        "url": "https://hpo.jax.org",
+        "version": "2024-08-13",
+        "namespacePrefix": "HP",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+      },
+      {
+        "id": "geno",
+        "name": "Genotype Ontology",
+        "url": "https://github.com/oborel/obo-relations",
+        "namespacePrefix": "GENO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GENO_"
+      },
+      {
+        "id": "omim",
+        "name": "Online Mendelian Inheritance in Man",
+        "url": "https://www.omim.org",
+        "namespacePrefix": "OMIM",
+        "iriPrefix": "https://www.omim.org/entry/"
+      },
+      {
+        "id": "mondo",
+        "name": "Monarch Disease Ontology",
+        "url": "http://purl.obolibrary.org/obo/mondo.obo",
+        "namespacePrefix": "MONDO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/MONDO_"
+      },
+      {
+        "id": "hancestro",
+        "name": "Human Ancestry Ontology",
+        "url": "https://github.com/EBISPOT/ancestro",
+        "namespacePrefix": "HANCESTRO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HANCESTRO_"
+      },
+      {
+        "id": "gaz",
+        "name": "Gazetteer",
+        "url": "http://purl.obolibrary.org/obo/gaz.obo",
+        "namespacePrefix": "GAZ",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GAZ_"
+      }
+    ],
+    "phenopacketSchemaVersion": "2.0",
+    "externalReferences": [
+      {
+        "id": "pavs:source:ahmed-variants",
+        "description": "Source dataset: ahmed-variants"
+      },
+      {
+        "id": "PMID:28454995",
+        "reference": "https://pubmed.ncbi.nlm.nih.gov/28454995/"
+      }
+    ]
+  },
+  "diseases": [
+    {
+      "term": {
+        "id": "MONDO:0014941",
+        "label": "arthrogryposis, distal, with impaired proprioception and touch"
+      },
+      "modeOfInheritance": {
+        "id": "HP:0000007",
+        "label": "Autosomal recessive inheritance"
+      }
+    }
+  ],
+  "interpretations": [
+    {
+      "id": "interp-PAVS:A0000005",
+      "progressStatus": "SOLVED",
+      "diagnosis": {
+        "disease": {
+          "id": "MONDO:0014941",
+          "label": "arthrogryposis, distal, with impaired proprioception and touch"
+        },
+        "genomicInterpretations": [
+          {
+            "subjectOrBiosampleId": "PAVS:A0000005",
+            "interpretationStatus": "CAUSATIVE",
+            "variantInterpretation": {
+              "acmgPathogenicityClassification": "PATHOGENIC",
+              "therapeuticActionability": "UNKNOWN_ACTIONABILITY",
+              "variationDescriptor": {
+                "id": "PAVS:A0000005_PIEZO2",
+                "moleculeContext": "genomic",
+                "geneContext": {
+                  "symbol": "PIEZO2",
+                  "valueId": "NCBIGene:63895"
+                },
+                "expressions": [
+                  {
+                    "syntax": "hgvs.c",
+                    "value": "ENST00000584167.1:n.37+264G>A"
+                  },
+                  {
+                    "syntax": "hgvs.g",
+                    "value": "NC_000018.10:g.10704597C>T"
+                  }
+                ],
+                "vcfRecord": {
+                  "genomeAssembly": "hg38",
+                  "chrom": "chr18",
+                  "pos": 10704597,
+                  "ref": "C",
+                  "alt": "T"
+                },
+                "allelicState": {
+                  "id": "GENO:0000136",
+                  "label": "homozygous"
+                },
+                "extensions": [
+                  {
+                    "name": "vep_consequence",
+                    "value": "stop_gained"
+                  },
+                  {
+                    "name": "vep_impact",
+                    "value": "MODIFIER"
+                  },
+                  {
+                    "name": "gnomad_pli",
+                    "value": "2.1757e-15"
+                  },
+                  {
+                    "name": "gnomad_loeuf",
+                    "value": "5.6300e-01"
+                  },
+                  {
+                    "name": "expressed_in",
+                    "value": "lung:100|cervical_vertebra:98|sigmoid_colon:96|tibial_nerve:96|prostate_gland:92|substantia_nigra:92|hippocampus:89|urinary_bladder:89|esophagus_mucosa:85|amygdala:85|hypothalamus:85|liver:85|mammary_gland:85|omental_fat_pad:85|ovary:85|pituitary_gland:85|putamen:85|spleen:85|testis:85|thyroid_gland:85|transverse_colon:85"
+                  },
+                  {
+                    "name": "go_biological_process",
+                    "value": "monoatomic ion transport|detection of renal blood flow|regulation of membrane potential|detection of mechanical stimulus|cellular response to mechanical stimulus|monoatomic cation transmembrane transport|monoatomic cation transport|monoatomic ion transmembrane transport|detection of mechanical stimulus involved in sensory perception|response to mechanical stimulus"
+                  },
+                  {
+                    "name": "mouse_mp_labels",
+                    "value": "increased circulating triglyceride level|abnormal embryo size|increased vertical activity|preweaning lethality, complete penetrance"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
