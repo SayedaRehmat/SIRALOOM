@@ -9,11 +9,11 @@ type Member = {
   id: string; member_identifier: string; relationship_to_proband?: string | null;
   sex?: string | null; affected_status: "AFFECTED" | "UNAFFECTED" | "UNKNOWN";
   is_proband: boolean; sampled: boolean; specimen_id?: string | null;
-  revision_version?: number; revision_history?: Array<Record<string, any>>;
+  status?: string; revision_version?: number; revision_history?: Array<Record<string, any>>;
 };
 type Relationship = {
   id: string; parent_member_id: string; child_member_id: string;
-  relationship_type: string; revision_version?: number;
+  relationship_type: string; status?: string; revision_version?: number;
   revision_history?: Array<Record<string, any>>;
 };
 type Props = {
