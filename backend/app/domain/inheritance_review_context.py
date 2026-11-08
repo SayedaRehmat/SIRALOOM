@@ -27,6 +27,29 @@ SUPPORTED_DISEASE_MODES = {
     "DE_NOVO",
     "UNKNOWN",
 }
+def normalize_clingen_moi_label(value: str | None) -> str | None:
+    """Map only explicit ClinGen MOI labels; ambiguous X-linked labels stay unknown."""
+    normalized = re.sub(r"[^a-z0-9]+", " ", str(value or "").casefold()).strip()
+    mapping = {
+        "autosomal dominant": "AUTOSOMAL_DOMINANT",
+        "autosomal dominant inheritance": "AUTOSOMAL_DOMINANT",
+        "autosomal recessive": "AUTOSOMAL_RECESSIVE",
+        "autosomal recessive inheritance": "AUTOSOMAL_RECESSIVE",
+        "autosomal semidominant": "AUTOSOMAL_SEMIDOMINANT",
+        "autosomal semidominant inheritance": "AUTOSOMAL_SEMIDOMINANT",
+        "x linked dominant": "X_LINKED_DOMINANT",
+        "x linked dominant inheritance": "X_LINKED_DOMINANT",
+        "x linked recessive": "X_LINKED_RECESSIVE",
+        "x linked recessive inheritance": "X_LINKED_RECESSIVE",
+        "mitochondrial": "MITOCHONDRIAL",
+        "mitochondrial inheritance": "MITOCHONDRIAL",
+        "y linked": "Y_LINKED",
+        "y linked inheritance": "Y_LINKED",
+        "de novo": "DE_NOVO",
+    }
+    return mapping.get(normalized)
+
+
 _MATRIX_CALL_STATES = {
     "NO_RECORD", "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_NO_CALL",
     "CALL_PRESENT", "OTHER_ALT_PRESENT", "OTHER_ALT_AND_MISSING", "INVALID_CALL",
