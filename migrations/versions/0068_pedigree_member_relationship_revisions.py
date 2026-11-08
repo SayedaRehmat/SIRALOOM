@@ -24,12 +24,12 @@ def _create_immutable_triggers(table: str, stem: str) -> None:
         op.execute(f"""
             CREATE TRIGGER trg_{stem}_no_update
             BEFORE UPDATE ON {table}
-            BEGIN SELECT RAISE(ABORT, 'pedigree revisions are append-only'); END
+            BEGIN SELECT RAISE(ABORT, 'pedigree lifecycle records are append-only'); END
         """)
         op.execute(f"""
             CREATE TRIGGER trg_{stem}_no_delete
             BEFORE DELETE ON {table}
-            BEGIN SELECT RAISE(ABORT, 'pedigree revisions are append-only'); END
+            BEGIN SELECT RAISE(ABORT, 'pedigree lifecycle records are append-only'); END
         """)
 
 
@@ -102,10 +102,12 @@ def upgrade():
             CREATE FUNCTION siraloom_reject_pedigree_revision_mutation()
             RETURNS trigger AS $siraloom$
             BEGIN
-                RAISE EXCEPTION 'pedigree revisions are append-only';
+                RAISE EXCEPTION 'pedigree lifecycle records are append-only';
             END;
             $siraloom$ LANGUAGE plpgsql
         """)
+    _create_immutable_triggers("pedigree_members", "pedigree_member")
+    _create_immutable_triggers("pedigree_relationships", "pedigree_relationship")
     _create_immutable_triggers("pedigree_member_revisions", "pedigree_member_revision")
     _create_immutable_triggers("pedigree_relationship_revisions", "pedigree_relationship_revision")
 
@@ -124,11 +126,17 @@ def downgrade():
         )
 
     if connection.dialect.name == "postgresql":
+        op.execute("DROP TRIGGER IF EXISTS trg_pedigree_member_no_update_delete ON pedigree_members")
+        op.execute("DROP TRIGGER IF EXISTS trg_pedigree_relationship_no_update_delete ON pedigree_relationships")
         op.execute("DROP TRIGGER IF EXISTS trg_pedigree_member_revision_no_update_delete ON pedigree_member_revisions")
         op.execute("DROP TRIGGER IF EXISTS trg_pedigree_relationship_revision_no_update_delete ON pedigree_relationship_revisions")
         op.execute("DROP FUNCTION IF EXISTS siraloom_reject_pedigree_revision_mutation()")
     elif connection.dialect.name == "sqlite":
         for trigger in (
+            "trg_pedigree_member_no_update",
+            "trg_pedigree_member_no_delete",
+            "trg_pedigree_relationship_no_update",
+            "trg_pedigree_relationship_no_delete",
             "trg_pedigree_member_revision_no_update",
             "trg_pedigree_member_revision_no_delete",
             "trg_pedigree_relationship_revision_no_update",
