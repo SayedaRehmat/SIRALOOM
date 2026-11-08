@@ -1,0 +1,56 @@
+{
+  "schema": "siraloom.vep-source-lock.v1",
+  "tool": "ensembl-vep",
+  "software_version": "115.2",
+  "cache_release": "115",
+  "lock_scope": "upstream_source_identity_only",
+  "qualification_status": "CANDIDATE",
+  "upstream_repositories": [
+    {
+      "name": "ensembl-vep",
+      "url": "https://github.com/Ensembl/ensembl-vep.git",
+      "ref": "release/115.2",
+      "commit": "2beada0d57ca6234f467b14a6c60280f4a082717"
+    },
+    {
+      "name": "ensembl",
+      "url": "https://github.com/Ensembl/ensembl.git",
+      "ref": "release/115",
+      "commit": "266b84da60126688c6182b7739b9c43700432cfe"
+    },
+    {
+      "name": "ensembl-io",
+      "url": "https://github.com/Ensembl/ensembl-io.git",
+      "ref": "release/115",
+      "commit": "25061d3be5b2d65d1111fcbc01f5b871e203ad5e"
+    },
+    {
+      "name": "ensembl-variation",
+      "url": "https://github.com/Ensembl/ensembl-variation.git",
+      "ref": "release/115",
+      "commit": "23c76f60b1592e4df86159cf5530bdc326120c3d"
+    },
+    {
+      "name": "ensembl-funcgen",
+      "url": "https://github.com/Ensembl/ensembl-funcgen.git",
+      "ref": "release/115",
+      "commit": "57f70613f6a25d014127ec7d2bed3647af537ca7"
+    }
+  ],
+  "target_architectures": [
+    "x86_64",
+    "aarch64"
+  ],
+  "unresolved_lock_inputs": [
+    "Exact Perl distribution version and archive SHA-256",
+    "Complete transitive CPAN dependency lock with archive SHA-256",
+    "BioPerl source commit and archive digest",
+    "Bio::DB::HTS/HTSlib build inputs and architecture-specific checksums",
+    "Native OCI base image digests per architecture"
+  ],
+  "notes": [
+    "Git commit IDs identify upstream source objects; they are not substitutes for downloaded archive SHA-256 values.",
+    "The Ensembl VEP INSTALL.pl updater must be disabled and every API checkout must be verified against these commits.",
+    "No production qualification is implied by this source lock."
+  ]
+}
