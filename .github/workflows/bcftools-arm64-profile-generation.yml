@@ -1,6 +1,9 @@
 name: BCFtools native ARM64 profile generation
 
 on:
+  push:
+    branches:
+      - feat/multi-profile-arm64-qualification-20261108
   pull_request:
     paths:
       - "configs/bioinformatics/toolchain-profiles.v1.json"
@@ -13,14 +16,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: bcftools-arm64-profile-generation-\${{ github.ref }}
+  group: bcftools-arm64-profile-generation-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   discover:
     runs-on: ubuntu-24.04
     outputs:
-      matrix: \${{ steps.profiles.outputs.matrix }}
+      matrix: ${{ steps.profiles.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
       - name: Select the three existing independent source-built profiles
@@ -67,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 1
-      matrix: \${{ fromJSON(needs.discover.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
     defaults:
       run:
         shell: bash -l {0}
@@ -83,7 +86,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = "aarch64"
-          lock="$RUNNER_TEMP/\${{ matrix.id }}-linux-aarch64.lock"
+          lock="$RUNNER_TEMP/${{ matrix.id }}-linux-aarch64.lock"
           micromamba env export --explicit --name bcftools-arm64-build > "$lock"
           grep -Fqx '@EXPLICIT' "$lock"
           grep -Fqx '# platform: linux-aarch64' "$lock"
@@ -92,9 +95,9 @@ jobs:
           sha256sum "$lock"
       - name: Build the exact registered BCFtools and HTSlib source pair
         env:
-          BCFTOOLS_PROFILE_ID: \${{ matrix.id }}
-          BCFTOOLS_VERSION: \${{ matrix.bcftools_version }}
-          HTSLIB_VERSION: \${{ matrix.htslib_version }}
+          BCFTOOLS_PROFILE_ID: ${{ matrix.id }}
+          BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
+          HTSLIB_VERSION: ${{ matrix.htslib_version }}
           BCFTOOLS_PROFILE_REGISTRY: configs/bioinformatics/toolchain-profiles.v1.json
         run: |
           set -euo pipefail
@@ -102,7 +105,7 @@ jobs:
           bash scripts/build_bcftools_from_profile.sh
       - name: Qualify reference-backed normalization, multiallelic splitting and CSI
         env:
-          BCFTOOLS_BIN: \${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-arm64-build/bin/bcftools
+          BCFTOOLS_BIN: ${{ env.MAMBA_ROOT_PREFIX }}/envs/bcftools-arm64-build/bin/bcftools
         run: |
           set -euo pipefail
           test "$(uname -m)" = "aarch64"
@@ -123,8 +126,8 @@ jobs:
           "$BCFTOOLS_BIN" index --csi "$work/normalized.vcf.gz"
           test "$("$BCFTOOLS_BIN" view -H "$work/normalized.vcf.gz" | wc -l)" -eq 2
           test -s "$work/normalized.vcf.gz.csi"
-          test "$("$BCFTOOLS_BIN" --version | sed -n '1p')" = "bcftools \${{ matrix.bcftools_version }}"
-          test "$("$BCFTOOLS_BIN" --version | sed -n '2p')" = "Using htslib \${{ matrix.htslib_version }}"
+          test "$("$BCFTOOLS_BIN" --version | sed -n '1p')" = "bcftools ${{ matrix.bcftools_version }}"
+          test "$("$BCFTOOLS_BIN" --version | sed -n '2p')" = "Using htslib ${{ matrix.htslib_version }}"
           ldd "$BCFTOOLS_BIN" | tee "$work/ldd.txt"
           ! grep -q "not found" "$work/ldd.txt"
       - name: Record profile lock and native qualification manifest
@@ -133,9 +136,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/arm64-profile-output"
           cp "$ARM64_LOCK" "$RUNNER_TEMP/arm64-profile-output/"
           cat > "$RUNNER_TEMP/arm64-profile-output/qualification.txt" <<EOF
-          profile_id=\${{ matrix.id }}
-          bcftools_version=\${{ matrix.bcftools_version }}
-          htslib_version=\${{ matrix.htslib_version }}
+          profile_id=${{ matrix.id }}
+          bcftools_version=${{ matrix.bcftools_version }}
+          htslib_version=${{ matrix.htslib_version }}
           platform=linux-aarch64
           runner=ubuntu-24.04-arm
           uname=$(uname -m)
@@ -150,6 +153,6 @@ jobs:
           sha256sum "$RUNNER_TEMP/arm64-profile-output/"*
       - uses: actions/upload-artifact@v4
         with:
-          name: \${{ matrix.id }}-linux-aarch64-profile-candidate
-          path: \${{ runner.temp }}/arm64-profile-output/
+          name: ${{ matrix.id }}-linux-aarch64-profile-candidate
+          path: ${{ runner.temp }}/arm64-profile-output/
           if-no-files-found: error
