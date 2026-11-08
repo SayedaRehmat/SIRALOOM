@@ -978,6 +978,8 @@ export type TranslationKey =
   | "review.memberSpecimen"
   | "review.relationshipType"
   | "review.segregationRecorded"
+  | "review.correctObservation"
+  | "review.saveSegregationCorrection"
   | "review.inheritanceRecorded"
   | "review.phenotypeAdded"
   | "review.confirmationVersioned"
@@ -1149,6 +1151,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.memberSpecimen": "Linked specimen",
     "review.relationshipType": "Relationship type",
     "review.segregationRecorded": "Segregation observation recorded.",
+    "review.correctObservation": "Correct observation",
+    "review.saveSegregationCorrection": "Save segregation correction",
     "review.inheritanceRecorded": "Inheritance assessment recorded as review context; no ACMG strength was assigned automatically.",
     "review.phenotypeAdded": "Phenotype observation added to the case context.",
     "review.confirmationVersioned": "Confirmation record versioned.",
