@@ -1439,8 +1439,9 @@ def add_member(case_id: UUID, body: MemberInput, db: Session=Depends(get_db), pr
         _validate_member_specimen_assignment(db, case_id, body.specimen_id)
     if db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.member_identifier==body.member_identifier.strip())):
         raise HTTPException(409,"Pedigree member identifier already exists")
-    if body.is_proband and db.scalar(select(PedigreeMember).where(PedigreeMember.case_id==case_id,PedigreeMember.is_proband.is_(True))):
-        raise HTTPException(409,"A case can have only one designated proband")
+    active_members, _, _, _ = _current_pedigree(db, case_id)
+    if body.is_proband and any(member.get("is_proband") for member in active_members):
+        raise HTTPException(409, "A case can have only one active designated proband")
     row=PedigreeMember(id=uuid4(),case_id=case_id,member_identifier=body.member_identifier.strip(),relationship_to_proband=body.relationship_to_proband,sex=body.sex,affected_status=body.affected_status,is_proband=body.is_proband,sampled=body.sampled,specimen_id=body.specimen_id,metadata_json=body.metadata)
     db.add(row)
     AuditService(db).record(event_type="PEDIGREE_MEMBER_ADDED",case_id=case_id,analysis_id=None,actor_type="HUMAN",actor_id=str(principal.user_id),subject_type="PEDIGREE_MEMBER",subject_id=str(row.id),operation="CREATE",after_state=_member(row))
@@ -1464,6 +1465,10 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     require_case_permission(case, principal, db, "write")
     parent=db.get(PedigreeMember,body.parent_member_id); child=db.get(PedigreeMember,body.child_member_id)
     if not parent or not child or parent.case_id!=case_id or child.case_id!=case_id or parent.id==child.id: raise HTTPException(400,"Parent and child must be distinct members in the same case")
+    active_members, active_relationships, _, _ = _current_pedigree(db, case_id)
+    active_member_ids = {item["id"] for item in active_members}
+    if str(parent.id) not in active_member_ids or str(child.id) not in active_member_ids:
+        raise HTTPException(409, "Parent and child must both be active pedigree members")
     relationships = db.scalars(
         select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
     ).all()
