@@ -57,7 +57,9 @@ The same compatible OCI image can run under Docker and Podman. Kubernetes also c
 - PR #310 qualified Docker and Podman on Linux x86_64 using the same BCFtools 1.25 worker image digest.
 - The three source-built BCFtools profiles have Linux AMD64 source/lock/runtime/software qualification.
 - Three ARM64 candidate profiles are registered for the independent source-built version pairs. A native `ubuntu-24.04-arm` workflow resolves their own explicit locks, builds each exact source pair, runs reference-backed normalization/CSI checks, inspects the pinned builder/runtime image digests, and attempts a non-root ARM64 OCI image qualification.
-- The ARM64 candidates remain non-production until all matrix jobs and review gates pass. The default BCFtools 1.25 profile is not yet covered by this source-profile matrix.
+- The first native ARM64 1.24.1 source build and reference-backed smoke test passed, and the exact pinned builder/runtime image manifests exposed linux/arm64. Its first OCI image build then exposed a real ABI issue: the ARM64 build environment emitted binaries requiring GLIBC_2.38 while the builder stage could not provide that symbol version. The ARM64 build environment now pins sysroot_linux-aarch64=2.28, matching the existing x86_64 profile's explicit sysroot discipline; this correction must be requalified before it is considered fixed.
+
+The ARM64 candidates remain non-production until all matrix jobs and review gates pass. The default BCFtools 1.25 profile is not yet covered by this source-profile matrix.
 - Direct Linux, rootless Podman, Kubernetes, cloud and remote-agent qualification remain separate.
 
 ## Promotion rule
