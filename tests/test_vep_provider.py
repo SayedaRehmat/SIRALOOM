@@ -550,6 +550,7 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     profile, tool_request = calls[0]
     assert profile.tool_id == "ensembl-vep"
     assert profile.profile_id == "vep-115-linux-amd64"
+    assert profile.qualification_status == "CANDIDATE"
     assert tool_request.operation == "annotate"
     assert tool_request.inputs[0].name == "vep-input.vcf"
     assert tool_request.outputs[0].name == "vep-output.json"
