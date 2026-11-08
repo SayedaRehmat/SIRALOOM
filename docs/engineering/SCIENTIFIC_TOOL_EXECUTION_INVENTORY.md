@@ -59,6 +59,8 @@ The same compatible OCI image can run under Docker and Podman. Kubernetes also c
 - Three ARM64 candidate profiles are registered for the independent source-built version pairs. A native `ubuntu-24.04-arm` workflow resolves their own explicit locks, builds each exact source pair, runs reference-backed normalization/CSI checks, inspects the pinned builder/runtime image digests, and attempts a non-root ARM64 OCI image qualification.
 - The first native ARM64 1.24.1 source build and reference-backed smoke test passed, and the exact pinned builder/runtime image manifests exposed linux/arm64. Its first OCI image build then exposed a real ABI issue: the ARM64 build environment emitted binaries requiring GLIBC_2.38 while the builder stage could not provide that symbol version. The ARM64 build environment now pins sysroot_linux-aarch64=2.28, matching the existing x86_64 profile's explicit sysroot discipline; this correction must be requalified before it is considered fixed.
 
+After pinning the ARM64 sysroot, the 1.22.3/1.22.4 ARM64 worker image built successfully; the executable/library version checks, non-root UID check and in-image profile/queue resolution passed. The container scientific smoke test then exposed a test-fixture error: it called `bcftools faidx`, which is not a BCFtools subcommand. The fixture now writes the valid FASTA `.fai` directly (as the native smoke test already does); the corrected container test is pending rerun.
+
 The ARM64 candidates remain non-production until all matrix jobs and review gates pass. The default BCFtools 1.25 profile is not yet covered by this source-profile matrix.
 - Direct Linux, rootless Podman, Kubernetes, cloud and remote-agent qualification remain separate.
 
