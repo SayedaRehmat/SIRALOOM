@@ -824,6 +824,58 @@ class PedigreeMember(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (UniqueConstraint("case_id", "member_identifier"),)
 
+
+class PedigreeMemberRevision(Base):
+    """Append-only correction/retraction history for a stable pedigree member."""
+    __tablename__ = "pedigree_member_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    member_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_members.id"), nullable=False)
+    supersedes_revision_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_member_revisions.id"))
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    revision_type: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    revision_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("member_id", "version", name="uq_pedigree_member_revision_version"),
+        UniqueConstraint("supersedes_revision_id", name="uq_pedigree_member_revision_successor"),
+        UniqueConstraint("case_id", "revision_fingerprint", name="uq_pedigree_member_revision_fingerprint"),
+        CheckConstraint("version >= 2", name="ck_pedigree_member_revision_version"),
+        CheckConstraint("revision_type IN ('CORRECTED', 'RETRACTED')", name="ck_pedigree_member_revision_type"),
+        CheckConstraint("length(trim(reason)) > 0", name="ck_pedigree_member_revision_reason"),
+        CheckConstraint("length(revision_fingerprint) = 64", name="ck_pedigree_member_revision_fingerprint"),
+        Index("ix_pedigree_member_revisions_member_version", "member_id", "version"),
+    )
+
+
+class PedigreeRelationshipRevision(Base):
+    """Append-only correction/retraction history for a pedigree relationship."""
+    __tablename__ = "pedigree_relationship_revisions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    relationship_id: Mapped[UUID] = mapped_column(ForeignKey("pedigree_relationships.id"), nullable=False)
+    supersedes_revision_id: Mapped[UUID | None] = mapped_column(ForeignKey("pedigree_relationship_revisions.id"))
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    revision_type: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    revision_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("relationship_id", "version", name="uq_pedigree_relationship_revision_version"),
+        UniqueConstraint("supersedes_revision_id", name="uq_pedigree_relationship_revision_successor"),
+        UniqueConstraint("case_id", "revision_fingerprint", name="uq_pedigree_relationship_revision_fingerprint"),
+        CheckConstraint("version >= 2", name="ck_pedigree_relationship_revision_version"),
+        CheckConstraint("revision_type IN ('CORRECTED', 'RETRACTED')", name="ck_pedigree_relationship_revision_type"),
+        CheckConstraint("length(trim(reason)) > 0", name="ck_pedigree_relationship_revision_reason"),
+        CheckConstraint("length(revision_fingerprint) = 64", name="ck_pedigree_relationship_revision_fingerprint"),
+        Index("ix_pedigree_relationship_revisions_relationship_version", "relationship_id", "version"),
+    )
+
 class PedigreeSampleBinding(Base):
     """Immutable, versioned claim linking a family member to a specimen and VCF sample."""
     __tablename__ = "pedigree_sample_bindings"

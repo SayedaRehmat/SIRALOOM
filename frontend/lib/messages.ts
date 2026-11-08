@@ -952,7 +952,34 @@ export type TranslationKey =
   | "review.startMessage"
   | "review.pedigreeMemberAdded"
   | "review.pedigreeRelationshipAdded"
+  | "review.pedigreeEditor"
+  | "review.pedigreeEditorHelp"
+  | "review.editMember"
+  | "review.saveMemberCorrection"
+  | "review.retractMember"
+  | "review.memberCorrectionReason"
+  | "review.editRelationship"
+  | "review.saveRelationshipCorrection"
+  | "review.retractRelationship"
+  | "review.relationshipCorrectionReason"
+  | "review.cancelEdit"
+  | "review.revisionHistory"
+  | "review.revisionVersion"
+  | "review.originalRecord"
+  | "review.currentRecord"
+  | "review.revisionReason"
+  | "review.recordedBy"
+  | "review.recordedAt"
+  | "review.noRevisionHistory"
+  | "review.memberSex"
+  | "review.memberAffectedStatus"
+  | "review.memberProband"
+  | "review.memberSampled"
+  | "review.memberSpecimen"
+  | "review.relationshipType"
   | "review.segregationRecorded"
+  | "review.correctObservation"
+  | "review.saveSegregationCorrection"
   | "review.inheritanceRecorded"
   | "review.phenotypeAdded"
   | "review.confirmationVersioned"
@@ -1098,7 +1125,34 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.startMessage": "Human review started.",
     "review.pedigreeMemberAdded": "Pedigree member added.",
     "review.pedigreeRelationshipAdded": "Pedigree relationship added.",
+    "review.pedigreeEditor": "Pedigree editor",
+    "review.pedigreeEditorHelp": "Edit reported family context using versioned corrections. Retractions preserve the original record and require a documented reason.",
+    "review.editMember": "Edit member",
+    "review.saveMemberCorrection": "Save correction",
+    "review.retractMember": "Retract member",
+    "review.memberCorrectionReason": "Reason for this correction or retraction",
+    "review.editRelationship": "Edit relationship",
+    "review.saveRelationshipCorrection": "Save relationship correction",
+    "review.retractRelationship": "Retract relationship",
+    "review.relationshipCorrectionReason": "Reason for this relationship correction or retraction",
+    "review.cancelEdit": "Cancel",
+    "review.revisionHistory": "Revision history",
+    "review.revisionVersion": "Revision",
+    "review.originalRecord": "Original record",
+    "review.currentRecord": "Current record",
+    "review.revisionReason": "Reason",
+    "review.recordedBy": "Recorded by",
+    "review.recordedAt": "Recorded at",
+    "review.noRevisionHistory": "No corrections recorded.",
+    "review.memberSex": "Reported sex",
+    "review.memberAffectedStatus": "Affected status",
+    "review.memberProband": "Designated proband",
+    "review.memberSampled": "Sampled",
+    "review.memberSpecimen": "Linked specimen",
+    "review.relationshipType": "Relationship type",
     "review.segregationRecorded": "Segregation observation recorded.",
+    "review.correctObservation": "Correct observation",
+    "review.saveSegregationCorrection": "Save segregation correction",
     "review.inheritanceRecorded": "Inheritance assessment recorded as review context; no ACMG strength was assigned automatically.",
     "review.phenotypeAdded": "Phenotype observation added to the case context.",
     "review.confirmationVersioned": "Confirmation record versioned.",
@@ -2153,7 +2207,34 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.startMessage": "بدأت المراجعة البشرية.",
     "review.pedigreeMemberAdded": "تمت إضافة فرد إلى شجرة النسب.",
     "review.pedigreeRelationshipAdded": "تمت إضافة علاقة النسب.",
+    "review.pedigreeEditor": "محرر شجرة النسب",
+    "review.pedigreeEditorHelp": "حرّر سياق الأسرة المُبلّغ عنه باستخدام تصحيحات ذات إصدارات. تحافظ عمليات السحب على السجل الأصلي وتتطلب سببًا موثقًا.",
+    "review.editMember": "تعديل الفرد",
+    "review.saveMemberCorrection": "حفظ التصحيح",
+    "review.retractMember": "سحب الفرد",
+    "review.memberCorrectionReason": "سبب هذا التصحيح أو السحب",
+    "review.editRelationship": "تعديل العلاقة",
+    "review.saveRelationshipCorrection": "حفظ تصحيح العلاقة",
+    "review.retractRelationship": "سحب العلاقة",
+    "review.relationshipCorrectionReason": "سبب تصحيح هذه العلاقة أو سحبها",
+    "review.cancelEdit": "إلغاء",
+    "review.revisionHistory": "سجل المراجعات",
+    "review.revisionVersion": "المراجعة",
+    "review.originalRecord": "السجل الأصلي",
+    "review.currentRecord": "السجل الحالي",
+    "review.revisionReason": "السبب",
+    "review.recordedBy": "سُجّل بواسطة",
+    "review.recordedAt": "وقت التسجيل",
+    "review.noRevisionHistory": "لا توجد تصحيحات مسجلة.",
+    "review.memberSex": "الجنس المُبلّغ عنه",
+    "review.memberAffectedStatus": "حالة الإصابة",
+    "review.memberProband": "الحالة الدليلية المحددة",
+    "review.memberSampled": "تم أخذ عينة",
+    "review.memberSpecimen": "العينة المرتبطة",
+    "review.relationshipType": "نوع العلاقة",
     "review.segregationRecorded": "تم تسجيل ملاحظة الانفصال الوراثي.",
+    "review.correctObservation": "تصحيح الملاحظة",
+    "review.saveSegregationCorrection": "حفظ تصحيح ملاحظة الانفصال الوراثي",
     "review.inheritanceRecorded": "تم تسجيل تقييم نمط الوراثة كسياق للمراجعة؛ ولم تُسند قوة ACMG تلقائيًا.",
     "review.phenotypeAdded": "تمت إضافة ملاحظة النمط الظاهري إلى سياق الحالة.",
     "review.confirmationVersioned": "تم إنشاء إصدار لسجل التأكيد.",

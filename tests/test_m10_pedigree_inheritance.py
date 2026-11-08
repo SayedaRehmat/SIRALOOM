@@ -76,13 +76,14 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
         specimen_id=None, metadata_json={},
     )
     relationship = SimpleNamespace(
+        id=uuid4(), case_id=case_id,
         parent_member_id=father_id, child_member_id=proband_id,
         relationship_type="PARENT_CHILD", metadata_json={},
     )
 
     class FakeDb:
         def __init__(self):
-            self.rows = [[proband, father], [relationship]]
+            self.rows = [[proband, father], [relationship], [], []]
 
         def get(self, _model, object_id, **_kwargs):
             return SimpleNamespace(id=object_id)
@@ -95,7 +96,7 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
 
     snapshot = pedigree._pedigree_context_snapshot(FakeDb(), case_id)
 
-    assert snapshot["schema_version"] == 1
+    assert snapshot["schema_version"] == 2
     assert [member["member_identifier"] for member in snapshot["members"]] == [
         "father", "proband"
     ]
@@ -104,6 +105,8 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
         "child_member_identifier": "proband",
         "relationship_type": "PARENT_CHILD",
         "metadata": {},
+        "relationship_revision_version": 1,
+        "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
     }]
 
 
@@ -166,6 +169,19 @@ def test_pedigree_member_and_relationship_changes_create_reanalysis_candidates(m
         pedigree,
         "create_case_change_candidates",
         lambda _db, **kwargs: candidate_calls.append(kwargs) or [],
+    )
+    monkeypatch.setattr(
+        pedigree,
+        "_current_pedigree",
+        lambda *_args: (
+            [
+                {"id": str(parent_id), "is_proband": False},
+                {"id": str(child_id), "is_proband": True},
+            ],
+            [],
+            [],
+            [],
+        ),
     )
 
     member_db = FakeDb()

@@ -275,6 +275,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         },
         scalar_rows=[None, workflow],
         query_rows=[
+            [member], [], [],
             [partition],
             [
                 SimpleNamespace(
@@ -292,7 +293,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
                     supersedes_evidence_id=None,
                 ),
             ],
-            [ploidy_evidence], [member], [],
+            [ploidy_evidence],
         ],
     )
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
@@ -470,6 +471,10 @@ def test_matrix_endpoint_composes_two_assays_for_same_family_member(monkeypatch)
             if "pedigree_members" in sql:
                 return _Rows([member])
             if "pedigree_relationships" in sql:
+                return _Rows([])
+            if "pedigree_member_revisions" in sql:
+                return _Rows([])
+            if "pedigree_relationship_revisions" in sql:
                 return _Rows([])
             raise AssertionError(f"Unexpected collection query: {sql}")
 
