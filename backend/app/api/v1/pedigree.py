@@ -421,27 +421,6 @@ def _revision_fingerprint(payload: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _current_pedigree(db: Session, case_id: UUID):
-    members = list(db.scalars(
-        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
-        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
-    ))
-    relationships = list(db.scalars(
-        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
-        .order_by(PedigreeRelationship.created_at)
-    ))
-    member_states = {row.id: _current_member_state(db, row) for row in members}
-    relationship_states = {row.id: _current_relationship_state(db, row) for row in relationships}
-    active_members = [state for state in member_states.values() if state["status"] == "ACTIVE"]
-    active_relationships = [
-        state for state in relationship_states.values()
-        if state["status"] == "ACTIVE"
-        and state["parent_member_id"] in {m["id"] for m in active_members}
-        and state["child_member_id"] in {m["id"] for m in active_members}
-    ]
-    return active_members, active_relationships, list(member_states.values()), list(relationship_states.values())
-
-
 def _validate_projected_proband(members: list[dict]) -> None:
     probands = [member for member in members if member.get("is_proband")]
     if len(probands) > 1:
