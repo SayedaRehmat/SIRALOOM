@@ -138,6 +138,8 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             encoding="utf-8",
         )
         clingen_gdv_path.write_text(
+            "CLINGEN GENE VALIDITY CURATIONS\n"
+            "FILE CREATED: 2026-09-01\n"
             "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),MOI,SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP\n"
             "GENE1,HGNC:1,Disease X,MONDO:0000001,Autosomal recessive,6,Definitive,https://example.test/report/fixture,2026-09-01,Fixture GCEP\n",
             encoding="utf-8",
