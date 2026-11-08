@@ -187,6 +187,7 @@ def _validate_revision_chain(revisions: list, entity_label: str) -> None:
         if (
             revision.version != expected_version
             or revision.supersedes_revision_id != previous_id
+            or revision.revision_type not in {"CORRECTED", "RETRACTED"}
             or not revision.reason
             or not revision.reason.strip()
             or len(revision.revision_fingerprint or "") != 64
@@ -201,6 +202,27 @@ def _validate_revision_chain(revisions: list, entity_label: str) -> None:
 
 def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dict:
     _validate_revision_chain(revisions, "Pedigree member")
+    allowed_fields = {
+        "relationship_to_proband", "sex", "affected_status",
+        "is_proband", "sampled", "specimen_id", "metadata",
+    }
+    for revision in revisions:
+        payload = revision.payload or {}
+        if revision.case_id != member.case_id or set(payload) - allowed_fields:
+            raise HTTPException(409, "Pedigree member revision contains invalid case or field references")
+        if "affected_status" in payload and payload["affected_status"] not in {"AFFECTED", "UNAFFECTED", "UNKNOWN"}:
+            raise HTTPException(409, "Pedigree member revision contains an invalid affected status")
+        if "metadata" in payload and not isinstance(payload["metadata"], dict):
+            raise HTTPException(409, "Pedigree member revision metadata is invalid")
+        if "is_proband" in payload and not isinstance(payload["is_proband"], bool):
+            raise HTTPException(409, "Pedigree member revision proband designation is invalid")
+        if "sampled" in payload and not isinstance(payload["sampled"], bool):
+            raise HTTPException(409, "Pedigree member revision sampled status is invalid")
+        if "specimen_id" in payload and payload["specimen_id"] is not None:
+            try:
+                UUID(str(payload["specimen_id"]))
+            except (TypeError, ValueError):
+                raise HTTPException(409, "Pedigree member revision specimen reference is invalid")
     state = _member(member)
     history = [{
         "id": str(member.id), "version": 1, "revision_type": "ORIGINAL",
@@ -229,6 +251,21 @@ def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dic
 
 def _relationship_state_from_revisions(relationship: PedigreeRelationship, revisions: list) -> dict:
     _validate_revision_chain(revisions, "Pedigree relationship")
+    allowed_fields = {"parent_member_id", "child_member_id", "relationship_type", "metadata"}
+    for revision in revisions:
+        payload = revision.payload or {}
+        if revision.case_id != relationship.case_id or set(payload) - allowed_fields:
+            raise HTTPException(409, "Pedigree relationship revision contains invalid case or field references")
+        if payload.get("parent_member_id", str(relationship.parent_member_id)) != str(relationship.parent_member_id):
+            raise HTTPException(409, "Pedigree relationship revision cannot rewrite its parent identity")
+        if payload.get("child_member_id", str(relationship.child_member_id)) != str(relationship.child_member_id):
+            raise HTTPException(409, "Pedigree relationship revision cannot rewrite its child identity")
+        if "relationship_type" in payload and (
+            not isinstance(payload["relationship_type"], str) or not payload["relationship_type"].strip()
+        ):
+            raise HTTPException(409, "Pedigree relationship revision type is invalid")
+        if "metadata" in payload and not isinstance(payload["metadata"], dict):
+            raise HTTPException(409, "Pedigree relationship revision metadata is invalid")
     state = _relationship(relationship)
     history = [{
         "id": str(relationship.id), "version": 1, "revision_type": "ORIGINAL",
