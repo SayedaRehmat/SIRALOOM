@@ -367,6 +367,7 @@ def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenanc
                 "source_record_sha256": "b" * 64,
                 "request_fingerprint": "a" * 64,
                 "resource_sha256": "d" * 64,
+                "response_sha256": "e" * 64,
                 "validity_provenance": {
                     "resource_id": str(uuid4()),
                     "source": "CLINGEN_GENE_DISEASE_VALIDITY",
@@ -375,7 +376,8 @@ def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenanc
             "hpoa_provenance": {
                 "resource_id": str(uuid4()),
                 "resource_release": "2026-09-02",
-                "resource_sha256": "e" * 64,
+                "resource_sha256": "f" * 64,
+                "response_sha256": "e" * 64,
             },
         }],
     }
@@ -394,3 +396,5 @@ def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenanc
     assert association.resource_id == g2p_resource_id
     assert association.source_record_id == "G2P:G2P001"
     assert association.request_fingerprint == "a" * 64
+    assert association.response_sha256 == "e" * 64
+    assert phenotype.response_sha256 == "e" * 64
