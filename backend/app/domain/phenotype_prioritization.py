@@ -49,11 +49,15 @@ def _association_evidence_state(association: dict[str, Any]) -> str:
     supportive = {"definitive", "strong", "moderate"}
     limited = {"limited"}
     contradictory = {
-        "disputed", "refuted", "no known disease relationship",
-        "no reported evidence", "conflicting_clingen_assertions",
+        "disputed", "refuted", "conflicting_clingen_assertions",
     }
+    no_assertion = {"no known disease relationship", "no reported evidence"}
     if g2p in contradictory or clingen in contradictory:
         return "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW"
+    if clingen in no_assertion:
+        if g2p in supportive or g2p in limited:
+            return "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW"
+        return "NO_KNOWN_DISEASE_RELATIONSHIP_REQUIRES_REVIEW"
     if g2p in limited or clingen in limited:
         return "LIMITED_REQUIRES_REVIEW"
     if g2p in supportive or clingen in supportive:
@@ -258,7 +262,8 @@ def prioritize_disease_context(
         "SUPPORTED_SOURCE_CONTEXT_ONLY": 0,
         "LIMITED_REQUIRES_REVIEW": 1,
         "UNRESOLVED_REQUIRES_REVIEW": 2,
-        "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW": 3,
+        "NO_KNOWN_DISEASE_RELATIONSHIP_REQUIRES_REVIEW": 3,
+        "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW": 4,
     }
     candidates.sort(key=lambda row: (
         evidence_state_order.get(row["association_evidence_state"], 2),
