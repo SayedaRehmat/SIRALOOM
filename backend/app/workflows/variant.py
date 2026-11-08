@@ -4344,6 +4344,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "resource_name": g2p_resource.name,
                             "resource_version": g2p_execution.resource_version,
                             "resource_sha256": g2p_provider.sha256,
+                            "source_url": G2PProvider.source_url,
+                            "download_url": G2PProvider.download_url,
+                            "archive_url": G2PProvider.archive_url,
+                            "terms_url": G2PProvider.terms_url,
+                            "attribution": "Gene2Phenotype, EMBL-EBI",
                             "request_fingerprint": g2p_request_fingerprint,
                             "source_record_id": model.source_record_id,
                             "source_record_sha256": model.record_sha256,
@@ -4516,6 +4521,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "response_sha256": validity_response_sha256,
                             "matched_assertion_count": len(matches),
                             "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            "source_url": "https://search.clinicalgenome.org/kb/downloads",
+                            "methodology_url": "https://www.clinicalgenome.org/docs/gene-disease-validity-standard-operating-procedure/",
                         }
                         clingen_moi_labels = sorted({
                             str(assertion.moi).strip()
