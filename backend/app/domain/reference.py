@@ -165,7 +165,7 @@ class FastaReference:
         fixed_header = self._handle.read(12)
         if (
             len(fixed_header) != 12
-            or fixed_header[:3] != b"\\x1f\\x8b\\x08"
+            or fixed_header[:3] != b"\x1f\x8b\x08"
             or fixed_header[3] != 4
         ):
             raise ReferenceError(

@@ -248,7 +248,7 @@ def test_reference_package_rejects_stale_fai_offset(tmp_path: Path):
     resource, _fasta, fai = make_package(tmp_path)
     fields = fai.read_text(encoding="utf-8").strip().split("\t")
     fields[2] = str(int(fields[2]) + 1)
-    fai.write_text("\t".join(fields) + "\\n", encoding="utf-8")
+    fai.write_text("\t".join(fields) + "\n", encoding="utf-8")
     with pytest.raises(ReferencePackageError) as exc:
         validate_reference_package(resource, expected_genome_build="GRCh38")
     assert exc.value.code == "REFERENCE_CHECKSUM_MISMATCH"
@@ -314,11 +314,11 @@ def _write_test_bgzf(path: Path, payload: bytes, *, block_size: int = 10_000) ->
     def make_block(data: bytes) -> bytes:
         compressor = zlib.compressobj(level=6, wbits=-15)
         compressed = compressor.compress(data) + compressor.flush()
-        extra = b"BC" + struct.pack("<H", 2) + b"\\x00\\x00"
+        extra = b"BC" + struct.pack("<H", 2) + b"\x00\x00"
         header = (
-            b"\\x1f\\x8b\\x08\\x04"
-            + b"\\x00\\x00\\x00\\x00"
-            + b"\\x00\\xff"
+            b"\x1f\x8b\x08\x04"
+            + b"\x00\x00\x00\x00"
+            + b"\x00\xff"
             + struct.pack("<H", len(extra))
             + extra
         )
@@ -359,9 +359,9 @@ def _write_test_bgzf(path: Path, payload: bytes, *, block_size: int = 10_000) ->
 
 def _write_bgzf_reference(tmp_path: Path) -> tuple[Path, str]:
     sequence = "ACGT" * 30_000
-    header = b">1 description\\n"
+    header = b">1 description\n"
     sequence_lines = [
-        sequence[start : start + 60].encode("ascii") + b"\\n"
+        sequence[start : start + 60].encode("ascii") + b"\n"
         for start in range(0, len(sequence), 60)
     ]
     fasta_bytes = header + b"".join(sequence_lines)
@@ -369,7 +369,7 @@ def _write_bgzf_reference(tmp_path: Path) -> tuple[Path, str]:
     _write_test_bgzf(fasta, fasta_bytes)
     fai = Path(f"{fasta}.fai")
     fai.write_text(
-        f"1\\t{len(sequence)}\\t{len(header)}\\t60\\t61\\n",
+        f"1\t{len(sequence)}\t{len(header)}\t60\t61\n",
         encoding="utf-8",
     )
     return fasta, sequence
@@ -394,10 +394,10 @@ def test_vcf_reference_validation_reads_bgzf_reference_across_block_boundary(tmp
     alt = "T" if ref[0] != "T" else "C"
     vcf = tmp_path / "bgzf-reference.vcf"
     vcf.write_text(
-        "##fileformat=VCFv4.3\\n"
-        f"##contig=<ID=1,length={len(sequence)}>\\n"
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\n"
-        f"1\\t{position}\\t.\\t{ref}\\t{alt}\\t.\\tPASS\\t.\\n",
+        "##fileformat=VCFv4.3\n"
+        f"##contig=<ID=1,length={len(sequence)}>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        f"1\t{position}\t.\t{ref}\t{alt}\t.\tPASS\t.\n",
         encoding="utf-8",
     )
 
@@ -410,7 +410,7 @@ def test_vcf_reference_validation_reads_bgzf_reference_across_block_boundary(tmp
 def test_fasta_reference_rejects_bgzf_without_matching_gzi(tmp_path: Path):
     fasta = tmp_path / "reference.fa.bgz"
     fasta.write_bytes(b"not-a-bgzf-stream")
-    Path(f"{fasta}.fai").write_text("1\\t4\\t3\\t4\\t5\\n", encoding="utf-8")
+    Path(f"{fasta}.fai").write_text("1\t4\t3\t4\t5\n", encoding="utf-8")
 
     with pytest.raises(ReferenceError) as exc:
         FastaReference(fasta)
