@@ -123,7 +123,8 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "ARG UV_ARCHIVE_SHA256_X86_64=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
     assert "ARG UV_ARCHIVE_SHA256_AARCH64=c300afd5f2d31df039fe6a26a2d68a76b62832098c272a43e1e74ab9efd4fbd7" in dockerfile
     assert "aarch64:linux-aarch64" in dockerfile
-    assert "uv-aarch64-unknown-linux-gnu.tar.gz" in dockerfile
+    assert 'url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-{target}.tar.gz"' in dockerfile
+    assert "aarch64) uv_target=aarch64-unknown-linux-gnu" in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
 
 
