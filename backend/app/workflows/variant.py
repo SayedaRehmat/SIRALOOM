@@ -3927,15 +3927,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "The analysis resource plan selected multiple ClinGen gene-disease resources."
                             )
                         clingen_gdv_resource, clingen_gdv_execution = gdv_candidates[0]
-                        clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(
-                            resolved=clingen_gdv_execution,
-                            expected_sha256=clingen_gdv_resource.checksum,
+                        gdv_toolchain = dict(clingen_gdv_execution.contract.toolchain or {})
+                        gdv_expected_sha256 = (
+                            clingen_gdv_resource.checksum
+                            or gdv_toolchain.get("sha256")
+                            or gdv_toolchain.get("checksum")
                         )
-                        clingen_gdv_metadata = {
-                            **clingen_gdv_execution.snapshot,
-                            "resource_name": clingen_gdv_resource.name,
-                            "resource_checksum": clingen_gdv_resource.checksum,
-                        }
+                        if not gdv_expected_sha256:
+                            provider_limitations.append({
+                                "code": "CLINGEN_GDV_CHECKSUM_REQUIRED",
+                                "message": "The approved ClinGen Gene-Disease Validity export must have a SHA-256 pin.",
+                                "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            })
+                            clingen_gdv_resource = clingen_gdv_execution = None
+                        else:
+                            clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(
+                                resolved=clingen_gdv_execution,
+                                expected_sha256=str(gdv_expected_sha256),
+                            )
+                            clingen_gdv_metadata = {
+                                **clingen_gdv_execution.snapshot,
+                                "resource_name": clingen_gdv_resource.name,
+                                "resource_checksum": gdv_expected_sha256,
+                            }
                     if g2p_candidates:
                         if len(g2p_candidates) != 1:
                             raise ResourceExecutionError(
