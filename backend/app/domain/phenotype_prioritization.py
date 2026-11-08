@@ -42,6 +42,25 @@ def _term_matches(patient_term: str, disease_term: str, ontology: Any) -> tuple[
     return False, "NO_MATCH"
 
 
+def _association_evidence_state(association: dict[str, Any]) -> str:
+    """Preserve source confidence semantics without equating G2P and ClinGen scales."""
+    g2p = str(association.get("g2p_confidence") or "").strip().casefold()
+    clingen = str(association.get("validity_status") or "").strip().casefold()
+    supportive = {"definitive", "strong", "moderate"}
+    limited = {"limited"}
+    contradictory = {
+        "disputed", "refuted", "no known disease relationship",
+        "no reported evidence", "conflicting_clingen_assertions",
+    }
+    if g2p in contradictory or clingen in contradictory:
+        return "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW"
+    if g2p in limited or clingen in limited:
+        return "LIMITED_REQUIRES_REVIEW"
+    if g2p in supportive or clingen in supportive:
+        return "SUPPORTED_SOURCE_CONTEXT_ONLY"
+    return "UNRESOLVED_REQUIRES_REVIEW"
+
+
 def prioritize_disease_context(
     *,
     patient_observations: Iterable[Any],
@@ -183,6 +202,7 @@ def prioritize_disease_context(
                 "disease_id": disease_id,
                 "disease_name": association.get("disease_name"),
                 "association_validity": association.get("validity_status") or "NOT_RECORDED",
+                "association_evidence_state": _association_evidence_state(association),
                 "association_validity_provenance": association.get("validity_provenance"),
                 "clingen_validity_assertions": association.get("clingen_validity_assertions") or [],
                 "g2p_confidence": association.get("g2p_confidence"),
@@ -228,7 +248,14 @@ def prioritize_disease_context(
 
     # This is deterministic navigation ordering, not a calibrated score. Ties
     # are stable and fully explained by the matched term list above.
+    evidence_state_order = {
+        "SUPPORTED_SOURCE_CONTEXT_ONLY": 0,
+        "LIMITED_REQUIRES_REVIEW": 1,
+        "UNRESOLVED_REQUIRES_REVIEW": 2,
+        "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW": 3,
+    }
     candidates.sort(key=lambda row: (
+        evidence_state_order.get(row["association_evidence_state"], 2),
         -row["matched_patient_term_count"], row["gene"], row["disease_id"],
         row["association_provenance"]["source_record_id"],
     ))
