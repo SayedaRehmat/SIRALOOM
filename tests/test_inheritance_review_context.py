@@ -121,3 +121,23 @@ def test_inheritance_context_rejects_invalid_call_state():
     matrix["samples"][0]["calls"][0]["call_state"] = "REFERENCE_ASSUMED"
     with pytest.raises(InheritanceReviewContextError, match="Unsupported family genotype call state"):
         build_inheritance_review_context(disease_association=_association(), family_matrix=matrix)
+
+
+@pytest.mark.parametrize(
+    ("source_label", "expected"),
+    [
+        ("Autosomal dominant inheritance", "AUTOSOMAL_DOMINANT"),
+        ("Autosomal recessive inheritance", "AUTOSOMAL_RECESSIVE"),
+        ("X-linked dominant inheritance", "X_LINKED_DOMINANT"),
+        ("X-linked recessive inheritance", "X_LINKED_RECESSIVE"),
+        ("Mitochondrial inheritance", "MITOCHONDRIAL"),
+        ("Y-linked inheritance", "Y_LINKED"),
+        ("Autosomal semidominant inheritance", "AUTOSOMAL_SEMIDOMINANT"),
+        ("X-linked inheritance", None),
+        ("", None),
+    ],
+)
+def test_clingen_moi_mapping_requires_explicit_dominant_recessive_distinction(source_label, expected):
+    from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
+
+    assert normalize_clingen_moi_label(source_label) == expected
