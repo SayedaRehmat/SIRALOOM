@@ -495,7 +495,10 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
     toolchain["execution_profile_id"] = "vep-115-linux-amd64"
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
-    provider.verify_local_runtime = lambda _assembly: {"status": "VERIFIED"}
+    provider.verify_local_runtime = lambda _assembly: {
+        "status": "VERIFIED",
+        "cache_resource_sha256": sha256_resource_path(Path(toolchain["cache_dir"])),
+    }
 
     environment = SimpleNamespace(profile_json={"runtime_image_digest": None})
     calls = []
