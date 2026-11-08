@@ -1221,6 +1221,8 @@ def get_family_genotype_matrix(
             raise HTTPException(404, "Canonical variant not found")
         variants[variant_id] = variant
 
+    _, _, member_history, _ = _current_pedigree(db, case_id)
+    member_state_by_id = {UUID(item["id"]): item for item in member_history}
     samples = []
     for binding_id in body.binding_ids:
         binding = db.get(PedigreeSampleBinding, binding_id)
@@ -1317,8 +1319,8 @@ def get_family_genotype_matrix(
                 "reviewed_at": latest.reviewed_at.isoformat() if latest.reviewed_at else None,
             }
 
-        member_state = _current_member_state(db, member)
-        if member_state["status"] != "ACTIVE":
+        member_state = member_state_by_id.get(member.id)
+        if member_state is None or member_state["status"] != "ACTIVE":
             raise HTTPException(409, "A retracted pedigree member cannot contribute a family genotype sample")
         samples.append({
             "member_id": member.id,
