@@ -53,6 +53,13 @@ function EvidenceCard({e}:{e:Evidence}){
    <p>{t("review.penetrance")}: {pretty(candidateContext.inheritance?.penetrance?.status||"NOT_RECORDED")} ({candidateContext.inheritance?.penetrance_provenance?.source||"—"})</p>
    {candidateContext.inheritance?.mode_conflict&&<p role="alert">{t("review.modeConflict")}</p>}
    {candidateContext.association_validity_provenance&&<small>{candidateContext.association_validity_provenance.resource_name||"ClinGen"} · {candidateContext.association_validity_provenance.resource_version||"—"} · {candidateContext.association_validity_provenance.matched_assertion_count??0} matched assertion(s)</small>}
+   {(candidateContext.association_validity_provenance||e.payload?.association_provenance)&&<details className="evidence-provenance"><summary>{t("review.provenance")}</summary><dl>
+    {candidateContext.association_validity_provenance?.resource_id&&<><dt>{t("review.resourceId")} · ClinGen</dt><dd><code>{candidateContext.association_validity_provenance.resource_id}</code></dd></>}
+    {candidateContext.association_validity_provenance?.resource_sha256&&<><dt>{t("review.responseDigest")} · ClinGen resource</dt><dd><code>{candidateContext.association_validity_provenance.resource_sha256}</code></dd></>}
+    {e.payload?.association_provenance?.source_record_id&&<><dt>{t("review.sourceRecord")} · G2P</dt><dd><code>{e.payload.association_provenance.source_record_id}</code></dd></>}
+    {e.payload?.association_provenance?.source_record_sha256&&<><dt>{t("review.responseDigest")} · G2P record</dt><dd><code>{e.payload.association_provenance.source_record_sha256}</code></dd></>}
+    {e.payload?.association_provenance?.resource_sha256&&<><dt>{t("review.responseDigest")} · G2P resource</dt><dd><code>{e.payload.association_provenance.resource_sha256}</code></dd></>}
+   </dl></details>}
    <p className="phenotype-match-review-note">{t("review.candidateContextUnvalidated")}</p>
   </section>}
   {phenotypeMatch&&<section className="phenotype-match-review" aria-label={t("review.phenotypeMatchStatus")}>
