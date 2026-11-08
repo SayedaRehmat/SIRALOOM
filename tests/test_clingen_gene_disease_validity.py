@@ -35,7 +35,7 @@ def test_clingen_gene_disease_validity_pins_release_checksum_and_exact_pair(tmp_
     assert provider.release_date == "2026-11-08"
     assert len(assertions) == 1
     assert assertions[0].gene == "GENE1"
-    assert assertions[0].mondo_id == "MONDO_0000001"
+    assert assertions[0].mondo_id == "MONDO:0000001"
     assert assertions[0].classification == "Definitive"
     assert assertions[0].moi == "Autosomal recessive inheritance"
     assert assertions[0].source_record_id.startswith("ClinGen-GDV:")
