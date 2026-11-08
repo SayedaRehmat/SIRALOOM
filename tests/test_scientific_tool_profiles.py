@@ -77,6 +77,7 @@ def test_vep_has_an_independent_candidate_profile_and_is_not_bcftools():
     assert cache["version"] == "115"
     assert profile["status"] == "CANDIDATE"
     assert profile["installation"]["dependency_lock"] is None
+    assert profile["installation"]["source_lock"] == "configs/bioinformatics/profiles/vep-115.2-source.lock.json"
     assert {item["name"] for item in profile["dependencies"]} >= {
         "perl-runtime", "ensembl-vep-perl-modules", "vep-cache"
     }
@@ -118,3 +119,23 @@ def test_registry_rejects_unqualified_profile_missing_execution_contract(tmp_pat
     malformed_path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ScientificToolProfileError, match="resource requirements"):
         load_scientific_tool_registry(malformed_path)
+
+
+def test_vep_has_separate_candidate_profiles_for_both_native_architectures():
+    for profile_id, platform, architecture in (
+        ("vep-115-linux-amd64", "linux-64", "x86_64"),
+        ("vep-115-linux-arm64", "linux-aarch64", "aarch64"),
+    ):
+        profile = resolve_scientific_tool_profile(
+            profile_id,
+            tool_id="ensembl-vep",
+            platform=platform,
+            execution_method="OCI_CONTAINER",
+            registry_path=REGISTRY,
+            require_qualified=False,
+        )
+        assert profile["architecture"] == architecture
+        assert profile["status"] == "CANDIDATE"
+        assert profile["installation"]["dependency_lock"] is None
+        with pytest.raises(ScientificToolProfileError, match="only SOFTWARE_QUALIFIED"):
+            resolve_scientific_tool_profile(profile_id, registry_path=REGISTRY)
