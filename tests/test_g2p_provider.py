@@ -126,3 +126,22 @@ def test_g2p_is_an_executable_governed_provider():
     )
     assert provider.descriptor.capabilities
     assert any(capability.value == "GENE_DISEASE" for capability in provider.descriptor.capabilities)
+
+
+def test_g2p_accepts_date_pinned_archive_release(tmp_path):
+    from backend.app.adapters.gene_disease.g2p import G2PError, G2PProvider
+
+    path = tmp_path / "g2p.csv"
+    path.write_text(
+        "g2p id,gene symbol,disease name,allelic requirement,molecular mechanism,confidence,publication\n"
+        "G2P:1,GENE1,Disease,monoallelic autosomal,loss of function,definitive,PMID:1\n",
+        encoding="utf-8",
+    )
+    import hashlib
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    provider = G2PProvider(
+        resource_path=str(path),
+        expected_sha256=digest,
+        release="2026-11-08",
+    )
+    assert provider.release == "2026-11-08"
