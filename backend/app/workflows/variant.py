@@ -3941,15 +3941,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             })
                             clingen_gdv_resource = clingen_gdv_execution = None
                         else:
-                            clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(
-                                resolved=clingen_gdv_execution,
-                                expected_sha256=str(gdv_expected_sha256),
-                            )
-                            clingen_gdv_metadata = {
-                                **clingen_gdv_execution.snapshot,
-                                "resource_name": clingen_gdv_resource.name,
-                                "resource_checksum": gdv_expected_sha256,
-                            }
+                            try:
+                                clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(
+                                    resolved=clingen_gdv_execution,
+                                    expected_sha256=str(gdv_expected_sha256),
+                                )
+                                clingen_gdv_metadata = {
+                                    **clingen_gdv_execution.snapshot,
+                                    "resource_name": clingen_gdv_resource.name,
+                                    "resource_checksum": gdv_expected_sha256,
+                                }
+                            except ClinGenGeneDiseaseValidityError as exc:
+                                provider_limitations.append({
+                                    "code": "CLINGEN_GDV_RESOURCE_UNAVAILABLE",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                                })
+                                clingen_gdv_provider = None
+                                clingen_gdv_resource = clingen_gdv_execution = None
                     if g2p_candidates:
                         if len(g2p_candidates) != 1:
                             raise ResourceExecutionError(
