@@ -134,3 +134,35 @@ def test_no_exact_disease_identifier_crosswalk_is_inferred():
         hpo_ontology=Ontology(),
     )
     assert result["candidates"] == []
+
+
+def test_snapshot_proband_member_id_is_included_but_sibling_id_is_excluded():
+    result = prioritize_disease_context(
+        patient_observations=[
+            {
+                "id": "proband-observation",
+                "hpo_id": "HP:0000003",
+                "phenotype_status": "PRESENT",
+                "subject_member_id": "member-proband",
+            },
+            {
+                "id": "sibling-observation",
+                "hpo_id": "HP:0000004",
+                "phenotype_status": "PRESENT",
+                "subject_member_id": "member-sibling",
+            },
+        ],
+        proband_member_ids=["member-proband"],
+        gene_disease_records=[_association()],
+        annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+        hpoa_provenance={
+            "resource_id": "hpoa-resource",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+        },
+        hpo_ontology=Ontology(),
+    )
+    assert result["observed_proband_present_terms"] == ["HP:0000003"]
+    assert result["candidates"][0]["matched_terms"][0]["patient_observation_ids"] == [
+        "proband-observation"
+    ]
