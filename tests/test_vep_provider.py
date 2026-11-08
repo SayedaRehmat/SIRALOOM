@@ -495,7 +495,7 @@ def test_registered_vep_profile_cannot_fall_back_to_unregistered_local_process(m
     toolchain, _cache_file = _manifested_toolchain(tmp_path, binary, vep_version="115.2")
     toolchain["execution_profile_id"] = "vep-115-linux-amd64"
     provider = VEPProvider.from_execution_contract(_contract(toolchain=toolchain))
-    provider.verify_local_runtime = lambda _assembly: {
+    provider._runtime_checks["GRCh38"] = {
         "status": "VERIFIED",
         "cache_resource_sha256": "d" * 64,
     }
