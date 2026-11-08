@@ -99,6 +99,7 @@ def register_builtin_providers() -> ProviderRegistry:
     from backend.app.adapters.clingen.variant_pathogenicity import (
         ClinGenVariantPathogenicityProvider,
     )
+    from backend.app.adapters.gene_disease.g2p import G2PProvider
     from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
     from backend.app.adapters.phenotype.hpoa import HPOAProvider
     from backend.app.adapters.population.gnomad import (
@@ -157,6 +158,16 @@ def register_builtin_providers() -> ProviderRegistry:
         factory=ClinGenGeneDiseaseValidityProvider.from_execution_contract,
         descriptor=ProviderCapability(
             provider_id=ClinGenGeneDiseaseValidityProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.GENE_DISEASE}),
+            supported_builds=frozenset({"GRCh37", "GRCh38"}),
+        ),
+    )
+    registry.register(
+        provider_id=G2PProvider.provider_id,
+        provider_version=G2PProvider.provider_version,
+        factory=G2PProvider.from_resource_contract,
+        descriptor=ProviderCapability(
+            provider_id=G2PProvider.provider_id,
             capabilities=frozenset({ResourceCapability.GENE_DISEASE}),
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
