@@ -4535,7 +4535,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         ).hexdigest()
                         hpoa_provenance = {
                             **(hpoa_resource_metadata or {}),
+                            "resource_id": str(hpoa_execution.resource_id),
                             "resource_name": hpoa_resource.name,
+                            "resource_version": hpoa_execution.resource_version,
                             "resource_release": hpoa_provider.release,
                             "resource_sha256": hpoa_provider.sha256,
                             "request_fingerprint": hpoa_request_fingerprint,
