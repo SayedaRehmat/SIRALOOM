@@ -275,7 +275,7 @@ def test_matrix_endpoint_joins_verified_sample_calls_to_source_artifact_provenan
         },
         scalar_rows=[None, workflow],
         query_rows=[
-            [member], [], [], [],
+            [member], [], [],
             [partition],
             [
                 SimpleNamespace(
