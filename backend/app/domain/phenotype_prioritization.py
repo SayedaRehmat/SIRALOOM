@@ -46,6 +46,7 @@ def prioritize_disease_context(
     patient_observations: Iterable[Any],
     gene_disease_records: Iterable[dict[str, Any]],
     annotations_by_disease: dict[str, Iterable[Any]],
+    hpoa_provenance: dict[str, Any],
     hpo_ontology: Any,
 ) -> dict[str, Any]:
     """Order gene–disease candidates by transparent HPOA assertion coverage.
@@ -59,6 +60,20 @@ def prioritize_disease_context(
     """
     if not isinstance(annotations_by_disease, dict):
         raise PhenotypePrioritizationError("annotations_by_disease must be a disease-keyed object")
+    if not isinstance(hpoa_provenance, dict):
+        raise PhenotypePrioritizationError("hpoa_provenance must be an object")
+    hpoa_resource_id = _required_text(hpoa_provenance, "resource_id", "HPOA provenance")
+    hpoa_release = _required_text(hpoa_provenance, "resource_version", "HPOA provenance")
+    hpoa_sha256 = _required_text(hpoa_provenance, "resource_sha256", "HPOA provenance").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", hpoa_sha256):
+        raise PhenotypePrioritizationError("HPOA provenance resource_sha256 must be SHA-256")
+    if hpo_ontology is None:
+        raise PhenotypePrioritizationError("A governed HPO ontology release is required")
+    ontology_release = _required_text({"release": getattr(hpo_ontology, "release", None)}, "release", "HPO ontology")
+    ontology_sha256 = _required_text({"sha256": getattr(hpo_ontology, "sha256", None)}, "sha256", "HPO ontology").lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", ontology_sha256):
+        raise PhenotypePrioritizationError("HPO ontology sha256 must be SHA-256")
+    annotation_index = {str(key).strip().casefold(): list(value) for key, value in annotations_by_disease.items()}
 
     observed: dict[str, dict[str, Any]] = {}
     non_matching_states: list[dict[str, Any]] = []
@@ -92,6 +107,9 @@ def prioritize_disease_context(
         disease_id = _required_text(association, "disease_id", "Gene–disease association")
         resource_id = _required_text(association, "resource_id", "Gene–disease association")
         resource_version = _required_text(association, "resource_version", "Gene–disease association")
+        association_sha256 = _required_text(association, "resource_sha256", "Gene–disease association").lower()
+        if not re.fullmatch(r"[0-9a-f]{64}", association_sha256):
+            raise PhenotypePrioritizationError("Gene–disease association resource_sha256 must be SHA-256")
         source_record_id = _required_text(association, "source_record_id", "Gene–disease association")
         modes = association.get("inheritance_modes")
         if not isinstance(modes, list) or not modes or any(not str(mode).strip() for mode in modes):
@@ -109,14 +127,14 @@ def prioritize_disease_context(
             "resource_id": resource_id,
             "resource_version": resource_version,
             "source_record_id": source_record_id,
-            "resource_sha256": association.get("resource_sha256"),
+            "resource_sha256": association_sha256,
         }
         associations.setdefault(disease_id.casefold(), []).append(association)
 
     candidates: list[dict[str, Any]] = []
     for disease_key in sorted(associations):
         disease_associations = associations[disease_key]
-        source_rows = list(annotations_by_disease.get(disease_key, ()))
+        source_rows = annotation_index.get(disease_key, [])
         if not source_rows:
             # Disease IDs are exact identifiers. Do not guess crosswalks or aliases.
             continue
@@ -169,8 +187,11 @@ def prioritize_disease_context(
                 "unmatched_present_patient_terms": sorted(set(observed) - set(matched_patient_terms)),
                 "association_provenance": association["_provenance"],
                 "hpoa_provenance": {
-                    "resource_release": getattr(hpo_ontology, "release", None),
-                    "ontology_sha256": getattr(hpo_ontology, "sha256", None),
+                    "resource_id": hpoa_resource_id,
+                    "resource_release": hpoa_release,
+                    "resource_sha256": hpoa_sha256,
+                    "ontology_release": ontology_release,
+                    "ontology_sha256": ontology_sha256,
                 },
                 "interpretive_use": "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
                 "clinical_prioritization_validated": False,
