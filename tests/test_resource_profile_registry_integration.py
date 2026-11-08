@@ -306,13 +306,13 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                 name="Gene2Phenotype",
                 provider="Gene2Phenotype",
                 resource_type="GENE_DISEASE",
-                version="v21.0.0",
+                version="2026-11-08",
             )
             g2p.license_text = "Gene2Phenotype data terms; institutional research use."
             g2p.metadata_json = {
                 "execution": {
                     "provider_version": "G2P_CSV",
-                    "toolchain": {"release": "v21.0.0", "sha256": "a" * 64},
+                    "toolchain": {"release": "2026-11-08", "sha256": "a" * 64},
                 }
             }
             db.add(g2p)
