@@ -4580,6 +4580,12 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 patient_hpo_terms=case_hpo_terms,
                                 hpo_ontology=hpo_ontology,
                             ))
+                        if phenotype_prioritization is not None and gene_symbol:
+                            records.extend(engine.build_from_phenotype_prioritization(
+                                variant_id=row.id,
+                                prioritization=phenotype_prioritization,
+                                gene_filter=gene_symbol,
+                            ))
 
                         gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")
                         hgvs_values: list[str] = []
