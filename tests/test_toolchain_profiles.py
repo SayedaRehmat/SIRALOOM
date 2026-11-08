@@ -318,6 +318,8 @@ def test_arm64_profiles_are_distinct_candidates_and_not_production_selectable(
     assert profile["htslib_version"] == htslib_version
     assert profile["worker_queue"].endswith(".arm64")
     assert profile["environment_file"] == "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml"
+    arm_environment = (ROOT / profile["environment_file"]).read_text(encoding="utf-8")
+    assert "sysroot_linux-aarch64=2.28" in arm_environment
     with pytest.raises(ToolchainProfileError, match="not software-qualified"):
         resolve_toolchain_profile(
             profile_id,
