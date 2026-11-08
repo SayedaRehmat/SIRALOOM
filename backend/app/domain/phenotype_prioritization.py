@@ -157,6 +157,7 @@ def prioritize_disease_context(
             "source_record_id": source_record_id,
             "source_record_sha256": association.get("source_record_sha256"),
             "request_fingerprint": association.get("request_fingerprint"),
+            "response_sha256": association.get("response_sha256"),
             "resource_sha256": association_sha256,
             "validity_provenance": association.get("validity_provenance"),
         }
