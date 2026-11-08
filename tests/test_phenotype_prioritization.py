@@ -1,0 +1,132 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+import pytest
+
+from backend.app.domain.phenotype_prioritization import (
+    PhenotypePrioritizationError,
+    prioritize_disease_context,
+)
+
+
+class Ontology:
+    release = "2026-09-01"
+    sha256 = "a" * 64
+
+    def ancestors(self, term_id):
+        return {
+            "HP:0000003": {"HP:0000001", "HP:0000002"},
+            "HP:0000004": {"HP:0000001"},
+        }.get(term_id, set())
+
+
+@dataclass(frozen=True)
+class Hpoa:
+    hpo_id: str
+    qualifier: str = ""
+    aspect: str = "P"
+    frequency: str | None = None
+    onset: str | None = None
+    sex: str | None = None
+    evidence: str = "PCS"
+    reference: str = "PMID:123"
+    biocuration: tuple[str, ...] = ("HPO:curator[2026-01-01]",)
+
+
+def _association(gene="GENE1", disease_id="MONDO:0000001", record_id="GENE1:MONDO:1"):
+    return {
+        "gene": gene,
+        "disease_id": disease_id,
+        "disease_name": "Example disorder",
+        "validity_status": "STRONG",
+        "molecular_mechanism": "loss_of_function",
+        "inheritance_modes": ["AUTOSOMAL_RECESSIVE"],
+        "penetrance": {"status": "UNKNOWN", "source": "NOT_RECORDED"},
+        "resource_id": "resource-gene-disease-v1",
+        "resource_version": "2026-10",
+        "resource_sha256": "b" * 64,
+        "source_record_id": record_id,
+    }
+
+
+def test_context_order_uses_only_present_proband_terms_and_preserves_provenance():
+    result = prioritize_disease_context(
+        patient_observations=[
+            {"id": "p1", "canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"},
+            {"id": "p2", "canonical_hpo_id": "HP:0000004", "phenotype_status": "PRESENT"},
+            {"id": "f1", "canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT", "subject_member_id": "sibling"},
+            {"id": "a1", "canonical_hpo_id": "HP:0000002", "phenotype_status": "ABSENT"},
+            {"id": "u1", "canonical_hpo_id": "HP:0000001", "phenotype_status": "UNKNOWN"},
+        ],
+        gene_disease_records=[_association()],
+        annotations_by_disease={
+            "mondo:0000001": [
+                Hpoa("HP:0000001", frequency="1/2"),
+                Hpoa("HP:0000002", qualifier="NOT", frequency="0/3"),
+            ]
+        },
+        hpo_ontology=Ontology(),
+    )
+
+    candidate = result["candidates"][0]
+    assert candidate["contextual_order"] == 1
+    assert candidate["matched_patient_term_count"] == 2
+    assert {item["patient_hpo_id"] for item in candidate["matched_terms"]} == {
+        "HP:0000003", "HP:0000004"
+    }
+    assert candidate["potential_discordances"][0]["hpoa_frequency"] == "0/3"
+    assert result["non_matching_phenotype_states"][0]["status"] in {"ABSENT", "UNKNOWN"}
+    assert result["clinical_prioritization_validated"] is False
+    assert candidate["inheritance"]["modes"] == ["AUTOSOMAL_RECESSIVE"]
+    assert candidate["inheritance"]["penetrance"]["status"] == "UNKNOWN"
+    assert candidate["association_provenance"]["resource_version"] == "2026-10"
+
+
+def test_context_order_is_deterministic_for_equal_match_counts():
+    result = prioritize_disease_context(
+        patient_observations=[
+            {"canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"},
+        ],
+        gene_disease_records=[
+            _association("GENE2", "MONDO:0000002", "r2"),
+            _association("GENE1", "MONDO:0000001", "r1"),
+        ],
+        annotations_by_disease={
+            "mondo:0000001": [Hpoa("HP:0000001")],
+            "mondo:0000002": [Hpoa("HP:0000001")],
+        },
+        hpo_ontology=Ontology(),
+    )
+
+    assert [(item["gene"], item["contextual_order"]) for item in result["candidates"]] == [
+        ("GENE1", 1), ("GENE2", 2)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("association", "message"),
+    [
+        ({**_association(), "resource_version": ""}, "resource_version"),
+        ({**_association(), "inheritance_modes": []}, "inheritance_modes"),
+        ({**_association(), "penetrance": None}, "penetrance"),
+    ],
+)
+def test_context_order_fails_closed_without_governed_association_contract(association, message):
+    with pytest.raises(PhenotypePrioritizationError, match=message):
+        prioritize_disease_context(
+            patient_observations=[],
+            gene_disease_records=[association],
+            annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+            hpo_ontology=Ontology(),
+        )
+
+
+def test_no_exact_disease_identifier_crosswalk_is_inferred():
+    result = prioritize_disease_context(
+        patient_observations=[{"canonical_hpo_id": "HP:0000003", "phenotype_status": "PRESENT"}],
+        gene_disease_records=[_association(disease_id="MONDO:0000001")],
+        annotations_by_disease={"orpha:123": [Hpoa("HP:0000001")]},
+        hpo_ontology=Ontology(),
+    )
+    assert result["candidates"] == []
