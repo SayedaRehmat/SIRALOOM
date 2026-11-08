@@ -245,7 +245,7 @@ def _validate_projected_proband(members: list[dict]) -> None:
 
 
 def _seg(o, member=None):
-    return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {}}
+    return {"id":str(o.id),"pedigree_member_id":str(o.pedigree_member_id),"member_identifier":member.member_identifier if member else None,"genotype":o.genotype,"zygosity":o.zygosity,"phase":o.phase,"allele_observed":o.allele_observed,"phenotype_status":o.phenotype_status,"source":o.source,"notes":o.notes,"metadata":o.metadata_json or {},"created_at":o.created_at.isoformat() if o.created_at else None}
 
 def _validate_observation_members(rows, members):
     if any(row.pedigree_member_id not in members for row in rows):
@@ -1726,6 +1726,8 @@ def _segregation_revision_payload(root, revision, member) -> dict:
         "source": "MANUALLY_REPORTED",
         "notes": payload.get("notes"),
         "metadata": payload.get("metadata") or {},
+        "recorded_by": str(revision.recorded_by),
+        "created_at": revision.created_at.isoformat() if revision.created_at else None,
     }
 
 
