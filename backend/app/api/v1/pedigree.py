@@ -226,7 +226,7 @@ def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dic
     state = _member(member)
     history = [{
         "id": str(member.id), "version": 1, "revision_type": "ORIGINAL",
-        "reason": None, "created_at": member.created_at.isoformat() if member.created_at else None,
+        "reason": None, "created_at": getattr(member, "created_at", None).isoformat() if getattr(member, "created_at", None) else None,
         "payload": _member(member),
     }]
     history.extend([{
@@ -269,7 +269,7 @@ def _relationship_state_from_revisions(relationship: PedigreeRelationship, revis
     state = _relationship(relationship)
     history = [{
         "id": str(relationship.id), "version": 1, "revision_type": "ORIGINAL",
-        "reason": None, "created_at": relationship.created_at.isoformat() if relationship.created_at else None,
+        "reason": None, "created_at": getattr(relationship, "created_at", None).isoformat() if getattr(relationship, "created_at", None) else None,
         "payload": _relationship(relationship),
     }]
     history.extend([{
