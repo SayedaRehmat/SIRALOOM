@@ -1322,6 +1322,8 @@ def get_family_genotype_matrix(
         variants[variant_id] = variant
 
     member_state_by_id = None
+    effective_members = None
+    effective_relationships = None
     samples = []
     for binding_id in body.binding_ids:
         binding = db.get(PedigreeSampleBinding, binding_id)
@@ -1335,7 +1337,7 @@ def get_family_genotype_matrix(
         if successor is not None:
             raise HTTPException(409, "A superseded sample binding cannot be used in a current genotype matrix")
         if member_state_by_id is None:
-            _, _, member_history, _ = _current_pedigree(db, case_id)
+            effective_members, effective_relationships, member_history, _ = _current_pedigree(db, case_id)
             member_state_by_id = {UUID(item["id"]): item for item in member_history}
         member = db.get(PedigreeMember, binding.pedigree_member_id)
         specimen = db.get(Specimen, binding.specimen_id)
@@ -1457,15 +1459,16 @@ def get_family_genotype_matrix(
             "calls": calls,
         })
 
-    active_members, active_relationships, _, _ = _current_pedigree(db, case_id)
-    member_identifiers = {UUID(member["id"]): member["member_identifier"] for member in active_members}
+    if effective_members is None or effective_relationships is None:
+        effective_members, effective_relationships, _, _ = _current_pedigree(db, case_id)
+    member_identifiers = {UUID(member["id"]): member["member_identifier"] for member in effective_members}
     relationship_snapshot = [{
         "parent_member_identifier": member_identifiers.get(UUID(item["parent_member_id"]), "UNKNOWN_MEMBER"),
         "child_member_identifier": member_identifiers.get(UUID(item["child_member_id"]), "UNKNOWN_MEMBER"),
         "relationship_type": item["relationship_type"],
         "metadata": item.get("metadata") or {},
         "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
-    } for item in active_relationships]
+    } for item in effective_relationships]
 
     return build_family_genotype_matrix(
         case_id=case_id,
