@@ -77,6 +77,10 @@ class ClinGenGeneDiseaseValidityProvider:
     @classmethod
     def from_execution_contract(cls, resolved: Any, *, expected_sha256: str | None = None):
         contract = resolved.contract
+        if contract.provider_id != cls.provider_id:
+            raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity provider identity does not match")
+        if contract.provider_version != cls.provider_version:
+            raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity provider version does not match")
         if contract.access_method not in {"LOCAL", "FILE", "LOCAL_ONLY"}:
             raise ClinGenGeneDiseaseValidityError(
                 "ClinGen Gene-Disease Validity requires the governed official CSV download as a local/file resource"
@@ -86,7 +90,12 @@ class ClinGenGeneDiseaseValidityProvider:
         delimiter = (contract.toolchain or {}).get("delimiter")
         if delimiter not in {None, ",", "\t"}:
             raise ClinGenGeneDiseaseValidityError("delimiter must be ',' or '\\t'")
-        release = str((contract.toolchain or {}).get("release") or resolved.resource_version or "").strip()
+        release = str(resolved.resource_version or "").strip()
+        declared_release = str((contract.toolchain or {}).get("release") or "").strip()
+        if declared_release and declared_release != release:
+            raise ClinGenGeneDiseaseValidityError(
+                "ClinGen execution contract release does not match the registered resource version"
+            )
         return cls(
             resource_path=contract.location,
             delimiter="\t" if delimiter == "\t" else delimiter,
