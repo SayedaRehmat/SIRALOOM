@@ -104,6 +104,8 @@ def test_pedigree_snapshot_records_stable_member_and_relationship_context():
         "child_member_identifier": "proband",
         "relationship_type": "PARENT_CHILD",
         "metadata": {},
+        "relationship_revision_version": 1,
+        "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
     }]
 
 
