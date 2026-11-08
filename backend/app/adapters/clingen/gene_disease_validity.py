@@ -39,7 +39,7 @@ class GeneDiseaseAssertion:
 
 def _normalize_mondo_id(value: str | None) -> str | None:
     raw = str(value or "").strip()
-    match = re.fullmatch(r"MONDO[:_](\\d{7})", raw, flags=re.IGNORECASE)
+    match = re.fullmatch(r"MONDO[:_](\d{7})", raw, flags=re.IGNORECASE)
     return f"MONDO:{match.group(1)}" if match else (raw or None)
 
 
@@ -111,7 +111,7 @@ class ClinGenGeneDiseaseValidityProvider:
         if self.sha256 is None:
             self.sha256 = hashlib.sha256(self.path.read_bytes()).hexdigest()
         raw_text = self.path.read_text(encoding="utf-8-sig")
-        release_match = re.search(r"(?im)^\\s*FILE CREATED:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$", raw_text)
+        release_match = re.search(r"(?im)^\s*FILE CREATED:\s*(\d{4}-\d{2}-\d{2})\s*$", raw_text)
         self.release_date = release_match.group(1) if release_match else None
         if self.expected_release is not None and self.release_date != self.expected_release:
             raise ClinGenGeneDiseaseValidityError(
