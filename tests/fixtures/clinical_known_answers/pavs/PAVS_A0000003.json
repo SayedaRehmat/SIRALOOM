@@ -1,0 +1,264 @@
+{
+  "id": "PAVS:A0000003",
+  "subject": {
+    "id": "PAVS:A0000003",
+    "sex": "MALE",
+    "extensions": [
+      {
+        "name": "consanguinity",
+        "value": {
+          "ontologyClass": {
+            "id": "HP:0025820",
+            "label": "Offspring of consanguineous parents"
+          }
+        }
+      },
+      {
+        "name": "geographicOrigin",
+        "value": {
+          "id": "GAZ:00005279",
+          "label": "Saudi Arabia"
+        }
+      }
+    ]
+  },
+  "phenotypicFeatures": [
+    {
+      "type": {
+        "id": "HP:0001263",
+        "label": "Global developmental delay"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001250",
+        "label": "Seizure"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0010544",
+        "label": "Vertical nystagmus"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0001257",
+        "label": "Spasticity"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0008936",
+        "label": "Axial hypotonia"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0000505",
+        "label": "Visual impairment"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0002135",
+        "label": "Basal ganglia calcification"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HANCESTRO:0852",
+        "label": "Middle Eastern"
+      },
+      "excluded": false
+    }
+  ],
+  "metaData": {
+    "created": "2026-02-24",
+    "createdBy": "PAVS pipeline",
+    "submittedBy": "Robert Hoehndorf",
+    "resources": [
+      {
+        "id": "hp",
+        "name": "Human Phenotype Ontology",
+        "url": "https://hpo.jax.org",
+        "version": "2024-08-13",
+        "namespacePrefix": "HP",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+      },
+      {
+        "id": "geno",
+        "name": "Genotype Ontology",
+        "url": "https://github.com/oborel/obo-relations",
+        "namespacePrefix": "GENO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GENO_"
+      },
+      {
+        "id": "omim",
+        "name": "Online Mendelian Inheritance in Man",
+        "url": "https://www.omim.org",
+        "namespacePrefix": "OMIM",
+        "iriPrefix": "https://www.omim.org/entry/"
+      },
+      {
+        "id": "mondo",
+        "name": "Monarch Disease Ontology",
+        "url": "http://purl.obolibrary.org/obo/mondo.obo",
+        "namespacePrefix": "MONDO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/MONDO_"
+      },
+      {
+        "id": "hancestro",
+        "name": "Human Ancestry Ontology",
+        "url": "https://github.com/EBISPOT/ancestro",
+        "namespacePrefix": "HANCESTRO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HANCESTRO_"
+      },
+      {
+        "id": "gaz",
+        "name": "Gazetteer",
+        "url": "http://purl.obolibrary.org/obo/gaz.obo",
+        "namespacePrefix": "GAZ",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GAZ_"
+      }
+    ],
+    "phenopacketSchemaVersion": "2.0",
+    "externalReferences": [
+      {
+        "id": "pavs:source:ahmed-variants",
+        "description": "Source dataset: ahmed-variants"
+      },
+      {
+        "id": "PMID:28454995",
+        "reference": "https://pubmed.ncbi.nlm.nih.gov/28454995/"
+      }
+    ]
+  },
+  "diseases": [
+    {
+      "term": {
+        "id": "MONDO:0012429",
+        "label": "Aicardi-Goutieres syndrome 2"
+      },
+      "modeOfInheritance": {
+        "id": "HP:0000007",
+        "label": "Autosomal recessive inheritance"
+      }
+    }
+  ],
+  "interpretations": [
+    {
+      "id": "interp-PAVS:A0000003",
+      "progressStatus": "SOLVED",
+      "diagnosis": {
+        "disease": {
+          "id": "MONDO:0012429",
+          "label": "Aicardi-Goutieres syndrome 2"
+        },
+        "genomicInterpretations": [
+          {
+            "subjectOrBiosampleId": "PAVS:A0000003",
+            "interpretationStatus": "CAUSATIVE",
+            "variantInterpretation": {
+              "acmgPathogenicityClassification": "LIKELY_PATHOGENIC",
+              "therapeuticActionability": "UNKNOWN_ACTIONABILITY",
+              "variationDescriptor": {
+                "id": "PAVS:A0000003_RNASEH2B",
+                "moleculeContext": "genomic",
+                "geneContext": {
+                  "symbol": "RNASEH2B",
+                  "valueId": "NCBIGene:79621"
+                },
+                "expressions": [
+                  {
+                    "syntax": "hgvs.c",
+                    "value": "ENST00000336617.8:c.356A>G"
+                  },
+                  {
+                    "syntax": "hgvs.g",
+                    "value": "NC_000013.11:g.50934919A>G"
+                  },
+                  {
+                    "syntax": "hgvs.p",
+                    "value": "ENSP00000337623.2:p.Asp119Gly"
+                  }
+                ],
+                "vcfRecord": {
+                  "genomeAssembly": "hg38",
+                  "chrom": "chr13",
+                  "pos": 50934919,
+                  "ref": "A",
+                  "alt": "G"
+                },
+                "allelicState": {
+                  "id": "GENO:0000136",
+                  "label": "homozygous"
+                },
+                "xrefs": [
+                  "ClinVar:188848"
+                ],
+                "extensions": [
+                  {
+                    "name": "vep_consequence",
+                    "value": "missense_variant"
+                  },
+                  {
+                    "name": "vep_impact",
+                    "value": "MODERATE"
+                  },
+                  {
+                    "name": "vep_sift",
+                    "value": "deleterious(0.01)"
+                  },
+                  {
+                    "name": "vep_polyphen",
+                    "value": "probably_damaging(1)"
+                  },
+                  {
+                    "name": "vep_domains",
+                    "value": "Pfam/PF09468"
+                  },
+                  {
+                    "name": "clinvar_allele_id",
+                    "value": "188848"
+                  },
+                  {
+                    "name": "clinvar_sig",
+                    "value": "Pathogenic/Likely pathogenic"
+                  },
+                  {
+                    "name": "gnomad_pli",
+                    "value": "7.8377e-04"
+                  },
+                  {
+                    "name": "gnomad_loeuf",
+                    "value": "1.4010e+00"
+                  },
+                  {
+                    "name": "expressed_in",
+                    "value": "uterus:100|ectocervix:98|endocervix:98|fallopian_tube:98|spleen:98|thyroid_gland:98|tibial_nerve:98|ileum:87|lung:87|ovary:87|prostate_gland:87|sigmoid_colon:87|urinary_bladder:87|coronary_artery:75|esophagogastric_junction:75|mammary_gland:75|muscle_layer_of_esophagus:75|aorta:75|subcutaneous_adipose_tissue:75|testis:75|tibial_artery:75|vagina:75"
+                  },
+                  {
+                    "name": "go_biological_process",
+                    "value": "mismatch repair|RNA catabolic process|nucleobase-containing compound metabolic process"
+                  },
+                  {
+                    "name": "mouse_mp_labels",
+                    "value": "decreased cell proliferation|abnormal cell morphology|liver hypoplasia|abnormal blood vessel morphology|decreased embryo size|abnormal allantois morphology|edema|thymus hypoplasia|hemorrhage|embryonic growth retardation|caudal body truncation|decreased birth body size|impaired somite development|preweaning lethality|perinatal lethality, complete penetrance|embryonic lethality, complete penetrance|decreased fibroblast proliferation"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
