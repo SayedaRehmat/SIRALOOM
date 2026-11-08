@@ -72,7 +72,9 @@ def test_vep_has_an_independent_candidate_profile_and_is_not_bcftools():
         registry_path=REGISTRY,
         require_qualified=False,
     )
-    assert profile["version"] == "115"
+    assert profile["version"] == "115.2"
+    cache = next(item for item in profile["dependencies"] if item["name"] == "vep-cache")
+    assert cache["version"] == "115"
     assert profile["status"] == "CANDIDATE"
     assert profile["installation"]["dependency_lock"] is None
     assert {item["name"] for item in profile["dependencies"]} >= {
