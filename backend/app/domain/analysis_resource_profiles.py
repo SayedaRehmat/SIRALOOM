@@ -57,7 +57,7 @@ class AnalysisResourceProfile:
 
 _COMMON_OPTIONAL = (
     ProfileResourceRequirement(CLINICAL_DATABASE, False, ("CLINVAR",)),
-    ProfileResourceRequirement(GENE_DISEASE, False, ("OMIM",), genome_build_required=False, license_required=True),
+    ProfileResourceRequirement(GENE_DISEASE, False, ("Gene2Phenotype", "OMIM"), genome_build_required=False, license_required=True),
     ProfileResourceRequirement(PHENOTYPE_ONTOLOGY, False, ("HPO",), genome_build_required=False),
     ProfileResourceRequirement(
         DISEASE_PHENOTYPE_ASSOCIATION,
