@@ -15,7 +15,7 @@ The registry is `configs/bioinformatics/toolchain-profiles.v1.json`.
 | `bcftools-1.21.3-htslib-1.21.3-linux-64-source` | 1.21.3 | 1.21.3 | linux-64 | BLOCKED_COMPATIBILITY | VCF 4.5 FORMAT/LEN reference-block regression remains unresolved |
 | `bcftools-1.19-htslib-1.19-linux-64-legacy` | 1.19 | 1.19 | linux-64 | QUARANTINED_LEGACY | Historical compatibility only; not production-selectable |
 
-The three independent source-built profiles are 1.24.1, 1.23.3 and 1.22.3/HTSlib 1.22.4. Their existing qualification is Linux AMD64 only. The default 1.25 profile is a fourth active profile and uses a different package-based build path. None of these records establishes ARM64 qualification.
+The three independent source-built profiles are 1.24.1, 1.23.3 and 1.22.3/HTSlib 1.22.4. Their existing qualification is Linux AMD64 only. The default 1.25 profile is a fourth active profile and uses a different package-based build path. None of these records establishes ARM64 qualification. Three separate ARM64 candidate records now exist with distinct profile IDs, platform locks, and `.arm64` worker queues. They remain `CANDIDATE` and are not production-selectable.
 
 ## VEP and other scientific components
 
@@ -56,8 +56,8 @@ The same compatible OCI image can run under Docker and Podman. Kubernetes also c
 
 - PR #310 qualified Docker and Podman on Linux x86_64 using the same BCFtools 1.25 worker image digest.
 - The three source-built BCFtools profiles have Linux AMD64 source/lock/runtime/software qualification.
-- Native ARM64 lock generation and source-build smoke qualification are introduced separately; they do not yet qualify ARM64 container images.
-- ARM64 image qualification requires architecture-compatible pinned builder/runtime image digests, an ARM64-aware Dockerfile, image inspection and container-based scientific regression.
+- Three ARM64 candidate profiles are registered for the independent source-built version pairs. A native `ubuntu-24.04-arm` workflow resolves their own explicit locks, builds each exact source pair, runs reference-backed normalization/CSI checks, inspects the pinned builder/runtime image digests, and attempts a non-root ARM64 OCI image qualification.
+- The ARM64 candidates remain non-production until all matrix jobs and review gates pass. The default BCFtools 1.25 profile is not yet covered by this source-profile matrix.
 - Direct Linux, rootless Podman, Kubernetes, cloud and remote-agent qualification remain separate.
 
 ## Promotion rule
