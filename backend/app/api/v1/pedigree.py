@@ -31,6 +31,7 @@ from backend.app.infrastructure.db.models import (
     InheritanceAssessment,
     PedigreeMember,
     PedigreeMemberRevision,
+    PhenotypeObservation,
     PedigreeRelationship,
     PedigreeRelationshipRevision,
     PedigreeSampleBinding,
@@ -1583,6 +1584,10 @@ def revise_pedigree_member(
         segregation = db.scalar(select(SegregationObservation.id).where(
             SegregationObservation.pedigree_member_id == member_id,
         ).limit(1))
+        phenotype = db.scalar(select(PhenotypeObservation.id).where(
+            PhenotypeObservation.case_id == case_id,
+            PhenotypeObservation.subject_member_id == member_id,
+        ).limit(1))
         active_relationship = any(
             item["status"] == "ACTIVE" and (
                 item["parent_member_id"] == str(member_id)
@@ -1590,10 +1595,10 @@ def revise_pedigree_member(
             )
             for item in _current_pedigree(db, case_id)[1]
         )
-        if binding or segregation or active_relationship:
+        if binding or segregation or phenotype or active_relationship:
             raise HTTPException(
                 409,
-                "Member is referenced by sample identity, segregation, or an active relationship; retract those records through their governed lifecycle first",
+                "Member is referenced by sample identity, phenotype observations, segregation observations, or an active relationship; resolve those records through their governed lifecycle first",
             )
         next_state = {
             key: current.get(key)
