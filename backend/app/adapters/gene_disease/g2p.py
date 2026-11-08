@@ -50,7 +50,7 @@ class G2PDiseaseModel:
             "monoallelic_x_heterozygous": ("X_LINKED_DOMINANT",),
             "monoallelic_mitochondrial": ("MITOCHONDRIAL",),
             "monoallelic_y": ("Y_LINKED",),
-            "semidominant": ("AUTOSOMAL_DOMINANT", "AUTOSOMAL_RECESSIVE"),
+            "semidominant": ("AUTOSOMAL_SEMIDOMINANT",),
         }
         return mapping.get(normalized, ("UNKNOWN",))
 
