@@ -307,40 +307,39 @@ def _would_create_pedigree_cycle(relationships, parent_member_id, child_member_i
 
 
 def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
-    """Capture the case pedigree used to contextualize a segregation observation."""
-    members = list(db.scalars(
-        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
-    ))
-    relationships = list(db.scalars(
-        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
-    ))
-    _validate_pedigree_lineage(members, relationships, case_id, db)
-    member_by_id = {member.id: member for member in members}
-    specimen_ids = {member.specimen_id for member in members if member.specimen_id}
+    """Capture the effective, versioned case pedigree used by a segregation observation."""
+    members, relationships, _, _ = _current_pedigree(db, case_id)
+    _validate_projected_proband(members)
+    specimen_ids = {
+        UUID(member["specimen_id"])
+        for member in members if member.get("specimen_id")
+    }
     specimens = {
         specimen.id: specimen
         for specimen in db.scalars(select(Specimen).where(Specimen.id.in_(specimen_ids)))
     } if specimen_ids else {}
+    member_by_id = {member["id"]: member for member in members}
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "members": sorted(
             [
                 {
-                    "member_identifier": member.member_identifier,
-                    "relationship_to_proband": member.relationship_to_proband,
-                    "sex": member.sex,
-                    "affected_status": member.affected_status,
-                    "is_proband": member.is_proband,
-                    "sampled": member.sampled,
+                    "member_identifier": member["member_identifier"],
+                    "relationship_to_proband": member.get("relationship_to_proband"),
+                    "sex": member.get("sex"),
+                    "affected_status": member.get("affected_status", "UNKNOWN"),
+                    "is_proband": bool(member.get("is_proband")),
+                    "sampled": bool(member.get("sampled")),
                     "specimen_identifier": (
-                        specimens[member.specimen_id].specimen_identifier
-                        if member.specimen_id in specimens else None
+                        specimens[UUID(member["specimen_id"])].specimen_identifier
+                        if member.get("specimen_id") and UUID(member["specimen_id"]) in specimens else None
                     ),
                     "specimen_type": (
-                        specimens[member.specimen_id].specimen_type
-                        if member.specimen_id in specimens else None
+                        specimens[UUID(member["specimen_id"])].specimen_type
+                        if member.get("specimen_id") and UUID(member["specimen_id"]) in specimens else None
                     ),
-                    "metadata": member.metadata_json or {},
+                    "metadata": member.get("metadata") or {},
+                    "member_revision_version": member.get("revision_version", 1),
                 }
                 for member in members
             ],
@@ -349,10 +348,12 @@ def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
         "relationships": sorted(
             [
                 {
-                    "parent_member_identifier": member_by_id[relationship.parent_member_id].member_identifier,
-                    "child_member_identifier": member_by_id[relationship.child_member_id].member_identifier,
-                    "relationship_type": relationship.relationship_type,
-                    "metadata": relationship.metadata_json or {},
+                    "parent_member_identifier": member_by_id[relationship["parent_member_id"]]["member_identifier"],
+                    "child_member_identifier": member_by_id[relationship["child_member_id"]]["member_identifier"],
+                    "relationship_type": relationship["relationship_type"],
+                    "metadata": relationship.get("metadata") or {},
+                    "relationship_revision_version": relationship.get("revision_version", 1),
+                    "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
                 }
                 for relationship in relationships
             ],
@@ -363,6 +364,7 @@ def _pedigree_context_snapshot(db: Session, case_id: UUID) -> dict:
             ),
         ),
     }
+
 
 def _sample_binding_payload(row):
     return {
