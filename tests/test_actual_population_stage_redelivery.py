@@ -1189,7 +1189,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             ).all()))
             assert replayed_evidence_ids == evidence_ids_before_replay
             if clingen_enabled:
-                for resource_id, source_name, expected_type in (
+                for resource_id, source_name, expected_type, expected_version in (
                     (clingen_vp_resource_id, "Fixture ClinGen Variant Pathogenicity", "CLINICAL_DATABASE", "fixture-v1"),
                     (clingen_gdv_resource_id, "Fixture ClinGen Gene-Disease Validity", "GENE_DISEASE", "2026-09-01"),
                 ):
