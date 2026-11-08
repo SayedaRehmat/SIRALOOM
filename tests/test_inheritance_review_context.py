@@ -144,3 +144,9 @@ def test_clingen_moi_mapping_requires_explicit_dominant_recessive_distinction(so
     from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
 
     assert normalize_clingen_moi_label(source_label) == expected
+
+
+def test_de_novo_is_not_a_disease_inheritance_mode():
+    association = {**_association(), "inheritance_modes": ["DE_NOVO"]}
+    with pytest.raises(InheritanceReviewContextError, match="Unsupported disease inheritance modes"):
+        build_inheritance_review_context(disease_association=association, family_matrix=_matrix())
