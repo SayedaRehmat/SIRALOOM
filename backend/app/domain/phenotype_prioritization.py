@@ -49,6 +49,7 @@ def prioritize_disease_context(
     annotations_by_disease: dict[str, Iterable[Any]],
     hpoa_provenance: dict[str, Any],
     hpo_ontology: Any,
+    proband_member_ids: Iterable[str] = (),
 ) -> dict[str, Any]:
     """Order gene–disease candidates by transparent HPOA assertion coverage.
 
@@ -78,13 +79,14 @@ def prioritize_disease_context(
 
     observed: dict[str, dict[str, Any]] = {}
     non_matching_states: list[dict[str, Any]] = []
+    allowed_proband_ids = {str(value) for value in proband_member_ids if str(value).strip()}
     for raw in patient_observations:
         item = _materialize(raw)
         subject = item.get("subject_member_id")
-        if subject not in (None, ""):
+        if subject not in (None, "") and str(subject) not in allowed_proband_ids:
             continue
         status = str(item.get("phenotype_status") or "").strip().upper()
-        submitted = str(item.get("canonical_hpo_id") or "").strip().upper()
+        submitted = str(item.get("canonical_hpo_id") or item.get("hpo_id") or "").strip().upper()
         if status == "PRESENT" and submitted:
             observed.setdefault(submitted, {"hpo_id": submitted, "observation_ids": [], "status": status})
             observation_id = str(item.get("id") or "")
@@ -95,6 +97,7 @@ def prioritize_disease_context(
                 "hpo_id": str(item.get("canonical_hpo_id") or item.get("hpo_id") or ""),
                 "status": status or "UNSPECIFIED",
                 "observation_id": str(item.get("id") or ""),
+                "subject_member_id": str(subject) if subject not in (None, "") else None,
                 "reason": "STATE_NOT_USED_AS_POSITIVE_MATCH_EVIDENCE",
             })
 
