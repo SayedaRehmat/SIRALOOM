@@ -5,6 +5,7 @@ dependencies:
   - python=3.12
   - c-compiler
   - binutils
+  - sysroot_linux-aarch64=2.28
   - make
   - pkg-config
   - autoconf
