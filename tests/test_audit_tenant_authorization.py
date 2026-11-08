@@ -222,6 +222,7 @@ def test_sampled_pedigree_member_persists_case_specimen_link(monkeypatch):
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
     monkeypatch.setattr(pedigree, "AuditService", _Audit)
     monkeypatch.setattr(pedigree, "create_case_change_candidates", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(pedigree, "_current_pedigree", lambda *_args: ([], [], [], []))
     db = _CaseDb()
 
     result = pedigree.add_member(
@@ -284,6 +285,16 @@ def test_pedigree_relationship_rejects_cycle_before_persisting(monkeypatch):
     db = _PedigreeDb()
     monkeypatch.setattr(pedigree, "require_case_permission", lambda *_args: None)
     monkeypatch.setattr(pedigree, "require_role", lambda *_args: None)
+    monkeypatch.setattr(
+        pedigree,
+        "_current_pedigree",
+        lambda *_args: (
+            [{"id": str(identifier), "is_proband": identifier == member_c_id} for identifier in members],
+            [{"parent_member_id": str(item.parent_member_id), "child_member_id": str(item.child_member_id)} for item in existing],
+            [],
+            [],
+        ),
+    )
 
     with pytest.raises(HTTPException) as exc:
         pedigree.add_relationship(
@@ -790,18 +801,25 @@ def test_pedigree_dossier_rejects_cross_case_links(monkeypatch, broken_link):
     case_id, member_id, specimen_id = uuid4(), uuid4(), uuid4()
     case = SimpleNamespace(id=case_id, organization_id=uuid4())
     member = SimpleNamespace(
-        id=member_id,
+        id=member_id, case_id=case_id, member_identifier="MEMBER",
+        relationship_to_proband=None, sex=None, affected_status="UNKNOWN",
+        is_proband=False, sampled=True,
         specimen_id=specimen_id if broken_link == "specimen" else None,
+        metadata_json={},
     )
     relationship = (
-        SimpleNamespace(parent_member_id=uuid4(), child_member_id=member_id)
+        SimpleNamespace(
+            id=uuid4(), case_id=case_id, parent_member_id=uuid4(),
+            child_member_id=member_id, relationship_type="PARENT_CHILD",
+            metadata_json={},
+        )
         if broken_link == "relationship"
         else None
     )
 
     class _Db:
         def __init__(self):
-            self.results = [[member], [relationship] if relationship else []]
+            self.results = [[member], [relationship] if relationship else [], [], []]
             if broken_link == "specimen":
                 self.results.append([SimpleNamespace(id=specimen_id, case_id=uuid4())])
 
