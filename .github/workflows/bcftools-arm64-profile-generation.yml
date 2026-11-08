@@ -34,33 +34,43 @@ jobs:
           from pathlib import Path
 
           registry = json.loads(Path("configs/bioinformatics/toolchain-profiles.v1.json").read_text())
-          expected = {
+          expected_sources = {
               "bcftools-1.24.1-htslib-1.24.1-linux-64-source",
               "bcftools-1.23.3-htslib-1.23.3-linux-64-source",
               "bcftools-1.22.3-htslib-1.22.4-linux-64-source",
           }
+          by_id = {profile["id"]: profile for profile in registry["profiles"]}
           selected = []
-          for profile in registry["profiles"]:
-              if profile.get("id") not in expected:
-                  continue
-              if profile.get("installation_method") != "verified_source_build":
-                  raise SystemExit(f"unexpected installation method: {profile['id']}")
-              if profile.get("status") != "SOFTWARE_QUALIFIED":
-                  raise SystemExit(f"source profile is not currently qualified: {profile['id']}")
-              if profile.get("platform") != "linux-64":
-                  raise SystemExit(f"expected existing x86_64 profile: {profile['id']}")
-              if profile.get("security_review", {}).get("status") != "PATCHED_UPSTREAM_RELEASE":
-                  raise SystemExit(f"security review is not approved: {profile['id']}")
-              if not Path(profile["lock_file"]).is_file():
-                  raise SystemExit(f"existing x86_64 lock is missing: {profile['id']}")
+          for source_id in sorted(expected_sources):
+              source = by_id.get(source_id)
+              if source is None:
+                  raise SystemExit(f"missing existing x86_64 source profile: {source_id}")
+              if source.get("installation_method") != "verified_source_build" or source.get("status") != "SOFTWARE_QUALIFIED":
+                  raise SystemExit(f"existing source profile is not software-qualified: {source_id}")
+              if source.get("platform") != "linux-64" or not Path(source["lock_file"]).is_file():
+                  raise SystemExit(f"existing x86_64 lock/profile is incomplete: {source_id}")
+              if source.get("security_review", {}).get("status") != "PATCHED_UPSTREAM_RELEASE":
+                  raise SystemExit(f"security review is not approved: {source_id}")
+              arm_id = source_id.replace("linux-64-source", "linux-aarch64-source")
+              candidate = by_id.get(arm_id)
+              if candidate is None or candidate.get("status") != "CANDIDATE":
+                  raise SystemExit(f"missing isolated ARM64 candidate profile: {arm_id}")
+              if candidate.get("platform") != "linux-aarch64" or candidate.get("architecture_candidate_for") != source_id:
+                  raise SystemExit(f"ARM64 candidate does not map to its x86_64 source profile: {arm_id}")
+              if candidate.get("bcftools_version") != source.get("bcftools_version") or candidate.get("htslib_version") != source.get("htslib_version"):
+                  raise SystemExit(f"ARM64 candidate version pair drifted from source profile: {arm_id}")
+              if candidate.get("environment_file") != "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml":
+                  raise SystemExit(f"ARM64 candidate uses an unexpected build environment: {arm_id}")
               selected.append({
-                  "id": profile["id"],
-                  "bcftools_version": profile["bcftools_version"],
-                  "htslib_version": profile["htslib_version"],
-                  "worker_queue": profile["worker_queue"],
+                  "id": candidate["id"],
+                  "source_profile_id": source_id,
+                  "bcftools_version": candidate["bcftools_version"],
+                  "htslib_version": candidate["htslib_version"],
+                  "worker_queue": candidate["worker_queue"],
+                  "lock_file": candidate["lock_file"],
               })
-          if {item["id"] for item in selected} != expected:
-              raise SystemExit("The three independent source-built profiles were not all discovered.")
+          if len(selected) != 3:
+              raise SystemExit("Exactly three independent ARM64 source-built candidates must be discovered.")
           print("matrix=" + json.dumps({"include": selected}, separators=(",", ":")))
           PY
 
@@ -86,7 +96,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = "aarch64"
-          lock="$RUNNER_TEMP/${{ matrix.id }}-linux-aarch64.lock"
+          lock="$RUNNER_TEMP/${{ matrix.id }}.lock"
           micromamba env export --explicit --name bcftools-arm64-build > "$lock"
           grep -Fqx '@EXPLICIT' "$lock"
           grep -Fqx '# platform: linux-aarch64' "$lock"
@@ -150,7 +160,8 @@ jobs:
           x86_64_profile_and_lock_modified=no
           container_image_qualification=pending
           EOF
-          cp "$ARM64_LOCK" configs/bioinformatics/profiles/bcftools-arm64-candidate.lock
+          mkdir -p "$(dirname "${{ matrix.lock_file }}")"
+          cp "$ARM64_LOCK" "${{ matrix.lock_file }}"
           sha256sum "$RUNNER_TEMP/arm64-profile-output/"*
       - uses: docker/setup-buildx-action@v3
       - name: Verify the pinned builder and runtime image digests include ARM64
@@ -174,8 +185,23 @@ jobs:
         run: |
           set -euo pipefail
           image="siraloom/bcftools-arm64:$PROFILE_ID"
+          registry=configs/bioinformatics/toolchain-profiles.v1.json
+          backup="$RUNNER_TEMP/toolchain-profiles.arm64-qualification.json"
+          cp "$registry" "$backup"
+          trap 'cp "$backup" "$registry"' EXIT
+          python - "$registry" "$PROFILE_ID" <<'PY'
+          import json, sys
+          path, profile_id = sys.argv[1:]
+          payload = json.load(open(path, encoding="utf-8"))
+          profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
+          if profile.get("status") != "CANDIDATE" or profile.get("platform") != "linux-aarch64":
+              raise SystemExit("Only the registered ARM64 candidate may be promoted in this disposable image-build context.")
+          profile["status"] = "SOFTWARE_QUALIFIED"
+          profile["qualification_scope"] = "Disposable ARM64 image qualification context only; production registry remains CANDIDATE until reviewed evidence is committed."
+          json.dump(payload, open(path, "w", encoding="utf-8"), indent=2)
+          PY
           docker buildx build --platform linux/arm64 --load \
-            --build-arg BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-arm64-candidate.lock \
+            --build-arg BCFTOOLS_BUILD_LOCK_FILE=${{ matrix.lock_file }} \
             --build-arg BCFTOOLS_PROFILE_ID="$PROFILE_ID" \
             --build-arg BCFTOOLS_VERSION="$BCFTOOLS_VERSION" \
             --build-arg HTSLIB_VERSION="$HTSLIB_VERSION" \
@@ -188,6 +214,7 @@ jobs:
           test "$(docker run --rm --platform linux/arm64 --entrypoint bcftools "$image" --version | sed -n '1p')" = "bcftools $BCFTOOLS_VERSION"
           test "$(docker run --rm --platform linux/arm64 --entrypoint bcftools "$image" --version | sed -n '2p')" = "Using htslib $HTSLIB_VERSION"
           test "$(docker run --rm --platform linux/arm64 --entrypoint sh "$image" -c 'id -u')" = "10001"
+          docker run --rm --platform linux/arm64 --entrypoint python "$image" -c "from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile; p=resolve_registered_toolchain_profile('$PROFILE_ID'); assert p['platform'] == 'linux-aarch64'; assert p['worker_queue'] == '$WORKER_QUEUE'"
           docker run --rm --platform linux/arm64 --entrypoint sh "$image" -c '
             set -eu
             work=$(mktemp -d)
