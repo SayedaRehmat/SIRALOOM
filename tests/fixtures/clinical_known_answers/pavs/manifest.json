@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "dataset": "Phenotype-Associated Variants in Saudi Arabia (PAVS) Phenopackets",
+  "source_repository": "https://github.com/bio-ontology-research-group/pavs-phenopackets",
+  "source_ref": "master",
+  "source_commit": "ca56e453b9090f7b90ef256c5aca8e8c672c18b4",
+  "data_license": "CC-BY-4.0",
+  "attribution": "Abdelhakim M, Althagafi A, Schofield PN, Hoehndorf R. Phenotype-Associated Variants in Saudi Arabia (PAVS).",
+  "intended_use": "Independent proband-level phenotype/disease/variant known-answer evaluation only.",
+  "limitations": [
+    "These records are individual proband phenopackets and do not contain parent/relative genotype calls.",
+    "They cannot qualify segregation, compound-heterozygous phase, de novo status, X-linked dominant versus recessive compatibility, or locus-specific ploidy.",
+    "PAVS curated interpretations are retained as published labels and are not re-adjudicated by SIRALOOM."
+  ],
+  "cases": [
+    {
+      "id": "PAVS:A0000001",
+      "path": "tests/fixtures/clinical_known_answers/pavs/PAVS_A0000001.json",
+      "source_path": "individual/PAVS:A0000001.json",
+      "git_blob_sha": "75c629ade4b0fdd6123dae0bde3bddc00e3c3cad",
+      "sha256": "692ffe91b644c2effe54b3127e963c33f05f73c24b391e3bdf80b3dc070b0e05",
+      "gene": "SUMF1",
+      "disease": "MONDO:0010088",
+      "moi": "Autosomal recessive inheritance",
+      "allelic_state": "homozygous",
+      "acmg": "LIKELY_PATHOGENIC",
+      "variant_status": "CAUSATIVE",
+      "commit": "8bd3d15715ff32499bd2d86bb55f7100a01276f2"
+    },
+    {
+      "id": "PAVS:A0000003",
+      "path": "tests/fixtures/clinical_known_answers/pavs/PAVS_A0000003.json",
+      "source_path": "individual/PAVS:A0000003.json",
+      "git_blob_sha": "1f2c1060bb54efd385bffc1cfe36811e556374fe",
+      "sha256": "c59db0e1c554d7b062c2ae45130b397ec8b373db25e994da4db0dc6e33830638",
+      "gene": "RNASEH2B",
+      "disease": "MONDO:0012429",
+      "moi": "Autosomal recessive inheritance",
+      "allelic_state": "homozygous",
+      "acmg": "LIKELY_PATHOGENIC",
+      "variant_status": "CAUSATIVE",
+      "commit": "b1aba10ab689818e738426d5dea665f6327de175"
+    },
+    {
+      "id": "PAVS:A0000005",
+      "path": "tests/fixtures/clinical_known_answers/pavs/PAVS_A0000005.json",
+      "source_path": "individual/PAVS:A0000005.json",
+      "git_blob_sha": "2b5224222c725f5e0f0d89f8be545e6e9c932288",
+      "sha256": "508a4ba6e74d6979a645753b8ab61844cc0189b70dc4c569d9f590364a1913a7",
+      "gene": "PIEZO2",
+      "disease": "MONDO:0014941",
+      "moi": "Autosomal recessive inheritance",
+      "allelic_state": "homozygous",
+      "acmg": "PATHOGENIC",
+      "variant_status": "CAUSATIVE",
+      "commit": "49ee684ce361b4999640dc5466a1c45096c81736"
+    },
+    {
+      "id": "PAVS:A0000007",
+      "path": "tests/fixtures/clinical_known_answers/pavs/PAVS_A0000007.json",
+      "source_path": "individual/PAVS:A0000007.json",
+      "git_blob_sha": "c17cfbcd2d0fefe3050bbca91a1e8e1d092a33f6",
+      "sha256": "6c3ca20a70d69d563949559192d622496d2fc7ee4a0391dd1c451c7575a37a11",
+      "gene": "G6PD",
+      "disease": "MONDO:0010480",
+      "moi": "X-linked inheritance",
+      "allelic_state": "hemizygous",
+      "acmg": "LIKELY_PATHOGENIC",
+      "variant_status": "CAUSATIVE",
+      "commit": "bec2f82b92e2a67f48f7b22a4a52f62126aa7ea7"
+    }
+  ]
+}
