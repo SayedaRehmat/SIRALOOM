@@ -4329,7 +4329,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "resource_name": g2p_resource.name,
                             "resource_version": g2p_execution.resource_version,
                             "resource_sha256": g2p_provider.sha256,
+                            "request_fingerprint": g2p_request_fingerprint,
                             "source_record_id": model.source_record_id,
+                            "source_record_sha256": model.record_sha256,
                             "g2p_confidence": model.confidence,
                             "g2p_allelic_requirement": model.allelic_requirement,
                             "g2p_publications": list(model.publications),
@@ -4442,11 +4444,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             }
                             for assertion in matches
                         ]
+                        validity_classifications = {
+                            str(assertion.classification).strip()
+                            for assertion in matches
+                            if assertion.classification
+                        }
                         model_record["validity_status"] = (
-                            matches[0].classification
-                            if len(matches) == 1
+                            next(iter(validity_classifications))
+                            if len(validity_classifications) == 1
                             else "CONFLICTING_CLINGEN_ASSERTIONS"
-                            if len(matches) > 1
+                            if len(validity_classifications) > 1
                             else "NOT_RECORDED"
                         )
                         model_record["validity_provenance"] = {
