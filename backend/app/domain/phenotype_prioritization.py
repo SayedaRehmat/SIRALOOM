@@ -180,13 +180,31 @@ def prioritize_disease_context(
                 "disease_id": disease_id,
                 "disease_name": association.get("disease_name"),
                 "association_validity": association.get("validity_status") or "NOT_RECORDED",
-                "g2p_confidence": association.get("g2p_confidence") or association.get("validity_status"),
+                "association_validity_provenance": association.get("validity_provenance"),
+                "clingen_validity_assertions": association.get("clingen_validity_assertions") or [],
+                "g2p_confidence": association.get("g2p_confidence"),
                 "g2p_allelic_requirement": association.get("g2p_allelic_requirement"),
                 "molecular_mechanism": association.get("molecular_mechanism"),
                 "inheritance": {
                     "modes": sorted({str(mode).strip().upper() for mode in association["inheritance_modes"]}),
+                    "mode_sources": association.get("inheritance_mode_sources") or {},
+                    "mode_conflict": bool(association.get("inheritance_mode_conflict")),
                     "penetrance": dict(association["penetrance"]),
-                    "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
+                    "penetrance_provenance": {
+                        "status": "NOT_RECORDED",
+                        "source": "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV",
+                        "g2p_resource_id": resource_id,
+                        "clingen_resource_id": (
+                            association.get("validity_provenance", {}).get("resource_id")
+                            if isinstance(association.get("validity_provenance"), dict)
+                            else None
+                        ),
+                    },
+                    "qualification_status": (
+                        "REQUIRES_REVIEW_FOR_SOURCE_CONFLICT"
+                        if association.get("inheritance_mode_conflict")
+                        else "REQUIRES_INDEPENDENT_QUALIFICATION"
+                    ),
                 },
                 "matched_patient_term_count": len(matched_patient_terms),
                 "matched_terms": matched,
