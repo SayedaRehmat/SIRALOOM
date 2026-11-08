@@ -161,10 +161,32 @@ class AssessmentInput(BaseModel):
 
 
 def _member(m):
-    return {"id":str(m.id),"member_identifier":m.member_identifier,"relationship_to_proband":m.relationship_to_proband,"sex":m.sex,"affected_status":m.affected_status,"is_proband":m.is_proband,"sampled":m.sampled,"specimen_id":str(m.specimen_id) if m.specimen_id else None,"metadata":m.metadata_json or {},"created_at":getattr(m, "created_at", None).isoformat() if getattr(m, "created_at", None) else None}
+    specimen_id = getattr(m, "specimen_id", None)
+    created_at = getattr(m, "created_at", None)
+    return {
+        "id": str(m.id),
+        "member_identifier": m.member_identifier,
+        "relationship_to_proband": getattr(m, "relationship_to_proband", None),
+        "sex": getattr(m, "sex", None),
+        "affected_status": getattr(m, "affected_status", "UNKNOWN"),
+        "is_proband": bool(getattr(m, "is_proband", False)),
+        "sampled": bool(getattr(m, "sampled", False)),
+        "specimen_id": str(specimen_id) if specimen_id else None,
+        "metadata": getattr(m, "metadata_json", None) or {},
+        "created_at": created_at.isoformat() if created_at else None,
+    }
+
 
 def _relationship(r):
-    return {"id":str(r.id),"parent_member_id":str(r.parent_member_id),"child_member_id":str(r.child_member_id),"relationship_type":r.relationship_type,"metadata":r.metadata_json or {},"created_at":getattr(r, "created_at", None).isoformat() if getattr(r, "created_at", None) else None}
+    created_at = getattr(r, "created_at", None)
+    return {
+        "id": str(r.id),
+        "parent_member_id": str(r.parent_member_id),
+        "child_member_id": str(r.child_member_id),
+        "relationship_type": getattr(r, "relationship_type", "PARENT_CHILD"),
+        "metadata": getattr(r, "metadata_json", None) or {},
+        "created_at": created_at.isoformat() if created_at else None,
+    }
 
 def _scalar_rows(db: Session, statement) -> list:
     result = db.scalars(statement)
