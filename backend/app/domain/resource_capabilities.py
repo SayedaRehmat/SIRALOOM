@@ -124,6 +124,9 @@ def infer_capabilities(
         ("ClinGen Gene-Disease Validity", "EVIDENCE"): {
             ResourceCapability.GENE_DISEASE,
         },
+        ("Gene2Phenotype", "EVIDENCE"): {
+            ResourceCapability.GENE_DISEASE,
+        },
         ("ClinGen CSpec", "ACMG_SPECIFICATION"): {
             ResourceCapability.ACMG_SPECIFICATION,
         },
