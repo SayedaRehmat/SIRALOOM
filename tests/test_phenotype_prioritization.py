@@ -236,3 +236,23 @@ def test_disputed_or_refuted_source_assertions_do_not_rank_ahead_of_supported_co
     assert result["candidates"][0]["association_evidence_state"] == "SUPPORTED_SOURCE_CONTEXT_ONLY"
     assert result["candidates"][1]["gene"] == "GENE1"
     assert result["candidates"][1]["association_evidence_state"] == "CONFLICTING_OR_REFUTED_REQUIRES_REVIEW"
+
+
+def test_no_known_disease_relationship_is_not_mislabelled_as_refuted():
+    association = {
+        **_association(),
+        "validity_status": "No Known Disease Relationship",
+        "g2p_confidence": None,
+    }
+    result = prioritize_disease_context(
+        patient_observations=[],
+        gene_disease_records=[association],
+        annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+        hpoa_provenance={
+            "resource_id": "00000000-0000-0000-0000-000000000002",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+        },
+        hpo_ontology=Ontology(),
+    )
+    assert result["candidates"][0]["association_evidence_state"] == "NO_KNOWN_DISEASE_RELATIONSHIP_REQUIRES_REVIEW"
