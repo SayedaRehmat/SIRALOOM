@@ -300,6 +300,21 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                 resource_type="EVIDENCE",
                 version="GeneValidity",
             )
+            g2p = _resource(
+                db,
+                organization_id=organization_id,
+                name="Gene2Phenotype",
+                provider="Gene2Phenotype",
+                resource_type="GENE_DISEASE",
+                version="v21.0.0",
+            )
+            g2p.metadata_json = {
+                "execution": {
+                    "provider_version": "G2P_CSV",
+                    "toolchain": {"release": "v21.0.0", "sha256": "a" * 64},
+                }
+            }
+            db.add(g2p)
             db.commit()
 
             plan = resolve_analysis_resource_profile(
@@ -315,6 +330,8 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
             assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].resource.id == gdv.id
             assert selected["CLINGEN_VARIANT_ASSERTION"].execution.resource_id == vp.id
             assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].execution.resource_id == gdv.id
+            assert selected["GENE_DISEASE"].resource.id == g2p.id
+            assert selected["GENE_DISEASE"].execution.resource_id == g2p.id
     finally:
         engine.dispose()
 
