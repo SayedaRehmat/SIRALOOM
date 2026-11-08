@@ -128,6 +128,7 @@ def prioritize_disease_context(
         association["_normalized_disease_id"] = disease_id
         association["_provenance"] = {
             "resource_id": resource_id,
+            "resource_name": association.get("resource_name"),
             "resource_version": resource_version,
             "source_record_id": source_record_id,
             "resource_sha256": association_sha256,
@@ -179,6 +180,8 @@ def prioritize_disease_context(
                 "disease_id": disease_id,
                 "disease_name": association.get("disease_name"),
                 "association_validity": association.get("validity_status") or "NOT_RECORDED",
+                "g2p_confidence": association.get("g2p_confidence") or association.get("validity_status"),
+                "g2p_allelic_requirement": association.get("g2p_allelic_requirement"),
                 "molecular_mechanism": association.get("molecular_mechanism"),
                 "inheritance": {
                     "modes": sorted({str(mode).strip().upper() for mode in association["inheritance_modes"]}),
