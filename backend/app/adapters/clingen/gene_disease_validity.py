@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -47,9 +48,14 @@ class ClinGenGeneDiseaseValidityProvider:
         resource_path: str,
         delimiter: str | None = None,
         expected_sha256: str | None = None,
+        expected_release: str | None = None,
     ) -> None:
         self.path = Path(resource_path)
         self.delimiter = delimiter
+        self.expected_release = str(expected_release or "").strip() or None
+        if self.expected_release is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", self.expected_release):
+            raise ClinGenGeneDiseaseValidityError("ClinGen resource version must be the exact FILE CREATED date (YYYY-MM-DD)")
+        self.release_date: str | None = None
         self._records_by_gene: dict[str, tuple[GeneDiseaseAssertion, ...]] | None = None
         self.sha256: str | None = None
         expected = str(expected_sha256 or "").strip().lower().removeprefix("sha256:")
@@ -74,10 +80,12 @@ class ClinGenGeneDiseaseValidityProvider:
         delimiter = (contract.toolchain or {}).get("delimiter")
         if delimiter not in {None, ",", "\t"}:
             raise ClinGenGeneDiseaseValidityError("delimiter must be ',' or '\\t'")
+        release = str((contract.toolchain or {}).get("release") or resolved.resource_version or "").strip()
         return cls(
             resource_path=contract.location,
             delimiter="\t" if delimiter == "\t" else delimiter,
             expected_sha256=expected_sha256,
+            expected_release=release,
         )
 
     def _load_index(self) -> dict[str, tuple[GeneDiseaseAssertion, ...]]:
@@ -88,6 +96,12 @@ class ClinGenGeneDiseaseValidityProvider:
         if self.sha256 is None:
             self.sha256 = hashlib.sha256(self.path.read_bytes()).hexdigest()
         raw_text = self.path.read_text(encoding="utf-8-sig")
+        release_match = re.search(r"(?im)^\\s*FILE CREATED:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$", raw_text)
+        self.release_date = release_match.group(1) if release_match else None
+        if self.expected_release is not None and self.release_date != self.expected_release:
+            raise ClinGenGeneDiseaseValidityError(
+                f"ClinGen release mismatch: resource pins {self.expected_release}, file declares {self.release_date or 'no FILE CREATED date'}"
+            )
         # Some governed transfers preserve newline characters as the literal two-character sequence \\n        # Normalize that transport artifact before CSV parsing.
         raw_text = raw_text.replace("\\n", "\n")
         from io import StringIO
