@@ -19,6 +19,7 @@ type Relationship = {
 type Props = {
   caseId: string; members: Member[]; relationships: Relationship[];
   specimens: Specimen[]; canWrite: boolean; apiFetch: ApiFetch;
+  memberHistory?: Member[]; relationshipHistory?: Relationship[];
   onChanged: () => Promise<void>;
 };
 
@@ -36,8 +37,10 @@ export default function PedigreeLifecycleEditor({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const selectedMember = members.find((item) => item.id === memberId) ?? null;
-  const selectedRelationship = relationships.find((item) => item.id === relationshipId) ?? null;
+  const allMembers = memberHistory.length ? memberHistory : members;
+  const allRelationships = relationshipHistory.length ? relationshipHistory : relationships;
+  const selectedMember = allMembers.find((item) => item.id === memberId) ?? null;
+  const selectedRelationship = allRelationships.find((item) => item.id === relationshipId) ?? null;
   const memberLabel = (id: string) => members.find((item) => item.id === id)?.member_identifier ?? id;
 
   const beginMemberEdit = () => {
@@ -159,11 +162,12 @@ export default function PedigreeLifecycleEditor({
             <label htmlFor="pedigree-member-editor-select">{t("review.familyMember")}</label>
             <select id="pedigree-member-editor-select" value={memberId} onChange={(event) => { setMemberId(event.target.value); setMemberDraft(null); }}>
               <option value="">—</option>
-              {members.map((member) => <option key={member.id} value={member.id}>{member.member_identifier}</option>)}
+              {allMembers.map((member) => <option key={member.id} value={member.id}>{member.member_identifier}{member.status === "RETRACTED" ? " · RETRACTED" : ""}</option>)}
             </select>
             {selectedMember && <>
               {renderHistory(selectedMember.revision_history)}
-              {canWrite && !memberDraft && <button type="button" className="secondary" onClick={beginMemberEdit}>{t("review.editMember")}</button>}
+              {selectedMember.status !== "RETRACTED" && canWrite && !memberDraft && <button type="button" className="secondary" onClick={beginMemberEdit}>{t("review.editMember")}</button>}
+              {selectedMember.status === "RETRACTED" && <p role="status">RETRACTED — historical record retained</p>}
             </>}
             {memberDraft && (
               <form onSubmit={saveMember}>
@@ -207,11 +211,12 @@ export default function PedigreeLifecycleEditor({
             <label htmlFor="pedigree-relationship-editor-select">{t("review.parentChild")}</label>
             <select id="pedigree-relationship-editor-select" value={relationshipId} onChange={(event) => { setRelationshipId(event.target.value); setRelationshipDraft(null); }}>
               <option value="">—</option>
-              {relationships.map((relationship) => <option key={relationship.id} value={relationship.id}>{memberLabel(relationship.parent_member_id)} → {memberLabel(relationship.child_member_id)} · {relationship.relationship_type}</option>)}
+              {allRelationships.map((relationship) => <option key={relationship.id} value={relationship.id}>{memberLabel(relationship.parent_member_id)} → {memberLabel(relationship.child_member_id)} · {relationship.relationship_type}{relationship.status === "RETRACTED" ? " · RETRACTED" : ""}</option>)}
             </select>
             {selectedRelationship && <>
               {renderHistory(selectedRelationship.revision_history)}
-              {canWrite && !relationshipDraft && <button type="button" className="secondary" onClick={beginRelationshipEdit}>{t("review.editRelationship")}</button>}
+              {selectedRelationship.status !== "RETRACTED" && canWrite && !relationshipDraft && <button type="button" className="secondary" onClick={beginRelationshipEdit}>{t("review.editRelationship")}</button>}
+              {selectedRelationship.status === "RETRACTED" && <p role="status">RETRACTED — historical record retained</p>}
             </>}
             {relationshipDraft && (
               <form onSubmit={saveRelationship}>
