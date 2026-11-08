@@ -181,13 +181,8 @@ def _latest_relationship_revision(db: Session, relationship_id: UUID):
     )
 
 
-def _current_member_state(db: Session, member: PedigreeMember) -> dict:
+def _member_state_from_revisions(member: PedigreeMember, revisions: list) -> dict:
     state = _member(member)
-    revisions = list(db.scalars(
-        select(PedigreeMemberRevision)
-        .where(PedigreeMemberRevision.member_id == member.id)
-        .order_by(PedigreeMemberRevision.version)
-    ))
     history = [{
         "id": str(member.id), "version": 1, "revision_type": "ORIGINAL",
         "reason": None, "created_at": member.created_at.isoformat() if member.created_at else None,
@@ -213,13 +208,8 @@ def _current_member_state(db: Session, member: PedigreeMember) -> dict:
     return state
 
 
-def _current_relationship_state(db: Session, relationship: PedigreeRelationship) -> dict:
+def _relationship_state_from_revisions(relationship: PedigreeRelationship, revisions: list) -> dict:
     state = _relationship(relationship)
-    revisions = list(db.scalars(
-        select(PedigreeRelationshipRevision)
-        .where(PedigreeRelationshipRevision.relationship_id == relationship.id)
-        .order_by(PedigreeRelationshipRevision.version)
-    ))
     history = [{
         "id": str(relationship.id), "version": 1, "revision_type": "ORIGINAL",
         "reason": None, "created_at": relationship.created_at.isoformat() if relationship.created_at else None,
@@ -243,6 +233,70 @@ def _current_relationship_state(db: Session, relationship: PedigreeRelationship)
     state["revision_history"] = history
     state["status"] = "RETRACTED" if state.get("revision_type") == "RETRACTED" else "ACTIVE"
     return state
+
+
+def _current_member_state(db: Session, member: PedigreeMember) -> dict:
+    revisions = list(db.scalars(
+        select(PedigreeMemberRevision)
+        .where(PedigreeMemberRevision.member_id == member.id)
+        .order_by(PedigreeMemberRevision.version)
+    ))
+    return _member_state_from_revisions(member, revisions)
+
+
+def _current_relationship_state(db: Session, relationship: PedigreeRelationship) -> dict:
+    revisions = list(db.scalars(
+        select(PedigreeRelationshipRevision)
+        .where(PedigreeRelationshipRevision.relationship_id == relationship.id)
+        .order_by(PedigreeRelationshipRevision.version)
+    ))
+    return _relationship_state_from_revisions(relationship, revisions)
+
+
+def _current_pedigree(db: Session, case_id: UUID):
+    member_rows = list(db.scalars(
+        select(PedigreeMember).where(PedigreeMember.case_id == case_id)
+        .order_by(PedigreeMember.created_at, PedigreeMember.member_identifier)
+    ))
+    relationship_rows = list(db.scalars(
+        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
+        .order_by(PedigreeRelationship.created_at)
+    ))
+    member_ids = [item.id for item in member_rows]
+    relationship_ids = [item.id for item in relationship_rows]
+    member_revisions = list(db.scalars(
+        select(PedigreeMemberRevision)
+        .where(PedigreeMemberRevision.member_id.in_(member_ids))
+        .order_by(PedigreeMemberRevision.member_id, PedigreeMemberRevision.version)
+    )) if member_ids else []
+    relationship_revisions = list(db.scalars(
+        select(PedigreeRelationshipRevision)
+        .where(PedigreeRelationshipRevision.relationship_id.in_(relationship_ids))
+        .order_by(PedigreeRelationshipRevision.relationship_id, PedigreeRelationshipRevision.version)
+    )) if relationship_ids else []
+    member_revision_map = {}
+    for item in member_revisions:
+        member_revision_map.setdefault(item.member_id, []).append(item)
+    relationship_revision_map = {}
+    for item in relationship_revisions:
+        relationship_revision_map.setdefault(item.relationship_id, []).append(item)
+    member_states = {
+        row.id: _member_state_from_revisions(row, member_revision_map.get(row.id, []))
+        for row in member_rows
+    }
+    relationship_states = {
+        row.id: _relationship_state_from_revisions(row, relationship_revision_map.get(row.id, []))
+        for row in relationship_rows
+    }
+    active_members = [state for state in member_states.values() if state["status"] == "ACTIVE"]
+    active_member_ids = {member["id"] for member in active_members}
+    active_relationships = [
+        state for state in relationship_states.values()
+        if state["status"] == "ACTIVE"
+        and state["parent_member_id"] in active_member_ids
+        and state["child_member_id"] in active_member_ids
+    ]
+    return active_members, active_relationships, list(member_states.values()), list(relationship_states.values())
 
 
 def _revision_fingerprint(payload: dict) -> str:
