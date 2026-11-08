@@ -549,5 +549,18 @@ def test_vep_uses_persistent_common_executor_when_environment_is_assigned(monkey
     assert tool_request.operation == "annotate"
     assert tool_request.inputs[0].name == "vep-input.vcf"
     assert tool_request.outputs[0].name == "vep-output.json"
+    cache_binding = next(
+        item for item in tool_request.resources
+        if item.resource_id.startswith("ensembl-vep-cache:")
+    )
+    manifest_binding = next(
+        item for item in tool_request.resources
+        if item.resource_id.startswith("ensembl-vep-cache-manifest:")
+    )
+    assert cache_binding.path == toolchain["cache_dir"]
+    assert cache_binding.sha256 == __import__(
+        "backend.app.domain.tool_execution", fromlist=["sha256_resource_path"]
+    ).sha256_resource_path(Path(toolchain["cache_dir"]))
+    assert manifest_binding.path == toolchain["cache_manifest"]
     assert result.metadata["tool_execution_record_id"]
     assert result.payload[0]["allele_string"] == "A/G"
