@@ -28,6 +28,7 @@ from backend.app.adapters.clingen.variant_pathogenicity import (
     ClinGenVariantPathogenicityError,
     ClinGenVariantPathogenicityProvider,
 )
+from backend.app.adapters.gene_disease.g2p import G2PError, G2PProvider
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
 from backend.app.adapters.phenotype.hpoa import HPOAError
@@ -3824,6 +3825,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clingen_gdv_provider = None
                 clingen_gdv_execution = None
                 clingen_gdv_metadata = None
+                g2p_resource = None
+                g2p_provider = None
+                g2p_execution = None
+                g2p_metadata = None
                 hpo_resource = None
                 hpo_execution = None
                 hpo_ontology = None
@@ -3886,12 +3891,34 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "message": str(exc),
                                 "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
                             })
+                        try:
+                            g2p_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="GENE_DISEASE",
+                                provider_id=G2PProvider.provider_id,
+                            )
+                            g2p_candidates = [(item.resource, item.execution) for item in g2p_runtime]
+                        except ProfileRuntimeResourceError as exc:
+                            g2p_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": "GENE_DISEASE",
+                            })
                     else:
                         gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
-                        gdv_candidates = [
+                        gene_disease_resources = [
                             (item.resource, resolve_resource_execution(db, resource=item.resource))
                             for item in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE)
-                            if item.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id
+                        ]
+                        gdv_candidates = [
+                            item for item in gene_disease_resources
+                            if item[0].provider == ClinGenGeneDiseaseValidityProvider.provider_id
+                        ]
+                        g2p_candidates = [
+                            item for item in gene_disease_resources
+                            if item[0].provider == G2PProvider.provider_id
                         ]
                     if gdv_candidates:
                         if len(gdv_candidates) != 1:
@@ -3901,6 +3928,35 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         clingen_gdv_resource, clingen_gdv_execution = gdv_candidates[0]
                         clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
                         clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
+                    if g2p_candidates:
+                        if len(g2p_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple Gene2Phenotype resources."
+                            )
+                        g2p_resource, g2p_execution = g2p_candidates[0]
+                        try:
+                            g2p_provider = G2PProvider.from_execution_contract(resolved=g2p_execution)
+                            if g2p_resource.version != g2p_provider.release:
+                                raise G2PError(
+                                    "G2P resource version does not match the release declared by its pinned export."
+                                )
+                            if str(g2p_resource.checksum or "").lower().removeprefix("sha256:") != g2p_provider.sha256:
+                                raise G2PError(
+                                    "G2P resource checksum does not match its qualified local export."
+                                )
+                            g2p_metadata = {
+                                **g2p_execution.snapshot,
+                                "resource_name": g2p_resource.name,
+                                "resource_checksum": g2p_resource.checksum,
+                                "g2p_release": g2p_provider.release,
+                            }
+                        except G2PError as exc:
+                            provider_limitations.append({
+                                "code": "G2P_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": "GENE_DISEASE",
+                            })
+                            g2p_resource = g2p_execution = g2p_provider = g2p_metadata = None
                     try:
                         if profile_bound_analysis:
                             hpo_runtime = resolve_profile_runtime_resources(
