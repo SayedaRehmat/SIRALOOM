@@ -337,6 +337,7 @@ class EvidenceEngine:
         *,
         variant_id: UUID,
         prioritization: dict[str, Any],
+        gene_filter: str | None = None,
     ) -> list[EvidenceRecord]:
         """Persist candidate context as neutral phenotype/gene-disease evidence.
 
@@ -358,6 +359,8 @@ class EvidenceEngine:
             if not isinstance(candidate, dict):
                 raise EvidenceEngineError("Every phenotype candidate must be an object")
             gene = _normalize_text(candidate.get("gene"))
+            if gene_filter and (gene or "").upper() != gene_filter.strip().upper():
+                continue
             disease_id = _normalize_text(candidate.get("disease_id"))
             association = candidate.get("association_provenance")
             hpoa = candidate.get("hpoa_provenance")
@@ -396,14 +399,20 @@ class EvidenceEngine:
                     "this is an unqualified reviewer navigation aid, not a diagnosis."
                 ),
                 direction="NEUTRAL",
-                source_name=str(hpoa.get("resource_id") or "HPOA"),
+                source_name=str(hpoa.get("resource_name") or "HPOA"),
                 source_version=str(hpoa.get("resource_release") or ""),
                 payload=phenotype_payload,
+                resource_id=UUID(str(hpoa["resource_id"])) if hpoa.get("resource_id") else None,
                 request_fingerprint=hpoa.get("request_fingerprint"),
                 response_sha256=hpoa.get("resource_sha256"),
                 request_metadata=dict(hpoa),
             )
-            out.append(phenotype_record)
+            out.append(EvidenceRecord(
+                **{
+                    **phenotype_record.__dict__,
+                    "source_record_id": f"HPOA:{disease_id}",
+                }
+            ))
 
             gene_disease_payload = {
                 "gene": gene,
@@ -425,9 +434,10 @@ class EvidenceEngine:
                     "it is not a variant pathogenicity classification."
                 ),
                 direction="NEUTRAL",
-                source_name=str(association.get("resource_id") or "GENE_DISEASE_RESOURCE"),
+                source_name=str(association.get("resource_name") or "Gene2Phenotype"),
                 source_version=resource_version,
                 payload=gene_disease_payload,
+                resource_id=UUID(str(association["resource_id"])) if association.get("resource_id") else None,
                 response_sha256=association.get("resource_sha256"),
                 request_metadata=dict(association),
             )
