@@ -321,6 +321,11 @@ class VEPProvider(ScientificResourceProvider):
                     raise VEPProviderError(
                         "This laboratory workflow requires persistent tool execution, but no qualified execution environment was configured."
                     )
+                if str((self.contract.toolchain or {}).get("execution_profile_id") or "").strip():
+                    raise VEPProviderError(
+                        "A registered VEP profile cannot fall back to unregistered local execution; "
+                        "configure its qualified persistent execution environment."
+                    )
                 execution_record_id = None
                 try:
                     # Preserve process-group termination for the legacy unregistered
