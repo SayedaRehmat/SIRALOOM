@@ -332,6 +332,113 @@ class EvidenceEngine:
             ))
         return out
 
+    def build_from_phenotype_prioritization(
+        self,
+        *,
+        variant_id: UUID,
+        prioritization: dict[str, Any],
+    ) -> list[EvidenceRecord]:
+        """Persist candidate context as neutral phenotype/gene-disease evidence.
+
+        Candidate order is only a reviewer navigation aid. The method refuses
+        unqualified or malformed payloads and never emits pathogenicity direction.
+        """
+        if not isinstance(prioritization, dict):
+            raise EvidenceEngineError("Phenotype prioritization must be an object")
+        if prioritization.get("clinical_prioritization_validated") is not False:
+            raise EvidenceEngineError("Unqualified phenotype context must remain explicitly unvalidated")
+        if prioritization.get("human_review_required") is not True:
+            raise EvidenceEngineError("Phenotype prioritization must require human review")
+        candidates = prioritization.get("candidates")
+        if not isinstance(candidates, list):
+            raise EvidenceEngineError("Phenotype prioritization candidates must be a list")
+
+        out: list[EvidenceRecord] = []
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                raise EvidenceEngineError("Every phenotype candidate must be an object")
+            gene = _normalize_text(candidate.get("gene"))
+            disease_id = _normalize_text(candidate.get("disease_id"))
+            association = candidate.get("association_provenance")
+            hpoa = candidate.get("hpoa_provenance")
+            inheritance = candidate.get("inheritance")
+            if not gene or not disease_id or not isinstance(association, dict):
+                raise EvidenceEngineError("Phenotype candidate lacks gene/disease provenance")
+            if not isinstance(hpoa, dict) or not isinstance(inheritance, dict):
+                raise EvidenceEngineError("Phenotype candidate lacks HPOA or inheritance context")
+            source_record_id = _normalize_text(association.get("source_record_id"))
+            resource_version = _normalize_text(association.get("resource_version"))
+            if not source_record_id or not resource_version:
+                raise EvidenceEngineError("Gene-disease candidate lacks source record identity")
+            contextual_order = candidate.get("contextual_order")
+            if not isinstance(contextual_order, int) or isinstance(contextual_order, bool) or contextual_order < 1:
+                raise EvidenceEngineError("Phenotype candidate contextual_order must be a positive integer")
+            phenotype_payload = {
+                "candidate_gene": gene,
+                "disease_id": disease_id,
+                "disease_name": candidate.get("disease_name"),
+                "contextual_order": contextual_order,
+                "matched_patient_term_count": candidate.get("matched_patient_term_count", 0),
+                "matched_terms": candidate.get("matched_terms") or [],
+                "potential_discordances": candidate.get("potential_discordances") or [],
+                "unmatched_present_patient_terms": candidate.get("unmatched_present_patient_terms") or [],
+                "hpoa_provenance": hpoa,
+                "method": prioritization.get("method"),
+                "interpretive_use": "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
+                "clinical_prioritization_validated": False,
+                "human_review_required": True,
+            }
+            phenotype_record = self._record(
+                variant_id=variant_id,
+                evidence_type="PHENOTYPE",
+                statement=(
+                    f"Phenotype context placed {gene}/{disease_id} at contextual order {contextual_order}; "
+                    "this is an unqualified reviewer navigation aid, not a diagnosis."
+                ),
+                direction="NEUTRAL",
+                source_name=str(hpoa.get("resource_id") or "HPOA"),
+                source_version=str(hpoa.get("resource_release") or ""),
+                payload=phenotype_payload,
+                request_fingerprint=hpoa.get("request_fingerprint"),
+                response_sha256=hpoa.get("resource_sha256"),
+                request_metadata=dict(hpoa),
+            )
+            out.append(phenotype_record)
+
+            gene_disease_payload = {
+                "gene": gene,
+                "disease_id": disease_id,
+                "disease_name": candidate.get("disease_name"),
+                "association_validity": candidate.get("association_validity"),
+                "molecular_mechanism": candidate.get("molecular_mechanism"),
+                "inheritance": inheritance,
+                "association_provenance": association,
+                "interpretive_use": "GENE_DISEASE_VALIDITY_CONTEXT_NOT_VARIANT_PATHOGENICITY",
+                "clinical_prioritization_validated": False,
+                "human_review_required": True,
+            }
+            gene_record = self._record(
+                variant_id=variant_id,
+                evidence_type="GENE_DISEASE",
+                statement=(
+                    f"Governed gene-disease association context is available for {gene}/{disease_id}; "
+                    "it is not a variant pathogenicity classification."
+                ),
+                direction="NEUTRAL",
+                source_name=str(association.get("resource_id") or "GENE_DISEASE_RESOURCE"),
+                source_version=resource_version,
+                payload=gene_disease_payload,
+                response_sha256=association.get("resource_sha256"),
+                request_metadata=dict(association),
+            )
+            out.append(EvidenceRecord(
+                **{
+                    **gene_record.__dict__,
+                    "source_record_id": source_record_id,
+                }
+            ))
+        return out
+
     def build_case_context_evidence(
         self, *, variant_id: UUID, case_hpo_terms: list[dict[str, Any]], gene: str | None,
         gene_disease_records: list[dict[str, Any]] = (), literature_records: list[dict[str, Any]] = (),
