@@ -2233,6 +2233,8 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.memberSpecimen": "العينة المرتبطة",
     "review.relationshipType": "نوع العلاقة",
     "review.segregationRecorded": "تم تسجيل ملاحظة الانفصال الوراثي.",
+    "review.correctObservation": "تصحيح الملاحظة",
+    "review.saveSegregationCorrection": "حفظ تصحيح ملاحظة الانفصال الوراثي",
     "review.inheritanceRecorded": "تم تسجيل تقييم نمط الوراثة كسياق للمراجعة؛ ولم تُسند قوة ACMG تلقائيًا.",
     "review.phenotypeAdded": "تمت إضافة ملاحظة النمط الظاهري إلى سياق الحالة.",
     "review.confirmationVersioned": "تم إنشاء إصدار لسجل التأكيد.",
