@@ -37,6 +37,12 @@ class GeneDiseaseAssertion:
     record_sha256: str
 
 
+def _normalize_mondo_id(value: str | None) -> str | None:
+    raw = str(value or "").strip()
+    match = re.fullmatch(r"MONDO[:_](\\d{7})", raw, flags=re.IGNORECASE)
+    return f"MONDO:{match.group(1)}" if match else (raw or None)
+
+
 class ClinGenGeneDiseaseValidityProvider:
     provider_id = "ClinGen Gene-Disease Validity"
     provider_version = "GeneValidity"
@@ -149,7 +155,7 @@ class ClinGenGeneDiseaseValidityProvider:
                 gene=gene_symbol,
                 hgnc_id=data.get("GENE ID (HGNC)") or None,
                 disease=data.get("DISEASE LABEL", ""),
-                mondo_id=data.get("DISEASE ID (MONDO)") or None,
+                mondo_id=_normalize_mondo_id(data.get("DISEASE ID (MONDO)")),
                 moi=data.get("MOI") or None,
                 sop=data.get("SOP") or None,
                 classification=data.get("CLASSIFICATION") or None,
