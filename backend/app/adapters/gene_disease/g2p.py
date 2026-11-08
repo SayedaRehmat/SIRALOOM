@@ -40,6 +40,24 @@ class G2PDiseaseModel:
     record_sha256: str
     raw: dict[str, str]
 
+    @property
+    def inheritance_modes(self) -> tuple[str, ...]:
+        normalized = re.sub(r"[^a-z0-9]+", "_", self.allelic_requirement.casefold()).strip("_")
+        mapping = {
+            "monoallelic_autosomal": ("AUTOSOMAL_DOMINANT",),
+            "biallelic_autosomal": ("AUTOSOMAL_RECESSIVE",),
+            "monoallelic_x_hemizygous": ("X_LINKED_RECESSIVE",),
+            "monoallelic_x_heterozygous": ("X_LINKED_DOMINANT",),
+            "monoallelic_mitochondrial": ("MITOCHONDRIAL",),
+            "monoallelic_y": ("Y_LINKED",),
+            "semidominant": ("AUTOSOMAL_DOMINANT", "AUTOSOMAL_RECESSIVE"),
+        }
+        return mapping.get(normalized, ("UNKNOWN",))
+
+    @property
+    def penetrance(self) -> dict[str, str]:
+        return {"status": "NOT_RECORDED", "source": "NOT_RECORDED_IN_G2P"}
+
 
 _ALIASES = {
     "g2p_id": ("g2p id", "g2p_id", "id"),
