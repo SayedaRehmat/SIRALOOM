@@ -424,6 +424,7 @@ class EvidenceEngine:
                 "potential_discordances": candidate.get("potential_discordances") or [],
                 "unmatched_present_patient_terms": candidate.get("unmatched_present_patient_terms") or [],
                 "association_validity": candidate.get("association_validity"),
+                "association_evidence_state": candidate.get("association_evidence_state"),
                 "association_validity_provenance": candidate.get("association_validity_provenance"),
                 "clingen_validity_assertions": candidate.get("clingen_validity_assertions") or [],
                 "g2p_confidence": candidate.get("g2p_confidence"),
