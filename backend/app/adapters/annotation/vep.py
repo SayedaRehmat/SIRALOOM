@@ -219,7 +219,6 @@ class VEPProvider(ScientificResourceProvider):
                     execution_profile_id,
                     tool_id="ensembl-vep",
                     platform=current_platform_id(),
-                    execution_method="OCI_CONTAINER",
                     require_qualified=False,
                 )
                 if scientific_profile.get("version") != expected_version_match:
