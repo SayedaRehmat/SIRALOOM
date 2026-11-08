@@ -4345,20 +4345,37 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         g2p_gene_disease_records.append(record)
                     gene_disease_records.extend(g2p_gene_disease_records)
 
-                # Join ClinGen validity to G2P disease models only by exact gene
-                # symbol and exact MONDO identifier. No disease-name/OMIM
-                # crosswalk or best-match heuristic is permitted.
+                # Query the pinned ClinGen export once for all genes in this
+                # analysis. The resulting assertions are reused for candidate
+                # joins and per-variant evidence; no per-variant re-query occurs.
+                clingen_gdv_assertions_by_gene: dict[str, list[Any]] = {}
+                validity_by_pair: dict[tuple[str, str], list[Any]] = {}
                 if (
                     clingen_gdv_provider is not None
                     and clingen_gdv_resource is not None
                     and clingen_gdv_execution is not None
-                    and g2p_gene_disease_records
                 ):
-                    gene_symbols_for_validity = sorted({
+                    gene_symbols_for_validity: set[str] = set()
+                    for payload in db.scalars(
+                        select(Annotation.payload).where(Annotation.analysis_id == analysis.id)
+                    ).yield_per(1000):
+                        normalized_payload = payload.get("normalized") if isinstance(payload, dict) and isinstance(payload.get("normalized"), dict) else (payload or {})
+                        gene_value = normalized_payload.get("gene")
+                        gene_symbol = gene_value.get("symbol") if isinstance(gene_value, dict) else gene_value
+                        gene_symbol = gene_symbol or normalized_payload.get("gene_symbol")
+                        if gene_symbol and str(gene_symbol).strip():
+                            gene_symbols_for_validity.add(str(gene_symbol).strip().upper())
+                    gene_symbols_for_validity.update(
+                        str(item.get("gene") or "").strip().upper()
+                        for item in gene_disease_records
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    gene_symbols_for_validity.update(
                         str(item.get("gene") or "").strip().upper()
                         for item in g2p_gene_disease_records
-                        if str(item.get("gene") or "").strip()
-                    })
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    gene_symbols_for_validity = sorted(gene_symbols_for_validity)
                     validity_request = {
                         "analysis_id": str(analysis.id),
                         "resource_id": str(clingen_gdv_execution.resource_id),
@@ -4369,11 +4386,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                     validity_request_fingerprint = hashlib.sha256(
                         json.dumps(validity_request, sort_keys=True, separators=(",", ":")).encode()
                     ).hexdigest()
-                    validity_assertions = [
-                        assertion
-                        for gene_symbol in gene_symbols_for_validity
-                        for assertion in clingen_gdv_provider.query_gene(gene=gene_symbol)
-                    ]
+                    validity_assertions = []
+                    for gene_symbol in gene_symbols_for_validity:
+                        gene_assertions = clingen_gdv_provider.query_gene(gene=gene_symbol)
+                        clingen_gdv_assertions_by_gene[gene_symbol] = gene_assertions
+                        validity_assertions.extend(gene_assertions)
                     validity_response_material = [
                         {
                             "source_record_id": assertion.source_record_id,
@@ -4420,7 +4437,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             request_fingerprint=validity_request_fingerprint,
                             response_sha256=validity_response_sha256,
                         )
-                    validity_by_pair: dict[tuple[str, str], list[Any]] = {}
                     for assertion in validity_assertions:
                         if assertion.mondo_id:
                             validity_by_pair.setdefault(
@@ -4808,31 +4824,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     })
 
                         if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
-                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
-                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                            if not _succeeded_evidence_execution(
-                                db,
-                                analysis_id=analysis.id,
-                                resource_id=clingen_gdv_execution.resource_id,
-                                batch_key=key,
-                                request_fingerprint=request_fingerprint,
-                                execution_kind="CLINGEN_GENE_DISEASE_VALIDITY_QUERY",
-                            ):
-                                execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
-                                try:
-                                    assertions = clingen_gdv_provider.query_gene(gene=gene)
-                                    response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
-                                    response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                                    complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
-                                    records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
-                                except ClinGenGeneDiseaseValidityError as exc:
-                                    complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
-                                    provider_limitations.append({
-                                        "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
-                                        "message": str(exc),
-                                        "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
-                                        "variant_id": str(row.id),
-                                    })
+                            assertions = clingen_gdv_assertions_by_gene.get(gene.strip().upper(), [])
+                            if assertions:
+                                records.extend(engine.build_from_clingen_gene_disease_assertions(
+                                    variant_id=row.id,
+                                    assertions=assertions,
+                                    resource_id=clingen_gdv_execution.resource_id,
+                                    resource_name=clingen_gdv_resource.name,
+                                    resource_version=clingen_gdv_execution.resource_version,
+                                    request_fingerprint=validity_request_fingerprint,
+                                    execution_metadata={
+                                        **clingen_gdv_metadata,
+                                        "query": validity_request,
+                                        "response_sha256": validity_response_sha256,
+                                    },
+                                ))
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
