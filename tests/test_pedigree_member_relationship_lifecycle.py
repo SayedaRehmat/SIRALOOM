@@ -77,6 +77,8 @@ def test_member_correction_is_projected_without_mutating_original_record():
     assert state["revision_version"] == 2
     assert state["revision_type"] == "CORRECTED"
     assert state["status"] == "ACTIVE"
+    assert len(state["revision_history"]) == 2
+    assert state["revision_history"][1]["recorded_by"] == str(actor.id)
     assert member.affected_status == "UNKNOWN"
     db.close()
 
@@ -174,3 +176,41 @@ def test_corrected_proband_projection_enforces_single_active_proband():
     else:
         raise AssertionError("Two active probands must be rejected")
     db.close()
+
+
+
+def test_member_revision_chain_gap_is_rejected_as_inconsistent_history():
+    db, actor, case = _clinical_db()
+    member = PedigreeMember(
+        id=uuid4(), case_id=case.id, member_identifier="MEMBER",
+        affected_status="UNKNOWN", is_proband=False, sampled=False, metadata_json={},
+    )
+    db.add(member)
+    db.flush()
+    db.add(PedigreeMemberRevision(
+        id=uuid4(), case_id=case.id, member_id=member.id,
+        version=3, revision_type="CORRECTED",
+        reason="This intentionally skips revision two",
+        payload={"affected_status": "AFFECTED"},
+        revision_fingerprint="e" * 64, recorded_by=actor.id,
+    ))
+    db.commit()
+
+    try:
+        pedigree._current_member_state(db, member)
+    except Exception as error:
+        assert getattr(error, "status_code", None) == 409
+        assert "revision history is incomplete" in str(error.detail)
+    else:
+        raise AssertionError("A broken revision chain must not be projected as current")
+    db.close()
+
+
+def test_parentage_cycle_check_accepts_projected_relationship_dicts():
+    grandparent, parent, child = uuid4(), uuid4(), uuid4()
+    relationships = [
+        {"parent_member_id": str(grandparent), "child_member_id": str(parent)},
+        {"parent_member_id": str(parent), "child_member_id": str(child)},
+    ]
+    assert pedigree._would_create_pedigree_cycle(relationships, child, grandparent) is True
+    assert pedigree._would_create_pedigree_cycle(relationships, grandparent, child) is False
