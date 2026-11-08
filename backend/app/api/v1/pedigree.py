@@ -362,17 +362,18 @@ def _current_pedigree(db: Session, case_id: UUID):
         row.id: _relationship_state_from_revisions(row, relationship_revision_map.get(row.id, []))
         for row in relationship_rows
     }
+    member_state_by_id = {state["id"]: state for state in member_states.values()}
     active_members = [state for state in member_states.values() if state["status"] == "ACTIVE"]
     active_member_ids = {member["id"] for member in active_members}
     for state in relationship_states.values():
         if (
-            state["parent_member_id"] not in member_states
-            or state["child_member_id"] not in member_states
+            state["parent_member_id"] not in member_state_by_id
+            or state["child_member_id"] not in member_state_by_id
         ):
             raise HTTPException(409, "Pedigree relationship references a member outside this case")
         if state["status"] == "ACTIVE" and (
-            member_states[state["parent_member_id"]]["status"] != "ACTIVE"
-            or member_states[state["child_member_id"]]["status"] != "ACTIVE"
+            member_state_by_id[state["parent_member_id"]]["status"] != "ACTIVE"
+            or member_state_by_id[state["child_member_id"]]["status"] != "ACTIVE"
         ):
             raise HTTPException(409, "Active pedigree relationship references a retracted member")
     active_relationships = [
