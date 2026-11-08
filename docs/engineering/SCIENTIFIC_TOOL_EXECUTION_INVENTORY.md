@@ -1,6 +1,6 @@
 # Scientific tool execution inventory
 
-**Audit baseline:** PR #310 head `e3738228b67995bf085102f5bf0e5e592a6cf3c1`, inspected 2026-11-08.
+**Audit baseline:** PR #312 head `e18b4111157d11bb4b0baee5683f61cb74f9705a`, with ARM64 workflow run `42457501199` and full SIRALOOM CI run `42457501166`, inspected 2026-11-08.
 
 ## BCFtools profile inventory
 
@@ -15,7 +15,7 @@ The registry is `configs/bioinformatics/toolchain-profiles.v1.json`.
 | `bcftools-1.21.3-htslib-1.21.3-linux-64-source` | 1.21.3 | 1.21.3 | linux-64 | BLOCKED_COMPATIBILITY | VCF 4.5 FORMAT/LEN reference-block regression remains unresolved |
 | `bcftools-1.19-htslib-1.19-linux-64-legacy` | 1.19 | 1.19 | linux-64 | QUARANTINED_LEGACY | Historical compatibility only; not production-selectable |
 
-The three independent source-built profiles are 1.24.1, 1.23.3 and 1.22.3/HTSlib 1.22.4. Their existing qualification is Linux AMD64 only. The default 1.25 profile is a fourth active profile and uses a different package-based build path. None of these records establishes ARM64 qualification. Three separate ARM64 candidate records now exist with distinct profile IDs, platform locks, and `.arm64` worker queues. They remain `CANDIDATE` and are not production-selectable.
+The three independent source-built profiles are 1.24.1, 1.23.3 and 1.22.3/HTSlib 1.22.4. Their existing qualification is Linux AMD64. Native ARM64 workflow run `42457501199` passed source compilation, reference-backed normalization, multiallelic splitting, BGZF/CSI, shared-library checks, pinned base-image architecture checks, ARM64 worker-image builds, version attestation, non-root identity, in-image profile/queue resolution and container scientific smoke tests for all three exact version pairs. Their generated `linux-aarch64` build-environment locks were committed at the three profile paths listed in the registry; each lock has SHA-256 `34f859b1851551a1dc80fa4ce49f91be1430a8a3f9f43b9c1b3a082121594bcf`. The three registry records deliberately remain `CANDIDATE` and are not production-selectable pending review and additional routing/recovery qualification. The default 1.25 profile is a fourth active profile and uses a different package-based build path; it is not covered by this source-build ARM64 matrix.
 
 ## VEP and other scientific components
 
@@ -37,7 +37,8 @@ This inventory distinguishes executable tools from APIs and datasets. ARM64 bina
 - `backend/app/domain/container_tool_execution.py` implements a Linux Docker/Podman executor for immutable OCI images.
 - `backend/app/domain/execution_environments.py` defines environment contracts and compatibility checks.
 - `backend/app/domain/toolchain_profiles.py` remains BCFtools/HTSlib-specific: it requires BCFtools and HTSlib versions and routes to BCFtools queues.
-- `backend/app/adapters/annotation/vep.py` retains VEP-specific execution and resource logic. The universal execution design document states that the common executor is not yet integrated into production BCFtools/VEP call sites.
+- `backend/app/adapters/annotation/vep.py` retains VEP-specific scientific argument construction, cache/assembly verification and response validation. When a persistent execution service is configured, it constructs `ToolIdentity`/`ToolExecutionRequest` and calls the common persistent executor; a legacy direct-subprocess fallback still exists unless the workflow sets `persistent_execution_required`. VEP is therefore partially integrated, not yet enforced through the common executor in every production mode.
+- BCFtools scientific call sites in `backend/app/domain/vcf_tools.py` still invoke BCFtools-specific subprocesses; they have not yet been migrated through a BCFtools adapter using the common executor.
 
 The universal executor is therefore a foundation, not evidence that all tools already use it. VEP must not be routed through BCFtools profile resolution.
 
@@ -55,14 +56,15 @@ The same compatible OCI image can run under Docker and Podman. Kubernetes also c
 ## Qualification boundary
 
 - PR #310 qualified Docker and Podman on Linux x86_64 using the same BCFtools 1.25 worker image digest.
-- The three source-built BCFtools profiles have Linux AMD64 source/lock/runtime/software qualification.
-- Three ARM64 candidate profiles are registered for the independent source-built version pairs. A native `ubuntu-24.04-arm` workflow resolves their own explicit locks, builds each exact source pair, runs reference-backed normalization/CSI checks, inspects the pinned builder/runtime image digests, and attempts a non-root ARM64 OCI image qualification.
-- The first native ARM64 1.24.1 source build and reference-backed smoke test passed, and the exact pinned builder/runtime image manifests exposed linux/arm64. Its first OCI image build then exposed a real ABI issue: the ARM64 build environment emitted binaries requiring GLIBC_2.38 while the builder stage could not provide that symbol version. The ARM64 build environment now pins sysroot_linux-aarch64=2.28, matching the existing x86_64 profile's explicit sysroot discipline; this correction must be requalified before it is considered fixed.
-
-After pinning the ARM64 sysroot, the 1.22.3/1.22.4 ARM64 worker image built successfully; the executable/library version checks, non-root UID check and in-image profile/queue resolution passed. The container scientific smoke test then exposed a test-fixture error: it called `bcftools faidx`, which is not a BCFtools subcommand. The fixture now writes the valid FASTA `.fai` directly (as the native smoke test already does); the corrected container test is pending rerun.
-
-The ARM64 candidates remain non-production until all matrix jobs and review gates pass. The default BCFtools 1.25 profile is not yet covered by this source-profile matrix.
-- Direct Linux, rootless Podman, Kubernetes, cloud and remote-agent qualification remain separate.
+- The three independent source-built BCFtools profiles have Linux AMD64 source/lock/runtime/software qualification.
+- Native ARM64 workflow run `42457501199` completed successfully for all three source-built version pairs on `ubuntu-24.04-arm`. Each job passed exact source archive SHA-256 verification/build, reference-backed normalization, multiallelic splitting, BGZF/CSI indexing, shared-library resolution, pinned builder/runtime image architecture inspection, ARM64 OCI image build, executable/library version attestation, non-root UID, profile/queue resolution inside the image, and a container-level scientific normalization/indexing smoke test.
+- The ARM64 build environment pins `sysroot_linux-aarch64=2.28`. This corrected the earlier GLIBC_2.38 ABI mismatch. The initial `bcftools faidx` test-fixture defect was corrected by writing a valid FASTA `.fai` directly; the subsequent full ARM64 matrix passed.
+- The three generated ARM64 explicit build-environment locks are now committed. Their identical content is expected because they lock the shared compiler/build environment; BCFtools and HTSlib source versions and SHA-256 identities remain independently pinned in each profile registry record and build invocation.
+- Full SIRALOOM CI run `42457501166` passed frontend, backend, PostgreSQL/Celery integration and real Docker/Podman container qualification. ARM64 profile lock-generation run `42457501092` passed.
+- The separate x86_64 source-profile matrix run `42457501082` was still in progress at the last status check: 1.24.1 and 1.23.3 jobs had passed; 1.22.3/1.22.4 remained in progress. Do not claim the entire x86_64 matrix has passed until that run completes.
+- All three ARM64 records remain `CANDIDATE`, intentionally non-production-selectable. Their source-build and image evidence is green, but production promotion still requires the broader cross-version dispatch, worker isolation, retries/redelivery, reanalysis inheritance and recovery gates.
+- The default BCFtools 1.25 package-based profile is not covered by this source-build ARM64 matrix and needs a separate native ARM64 package-lock/image/scientific qualification.
+- Direct native-process execution, rootless Podman, Kubernetes, cloud scheduling and remote-agent execution remain separate qualification targets.
 
 ## Promotion rule
 
