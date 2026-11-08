@@ -408,9 +408,13 @@ def _would_create_pedigree_cycle(relationships, parent_member_id, child_member_i
     """Check whether adding parent -> child would create an ancestry cycle."""
     children_by_parent = {}
     for relationship in relationships:
-        children_by_parent.setdefault(relationship.parent_member_id, set()).add(
-            relationship.child_member_id
-        )
+        if isinstance(relationship, dict):
+            parent_id = UUID(relationship["parent_member_id"])
+            child_id = UUID(relationship["child_member_id"])
+        else:
+            parent_id = relationship.parent_member_id
+            child_id = relationship.child_member_id
+        children_by_parent.setdefault(parent_id, set()).add(child_id)
 
     pending = [child_member_id]
     visited = set()
@@ -1469,10 +1473,7 @@ def add_relationship(case_id: UUID, body: RelationshipInput, db: Session=Depends
     active_member_ids = {item["id"] for item in active_members}
     if str(parent.id) not in active_member_ids or str(child.id) not in active_member_ids:
         raise HTTPException(409, "Parent and child must both be active pedigree members")
-    relationships = db.scalars(
-        select(PedigreeRelationship).where(PedigreeRelationship.case_id == case_id)
-    ).all()
-    if _would_create_pedigree_cycle(relationships, parent.id, child.id):
+    if _would_create_pedigree_cycle(active_relationships, parent.id, child.id):
         raise HTTPException(
             status_code=409,
             detail="Pedigree relationship would create a parentage cycle",
