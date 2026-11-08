@@ -102,7 +102,8 @@ def test_security_review_advisories_match_the_exact_upstream_release(
 
 def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
-    assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build" in dockerfile
+    assert "ARG BCFTOOLS_BUILDER_IMAGE=mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3" in dockerfile
+    assert "FROM ${BCFTOOLS_BUILDER_IMAGE} AS bcftools-source-build" in dockerfile
     assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
     assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile
     assert "printf '%s\\n'" in dockerfile
@@ -119,8 +120,10 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "test -s /etc/ssl/certs/ca-certificates.crt" in dockerfile
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ssl.get_default_verify_paths()" in dockerfile
-    assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
-    assert 'test "$(uname -m)" = "x86_64"' in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256_X86_64=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256_AARCH64=c300afd5f2d31df039fe6a26a2d68a76b62832098c272a43e1e74ab9efd4fbd7" in dockerfile
+    assert "aarch64:linux-aarch64" in dockerfile
+    assert "uv-aarch64-unknown-linux-gnu.tar.gz" in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
 
 
