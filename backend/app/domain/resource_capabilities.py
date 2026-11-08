@@ -345,6 +345,9 @@ _SCIENTIFIC_PROVIDERS = {
     "PUBMED": ScientificProvider("PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "PMC": ScientificProvider("PMC", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "OMIM": ScientificProvider("OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True),
+    "GENE2PHENOTYPE": ScientificProvider(
+        "GENE2PHENOTYPE", GENE_DISEASE, ("LOCAL", "FILE", "LOCAL_ONLY"), True
+    ),
     "SPLICEAI": ScientificProvider("SPLICEAI", SPLICING_PREDICTOR, ("LOCAL", "API", "HTTPS"), True),
     "DBNSFP": ScientificProvider("DBNSFP", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE")),
     "CADD": ScientificProvider("CADD", COMPUTATIONAL_PREDICTOR, ("LOCAL", "API", "HTTPS")),
