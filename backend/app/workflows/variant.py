@@ -4387,10 +4387,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         json.dumps(validity_request, sort_keys=True, separators=(",", ":")).encode()
                     ).hexdigest()
                     validity_assertions = []
-                    for gene_symbol in gene_symbols_for_validity:
-                        gene_assertions = clingen_gdv_provider.query_gene(gene=gene_symbol)
-                        clingen_gdv_assertions_by_gene[gene_symbol] = gene_assertions
-                        validity_assertions.extend(gene_assertions)
+                    validity_query_error = None
+                    try:
+                        for gene_symbol in gene_symbols_for_validity:
+                            gene_assertions = clingen_gdv_provider.query_gene(gene=gene_symbol)
+                            clingen_gdv_assertions_by_gene[gene_symbol] = gene_assertions
+                            validity_assertions.extend(gene_assertions)
+                    except ClinGenGeneDiseaseValidityError as exc:
+                        validity_query_error = str(exc)
+                        validity_assertions = []
+                        clingen_gdv_assertions_by_gene.clear()
+                        provider_limitations.append({
+                            "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
+                            "message": validity_query_error,
+                            "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                        })
                     validity_response_material = [
                         {
                             "source_record_id": assertion.source_record_id,
@@ -4433,9 +4444,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         complete_resource_execution(
                             db,
                             validity_execution_row,
-                            status="SUCCESS" if validity_assertions else "NO_DATA",
+                            status=(
+                                "FAILED"
+                                if validity_query_error
+                                else "SUCCESS" if validity_assertions else "NO_DATA"
+                            ),
                             request_fingerprint=validity_request_fingerprint,
                             response_sha256=validity_response_sha256,
+                            error_code=(
+                                "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED"
+                                if validity_query_error else None
+                            ),
+                            error_message=validity_query_error,
                         )
                     for assertion in validity_assertions:
                         if assertion.mondo_id:
