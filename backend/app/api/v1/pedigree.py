@@ -1227,13 +1227,16 @@ def get_family_genotype_matrix(
                 "reviewed_at": latest.reviewed_at.isoformat() if latest.reviewed_at else None,
             }
 
+        member_state = _current_member_state(db, member)
+        if member_state["status"] != "ACTIVE":
+            raise HTTPException(409, "A retracted pedigree member cannot contribute a family genotype sample")
         samples.append({
             "member_id": member.id,
             "member_identifier": member.member_identifier,
-            "relationship_to_proband": member.relationship_to_proband,
-            "sex": member.sex,
-            "affected_status": member.affected_status,
-            "is_proband": member.is_proband,
+            "relationship_to_proband": member_state.get("relationship_to_proband"),
+            "sex": member_state.get("sex"),
+            "affected_status": member_state.get("affected_status", "UNKNOWN"),
+            "is_proband": bool(member_state.get("is_proband")),
             "specimen_id": specimen.id,
             "analysis_id": analysis.id,
             "analysis_version": analysis.analysis_version,
@@ -1260,20 +1263,15 @@ def get_family_genotype_matrix(
             "calls": calls,
         })
 
-    members = db.scalars(select(PedigreeMember).where(
-        PedigreeMember.case_id == case_id,
-    )).all()
-    member_identifiers = {member.id: member.member_identifier for member in members}
-    relationships = db.scalars(select(PedigreeRelationship).where(
-        PedigreeRelationship.case_id == case_id,
-    )).all()
+    active_members, active_relationships, _, _ = _current_pedigree(db, case_id)
+    member_identifiers = {UUID(member["id"]): member["member_identifier"] for member in active_members}
     relationship_snapshot = [{
-        "parent_member_identifier": member_identifiers.get(item.parent_member_id, "UNKNOWN_MEMBER"),
-        "child_member_identifier": member_identifiers.get(item.child_member_id, "UNKNOWN_MEMBER"),
-        "relationship_type": item.relationship_type,
-        "metadata": item.metadata_json or {},
+        "parent_member_identifier": member_identifiers.get(UUID(item["parent_member_id"]), "UNKNOWN_MEMBER"),
+        "child_member_identifier": member_identifiers.get(UUID(item["child_member_id"]), "UNKNOWN_MEMBER"),
+        "relationship_type": item["relationship_type"],
+        "metadata": item.get("metadata") or {},
         "relationship_status": "AS_RECORDED_NOT_INDEPENDENTLY_VERIFIED",
-    } for item in relationships]
+    } for item in active_relationships]
 
     return build_family_genotype_matrix(
         case_id=case_id,
@@ -1422,11 +1420,14 @@ def revise_pedigree_member(
         )}
         next_state.update(changes)
         if next_state.get("specimen_id") is not None:
-            specimen = db.get(Specimen, next_state["specimen_id"])
+            specimen_id = UUID(str(next_state["specimen_id"]))
+            specimen = db.get(Specimen, specimen_id)
             if specimen is None or specimen.case_id != case_id:
                 raise HTTPException(404, "Specimen not found in this case")
             next_state["sampled"] = True
             next_state["specimen_id"] = str(specimen.id)
+        else:
+            next_state["specimen_id"] = None
         if next_state.get("affected_status") is None:
             raise HTTPException(422, "Affected status cannot be null")
         projected = []
