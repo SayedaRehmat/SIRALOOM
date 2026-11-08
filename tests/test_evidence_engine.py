@@ -316,3 +316,81 @@ def test_phenotype_prioritization_evidence_rejects_unreviewed_or_classification_
                 "candidates": [],
             },
         )
+
+
+def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenances():
+    from uuid import uuid4
+
+    variant_id = uuid4()
+    g2p_resource_id = uuid4()
+    prioritization = {
+        "method": "HPOA_EXACT_AND_IS_A_CONTEXT_ORDER_V1",
+        "clinical_prioritization_validated": False,
+        "human_review_required": True,
+        "candidates": [{
+            "gene": "GENE1",
+            "disease_id": "MONDO:0000001",
+            "disease_name": "Example disorder",
+            "contextual_order": 1,
+            "matched_patient_term_count": 1,
+            "matched_terms": [{
+                "patient_hpo_id": "HP:0000003",
+                "disease_hpo_id": "HP:0000001",
+                "patient_observation_ids": ["obs-1"],
+                "match_type": "IS_A",
+            }],
+            "potential_discordances": [],
+            "unmatched_present_patient_terms": [],
+            "association_validity": "Definitive",
+            "association_validity_provenance": {
+                "resource_id": str(uuid4()),
+                "resource_name": "ClinGen Gene-Disease Validity",
+                "resource_version": "GeneValidity",
+                "resource_sha256": "c" * 64,
+            },
+            "clingen_validity_assertions": [],
+            "g2p_confidence": "definitive",
+            "molecular_mechanism": "loss of function",
+            "inheritance": {
+                "modes": ["AUTOSOMAL_RECESSIVE"],
+                "mode_sources": {"g2p_allelic_requirement": "biallelic_autosomal"},
+                "mode_conflict": False,
+                "penetrance": {"status": "NOT_RECORDED"},
+                "penetrance_provenance": {"source": "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"},
+                "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
+            },
+            "association_provenance": {
+                "resource_id": str(g2p_resource_id),
+                "resource_name": "Gene2Phenotype",
+                "resource_version": "2026-11-08",
+                "source_record_id": "G2P:G2P001",
+                "source_record_sha256": "b" * 64,
+                "request_fingerprint": "a" * 64,
+                "resource_sha256": "d" * 64,
+                "validity_provenance": {
+                    "resource_id": str(uuid4()),
+                    "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                },
+            },
+            "hpoa_provenance": {
+                "resource_id": str(uuid4()),
+                "resource_release": "2026-09-02",
+                "resource_sha256": "e" * 64,
+            },
+        }],
+    }
+    records = EvidenceEngine().build_from_phenotype_prioritization(
+        variant_id=variant_id,
+        prioritization=prioritization,
+        gene_filter="GENE1",
+    )
+    phenotype = next(item for item in records if item.evidence_type == "PHENOTYPE")
+    association = next(item for item in records if item.evidence_type == "GENE_DISEASE")
+    assert all(item.direction == "NEUTRAL" for item in records)
+    assert phenotype.payload["contextual_order"] == 1
+    assert association.payload["matched_terms"][0]["patient_observation_ids"] == ["obs-1"]
+    assert association.payload["association_validity_provenance"]["resource_name"] == "ClinGen Gene-Disease Validity"
+    assert association.payload["inheritance"]["penetrance_provenance"]["source"] == "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"
+    assert association.resource_id == g2p_resource_id
+    assert association.source_record_id == "G2P:G2P001"
+    assert association.request_fingerprint == "a" * 64
