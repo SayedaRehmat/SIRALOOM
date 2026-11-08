@@ -404,7 +404,7 @@ class EvidenceEngine:
                 payload=phenotype_payload,
                 resource_id=UUID(str(hpoa["resource_id"])) if hpoa.get("resource_id") else None,
                 request_fingerprint=hpoa.get("request_fingerprint"),
-                response_sha256=hpoa.get("resource_sha256"),
+                response_sha256=hpoa.get("response_sha256"),
                 request_metadata=dict(hpoa),
             )
             out.append(EvidenceRecord(
@@ -448,7 +448,7 @@ class EvidenceEngine:
                 payload=gene_disease_payload,
                 resource_id=UUID(str(association["resource_id"])) if association.get("resource_id") else None,
                 request_fingerprint=association.get("request_fingerprint"),
-                response_sha256=association.get("resource_sha256"),
+                response_sha256=association.get("response_sha256"),
                 request_metadata=dict(association),
             )
             out.append(EvidenceRecord(
