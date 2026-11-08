@@ -4209,17 +4209,127 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 except ValueError as exc:
                     raise RuntimeError(str(exc)) from exc
 
+                proband_observations = patient_phenotype_observations(clinical_input_snapshot)
                 case_hpo_terms = [
                     {
+                        "id": row.get("observation_id") or row.get("id"),
                         "hpo_id": row["hpo_id"],
+                        "canonical_hpo_id": row.get("canonical_hpo_id") or row["hpo_id"],
                         "label": row.get("label"),
                         "present": row.get("present"),
                         "phenotype_status": row["phenotype_status"],
+                        "subject_member_id": row.get("subject_member_id"),
                     }
-                    for row in patient_phenotype_observations(clinical_input_snapshot)
+                    for row in proband_observations
                 ]
-                gene_disease_records = clinical_input_snapshot["gene_disease_evidence"]
+                pedigree_snapshot = clinical_input_snapshot.get("pedigree_context") or {}
+                proband_member_ids = [
+                    str(member.get("member_id"))
+                    for member in pedigree_snapshot.get("members", [])
+                    if isinstance(member, dict) and member.get("is_proband") and member.get("member_id")
+                ]
+                gene_disease_records = list(clinical_input_snapshot["gene_disease_evidence"])
                 literature_records = clinical_input_snapshot["literature_evidence"]
+                g2p_gene_disease_records: list[dict[str, object]] = []
+                if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None:
+                    gene_symbols: set[str] = set()
+                    for payload in db.scalars(
+                        select(Annotation.payload).where(Annotation.analysis_id == analysis.id)
+                    ).yield_per(1000):
+                        normalized_payload = payload.get("normalized") if isinstance(payload, dict) and isinstance(payload.get("normalized"), dict) else (payload or {})
+                        gene_value = normalized_payload.get("gene")
+                        gene_symbol = gene_value.get("symbol") if isinstance(gene_value, dict) else gene_value
+                        gene_symbol = gene_symbol or normalized_payload.get("gene_symbol")
+                        if gene_symbol and str(gene_symbol).strip():
+                            gene_symbols.add(str(gene_symbol).strip().upper())
+                    gene_symbols.update(
+                        str(item.get("gene") or "").strip().upper()
+                        for item in gene_disease_records
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    g2p_models = [
+                        model
+                        for gene_symbol in sorted(gene_symbols)
+                        for model in g2p_provider.query_gene(gene=gene_symbol)
+                    ]
+                    g2p_request = {
+                        "analysis_id": str(analysis.id),
+                        "resource_id": str(g2p_execution.resource_id),
+                        "resource_version": g2p_execution.resource_version,
+                        "contract_hash": g2p_execution.contract_hash,
+                        "genes": sorted(gene_symbols),
+                    }
+                    g2p_request_fingerprint = hashlib.sha256(
+                        json.dumps(g2p_request, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    g2p_response_material = [
+                        {"source_record_id": model.source_record_id, "record_sha256": model.record_sha256}
+                        for model in g2p_models
+                    ]
+                    g2p_response_sha256 = hashlib.sha256(
+                        json.dumps(g2p_response_material, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    if not _succeeded_evidence_execution(
+                        db,
+                        analysis_id=analysis.id,
+                        resource_id=g2p_execution.resource_id,
+                        batch_key="g2p-gene-disease-models",
+                        request_fingerprint=g2p_request_fingerprint,
+                        execution_kind="G2P_GENE_DISEASE_MODEL_QUERY",
+                    ):
+                        g2p_execution_row = start_resource_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="build_evidence",
+                            attempt=max(1, int(evidence_step.attempt or 0)),
+                            batch_key="g2p-gene-disease-models",
+                            resolved=g2p_execution,
+                            requested_resource_id=g2p_resource.id,
+                            fallback_resource_id=None,
+                            metadata={
+                                "execution_kind": "G2P_GENE_DISEASE_MODEL_QUERY",
+                                "gene_count": len(gene_symbols),
+                                "model_count": len(g2p_models),
+                                "input_sha256": g2p_request_fingerprint,
+                                "output_sha256": g2p_response_sha256,
+                                "g2p_release": g2p_provider.release,
+                            },
+                        )
+                        complete_resource_execution(
+                            db,
+                            g2p_execution_row,
+                            status="SUCCESS" if g2p_models else "NO_DATA",
+                            request_fingerprint=g2p_request_fingerprint,
+                            response_sha256=g2p_response_sha256,
+                        )
+                    for model in g2p_models:
+                        if not model.disease_mondo:
+                            continue
+                        record = {
+                            "gene": model.gene_symbol,
+                            "disease": model.disease_name,
+                            "disease_name": model.disease_name,
+                            "disease_id": model.disease_mondo,
+                            "validity_status": model.confidence,
+                            "molecular_mechanism": model.molecular_mechanism,
+                            "inheritance_modes": list(model.inheritance_modes),
+                            "penetrance": model.penetrance,
+                            "resource_id": str(g2p_execution.resource_id),
+                            "resource_name": g2p_resource.name,
+                            "resource_version": g2p_execution.resource_version,
+                            "resource_sha256": g2p_provider.sha256,
+                            "source_record_id": model.source_record_id,
+                            "g2p_confidence": model.confidence,
+                            "g2p_allelic_requirement": model.allelic_requirement,
+                            "g2p_publications": list(model.publications),
+                            "g2p_cross_cutting_modifiers": list(model.cross_cutting_modifiers),
+                            "g2p_variant_types": list(model.variant_types),
+                            "g2p_variant_consequences": list(model.variant_consequences),
+                            "g2p_mechanism_evidence": list(model.mechanism_evidence),
+                            "hpo_terms": list(model.phenotypes),
+                        }
+                        g2p_gene_disease_records.append(record)
+                    gene_disease_records.extend(g2p_gene_disease_records)
                 hpoa_disease_annotations: dict[str, tuple] = {}
                 hpoa_provenance = None
                 if hpoa_provider is not None and hpoa_resource is not None and hpoa_execution is not None:
@@ -4257,6 +4367,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         ).hexdigest()
                         hpoa_provenance = {
                             **(hpoa_resource_metadata or {}),
+                            "resource_name": hpoa_resource.name,
+                            "resource_release": hpoa_provider.release,
+                            "resource_sha256": hpoa_provider.sha256,
                             "request_fingerprint": hpoa_request_fingerprint,
                             "response_sha256": hpoa_response_sha256,
                         }
@@ -4297,6 +4410,33 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 request_fingerprint=hpoa_request_fingerprint,
                                 response_sha256=hpoa_response_sha256,
                             )
+
+                phenotype_prioritization = None
+                if (
+                    g2p_gene_disease_records
+                    and hpoa_provenance is not None
+                    and hpo_ontology is not None
+                    and hpoa_disease_annotations
+                ):
+                    from backend.app.domain.phenotype_prioritization import (
+                        PhenotypePrioritizationError,
+                        prioritize_disease_context,
+                    )
+                    try:
+                        phenotype_prioritization = prioritize_disease_context(
+                            patient_observations=case_hpo_terms,
+                            gene_disease_records=g2p_gene_disease_records,
+                            annotations_by_disease=hpoa_disease_annotations,
+                            hpoa_provenance=hpoa_provenance,
+                            hpo_ontology=hpo_ontology,
+                            proband_member_ids=proband_member_ids,
+                        )
+                    except PhenotypePrioritizationError as exc:
+                        provider_limitations.append({
+                            "code": "PHENOTYPE_PRIORITIZATION_REQUIRES_REVIEW",
+                            "message": str(exc),
+                            "resource_capability": "PHENOTYPE",
+                        })
 
                 created = 0
                 batch_size = int(analysis.configuration.get("evidence_batch_size", 250) or 250)
