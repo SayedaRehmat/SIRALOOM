@@ -97,6 +97,10 @@ def _normalize_mondo(value: str | None) -> str | None:
 class G2PProvider:
     provider_id = "Gene2Phenotype"
     provider_version = "G2P_CSV"
+    source_url = "https://www.ebi.ac.uk/gene2phenotype/"
+    download_url = "https://www.ebi.ac.uk/gene2phenotype/api/panel/all/download/"
+    archive_url = "https://ftp.ebi.ac.uk/pub/databases/gene2phenotype/G2P_data_downloads/"
+    terms_url = "https://www.ebi.ac.uk/about/terms-of-use/"
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
     def __init__(self, *, resource_path: str, expected_sha256: str, release: str) -> None:
