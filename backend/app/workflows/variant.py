@@ -76,6 +76,7 @@ from backend.app.domain.resource_execution import (
     resolve_resource_execution,
     start_resource_execution,
 )
+from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.schemas import CanonicalVariant
@@ -4466,20 +4467,35 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "matched_assertion_count": len(matches),
                             "source": "CLINGEN_GENE_DISEASE_VALIDITY",
                         }
+                        clingen_moi_labels = sorted({
+                            str(assertion.moi).strip()
+                            for assertion in matches
+                            if assertion.moi
+                        })
+                        clingen_moi_modes = {
+                            normalize_clingen_moi_label(label)
+                            for label in clingen_moi_labels
+                        }
+                        clingen_moi_modes.discard(None)
+                        g2p_modes = {
+                            str(mode).strip().upper()
+                            for mode in (model_record.get("inheritance_modes") or [])
+                        }
+                        unmapped_clingen_moi = [
+                            label for label in clingen_moi_labels
+                            if normalize_clingen_moi_label(label) is None
+                        ]
                         model_record["inheritance_mode_sources"] = {
                             "g2p_allelic_requirement": model_record.get("g2p_allelic_requirement"),
-                            "clingen_moi_assertions": sorted({
-                                str(assertion.moi).strip()
-                                for assertion in matches
-                                if assertion.moi
-                            }),
+                            "g2p_modes": sorted(g2p_modes),
+                            "clingen_moi_assertions": clingen_moi_labels,
+                            "clingen_moi_modes": sorted(clingen_moi_modes),
+                            "unmapped_clingen_moi": unmapped_clingen_moi,
                         }
-                        model_record["inheritance_mode_conflict"] = (
-                            len({
-                                str(assertion.moi).strip().casefold()
-                                for assertion in matches
-                                if assertion.moi
-                            }) > 1
+                        model_record["inheritance_mode_conflict"] = bool(
+                            len(clingen_moi_modes) > 1
+                            or unmapped_clingen_moi
+                            or (clingen_moi_modes and g2p_modes and clingen_moi_modes != g2p_modes)
                         )
 
                 hpoa_disease_annotations: dict[str, tuple] = {}
