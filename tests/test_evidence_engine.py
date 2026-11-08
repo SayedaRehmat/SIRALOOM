@@ -281,13 +281,13 @@ def test_phenotype_prioritization_becomes_neutral_reviewable_evidence():
                         "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
                     },
                     "association_provenance": {
-                        "resource_id": "ClinGen-Gene-Disease",
+                        "resource_id": "00000000-0000-0000-0000-000000000001",
                         "resource_version": "2026-10",
                         "source_record_id": "GENE1:MONDO:0000001",
                         "resource_sha256": "a" * 64,
                     },
                     "hpoa_provenance": {
-                        "resource_id": "HPOA",
+                        "resource_id": "00000000-0000-0000-0000-000000000002",
                         "resource_release": "2026-09-02",
                         "resource_sha256": "b" * 64,
                         "ontology_release": "2026-09-01",
