@@ -29,6 +29,7 @@ from backend.app.domain.tool_execution import (
     ToolExecutionRequest,
     ToolIdentity,
     current_platform_id,
+    sha256_resource_path,
 )
 
 
@@ -231,6 +232,13 @@ class VEPProvider(ScientificResourceProvider):
                     (self._runtime_checks.get(build) or {}).get("cache_tree_sha256") or ""
                 )
                 resource_bindings = (
+                    ScientificResourceBinding(
+                        resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{build}",
+                        version=self.cache_version,
+                        sha256=sha256_resource_path(Path(self.cache_dir)),
+                        assembly=build,
+                        path=self.cache_dir,
+                    ),
                     ScientificResourceBinding(
                         resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{build}",
                         version=self.cache_version,
@@ -660,6 +668,13 @@ class VEPProvider(ScientificResourceProvider):
             "--show_cache_info",
         ]
         cache_resources = (
+            ScientificResourceBinding(
+                resource_id=f"ensembl-vep-cache:{self.species}:{self.cache_version}:{assembly}",
+                version=self.cache_version,
+                sha256=sha256_resource_path(Path(self.cache_dir)),
+                assembly=assembly,
+                path=self.cache_dir,
+            ),
             ScientificResourceBinding(
                 resource_id=f"ensembl-vep-cache-manifest:{self.species}:{self.cache_version}:{assembly}",
                 version=self.cache_version,
