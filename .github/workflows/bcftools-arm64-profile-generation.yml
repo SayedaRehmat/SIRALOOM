@@ -130,7 +130,7 @@ jobs:
           test "$("$BCFTOOLS_BIN" --version | sed -n '2p')" = "Using htslib ${{ matrix.htslib_version }}"
           ldd "$BCFTOOLS_BIN" | tee "$work/ldd.txt"
           ! grep -q "not found" "$work/ldd.txt"
-      - name: Record profile lock and native qualification manifest
+      - name: Record native source-build qualification evidence
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/arm64-profile-output"
@@ -148,10 +148,61 @@ jobs:
           bgzf_csi_index=passed
           shared_library_resolution=passed
           x86_64_profile_and_lock_modified=no
-          container_image_qualification=not_yet_performed
+          container_image_qualification=pending
           EOF
+          cp "$ARM64_LOCK" configs/bioinformatics/profiles/bcftools-arm64-candidate.lock
           sha256sum "$RUNNER_TEMP/arm64-profile-output/"*
+      - uses: docker/setup-buildx-action@v3
+      - name: Verify the pinned builder and runtime image digests include ARM64
+        env:
+          BUILDER_IMAGE: mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3
+          RUNTIME_IMAGE: python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$BUILDER_IMAGE" | tee "$RUNNER_TEMP/builder-manifest.txt"
+          docker buildx imagetools inspect "$RUNTIME_IMAGE" | tee "$RUNNER_TEMP/runtime-manifest.txt"
+          grep -Fq "linux/arm64" "$RUNNER_TEMP/builder-manifest.txt"
+          grep -Fq "linux/arm64" "$RUNNER_TEMP/runtime-manifest.txt"
+      - name: Build the immutable ARM64 worker image for this exact profile
+        env:
+          PROFILE_ID: ${{ matrix.id }}
+          BCFTOOLS_VERSION: ${{ matrix.bcftools_version }}
+          HTSLIB_VERSION: ${{ matrix.htslib_version }}
+          WORKER_QUEUE: ${{ matrix.worker_queue }}
+          BUILDER_IMAGE: mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3
+          RUNTIME_IMAGE: python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30
+        run: |
+          set -euo pipefail
+          image="siraloom/bcftools-arm64:$PROFILE_ID"
+          docker buildx build --platform linux/arm64 --load \
+            --build-arg BCFTOOLS_BUILD_LOCK_FILE=configs/bioinformatics/profiles/bcftools-arm64-candidate.lock \
+            --build-arg BCFTOOLS_PROFILE_ID="$PROFILE_ID" \
+            --build-arg BCFTOOLS_VERSION="$BCFTOOLS_VERSION" \
+            --build-arg HTSLIB_VERSION="$HTSLIB_VERSION" \
+            --build-arg BCFTOOLS_WORKER_QUEUE="$WORKER_QUEUE" \
+            --build-arg BCFTOOLS_PLATFORM=linux-aarch64 \
+            --build-arg BCFTOOLS_BUILDER_IMAGE="$BUILDER_IMAGE" \
+            --build-arg BCFTOOLS_BASE_IMAGE="$RUNTIME_IMAGE" \
+            --file docker/backend-bcftools-source.Dockerfile \
+            --tag "$image" .
+          test "$(docker run --rm --platform linux/arm64 --entrypoint bcftools "$image" --version | sed -n '1p')" = "bcftools $BCFTOOLS_VERSION"
+          test "$(docker run --rm --platform linux/arm64 --entrypoint bcftools "$image" --version | sed -n '2p')" = "Using htslib $HTSLIB_VERSION"
+          test "$(docker run --rm --platform linux/arm64 --entrypoint sh "$image" -c 'id -u')" = "10001"
+          docker run --rm --platform linux/arm64 --entrypoint sh "$image" -c '
+            set -eu
+            work=$(mktemp -d)
+            trap "rm -rf \"$work\"" EXIT
+            printf ">chr1\\nAAAAAAAAAACCCCCCCCCCGGGGGGGGGGTTTTTTTTTT\\n" > "$work/ref.fa"
+            bcftools faidx "$work/ref.fa"
+            printf "##fileformat=VCFv4.2\\n##contig=<ID=chr1,length=40>\\n#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\nchr1\\t11\\t.\\tC\\tCA,CAA\\t50\\tPASS\\t.\\n" > "$work/input.vcf"
+            bcftools norm -f "$work/ref.fa" -m -any -Oz -o "$work/output.vcf.gz" "$work/input.vcf"
+            bcftools index --csi "$work/output.vcf.gz"
+            test "$(bcftools view -H "$work/output.vcf.gz" | wc -l)" -eq 2
+            test -s "$work/output.vcf.gz.csi"
+          '
+          printf "container_image_qualification=passed\\nimage=%s\\n" "$image" >> "$RUNNER_TEMP/arm64-profile-output/qualification.txt"
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ${{ matrix.id }}-linux-aarch64-profile-candidate
           path: ${{ runner.temp }}/arm64-profile-output/
