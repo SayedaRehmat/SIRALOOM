@@ -104,11 +104,9 @@ def build_inheritance_review_context(
         gaps.add("BIOLOGICAL_RELATEDNESS_REQUIRES_INDEPENDENT_REVIEW")
     else:
         gaps.add("BIOLOGICAL_RELATEDNESS_NOT_INDEPENDENTLY_ESTABLISHED")
-    if family_matrix.get("callability_status") != "NOT_ASSESSED; REQUIRES_LAB_QC_POLICY":
+    if family_matrix.get("callability_status") != "ASSESSED":
         gaps.add("LAB_APPROVED_CALLABILITY_POLICY_NOT_APPLIED")
-    if family_matrix.get("ploidy_status") != "PROVENANCE_ONLY; LOCUS_SPECIFIC_POLICY_NOT_APPLIED":
-        gaps.add("LOCUS_SPECIFIC_PLOIDY_POLICY_NOT_APPLIED")
-    else:
+    if family_matrix.get("ploidy_status") != "QUALIFIED_FOR_LOCUS":
         gaps.add("LOCUS_SPECIFIC_PLOIDY_POLICY_NOT_APPLIED")
 
     sample_manifest = []
