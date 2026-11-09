@@ -4335,6 +4335,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 g2p_request_fingerprint = None
                 g2p_response_sha256 = None
                 validity_assertions: list[Any] = []
+                validity_query_error = None
                 validity_request_fingerprint = None
                 validity_response_sha256 = None
                 gene_disease_reconciliations_by_symbol: dict[str, dict[str, Any]] = {}
