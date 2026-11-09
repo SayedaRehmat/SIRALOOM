@@ -144,3 +144,25 @@ def test_unrecognized_clingen_moi_is_preserved_as_unmapped_not_as_agreement():
     assert inheritance.status == DimensionStatus.UNMAPPED
     assert inheritance.clingen_unmapped_values == ("X-linked inheritance",)
     assert "SOURCE_DIMENSION_UNMAPPED" in reconciled.review_reasons
+
+
+
+def test_g2p_native_hgnc_id_does_not_bypass_qualified_resource_gate():
+    model = _g2p_model()
+    model.hgnc_id = "HGNC:1"
+    assertions = build_gene_disease_source_assertions(
+        g2p_models=[model],
+        clingen_assertions=[],
+        g2p_resource_id="g2p",
+        g2p_resource_name="G2P",
+        g2p_resource_version="2026-11-08",
+        g2p_resource_sha256="e" * 64,
+        clingen_resource_id=None,
+        clingen_resource_name=None,
+        clingen_resource_version=None,
+        clingen_resource_sha256=None,
+        hgnc_resolver=None,
+    )
+    assert assertions[0].hgnc_id is None
+    assert assertions[0].gene_identifier_resolution["status"] == "NOT_CONFIGURED"
+    assert assertions[0].gene_identifier_resolution["source_native_hgnc_id"] == "HGNC:1"
