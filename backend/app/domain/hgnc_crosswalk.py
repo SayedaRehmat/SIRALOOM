@@ -75,7 +75,7 @@ def _split(value: str | None) -> tuple[str, ...]:
 
 def _normalize_header(value: str) -> str:
     normalized = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
-    if normalized == "merged_into_report_s":
+    if normalized in {"merged_into_report_s", "merged_into_reports", "merged_into_report"}:
         return "merged_into_report"
     return normalized
 
@@ -216,6 +216,7 @@ class HGNCResolver:
             raise HGNCResourceError(
                 "withdrawn schema missing columns: "
                 + ", ".join(sorted(required_withdrawn_fields - set(withdrawn_fields)))
+                + f"; observed columns: {sorted(withdrawn_fields)}"
             )
         self._approved: dict[str, dict[str, str]] = {}
         self._approved_symbols: dict[str, set[str]] = {}
