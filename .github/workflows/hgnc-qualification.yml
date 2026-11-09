@@ -39,7 +39,13 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install qualification runtime dependency
-        run: python -m pip install "SQLAlchemy>=2.0,<3" "psycopg[binary]>=3.2,<4"
+        run: python -m pip install "SQLAlchemy==2.1.8" "psycopg[binary]==3.3.8" "pytest==8.4.2"
+      - name: Run deterministic HGNC resolver and resource lifecycle tests
+        run: >-
+          python -m pytest -q
+          tests/test_hgnc_crosswalk.py
+          tests/test_hgnc_resource_qualification.py
+          tests/test_hgnc_resource_registration.py
       - name: Acquire exact official HGNC quarterly release
         run: |
           python -m backend.app.domain.hgnc_crosswalk acquire \
@@ -115,6 +121,61 @@ jobs:
           assert split_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
           assert split_result.hgnc_id is None
 
+          approved_symbols = set(resolver._approved_symbols)
+          previous_symbols = set(resolver._previous)
+          unique_aliases = sorted(
+              alias for alias, ids in resolver._alias_index.items()
+              if len(ids) == 1 and alias not in approved_symbols and alias not in previous_symbols
+          )
+          assert unique_aliases, "real HGNC release contained no unambiguous alias test case"
+          alias_result = resolver.resolve(unique_aliases[0])
+          assert alias_result.status == HGNCResolutionStatus.ALIAS_SYMBOL
+          assert alias_result.hgnc_id is not None
+
+          unique_previous = sorted(
+              symbol for symbol, ids in resolver._previous.items()
+              if len(ids) == 1 and symbol not in approved_symbols
+              and symbol not in resolver._alias_index and symbol not in resolver._withdrawn
+          )
+          assert unique_previous, "real HGNC release contained no unambiguous previous-symbol test case"
+          previous_result = resolver.resolve(unique_previous[0])
+          assert previous_result.status == HGNCResolutionStatus.PREVIOUS_SYMBOL
+          assert previous_result.hgnc_id is not None
+
+          merged_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if all(status.casefold() == "merged/split" for status, _ in records)
+              and len({
+                  target[0] for _status, targets in records for target in targets
+                  if target[0] in resolver._approved
+              }) == 1
+          )
+          assert merged_accessions, "real HGNC release contained no single-target withdrawn accession"
+          merged_accession_result = resolver.resolve(merged_accessions[0])
+          assert merged_accession_result.status == HGNCResolutionStatus.WITHDRAWN_MERGED
+          assert merged_accession_result.hgnc_id is not None
+
+          entry_withdrawn_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if any(status.casefold() == "entry withdrawn" for status, _ in records)
+          )
+          assert entry_withdrawn_accessions, "real HGNC release contained no entry-withdrawn accession"
+          entry_withdrawn_result = resolver.resolve(entry_withdrawn_accessions[0])
+          assert entry_withdrawn_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert entry_withdrawn_result.hgnc_id is None
+
+          split_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if len({
+                  target[0] for _status, targets in records for target in targets
+                  if target[0] in resolver._approved
+              }) > 1
+          )
+          assert split_accessions, "real HGNC release contained no split withdrawn accession"
+          split_accession_result = resolver.resolve(split_accessions[0])
+          assert split_accession_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert split_accession_result.hgnc_id is None
+
           engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
           Base.metadata.create_all(
               engine,
@@ -154,7 +215,12 @@ jobs:
               "withdrawn_symbol_count": len(resolver._withdrawn),
               "known_answer_count": len(known_answers),
               "ambiguous_alias_test": ambiguous_result.normalized_identifier,
+              "unique_alias_test": alias_result.normalized_identifier,
+              "previous_symbol_test": previous_result.normalized_identifier,
               "split_withdrawn_symbol_test": split_result.normalized_identifier,
+              "withdrawn_merged_accession_test": merged_accession_result.normalized_identifier,
+              "entry_withdrawn_accession_test": entry_withdrawn_result.normalized_identifier,
+              "split_withdrawn_accession_test": split_accession_result.normalized_identifier,
               "resource_id": str(resource.id),
               "staging_id": str(staging.id),
               "qualification_id": str(persisted_qualification.id),
