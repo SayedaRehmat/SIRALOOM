@@ -79,7 +79,9 @@ jobs:
           # Bootstrap the cpanminus application into the custom Perl prefix.
           # Ubuntu's /usr/bin/cpanm is tied to the system Perl and cannot be
           # executed by the isolated Perl 5.38.5 interpreter.
-          sudo env "PATH=$PERL_PREFIX/bin:$PATH" cpanm --local-lib-contained="$PERL_PREFIX" --notest App::cpanminus@1.7048
+          # Install as the runner user: sudo would create root-owned files in
+          # the runner-owned Perl prefix and make subsequent module installs fail.
+          /usr/bin/cpanm --local-lib-contained="$PERL_PREFIX" --notest App::cpanminus@1.7048
           test -x "$PERL_PREFIX/bin/cpanm"
           export PERL5LIB="$PERL_PREFIX/lib/perl5${PERL5LIB:+:$PERL5LIB}"
           echo "PERL5LIB=$PERL5LIB" >> "$GITHUB_ENV"
