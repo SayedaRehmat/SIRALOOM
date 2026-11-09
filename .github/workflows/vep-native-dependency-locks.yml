@@ -83,13 +83,14 @@ jobs:
           test -x "$PERL_PREFIX/bin/cpanm"
           export PERL5LIB="$PERL_PREFIX/lib/perl5${PERL5LIB:+:$PERL5LIB}"
           echo "PERL5LIB=$PERL5LIB" >> "$GITHUB_ENV"
-          "$PERL_PREFIX/bin/perl" "$PERL_PREFIX/bin/cpanm" --notest Carton@1.0.35
-          carton --version
+          "$PERL_PREFIX/bin/perl" "$PERL_PREFIX/bin/cpanm" --local-lib-contained="$PERL_PREFIX" --notest Carton@1.0.35
+          test -x "$PERL_PREFIX/bin/carton"
+          "$PERL_PREFIX/bin/carton" --version
           mkdir -p "$RUNNER_TEMP/vep-carton"
           cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
           cd "$RUNNER_TEMP/vep-carton"
-          carton install
-          carton bundle
+          "$PERL_PREFIX/bin/carton" install
+          "$PERL_PREFIX/bin/carton" bundle
           test -s cpanfile.snapshot
           test -d vendor/cache
           test "$(find vendor/cache -maxdepth 1 -type f | wc -l)" -gt 0
@@ -102,7 +103,7 @@ jobs:
           export PATH="$PERL_PREFIX/bin:$PATH"
           cd "$RUNNER_TEMP/vep-carton"
           rm -rf local
-          carton install --deployment --cached
+          "$PERL_PREFIX/bin/carton" install --deployment --cached
           test -d local
       - name: Emit architecture-specific lock with archive SHA-256 values
         shell: bash
