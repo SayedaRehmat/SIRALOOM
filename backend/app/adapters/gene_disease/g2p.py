@@ -97,6 +97,21 @@ def _normalize_mondo(value: str | None) -> str | None:
         raise G2PError(f"Unsupported G2P disease MONDO identifier: {text!r}")
     return f"MONDO:{match.group(1)}"
 
+def _normalize_hgnc_id(value: str | None) -> str | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    prefixed = re.fullmatch(r"HGNC:(\d+)", raw, flags=re.IGNORECASE)
+    if prefixed:
+        accession = int(prefixed.group(1))
+    elif raw.isdecimal():
+        accession = int(raw)
+    else:
+        raise G2PError(f"Unsupported G2P HGNC identifier: {raw!r}")
+    if accession <= 0:
+        raise G2PError(f"Unsupported G2P HGNC identifier: {raw!r}")
+    return f"HGNC:{accession}"
+
 
 class G2PProvider:
     provider_id = "Gene2Phenotype"
@@ -181,10 +196,10 @@ class G2PProvider:
                     gene = raw.get(columns.get("gene_symbol", ""), "").upper()
                     if not gene:
                         raise G2PError(f"G2P row {line_number} is missing gene symbol")
-                    hgnc_id = raw.get(columns.get("hgnc_id", ""), "").strip() or None
-                    if hgnc_id and not re.fullmatch(r"HGNC:\d+", hgnc_id, flags=re.IGNORECASE):
-                        raise G2PError(f"G2P row {line_number} contains an invalid HGNC identifier: {hgnc_id!r}")
-                    hgnc_id = hgnc_id.upper() if hgnc_id else None
+                    try:
+                        hgnc_id = _normalize_hgnc_id(raw.get(columns.get("hgnc_id", ""), ""))
+                    except G2PError as exc:
+                        raise G2PError(f"G2P row {line_number} contains an invalid HGNC identifier: {exc}") from exc
                     g2p_id = raw.get(columns.get("g2p_id", ""), "")
                     if not g2p_id:
                         raise G2PError(f"G2P row {line_number} is missing stable G2P ID")
