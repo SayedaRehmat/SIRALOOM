@@ -207,6 +207,18 @@ def prioritize_disease_context(
                     matched.append(record)
         matched_patient_terms = sorted({item["patient_hpo_id"] for item in matched})
         for association in disease_associations:
+            raw_inheritance_conflict = association.get("inheritance_mode_conflict")
+            inheritance_conflict = (
+                True if raw_inheritance_conflict is True
+                else False if raw_inheritance_conflict is False
+                else None
+            )
+            if inheritance_conflict is True:
+                inheritance_qualification_status = "REQUIRES_REVIEW_FOR_SOURCE_CONFLICT"
+            elif inheritance_conflict is False:
+                inheritance_qualification_status = "REQUIRES_INDEPENDENT_QUALIFICATION"
+            else:
+                inheritance_qualification_status = "REQUIRES_REVIEW_FOR_UNMAPPED_OR_INCOMPLETE_SOURCE_EVIDENCE"
             candidates.append({
                 "gene": association["_normalized_gene"],
                 "disease_id": disease_id,
@@ -221,7 +233,7 @@ def prioritize_disease_context(
                 "inheritance": {
                     "modes": sorted({str(mode).strip().upper() for mode in association["inheritance_modes"]}),
                     "mode_sources": association.get("inheritance_mode_sources") or {},
-                    "mode_conflict": bool(association.get("inheritance_mode_conflict")),
+                    "mode_conflict": inheritance_conflict,
                     "penetrance": dict(association["penetrance"]),
                     "penetrance_provenance": {
                         "status": "NOT_RECORDED",
@@ -233,11 +245,7 @@ def prioritize_disease_context(
                             else None
                         ),
                     },
-                    "qualification_status": (
-                        "REQUIRES_REVIEW_FOR_SOURCE_CONFLICT"
-                        if association.get("inheritance_mode_conflict")
-                        else "REQUIRES_INDEPENDENT_QUALIFICATION"
-                    ),
+                    "qualification_status": inheritance_qualification_status,
                 },
                 "matched_patient_term_count": len(matched_patient_terms),
                 "matched_terms": matched,
