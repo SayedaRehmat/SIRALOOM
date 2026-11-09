@@ -82,3 +82,86 @@ def test_clingen_execution_contract_uses_registered_resource_release(tmp_path):
         expected_sha256=digest,
     )
     assert provider.query_gene(gene="GENE1")[0].classification == "Definitive"
+
+
+
+def test_clingen_rejects_malformed_mondo_and_hgnc_identifiers(tmp_path):
+    malformed_mondo = _write_export(tmp_path / "bad-mondo.csv")
+    malformed_mondo.write_text(
+        malformed_mondo.read_text(encoding="utf-8").replace("MONDO_0000001", "MONDO:1"),
+        encoding="utf-8",
+    )
+    mondo_provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(malformed_mondo),
+        expected_sha256=hashlib.sha256(malformed_mondo.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    with pytest.raises(ClinGenGeneDiseaseValidityError, match="invalid MONDO"):
+        mondo_provider.query_gene(gene="GENE1")
+
+    malformed_hgnc = _write_export(tmp_path / "bad-hgnc.csv")
+    malformed_hgnc.write_text(
+        malformed_hgnc.read_text(encoding="utf-8").replace("HGNC:1", "HGNC:abc"),
+        encoding="utf-8",
+    )
+    hgnc_provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(malformed_hgnc),
+        expected_sha256=hashlib.sha256(malformed_hgnc.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    with pytest.raises(ClinGenGeneDiseaseValidityError, match="invalid HGNC"):
+        hgnc_provider.query_gene(gene="GENE1")
+
+
+def test_clingen_rejects_duplicate_headers_and_unexpected_columns(tmp_path):
+    duplicate_header = _write_export(tmp_path / "duplicate-header.csv")
+    duplicate_header.write_text(
+        duplicate_header.read_text(encoding="utf-8").replace(
+            "GENE SYMBOL,GENE ID (HGNC),",
+            "GENE SYMBOL,GENE SYMBOL,GENE ID (HGNC),",
+        ),
+        encoding="utf-8",
+    )
+    duplicate_provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(duplicate_header),
+        expected_sha256=hashlib.sha256(duplicate_header.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    with pytest.raises(ClinGenGeneDiseaseValidityError, match="duplicate headers"):
+        duplicate_provider.query_gene(gene="GENE1")
+
+    extra_column = _write_export(tmp_path / "extra-column.csv")
+    extra_column.write_text(
+        extra_column.read_text(encoding="utf-8").replace(
+            "Expert Panel,Autosomal recessive inheritance",
+            "Expert Panel,Autosomal recessive inheritance,UNEXPECTED",
+        ),
+        encoding="utf-8",
+    )
+    extra_provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(extra_column),
+        expected_sha256=hashlib.sha256(extra_column.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    with pytest.raises(ClinGenGeneDiseaseValidityError, match="unexpected extra columns"):
+        extra_provider.query_gene(gene="GENE1")
+
+
+def test_clingen_fallback_record_ids_include_row_digest(tmp_path):
+    path = tmp_path / "clingen-multiple.csv"
+    path.write_text(
+        "CLINGEN GENE VALIDITY CURATIONS\n"
+        "FILE CREATED: 2026-11-08\n"
+        "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\n"
+        "GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Definitive,,2026-11-08,Expert Panel,Autosomal recessive inheritance\n"
+        "GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Strong,,2026-11-08,Expert Panel,Autosomal recessive inheritance\n",
+        encoding="utf-8",
+    )
+    provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(path),
+        expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    assertions = provider.query_gene(gene="GENE1")
+    assert len(assertions) == 2
+    assert len({item.source_record_id for item in assertions}) == 2
