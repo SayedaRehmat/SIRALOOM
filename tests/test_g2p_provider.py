@@ -185,7 +185,7 @@ def test_g2p_rejects_duplicate_headers_extra_columns_and_missing_hgnc_column(tmp
     extra.write_text(
         HEADER
         + "G2P00123,GENE1,HGNC:1,Example disorder,MONDO:0000001,biallelic_autosomal,"
-        "loss of function,definitive,PMID:123,,,,,UNEXPECTED\n",
+        "loss of function,definitive,PMID:123,,,,,,UNEXPECTED\n",
         encoding="utf-8",
     )
     with pytest.raises(G2PError, match="extra columns"):
