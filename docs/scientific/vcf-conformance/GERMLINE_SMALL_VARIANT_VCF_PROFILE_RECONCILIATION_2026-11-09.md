@@ -176,6 +176,26 @@ The current PSO/BND implementation and regression tests are retained. The last r
 - **Disposition:** SOURCE_CAPTURE_BLOCKED
 - **Next action:** Capture immutable authoritative bytes/revision and retrieval metadata, independently compute SHA-256, and keep the separate 1000 Genomes SV convention source distinct.
 
+## 6.1 Full VCFv4.5 source-gap candidate triage
+
+The existing VCFv4.5 source-to-ledger gap register contains **94 source-line candidates**. All 94 are now explicitly triaged against both Phase 1 profiles, while preserving the original source text, surrounding context, primary disposition and traceability disposition.
+
+| Source-gap register class | Candidate lines |
+|---|---:|
+| Potential normative or mixed obligation | 50 |
+| Recommendation, permission or implementation guidance | 37 |
+| Informative or explanatory context | 6 |
+| Ambiguous scope | 1 |
+| **Total** | **94** |
+
+The profile-scope triage is 39 CORE_REQUIRED, 22 CONDITIONAL_INPUT, 27 OUT_OF_SCOPE_EXPLICIT_REJECTION and 6 NOT_APPLICABLE candidates in each profile. These are candidate-level scope dispositions, not 94 newly approved requirements.
+
+I independently reran the exact-locator overlap test against the current canonical ledger blob `81d27c5b306f120c45d1d5347b931f8ceaf1f47c`: **0 of 94 candidates have an exact source-locator overlap**. The original gap register was generated against older ledger blob `ba7d1bb0544f5d1105a4bd62f757decae13caee8`; the current-ledger recheck is now recorded separately in the overlay and enforced by the validator.
+
+Exact-locator non-overlap does **not** prove semantic non-coverage. Each candidate still requires full-context adjudication to decide whether it maps to an existing requirement, needs a new atomic requirement, is recommendation/permission guidance, or is informative and should be excluded with rationale.
+
+One concrete modality conflict is flagged: `VCFv4.5:L1187` says positions **must** be sorted in increasing order, while the old gap register labels the line `INFORMATIVE_EXAMPLE`. The VCFv4.3 version-delta crosswalk also records an explicit MUST sorting rule. This must be corrected through source-context review, not inherited from the old classification.
+
 ## 7. Provenance consistency issue
 
 The current canonical ledger blob is `81d27c5b306f120c45d1d5347b931f8ceaf1f47c` and records 26 code mappings plus 26 executed-test mappings. Two downstream VCFv4.5 author artifacts still refer to older canonical ledger blob `ba7d1bb0544f5d1105a4bd62f757decae13caee8`, whose snapshot records zero code/test mappings:
