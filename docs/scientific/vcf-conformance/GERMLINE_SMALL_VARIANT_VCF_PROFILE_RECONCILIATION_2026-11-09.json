@@ -11802,14 +11802,14 @@
     },
     "candidate_disposition_counts": {
       "GERMLINE_VARIANT_VCF": {
-        "CORE_REQUIRED": 41,
-        "CONDITIONAL_INPUT": 20,
+        "CORE_REQUIRED": 39,
+        "CONDITIONAL_INPUT": 22,
         "NOT_APPLICABLE": 6,
         "OUT_OF_SCOPE_EXPLICIT_REJECTION": 27
       },
       "GERMLINE_GVCF": {
-        "CORE_REQUIRED": 41,
-        "CONDITIONAL_INPUT": 20,
+        "CORE_REQUIRED": 39,
+        "CONDITIONAL_INPUT": 22,
         "NOT_APPLICABLE": 6,
         "OUT_OF_SCOPE_EXPLICIT_REJECTION": 27
       }
@@ -11856,7 +11856,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0104",
@@ -11897,7 +11900,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0105",
@@ -11938,7 +11944,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0107",
@@ -11979,7 +11988,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0119",
@@ -12020,7 +12032,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0120",
@@ -12061,7 +12076,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0125",
@@ -12102,7 +12120,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0126",
@@ -12143,7 +12164,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0127",
@@ -12184,7 +12208,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0129",
@@ -12225,7 +12252,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0130",
@@ -12266,7 +12296,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0132",
@@ -12307,7 +12340,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0133",
@@ -12348,7 +12384,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0135",
@@ -12389,7 +12428,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0136",
@@ -12430,7 +12472,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0138",
@@ -12471,7 +12516,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0151",
@@ -12512,7 +12560,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0159",
@@ -12553,7 +12604,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0164",
@@ -12594,7 +12648,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0166",
@@ -12635,7 +12692,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0168",
@@ -12676,7 +12736,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0172",
@@ -12717,7 +12780,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0173",
@@ -12758,7 +12824,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0174",
@@ -12799,7 +12868,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0175",
@@ -12840,7 +12912,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0178",
@@ -12881,7 +12956,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0185",
@@ -12922,7 +13000,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0258",
@@ -12949,21 +13030,24 @@
       "candidate_treatment": "NORMATIVE_OR_MIXED_CANDIDATE_REQUIRES_SOURCE_TO_REQUIREMENT_ADJUDICATION",
       "profile_dispositions": {
         "GERMLINE_VARIANT_VCF": {
-          "scope_disposition": "CORE_REQUIRED",
-          "rationale": "This source candidate describes a base VCF lexical, header, fixed-column, allele, ordering, INFO or FORMAT contract needed for correct Phase 1 parsing; exact source-to-atomic mapping remains to be adjudicated.",
-          "runtime_action": "IMPLEMENT_AND_STRICTLY_VALIDATE_IF_SOURCE_MODALITY_CONFIRMED"
+          "scope_disposition": "CONDITIONAL_INPUT",
+          "rationale": "Symbolic structural-variant allele ID grammar is conditional on encountering a symbolic SV allele. Parse and validate the symbolic token sufficiently to identify and route it; do not process its structural-variant semantics in Phase 1.",
+          "runtime_action": "VALIDATE_SYMBOLIC_ID_GRAMMAR_IF_PRESENT; PRESERVE_RECORD; ROUTE_STRUCTURAL_VARIANT_OUT_OF_PHASE1_INTERPRETATION"
         },
         "GERMLINE_GVCF": {
-          "scope_disposition": "CORE_REQUIRED",
-          "rationale": "This source candidate describes a base VCF lexical, header, fixed-column, allele, ordering, INFO or FORMAT contract needed for correct Phase 1 parsing; exact source-to-atomic mapping remains to be adjudicated.",
-          "runtime_action": "IMPLEMENT_AND_STRICTLY_VALIDATE_IF_SOURCE_MODALITY_CONFIRMED"
+          "scope_disposition": "CONDITIONAL_INPUT",
+          "rationale": "Symbolic structural-variant allele ID grammar is conditional on encountering a symbolic SV allele. Parse and validate the symbolic token sufficiently to identify and route it; do not process its structural-variant semantics in Phase 1.",
+          "runtime_action": "VALIDATE_SYMBOLIC_ID_GRAMMAR_IF_PRESENT; PRESERVE_RECORD; ROUTE_STRUCTURAL_VARIANT_OUT_OF_PHASE1_INTERPRETATION"
         }
       },
       "future_retention": {
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0259",
@@ -12990,21 +13074,24 @@
       "candidate_treatment": "NORMATIVE_OR_MIXED_CANDIDATE_REQUIRES_SOURCE_TO_REQUIREMENT_ADJUDICATION",
       "profile_dispositions": {
         "GERMLINE_VARIANT_VCF": {
-          "scope_disposition": "CORE_REQUIRED",
-          "rationale": "This source candidate describes a base VCF lexical, header, fixed-column, allele, ordering, INFO or FORMAT contract needed for correct Phase 1 parsing; exact source-to-atomic mapping remains to be adjudicated.",
-          "runtime_action": "IMPLEMENT_AND_STRICTLY_VALIDATE_IF_SOURCE_MODALITY_CONFIRMED"
+          "scope_disposition": "CONDITIONAL_INPUT",
+          "rationale": "Symbolic structural-variant allele ID grammar is conditional on encountering a symbolic SV allele. Parse and validate the symbolic token sufficiently to identify and route it; do not process its structural-variant semantics in Phase 1.",
+          "runtime_action": "VALIDATE_SYMBOLIC_ID_GRAMMAR_IF_PRESENT; PRESERVE_RECORD; ROUTE_STRUCTURAL_VARIANT_OUT_OF_PHASE1_INTERPRETATION"
         },
         "GERMLINE_GVCF": {
-          "scope_disposition": "CORE_REQUIRED",
-          "rationale": "This source candidate describes a base VCF lexical, header, fixed-column, allele, ordering, INFO or FORMAT contract needed for correct Phase 1 parsing; exact source-to-atomic mapping remains to be adjudicated.",
-          "runtime_action": "IMPLEMENT_AND_STRICTLY_VALIDATE_IF_SOURCE_MODALITY_CONFIRMED"
+          "scope_disposition": "CONDITIONAL_INPUT",
+          "rationale": "Symbolic structural-variant allele ID grammar is conditional on encountering a symbolic SV allele. Parse and validate the symbolic token sufficiently to identify and route it; do not process its structural-variant semantics in Phase 1.",
+          "runtime_action": "VALIDATE_SYMBOLIC_ID_GRAMMAR_IF_PRESENT; PRESERVE_RECORD; ROUTE_STRUCTURAL_VARIANT_OUT_OF_PHASE1_INTERPRETATION"
         }
       },
       "future_retention": {
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0265",
@@ -13045,7 +13132,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0268",
@@ -13086,7 +13176,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0272",
@@ -13127,7 +13220,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0292",
@@ -13168,7 +13264,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0301",
@@ -13209,7 +13308,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0302",
@@ -13250,7 +13352,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0322",
@@ -13291,7 +13396,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0329",
@@ -13332,7 +13440,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0391",
@@ -13373,7 +13484,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0392",
@@ -13414,7 +13528,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0397",
@@ -13455,7 +13572,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0399",
@@ -13496,7 +13616,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0400",
@@ -13537,7 +13660,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0401",
@@ -13578,7 +13704,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0403",
@@ -13619,7 +13748,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0406",
@@ -13660,7 +13792,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0407",
@@ -13701,7 +13836,10 @@
         "retain": true,
         "workstream": "GVCF_AND_OPTIONAL_SYMBOLIC_SEMANTICS",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0409",
@@ -13742,7 +13880,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0411",
@@ -13783,7 +13924,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0416",
@@ -13824,7 +13968,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0417",
@@ -13865,7 +14012,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0418",
@@ -13906,7 +14056,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0422",
@@ -13947,7 +14100,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0425",
@@ -13988,7 +14144,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0426",
@@ -14029,7 +14188,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0429",
@@ -14070,7 +14232,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0433",
@@ -14111,7 +14276,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0435",
@@ -14152,7 +14320,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0437",
@@ -14193,7 +14364,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0439",
@@ -14234,7 +14408,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0488",
@@ -14275,7 +14452,10 @@
         "retain": true,
         "workstream": "GVCF_AND_OPTIONAL_SYMBOLIC_SEMANTICS",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0502",
@@ -14316,7 +14496,10 @@
         "retain": true,
         "workstream": "GVCF_AND_OPTIONAL_SYMBOLIC_SEMANTICS",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0609",
@@ -14357,7 +14540,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0627",
@@ -14398,7 +14584,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0713",
@@ -14439,7 +14628,10 @@
         "retain": true,
         "workstream": "BCF_API_COMPATIBILITY",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0715",
@@ -14480,7 +14672,10 @@
         "retain": true,
         "workstream": "BCF_API_COMPATIBILITY",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0726",
@@ -14521,7 +14716,10 @@
         "retain": true,
         "workstream": "BASE_MODIFICATION",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0770",
@@ -14562,7 +14760,10 @@
         "retain": true,
         "workstream": "PHASING_METADATA",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0825",
@@ -14603,7 +14804,10 @@
         "retain": true,
         "workstream": "PHASE1_VCF_CORE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L0845",
@@ -14644,7 +14848,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1187",
@@ -14685,7 +14892,15 @@
         "retain": true,
         "workstream": "SMALL_VARIANT_RECORD_ORDERING",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ],
+      "related_version_delta": [
+        "VCFv4.3",
+        "VCFv4.4",
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1487",
@@ -14726,7 +14941,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1623",
@@ -14767,7 +14985,10 @@
         "retain": true,
         "workstream": "STRUCTURAL_VARIANT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1732",
@@ -14808,7 +15029,10 @@
         "retain": true,
         "workstream": "PEDIGREE_HAPLOTYPE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1783",
@@ -14849,7 +15073,10 @@
         "retain": true,
         "workstream": "PEDIGREE_HAPLOTYPE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1784",
@@ -14890,7 +15117,10 @@
         "retain": true,
         "workstream": "PEDIGREE_HAPLOTYPE",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1889",
@@ -14931,7 +15161,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1899",
@@ -14972,7 +15205,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1900",
@@ -15013,7 +15249,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1901",
@@ -15054,7 +15293,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1903",
@@ -15095,7 +15337,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1914",
@@ -15136,7 +15381,10 @@
         "retain": true,
         "workstream": "CNV",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1946",
@@ -15177,7 +15425,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1982",
@@ -15218,7 +15469,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1983",
@@ -15259,7 +15513,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1985",
@@ -15300,7 +15557,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1986",
@@ -15341,7 +15601,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1987",
@@ -15382,7 +15645,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1988",
@@ -15423,7 +15689,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1989",
@@ -15464,7 +15733,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1994",
@@ -15505,7 +15777,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1995",
@@ -15546,7 +15821,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1996",
@@ -15587,7 +15865,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L1998",
@@ -15628,7 +15909,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     },
     {
       "candidate_id": "VCFv4.5:L2027",
@@ -15669,7 +15953,10 @@
         "retain": true,
         "workstream": "TANDEM_REPEAT",
         "source_asset": "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
-      }
+      },
+      "source_version_applicability": [
+        "VCFv4.5"
+      ]
     }
   ]
 }
