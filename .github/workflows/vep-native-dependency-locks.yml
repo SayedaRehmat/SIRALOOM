@@ -1,0 +1,141 @@
+name: VEP native dependency lock generation
+
+on:
+  pull_request:
+    paths:
+      - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
+      - "scripts/generate_vep_dependency_lock.py"
+      - ".github/workflows/vep-native-dependency-locks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vep-native-locks-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: Resolve and reproduce VEP dependencies (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: x86_64
+            runner: ubuntu-24.04
+          - architecture: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          init-shell: bash
+          cache-environment: false
+      - name: Resolve native Perl and compiled runtime prerequisites
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          micromamba create -y -n vep-lock -c conda-forge --strict-channel-priority \\
+            "perl=5.38" cpanminus htslib mariadb-connector-c \\
+            c-compiler cxx-compiler make pkg-config zlib bzip2 xz openssl libcurl
+          micromamba activate vep-lock
+          test "$(perl -e 'print $^V')" != ""
+          test "$(uname -m)" = "${{ matrix.architecture }}"
+          mkdir -p "$RUNNER_TEMP/vep-lock-output" "$RUNNER_TEMP/cpan-dists"
+          micromamba env export --explicit -n vep-lock > "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock"
+          grep -q '^@EXPLICIT$' "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock"
+      - name: Resolve combined Ensembl runtime dependencies
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          micromamba activate vep-lock
+          cpanm --notest Carton
+          mkdir -p "$RUNNER_TEMP/vep-carton"
+          cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
+          cd "$RUNNER_TEMP/vep-carton"
+          carton install
+          carton bundle
+          test -s cpanfile.snapshot
+          test -d vendor/cache
+          test "$(find vendor/cache -maxdepth 1 -type f | wc -l)" -gt 0
+          cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
+          cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
+      - name: Verify clean offline reinstall from the resolved snapshot and archives
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          micromamba activate vep-lock
+          cd "$RUNNER_TEMP/vep-carton"
+          rm -rf local
+          carton install --deployment --cached
+          test -d local
+      - name: Emit architecture-specific lock with archive SHA-256 values
+        shell: bash -el {0}
+        run: |
+          set -euo pipefail
+          python scripts/generate_vep_dependency_lock.py \\
+            --architecture "${{ matrix.architecture }}" \\
+            --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile \\
+            --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" \\
+            --conda-lock "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock" \\
+            --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" \\
+            --output "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json"
+          cp "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vep-dependency-lock-${{ matrix.architecture }}
+          path: vep-115.2-${{ matrix.architecture }}.lock.json
+          if-no-files-found: error
+          retention-days: 30
+
+  commit-locks:
+    name: Commit both native dependency locks
+    needs: resolve
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vep-dependency-lock-*
+          path: generated-vep-locks
+          merge-multiple: true
+      - name: Verify both locks and commit
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          test -s generated-vep-locks/vep-115.2-x86_64.lock.json
+          test -s generated-vep-locks/vep-115.2-aarch64.lock.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          expected = {
+              "vep-115.2-x86_64.lock.json": "x86_64",
+              "vep-115.2-aarch64.lock.json": "aarch64",
+          }
+          for filename, arch in expected.items():
+              data = json.loads((Path("generated-vep-locks") / filename).read_text())
+              assert data["schema"] == "siraloom.vep-dependency-lock.v1"
+              assert data["architecture"] == arch
+              assert data["qualification_status"] == "CANDIDATE"
+              assert data["archive_count"] > 0
+          PY
+          mkdir -p configs/bioinformatics/profiles
+          cp generated-vep-locks/*.json configs/bioinformatics/profiles/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add configs/bioinformatics/profiles/vep-115.2-*.lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency locks already match the generated native results."
+          else
+            git commit -m "build: generate native VEP dependency locks"
+            git push origin "HEAD:$TARGET_BRANCH"
+          fi
