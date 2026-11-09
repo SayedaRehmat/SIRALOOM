@@ -5058,36 +5058,16 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")
                         if gene:
                             variant_gene = str(gene).strip().upper()
-                            variant_g2p_models = [
-                                model for model in g2p_models
-                                if model.gene_symbol.strip().upper() == variant_gene
-                            ] if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None else []
-                            variant_clingen_assertions = (
-                                clingen_gdv_assertions_by_gene.get(variant_gene, ())
-                                if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None
-                                else ()
+                            variant_reconciliations = tuple(
+                                gene_disease_reconciliations_by_symbol.get(variant_gene, {})[key]
+                                for key in sorted(
+                                    gene_disease_reconciliations_by_symbol.get(variant_gene, {})
+                                )
                             )
-                            source_assertions = build_gene_disease_source_assertions(
-                                g2p_models=variant_g2p_models,
-                                clingen_assertions=variant_clingen_assertions,
-                                g2p_resource_id=str(g2p_execution.resource_id) if g2p_execution else None,
-                                g2p_resource_name=g2p_resource.name if g2p_resource else None,
-                                g2p_resource_version=str(g2p_execution.resource_version) if g2p_execution else None,
-                                g2p_resource_sha256=g2p_provider.sha256 if g2p_provider else None,
-                                clingen_resource_id=str(clingen_gdv_execution.resource_id) if clingen_gdv_execution else None,
-                                clingen_resource_name=clingen_gdv_resource.name if clingen_gdv_resource else None,
-                                clingen_resource_version=str(clingen_gdv_execution.resource_version) if clingen_gdv_execution else None,
-                                clingen_resource_sha256=clingen_gdv_provider.sha256 if clingen_gdv_provider else None,
-                                g2p_request_fingerprint=g2p_request_fingerprint if g2p_provider else None,
-                                g2p_response_sha256=g2p_response_sha256 if g2p_provider else None,
-                                clingen_request_fingerprint=validity_request_fingerprint if clingen_gdv_provider else None,
-                                clingen_response_sha256=validity_response_sha256 if clingen_gdv_provider else None,
-                            )
-                            if source_assertions:
-                                reconciliations = reconcile_gene_disease_assertions(source_assertions)
+                            if variant_reconciliations:
                                 records.extend(engine.build_from_gene_disease_reconciliations(
                                     variant_id=row.id,
-                                    reconciliations=reconciliations,
+                                    reconciliations=variant_reconciliations,
                                 ))
                         hgvs_values: list[str] = []
                         for consequence in normalized.get("hgvs_consequences") or []:
