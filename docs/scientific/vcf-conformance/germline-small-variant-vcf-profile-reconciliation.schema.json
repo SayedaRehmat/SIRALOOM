@@ -19,7 +19,9 @@
     "source_gap_candidates",
     "preserved_future_workstreams",
     "limitations",
-    "release_decision"
+    "release_decision",
+    "source_gap_register_reconciliation",
+    "source_candidate_profile_triage"
   ],
   "properties": {
     "schema_version": {
@@ -421,6 +423,213 @@
     },
     "release_decision": {
       "const": "NOT_READY_FOR_LABORATORY_QUALIFICATION"
+    },
+    "source_gap_register_reconciliation": {
+      "type": "object",
+      "required": [
+        "source_gap_register_path",
+        "source_gap_register_blob_sha",
+        "source_file",
+        "source_revision",
+        "source_sha256",
+        "historical_canonical_ledger_blob_sha",
+        "current_canonical_ledger_blob_sha",
+        "exact_locator_recheck_against_current_ledger",
+        "original_register_counts",
+        "candidate_disposition_counts",
+        "status"
+      ],
+      "properties": {
+        "source_gap_register_path": {
+          "type": "string"
+        },
+        "source_gap_register_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "source_file": {
+          "type": "string"
+        },
+        "source_revision": {
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "historical_canonical_ledger_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "current_canonical_ledger_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "exact_locator_recheck_against_current_ledger": {
+          "type": "object",
+          "required": [
+            "candidate_lines",
+            "exact_locator_overlap",
+            "no_exact_locator_overlap",
+            "method"
+          ],
+          "properties": {
+            "candidate_lines": {
+              "const": 94
+            },
+            "exact_locator_overlap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "no_exact_locator_overlap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "method": {
+              "type": "string"
+            }
+          }
+        },
+        "original_register_counts": {
+          "type": "object"
+        },
+        "candidate_disposition_counts": {
+          "type": "object"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "source_candidate_profile_triage": {
+      "type": "array",
+      "minItems": 94,
+      "maxItems": 94,
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "source_line",
+          "source_text",
+          "original_primary_disposition",
+          "original_traceability_disposition",
+          "candidate_treatment",
+          "profile_dispositions",
+          "future_retention"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^VCFv4\\.5:L[0-9]{4}$"
+          },
+          "source_line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "source_context": {
+            "type": "array"
+          },
+          "original_primary_disposition": {
+            "type": "string"
+          },
+          "original_traceability_disposition": {
+            "type": "string"
+          },
+          "source_candidate_status": {
+            "type": "string"
+          },
+          "source_current_requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidate_treatment": {
+            "type": "string"
+          },
+          "profile_dispositions": {
+            "type": "object",
+            "required": [
+              "GERMLINE_VARIANT_VCF",
+              "GERMLINE_GVCF"
+            ],
+            "properties": {
+              "GERMLINE_VARIANT_VCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "runtime_action"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "runtime_action": {
+                    "type": "string"
+                  }
+                }
+              },
+              "GERMLINE_GVCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "runtime_action"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "runtime_action": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "future_retention": {
+            "type": "object",
+            "required": [
+              "retain",
+              "workstream",
+              "source_asset"
+            ],
+            "properties": {
+              "retain": {
+                "const": true
+              },
+              "workstream": {
+                "type": "string"
+              },
+              "source_asset": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
