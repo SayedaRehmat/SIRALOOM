@@ -16,6 +16,9 @@ SCHEMA_PATH = BASE / "germline-small-variant-vcf-profile-reconciliation.schema.j
 PROFILE_PATH = BASE / "GERMLINE_SMALL_VARIANT_VCF_PROFILE_RECONCILIATION_2026-11-09.json"
 LEDGER_PATH = BASE / "atomic-requirements.v1.json"
 SOURCE_GAP_REGISTER_PATH = BASE / "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
+ADJUDICATION_SCHEMA_PATH = BASE / "vcf45-source-candidate-adjudication.schema.json"
+ADJUDICATION_PATH = BASE / "VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.json"
+VCF45_SOURCE_PATH = BASE / "sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex"
 PROFILES = ("GERMLINE_VARIANT_VCF", "GERMLINE_GVCF")
 DISPOSITIONS = {
     "CORE_REQUIRED",
@@ -225,6 +228,114 @@ def main() -> int:
     print(
         "PASS: all 94 source-gap candidates are mapped to both profiles and checked against "
         f"the current ledger ({exact_overlaps} exact locator overlaps)"
+    )
+    adjudication_schema = json.loads(ADJUDICATION_SCHEMA_PATH.read_text(encoding="utf-8"))
+    adjudication = json.loads(ADJUDICATION_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator.check_schema(adjudication_schema)
+    schema_errors = sorted(
+        Draft202012Validator(adjudication_schema).iter_errors(adjudication),
+        key=lambda error: list(error.absolute_path),
+    )
+    if schema_errors:
+        first = schema_errors[0]
+        fail(
+            "source-candidate adjudication schema validation failed at "
+            f"{list(first.absolute_path)}: {first.message}"
+        )
+
+    vcf45_raw = VCF45_SOURCE_PATH.read_bytes()
+    vcf45_sha = hashlib.sha256(vcf45_raw).hexdigest()
+    if vcf45_sha != adjudication["source"]["sha256"]:
+        fail(
+            "pinned VCFv4.5 source SHA-256 mismatch: "
+            f"expected {adjudication['source']['sha256']}, got {vcf45_sha}"
+        )
+    if git_blob_sha1(vcf45_raw) != adjudication["source"]["git_blob_sha1"]:
+        fail("pinned VCFv4.5 source Git blob identity mismatch")
+
+    adjudication_register = {
+        item["candidate_id"]: item
+        for item in gap_register["gaps"]
+        if item["traceability_disposition"]
+        in {"POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION", "AMBIGUOUS_SCOPE"}
+    }
+    adjudicated = {item["candidate_id"]: item for item in adjudication["records"]}
+    if len(adjudication_register) != 51 or len(adjudicated) != 51:
+        fail(
+            "source-candidate adjudication must cover exactly 51 candidates "
+            f"(register={len(adjudication_register)}, adjudicated={len(adjudicated)})"
+        )
+    if set(adjudication_register) != set(adjudicated):
+        fail("source-candidate adjudication IDs differ from the 50+1 source register set")
+
+    source_lines = vcf45_raw.decode("utf-8").splitlines()
+    canonical_ids = set(canonical)
+    proposal_ids = []
+    decision_counts = Counter()
+    proposal_count = 0
+    direct_mapping_edges = 0
+    related_mapping_edges = 0
+    for candidate_id, source_candidate in adjudication_register.items():
+        item = adjudicated[candidate_id]
+        line_number = source_candidate["source_line"]
+        if item["source_line"] != line_number:
+            fail(f"{candidate_id}: source line number mismatch")
+        if item["source_excerpt"] != source_lines[line_number - 1]:
+            fail(f"{candidate_id}: source excerpt differs from pinned VCFv4.5 source")
+        context = item["source_context"]
+        if context["start_line"] != max(1, line_number - 3):
+            fail(f"{candidate_id}: context start is not the expected three-line window")
+        if context["end_line"] != min(len(source_lines), line_number + 3):
+            fail(f"{candidate_id}: context end is not the expected three-line window")
+        expected_context = source_lines[context["start_line"] - 1:context["end_line"]]
+        observed_context = [entry["text"] for entry in context["lines"]]
+        if observed_context != expected_context:
+            fail(f"{candidate_id}: surrounding source context differs from pinned source")
+        if item["original_register_classification"]["traceability_disposition"] != source_candidate["traceability_disposition"]:
+            fail(f"{candidate_id}: original source classification was changed")
+        if item["status"] != "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW":
+            fail(f"{candidate_id}: author adjudication status changed")
+        decision_counts[item["adjudication_decision"]] += 1
+        mappings = item["existing_requirement_mapping"]
+        related = item["related_existing_requirement_ids"]
+        if set(mappings + related) - canonical_ids:
+            fail(f"{candidate_id}: mapping references unknown canonical requirement IDs")
+        direct_mapping_edges += len(mappings)
+        related_mapping_edges += len(related)
+        for proposal in item["proposed_atomic_requirements"]:
+            proposal_ids.append(proposal["proposal_id"])
+            proposal_count += 1
+            if proposal["review_status"] not in {
+                "PROPOSED_NOT_CANONICAL",
+                "PROPOSED_CANONICAL_REQUIREMENT_REFINEMENT",
+            }:
+                fail(f"{candidate_id}: invalid proposal review status")
+            if not proposal["atomic_statement"].strip() or not proposal["observable_acceptance_condition"].strip():
+                fail(f"{candidate_id}: incomplete proposed atomic requirement")
+    if len(proposal_ids) != len(set(proposal_ids)):
+        fail("proposed atomic requirement IDs are not unique")
+    if proposal_count != adjudication["counts"]["proposed_atomic_requirement_count"]:
+        fail("proposed atomic requirement count differs from adjudication summary")
+    if direct_mapping_edges != adjudication["counts"]["existing_requirement_mapping_edges"]:
+        fail("direct canonical mapping edge count differs from adjudication summary")
+    if related_mapping_edges != adjudication["counts"]["related_existing_requirement_edges"]:
+        fail("related canonical mapping edge count differs from adjudication summary")
+    if dict(decision_counts) != adjudication["counts"]["decision_counts"]:
+        fail("adjudication decision counts differ from adjudication summary")
+    if adjudication["controls"]["canonical_ledger_modified"] is not False:
+        fail("source-candidate adjudication must not mutate the canonical ledger")
+    if adjudication["controls"]["production_code_modified"] is not False:
+        fail("source-candidate adjudication must not claim production code changes")
+    if adjudication["controls"]["existing_pso_bnd_assets_modified"] is not False:
+        fail("source-candidate adjudication must preserve PSO/BND assets")
+    print(
+        "PASS: VCFv4.5 source-candidate adjudication schema and pinned source provenance "
+        f"({len(adjudicated)} candidates; {proposal_count} proposed atomic requirements; "
+        f"{direct_mapping_edges} direct and {related_mapping_edges} related canonical mapping edges)"
+    )
+    print(
+        "NOTE: author adjudication only; semantic cross-version review, independent standards review, "
+        "runtime implementation and laboratory qualification remain open."
     )
     print("NOTE: this validator checks reconciliation integrity, not scientific correctness or laboratory qualification.")
     return 0
