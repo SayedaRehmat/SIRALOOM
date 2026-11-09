@@ -15958,5 +15958,20 @@
         "VCFv4.5"
       ]
     }
-  ]
+  ],
+  "source_candidate_semantic_adjudication": {
+    "path": "docs/scientific/vcf-conformance/VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.json",
+    "markdown_path": "docs/scientific/vcf-conformance/VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.md",
+    "schema_path": "docs/scientific/vcf-conformance/vcf45-source-candidate-adjudication.schema.json",
+    "artifact_blob_sha": "daf4330e4838f4e41b574d212455711ba44120d9",
+    "status": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW",
+    "candidate_count": 51,
+    "potential_normative_or_mixed_count": 50,
+    "ambiguous_scope_count": 1,
+    "proposed_atomic_requirement_count": 51,
+    "direct_canonical_mapping_edges": 11,
+    "related_context_only_mapping_edges": 5,
+    "cross_version_reconciliation": "OPEN",
+    "canonical_ledger_modified": false
+  }
 }
