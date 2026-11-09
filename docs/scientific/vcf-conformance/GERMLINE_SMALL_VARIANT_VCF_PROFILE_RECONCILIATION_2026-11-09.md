@@ -222,11 +222,11 @@ The pass produced **51 atomic proposals** (43 Phase 1, 8 future-phase), with 11 
 - **L0104:** proposes a distinct rule that all meta-information lines precede the `#CHROM` header and data records. Existing `VCF-REQ-000003` only states that `##fileformat` is first.
 - **L0129/L0130 and L0301:** preserve the VCF recommendation versus BCF requirement distinction. Contig/reference header tags are optional in VCF under these statements; this does not waive SIRALOOM's separate operational reference-identity policy.
 - **L0133/L0135/L0136:** separate structured-attribute order independence, well-formedness of present meta-information lines, and arbitrary ordering of non-`fileformat` meta-information lines.
-- **L0151/L0175:** separate required INFO declaration fields from recommended optional `Source`/`Version` attributes and the conditions applying when those attributes are supplied.
+- **L0151/L0173/L0174/L0175:** separate required INFO declaration fields from recommended optional `Source`/`Version` attributes. The quote/escape rules at L0173–L0174 are scoped to the INFO metadata subsection where they occur; this pass does not silently generalize those locators to all structured metadata types.
 - **L0159/L0164/L0166/L0168:** add generic Number cardinality and A/R ordering requirements; L0168 maps to existing arbitrary-ploidy Number=G ordering `VCF-REQ-000136`.
 - **L0400/L0401:** retain the exact SHOULD force. Neither global duplicate record IDs nor use of the missing ID marker is promoted to a MUST rejection rule by these lines.
 - **L0406:** decomposes simple-indel padding, the contig-position-1 right-padding exception, and optional padding for complex non-empty alleles.
-- **L0407/L0416:** keep `*`, `<*>`, ordinary sequence alleles, symbolic SV alleles and breakend strings distinct. Phase 1 must route unsupported symbolic SV/BND constructs without treating them as malformed sequence alleles.
+- **L0407/L0416:** keep `*`, `<*>`, ordinary sequence alleles, symbolic SV alleles and breakend strings distinct. The generic symbolic-ALT padding rule excludes `<*>`, whose reference-call interval includes POS. Phase 1 must route unsupported symbolic SV/BND constructs without treating them as malformed sequence alleles.
 - **L0411:** retained as a future upstream producer/reference-provenance obligation. It is not permission for a reader to rewrite incoming REF alleles.
 - **L0488:** proposes a separate computed-END consistency rule. Existing END deprecation and END-to-LEN fallback requirements are related context, not complete coverage of this rule.
 - **L0502:** maps the LAA-presence component to `VCF-REQ-000053`; GT-first is related to `VCF-REQ-000019`; the additional LAA ordering condition is a separate proposal.
