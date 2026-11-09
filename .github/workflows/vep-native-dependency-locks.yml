@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
+          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libmariadb-dev-compat libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
           sudo apt-get update
           sudo apt-get --download-only install -y $PACKAGES
           python3 - <<'PY'
@@ -98,6 +98,19 @@ jobs:
           test "$(find vendor/cache -maxdepth 1 -type f | wc -l)" -gt 0
           cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
           cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
+      - name: Preserve CPAN build diagnostics on dependency-resolution failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vep-cpan-build-diagnostics-${{ matrix.architecture }}
+          path: |
+            ~/.cpanm/work/**/build.log
+            ~/.cpanm/work/**/Makefile
+            ~/.cpanm/work/**/MYMETA.json
+            ~/.cpanm/work/**/MYMETA.yml
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Verify clean offline reinstall from the resolved snapshot and archives
         shell: bash
         run: |
