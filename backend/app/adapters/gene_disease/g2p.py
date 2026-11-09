@@ -13,6 +13,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -110,10 +111,13 @@ class G2PProvider:
         self.path = Path(resource_path)
         self.release = str(release or "").strip()
         # EBI's archived G2P releases are date-stamped; on-the-fly exports
-        # must likewise be pinned to their exact acquisition date. Permit a
-        # semantic version only for explicitly versioned downstream snapshots.
-        if not re.fullmatch(r"(?:v?\d+\.\d+\.\d+|\d{4}-\d{2}-\d{2})", self.release):
-            raise G2PError("G2P release must be an exact YYYY-MM-DD archive/acquisition date or pinned semantic version")
+        # must likewise be pinned to their exact acquisition date.
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", self.release):
+            raise G2PError("G2P release must be an exact YYYY-MM-DD archive/acquisition date")
+        try:
+            date.fromisoformat(self.release)
+        except ValueError as exc:
+            raise G2PError("G2P release date is not a valid calendar date") from exc
         expected = str(expected_sha256 or "").strip().lower().removeprefix("sha256:")
         if not re.fullmatch(r"[0-9a-f]{64}", expected):
             raise G2PError("A valid SHA-256 pin is required for the G2P export")
