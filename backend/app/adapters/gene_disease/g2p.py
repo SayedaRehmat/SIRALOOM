@@ -39,6 +39,7 @@ class G2PDiseaseModel:
     source_record_id: str
     record_sha256: str
     raw: dict[str, str]
+    hgnc_id: str | None = None
 
     @property
     def inheritance_modes(self) -> tuple[str, ...]:
@@ -63,6 +64,7 @@ class G2PDiseaseModel:
 _ALIASES = {
     "g2p_id": ("g2p id", "g2p_id", "id"),
     "gene_symbol": ("gene symbol", "gene", "gene_symbol"),
+    "hgnc_id": ("hgnc id", "hgnc_id", "hgnc accession"),
     "disease_name": ("disease name", "disease", "disease_name"),
     "disease_mondo": ("disease mondo", "disease mondo id", "mondo id", "disease_mondo"),
     "allelic_requirement": ("allelic requirement", "required genotype", "allelic_requirement"),
@@ -160,7 +162,7 @@ class G2PProvider:
                 columns: dict[str, str] = {}
                 for field, aliases in _ALIASES.items():
                     found = next((normalized_headers[_header_key(alias)] for alias in aliases if _header_key(alias) in normalized_headers), None)
-                    if found is None and field in {"g2p_id", "gene_symbol", "disease_name", "allelic_requirement", "molecular_mechanism", "confidence"}:
+                    if found is None and field in {"g2p_id", "gene_symbol", "hgnc_id", "disease_name", "allelic_requirement", "molecular_mechanism", "confidence"}:
                         raise G2PError(f"G2P export is missing required column for {field}")
                     if found is not None:
                         columns[field] = found
@@ -170,6 +172,10 @@ class G2PProvider:
                     gene = raw.get(columns.get("gene_symbol", ""), "").upper()
                     if not gene:
                         raise G2PError(f"G2P row {line_number} is missing gene symbol")
+                    hgnc_id = raw.get(columns.get("hgnc_id", ""), "").strip() or None
+                    if hgnc_id and not re.fullmatch(r"HGNC:\\d+", hgnc_id, flags=re.IGNORECASE):
+                        raise G2PError(f"G2P row {line_number} contains an invalid HGNC identifier: {hgnc_id!r}")
+                    hgnc_id = hgnc_id.upper() if hgnc_id else None
                     g2p_id = raw.get(columns.get("g2p_id", ""), "")
                     if not g2p_id:
                         raise G2PError(f"G2P row {line_number} is missing stable G2P ID")
@@ -201,6 +207,7 @@ class G2PProvider:
                         source_record_id=f"G2P:{g2p_id}",
                         record_sha256=digest,
                         raw=raw,
+                        hgnc_id=hgnc_id,
                     ))
         except OSError as exc:
             raise G2PError(f"Unable to read pinned G2P export: {exc}") from exc
