@@ -107,3 +107,58 @@ def test_source_provenance_is_required():
             resource_name="G2P", resource_version="r1", resource_sha256="bad",
             raw_assertion={},
         )
+
+
+
+def test_malformed_hgnc_and_mondo_identifiers_are_rejected():
+    import pytest
+
+    with pytest.raises(ValueError, match="complete HGNC"):
+        assertion(GeneDiseaseSource.G2P, "bad-hgnc", hgnc="HGNC:abc")
+    with pytest.raises(ValueError, match="seven-digit MONDO"):
+        assertion(GeneDiseaseSource.G2P, "bad-mondo", mondo="MONDO:1")
+
+
+def test_reconciliation_identity_changes_when_source_release_provenance_changes():
+    original = assertion(GeneDiseaseSource.G2P, "g1", hgnc="HGNC:34")
+    updated = GeneDiseaseSourceAssertion(
+        source=original.source,
+        source_record_id=original.source_record_id,
+        gene_symbol=original.gene_symbol,
+        hgnc_id=original.hgnc_id,
+        mondo_id=original.mondo_id,
+        resource_id=original.resource_id,
+        resource_name=original.resource_name,
+        resource_version="2026-12-01",
+        resource_sha256="b" * 64,
+        raw_assertion=original.raw_assertion,
+    )
+    first, = reconcile_gene_disease_assertions([original])
+    second, = reconcile_gene_disease_assertions([updated])
+    assert first.reconciliation_id != second.reconciliation_id
+
+
+def test_unmapped_inheritance_assertion_is_not_reported_as_agreement():
+    g = assertion(
+        GeneDiseaseSource.G2P,
+        "g1",
+        hgnc="HGNC:34",
+        modes=("AUTOSOMAL_RECESSIVE",),
+    )
+    c = GeneDiseaseSourceAssertion(
+        source=GeneDiseaseSource.CLINGEN_GDV,
+        source_record_id="c1",
+        gene_symbol="GENE1",
+        hgnc_id="HGNC:34",
+        mondo_id="MONDO:0000001",
+        resource_id="resource-1",
+        resource_name="ClinGen",
+        resource_version="2026-11-08",
+        resource_sha256=SHA,
+        raw_assertion={"MOI": "X-linked inheritance"},
+        unmapped_inheritance_modes=("X-linked inheritance",),
+    )
+    result, = reconcile_gene_disease_assertions([g, c])
+    assert result.dimensions["inheritance_mode"].status == DimensionStatus.UNMAPPED
+    assert result.dimensions["inheritance_mode"].clingen_unmapped_values == ("x-linked inheritance",)
+    assert "SOURCE_DIMENSION_UNMAPPED" in result.review_reasons
