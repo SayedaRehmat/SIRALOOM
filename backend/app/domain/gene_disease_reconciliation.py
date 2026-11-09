@@ -168,8 +168,18 @@ def _stable_id(namespace, gene_id, mondo, g2p, clingen, status) -> str:
         "namespace": namespace.value if namespace else None,
         "gene": gene_id,
         "mondo": mondo,
-        "g2p": sorted((provenance(item) for item in g2p), key=lambda item: item["source_record_id"]),
-        "clingen": sorted((provenance(item) for item in clingen), key=lambda item: item["source_record_id"]),
+        "g2p": sorted(
+            (provenance(item) for item in g2p),
+            key=lambda item: tuple(str(item[key] or "") for key in (
+                "source_record_id", "resource_id", "resource_version", "resource_sha256", "source_record_sha256"
+            )),
+        ),
+        "clingen": sorted(
+            (provenance(item) for item in clingen),
+            key=lambda item: tuple(str(item[key] or "") for key in (
+                "source_record_id", "resource_id", "resource_version", "resource_sha256", "source_record_sha256"
+            )),
+        ),
         "status": status.value,
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
