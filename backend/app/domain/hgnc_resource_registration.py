@@ -138,6 +138,7 @@ def register_and_qualify_hgnc_release(
         "provider_version": HGNC_ARCHIVE_RELEASE,
         "access_method": "LOCAL",
         "location": str(destination_manifest),
+        "toolchain": {"manifest_sha256": manifest_sha256},
     }
     resource, _created = register_resource_version(
         db,
