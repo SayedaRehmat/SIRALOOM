@@ -107,7 +107,8 @@
         "source_candidates_ambiguous_scope",
         "decision_counts",
         "proposed_atomic_requirement_count",
-        "existing_requirement_mapping_edges"
+        "existing_requirement_mapping_edges",
+        "related_existing_requirement_edges"
       ],
       "properties": {
         "source_candidates": {
@@ -127,6 +128,10 @@
           "minimum": 0
         },
         "existing_requirement_mapping_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "related_existing_requirement_edges": {
           "type": "integer",
           "minimum": 0
         }
@@ -151,7 +156,9 @@
           "phase1_profile_disposition",
           "retained_workstream",
           "rationale",
-          "status"
+          "status",
+          "related_existing_requirement_ids",
+          "mapping_relation"
         ],
         "properties": {
           "candidate_id": {
@@ -267,6 +274,29 @@
           },
           "status": {
             "const": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+          },
+          "related_existing_requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^VCF-REQ-[0-9]{6}$"
+            }
+          },
+          "mapping_relation": {
+            "enum": [
+              "DIRECT_SEMANTIC_MAPPING",
+              "RELATED_CONTEXT_ONLY",
+              "RELATED_CONTEXT_ONLY_NOT_SEMANTIC_SUBSTITUTE",
+              "PARTIAL_COVERAGE_PLUS_NEW_ORDERING_REQUIREMENT",
+              "REFINES_EXISTING_REQUIREMENT",
+              "NO_EXISTING_REQUIREMENT_MAPPING"
+            ]
+          },
+          "related_proposal_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
