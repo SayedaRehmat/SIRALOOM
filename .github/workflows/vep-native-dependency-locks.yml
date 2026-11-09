@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
+      - "configs/bioinformatics/profiles/vep-115.2-capability-*.cpanfile"
       - "scripts/generate_vep_dependency_lock.py"
       - ".github/workflows/vep-native-dependency-locks.yml"
   workflow_dispatch:
@@ -118,6 +119,10 @@ jobs:
           export PATH="$PERL_PREFIX/bin:$PATH"
           cd "$RUNNER_TEMP/vep-carton"
           rm -rf local
+          # Enforce offline behavior at the network layer; --cached alone is not
+          # proof that Carton cannot fall back to a remote mirror.
+          sudo iptables -P OUTPUT DROP
+          sudo ip6tables -P OUTPUT DROP
           "$PERL_PREFIX/bin/carton" install --deployment --cached
           test -d local
       - name: Emit architecture-specific lock with archive SHA-256 values
