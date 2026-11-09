@@ -31,29 +31,53 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref_name }}
-      - uses: mamba-org/setup-micromamba@v2
-        with:
-          init-shell: bash
-          cache-environment: false
-      - name: Resolve native Perl and compiled runtime prerequisites
-        shell: bash -el {0}
+      - name: Install pinned native build prerequisites
+        shell: bash
         run: |
           set -euo pipefail
-          micromamba create -y -n vep-lock -c conda-forge --strict-channel-priority \
-            "perl=5.38" cpanminus htslib mariadb-connector-c \
-            c-compiler cxx-compiler make pkg-config zlib bzip2 xz openssl libcurl
-          micromamba activate vep-lock
-          test "$(perl -e 'print $^V')" != ""
-          test "$(uname -m)" = "${{ matrix.architecture }}"
-          mkdir -p "$RUNNER_TEMP/vep-lock-output" "$RUNNER_TEMP/cpan-dists"
-          micromamba env export --explicit -n vep-lock > "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock"
-          grep -q '^@EXPLICIT$' "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock"
+          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
+          sudo apt-get update
+          sudo apt-get --download-only install -y $PACKAGES
+          python3 - <<'PY'
+          import glob, hashlib, json, platform, subprocess
+          from pathlib import Path
+          debs = []
+          for filename in sorted(glob.glob("/var/cache/apt/archives/*.deb")):
+              path = Path(filename)
+              def field(name):
+                  return subprocess.check_output(["dpkg-deb", "-f", filename, name], text=True).strip()
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              debs.append({"filename": path.name, "package": field("Package"), "version": field("Version"), "architecture": field("Architecture"), "size_bytes": path.stat().st_size, "sha256": digest})
+          if not debs:
+              raise SystemExit("apt did not retain downloaded prerequisite packages for hashing")
+          out = Path("${{ runner.temp }}/vep-lock-output")
+          out.mkdir(parents=True, exist_ok=True)
+          (out / "native-build-manifest.json").write_text(json.dumps({"architecture": platform.machine(), "runner_os": "ubuntu-24.04", "downloaded_debs": debs}, indent=2, sort_keys=True) + "\\n")
+          PY
+          sudo apt-get install -y $PACKAGES
+      - name: Build checksum-pinned Perl 5.38.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          PERL_PREFIX="$HOME/opt/perl-5.38.5"
+          curl --fail --location --retry 3 https://www.cpan.org/src/5.0/perl-5.38.5.tar.gz --output "$RUNNER_TEMP/perl-5.38.5.tar.gz"
+          echo "b7667d3ff309068852af7853910aaccec26c839d717402121b664ac705e07bfe  $RUNNER_TEMP/perl-5.38.5.tar.gz" | sha256sum --check -
+          tar -xzf "$RUNNER_TEMP/perl-5.38.5.tar.gz" -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/perl-5.38.5"
+          ./Configure -des -Dprefix="$PERL_PREFIX" -Duseshrplib
+          make -j2
+          make test
+          make install
+          echo "$PERL_PREFIX/bin" >> "$GITHUB_PATH"
+          echo "PERL_PREFIX=$PERL_PREFIX" >> "$GITHUB_ENV"
+          "$PERL_PREFIX/bin/perl" -e 'die "wrong Perl version" unless $^V eq v5.38.5; print "$^V\\n"'
       - name: Resolve combined Ensembl runtime dependencies
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euo pipefail
-          micromamba activate vep-lock
-          cpanm --notest Carton
+          export PATH="$PERL_PREFIX/bin:$PATH"
+          "$PERL_PREFIX/bin/perl" /usr/bin/cpanm --notest Carton@1.0.35
+          carton --version
           mkdir -p "$RUNNER_TEMP/vep-carton"
           cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
           cd "$RUNNER_TEMP/vep-carton"
@@ -65,25 +89,20 @@ jobs:
           cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
           cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
       - name: Verify clean offline reinstall from the resolved snapshot and archives
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euo pipefail
-          micromamba activate vep-lock
+          export PATH="$PERL_PREFIX/bin:$PATH"
           cd "$RUNNER_TEMP/vep-carton"
           rm -rf local
           carton install --deployment --cached
           test -d local
       - name: Emit architecture-specific lock with archive SHA-256 values
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euo pipefail
-          python scripts/generate_vep_dependency_lock.py \
-            --architecture "${{ matrix.architecture }}" \
-            --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile \
-            --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" \
-            --conda-lock "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock" \
-            --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" \
-            --output "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json"
+          export PATH="$PERL_PREFIX/bin:$PATH"
+          python3 scripts/generate_vep_dependency_lock.py --architecture "${{ matrix.architecture }}" --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" --build-manifest "$RUNNER_TEMP/vep-lock-output/native-build-manifest.json" --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" --output "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json"
           cp "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json" .
       - uses: actions/upload-artifact@v4
         with:
@@ -114,13 +133,10 @@ jobs:
           set -euo pipefail
           test -s generated-vep-locks/vep-115.2-x86_64.lock.json
           test -s generated-vep-locks/vep-115.2-aarch64.lock.json
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           from pathlib import Path
-          expected = {
-              "vep-115.2-x86_64.lock.json": "x86_64",
-              "vep-115.2-aarch64.lock.json": "aarch64",
-          }
+          expected = {"vep-115.2-x86_64.lock.json": "x86_64", "vep-115.2-aarch64.lock.json": "aarch64"}
           for filename, arch in expected.items():
               data = json.loads((Path("generated-vep-locks") / filename).read_text())
               assert data["schema"] == "siraloom.vep-dependency-lock.v1"
