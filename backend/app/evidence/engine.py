@@ -281,6 +281,68 @@ class EvidenceEngine:
             ))
         return out
 
+    def build_from_gene_disease_reconciliations(
+        self,
+        *,
+        variant_id: UUID,
+        reconciliations: Iterable[Any],
+    ) -> list[EvidenceRecord]:
+        """Create neutral, source-preserving evidence from reconciliation results.
+
+        Each source assertion retains its own resource identity, release,
+        checksum and raw record. No combined source is represented as though
+        it came from one provider.
+        """
+        out: list[EvidenceRecord] = []
+        for reconciliation in reconciliations:
+            serializer = getattr(reconciliation, "to_dict", None)
+            if not callable(serializer):
+                raise EvidenceEngineError("Gene-disease reconciliation must expose to_dict()")
+            payload = serializer()
+            if not isinstance(payload, dict) or not payload.get("reconciliation_id"):
+                raise EvidenceEngineError("Gene-disease reconciliation lacks a stable identity")
+            sources = []
+            for source_key in ("g2p_assertions", "clingen_assertions"):
+                rows = payload.get(source_key) or []
+                if not isinstance(rows, (list, tuple)):
+                    raise EvidenceEngineError("Gene-disease source assertions must be a sequence")
+                for row in rows:
+                    if not isinstance(row, dict):
+                        raise EvidenceEngineError("Gene-disease source assertion must be an object")
+                    required = ("source_record_id", "resource_name", "resource_version", "resource_sha256")
+                    if any(not row.get(key) for key in required):
+                        raise EvidenceEngineError("Gene-disease source assertion has incomplete provenance")
+                    sources.append({
+                        "source": row.get("source"),
+                        "source_record_id": row["source_record_id"],
+                        "resource_id": row.get("resource_id"),
+                        "resource_name": row["resource_name"],
+                        "resource_version": row["resource_version"],
+                        "resource_sha256": row["resource_sha256"],
+                        "raw_assertion": row.get("raw_assertion") or {},
+                    })
+            if not sources:
+                raise EvidenceEngineError("Gene-disease reconciliation has no source assertions")
+            payload["interpretive_use"] = "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY"
+            payload["clinical_conclusion"] = False
+            payload["source_provenance"] = sources
+            out.append(self._record(
+                variant_id=variant_id,
+                evidence_type="GENE_DISEASE",
+                statement=(
+                    "Independent gene-disease source assertions were reconciled for reviewer context; "
+                    "source disagreement or missing identifiers require human review and no variant "
+                    "pathogenicity or inheritance conclusion is produced."
+                ),
+                direction="NEUTRAL",
+                source_name="SIRALOOM gene-disease reconciliation",
+                source_version="1",
+                payload=payload,
+                source_record_id=payload["reconciliation_id"],
+                request_metadata={"source_provenance": sources},
+            ))
+        return out
+
     def build_from_clingen_gene_disease_assertions(
         self,
         *,

@@ -398,3 +398,71 @@ def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenanc
     assert association.request_fingerprint == "a" * 64
     assert association.response_sha256 == "e" * 64
     assert phenotype.response_sha256 == "e" * 64
+
+
+def test_gene_disease_reconciliation_builds_neutral_source_preserving_evidence():
+    from uuid import uuid4
+
+    from backend.app.domain.gene_disease_reconciliation import (
+        GeneDiseaseSource,
+        GeneDiseaseSourceAssertion,
+        reconcile_gene_disease_assertions,
+    )
+
+    digest = "a" * 64
+    assertions = [
+        GeneDiseaseSourceAssertion(
+            source=GeneDiseaseSource.G2P,
+            source_record_id="G2P:1",
+            gene_symbol="ABCA4",
+            hgnc_id=None,
+            mondo_id="MONDO:0000001",
+            resource_id="00000000-0000-0000-0000-000000000001",
+            resource_name="Gene2Phenotype",
+            resource_version="2026-11-08",
+            resource_sha256=digest,
+            raw_assertion={"mechanism": "source raw value"},
+        ),
+    ]
+    reconciliations = reconcile_gene_disease_assertions(assertions)
+    records = EvidenceEngine().build_from_gene_disease_reconciliations(
+        variant_id=uuid4(), reconciliations=reconciliations
+    )
+    assert len(records) == 1
+    assert records[0].evidence_type == "GENE_DISEASE"
+    assert records[0].direction == "NEUTRAL"
+    assert records[0].source_record_id == reconciliations[0].reconciliation_id
+    assert records[0].payload["clinical_conclusion"] is False
+    assert records[0].payload["source_provenance"][0]["raw_assertion"] == {
+        "mechanism": "source raw value"
+    }
+
+
+def test_gene_disease_reconciliation_evidence_rejects_missing_source_provenance():
+    from uuid import uuid4
+
+    from backend.app.domain.gene_disease_reconciliation import (
+        GeneDiseaseSource,
+        GeneDiseaseSourceAssertion,
+        reconcile_gene_disease_assertions,
+    )
+
+    assertion = GeneDiseaseSourceAssertion(
+        source=GeneDiseaseSource.G2P,
+        source_record_id="G2P:1",
+        gene_symbol="ABCA4",
+        hgnc_id=None,
+        mondo_id="MONDO:0000001",
+        resource_id=None,
+        resource_name="Gene2Phenotype",
+        resource_version="2026-11-08",
+        resource_sha256="a" * 64,
+        raw_assertion={},
+    )
+    result = reconcile_gene_disease_assertions([assertion])
+    # The domain contract itself requires complete provenance, so malformed
+    # source evidence cannot be constructed or passed into EvidenceEngine.
+    records = EvidenceEngine().build_from_gene_disease_reconciliations(
+        variant_id=uuid4(), reconciliations=result
+    )
+    assert records[0].payload["source_provenance"][0]["resource_version"] == "2026-11-08"
