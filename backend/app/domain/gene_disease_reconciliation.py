@@ -31,6 +31,7 @@ class ReconciliationStatus(StrEnum):
 
 class DimensionStatus(StrEnum):
     AGREE = "AGREE"
+    PARTIAL_AGREEMENT = "PARTIAL_AGREEMENT"
     CONFLICT = "CONFLICT"
     G2P_ONLY = "G2P_ONLY"
     CLINGEN_ONLY = "CLINGEN_ONLY"
@@ -117,13 +118,12 @@ def _dimension(
     left, right = _canonical(g2p), _canonical(clingen)
     left_unmapped, right_unmapped = _canonical(g2p_unmapped), _canonical(clingen_unmapped)
     if left and right:
-        status = (
-            DimensionStatus.CONFLICT
-            if left != right
-            else DimensionStatus.UNMAPPED
-            if left_unmapped or right_unmapped
-            else DimensionStatus.AGREE
-        )
+        if left == right:
+            status = DimensionStatus.UNMAPPED if left_unmapped or right_unmapped else DimensionStatus.AGREE
+        elif set(left).intersection(right):
+            status = DimensionStatus.PARTIAL_AGREEMENT
+        else:
+            status = DimensionStatus.CONFLICT
     elif left_unmapped or right_unmapped:
         status = DimensionStatus.UNMAPPED
     elif left:
@@ -256,6 +256,8 @@ def reconcile_gene_disease_assertions(
             reasons.append(f"ASSOCIATION_{status.value}")
         if any(value.status == DimensionStatus.CONFLICT for value in dimensions.values()):
             reasons.append("SOURCE_DIMENSION_CONFLICT")
+        if any(value.status == DimensionStatus.PARTIAL_AGREEMENT for value in dimensions.values()):
+            reasons.append("SOURCE_DIMENSION_PARTIAL_AGREEMENT")
         if any(value.status == DimensionStatus.UNMAPPED for value in dimensions.values()):
             reasons.append("SOURCE_DIMENSION_UNMAPPED")
         if any(value.status in {DimensionStatus.G2P_ONLY, DimensionStatus.CLINGEN_ONLY} for value in dimensions.values()):
