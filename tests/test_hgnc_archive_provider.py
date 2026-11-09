@@ -158,3 +158,24 @@ def test_hgnc_archive_provider_is_registered_as_a_nomenclature_capability():
     )
     assert descriptor.descriptor.capabilities == frozenset({GENE_NOMENCLATURE})
     assert get_scientific_provider("HGNC").resource_type == GENE_NOMENCLATURE
+
+
+
+def test_builtin_provider_registration_does_not_skip_hgnc_when_registry_is_partially_populated(monkeypatch):
+    import backend.app.domain.provider_registry as provider_registry_module
+    from backend.app.domain.provider_registry import ProviderCapability, ProviderRegistry
+
+    registry = ProviderRegistry()
+    registry.register(
+        provider_id="CUSTOM_TEST_PROVIDER",
+        provider_version="1",
+        factory=lambda resolved: resolved,
+        descriptor=ProviderCapability(
+            provider_id="CUSTOM_TEST_PROVIDER",
+            capabilities=frozenset(),
+            supported_builds=frozenset(),
+        ),
+    )
+    monkeypatch.setattr(provider_registry_module, "get_provider_registry", lambda: registry)
+    provider_registry_module.register_builtin_providers()
+    assert registry.resolve("HGNC", HGNC_ARCHIVE_RELEASE) is not None
