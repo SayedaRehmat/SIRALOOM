@@ -73,17 +73,34 @@ def _split(value: str | None) -> tuple[str, ...]:
     return tuple(sorted({part.strip() for part in (value or "").split("|") if part.strip()}))
 
 
+def _normalize_header(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
+    if normalized == "merged_into_report_s":
+        return "merged_into_report"
+    return normalized
+
+
 def _read_tsv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     if not path.is_file() or path.stat().st_size == 0:
         raise HGNCResourceError(f"HGNC artifact missing or empty: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
+        reader = csv.DictReader(handle, delimiter="\\t")
         if not reader.fieldnames:
             raise HGNCResourceError(f"HGNC artifact has no header: {path}")
-        rows = list(reader)
+        raw_fields = list(reader.fieldnames)
+        normalized_fields = [_normalize_header(field) for field in raw_fields]
+        if len(normalized_fields) != len(set(normalized_fields)):
+            raise HGNCResourceError(f"HGNC artifact has duplicate normalized headers: {path}")
+        rows = [
+            {
+                normalized: str(row.get(raw) or "")
+                for raw, normalized in zip(raw_fields, normalized_fields)
+            }
+            for row in reader
+        ]
         if not rows:
             raise HGNCResourceError(f"HGNC artifact has no records: {path}")
-        return list(reader.fieldnames), rows
+        return normalized_fields, rows
 
 
 def _sha256(path: Path) -> str:
