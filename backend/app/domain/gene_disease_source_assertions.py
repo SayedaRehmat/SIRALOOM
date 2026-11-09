@@ -36,7 +36,7 @@ def build_gene_disease_source_assertions(
             gene_symbol=assertion.gene, hgnc_id=assertion.hgnc_id, mondo_id=assertion.mondo_id,
             resource_id=clingen_resource_id, resource_name=clingen_resource_name,
             resource_version=clingen_resource_version, resource_sha256=clingen_resource_sha256,
-            raw_assertion=dict(assertion.payload), source_record_sha256=assertion.record_sha256,
+            raw_assertion=dict(assertion.payload), source_record_sha256=getattr(assertion, "record_sha256", None),
             request_fingerprint=clingen_request_fingerprint, response_sha256=clingen_response_sha256,
             validity=assertion.classification,
             inheritance_modes=(assertion.moi,) if assertion.moi else (),
