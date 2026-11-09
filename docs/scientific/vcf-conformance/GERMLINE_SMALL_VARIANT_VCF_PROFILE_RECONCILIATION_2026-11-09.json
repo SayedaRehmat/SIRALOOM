@@ -35,7 +35,20 @@
     "workflow_url": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42370069178",
     "workflow_conclusion": "success",
     "exact_branch_head": "e8ddc2a0d108ee8ca7486c2beb547ffa7edc6212",
-    "exact_branch_head_ci": "NOT_RUN_ON_E8DD_DOCS_ONLY_CHILD; full workflow passed on parent f7636dfa0b83886f3a52e6f317657c5f8c63433c"
+    "exact_branch_head_ci": "NOT_RUN_ON_E8DD_DOCS_ONLY_CHILD; full workflow passed on parent f7636dfa0b83886f3a52e6f317657c5f8c63433c",
+    "profile_overlay_commit": "2ea24ea569bac84c9a50b9a77ea5d486c91d90d7",
+    "profile_reconciliation_validation": {
+      "workflow_run_id": 42576070327,
+      "workflow_url": "https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42576070327",
+      "workflow_name": "VCF research ledger schema validation",
+      "exact_commit": "2ea24ea569bac84c9a50b9a77ea5d486c91d90d7",
+      "conclusion": "success",
+      "job": "validate-vcf-research-registries",
+      "steps": [
+        "Validate Draft 2020-12 schema and all research registries",
+        "Validate Phase 1 germline VCF profile reconciliation"
+      ]
+    }
   },
   "scope_decision": {
     "phase": "PHASE_1",
