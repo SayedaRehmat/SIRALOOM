@@ -142,7 +142,7 @@ def test_unrecognized_clingen_moi_is_preserved_as_unmapped_not_as_agreement():
     assert reconciled.status == ReconciliationStatus.MATCHED
     inheritance = reconciled.dimensions["inheritance_mode"]
     assert inheritance.status == DimensionStatus.UNMAPPED
-    assert inheritance.clingen_unmapped_values == ("X-linked inheritance",)
+    assert inheritance.clingen_unmapped_values == ("x-linked inheritance",)
     assert "SOURCE_DIMENSION_UNMAPPED" in reconciled.review_reasons
 
 
