@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+import re
 from typing import Any, Mapping
 
 
@@ -59,6 +60,8 @@ class GeneDiseaseSourceAssertion:
     inheritance_modes: tuple[str, ...] = ()
     molecular_mechanism: str | None = None
     penetrance: str | None = None
+    gene_identifier_resolution: Mapping[str, Any] | None = None
+    unmapped_inheritance_modes: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.source_record_id.strip():
@@ -68,10 +71,10 @@ class GeneDiseaseSourceAssertion:
         digest = self.resource_sha256.lower().removeprefix("sha256:")
         if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
             raise ValueError("resource_sha256 must be a SHA-256 hex digest")
-        if self.hgnc_id and not self.hgnc_id.upper().startswith("HGNC:"):
-            raise ValueError("hgnc_id must use the HGNC: identifier namespace")
-        if self.mondo_id and not self.mondo_id.upper().startswith("MONDO:"):
-            raise ValueError("mondo_id must use the MONDO: identifier namespace")
+        if self.hgnc_id and not re.fullmatch(r"HGNC:\\d+", self.hgnc_id.upper()):
+            raise ValueError("hgnc_id must be a complete HGNC accession")
+        if self.mondo_id and not re.fullmatch(r"MONDO:\\d{7}", self.mondo_id.upper()):
+            raise ValueError("mondo_id must be a complete seven-digit MONDO identifier")
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +82,8 @@ class DimensionReconciliation:
     status: DimensionStatus
     g2p_values: tuple[str, ...] = ()
     clingen_values: tuple[str, ...] = ()
+    g2p_unmapped_values: tuple[str, ...] = ()
+    clingen_unmapped_values: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,17 +107,38 @@ def _canonical(values: tuple[str, ...] | list[str]) -> tuple[str, ...]:
     return tuple(sorted({str(value).strip().casefold() for value in values if str(value).strip()}))
 
 
-def _dimension(g2p: tuple[str, ...], clingen: tuple[str, ...]) -> DimensionReconciliation:
+def _dimension(
+    g2p: tuple[str, ...],
+    clingen: tuple[str, ...],
+    *,
+    g2p_unmapped: tuple[str, ...] = (),
+    clingen_unmapped: tuple[str, ...] = (),
+) -> DimensionReconciliation:
     left, right = _canonical(g2p), _canonical(clingen)
+    left_unmapped, right_unmapped = _canonical(g2p_unmapped), _canonical(clingen_unmapped)
     if left and right:
-        status = DimensionStatus.AGREE if left == right else DimensionStatus.CONFLICT
+        status = (
+            DimensionStatus.CONFLICT
+            if left != right
+            else DimensionStatus.UNMAPPED
+            if left_unmapped or right_unmapped
+            else DimensionStatus.AGREE
+        )
+    elif left_unmapped or right_unmapped:
+        status = DimensionStatus.UNMAPPED
     elif left:
         status = DimensionStatus.G2P_ONLY
     elif right:
         status = DimensionStatus.CLINGEN_ONLY
     else:
         status = DimensionStatus.NOT_PROVIDED
-    return DimensionReconciliation(status=status, g2p_values=left, clingen_values=right)
+    return DimensionReconciliation(
+        status=status,
+        g2p_values=left,
+        clingen_values=right,
+        g2p_unmapped_values=left_unmapped,
+        clingen_unmapped_values=right_unmapped,
+    )
 
 
 def _gene_key(assertion: GeneDiseaseSourceAssertion):
@@ -129,12 +155,21 @@ def _stable_id(namespace, gene_id, mondo, g2p, clingen, status) -> str:
     import hashlib
     import json
 
+    def provenance(item):
+        return {
+            "source_record_id": item.source_record_id,
+            "resource_id": item.resource_id,
+            "resource_version": item.resource_version,
+            "resource_sha256": item.resource_sha256,
+            "source_record_sha256": item.source_record_sha256,
+        }
+
     payload = {
         "namespace": namespace.value if namespace else None,
         "gene": gene_id,
         "mondo": mondo,
-        "g2p": sorted(item.source_record_id for item in g2p),
-        "clingen": sorted(item.source_record_id for item in clingen),
+        "g2p": sorted((provenance(item) for item in g2p), key=lambda item: item["source_record_id"]),
+        "clingen": sorted((provenance(item) for item in clingen), key=lambda item: item["source_record_id"]),
         "status": status.value,
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -188,8 +223,18 @@ def reconcile_gene_disease_assertions(
                 tuple(x.allelic_requirement for x in clingen if x.allelic_requirement),
             ),
             "inheritance_mode": _dimension(
-                tuple(mode for x in g2p for mode in x.inheritance_modes),
-                tuple(mode for x in clingen for mode in x.inheritance_modes),
+                tuple(mode for x in g2p for mode in x.inheritance_modes if mode != "UNKNOWN"),
+                tuple(mode for x in clingen for mode in x.inheritance_modes if mode != "UNKNOWN"),
+                g2p_unmapped=tuple(
+                    value
+                    for x in g2p
+                    for value in (*x.unmapped_inheritance_modes, *(("UNKNOWN",) if "UNKNOWN" in x.inheritance_modes else ()))
+                ),
+                clingen_unmapped=tuple(
+                    value
+                    for x in clingen
+                    for value in (*x.unmapped_inheritance_modes, *(("UNKNOWN",) if "UNKNOWN" in x.inheritance_modes else ()))
+                ),
             ),
             "molecular_mechanism": _dimension(
                 tuple(x.molecular_mechanism for x in g2p if x.molecular_mechanism),
@@ -201,6 +246,8 @@ def reconcile_gene_disease_assertions(
             reasons.append(f"ASSOCIATION_{status.value}")
         if any(value.status == DimensionStatus.CONFLICT for value in dimensions.values()):
             reasons.append("SOURCE_DIMENSION_CONFLICT")
+        if any(value.status == DimensionStatus.UNMAPPED for value in dimensions.values()):
+            reasons.append("SOURCE_DIMENSION_UNMAPPED")
         if any(value.status in {DimensionStatus.G2P_ONLY, DimensionStatus.CLINGEN_ONLY} for value in dimensions.values()):
             reasons.append("SOURCE_DIMENSION_INCOMPLETE")
         if any(not x.hgnc_id for x in (*g2p, *clingen)):
