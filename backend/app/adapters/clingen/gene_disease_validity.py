@@ -52,6 +52,9 @@ def _normalize_mondo_id(value: str | None) -> str | None:
 class ClinGenGeneDiseaseValidityProvider:
     provider_id = "ClinGen Gene-Disease Validity"
     provider_version = "GeneValidity"
+    source_url = "https://search.clinicalgenome.org/kb/downloads"
+    download_url = "https://search.clinicalgenome.org/kb/gene-validity/download"
+    methodology_url = "https://www.clinicalgenome.org/docs/gene-disease-validity-standard-operating-procedure/"
     supported_builds = frozenset({"GRCh37", "GRCh38"})
 
     def __init__(
