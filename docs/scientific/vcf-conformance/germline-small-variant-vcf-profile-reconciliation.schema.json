@@ -21,7 +21,8 @@
     "limitations",
     "release_decision",
     "source_gap_register_reconciliation",
-    "source_candidate_profile_triage"
+    "source_candidate_profile_triage",
+    "source_candidate_semantic_adjudication"
   ],
   "properties": {
     "schema_version": {
@@ -640,6 +641,66 @@
               "type": "string"
             }
           }
+        }
+      }
+    },
+    "source_candidate_semantic_adjudication": {
+      "type": "object",
+      "required": [
+        "path",
+        "markdown_path",
+        "schema_path",
+        "artifact_blob_sha",
+        "status",
+        "candidate_count",
+        "potential_normative_or_mixed_count",
+        "ambiguous_scope_count",
+        "proposed_atomic_requirement_count",
+        "direct_canonical_mapping_edges",
+        "related_context_only_mapping_edges",
+        "cross_version_reconciliation",
+        "canonical_ledger_modified"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "markdown_path": {
+          "type": "string"
+        },
+        "schema_path": {
+          "type": "string"
+        },
+        "artifact_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "status": {
+          "const": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW"
+        },
+        "candidate_count": {
+          "const": 51
+        },
+        "potential_normative_or_mixed_count": {
+          "const": 50
+        },
+        "ambiguous_scope_count": {
+          "const": 1
+        },
+        "proposed_atomic_requirement_count": {
+          "const": 51
+        },
+        "direct_canonical_mapping_edges": {
+          "const": 11
+        },
+        "related_context_only_mapping_edges": {
+          "const": 5
+        },
+        "cross_version_reconciliation": {
+          "const": "OPEN"
+        },
+        "canonical_ledger_modified": {
+          "const": false
         }
       }
     }
