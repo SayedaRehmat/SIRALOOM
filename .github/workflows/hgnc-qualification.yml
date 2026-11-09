@@ -19,13 +19,27 @@ jobs:
   acquire-and-qualify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: siraloom
+          POSTGRES_PASSWORD: siraloom
+          POSTGRES_DB: siraloom_hgnc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U siraloom -d siraloom_hgnc"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install qualification runtime dependency
-        run: python -m pip install "SQLAlchemy>=2.0,<3"
+        run: python -m pip install "SQLAlchemy>=2.0,<3" "psycopg[binary]>=3.2,<4"
       - name: Acquire exact official HGNC quarterly release
         run: |
           python -m backend.app.domain.hgnc_crosswalk acquire \
@@ -36,6 +50,7 @@ jobs:
           HGNC_DIR: ${{ runner.temp }}/hgnc-2026-10-06
           REPORT_PATH: ${{ runner.temp }}/hgnc-qualification-report.json
           MANAGED_DIR: ${{ runner.temp }}/hgnc-managed/hgnc-2026-10-06
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom_hgnc
         run: |
           python - <<'PY'
           import hashlib
@@ -53,7 +68,13 @@ jobs:
           )
           from backend.app.domain.hgnc_resource_registration import register_and_qualify_hgnc_release
           from backend.app.infrastructure.db.base import Base
-          from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
+          from backend.app.infrastructure.db.models import (
+              Organization,
+              Resource,
+              ResourceQualification,
+              ResourceStaging,
+              User,
+          )
 
           directory = Path(os.environ["HGNC_DIR"])
           manifest_path = directory / "manifest.json"
@@ -94,10 +115,16 @@ jobs:
           assert split_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
           assert split_result.hgnc_id is None
 
-          engine = create_engine("sqlite+pysqlite:///:memory:")
+          engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
           Base.metadata.create_all(
               engine,
-              tables=[Resource.__table__, ResourceStaging.__table__, ResourceQualification.__table__],
+              tables=[
+                  Organization.__table__,
+                  User.__table__,
+                  Resource.__table__,
+                  ResourceStaging.__table__,
+                  ResourceQualification.__table__,
+              ],
           )
           with Session(engine, expire_on_commit=False) as db:
               resource, staging, persisted_qualification, qualification = register_and_qualify_hgnc_release(
