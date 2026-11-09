@@ -1,0 +1,708 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SayedaRehmat/SIRALOOM/blob/main/docs/scientific/vcf-conformance/germline-small-variant-vcf-profile-reconciliation.schema.json",
+  "title": "SIRALOOM Germline Small-Variant VCF Profile Reconciliation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "status",
+    "repository",
+    "base_commit",
+    "branch",
+    "canonical_ledger",
+    "profiles",
+    "requirement_dispositions",
+    "requirement_disposition_counts",
+    "evidence_summary",
+    "source_gap_candidates",
+    "preserved_future_workstreams",
+    "limitations",
+    "release_decision",
+    "source_gap_register_reconciliation",
+    "source_candidate_profile_triage",
+    "source_candidate_semantic_adjudication"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_id": {
+      "const": "siraloom-germline-small-variant-vcf-profile-reconciliation"
+    },
+    "status": {
+      "const": "AUTHOR_PROPOSED_FIRST_PASS_PENDING_SOURCE_REVIEW_AND_INDEPENDENT_REVIEW"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repository": {
+      "type": "string"
+    },
+    "base_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "canonical_ledger": {
+      "type": "object",
+      "required": [
+        "path",
+        "blob_sha",
+        "requirement_count",
+        "registry_status",
+        "coverage_summary"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "requirement_count": {
+          "const": 226
+        },
+        "registry_status": {
+          "type": "string"
+        },
+        "coverage_summary": {
+          "type": "object"
+        }
+      }
+    },
+    "execution_baseline": {
+      "type": "object"
+    },
+    "scope_decision": {
+      "type": "object"
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "profile_id",
+          "display_name",
+          "description",
+          "mode_selection",
+          "supported_variant_scope",
+          "not_in_scope",
+          "critical_controls",
+          "source_version_policy"
+        ],
+        "properties": {
+          "profile_id": {
+            "enum": [
+              "GERMLINE_VARIANT_VCF",
+              "GERMLINE_GVCF"
+            ]
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mode_selection": {
+            "type": "string"
+          },
+          "supported_variant_scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "not_in_scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "critical_controls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_version_policy": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "requirement_dispositions": {
+      "type": "array",
+      "minItems": 226,
+      "maxItems": 226,
+      "items": {
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "title",
+          "requirement_domain",
+          "normative_force",
+          "requirement_kind",
+          "source_applicability",
+          "profile_dispositions",
+          "evidence_snapshot",
+          "future_retention"
+        ],
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "pattern": "^VCF-REQ-[0-9]{6}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "requirement_domain": {
+            "type": "string"
+          },
+          "normative_force": {
+            "type": "string"
+          },
+          "requirement_kind": {
+            "type": "string"
+          },
+          "source_applicability": {
+            "type": "object"
+          },
+          "profile_dispositions": {
+            "type": "object",
+            "required": [
+              "GERMLINE_VARIANT_VCF",
+              "GERMLINE_GVCF"
+            ],
+            "properties": {
+              "GERMLINE_VARIANT_VCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "required_runtime_action",
+                  "runtime_contract_status"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "required_runtime_action": {
+                    "type": "string"
+                  },
+                  "runtime_contract_status": {
+                    "type": "string"
+                  },
+                  "conditional_trigger": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              },
+              "GERMLINE_GVCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "required_runtime_action",
+                  "runtime_contract_status"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "required_runtime_action": {
+                    "type": "string"
+                  },
+                  "runtime_contract_status": {
+                    "type": "string"
+                  },
+                  "conditional_trigger": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "evidence_snapshot": {
+            "type": "object",
+            "required": [
+              "evidence_status",
+              "implementation_status",
+              "code_symbols",
+              "implementation_commit",
+              "tests",
+              "review_status",
+              "second_review_status",
+              "independent_review_required"
+            ],
+            "properties": {
+              "evidence_status": {
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "UNSUPPORTED",
+                  "UNRESOLVED"
+                ]
+              },
+              "implementation_status": {
+                "type": "string"
+              },
+              "code_symbols": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "implementation_commit": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tests": {
+                "type": "array"
+              },
+              "review_status": {
+                "type": "string"
+              },
+              "second_review_status": {
+                "type": "string"
+              },
+              "independent_review_required": {
+                "type": "boolean"
+              }
+            }
+          },
+          "future_retention": {
+            "type": "object",
+            "required": [
+              "retain",
+              "workstream",
+              "retention_action"
+            ],
+            "properties": {
+              "retain": {
+                "const": true
+              },
+              "workstream": {
+                "type": "string"
+              },
+              "retention_action": {
+                "type": "string"
+              },
+              "note": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "requirement_disposition_counts": {
+      "type": "object"
+    },
+    "evidence_summary": {
+      "type": "object"
+    },
+    "source_gap_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "gap_id",
+          "source_class",
+          "versions",
+          "finding",
+          "disposition",
+          "next_action"
+        ],
+        "properties": {
+          "gap_id": {
+            "type": "string"
+          },
+          "source_class": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "source_locators": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "finding": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "preserved_future_workstreams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "workstream",
+          "requirement_ids",
+          "assets",
+          "preserve"
+        ],
+        "properties": {
+          "workstream": {
+            "type": "string"
+          },
+          "requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preserve": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provenance_consistency_findings": {
+      "type": "array"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "release_decision": {
+      "const": "NOT_READY_FOR_LABORATORY_QUALIFICATION"
+    },
+    "source_gap_register_reconciliation": {
+      "type": "object",
+      "required": [
+        "source_gap_register_path",
+        "source_gap_register_blob_sha",
+        "source_file",
+        "source_revision",
+        "source_sha256",
+        "historical_canonical_ledger_blob_sha",
+        "current_canonical_ledger_blob_sha",
+        "exact_locator_recheck_against_current_ledger",
+        "original_register_counts",
+        "candidate_disposition_counts",
+        "status"
+      ],
+      "properties": {
+        "source_gap_register_path": {
+          "type": "string"
+        },
+        "source_gap_register_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "source_file": {
+          "type": "string"
+        },
+        "source_revision": {
+          "type": "string"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "historical_canonical_ledger_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "current_canonical_ledger_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "exact_locator_recheck_against_current_ledger": {
+          "type": "object",
+          "required": [
+            "candidate_lines",
+            "exact_locator_overlap",
+            "no_exact_locator_overlap",
+            "method"
+          ],
+          "properties": {
+            "candidate_lines": {
+              "const": 94
+            },
+            "exact_locator_overlap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "no_exact_locator_overlap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "method": {
+              "type": "string"
+            }
+          }
+        },
+        "original_register_counts": {
+          "type": "object"
+        },
+        "candidate_disposition_counts": {
+          "type": "object"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "source_candidate_profile_triage": {
+      "type": "array",
+      "minItems": 94,
+      "maxItems": 94,
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "source_line",
+          "source_text",
+          "original_primary_disposition",
+          "original_traceability_disposition",
+          "candidate_treatment",
+          "profile_dispositions",
+          "future_retention"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^VCFv4\\.5:L[0-9]{4}$"
+          },
+          "source_line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "source_text": {
+            "type": "string"
+          },
+          "source_context": {
+            "type": "array"
+          },
+          "original_primary_disposition": {
+            "type": "string"
+          },
+          "original_traceability_disposition": {
+            "type": "string"
+          },
+          "source_candidate_status": {
+            "type": "string"
+          },
+          "source_current_requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "candidate_treatment": {
+            "type": "string"
+          },
+          "profile_dispositions": {
+            "type": "object",
+            "required": [
+              "GERMLINE_VARIANT_VCF",
+              "GERMLINE_GVCF"
+            ],
+            "properties": {
+              "GERMLINE_VARIANT_VCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "runtime_action"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "runtime_action": {
+                    "type": "string"
+                  }
+                }
+              },
+              "GERMLINE_GVCF": {
+                "type": "object",
+                "required": [
+                  "scope_disposition",
+                  "rationale",
+                  "runtime_action"
+                ],
+                "properties": {
+                  "scope_disposition": {
+                    "enum": [
+                      "CORE_REQUIRED",
+                      "CONDITIONAL_INPUT",
+                      "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                      "DESCRIPTIVE_RESERVED",
+                      "NOT_APPLICABLE"
+                    ]
+                  },
+                  "rationale": {
+                    "type": "string"
+                  },
+                  "runtime_action": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "future_retention": {
+            "type": "object",
+            "required": [
+              "retain",
+              "workstream",
+              "source_asset"
+            ],
+            "properties": {
+              "retain": {
+                "const": true
+              },
+              "workstream": {
+                "type": "string"
+              },
+              "source_asset": {
+                "type": "string"
+              }
+            }
+          },
+          "source_version_applicability": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "related_version_delta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "source_candidate_semantic_adjudication": {
+      "type": "object",
+      "required": [
+        "path",
+        "markdown_path",
+        "schema_path",
+        "artifact_blob_sha",
+        "status",
+        "candidate_count",
+        "potential_normative_or_mixed_count",
+        "ambiguous_scope_count",
+        "proposed_atomic_requirement_count",
+        "direct_canonical_mapping_edges",
+        "related_context_only_mapping_edges",
+        "cross_version_reconciliation",
+        "canonical_ledger_modified"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "markdown_path": {
+          "type": "string"
+        },
+        "schema_path": {
+          "type": "string"
+        },
+        "artifact_blob_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "status": {
+          "const": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW"
+        },
+        "candidate_count": {
+          "const": 51
+        },
+        "potential_normative_or_mixed_count": {
+          "const": 50
+        },
+        "ambiguous_scope_count": {
+          "const": 1
+        },
+        "proposed_atomic_requirement_count": {
+          "const": 51
+        },
+        "direct_canonical_mapping_edges": {
+          "const": 11
+        },
+        "related_context_only_mapping_edges": {
+          "const": 5
+        },
+        "cross_version_reconciliation": {
+          "const": "OPEN"
+        },
+        "canonical_ledger_modified": {
+          "const": false
+        }
+      }
+    }
+  }
+}

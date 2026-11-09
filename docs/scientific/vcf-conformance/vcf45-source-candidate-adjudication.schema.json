@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://siraloom.invalid/schemas/vcf45-source-candidate-adjudication.schema.json",
+  "title": "SIRALOOM VCFv4.5 source candidate adjudication",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "status",
+    "source",
+    "input_register",
+    "canonical_ledger",
+    "method",
+    "counts",
+    "records",
+    "controls",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "artifact_id": {
+      "const": "siraloom-vcf45-source-candidate-adjudication-phase1"
+    },
+    "status": {
+      "const": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW"
+    },
+    "created_at_utc": {
+      "type": "string"
+    },
+    "repository": {
+      "type": "string"
+    },
+    "branch": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "path",
+        "revision",
+        "git_blob_sha1",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "git_blob_sha1": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "input_register": {
+      "type": "object",
+      "required": [
+        "path",
+        "git_blob_sha1"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "git_blob_sha1": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "canonical_ledger": {
+      "type": "object",
+      "required": [
+        "path",
+        "git_blob_sha1",
+        "requirement_count"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "git_blob_sha1": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "requirement_count": {
+          "const": 226
+        }
+      }
+    },
+    "method": {
+      "type": "object"
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "source_candidates",
+        "source_candidates_potential_normative_or_mixed",
+        "source_candidates_ambiguous_scope",
+        "decision_counts",
+        "proposed_atomic_requirement_count",
+        "existing_requirement_mapping_edges",
+        "related_existing_requirement_edges"
+      ],
+      "properties": {
+        "source_candidates": {
+          "const": 51
+        },
+        "source_candidates_potential_normative_or_mixed": {
+          "const": 50
+        },
+        "source_candidates_ambiguous_scope": {
+          "const": 1
+        },
+        "decision_counts": {
+          "type": "object"
+        },
+        "proposed_atomic_requirement_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "existing_requirement_mapping_edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "related_existing_requirement_edges": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "records": {
+      "type": "array",
+      "minItems": 51,
+      "maxItems": 51,
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "source_line",
+          "source_excerpt",
+          "source_context",
+          "original_register_classification",
+          "source_modality",
+          "adjudication_decision",
+          "existing_requirement_mapping",
+          "proposed_atomic_requirements",
+          "phase1_profile_disposition",
+          "retained_workstream",
+          "rationale",
+          "status",
+          "related_existing_requirement_ids",
+          "mapping_relation"
+        ],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^VCFv4\\.5:L[0-9]{4}$"
+          },
+          "source_line": {
+            "type": "integer"
+          },
+          "source_excerpt": {
+            "type": "string"
+          },
+          "source_context": {
+            "type": "object"
+          },
+          "original_register_classification": {
+            "type": "object"
+          },
+          "source_modality": {
+            "type": "string"
+          },
+          "adjudication_decision": {
+            "enum": [
+              "MAP_EXISTING_REQUIREMENT",
+              "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+              "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+              "INFORMATIVE_EXCLUDE_NORMATIVE",
+              "SPLIT_MIXED_CANDIDATE",
+              "FUTURE_PHASE_REQUIREMENT"
+            ]
+          },
+          "existing_requirement_mapping": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^VCF-REQ-[0-9]{6}$"
+            }
+          },
+          "proposed_atomic_requirements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "proposal_id",
+                "atomic_statement",
+                "observable_acceptance_condition",
+                "requirement_domain",
+                "normative_force",
+                "phase",
+                "review_status"
+              ],
+              "properties": {
+                "proposal_id": {
+                  "type": "string"
+                },
+                "atomic_statement": {
+                  "type": "string",
+                  "minLength": 20
+                },
+                "observable_acceptance_condition": {
+                  "type": "string",
+                  "minLength": 20
+                },
+                "requirement_domain": {
+                  "type": "string"
+                },
+                "normative_force": {
+                  "type": "string"
+                },
+                "phase": {
+                  "enum": [
+                    "PHASE1",
+                    "FUTURE_PHASE"
+                  ]
+                },
+                "review_status": {
+                  "enum": [
+                    "PROPOSED_NOT_CANONICAL",
+                    "PROPOSED_CANONICAL_REQUIREMENT_REFINEMENT"
+                  ]
+                }
+              }
+            }
+          },
+          "phase1_profile_disposition": {
+            "type": "object",
+            "required": [
+              "GERMLINE_VARIANT_VCF",
+              "GERMLINE_GVCF"
+            ],
+            "properties": {
+              "GERMLINE_VARIANT_VCF": {
+                "enum": [
+                  "CORE_REQUIRED",
+                  "CONDITIONAL_INPUT",
+                  "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                  "NOT_APPLICABLE"
+                ]
+              },
+              "GERMLINE_GVCF": {
+                "enum": [
+                  "CORE_REQUIRED",
+                  "CONDITIONAL_INPUT",
+                  "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+                  "NOT_APPLICABLE"
+                ]
+              }
+            }
+          },
+          "retained_workstream": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 40
+          },
+          "status": {
+            "const": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+          },
+          "related_existing_requirement_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^VCF-REQ-[0-9]{6}$"
+            }
+          },
+          "mapping_relation": {
+            "enum": [
+              "DIRECT_SEMANTIC_MAPPING",
+              "RELATED_CONTEXT_ONLY",
+              "RELATED_CONTEXT_ONLY_NOT_SEMANTIC_SUBSTITUTE",
+              "PARTIAL_COVERAGE_PLUS_NEW_ORDERING_REQUIREMENT",
+              "REFINES_EXISTING_REQUIREMENT",
+              "NO_EXISTING_REQUIREMENT_MAPPING"
+            ]
+          },
+          "related_proposal_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "required": [
+        "canonical_ledger_modified",
+        "production_code_modified",
+        "runtime_tests_added",
+        "existing_pso_bnd_assets_modified",
+        "independent_review_count",
+        "laboratory_qualification"
+      ],
+      "properties": {
+        "canonical_ledger_modified": {
+          "const": false
+        },
+        "production_code_modified": {
+          "const": false
+        },
+        "runtime_tests_added": {
+          "const": false
+        },
+        "existing_pso_bnd_assets_modified": {
+          "const": false
+        },
+        "independent_review_count": {
+          "const": 0
+        },
+        "laboratory_qualification": {
+          "const": "NOT_READY"
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

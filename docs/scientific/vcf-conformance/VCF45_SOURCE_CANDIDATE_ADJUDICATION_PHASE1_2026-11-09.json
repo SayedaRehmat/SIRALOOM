@@ -1,0 +1,3549 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "siraloom-vcf45-source-candidate-adjudication-phase1",
+  "status": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW",
+  "created_at_utc": "2026-11-09",
+  "repository": "SayedaRehmat/SIRALOOM",
+  "branch": "research/germline-vcf-profile-reconciliation-20261109",
+  "source": {
+    "path": "docs/scientific/vcf-conformance/sources/hts-specs-510c107ba89aa13113818c9e4fa3071283cb7f7/VCFv4.5.tex",
+    "revision": "510c107ba89aa13113818c9e4fa3071283cb7f7b",
+    "git_blob_sha1": "307950e7eeafc33d524969ff906343f756adb7d7",
+    "sha256": "37f13e0d2e8e741ea8505b0342b6e6034637a1f476eeb3af1b8acc25d70246c5"
+  },
+  "input_register": {
+    "path": "docs/scientific/vcf-conformance/VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json",
+    "git_blob_sha1": "d15777a84dc85b8474fc4fdd0db42d8031e0631a"
+  },
+  "canonical_ledger": {
+    "path": "docs/scientific/vcf-conformance/atomic-requirements.v1.json",
+    "git_blob_sha1": "81d27c5b306f120c45d1d5347b931f8ceaf1f47c",
+    "requirement_count": 226
+  },
+  "method": {
+    "candidate_selection": "All 50 POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION candidates plus the single AMBIGUOUS_SCOPE candidate from the source-gap register.",
+    "source_review": "Pinned VCFv4.5.tex source lines and three lines of surrounding context on each side were re-read. Decisions distinguish reader obligations from producer recommendations, BCF-only rules, optional metadata, descriptive context, and future variant semantics. For mixed sentences, proposal-level normative force is split so MUST, SHOULD, MAY and optional metadata are not collapsed into one force label.",
+    "semantic_mapping": "Direct mappings denote source semantics already captured by the cited canonical requirement. Related IDs denote partial/contextual relationships only and are not counted as complete coverage. Refinements preserve the existing canonical requirement and explicitly propose the missing condition. All proposals remain non-canonical pending cross-version reconciliation and review.",
+    "requirement_policy": "Proposals are not inserted into the canonical ledger until cross-version reconciliation, atomicity review, schema validation and independent review are complete. No implementation or test status is inferred from a proposal.",
+    "modality_policy": "MUST/MUST NOT, SHOULD, MAY, recommendation, optionality and descriptive context are kept distinct. Recommendation-only statements are not promoted to hard rejection rules."
+  },
+  "counts": {
+    "source_candidates": 51,
+    "source_candidates_potential_normative_or_mixed": 50,
+    "source_candidates_ambiguous_scope": 1,
+    "decision_counts": {
+      "MAP_EXISTING_REQUIREMENT": 4,
+      "PROPOSE_NEW_ATOMIC_REQUIREMENT": 27,
+      "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE": 5,
+      "INFORMATIVE_EXCLUDE_NORMATIVE": 1,
+      "SPLIT_MIXED_CANDIDATE": 8,
+      "FUTURE_PHASE_REQUIREMENT": 6
+    },
+    "proposed_atomic_requirement_count": 51,
+    "existing_requirement_mapping_edges": 11,
+    "related_existing_requirement_edges": 5
+  },
+  "records": [
+    {
+      "candidate_id": "VCFv4.5:L0081",
+      "source_line": 81,
+      "source_excerpt": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:",
+      "source_context": {
+        "start_line": 78,
+        "end_line": 84,
+        "lines": [
+          {
+            "line": 78,
+            "text": "VCF files must not contain a byte order mark."
+          },
+          {
+            "line": 79,
+            "text": "Note that non-printable characters U+0000--U+0008, U+000B--U+000C, U+000E--U+001F are disallowed."
+          },
+          {
+            "line": 80,
+            "text": "Line separators must be CR+LF or LF and they are allowed only as line separators at end of line."
+          },
+          {
+            "line": 81,
+            "text": "Some characters have a special meaning when they appear (such as field delimiters `\\verb|;|' in INFO or `\\verb|:|' FORMAT fields), and for any other meaning they must be represented with the capitalized percent encoding:"
+          },
+          {
+            "line": 82,
+            "text": ""
+          },
+          {
+            "line": 83,
+            "text": "\\begingroup\\footnotesize"
+          },
+          {
+            "line": 84,
+            "text": "\\begin{tabular}{l l l}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ENCODING",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
+      "existing_requirement_mapping": [
+        "VCF-REQ-000114",
+        "VCF-REQ-000115",
+        "VCF-REQ-000116",
+        "VCF-REQ-000117",
+        "VCF-REQ-000118",
+        "VCF-REQ-000119",
+        "VCF-REQ-000120",
+        "VCF-REQ-000121"
+      ],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "This sentence introduces the percent-encoding table; the eight table entries are already represented as atomic requirements. The candidate is explanatory lead-in, not an additional ninth escape rule.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "DIRECT_SEMANTIC_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0104",
+      "source_line": 104,
+      "source_excerpt": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines}).",
+      "source_context": {
+        "start_line": 101,
+        "end_line": 107,
+        "lines": [
+          {
+            "line": 101,
+            "text": "For the Integer type, the values from $-2^{31}$ to $-2^{31}+7$ cannot be stored in the binary version and therefore are disallowed in both VCF and BCF, see \\ref{BcfTypeEncoding}."
+          },
+          {
+            "line": 102,
+            "text": ""
+          },
+          {
+            "line": 103,
+            "text": "\\subsection{Meta-information lines}"
+          },
+          {
+            "line": 104,
+            "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+          },
+          {
+            "line": 105,
+            "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+          },
+          {
+            "line": 106,
+            "text": ""
+          },
+          {
+            "line": 107,
+            "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_HEADER_ORDER",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0104-1",
+          "atomic_statement": "Meta-information lines precede the #CHROM header and all data records.",
+          "observable_acceptance_condition": "A VCF reader rejects a file in which a ## meta-information line occurs after the #CHROM header or among data records.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Requires all ## meta-information lines to precede the #CHROM header and all data records. Existing REQ-000003 only places ##fileformat first; it does not state this broader ordering rule.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0107",
+      "source_line": 107,
+      "source_excerpt": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:",
+      "source_context": {
+        "start_line": 104,
+        "end_line": 110,
+        "lines": [
+          {
+            "line": 104,
+            "text": "File meta-information lines start with ``\\verb|##|'' and must appear first in the VCF file, before the header line (section~\\ref{header-line}) and data record lines (section~\\ref{data-lines})."
+          },
+          {
+            "line": 105,
+            "text": "They may be either \\emph{unstructured} or \\emph{structured}."
+          },
+          {
+            "line": 106,
+            "text": ""
+          },
+          {
+            "line": 107,
+            "text": "An \\emph{unstructured} meta-information line consists of a~\\emph{key} (denoting the type of meta-information recorded) and a~\\emph{value} (which may not be empty and must not start with a `\\verb|<|' character), separated by an `\\verb|=|' character:"
+          },
+          {
+            "line": 108,
+            "text": "\\begin{quote}"
+          },
+          {
+            "line": 109,
+            "text": "\\verb|##|\\emph{key}\\verb|=|\\emph{value}"
+          },
+          {
+            "line": 110,
+            "text": "\\end{quote}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_GRAMMAR",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0107-1",
+          "atomic_statement": "An unstructured meta-information line has a non-empty value that does not begin with '<' and is separated from its key by '='.",
+          "observable_acceptance_condition": "A reader accepts valid unstructured ##key=value lines and rejects empty values or values beginning with '<'.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Defines grammar and value constraints for unstructured meta-information lines. Not covered by the fileformat declaration requirements.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0119",
+      "source_line": 119,
+      "source_excerpt": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix.",
+      "source_context": {
+        "start_line": 116,
+        "end_line": 122,
+        "lines": [
+          {
+            "line": 116,
+            "text": "\\begin{quote}"
+          },
+          {
+            "line": 117,
+            "text": "\\verb|##|\\emph{key}\\verb|=<|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\emph{key}\\verb|=|\\emph{value}\\verb|,|\\ldots\\verb|>|"
+          },
+          {
+            "line": 118,
+            "text": "\\end{quote}"
+          },
+          {
+            "line": 119,
+            "text": "All structured lines require an ID which must be unique within their type, i.e., within all the meta-information lines with the same ``\\verb|##|\\emph{key}\\verb|=|'' prefix."
+          },
+          {
+            "line": 120,
+            "text": "For all of the structured lines (\\verb|##INFO|, \\verb|##FORMAT|, \\verb|##FILTER|, etc.) described in this specification, optional fields can be included."
+          },
+          {
+            "line": 121,
+            "text": "For example:"
+          },
+          {
+            "line": 122,
+            "text": "\\begin{verbatim}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_UNIQUENESS",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0119-1",
+          "atomic_statement": "Within each structured meta-information type, ID values are unique.",
+          "observable_acceptance_condition": "A reader rejects duplicate ID attributes among structured lines sharing the same ##key prefix while allowing the same ID in different types where the specification permits.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Structured meta-information IDs must be unique within the same ##key type. Existing duplicate FORMAT-key requirement is narrower and does not cover INFO/FILTER/contig or other structured meta-information IDs.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0126",
+      "source_line": 126,
+      "source_excerpt": "The values of optional fields must be written as quoted strings, even for numeric values.",
+      "source_context": {
+        "start_line": 123,
+        "end_line": 129,
+        "lines": [
+          {
+            "line": 123,
+            "text": "##INFO=<ID=ALLELEID,Number=A,Type=String,Description=\"Allele ID\",Source=\"ClinVar\",Version=\"20220804\">"
+          },
+          {
+            "line": 124,
+            "text": "\\end{verbatim}"
+          },
+          {
+            "line": 125,
+            "text": "In the above example, the optional fields of ``Source'' and ``Version'' are provided."
+          },
+          {
+            "line": 126,
+            "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+          },
+          {
+            "line": 127,
+            "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+          },
+          {
+            "line": 128,
+            "text": ""
+          },
+          {
+            "line": 129,
+            "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_SERIALIZATION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0126-1",
+          "atomic_statement": "Values of optional structured meta-information attributes are serialized as quoted strings, including numeric values.",
+          "observable_acceptance_condition": "A reader accepts quoted optional attribute values and rejects unquoted numeric optional attributes in the VCFv4.5 dialect.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Serialization rule for optional structured-line attributes: quoted strings even when values are numeric. No existing requirement covers this syntax.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0129",
+      "source_line": 129,
+      "source_excerpt": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file.",
+      "source_context": {
+        "start_line": 126,
+        "end_line": 132,
+        "lines": [
+          {
+            "line": 126,
+            "text": "The values of optional fields must be written as quoted strings, even for numeric values."
+          },
+          {
+            "line": 127,
+            "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+          },
+          {
+            "line": 128,
+            "text": ""
+          },
+          {
+            "line": 129,
+            "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+          },
+          {
+            "line": 130,
+            "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+          },
+          {
+            "line": 131,
+            "text": ""
+          },
+          {
+            "line": 132,
+            "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "RECOMMENDED_FOR_VCF_REQUIRED_FOR_BCF",
+      "adjudication_decision": "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
+        "GERMLINE_GVCF": "NOT_APPLICABLE"
+      },
+      "retained_workstream": "BCF_FUTURE_OR_SEPARATE_SCOPE",
+      "rationale": "The text explicitly says recommended for VCF and required for BCF. Do not promote the VCF recommendation into a MUST. BCF is not one of the Phase 1 text-VCF input profiles.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0130",
+      "source_line": 130,
+      "source_excerpt": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above).",
+      "source_context": {
+        "start_line": 127,
+        "end_line": 133,
+        "lines": [
+          {
+            "line": 127,
+            "text": "Other structured lines not defined by this specification may also be used; the only required field for such lines is the required \\verb|ID| field."
+          },
+          {
+            "line": 128,
+            "text": ""
+          },
+          {
+            "line": 129,
+            "text": "It is recommended in VCF and required in BCF that the header includes tags describing the reference and contigs backing the data contained in the file."
+          },
+          {
+            "line": 130,
+            "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+          },
+          {
+            "line": 131,
+            "text": ""
+          },
+          {
+            "line": 132,
+            "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+          },
+          {
+            "line": 133,
+            "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "AMBIGUOUS_SCOPE_REQUIRES_ADJUDICATION",
+        "traceability_disposition": "AMBIGUOUS_SCOPE",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "OPTIONAL_CONTEXT",
+      "adjudication_decision": "INFORMATIVE_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
+        "GERMLINE_GVCF": "NOT_APPLICABLE"
+      },
+      "retained_workstream": "PHASE1_REFERENCE_IDENTITY_POLICY",
+      "rationale": "Clarifies that reference/contig tags are optional in VCF. It supplies context for L129 rather than a separate parser obligation. Preserve optionality; reference identity may still be required by SIRALOOM's clinical pipeline under its own operational policy, not by this VCF sentence.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0133",
+      "source_line": 133,
+      "source_excerpt": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering.",
+      "source_context": {
+        "start_line": 130,
+        "end_line": 136,
+        "lines": [
+          {
+            "line": 130,
+            "text": "These tags are based on the SQ field from the SAM spec; all tags are optional (see the VCF example above)."
+          },
+          {
+            "line": 131,
+            "text": ""
+          },
+          {
+            "line": 132,
+            "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+          },
+          {
+            "line": 133,
+            "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+          },
+          {
+            "line": 134,
+            "text": ""
+          },
+          {
+            "line": 135,
+            "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+          },
+          {
+            "line": 136,
+            "text": "Other than \\verb|##fileformat|, they may appear in any order."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ORDER_INDEPENDENCE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_NOT",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0133-1",
+          "atomic_statement": "A VCF reader does not rely on the order of attributes within structured meta-information lines.",
+          "observable_acceptance_condition": "Permuting valid attributes in ##INFO, ##FORMAT, ##FILTER or ##contig declarations does not change parsing or validation.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_NOT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Reader must not depend on ordering of attributes within a structured meta-information line. This is distinct from human-readable recommended ordering and not represented by current registry.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0135",
+      "source_line": 135,
+      "source_excerpt": "Meta-information lines are optional, but if they are present then they must be completely well-formed.",
+      "source_context": {
+        "start_line": 132,
+        "end_line": 138,
+        "lines": [
+          {
+            "line": 132,
+            "text": "To aid human readability, the order of fields should be ID, Number, Type, Description, then any optional fields."
+          },
+          {
+            "line": 133,
+            "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+          },
+          {
+            "line": 134,
+            "text": ""
+          },
+          {
+            "line": 135,
+            "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+          },
+          {
+            "line": 136,
+            "text": "Other than \\verb|##fileformat|, they may appear in any order."
+          },
+          {
+            "line": 137,
+            "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+          },
+          {
+            "line": 138,
+            "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_OPTIONALITY_AND_WELL_FORMEDNESS",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0135-1",
+          "atomic_statement": "Every meta-information line that is present is completely well-formed under its declared VCF version.",
+          "observable_acceptance_condition": "Malformed present meta-information lines are rejected; omission is allowed where the specification makes the line optional.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Optionality of meta-information lines does not waive syntax validation: any line present must be well-formed. Distinct from required fileformat and header declarations.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0136",
+      "source_line": 136,
+      "source_excerpt": "Other than \\verb|##fileformat|, they may appear in any order.",
+      "source_context": {
+        "start_line": 133,
+        "end_line": 139,
+        "lines": [
+          {
+            "line": 133,
+            "text": "Implementations must not rely on the order of the fields within structured lines and are not required to preserve field ordering."
+          },
+          {
+            "line": 134,
+            "text": ""
+          },
+          {
+            "line": 135,
+            "text": "Meta-information lines are optional, but if they are present then they must be completely well-formed."
+          },
+          {
+            "line": 136,
+            "text": "Other than \\verb|##fileformat|, they may appear in any order."
+          },
+          {
+            "line": 137,
+            "text": "Note that BCF, the binary counterpart of VCF, requires that all entries are present."
+          },
+          {
+            "line": 138,
+            "text": "It is recommended to include meta-information lines describing the entries used in the body of the VCF file."
+          },
+          {
+            "line": 139,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ORDERING_PERMISSION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MAY",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0136-1",
+          "atomic_statement": "Meta-information lines other than ##fileformat may occur in any order before the #CHROM header.",
+          "observable_acceptance_condition": "A reader accepts permutations of valid non-fileformat meta-information lines while still requiring ##fileformat first.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MAY",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Except for ##fileformat, meta-information lines may appear in any order. This is a parser order-independence rule and must not be confused with L104, which places all meta-information before #CHROM.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0151",
+      "source_line": 151,
+      "source_excerpt": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:",
+      "source_context": {
+        "start_line": 148,
+        "end_line": 154,
+        "lines": [
+          {
+            "line": 148,
+            "text": ""
+          },
+          {
+            "line": 149,
+            "text": ""
+          },
+          {
+            "line": 150,
+            "text": "\\subsubsection{Information field format}"
+          },
+          {
+            "line": 151,
+            "text": "INFO meta-information lines are structured lines with required fields ID, Number, Type, and Description, and recommended optional fields Source and Version:"
+          },
+          {
+            "line": 152,
+            "text": ""
+          },
+          {
+            "line": 153,
+            "text": "\\begin{verbatim}"
+          },
+          {
+            "line": 154,
+            "text": "##INFO=<ID=ID,Number=number,Type=type,Description=\"description\",Source=\"source\",Version=\"version\">"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_REQUIRED_AND_RECOMMENDED_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_PLUS_RECOMMENDED",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0151-1",
+          "atomic_statement": "A structured ##INFO declaration contains ID, Number, Type and Description attributes.",
+          "observable_acceptance_condition": "A reader rejects a ##INFO declaration missing any of ID, Number, Type or Description.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0151-2",
+          "atomic_statement": "Source and Version are recommended optional attributes on ##INFO declarations; their absence is valid.",
+          "observable_acceptance_condition": "A reader accepts an ##INFO declaration without Source and/or Version and preserves them when supplied.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "RECOMMENDED_OPTIONAL",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The source combines mandatory INFO declaration attributes (ID, Number, Type, Description) with recommended optional Source and Version attributes. These have different normative force and must not be encoded as one all-required rule.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0159",
+      "source_line": 159,
+      "source_excerpt": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on.",
+      "source_context": {
+        "start_line": 156,
+        "end_line": 162,
+        "lines": [
+          {
+            "line": 156,
+            "text": ""
+          },
+          {
+            "line": 157,
+            "text": "Possible Types for INFO fields are: Integer, Float, Flag, Character, and String."
+          },
+          {
+            "line": 158,
+            "text": "The Number entry is an Integer that describes the number of values that can be included with the INFO field."
+          },
+          {
+            "line": 159,
+            "text": "For example, if the INFO field contains a single number, then this value must be $1$; if the INFO field describes a pair of numbers, then this value must be $2$ and so on."
+          },
+          {
+            "line": 160,
+            "text": "There are also certain special characters used to define special cases:"
+          },
+          {
+            "line": 161,
+            "text": ""
+          },
+          {
+            "line": 162,
+            "text": "\\begin{itemize}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_CARDINALITY",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0159-1",
+          "atomic_statement": "A field declared with a non-negative integer Number=n has exactly n values when present.",
+          "observable_acceptance_condition": "A reader validates value cardinality against the field declaration for arbitrary INFO and FORMAT tags.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Defines fixed integer Number cardinality: a field declared Number=n has exactly n values. Existing reserved-field rows record individual key metadata but do not enforce generic cardinality for arbitrary declared INFO/FORMAT fields.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0164",
+      "source_line": 164,
+      "source_excerpt": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines}).",
+      "source_context": {
+        "start_line": 161,
+        "end_line": 167,
+        "lines": [
+          {
+            "line": 161,
+            "text": ""
+          },
+          {
+            "line": 162,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 163,
+            "text": "  \\item A: The field has one value per alternate allele."
+          },
+          {
+            "line": 164,
+            "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+          },
+          {
+            "line": 165,
+            "text": "  \\item R: The field has one value for each possible allele, including the reference."
+          },
+          {
+            "line": 166,
+            "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+          },
+          {
+            "line": 167,
+            "text": "  \\item G: The field has one value for each possible genotype."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_VALUE_ORDER",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0164-1",
+          "atomic_statement": "A Number=A field has one value per ALT allele, in ALT-column order.",
+          "observable_acceptance_condition": "For multiallelic records, a reader validates Number=A vector length and preserves its positional correspondence to ALT alleles.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Generic Number=A cardinality/order rule. Existing AC/AF/EC descriptions are field-specific and do not establish generic Number=A semantics.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0166",
+      "source_line": 166,
+      "source_excerpt": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column.",
+      "source_context": {
+        "start_line": 163,
+        "end_line": 169,
+        "lines": [
+          {
+            "line": 163,
+            "text": "  \\item A: The field has one value per alternate allele."
+          },
+          {
+            "line": 164,
+            "text": "  The values must be in the same order as listed in the ALT column (described in section \\ref{data-lines})."
+          },
+          {
+            "line": 165,
+            "text": "  \\item R: The field has one value for each possible allele, including the reference."
+          },
+          {
+            "line": 166,
+            "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+          },
+          {
+            "line": 167,
+            "text": "  \\item G: The field has one value for each possible genotype."
+          },
+          {
+            "line": 168,
+            "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+          },
+          {
+            "line": 169,
+            "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_VALUE_ORDER",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0166-1",
+          "atomic_statement": "A Number=R field has one value per allele, ordered REF first followed by ALT alleles in ALT-column order.",
+          "observable_acceptance_condition": "For multiallelic records, a reader validates Number=R vector length and reference/alternate positional mapping.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Generic Number=R cardinality/order rule. Existing AD/ADF/ADR descriptions do not establish this for all fields declared Number=R.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0168",
+      "source_line": 168,
+      "source_excerpt": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering}).",
+      "source_context": {
+        "start_line": 165,
+        "end_line": 171,
+        "lines": [
+          {
+            "line": 165,
+            "text": "  \\item R: The field has one value for each possible allele, including the reference."
+          },
+          {
+            "line": 166,
+            "text": "  The order of the values must be the reference allele first, then the alternate alleles as listed in the ALT column."
+          },
+          {
+            "line": 167,
+            "text": "  \\item G: The field has one value for each possible genotype."
+          },
+          {
+            "line": 168,
+            "text": "  The values must be in the same order as prescribed in section \\ref{genotype-fields:genotype-ordering} (see \\textsc{Genotype Ordering})."
+          },
+          {
+            "line": 169,
+            "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+          },
+          {
+            "line": 170,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 171,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_VALUE_ORDER",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
+      "existing_requirement_mapping": [
+        "VCF-REQ-000136"
+      ],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The candidate explicitly delegates Number=G ordering to the genotype-ordering section. REQ-000136 captures VCFv4.3-4.5 arbitrary-ploidy genotype ordering; REQ-000033 captures the broader genotype-likelihood ordering statement. Map rather than duplicate.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "DIRECT_SEMANTIC_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0172",
+      "source_line": 172,
+      "source_excerpt": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case.",
+      "source_context": {
+        "start_line": 169,
+        "end_line": 175,
+        "lines": [
+          {
+            "line": 169,
+            "text": "  \\item . (dot): The number of possible values varies, is unknown or unbounded."
+          },
+          {
+            "line": 170,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 171,
+            "text": ""
+          },
+          {
+            "line": 172,
+            "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+          },
+          {
+            "line": 173,
+            "text": "The Description value must be surrounded by double-quotes."
+          },
+          {
+            "line": 174,
+            "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+          },
+          {
+            "line": 175,
+            "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_FLAG_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0172-1",
+          "atomic_statement": "An INFO field declared Type=Flag has Number=0 and is represented without a '=value' payload.",
+          "observable_acceptance_condition": "A reader rejects Flag declarations with nonzero Number and INFO occurrences carrying a value.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Flag INFO values are absent (key-only) and Flag declarations must use Number=0. This is not the same as a zero-length field rule; it constrains the metadata schema and record representation.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0173",
+      "source_line": 173,
+      "source_excerpt": "The Description value must be surrounded by double-quotes.",
+      "source_context": {
+        "start_line": 170,
+        "end_line": 176,
+        "lines": [
+          {
+            "line": 170,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 171,
+            "text": ""
+          },
+          {
+            "line": 172,
+            "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+          },
+          {
+            "line": 173,
+            "text": "The Description value must be surrounded by double-quotes."
+          },
+          {
+            "line": 174,
+            "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+          },
+          {
+            "line": 175,
+            "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+          },
+          {
+            "line": 176,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_QUOTING",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0173-1",
+          "atomic_statement": "The Description attribute in a structured ##INFO declaration is enclosed in double quotes.",
+          "observable_acceptance_condition": "A reader validates that the Description value in a ##INFO declaration is serialized as a quoted string.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Description attributes must be double-quoted. Separate from escaping of quote and backslash characters.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0174",
+      "source_line": 174,
+      "source_excerpt": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$.",
+      "source_context": {
+        "start_line": 171,
+        "end_line": 177,
+        "lines": [
+          {
+            "line": 171,
+            "text": ""
+          },
+          {
+            "line": 172,
+            "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+          },
+          {
+            "line": 173,
+            "text": "The Description value must be surrounded by double-quotes."
+          },
+          {
+            "line": 174,
+            "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+          },
+          {
+            "line": 175,
+            "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+          },
+          {
+            "line": 176,
+            "text": ""
+          },
+          {
+            "line": 177,
+            "text": "\\subsubsection{Filter field format}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ESCAPING",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0174-1",
+          "atomic_statement": "Within a quoted ##INFO Description value, a double-quote is escaped with a backslash and a literal backslash is escaped as a doubled backslash.",
+          "observable_acceptance_condition": "A reader correctly decodes escaped quote and backslash characters in ##INFO Description values and rejects invalid escape sequences.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Escaping rules for quote and backslash inside quoted structured metadata values are independently testable and not covered by the existing percent-encoding rules for data fields.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0175",
+      "source_line": 175,
+      "source_excerpt": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use.",
+      "source_context": {
+        "start_line": 172,
+        "end_line": 178,
+        "lines": [
+          {
+            "line": 172,
+            "text": "The `Flag' type indicates that the INFO field does not contain a Value entry, and hence the Number must be $0$ in this case."
+          },
+          {
+            "line": 173,
+            "text": "The Description value must be surrounded by double-quotes."
+          },
+          {
+            "line": 174,
+            "text": "Double-quote character must be escaped with backslash $\\backslash$ and backslash as $\\backslash\\backslash$."
+          },
+          {
+            "line": 175,
+            "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+          },
+          {
+            "line": 176,
+            "text": ""
+          },
+          {
+            "line": 177,
+            "text": "\\subsubsection{Filter field format}"
+          },
+          {
+            "line": 178,
+            "text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_QUOTING_AND_SEMANTICS",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WHEN_PRESENT",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0175-1",
+          "atomic_statement": "When Source or Version is supplied on a structured INFO declaration, its value is quoted; Source identifies the annotation source and Version identifies its exact version.",
+          "observable_acceptance_condition": "A reader accepts absent optional Source/Version attributes and preserves exact supplied values without coercing or inventing them.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WHEN_PRESENT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Source and Version are optional per L151, but when supplied they must be quoted and carry annotation-source and exact-version semantics. Do not convert optional presence into mandatory presence.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0178",
+      "source_line": 178,
+      "source_excerpt": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:",
+      "source_context": {
+        "start_line": 175,
+        "end_line": 181,
+        "lines": [
+          {
+            "line": 175,
+            "text": "Source and Version values likewise must be surrounded by double-quotes and specify the annotation source (case-insensitive, e.g.\\ \\verb|\"dbsnp\"|) and exact version (e.g.\\ \\verb|\"138\"|), respectively for computational use."
+          },
+          {
+            "line": 176,
+            "text": ""
+          },
+          {
+            "line": 177,
+            "text": "\\subsubsection{Filter field format}"
+          },
+          {
+            "line": 178,
+            "text": "FILTER meta-information lines are structured lines with required fields ID and Description that define the possible content of the FILTER column in the VCF records:"
+          },
+          {
+            "line": 179,
+            "text": ""
+          },
+          {
+            "line": 180,
+            "text": "\\begin{verbatim}"
+          },
+          {
+            "line": 181,
+            "text": "##FILTER=<ID=ID,Description=\"description\">"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_FILTER_METADATA_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0178-1",
+          "atomic_statement": "A structured ##FILTER declaration contains ID and Description attributes.",
+          "observable_acceptance_condition": "A reader rejects a ##FILTER declaration missing ID or Description.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "FILTER metadata has required ID and Description fields. Not represented by INFO or FORMAT declaration rules.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0185",
+      "source_line": 185,
+      "source_excerpt": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:",
+      "source_context": {
+        "start_line": 182,
+        "end_line": 188,
+        "lines": [
+          {
+            "line": 182,
+            "text": "\\end{verbatim}"
+          },
+          {
+            "line": 183,
+            "text": ""
+          },
+          {
+            "line": 184,
+            "text": "\\subsubsection{Individual format field format}"
+          },
+          {
+            "line": 185,
+            "text": "FORMAT meta-information lines are structured lines with required fields ID, Number, Type, and Description that define the possible content of the per-sample/genotype columns in the VCF records:"
+          },
+          {
+            "line": 186,
+            "text": ""
+          },
+          {
+            "line": 187,
+            "text": "\\begin{verbatim}"
+          },
+          {
+            "line": 188,
+            "text": "##FORMAT=<ID=ID,Number=number,Type=type,Description=\"description\">"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_FORMAT_METADATA_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0185-1",
+          "atomic_statement": "A structured ##FORMAT declaration contains ID, Number, Type and Description attributes.",
+          "observable_acceptance_condition": "A reader rejects a ##FORMAT declaration missing any required attribute.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "FORMAT metadata has required ID, Number, Type and Description fields. REQ-000017 concerns the record FORMAT column and sample-value alignment, not the metadata declaration schema.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0258",
+      "source_line": 258,
+      "source_excerpt": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})",
+      "source_context": {
+        "start_line": 255,
+        "end_line": 261,
+        "lines": [
+          {
+            "line": 255,
+            "text": ""
+          },
+          {
+            "line": 256,
+            "text": "\\noindent \\textbf{Structural Variants} \\newline"
+          },
+          {
+            "line": 257,
+            "text": "In symbolic alternate alleles for structural variants, the ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes."
+          },
+          {
+            "line": 258,
+            "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})"
+          },
+          {
+            "line": 259,
+            "text": "The first level type must be one of the following:"
+          },
+          {
+            "line": 260,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 261,
+            "text": "  \\item DEL Region of lowered copy number relative to the reference, or a deletion breakpoint"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_LEXICAL_CONSTRAINT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_NOT",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0258-1",
+          "atomic_statement": "Symbolic structural-variant type identifiers are case-sensitive strings and contain no whitespace, commas or angle brackets.",
+          "observable_acceptance_condition": "A future SV parser accepts valid case-sensitive symbolic type identifiers and rejects identifiers containing prohibited characters.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST_NOT",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "STRUCTURAL_VARIANT",
+      "rationale": "The lexical restrictions apply to symbolic structural-variant ALT type identifiers. Retain for the structural-variant parser/routing phase; Phase 1 must still recognize and preserve symbolic records sufficiently to route them safely.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0259",
+      "source_line": 259,
+      "source_excerpt": "The first level type must be one of the following:",
+      "source_context": {
+        "start_line": 256,
+        "end_line": 262,
+        "lines": [
+          {
+            "line": 256,
+            "text": "\\noindent \\textbf{Structural Variants} \\newline"
+          },
+          {
+            "line": 257,
+            "text": "In symbolic alternate alleles for structural variants, the ID field indicates the type of structural variant, and can be a colon-separated list of types and subtypes."
+          },
+          {
+            "line": 258,
+            "text": "ID values are case sensitive strings and must not contain whitespace, commas or angle brackets (See \\ref{fixed-fields}.\\ref{fixed-fields-alt})"
+          },
+          {
+            "line": 259,
+            "text": "The first level type must be one of the following:"
+          },
+          {
+            "line": 260,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 261,
+            "text": "  \\item DEL Region of lowered copy number relative to the reference, or a deletion breakpoint"
+          },
+          {
+            "line": 262,
+            "text": "  \\item INS Insertion of novel sequence relative to the reference"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ENUMERATED_DOMAIN",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0259-1",
+          "atomic_statement": "The first-level symbolic structural-variant type is one of the VCFv4.5 reserved top-level types enumerated in the specification.",
+          "observable_acceptance_condition": "A future SV parser validates the complete enumerated top-level type set and retains the subtype grammar separately.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "STRUCTURAL_VARIANT",
+      "rationale": "Enumerated top-level symbolic SV type domain. Preserve the full enumerated set for later SV interpretation; Phase 1 only needs recognition and explicit routing.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0265",
+      "source_line": 265,
+      "source_excerpt": "  \\item CNV Region of uniform copy number (may be deletion, duplication or copy number neutral)",
+      "source_context": {
+        "start_line": 262,
+        "end_line": 268,
+        "lines": [
+          {
+            "line": 262,
+            "text": "  \\item INS Insertion of novel sequence relative to the reference"
+          },
+          {
+            "line": 263,
+            "text": "  \\item DUP Region of elevated copy number relative to the reference, or a tandem duplication breakpoint"
+          },
+          {
+            "line": 264,
+            "text": "  \\item INV Inversion of reference sequence"
+          },
+          {
+            "line": 265,
+            "text": "  \\item CNV Region of uniform copy number (may be deletion, duplication or copy number neutral)"
+          },
+          {
+            "line": 266,
+            "text": "\\end{itemize}"
+          },
+          {
+            "line": 267,
+            "text": ""
+          },
+          {
+            "line": 268,
+            "text": "The CNV symbolic allele should not be used when a more specific one (e.g. DEL, CNV:TR) can be applied."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "DESCRIPTIVE_ENUMERATION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "DESCRIPTIVE_ENUMERATION",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "CNV",
+      "rationale": "This line defines the CNV member of the top-level symbolic SV type enumeration introduced at L259. It is not a separate parser rule; preserve the CNV definition as a future CNV glossary/semantic entry and link it to the single enumerated-domain proposal at L259.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_proposal_ids": [
+        "VCF45-PROP-0259-1"
+      ],
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0301",
+      "source_line": 301,
+      "source_excerpt": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file.",
+      "source_context": {
+        "start_line": 298,
+        "end_line": 304,
+        "lines": [
+          {
+            "line": 298,
+            "text": ""
+          },
+          {
+            "line": 299,
+            "text": "\\subsubsection{Contig field format}"
+          },
+          {
+            "line": 300,
+            "text": "\\label{sec-contig-field}"
+          },
+          {
+            "line": 301,
+            "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+          },
+          {
+            "line": 302,
+            "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+          },
+          {
+            "line": 303,
+            "text": "the following ones reserved:"
+          },
+          {
+            "line": 304,
+            "text": "\\begin{itemize}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_VCF_RECOMMENDATION_BCF_REQUIREMENT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "RECOMMENDED_FOR_VCF_REQUIRED_FOR_BCF",
+      "adjudication_decision": "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
+        "GERMLINE_GVCF": "NOT_APPLICABLE"
+      },
+      "retained_workstream": "BCF_FUTURE_OR_SEPARATE_SCOPE",
+      "rationale": "Again distinguishes recommended VCF header contig tags from required BCF entries. BCF-only obligation is outside Phase 1 VCF-text scope; preserve the VCF recommendation but do not require these tags solely on this basis.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0302",
+      "source_line": 302,
+      "source_excerpt": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with",
+      "source_context": {
+        "start_line": 299,
+        "end_line": 305,
+        "lines": [
+          {
+            "line": 299,
+            "text": "\\subsubsection{Contig field format}"
+          },
+          {
+            "line": 300,
+            "text": "\\label{sec-contig-field}"
+          },
+          {
+            "line": 301,
+            "text": "It is recommended for VCF, and required for BCF, that the header includes tags describing the contigs referred to in the file."
+          },
+          {
+            "line": 302,
+            "text": "The structured \\texttt{contig} field must include the ID attribute and can include additional optional attributes with"
+          },
+          {
+            "line": 303,
+            "text": "the following ones reserved:"
+          },
+          {
+            "line": 304,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 305,
+            "text": "  \\item length: the length of the sequence"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_STRUCTURED_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WHEN_PRESENT",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0302-1",
+          "atomic_statement": "A present structured ##contig declaration contains an ID attribute.",
+          "observable_acceptance_condition": "A reader rejects a present ##contig declaration without ID.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WHEN_PRESENT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0302-2",
+          "atomic_statement": "The reserved optional ##contig attributes length, md5 and URL are recognized and preserved when present.",
+          "observable_acceptance_condition": "A reader retains the raw values of recognized optional length, md5 and URL attributes without requiring their presence or inventing validation semantics not specified in the pinned source.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WHEN_PRESENT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_REFERENCE_IDENTITY_POLICY",
+      "rationale": "When a ##contig declaration is present, its structured metadata must include ID; optional attributes may include reserved length, md5 and URL. The existence of a ##contig line is recommended for VCF, not mandatory.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0322",
+      "source_line": 322,
+      "source_excerpt": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'.",
+      "source_context": {
+        "start_line": 319,
+        "end_line": 325,
+        "lines": [
+          {
+            "line": 319,
+            "text": "}"
+          },
+          {
+            "line": 320,
+            "text": "\\noindent"
+          },
+          {
+            "line": 321,
+            "text": "Contig names follow the same rules as the SAM format's reference sequence names:"
+          },
+          {
+            "line": 322,
+            "text": "they may contain any printable ASCII characters in the range \\verb|[!-~]| apart from `{\\tt\\verb|\\|\\,,\\,\"`'\\,()\\,[]\\,\\verb|{}|\\,<>}' and may not start with `{\\tt *}' or `{\\tt =}'."
+          },
+          {
+            "line": 323,
+            "text": "Thus they match the following regular expression:"
+          },
+          {
+            "line": 324,
+            "text": "\\begin{verbatim}"
+          },
+          {
+            "line": 325,
+            "text": "    [0-9A-Za-z!#$%&+./:;?@^_|~-][0-9A-Za-z!#$%&*+./:;=?@^_|~-]*"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_LEXICAL_GRAMMAR",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0322-1",
+          "atomic_statement": "Contig names conform to the VCFv4.5 reference-sequence identifier character set and first-character restrictions.",
+          "observable_acceptance_condition": "A reader rejects contig identifiers containing prohibited characters or prohibited initial characters.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Defines allowed lexical characters and first-character restrictions for reference-sequence/contig identifiers. Required to parse CHROM and reconcile contig names safely.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0329",
+      "source_line": 329,
+      "source_excerpt": "The contig names must not use a reserved symbolic allele name.",
+      "source_context": {
+        "start_line": 326,
+        "end_line": 332,
+        "lines": [
+          {
+            "line": 326,
+            "text": "\\end{verbatim}"
+          },
+          {
+            "line": 327,
+            "text": "\\noindent"
+          },
+          {
+            "line": 328,
+            "text": "In particular, excluding commas facilitates parsing \\verb|##contig| lines, and excluding the characters `\\verb|<>[]|' and initial~`{\\tt *}' avoids clashes with symbolic alleles."
+          },
+          {
+            "line": 329,
+            "text": "The contig names must not use a reserved symbolic allele name."
+          },
+          {
+            "line": 330,
+            "text": ""
+          },
+          {
+            "line": 331,
+            "text": ""
+          },
+          {
+            "line": 332,
+            "text": "\\subsubsection{Sample field format}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_PROHIBITION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_NOT",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0329-1",
+          "atomic_statement": "A contig name does not equal a reserved symbolic allele name.",
+          "observable_acceptance_condition": "A reader rejects a contig declaration or CHROM identifier that collides with a reserved symbolic allele token.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_NOT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Contig identifiers must not collide with reserved symbolic allele names. Prevents ambiguity between reference names and symbolic ALT syntax.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0391",
+      "source_line": 391,
+      "source_excerpt": "  All entries for a specific CHROM must form a contiguous block within the VCF file.",
+      "source_context": {
+        "start_line": 388,
+        "end_line": 394,
+        "lines": [
+          {
+            "line": 388,
+            "text": ""
+          },
+          {
+            "line": 389,
+            "text": "\\begin{enumerate}"
+          },
+          {
+            "line": 390,
+            "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+          },
+          {
+            "line": 391,
+            "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+          },
+          {
+            "line": 392,
+            "text": "  (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 393,
+            "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+          },
+          {
+            "line": 394,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ORDERING",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0391-1",
+          "atomic_statement": "All records for a given CHROM occur in one contiguous block in the VCF.",
+          "observable_acceptance_condition": "A reader rejects a file where a CHROM block reappears after another CHROM block has begun.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "All records for one CHROM form a contiguous block. This is distinct from numeric POS ordering within each CHROM (L394) and must be tested separately.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0392",
+      "source_line": 392,
+      "source_excerpt": "  (String, no whitespace permitted, Required).",
+      "source_context": {
+        "start_line": 389,
+        "end_line": 395,
+        "lines": [
+          {
+            "line": 389,
+            "text": "\\begin{enumerate}"
+          },
+          {
+            "line": 390,
+            "text": "  \\item CHROM --- chromosome: An identifier from the reference genome or an angle-bracketed ID String (``$<$ID$>$'') pointing to a contig in the assembly file (cf.\\ the \\#\\#assembly line in the header)."
+          },
+          {
+            "line": 391,
+            "text": "  All entries for a specific CHROM must form a contiguous block within the VCF file."
+          },
+          {
+            "line": 392,
+            "text": "  (String, no whitespace permitted, Required)."
+          },
+          {
+            "line": 393,
+            "text": "  \\item POS --- position: The reference position, with the 1st base having position 1."
+          },
+          {
+            "line": 394,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          },
+          {
+            "line": 395,
+            "text": "  It is permitted to have multiple records with the same POS."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0392-1",
+          "atomic_statement": "CHROM is a required string field containing no whitespace.",
+          "observable_acceptance_condition": "A reader rejects missing or whitespace-containing CHROM values.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "CHROM is a required string field with no whitespace. This is a distinct fixed-column lexical contract.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0397",
+      "source_line": 397,
+      "source_excerpt": "  (Integer, Required)",
+      "source_context": {
+        "start_line": 394,
+        "end_line": 400,
+        "lines": [
+          {
+            "line": 394,
+            "text": "  Positions are sorted numerically, in increasing order, within each reference sequence CHROM."
+          },
+          {
+            "line": 395,
+            "text": "  It is permitted to have multiple records with the same POS."
+          },
+          {
+            "line": 396,
+            "text": "  Telomeres are indicated by using positions 0 or N+1, where N is the length of the corresponding chromosome or contig."
+          },
+          {
+            "line": 397,
+            "text": "  (Integer, Required)"
+          },
+          {
+            "line": 398,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 399,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 400,
+            "text": "  No identifier should be present in more than one data record."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_FIELD_SCHEMA",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0397-1",
+          "atomic_statement": "POS is a required integer field.",
+          "observable_acceptance_condition": "A reader rejects non-integer or missing POS values while applying the version-specific allowed coordinate domain from L393-L396.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "POS is a required integer field. Coordinate origin and telomere boundary values are specified in adjacent L393/L396, but this candidate specifically establishes its declared field type.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0400",
+      "source_line": 400,
+      "source_excerpt": "  No identifier should be present in more than one data record.",
+      "source_context": {
+        "start_line": 397,
+        "end_line": 403,
+        "lines": [
+          {
+            "line": 397,
+            "text": "  (Integer, Required)"
+          },
+          {
+            "line": 398,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 399,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 400,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 401,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 402,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 403,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_UNIQUENESS",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "SHOULD",
+      "adjudication_decision": "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The exact source uses 'should', not 'must'. Duplicate IDs are discouraged, but the reader must not promote this to a hard VCFv4.5 rejection unless a separate lab policy explicitly does so.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0401",
+      "source_line": 401,
+      "source_excerpt": "  If there is no identifier available, then the MISSING value should be used.",
+      "source_context": {
+        "start_line": 398,
+        "end_line": 404,
+        "lines": [
+          {
+            "line": 398,
+            "text": "  \\item ID --- identifier: Semicolon-separated list of unique identifiers where available."
+          },
+          {
+            "line": 399,
+            "text": "  If this is a dbSNP variant the rs number(s) should be used."
+          },
+          {
+            "line": 400,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 401,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 402,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 403,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 404,
+            "text": "  Multiple bases are permitted."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_MISSING_VALUE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "SHOULD",
+      "adjudication_decision": "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The exact source uses 'should'. A missing ID marker is recommended when no identifier exists; do not misstate this as a MUST.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0403",
+      "source_line": 403,
+      "source_excerpt": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive).",
+      "source_context": {
+        "start_line": 400,
+        "end_line": 406,
+        "lines": [
+          {
+            "line": 400,
+            "text": "  No identifier should be present in more than one data record."
+          },
+          {
+            "line": 401,
+            "text": "  If there is no identifier available, then the MISSING value should be used."
+          },
+          {
+            "line": 402,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 403,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 404,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 405,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 406,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_LEXICAL_DOMAIN",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0403-1",
+          "atomic_statement": "Each REF allele base is one of A, C, G, T or N, case-insensitively; REF may contain multiple bases.",
+          "observable_acceptance_condition": "A reader rejects REF strings containing unsupported IUPAC ambiguity symbols or non-base characters before reference-genome comparison.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "REF allele strings are restricted to A,C,G,T,N (case-insensitive); multiple bases are allowed. This is central to small-variant REF validation.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0406",
+      "source_line": 406,
+      "source_excerpt": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings.",
+      "source_context": {
+        "start_line": 403,
+        "end_line": 409,
+        "lines": [
+          {
+            "line": 403,
+            "text": "  \\item REF --- reference base(s): Each base must be one of A,C,G,T,N (case insensitive)."
+          },
+          {
+            "line": 404,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 405,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 406,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+          },
+          {
+            "line": 407,
+            "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+          },
+          {
+            "line": 408,
+            "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+          },
+          {
+            "line": 409,
+            "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_NORMATIVE_AND_EXCEPTION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_PLUS_MAY",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0406-1",
+          "atomic_statement": "A simple insertion or deletion is represented with a padding base preceding the variant, with POS identifying that padding base.",
+          "observable_acceptance_condition": "A reader validates the anchor-base representation and coordinate span for ordinary simple insertions/deletions.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0406-2",
+          "atomic_statement": "For a simple insertion or deletion at contig position 1, the padding base follows the variant and POS identifies that following base.",
+          "observable_acceptance_condition": "Boundary tests at POS=1 validate right-padding without an impossible preceding base.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0406-3",
+          "atomic_statement": "For complex substitutions or other alleles where every allele string is non-empty, padding is not required but is permitted.",
+          "observable_acceptance_condition": "A reader accepts both permitted padded and unpadded complex alleles without changing their biological sequence.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MAY",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The sentence contains the ordinary simple-indel anchor rule, a contig-position-1 exception, and a distinct permission that complex substitutions with non-empty alleles need not be padded. These are separate behaviors and must be split.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0407",
+      "source_line": 407,
+      "source_excerpt": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism.",
+      "source_context": {
+        "start_line": 404,
+        "end_line": 410,
+        "lines": [
+          {
+            "line": 404,
+            "text": "  Multiple bases are permitted."
+          },
+          {
+            "line": 405,
+            "text": "  The value in the POS field refers to the position of the first base in the String."
+          },
+          {
+            "line": 406,
+            "text": "  For simple insertions and deletions in which either the REF or one of the ALT alleles would otherwise be null/empty, the REF and ALT Strings must include the base before the variant (which must be reflected in the POS field), unless the variant occurs at position 1 on the contig in which case it must include the base after the variant; this padding base is not required (although it is permitted) e.g. for complex substitutions or other variants where all alleles have at least one base represented in their Strings."
+          },
+          {
+            "line": 407,
+            "text": "  If any of the ALT alleles is a symbolic allele (an angle-bracketed ID String ``$<$ID$>$'') then the padding base is required and POS denotes the coordinate of the base preceding the polymorphism."
+          },
+          {
+            "line": 408,
+            "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+          },
+          {
+            "line": 409,
+            "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+          },
+          {
+            "line": 410,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ALLELE_REPRESENTATION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WITH_EXCEPTION",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0407-1",
+          "atomic_statement": "For any symbolic ALT other than <*>, the required padding base precedes the polymorphism and POS identifies that preceding base.",
+          "observable_acceptance_condition": "A reader validates symbolic-ALT padding against the exact construct class and does not apply this generic rule to the VCFv4.5 <*> exception.",
+          "requirement_domain": "GVCF",
+          "normative_force": "MUST_WITH_EXCEPTION",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0407-2",
+          "atomic_statement": "The VCFv4.5 <*> unspecified allele uses the reference-call interval convention in which the POS base is included in the reference-call interval.",
+          "observable_acceptance_condition": "A gVCF parser distinguishes <*> from * and validates the reference-block start convention.",
+          "requirement_domain": "GVCF",
+          "normative_force": "MUST_WITH_EXCEPTION",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "GVCF_AND_SYMBOLIC_ALLELE_ROUTING",
+      "rationale": "The generic symbolic-ALT padding rule and the <*> reference-block exception must be separated. The exception is specifically important for gVCF and cannot be generalized to the spanning-deletion '*' allele.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0411",
+      "source_line": 411,
+      "source_excerpt": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)",
+      "source_context": {
+        "start_line": 408,
+        "end_line": 414,
+        "lines": [
+          {
+            "line": 408,
+            "text": "  The exception to this is the $<$*$>$ symbolic allele for which the reference call interval includes the POS base."
+          },
+          {
+            "line": 409,
+            "text": "  Tools processing VCF files are not required to preserve case in the REF allele Strings. (String, Required)."
+          },
+          {
+            "line": 410,
+            "text": ""
+          },
+          {
+            "line": 411,
+            "text": "  If the reference sequence contains IUPAC ambiguity codes not allowed by this specification (such as R = A/G), the ambiguous reference base must be reduced to a concrete base by using the one that is first alphabetically (thus R as a reference base is converted to A in VCF.)"
+          },
+          {
+            "line": 412,
+            "text": ""
+          },
+          {
+            "line": 413,
+            "text": "  \\item ALT --- alternate base(s): Comma-separated list of alternate non-reference alleles."
+          },
+          {
+            "line": 414,
+            "text": "  \\label{fixed-fields-alt}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_REFERENCE_ALPHABET_POLICY",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_FOR_PRODUCER",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0411-1",
+          "atomic_statement": "When a VCF producer uses a reference sequence containing IUPAC ambiguity codes outside the VCF REF alphabet, it converts each ambiguous reference base to the alphabetically first concrete base before emitting the VCF REF allele.",
+          "observable_acceptance_condition": "An upstream producer conformance test verifies the prescribed conversion for each unsupported IUPAC ambiguity symbol; SIRALOOM's reader never silently rewrites incoming REF values.",
+          "requirement_domain": "UPSTREAM_VCF_PRODUCER",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
+        "GERMLINE_GVCF": "NOT_APPLICABLE"
+      },
+      "retained_workstream": "REFERENCE_PACKAGE_AND_UPSTREAM_PRODUCER_PROVENANCE",
+      "rationale": "This is a normative producer-side conversion rule for ambiguous underlying reference sequences, not an additional reader-side input rule. Preserve it as an upstream producer/reference-provenance requirement. Incoming VCF REF is already constrained to A/C/G/T/N by L403; SIRALOOM must not silently rewrite user-supplied REF alleles to an alphabetically selected base.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0416",
+      "source_line": 416,
+      "source_excerpt": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}.",
+      "source_context": {
+        "start_line": 413,
+        "end_line": 419,
+        "lines": [
+          {
+            "line": 413,
+            "text": "  \\item ALT --- alternate base(s): Comma-separated list of alternate non-reference alleles."
+          },
+          {
+            "line": 414,
+            "text": "  \\label{fixed-fields-alt}"
+          },
+          {
+            "line": 415,
+            "text": "  These alleles do not have to be called in any of the samples."
+          },
+          {
+            "line": 416,
+            "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+          },
+          {
+            "line": 417,
+            "text": "  If there are no alternative alleles, then the MISSING value must be used."
+          },
+          {
+            "line": 418,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+          },
+          {
+            "line": 419,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_ALT_GRAMMAR",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WITH_CLASS_SPECIFIC_ROUTING",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0416-1",
+          "atomic_statement": "A sequence ALT allele is a non-empty string over A,C,G,T,N, case-insensitively; '*' is the spanning-deletion allele and '.' denotes no alternate allele.",
+          "observable_acceptance_condition": "A reader parses sequence alleles, preserves '*' as an overlapping-deletion marker, and does not treat it as an ordinary sequence allele.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WITH_CLASS_SPECIFIC_ROUTING",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0416-2",
+          "atomic_statement": "The <*> allele is a distinct unspecified/reference-confidence allele and is not an ordinary clinical alternate allele.",
+          "observable_acceptance_condition": "The gVCF parser recognizes <*> as a reference-confidence construct and routes it to reference-block logic.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WITH_CLASS_SPECIFIC_ROUTING",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0416-3",
+          "atomic_statement": "Symbolic SV alleles and breakend replacement strings are recognized as distinct ALT classes and are not interpreted as ordinary short sequence alleles.",
+          "observable_acceptance_condition": "Phase 1 preserves their original records and routes them to the retained future SV/BND workstream.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WITH_CLASS_SPECIFIC_ROUTING",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_ALLELE_ROUTING_AND_FUTURE_SV",
+      "rationale": "ALT grammar combines sequence alleles, spanning-deletion '*', missing '.', unspecified <*> reference-confidence allele, symbolic SV alleles and breakend strings. Phase 1 must distinguish all classes, process small-variant alleles and '*' correctly, and route unsupported symbolic SV/BND without pretending they are malformed.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0417",
+      "source_line": 417,
+      "source_excerpt": "  If there are no alternative alleles, then the MISSING value must be used.",
+      "source_context": {
+        "start_line": 414,
+        "end_line": 420,
+        "lines": [
+          {
+            "line": 414,
+            "text": "  \\label{fixed-fields-alt}"
+          },
+          {
+            "line": 415,
+            "text": "  These alleles do not have to be called in any of the samples."
+          },
+          {
+            "line": 416,
+            "text": "  Each allele in this list must be one of: a non-empty String of bases (A,C,G,T,N; case insensitive); the `*' symbol (allele missing due to overlapping deletion); the MISSING value `.' (no variant); an angle-bracketed ID String (``$<$ID$>$''); the unspecified allele ``$<$*$>$'' as described in Section \\ref{unspecified-allele}; or a breakend replacement string as described in Section \\ref{Breakends}."
+          },
+          {
+            "line": 417,
+            "text": "  If there are no alternative alleles, then the MISSING value must be used."
+          },
+          {
+            "line": 418,
+            "text": "  Tools processing VCF files are not required to preserve case in the allele String, except for IDs, which are case sensitive."
+          },
+          {
+            "line": 419,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 420,
+            "text": "  \\item QUAL --- quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong)."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_MISSING_VALUE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0417-1",
+          "atomic_statement": "A record with no alternate alleles represents ALT using the missing marker '.'.",
+          "observable_acceptance_condition": "A reader rejects an empty ALT value and validates '.' as the no-alternate representation.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "When no alternate alleles are present, ALT must be the missing marker '.'. Distinct from GT missing-value semantics.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0422",
+      "source_line": 422,
+      "source_excerpt": "  If unknown, the MISSING value must be specified. (Float)",
+      "source_context": {
+        "start_line": 419,
+        "end_line": 425,
+        "lines": [
+          {
+            "line": 419,
+            "text": "  (String; no whitespace, commas, or angle-brackets are permitted in the ID String itself)"
+          },
+          {
+            "line": 420,
+            "text": "  \\item QUAL --- quality: Phred-scaled quality score for the assertion made in ALT. i.e.\\ $-10log_{10}$ prob(call in ALT is wrong)."
+          },
+          {
+            "line": 421,
+            "text": "  If ALT is `.' (no variant) then this is $-10log_{10}$ prob(variant), and if ALT is not `.' this is $-10log_{10}$ prob(no variant)."
+          },
+          {
+            "line": 422,
+            "text": "  If unknown, the MISSING value must be specified. (Float)"
+          },
+          {
+            "line": 423,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 424,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 425,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_MISSING_VALUE_AND_TYPE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0422-1",
+          "atomic_statement": "QUAL is a Float value; when unknown it is represented by '.'.",
+          "observable_acceptance_condition": "A reader accepts numeric QUAL or '.', and rejects nonnumeric or empty QUAL values.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "QUAL is Float and unknown quality must be represented with the missing marker. Existing registry does not capture QUAL field type/missing semantics.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0425",
+      "source_line": 425,
+      "source_excerpt": "  `0' is reserved and must not be used as a filter String.",
+      "source_context": {
+        "start_line": 422,
+        "end_line": 428,
+        "lines": [
+          {
+            "line": 422,
+            "text": "  If unknown, the MISSING value must be specified. (Float)"
+          },
+          {
+            "line": 423,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 424,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 425,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          },
+          {
+            "line": 426,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 427,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 428,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_PROHIBITION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_NOT",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0425-1",
+          "atomic_statement": "The FILTER value '0' is reserved and must not be used as a filter identifier.",
+          "observable_acceptance_condition": "A reader rejects FILTER=0 while preserving PASS, '.', and declared filter identifiers according to their separate meanings.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_NOT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The string '0' is reserved and prohibited as a FILTER value. Distinct from the missing FILTER state.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0426",
+      "source_line": 426,
+      "source_excerpt": "  If filters have not been applied, then this field must be set to the MISSING value.",
+      "source_context": {
+        "start_line": 423,
+        "end_line": 429,
+        "lines": [
+          {
+            "line": 423,
+            "text": "  \\item FILTER --- filter status: PASS if this position has passed all filters, i.e., a call is made at this position."
+          },
+          {
+            "line": 424,
+            "text": "  Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. e.g.\\ ``q10;s50'' might indicate that at this site the quality is below 10 and the number of samples with data is below 50\\% of the total number of samples."
+          },
+          {
+            "line": 425,
+            "text": "  `0' is reserved and must not be used as a filter String."
+          },
+          {
+            "line": 426,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 427,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 428,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          },
+          {
+            "line": 429,
+            "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_MISSING_VALUE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0426-1",
+          "atomic_statement": "When no filters have been applied, FILTER is represented by '.'.",
+          "observable_acceptance_condition": "A reader preserves the distinction between FILTER='.' (not applied), FILTER='PASS' (applied and passed), and declared failing filter IDs.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "If filters have not been applied, FILTER must be '.'. This distinguishes unfiltered from passed (PASS) and failed-filter records.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0429",
+      "source_line": 429,
+      "source_excerpt": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]].",
+      "source_context": {
+        "start_line": 426,
+        "end_line": 432,
+        "lines": [
+          {
+            "line": 426,
+            "text": "  If filters have not been applied, then this field must be set to the MISSING value."
+          },
+          {
+            "line": 427,
+            "text": "  (String, no whitespace or semicolons permitted, duplicate values not allowed.)"
+          },
+          {
+            "line": 428,
+            "text": "  \\item INFO --- additional information: Semicolon-separated series of additional information fields, or the MISSING value `{\\tt .}'\\ if none are present."
+          },
+          {
+            "line": 429,
+            "text": "  Each subfield consists of a short \\emph{key} with optional \\emph{values} in the format: key[=value[,\\,\\ldots,value]]."
+          },
+          {
+            "line": 430,
+            "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+          },
+          {
+            "line": 431,
+            "text": "  Space characters are allowed in values."
+          },
+          {
+            "line": 432,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_INFO_GRAMMAR",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "PROPOSE_NEW_ATOMIC_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0429-1",
+          "atomic_statement": "Each INFO entry is a key optionally followed by '=' and one or more comma-delimited values; semicolon separates entries and '.' denotes no INFO entries.",
+          "observable_acceptance_condition": "A reader parses INFO keys and values without conflating comma, semicolon or equals delimiters and preserves missing versus flag entries.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "Defines INFO subfield grammar and optional value/list structure. Existing encoding requirements cover escaped characters but not the complete key[=value,...] grammar.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0433",
+      "source_line": 433,
+      "source_excerpt": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value.",
+      "source_context": {
+        "start_line": 430,
+        "end_line": 436,
+        "lines": [
+          {
+            "line": 430,
+            "text": "  Literal semicolon (`{\\tt ;}') and equals sign (`{\\tt =}') characters are not permitted in these values, and literal commas (`{\\tt ,}') are permitted only as delimiters for lists of values; characters with special meaning can be encoded using percent encoding, see Section~\\ref{character-encoding}."
+          },
+          {
+            "line": 431,
+            "text": "  Space characters are allowed in values."
+          },
+          {
+            "line": 432,
+            "text": ""
+          },
+          {
+            "line": 433,
+            "text": "  INFO keys must match the regular expression \\texttt{\\^{}([A-Za-z\\_][0-9A-Za-z\\_.]*|1000G)\\$}, please note that ``1000G'' is allowed as a special legacy value."
+          },
+          {
+            "line": 434,
+            "text": "  Duplicate keys are not allowed."
+          },
+          {
+            "line": 435,
+            "text": "  Arbitrary keys are permitted, although those listed in Table~\\ref{table:reserved-info} and described below are reserved (albeit optional)."
+          },
+          {
+            "line": 436,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_KEY_GRAMMAR",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0433-1",
+          "atomic_statement": "INFO keys match the VCFv4.5 key grammar, including the explicit legacy exception '1000G'.",
+          "observable_acceptance_condition": "A reader accepts keys in the defined grammar and rejects keys outside it.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-0433-2",
+          "atomic_statement": "An INFO field does not contain duplicate keys.",
+          "observable_acceptance_condition": "A reader rejects repeated INFO keys within one record.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CORE_REQUIRED",
+        "GERMLINE_GVCF": "CORE_REQUIRED"
+      },
+      "retained_workstream": "PHASE1_VCF_CORE",
+      "rationale": "The line contains two independently testable constraints: the allowed INFO key regular expression (including legacy 1000G) and the prohibition on duplicate INFO keys in a record.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0488",
+      "source_line": 488,
+      "source_excerpt": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:",
+      "source_context": {
+        "start_line": 485,
+        "end_line": 491,
+        "lines": [
+          {
+            "line": 485,
+            "text": "\\item END: Deprecated."
+          },
+          {
+            "line": 486,
+            "text": "Retained for backwards compatibility with  earlier versions of VCF and older VCF indexing software which rely on this field being present."
+          },
+          {
+            "line": 487,
+            "text": ""
+          },
+          {
+            "line": 488,
+            "text": "This is a computed field that, when present, must be set to the maximum end reference position (1-based) of:"
+          },
+          {
+            "line": 489,
+            "text": "the position of the final base of the REF allele,"
+          },
+          {
+            "line": 490,
+            "text": "the end position corresponding to the SVLEN of a symbolic SV allele,"
+          },
+          {
+            "line": 491,
+            "text": "and the end positions calculated from FORMAT LEN for the $<$*$>$ symbolic allele."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_DERIVED_VALUE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WHEN_END_PRESENT",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0488-1",
+          "atomic_statement": "When INFO END is present, it equals the maximum 1-based end coordinate implied by REF, symbolic SVLEN where applicable, and FORMAT LEN for <*> reference blocks.",
+          "observable_acceptance_condition": "A reader validates END against all applicable record components; for ordinary sequence-only variants it at minimum agrees with the REF span, and for gVCF it accounts for the sample-specific LEN semantics.",
+          "requirement_domain": "GVCF",
+          "normative_force": "MUST_WHEN_END_PRESENT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_END_AND_GVCF_BLOCK_COORDINATES",
+      "rationale": "Existing requirements capture END deprecation and a backwards-compatibility inference from END to LEN, but not the computed END value itself. This sentence is a maximum across REF end, symbolic SVLEN end, and <*> FORMAT LEN end; create a distinct conditional requirement and retain structural branches for future SV.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000106",
+        "VCF-REQ-000129"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0502",
+      "source_line": 502,
+      "source_excerpt": "If any local-allele field is present, LAA must also be present and precede all fields other than GT.",
+      "source_context": {
+        "start_line": 499,
+        "end_line": 505,
+        "lines": [
+          {
+            "line": 499,
+            "text": "First a FORMAT field is given specifying the data types and order (colon-separated FORMAT keys matching the regular expression \\texttt{\\^{}[A-Za-z\\_][0-9A-Za-z\\_.]*\\$}, duplicate keys are not allowed)."
+          },
+          {
+            "line": 500,
+            "text": "This is followed by one data block per sample, with the colon-separated data corresponding to the types specified in the format."
+          },
+          {
+            "line": 501,
+            "text": "The first key must always be the genotype (GT) if it is present."
+          },
+          {
+            "line": 502,
+            "text": "If any local-allele field is present, LAA must also be present and precede all fields other than GT."
+          },
+          {
+            "line": 503,
+            "text": "There are no required keys."
+          },
+          {
+            "line": 504,
+            "text": "Additional Genotype keys can be defined in the meta-information, however, software support for them is not guaranteed."
+          },
+          {
+            "line": 505,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_LOCAL_ALLELE_DEPENDENCY",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WHEN_LOCAL_ALLELE_FIELDS_PRESENT",
+      "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
+      "existing_requirement_mapping": [
+        "VCF-REQ-000053"
+      ],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0502-1",
+          "atomic_statement": "When local-allele fields are present, LAA occurs immediately after GT if GT is present, and before all other FORMAT fields.",
+          "observable_acceptance_condition": "A reader validates LAA ordering while preserving the independent GT-first rule.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WHEN_LOCAL_ALLELE_FIELDS_PRESENT",
+          "phase": "PHASE1",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "CONDITIONAL_INPUT",
+        "GERMLINE_GVCF": "CONDITIONAL_INPUT"
+      },
+      "retained_workstream": "PHASE1_LOCAL_ALLELE",
+      "rationale": "REQ-000053 covers the LAA-presence dependency and REQ-000019 covers GT-first. The additional requirement that LAA precede all other non-GT fields is not covered and needs its own atomic requirement.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000019"
+      ],
+      "mapping_relation": "PARTIAL_COVERAGE_PLUS_NEW_ORDERING_REQUIREMENT"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0715",
+      "source_line": 715,
+      "source_excerpt": "  It is recommended that VCF libraries provide an API in which local allele encoding can be abstracted away from the API consumer and values accessed through their corresponding non-local key.",
+      "source_context": {
+        "start_line": 712,
+        "end_line": 718,
+        "lines": [
+          {
+            "line": 712,
+            "text": ""
+          },
+          {
+            "line": 713,
+            "text": "  Due to BCF encoding empty vectors as missing, implementation-defined Number=LA local-allele fields should not be used if distinguishing between zero-length data and missing data is required at REF-only sites."
+          },
+          {
+            "line": 714,
+            "text": "  "
+          },
+          {
+            "line": 715,
+            "text": "  It is recommended that VCF libraries provide an API in which local allele encoding can be abstracted away from the API consumer and values accessed through their corresponding non-local key."
+          },
+          {
+            "line": 716,
+            "text": "  "
+          },
+          {
+            "line": 717,
+            "text": "  \\item LPL: is a list of $n \\choose \\mathrm{Ploidy}$ integers giving phred-scaled genotype likelihoods (rounded to the closest integer; as per PL) for all possible genotypes given the set of alleles defined in the LAA local alleles."
+          },
+          {
+            "line": 718,
+            "text": "  The precise ordering is defined in the GL paragraph."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "API_RECOMMENDATION",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "RECOMMENDED",
+      "adjudication_decision": "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
+        "GERMLINE_GVCF": "NOT_APPLICABLE"
+      },
+      "retained_workstream": "PARSER_LIBRARY_API_DESIGN",
+      "rationale": "This is explicitly an API design recommendation for VCF libraries, not a file-format conformance obligation. Do not create a parser rejection rule from it.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L0726",
+      "source_line": 726,
+      "source_excerpt": "  Values must be between 0 and 1 and indicate how prevalent the modified base is in the sample.",
+      "source_context": {
+        "start_line": 723,
+        "end_line": 729,
+        "lines": [
+          {
+            "line": 723,
+            "text": "  "
+          },
+          {
+            "line": 724,
+            "text": "  The alias keys M5mC, M5hmC, M5fC, M5caC, M5hmU, M5fU, M5caU, M6mA, M8oxoG, and MxaoN should be used instead of their corresponding ChEBI keys."
+          },
+          {
+            "line": 725,
+            "text": "  "
+          },
+          {
+            "line": 726,
+            "text": "  Values must be between 0 and 1 and indicate how prevalent the modified base is in the sample."
+          },
+          {
+            "line": 727,
+            "text": "  "
+          },
+          {
+            "line": 728,
+            "text": "  When base modification information is present in the FORMAT field of a reference block record, the base modification information apply to all applicable bases covered by that reference block."
+          },
+          {
+            "line": 729,
+            "text": ""
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_VALUE_RANGE",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0726-1",
+          "atomic_statement": "Base-modification M values are in the closed interval [0,1] and represent prevalence in the sample.",
+          "observable_acceptance_condition": "A future base-modification parser rejects values below 0 or above 1.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "BASE_MODIFICATION",
+      "rationale": "The 0..1 range constrains base-modification M values. REQ-000075 records Number=M cardinality but not value range. This is a valid future base-modification semantic requirement, not a Phase 1 SNV/indel or gVCF reference-block acceptance requirement unless base modifications are explicitly supported.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000075"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY"
+    },
+    {
+      "candidate_id": "VCFv4.5:L1989",
+      "source_line": 1989,
+      "source_excerpt": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length.",
+      "source_context": {
+        "start_line": 1986,
+        "end_line": 1992,
+        "lines": [
+          {
+            "line": 1986,
+            "text": "    \\item When both $<$CNV:TR$>$ and the equivalent non-symbolic records are present, the $<$CNV:TR$>$ should approximately encode the sequence but is not required to encode the sequence exactly."
+          },
+          {
+            "line": 1987,
+            "text": "\tFor example, SNVs and indels may be omitted in the $<$CNV:TR$>$ record."
+          },
+          {
+            "line": 1988,
+            "text": "    \\item Variant callers which do not report allele-specific tandem repeats should use a single $<$CNV:TR$>$ ALT allele and the missing genotype for the GT field (for example, $./.$ if diploid)."
+          },
+          {
+            "line": 1989,
+            "text": "    \\item The INFO and FORMAT CN fields should be present for $<$CNV:TR$>$ records (as they are $<$CNV$>$ records) and, when present, must correspond to the sample allelic length divided by the reference allelic length."
+          },
+          {
+            "line": 1990,
+            "text": "\tNote that CN FORMAT field represents the overall copy number and the INFO CN the allele-specific copy number."
+          },
+          {
+            "line": 1991,
+            "text": "    \\item When benchmarking tandem repeats, the $<$CNV:TR$>$ interval provides a region over which a set of (preferably phased) non-symbolic records can be compared against for length and sequence composition."
+          },
+          {
+            "line": 1992,
+            "text": "    \\item RN encodes the number of records for each allele in the RUS, RUL, RUC, RB fields."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "MIXED_RECOMMENDATION_AND_NORMATIVE_CONSTRAINT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "SHOULD_PLUS_MUST_WHEN_PRESENT",
+      "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-1989-1",
+          "atomic_statement": "INFO and FORMAT CN are recommended for <CNV:TR> records.",
+          "observable_acceptance_condition": "A future CNV/TR implementation accepts their absence without treating it as a format violation.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "SHOULD",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        },
+        {
+          "proposal_id": "VCF45-PROP-1989-2",
+          "atomic_statement": "When INFO CN or FORMAT CN is present for <CNV:TR>, its value corresponds to sample allelic length divided by reference allelic length, with INFO CN allele-specific and FORMAT CN overall.",
+          "observable_acceptance_condition": "A future CNV/TR implementation validates the appropriate ratio semantics and distinguishes INFO versus FORMAT scope.",
+          "requirement_domain": "VCF_CORE",
+          "normative_force": "MUST_WHEN_PRESENT",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "CNV_AND_TANDEM_REPEAT",
+      "rationale": "The source mixes a SHOULD for presence of INFO/FORMAT CN with a MUST consistency rule conditional on those fields being present. The CN semantics are future CNV/TR scope; existing REQ-000096 addresses a different SVLEN consistency condition and is not a substitute.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000096"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY_NOT_SEMANTIC_SUBSTITUTE"
+    },
+    {
+      "candidate_id": "VCFv4.5:L1996",
+      "source_line": 1996,
+      "source_excerpt": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$.",
+      "source_context": {
+        "start_line": 1993,
+        "end_line": 1999,
+        "lines": [
+          {
+            "line": 1993,
+            "text": "\tConceptually, this a mechanism to encode a list-of-list with flat list format used in VCF."
+          },
+          {
+            "line": 1994,
+            "text": "    \\item STRs should use RUS, whereas VNTRs should use RUL to ensure the VCF records are not excessively large."
+          },
+          {
+            "line": 1995,
+            "text": "    \\item RUL should be omitted when RUS is present (as it is redundant when RS is present)."
+          },
+          {
+            "line": 1996,
+            "text": "    \\item RUS or RUL must be specified for each $<$CNV:TR$>$."
+          },
+          {
+            "line": 1997,
+            "text": "    \\item Support for multiple levels of repeat nesting (such as STRs within VNTRs) is limited to the RUL repeat unit length field which allows the overall length of each top-level repeat unit to be encoded."
+          },
+          {
+            "line": 1998,
+            "text": "    \\item The POS and SVLEN of $<$CNV:TR$>$ records should match the STR/VNTR reference catalog sizes for catalog-based callers."
+          },
+          {
+            "line": 1999,
+            "text": "    \\item Variant normalisation has limited utility in regions of low complexity as almost identical haplotypes can have very different normalised representations."
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "NORMATIVE_CONDITIONAL_REQUIREMENT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
+      "existing_requirement_mapping": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-1996-1",
+          "atomic_statement": "Each <CNV:TR> allele specifies at least one of RUS or RUL.",
+          "observable_acceptance_condition": "A future tandem-repeat parser rejects a <CNV:TR> allele lacking both RUS and RUL.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "TANDEM_REPEAT",
+      "rationale": "RUS or RUL is mandatory for each <CNV:TR> allele. This is a future tandem-repeat semantic requirement and must be retained rather than implemented in the Phase 1 small-variant release.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
+    },
+    {
+      "candidate_id": "VCFv4.5:L2027",
+      "source_line": 2027,
+      "source_excerpt": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1.",
+      "source_context": {
+        "start_line": 2024,
+        "end_line": 2030,
+        "lines": [
+          {
+            "line": 2024,
+            "text": ""
+          },
+          {
+            "line": 2025,
+            "text": "Note that:"
+          },
+          {
+            "line": 2026,
+            "text": "\\begin{itemize}"
+          },
+          {
+            "line": 2027,
+            "text": "\t\\item RN was omitted as it is only required if at least one $<$CNV:TR$>$ allele has RN greater than 1."
+          },
+          {
+            "line": 2028,
+            "text": "\t\\item The confidence interval bounds are relative to the nominal value."
+          },
+          {
+            "line": 2029,
+            "text": "\t\\item A missing upper bound indicates the maximum length is not known."
+          },
+          {
+            "line": 2030,
+            "text": "\\end{itemize}"
+          }
+        ]
+      },
+      "original_register_classification": {
+        "primary_disposition": "CONDITIONAL_REQUIREMENT",
+        "traceability_disposition": "POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION",
+        "candidate_status": "SOURCE_CONTEXT_REVIEWED_PRIMARY_ONLY",
+        "current_requirement_ids": []
+      },
+      "source_modality": "MUST_WHEN_RN_GT_1",
+      "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
+      "existing_requirement_mapping": [
+        "VCF-REQ-000091"
+      ],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-2027-REFINE-000091",
+          "atomic_statement": "For <CNV:TR> alleles, RN may be omitted when no allele has more than one repeat sequence; RN must be specified when any <CNV:TR> allele has RN greater than 1.",
+          "observable_acceptance_condition": "A future tandem-repeat validator accepts omission of RN for single-repeat alleles and rejects omission when any allele requires RN greater than 1, while preserving the existing default of one when RN is absent.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST_WHEN_RN_GT_1",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_CANONICAL_REQUIREMENT_REFINEMENT"
+        }
+      ],
+      "phase1_profile_disposition": {
+        "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
+        "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
+      },
+      "retained_workstream": "TANDEM_REPEAT",
+      "rationale": "This condition refines the existing RN default/absence rule: RN may be omitted when each relevant allele has at most one repeat record; RN is required when any <CNV:TR> allele has RN greater than 1. Existing REQ-000091 should be amended or explicitly cross-referenced, not duplicated.",
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "REFINES_EXISTING_REQUIREMENT"
+    }
+  ],
+  "controls": {
+    "canonical_ledger_modified": false,
+    "production_code_modified": false,
+    "runtime_tests_added": false,
+    "existing_pso_bnd_assets_modified": false,
+    "independent_review_count": 0,
+    "laboratory_qualification": "NOT_READY"
+  },
+  "limitations": [
+    "This is an author adjudication, not independent standards-owner approval.",
+    "Proposed requirements have temporary proposal IDs and are not canonical requirement IDs.",
+    "Cross-version applicability for each candidate must be reconciled against VCFv4.1–4.4 sources before canonical ledger insertion.",
+    "The 37 recommendation/permission/implementation-guidance candidates and 6 informative candidates remain for a subsequent pass.",
+    "The VCFv4.0 historical source provenance gap remains open."
+  ]
+}
