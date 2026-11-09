@@ -157,7 +157,7 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
         ) as output:
             manifest_temporary = Path(output.name)
             temporary_paths.append(manifest_temporary)
-            output.write(json.dumps(manifest, indent=2, sort_keys=True) + "\\n")
+            output.write(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
             output.flush()
             os.fsync(output.fileno())
         for temporary, final_path in zip(temporary_paths[:2], final_paths):
