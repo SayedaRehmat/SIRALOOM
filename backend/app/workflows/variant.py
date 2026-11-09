@@ -4380,7 +4380,6 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 # analysis. The resulting assertions are reused for candidate
                 # joins and per-variant evidence; no per-variant re-query occurs.
                 clingen_gdv_assertions_by_gene: dict[str, list[Any]] = {}
-                validity_by_pair: dict[tuple[str, str], list[Any]] = {}
                 if (
                     clingen_gdv_provider is not None
                     and clingen_gdv_resource is not None
@@ -4488,84 +4487,43 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             ),
                             error_message=validity_query_error,
                         )
-                    for assertion in validity_assertions:
-                        if assertion.mondo_id:
-                            validity_by_pair.setdefault(
-                                (assertion.gene.upper(), assertion.mondo_id.strip().upper()), []
-                            ).append(assertion)
+                    # G2P does not provide a native HGNC identifier. Do not
+                    # join ClinGen validity or MOI to G2P by symbol+MONDO: that
+                    # would silently equate different identifier namespaces.
+                    # Preserve ClinGen assertions independently for variant-level
+                    # source evidence; cross-source matching stays blocked until
+                    # an organization-approved, versioned HGNC crosswalk exists.
                     for model_record in g2p_gene_disease_records:
-                        key = (
-                            str(model_record.get("gene") or "").strip().upper(),
-                            str(model_record.get("disease_id") or "").strip().upper(),
-                        )
-                        matches = validity_by_pair.get(key, [])
-                        model_record["clingen_validity_assertions"] = [
-                            {
-                                "classification": assertion.classification,
-                                "moi": assertion.moi,
-                                "sop": assertion.sop,
-                                "classification_date": assertion.classification_date,
-                                "expert_panel": assertion.expert_panel,
-                                "online_report": assertion.online_report,
-                                "source_record_id": assertion.source_record_id,
-                                "record_sha256": assertion.record_sha256,
-                            }
-                            for assertion in matches
-                        ]
-                        validity_classifications = {
-                            str(assertion.classification).strip()
-                            for assertion in matches
-                            if assertion.classification
-                        }
-                        model_record["validity_status"] = (
-                            next(iter(validity_classifications))
-                            if len(validity_classifications) == 1
-                            else "CONFLICTING_CLINGEN_ASSERTIONS"
-                            if len(validity_classifications) > 1
-                            else "NOT_RECORDED"
-                        )
+                        g2p_modes = sorted({
+                            str(mode).strip().upper()
+                            for mode in (model_record.get("inheritance_modes") or [])
+                            if str(mode).strip()
+                        })
+                        model_record["clingen_validity_assertions"] = []
+                        model_record["validity_status"] = "NOT_RECORDED"
                         model_record["validity_provenance"] = {
+                            "source": "CLINGEN_GENE_DISEASE_VALIDITY",
                             "resource_id": str(clingen_gdv_execution.resource_id),
                             "resource_name": clingen_gdv_resource.name,
                             "resource_version": clingen_gdv_execution.resource_version,
                             "resource_sha256": clingen_gdv_provider.sha256,
                             "query_fingerprint": validity_request_fingerprint,
                             "response_sha256": validity_response_sha256,
-                            "matched_assertion_count": len(matches),
-                            "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            "matched_assertion_count": 0,
+                            "cross_source_match_status": "BLOCKED_NO_GOVERNED_HGNC_MAPPING",
                             "source_url": "https://search.clinicalgenome.org/kb/downloads",
                             "methodology_url": "https://www.clinicalgenome.org/docs/gene-disease-validity-standard-operating-procedure/",
                         }
-                        clingen_moi_labels = sorted({
-                            str(assertion.moi).strip()
-                            for assertion in matches
-                            if assertion.moi
-                        })
-                        clingen_moi_modes = {
-                            normalize_clingen_moi_label(label)
-                            for label in clingen_moi_labels
-                        }
-                        clingen_moi_modes.discard(None)
-                        g2p_modes = {
-                            str(mode).strip().upper()
-                            for mode in (model_record.get("inheritance_modes") or [])
-                        }
-                        unmapped_clingen_moi = [
-                            label for label in clingen_moi_labels
-                            if normalize_clingen_moi_label(label) is None
-                        ]
                         model_record["inheritance_mode_sources"] = {
                             "g2p_allelic_requirement": model_record.get("g2p_allelic_requirement"),
-                            "g2p_modes": sorted(g2p_modes),
-                            "clingen_moi_assertions": clingen_moi_labels,
-                            "clingen_moi_modes": sorted(clingen_moi_modes),
-                            "unmapped_clingen_moi": unmapped_clingen_moi,
+                            "g2p_modes": g2p_modes,
+                            "clingen_moi_assertions": [],
+                            "clingen_moi_modes": [],
+                            "unmapped_clingen_moi": [],
+                            "comparison_status": "NOT_COMPARABLE_NO_GOVERNED_HGNC_MAPPING",
                         }
-                        model_record["inheritance_mode_conflict"] = bool(
-                            len(clingen_moi_modes) > 1
-                            or unmapped_clingen_moi
-                            or (clingen_moi_modes and g2p_modes and clingen_moi_modes != g2p_modes)
-                        )
+                        # None means "not compared", not "no conflict".
+                        model_record["inheritance_mode_conflict"] = None
 
                 hpoa_disease_annotations: dict[str, tuple] = {}
                 hpoa_provenance = None
