@@ -30,6 +30,9 @@ def normalize_clingen_moi_label(value: str | None) -> str | None:
     """Map only explicit ClinGen MOI labels; ambiguous X-linked labels stay unknown."""
     normalized = re.sub(r"[^a-z0-9]+", " ", str(value or "").casefold()).strip()
     mapping = {
+        "ad": "AUTOSOMAL_DOMINANT",
+        "ar": "AUTOSOMAL_RECESSIVE",
+        "sd": "AUTOSOMAL_SEMIDOMINANT",
         "autosomal dominant": "AUTOSOMAL_DOMINANT",
         "autosomal dominant inheritance": "AUTOSOMAL_DOMINANT",
         "autosomal recessive": "AUTOSOMAL_RECESSIVE",
