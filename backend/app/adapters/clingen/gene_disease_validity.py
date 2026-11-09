@@ -171,7 +171,7 @@ class ClinGenGeneDiseaseValidityProvider:
             report = data.get("ONLINE REPORT") or None
             record_id = report.rsplit("/", 1)[-1] if report else ""
             hgnc_id = data.get("GENE ID (HGNC)") or None
-            if hgnc_id and not re.fullmatch(r"HGNC:\\d+", hgnc_id, flags=re.IGNORECASE):
+            if hgnc_id and not re.fullmatch(r"HGNC:\d+", hgnc_id, flags=re.IGNORECASE):
                 raise ClinGenGeneDiseaseValidityError(
                     f"ClinGen export contains an invalid HGNC identifier: {hgnc_id!r}"
                 )
