@@ -4795,8 +4795,8 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             "hgnc_manifest_sha256": hgnc_provider.sha256 if hgnc_provider else None,
                             "hgnc_request_fingerprint": hgnc_request_fingerprint,
                             "hgnc_response_sha256": hgnc_response_sha256,
-                            "source_url": "https://search.clinicalgenome.org/kb/downloads",
-                            "methodology_url": "https://www.clinicalgenome.org/docs/gene-disease-validity-standard-operating-procedure/",
+                            "source_url": ClinGenGeneDiseaseValidityProvider.source_url,
+                            "methodology_url": ClinGenGeneDiseaseValidityProvider.methodology_url,
                         }
 
                 hpoa_disease_annotations: dict[str, tuple] = {}
