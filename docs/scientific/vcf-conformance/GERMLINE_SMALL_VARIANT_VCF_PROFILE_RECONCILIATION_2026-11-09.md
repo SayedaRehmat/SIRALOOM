@@ -196,6 +196,48 @@ Exact-locator non-overlap does **not** prove semantic non-coverage. Each candida
 
 One concrete modality conflict is flagged: `VCFv4.5:L1187` says positions **must** be sorted in increasing order, while the old gap register labels the line `INFORMATIVE_EXAMPLE`. The VCFv4.3 version-delta crosswalk also records an explicit MUST sorting rule. This must be corrected through source-context review, not inherited from the old classification.
 
+## 6.2 Semantic adjudication of the 50 normative/mixed candidates
+
+The 50 `POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION` candidates and the single `AMBIGUOUS_SCOPE` candidate have now received an author-level semantic disposition. The complete record is in:
+
+- `VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.json`
+- `VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.md`
+- Schema: `vcf45-source-candidate-adjudication.schema.json`
+
+| Decision | Candidates |
+|---|---:|
+| Map to existing canonical requirement(s) | 4 |
+| Propose new atomic requirement(s) | 27 |
+| Split mixed candidates into separate obligations | 8 |
+| Retain recommendation/permission without promoting to MUST | 5 |
+| Exclude informative context from normative requirements | 1 |
+| Retain for future variant/producer workstream | 6 |
+| **Total** | **51** |
+
+The pass produced **51 atomic proposals** (43 Phase 1, 8 future-phase), with 11 direct canonical mapping edges and 5 related/context-only edges. Related edges are not counted as complete semantic coverage. Proposals use temporary IDs and have not been inserted into the canonical 226-record ledger.
+
+### Important adjudication decisions
+
+- **L0081:** maps to the eight existing percent-encoding requirements `VCF-REQ-000114` through `VCF-REQ-000121`; it is the lead-in to their table, not a ninth independent escape rule.
+- **L0104:** proposes a distinct rule that all meta-information lines precede the `#CHROM` header and data records. Existing `VCF-REQ-000003` only states that `##fileformat` is first.
+- **L0129/L0130 and L0301:** preserve the VCF recommendation versus BCF requirement distinction. Contig/reference header tags are optional in VCF under these statements; this does not waive SIRALOOM's separate operational reference-identity policy.
+- **L0133/L0135/L0136:** separate structured-attribute order independence, well-formedness of present meta-information lines, and arbitrary ordering of non-`fileformat` meta-information lines.
+- **L0151/L0175:** separate required INFO declaration fields from recommended optional `Source`/`Version` attributes and the conditions applying when those attributes are supplied.
+- **L0159/L0164/L0166/L0168:** add generic Number cardinality and A/R ordering requirements; L0168 maps to existing arbitrary-ploidy Number=G ordering `VCF-REQ-000136`.
+- **L0400/L0401:** retain the exact SHOULD force. Neither global duplicate record IDs nor use of the missing ID marker is promoted to a MUST rejection rule by these lines.
+- **L0406:** decomposes simple-indel padding, the contig-position-1 right-padding exception, and optional padding for complex non-empty alleles.
+- **L0407/L0416:** keep `*`, `<*>`, ordinary sequence alleles, symbolic SV alleles and breakend strings distinct. Phase 1 must route unsupported symbolic SV/BND constructs without treating them as malformed sequence alleles.
+- **L0411:** retained as a future upstream producer/reference-provenance obligation. It is not permission for a reader to rewrite incoming REF alleles.
+- **L0488:** proposes a separate computed-END consistency rule. Existing END deprecation and END-to-LEN fallback requirements are related context, not complete coverage of this rule.
+- **L0502:** maps the LAA-presence component to `VCF-REQ-000053`; GT-first is related to `VCF-REQ-000019`; the additional LAA ordering condition is a separate proposal.
+- **L0715:** excluded from file conformance because it is a VCF-library API recommendation.
+- **L0726:** retained for the future base-modification phase; existing Number=M cardinality coverage does not include the 0–1 value range.
+- **L1989/L1996/L2027:** retained for CNV/tandem-repeat work. L1989 is split into a SHOULD for CN presence and a MUST consistency condition when present. L2027 refines existing RN behavior in `VCF-REQ-000091`.
+
+The source excerpts and three preceding/following lines are stored exactly from the pinned VCFv4.5 source. The integrity validator now checks the source bytes, Git blob identity, candidate-set bijection, exact source/context equality, mapping references, proposal uniqueness and count consistency, and the profile's reference to the exact adjudication artifact blob.
+
+**This is author adjudication, not independent standards approval.** Cross-version applicability for each candidate remains open. The remaining 37 recommendation/permission/implementation-guidance candidates and 6 informative candidates have not yet been adjudicated. The VCFv4.0 source-provenance gap remains open.
+
 ## 7. Provenance consistency issue
 
 The current canonical ledger blob is `81d27c5b306f120c45d1d5347b931f8ceaf1f47c` and records 26 code mappings plus 26 executed-test mappings. Two downstream VCFv4.5 author artifacts still refer to older canonical ledger blob `ba7d1bb0544f5d1105a4bd62f757decae13caee8`, whose snapshot records zero code/test mappings:
