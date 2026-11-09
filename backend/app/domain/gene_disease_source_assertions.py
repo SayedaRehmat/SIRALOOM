@@ -23,7 +23,7 @@ def build_gene_disease_source_assertions(
             gene_symbol=model.gene_symbol, hgnc_id=None, mondo_id=model.disease_mondo,
             resource_id=g2p_resource_id, resource_name=g2p_resource_name,
             resource_version=g2p_resource_version, resource_sha256=g2p_resource_sha256,
-            raw_assertion=dict(model.raw), source_record_sha256=model.record_sha256,
+            raw_assertion=dict(model.raw), source_record_sha256=getattr(model, "record_sha256", None),
             request_fingerprint=g2p_request_fingerprint, response_sha256=g2p_response_sha256,
             allelic_requirement=model.allelic_requirement,
             inheritance_modes=tuple(model.inheritance_modes), molecular_mechanism=model.molecular_mechanism,
