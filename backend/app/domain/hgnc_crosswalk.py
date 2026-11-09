@@ -210,7 +210,15 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
 class HGNCResolver:
     """Exact resolver over one validated pair of HGNC release artifacts."""
 
-    def __init__(self, complete_set_path: Path, withdrawn_path: Path, *, release: str):
+    def __init__(
+        self,
+        complete_set_path: Path,
+        withdrawn_path: Path,
+        *,
+        release: str,
+        expected_complete_sha256: str | None = None,
+        expected_withdrawn_sha256: str | None = None,
+    ):
         if release != HGNC_ARCHIVE_RELEASE:
             raise HGNCResourceError(f"unsupported HGNC release: {release}")
         self.release = release
@@ -279,6 +287,17 @@ class HGNCResolver:
                 self._withdrawn.setdefault(symbol, []).append((status, target_tuple))
         self.complete_sha256 = _sha256(complete_set_path)
         self.withdrawn_sha256 = _sha256(withdrawn_path)
+        for label, expected, actual in (
+            ("complete-set", expected_complete_sha256, self.complete_sha256),
+            ("withdrawn", expected_withdrawn_sha256, self.withdrawn_sha256),
+        ):
+            if expected is None:
+                continue
+            normalized_expected = str(expected).strip().lower().removeprefix("sha256:")
+            if not re.fullmatch(r"[0-9a-f]{64}", normalized_expected):
+                raise HGNCResourceError(f"{label} expected SHA-256 is invalid")
+            if actual != normalized_expected:
+                raise HGNCResourceError(f"{label} SHA-256 does not match the qualified manifest")
 
     def resolve(self, identifier: str) -> HGNCResolution:
         original = identifier
