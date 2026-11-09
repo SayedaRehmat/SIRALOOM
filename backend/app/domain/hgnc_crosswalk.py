@@ -10,6 +10,8 @@ import argparse
 import csv
 import hashlib
 import json
+import os
+import tempfile
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -93,10 +95,11 @@ def _sha256(path: Path) -> str:
 
 
 def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEASE) -> dict:
-    """Download the immutable official quarterly snapshot and preserve bytes.
+    """Atomically acquire the immutable official snapshot and preserve source bytes.
 
-    Existing files are never overwritten. The manifest records local SHA-256
-    digests; HGNC does not publish per-file cryptographic checksums.
+    Local SHA-256 values provide reproducible byte identity. HGNC does not
+    publish per-file cryptographic checksums, so these are not represented as
+    upstream authenticity checksums.
     """
     if release != HGNC_ARCHIVE_RELEASE:
         raise HGNCResourceError(
@@ -108,41 +111,68 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
         ("hgnc_complete_set.txt", HGNC_COMPLETE_URL),
         ("withdrawn.txt", HGNC_WITHDRAWN_URL),
     )
-    manifest_files = []
-    for filename, url in artifacts:
-        path = destination / filename
-        if path.exists():
-            raise HGNCResourceError(f"refusing to overwrite existing source artifact: {path}")
-        request = Request(url, headers={"User-Agent": "SIRALOOM-resource-acquisition/1.0"})
-        with urlopen(request, timeout=120) as response, path.open("xb") as output:
-            if response.status != 200:
-                raise HGNCResourceError(f"HGNC download failed with HTTP {response.status}: {url}")
-            while chunk := response.read(1024 * 1024):
-                output.write(chunk)
-        manifest_files.append({
-            "filename": filename,
-            "source_url": url,
-            "sha256": _sha256(path),
-            "size_bytes": path.stat().st_size,
-        })
-    manifest = {
-        "schema": "siraloom.hgnc-acquisition.v1",
-        "publisher": HGNC_PUBLISHER,
-        "release": release,
-        "release_kind": "HGNC_QUARTERLY_ARCHIVE",
-        "license": HGNC_LICENSE,
-        "license_url": "https://www.genenames.org/about/license/",
-        "authority_url": "https://www.genenames.org/download/archive/",
-        "checksum_semantics": "LOCAL_SHA256; HGNC_DOES_NOT_PUBLISH_FILE_CHECKSUMS",
-        "files": manifest_files,
-    }
+    final_paths = [destination / filename for filename, _ in artifacts]
     manifest_path = destination / "manifest.json"
-    if manifest_path.exists():
-        raise HGNCResourceError(f"refusing to overwrite acquisition manifest: {manifest_path}")
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    return manifest
+    if any(path.exists() for path in (*final_paths, manifest_path)):
+        raise HGNCResourceError("destination already contains one or more HGNC release files")
+    temporary_paths: list[Path] = []
+    published_paths: list[Path] = []
+    try:
+        manifest_files = []
+        for filename, url in artifacts:
+            request = Request(url, headers={"User-Agent": "SIRALOOM-resource-acquisition/1.0"})
+            with urlopen(request, timeout=120) as response:
+                if response.status != 200:
+                    raise HGNCResourceError(f"HGNC download failed with HTTP {response.status}: {url}")
+                with tempfile.NamedTemporaryFile(
+                    mode="wb", dir=destination, prefix=f".{filename}.", delete=False
+                ) as output:
+                    temporary = Path(output.name)
+                    temporary_paths.append(temporary)
+                    while chunk := response.read(1024 * 1024):
+                        output.write(chunk)
+                    output.flush()
+                    os.fsync(output.fileno())
+            if temporary.stat().st_size == 0:
+                raise HGNCResourceError(f"HGNC download returned an empty artifact: {url}")
+            manifest_files.append({
+                "filename": filename,
+                "source_url": url,
+                "sha256": _sha256(temporary),
+                "size_bytes": temporary.stat().st_size,
+            })
+        manifest = {
+            "schema": "siraloom.hgnc-acquisition.v1",
+            "publisher": HGNC_PUBLISHER,
+            "release": release,
+            "release_kind": "HGNC_QUARTERLY_ARCHIVE",
+            "license": HGNC_LICENSE,
+            "license_url": "https://www.genenames.org/about/license/",
+            "authority_url": "https://www.genenames.org/download/archive/",
+            "checksum_semantics": "LOCAL_SHA256; HGNC_DOES_NOT_PUBLISH_FILE_CHECKSUMS",
+            "files": manifest_files,
+        }
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=destination, prefix=".manifest.", delete=False
+        ) as output:
+            manifest_temporary = Path(output.name)
+            temporary_paths.append(manifest_temporary)
+            output.write(json.dumps(manifest, indent=2, sort_keys=True) + "\\n")
+            output.flush()
+            os.fsync(output.fileno())
+        for temporary, final_path in zip(temporary_paths[:2], final_paths):
+            os.replace(temporary, final_path)
+            published_paths.append(final_path)
+        os.replace(manifest_temporary, manifest_path)
+        published_paths.append(manifest_path)
+        return manifest
+    except Exception:
+        for path in (*temporary_paths, *published_paths):
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise
 
 
 class HGNCResolver:
