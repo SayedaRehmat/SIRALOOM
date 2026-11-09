@@ -178,4 +178,4 @@ def test_builtin_provider_registration_does_not_skip_hgnc_when_registry_is_parti
     )
     monkeypatch.setattr(provider_registry_module, "registry", registry)
     provider_registry_module.register_builtin_providers()
-    assert registry.resolve("HGNC", HGNC_ARCHIVE_RELEASE) is not None
+    assert registry.resolve(provider_id="HGNC", provider_version=HGNC_ARCHIVE_RELEASE) is not None
