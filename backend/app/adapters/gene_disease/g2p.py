@@ -173,7 +173,7 @@ class G2PProvider:
                     if not gene:
                         raise G2PError(f"G2P row {line_number} is missing gene symbol")
                     hgnc_id = raw.get(columns.get("hgnc_id", ""), "").strip() or None
-                    if hgnc_id and not re.fullmatch(r"HGNC:\\d+", hgnc_id, flags=re.IGNORECASE):
+                    if hgnc_id and not re.fullmatch(r"HGNC:\d+", hgnc_id, flags=re.IGNORECASE):
                         raise G2PError(f"G2P row {line_number} contains an invalid HGNC identifier: {hgnc_id!r}")
                     hgnc_id = hgnc_id.upper() if hgnc_id else None
                     g2p_id = raw.get(columns.get("g2p_id", ""), "")
