@@ -29,6 +29,7 @@ from backend.app.adapters.clingen.variant_pathogenicity import (
     ClinGenVariantPathogenicityProvider,
 )
 from backend.app.adapters.gene_disease.g2p import G2PError, G2PProvider
+from backend.app.adapters.nomenclature.hgnc import HGNCArchiveProvider, HGNCArchiveProviderError
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
 from backend.app.adapters.phenotype.hpoa import HPOAError
@@ -3832,6 +3833,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 g2p_provider = None
                 g2p_execution = None
                 g2p_metadata = None
+                hgnc_resource = None
+                hgnc_provider = None
+                hgnc_execution = None
+                hgnc_metadata = None
                 hpo_resource = None
                 hpo_execution = None
                 hpo_ontology = None
@@ -3990,6 +3995,68 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "resource_capability": "GENE_DISEASE",
                             })
                             g2p_resource = g2p_execution = g2p_provider = g2p_metadata = None
+                    if profile_bound_analysis:
+                        try:
+                            hgnc_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability=ResourceCapability.GENE_NOMENCLATURE.value,
+                                provider_id=HGNCArchiveProvider.provider_id,
+                            )
+                            hgnc_candidates = [
+                                (item.resource, item.execution) for item in hgnc_runtime
+                            ]
+                        except ProfileRuntimeResourceError as exc:
+                            hgnc_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": ResourceCapability.GENE_NOMENCLATURE.value,
+                            })
+                    else:
+                        hgnc_plan = build_resource_execution_plan(
+                            db,
+                            organization_id=case_for_clingen.organization_id,
+                            requirements=(CapabilityRequirement(ResourceCapability.GENE_NOMENCLATURE),),
+                        )
+                        hgnc_candidates = [
+                            (item.resource, resolve_resource_execution(db, resource=item.resource))
+                            for item in hgnc_plan.for_capability(ResourceCapability.GENE_NOMENCLATURE)
+                            if item.resource.provider == HGNCArchiveProvider.provider_id
+                        ]
+                    if hgnc_candidates:
+                        if len(hgnc_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple HGNC nomenclature resources."
+                            )
+                        hgnc_resource, hgnc_execution = hgnc_candidates[0]
+                        try:
+                            hgnc_provider = HGNCArchiveProvider.from_execution_contract(
+                                resolved=hgnc_execution,
+                                expected_sha256=hgnc_resource.checksum,
+                            )
+                            if hgnc_resource.version != hgnc_provider.release:
+                                raise HGNCArchiveProviderError(
+                                    "HGNC resource version does not match the pinned archive release."
+                                )
+                            if str(hgnc_resource.checksum or "").lower().removeprefix("sha256:") != hgnc_provider.sha256:
+                                raise HGNCArchiveProviderError(
+                                    "HGNC resource checksum does not match its qualified manifest."
+                                )
+                            hgnc_metadata = {
+                                **hgnc_execution.snapshot,
+                                "resource_name": hgnc_resource.name,
+                                "resource_checksum": hgnc_resource.checksum,
+                                "hgnc_release": hgnc_provider.release,
+                            }
+                        except HGNCArchiveProviderError as exc:
+                            provider_limitations.append({
+                                "code": "HGNC_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": ResourceCapability.GENE_NOMENCLATURE.value,
+                            })
+                            hgnc_resource = hgnc_execution = hgnc_provider = hgnc_metadata = None
+
                     try:
                         if profile_bound_analysis:
                             hpo_runtime = resolve_profile_runtime_resources(
