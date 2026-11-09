@@ -276,17 +276,6 @@ class HGNCResolver:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
         if len(approved) > 1:
             return self._ambiguous(original, normalized, approved, "symbol")
-        # Alias and previous-symbol namespaces are resolved independently so
-        # collisions are surfaced rather than silently selecting one record.
-        alias_candidates = self._alias_candidates(normalized)
-        previous_candidates = self._previous.get(normalized, set())
-        historical_candidates = alias_candidates | previous_candidates
-        if historical_candidates:
-            if len(historical_candidates) > 1:
-                return self._ambiguous(original, normalized, historical_candidates, "historical_symbol")
-            if alias_candidates:
-                return self._resolve_candidates(original, normalized, alias_candidates, HGNCResolutionStatus.ALIAS_SYMBOL, "alias_symbol")
-            return self._resolve_candidates(original, normalized, previous_candidates, HGNCResolutionStatus.PREVIOUS_SYMBOL, "prev_symbol")
         withdrawn = self._withdrawn.get(normalized, [])
         if withdrawn:
             targets = {
@@ -302,6 +291,17 @@ class HGNCResolver:
                 original, normalized, HGNCResolutionStatus.WITHDRAWN_UNRESOLVED,
                 None, None, "withdrawn_symbol", tuple(sorted(targets))
             )
+        # Alias and previous-symbol namespaces are resolved independently so
+        # collisions are surfaced rather than silently selecting one record.
+        alias_candidates = self._alias_candidates(normalized)
+        previous_candidates = self._previous.get(normalized, set())
+        historical_candidates = alias_candidates | previous_candidates
+        if historical_candidates:
+            if len(historical_candidates) > 1:
+                return self._ambiguous(original, normalized, historical_candidates, "historical_symbol")
+            if alias_candidates:
+                return self._resolve_candidates(original, normalized, alias_candidates, HGNCResolutionStatus.ALIAS_SYMBOL, "alias_symbol")
+            return self._resolve_candidates(original, normalized, previous_candidates, HGNCResolutionStatus.PREVIOUS_SYMBOL, "prev_symbol")
         return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, None)
 
     def _alias_candidates(self, normalized: str) -> set[str]:
