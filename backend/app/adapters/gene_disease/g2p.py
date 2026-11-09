@@ -158,7 +158,10 @@ class G2PProvider:
                 reader = csv.DictReader(stream)
                 if not reader.fieldnames:
                     raise G2PError("G2P export is missing its CSV header")
-                normalized_headers = {_header_key(name): name for name in reader.fieldnames}
+                normalized_header_keys = [_header_key(name) for name in reader.fieldnames]
+                if len(set(normalized_header_keys)) != len(normalized_header_keys):
+                    raise G2PError("G2P export contains duplicate normalized column headers")
+                normalized_headers = dict(zip(normalized_header_keys, reader.fieldnames))
                 columns: dict[str, str] = {}
                 for field, aliases in _ALIASES.items():
                     found = next((normalized_headers[_header_key(alias)] for alias in aliases if _header_key(alias) in normalized_headers), None)
@@ -168,6 +171,8 @@ class G2PProvider:
                         columns[field] = found
                 models: list[G2PDiseaseModel] = []
                 for line_number, row in enumerate(reader, start=2):
+                    if None in row and any(str(value or "").strip() for value in (row.get(None) or [])):
+                        raise G2PError(f"G2P row {line_number} contains unexpected extra columns")
                     raw = {str(k): str(v or "").strip() for k, v in row.items() if k is not None}
                     gene = raw.get(columns.get("gene_symbol", ""), "").upper()
                     if not gene:
