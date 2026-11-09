@@ -84,7 +84,7 @@ def _read_tsv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     if not path.is_file() or path.stat().st_size == 0:
         raise HGNCResourceError(f"HGNC artifact missing or empty: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\\t")
+        reader = csv.DictReader(handle, delimiter="\t")
         if not reader.fieldnames:
             raise HGNCResourceError(f"HGNC artifact has no header: {path}")
         raw_fields = list(reader.fieldnames)
