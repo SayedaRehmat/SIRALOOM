@@ -49,11 +49,14 @@ def main() -> int:
     if not build_manifest.get("downloaded_debs"):
         raise SystemExit("native build-package manifest has no hashed Debian packages")
 
+    # Carton 1.0.35 stores distribution archives under vendor/cache/modules/.
+    # Recurse so the lock records the actual archive files, not just top-level metadata.
     archives = []
-    for path in sorted(args.cache_dir.iterdir()):
+    for path in sorted(args.cache_dir.rglob("*")):
         if path.is_file() and path.name.endswith(ARCHIVE_SUFFIXES):
             archives.append({
                 "filename": path.name,
+                "relative_path": path.relative_to(args.cache_dir).as_posix(),
                 "size_bytes": path.stat().st_size,
                 "sha256": sha256(path),
             })
