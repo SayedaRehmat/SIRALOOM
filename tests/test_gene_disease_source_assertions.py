@@ -1,4 +1,6 @@
 from types import SimpleNamespace
+
+import pytest
 from backend.app.domain.gene_disease_source_assertions import build_gene_disease_source_assertions
 from backend.app.domain.gene_disease_reconciliation import ReconciliationStatus, DimensionStatus, reconcile_gene_disease_assertions
 from backend.app.domain.hgnc_crosswalk import HGNCResolution, HGNCResolutionStatus
