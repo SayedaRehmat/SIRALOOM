@@ -47,8 +47,14 @@ jobs:
         run: >-
           uv run --locked pytest -q
           tests/test_hgnc_crosswalk.py
+          tests/test_hgnc_archive_provider.py
           tests/test_hgnc_resource_qualification.py
           tests/test_hgnc_resource_registration.py
+          tests/test_gene_disease_source_assertions.py
+          tests/test_clingen_gene_disease_validity.py
+          tests/test_g2p_provider.py
+          tests/test_resource_profile_registry_integration.py
+          backend/tests/test_gene_disease_reconciliation.py
       - name: Acquire exact official HGNC quarterly release
         run: |
           uv run --locked python -m backend.app.domain.hgnc_crosswalk acquire \
