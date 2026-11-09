@@ -77,7 +77,7 @@ def main() -> int:
         "perl": {
             "version": perl_version,
             "source_url": PERL_SOURCE_URL,
-            "source_sha256": PERL_SOURCE_SHA256,
+            "source_sha256": PERL_SOURCE_SHA256,\n            "lifecycle_status": "end_of_life",
         },
         "carton_version": carton_version,
         "cpanfile_sha256": sha256(args.cpanfile),
@@ -89,7 +89,7 @@ def main() -> int:
         "cpan_distribution_archives": archives,
         "archive_count": len(archives),
         "limitations": [
-            "Candidate dependency lock only; not a VEP image or scientific qualification.",
+            "Candidate dependency lock only; not a VEP image or scientific qualification.",\n            "Perl 5.38 reached end of life on 2025-08-03; this compatibility candidate cannot be production-promoted without an approved security exception or a separately qualified supported Perl release.",
             "Bio::DB::HTS and HTSlib must pass native build and runtime tests.",
             "GRCh37/GRCh38 cache manifests, plugin locks, annotation fixtures, offline execution, and recovery qualification remain separate gates.",
         ],
