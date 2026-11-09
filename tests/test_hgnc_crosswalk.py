@@ -73,9 +73,22 @@ def test_ensembl_gene_id_resolves_without_transcript_mapping(resolver):
     assert result.hgnc_id == "HGNC:1"
 
 
-def test_hgnc_accession_must_be_currently_approved(resolver):
+def test_hgnc_accessions_preserve_approved_and_withdrawn_history(resolver):
     assert resolver.resolve("HGNC:2").hgnc_id == "HGNC:2"
-    assert resolver.resolve("HGNC:90").status == Status.NOT_FOUND
+
+    merged = resolver.resolve("HGNC:90")
+    assert merged.status == Status.WITHDRAWN_MERGED
+    assert merged.hgnc_id == "HGNC:1"
+    assert merged.matched_field == "withdrawn_hgnc_id"
+
+    withdrawn = resolver.resolve("HGNC:91")
+    assert withdrawn.status == Status.WITHDRAWN_UNRESOLVED
+    assert withdrawn.hgnc_id is None
+
+    split = resolver.resolve("HGNC:92")
+    assert split.status == Status.WITHDRAWN_UNRESOLVED
+    assert split.hgnc_id is None
+    assert split.candidate_hgnc_ids == ("HGNC:1", "HGNC:2")
 
 
 def test_single_target_withdrawn_symbol_resolves_to_explicit_approved_merge(resolver):
@@ -141,13 +154,14 @@ def test_pinned_acquisition_preserves_both_artifacts_and_local_digests(tmp_path,
         return Response(payloads[request.full_url])
 
     monkeypatch.setattr(hgnc_crosswalk, "urlopen", fake_urlopen)
-    manifest = hgnc_crosswalk.acquire_hgnc_release(tmp_path)
+    destination = tmp_path / "release"
+    manifest = hgnc_crosswalk.acquire_hgnc_release(destination)
 
     assert manifest["release"] == HGNC_ARCHIVE_RELEASE
     assert manifest["checksum_semantics"] == "LOCAL_SHA256; HGNC_DOES_NOT_PUBLISH_FILE_CHECKSUMS"
-    assert (tmp_path / "hgnc_complete_set.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_COMPLETE_URL]
-    assert (tmp_path / "withdrawn.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_WITHDRAWN_URL]
-    persisted = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert (destination / "hgnc_complete_set.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_COMPLETE_URL]
+    assert (destination / "withdrawn.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_WITHDRAWN_URL]
+    persisted = json.loads((destination / "manifest.json").read_text(encoding="utf-8"))
     assert persisted == manifest
     assert len({item["sha256"] for item in manifest["files"]}) == 2
 
@@ -177,5 +191,57 @@ def test_acquisition_failure_cleans_partial_temporary_files(tmp_path, monkeypatc
 
     monkeypatch.setattr(hgnc_crosswalk, "urlopen", fake_urlopen)
     with pytest.raises(HGNCResourceError, match="HTTP 503"):
-        hgnc_crosswalk.acquire_hgnc_release(tmp_path)
+        hgnc_crosswalk.acquire_hgnc_release(tmp_path / "release")
     assert list(tmp_path.iterdir()) == []
+
+
+
+def test_acquisition_publication_failure_leaves_no_partial_release(tmp_path, monkeypatch):
+    import io
+
+    from backend.app.domain import hgnc_crosswalk
+
+    payloads = {
+        hgnc_crosswalk.HGNC_COMPLETE_URL: b"complete-set-bytes",
+        hgnc_crosswalk.HGNC_WITHDRAWN_URL: b"withdrawn-bytes",
+    }
+
+    class Response(io.BytesIO):
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    monkeypatch.setattr(
+        hgnc_crosswalk,
+        "urlopen",
+        lambda request, timeout: Response(payloads[request.full_url]),
+    )
+
+    def fail_publish(_source, _destination):
+        raise OSError("simulated atomic directory publication failure")
+
+    monkeypatch.setattr(hgnc_crosswalk.os, "rename", fail_publish)
+    destination = tmp_path / "release"
+    with pytest.raises(OSError, match="simulated atomic directory publication failure"):
+        hgnc_crosswalk.acquire_hgnc_release(destination)
+
+    assert not destination.exists()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_acquisition_refuses_to_overwrite_existing_release_directory(tmp_path):
+    from backend.app.domain.hgnc_crosswalk import acquire_hgnc_release
+
+    destination = tmp_path / "release"
+    destination.mkdir()
+    marker = destination / "preserve.txt"
+    marker.write_text("existing bytes", encoding="utf-8")
+
+    with pytest.raises(HGNCResourceError, match="destination already exists"):
+        acquire_hgnc_release(destination)
+
+    assert marker.read_text(encoding="utf-8") == "existing bytes"
