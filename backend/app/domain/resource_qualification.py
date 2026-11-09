@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import json
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
@@ -118,6 +119,68 @@ def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, 
         }
 
 
+def _qualify_hgnc(resource: Resource, manifest_path: Path | None, blockers: list[str], checks: dict[str, Any]) -> None:
+    """Validate exact pinned HGNC artifacts and deterministic crosswalk structure."""
+    checks["provider"] = "HGNCArchiveProvider"
+    checks["hgnc_release"] = resource.version
+    if manifest_path is None or not manifest_path.is_file():
+        blockers.append("HGNC_ACQUISITION_MANIFEST_MISSING")
+        return
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("schema") != "siraloom.hgnc-acquisition.v1":
+            raise ValueError("unsupported acquisition manifest schema")
+        if manifest.get("release") != HGNC_ARCHIVE_RELEASE or resource.version != HGNC_ARCHIVE_RELEASE:
+            raise ValueError("HGNC release identity does not match pinned qualification")
+        if manifest.get("publisher") != "HUGO Gene Nomenclature Committee":
+            raise ValueError("unexpected HGNC publisher")
+        if manifest.get("license") != "CC0-1.0":
+            raise ValueError("HGNC license identity is not CC0-1.0")
+        files = {item.get("filename"): item for item in manifest.get("files", [])}
+        expected = {
+            "hgnc_complete_set.txt": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/hgnc_complete_set_2026-10-06.txt",
+            "withdrawn.txt": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/withdrawn_2026-10-06.txt",
+        }
+        paths = {}
+        for filename, source_url in expected.items():
+            record = files.get(filename)
+            if not record or record.get("source_url") != source_url:
+                raise ValueError(f"unexpected or missing pinned source artifact: {filename}")
+            artifact = manifest_path.parent / filename
+            if not artifact.is_file() or artifact.stat().st_size <= 0:
+                raise ValueError(f"HGNC artifact missing or empty: {filename}")
+            observed = _sha256(artifact)
+            if observed != record.get("sha256") or artifact.stat().st_size != record.get("size_bytes"):
+                raise ValueError(f"HGNC artifact integrity mismatch: {filename}")
+            paths[filename] = artifact
+        resolver = HGNCResolver(
+            paths["hgnc_complete_set.txt"], paths["withdrawn.txt"],
+            release=HGNC_ARCHIVE_RELEASE,
+        )
+        checks["hgnc_crosswalk"] = {
+            "status": "STRUCTURALLY_VALIDATED",
+            "release": HGNC_ARCHIVE_RELEASE,
+            "approved_gene_count": len(resolver._approved),
+            "approved_symbol_count": len(resolver._approved_symbols),
+            "alias_symbol_count": len(resolver._alias_index),
+            "previous_symbol_count": len(resolver._previous),
+            "ensembl_gene_id_count": len(resolver._ensembl),
+            "withdrawn_symbol_count": len(resolver._withdrawn),
+            "complete_set_sha256": resolver.complete_sha256,
+            "withdrawn_sha256": resolver.withdrawn_sha256,
+            "checksum_semantics": manifest.get("checksum_semantics"),
+            "upstream_checksums_published": False,
+        }
+        if len(resolver._approved) < 10000:
+            raise ValueError("HGNC complete set is implausibly small")
+        if not resolver._ensembl:
+            raise ValueError("HGNC complete set contains no Ensembl gene identifiers")
+        checks["hgnc_crosswalk"]["status"] = "QUALIFICATION_CHECKS_PASSED"
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        blockers.append("HGNC_CROSSWALK_QUALIFICATION_FAILED")
+        checks["hgnc_crosswalk"] = {"status": "BLOCKED", "error": str(exc)[:2000]}
+
+
 def qualify_resource(
     resource: Resource,
     *,
@@ -210,12 +273,14 @@ def qualify_resource(
         blockers.append("STAGED_ARTIFACT_MISSING")
     else:
         blockers.append("STAGING_REQUIRED")
-    if contract.checksum_status in {"NOT_PUBLISHED", "UNKNOWN", "TRANSPORT_DIGEST_ONLY"}:
+    if contract.checksum_status in {"NOT_PUBLISHED", "UNKNOWN", "TRANSPORT_DIGEST_ONLY"} and resource.provider != "HGNC":
         blockers.append("AUTHORITATIVE_CHECKSUM_UNVERIFIED")
     if contract.license_status in {"REVIEW_REQUIRED", "UNKNOWN", "RESTRICTED"}:
         blockers.append("LICENSE_REVIEW_REQUIRED")
     if contract.access_mode == "LICENSE_REQUIRED" and contract.license_status != "VERIFIED":
         blockers.append("LICENSE_NOT_VERIFIED")
+    if resource.provider == "HGNC":
+        _qualify_hgnc(resource, path, blockers, checks)
     if resource.provider == "NCBI ClinVar":
         _qualify_clinvar(resource, path, checks)
     if resource.provider == "VEP":
