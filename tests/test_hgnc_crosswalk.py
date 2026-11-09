@@ -14,7 +14,7 @@ from backend.app.domain.hgnc_crosswalk import (
 
 
 GENE_FIELDS = ["hgnc_id", "symbol", "alias_symbol", "prev_symbol", "ensembl_gene_id"]
-WITHDRAWN_FIELDS = ["hgnc_id", "status", "withdrawn_symbol", "merged_into_report"]
+WITHDRAWN_FIELDS = ["HGNC_ID", "STATUS", "WITHDRAWN_SYMBOL", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS"]
 
 
 def _write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
@@ -34,9 +34,9 @@ def resolver(tmp_path):
         {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
-        {"hgnc_id": "HGNC:90", "status": "Merged/Split", "withdrawn_symbol": "RETIRED_A", "merged_into_report": "HGNC:1|GENEA|Approved"},
-        {"hgnc_id": "HGNC:91", "status": "Entry Withdrawn", "withdrawn_symbol": "RETIRED_X", "merged_into_report": ""},
-        {"hgnc_id": "HGNC:92", "status": "Merged/Split", "withdrawn_symbol": "SPLIT_X", "merged_into_report": "HGNC:1|GENEA|Approved,HGNC:2|GENEB|Approved"},
+        {"hgnc_id": "HGNC:90", "status": "Merged/Split", "withdrawn_symbol": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
+        {"hgnc_id": "HGNC:91", "status": "Entry Withdrawn", "withdrawn_symbol": "RETIRED_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
+        {"hgnc_id": "HGNC:92", "status": "Merged/Split", "withdrawn_symbol": "SPLIT_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved,HGNC:2|GENEB|Approved"},
     ])
     return HGNCResolver(complete, withdrawn, release=HGNC_ARCHIVE_RELEASE)
 
@@ -105,7 +105,7 @@ def test_duplicate_release_identity_is_rejected(tmp_path):
         {"hgnc_id": "HGNC:1", "symbol": "B", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
-        {"hgnc_id": "HGNC:90", "status": "Entry Withdrawn", "withdrawn_symbol": "OLD", "merged_into_report": ""},
+        {"hgnc_id": "HGNC:90", "status": "Entry Withdrawn", "withdrawn_symbol": "OLD", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
     ])
     with pytest.raises(HGNCResourceError, match="duplicate approved HGNC ID"):
         HGNCResolver(complete, withdrawn, release=HGNC_ARCHIVE_RELEASE)
