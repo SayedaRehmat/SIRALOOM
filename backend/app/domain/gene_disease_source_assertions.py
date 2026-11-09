@@ -104,12 +104,14 @@ def build_gene_disease_source_assertions(
     for model in g2p_models:
         if not all((g2p_resource_name, g2p_resource_version, g2p_resource_sha256)):
             raise ValueError("G2P release provenance is incomplete")
+        native_hgnc_id = getattr(model, "hgnc_id", None)
         hgnc_id, identifier_resolution = _resolve_hgnc_identifier(
             hgnc_resolver,
-            model.gene_symbol,
+            native_hgnc_id or model.gene_symbol,
             request_fingerprint=hgnc_request_fingerprint,
             response_sha256=hgnc_response_sha256,
         )
+        identifier_resolution["source_native_hgnc_id"] = native_hgnc_id
         raw_modes = tuple(model.inheritance_modes)
         unmapped_modes = ()
         if "UNKNOWN" in raw_modes:
