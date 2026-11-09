@@ -71,9 +71,9 @@ class GeneDiseaseSourceAssertion:
         digest = self.resource_sha256.lower().removeprefix("sha256:")
         if len(digest) != 64 or any(ch not in "0123456789abcdef" for ch in digest):
             raise ValueError("resource_sha256 must be a SHA-256 hex digest")
-        if self.hgnc_id and not re.fullmatch(r"HGNC:\\d+", self.hgnc_id.upper()):
+        if self.hgnc_id and not re.fullmatch(r"HGNC:\d+", self.hgnc_id.upper()):
             raise ValueError("hgnc_id must be a complete HGNC accession")
-        if self.mondo_id and not re.fullmatch(r"MONDO:\\d{7}", self.mondo_id.upper()):
+        if self.mondo_id and not re.fullmatch(r"MONDO:\d{7}", self.mondo_id.upper()):
             raise ValueError("mondo_id must be a complete seven-digit MONDO identifier")
 
 
