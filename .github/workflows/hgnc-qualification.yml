@@ -81,7 +81,7 @@ jobs:
 
           split_symbols = sorted(
               symbol for symbol, rows in resolver._withdrawn.items()
-              if any(len(targets) > 1 for status, targets in rows if status.casefold() == "merged/split")
+              if any(len({target[0] for target in targets}) > 1 for status, targets in rows if status.casefold() == "merged/split")
           )
           assert split_symbols, "real HGNC release contained no split-withdrawal test case"
           split_result = resolver.resolve(split_symbols[0])
