@@ -83,6 +83,8 @@ def test_hgnc_release_registers_stages_and_persists_qualification(tmp_path, monk
             assert resource.status == "QUALIFIED"
             assert staging.status == "STAGED"
             assert qualification.status == "QUALIFIED"
+            assert qualification.execution_contract["toolchain"]["manifest_sha256"] == _sha(managed / "manifest.json")
+            assert resource.checksum == _sha(managed / "manifest.json")
             assert Path(resource.location).is_file()
             assert (managed / "hgnc_complete_set.txt").read_bytes() == (
                 acquisition / "hgnc_complete_set.txt"
