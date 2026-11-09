@@ -33,21 +33,25 @@ jobs:
         env:
           HGNC_DIR: ${{ runner.temp }}/hgnc-2026-10-06
           REPORT_PATH: ${{ runner.temp }}/hgnc-qualification-report.json
+          MANAGED_DIR: ${{ runner.temp }}/hgnc-managed/hgnc-2026-10-06
         run: |
           python - <<'PY'
           import hashlib
           import json
           import os
           from pathlib import Path
-          from uuid import uuid4
+
+          from sqlalchemy import create_engine
+          from sqlalchemy.orm import Session
 
           from backend.app.domain.hgnc_crosswalk import (
               HGNC_ARCHIVE_RELEASE,
               HGNCResolutionStatus,
               HGNCResolver,
           )
-          from backend.app.domain.resource_qualification import qualify_resource
-          from backend.app.infrastructure.db.models import Resource, ResourceStaging
+          from backend.app.domain.hgnc_resource_registration import register_and_qualify_hgnc_release
+          from backend.app.infrastructure.db.base import Base
+          from backend.app.infrastructure.db.models import Resource, ResourceQualification, ResourceStaging
 
           directory = Path(os.environ["HGNC_DIR"])
           manifest_path = directory / "manifest.json"
@@ -88,64 +92,24 @@ jobs:
           assert split_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
           assert split_result.hgnc_id is None
 
-          manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
-          resource_id = uuid4()
-          resource = Resource(
-              id=resource_id,
-              organization_id=None,
-              name="HGNC human gene nomenclature crosswalk",
-              provider="HGNC",
-              resource_type="GENE_NOMENCLATURE",
-              version=HGNC_ARCHIVE_RELEASE,
-              genome_build=None,
-              access_method="LOCAL",
-              license_text="CC0-1.0",
-              checksum=manifest_sha256,
-              location=str(manifest_path),
-              status="CANDIDATE",
-              population_definition=None,
-              metadata_json={
-                  "source_contract": {
-                      "publisher": "HUGO Gene Nomenclature Committee",
-                      "canonical_source_url": "https://www.genenames.org/download/archive/",
-                      "artifact_url": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/hgnc_complete_set_2026-10-06.txt",
-                      "release_identity": HGNC_ARCHIVE_RELEASE,
-                      "access_mode": "PUBLIC",
-                      "license_status": "VERIFIED",
-                      "license_url": "https://www.genenames.org/about/license/",
-                      "checksum_status": "NOT_PUBLISHED",
-                      "authority_evidence_url": "https://www.genenames.org/download/archive/",
-                  },
-                  "execution": {
-                      "provider_id": "HGNC",
-                      "provider_version": HGNC_ARCHIVE_RELEASE,
-                      "access_method": "LOCAL",
-                      "location": str(manifest_path),
-                  },
-              },
+          engine = create_engine("sqlite+pysqlite:///:memory:")
+          Base.metadata.create_all(
+              engine,
+              tables=[Resource.__table__, ResourceStaging.__table__, ResourceQualification.__table__],
           )
-          staging = ResourceStaging(
-              id=uuid4(),
-              resource_id=resource_id,
-              resource_version=HGNC_ARCHIVE_RELEASE,
-              staging_key=f"HGNC:{HGNC_ARCHIVE_RELEASE}:manifest",
-              source_uri="https://www.genenames.org/download/archive/",
-              destination_uri=str(manifest_path),
-              storage_backend="LOCAL_FILESYSTEM",
-              status="STAGED",
-              expected_sha256=manifest_sha256,
-              observed_sha256=manifest_sha256,
-              expected_size_bytes=manifest_path.stat().st_size,
-              observed_size_bytes=manifest_path.stat().st_size,
-              metadata_json={"integrity": "SHA256_VERIFIED"},
-          )
-          qualification = qualify_resource(
-              resource,
-              staging=staging,
-              qualification_version="siraloom-hgnc-2026-10-06-v1",
-          )
-          assert qualification.passed, json.dumps(qualification.checks, indent=2)
+          with Session(engine) as db:
+              resource, staging, persisted_qualification, qualification = register_and_qualify_hgnc_release(
+                  db,
+                  acquisition_directory=directory,
+                  managed_directory=Path(os.environ["MANAGED_DIR"]),
+              )
+              assert qualification.passed, json.dumps(qualification.checks, indent=2)
+              assert resource.status == "QUALIFIED"
+              assert staging.status == "STAGED"
+              assert persisted_qualification.status == "QUALIFIED"
+              db.commit()
 
+          manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
           report = {
               "status": "QUALIFICATION_CHECKS_PASSED",
               "release": HGNC_ARCHIVE_RELEASE,
@@ -162,6 +126,12 @@ jobs:
               "known_answer_count": len(known_answers),
               "ambiguous_alias_test": ambiguous_result.normalized_identifier,
               "split_withdrawn_symbol_test": split_result.normalized_identifier,
+              "resource_id": str(resource.id),
+              "staging_id": str(staging.id),
+              "qualification_id": str(persisted_qualification.id),
+              "resource_status": resource.status,
+              "staging_status": staging.status,
+              "qualification_status": persisted_qualification.status,
               "resource_qualification": qualification.checks,
           }
           Path(os.environ["REPORT_PATH"]).write_text(
@@ -176,6 +146,7 @@ jobs:
           name: hgnc-2026-10-06-qualified-source
           path: |
             ${{ runner.temp }}/hgnc-2026-10-06/
+            ${{ runner.temp }}/hgnc-managed/
             ${{ runner.temp }}/hgnc-qualification-report.json
           if-no-files-found: error
           retention-days: 30
