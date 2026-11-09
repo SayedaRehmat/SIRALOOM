@@ -171,7 +171,8 @@ class HGNCResolver:
                 + ", ".join(sorted(required_withdrawn_fields - set(withdrawn_fields)))
             )
         self._approved: dict[str, dict[str, str]] = {}
-        self._aliases: dict[str, set[str]] = {}
+        self._approved_symbols: dict[str, set[str]] = {}
+        self._alias_index: dict[str, set[str]] = {}
         self._previous: dict[str, set[str]] = {}
         self._ensembl: dict[str, set[str]] = {}
         self._withdrawn: dict[str, list[tuple[str, str, str]]] = {}
@@ -183,9 +184,9 @@ class HGNCResolver:
             if hgnc_id in self._approved:
                 raise HGNCResourceError(f"duplicate approved HGNC ID: {hgnc_id}")
             self._approved[hgnc_id] = {"symbol": row["symbol"].strip()}
-            self._aliases.setdefault(symbol, set()).add(hgnc_id)
+            self._approved_symbols.setdefault(symbol, set()).add(hgnc_id)
             for alias in _split(row.get("alias_symbol")):
-                self._aliases.setdefault(alias.upper(), set()).add(hgnc_id)
+                self._alias_index.setdefault(alias.upper(), set()).add(hgnc_id)
             for previous in _split(row.get("prev_symbol")):
                 self._previous.setdefault(previous.upper(), set()).add(hgnc_id)
             for ensembl_id in _split(row.get("ensembl_gene_id")):
@@ -224,9 +225,6 @@ class HGNCResolver:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
         if len(approved) > 1:
             return self._ambiguous(original, normalized, approved, "symbol")
-        aliases = {
-            hgnc_id for hgnc_id in approved
-        }
         # Alias and previous-symbol namespaces are resolved independently so
         # collisions are surfaced rather than silently selecting one record.
         alias_candidates = self._alias_candidates(normalized)
@@ -253,8 +251,6 @@ class HGNCResolver:
         return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, None)
 
     def _alias_candidates(self, normalized: str) -> set[str]:
-        # Rebuild exact alias-only membership from stored source rows is
-        # intentionally avoided; this index is populated separately below.
         return self._alias_index.get(normalized, set())
 
     def _resolve_candidates(self, original, normalized, candidates, status, field):
