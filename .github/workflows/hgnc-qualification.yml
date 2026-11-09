@@ -1,0 +1,181 @@
+name: HGNC pinned release qualification
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/app/domain/hgnc_crosswalk.py"
+      - "backend/app/domain/resource_qualification.py"
+      - "tests/test_hgnc_crosswalk.py"
+      - "tests/test_hgnc_resource_qualification.py"
+      - ".github/workflows/hgnc-qualification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-and-qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install qualification runtime dependency
+        run: python -m pip install "SQLAlchemy>=2.0,<3"
+      - name: Acquire exact official HGNC quarterly release
+        run: |
+          python -m backend.app.domain.hgnc_crosswalk acquire \
+            --release 2026-10-06 \
+            --destination "$RUNNER_TEMP/hgnc-2026-10-06"
+      - name: Validate real HGNC release and resource qualification
+        env:
+          HGNC_DIR: ${{ runner.temp }}/hgnc-2026-10-06
+          REPORT_PATH: ${{ runner.temp }}/hgnc-qualification-report.json
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from uuid import uuid4
+
+          from backend.app.domain.hgnc_crosswalk import (
+              HGNC_ARCHIVE_RELEASE,
+              HGNCResolutionStatus,
+              HGNCResolver,
+          )
+          from backend.app.domain.resource_qualification import qualify_resource
+          from backend.app.infrastructure.db.models import Resource, ResourceStaging
+
+          directory = Path(os.environ["HGNC_DIR"])
+          manifest_path = directory / "manifest.json"
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          resolver = HGNCResolver(
+              directory / "hgnc_complete_set.txt",
+              directory / "withdrawn.txt",
+              release=HGNC_ARCHIVE_RELEASE,
+          )
+
+          known_answers = {
+              "BRCA1": ("HGNC:1100", "ENSG00000012048"),
+              "CFTR": ("HGNC:1884", "ENSG00000001626"),
+              "TP53": ("HGNC:11998", "ENSG00000141510"),
+              "FBN1": ("HGNC:3603", "ENSG00000166147"),
+              "HBB": ("HGNC:4827", "ENSG00000244734"),
+          }
+          for symbol, (expected_hgnc, expected_ensembl) in known_answers.items():
+              symbol_result = resolver.resolve(symbol)
+              ensembl_result = resolver.resolve(expected_ensembl)
+              assert symbol_result.hgnc_id == expected_hgnc, (symbol, symbol_result)
+              assert ensembl_result.hgnc_id == expected_hgnc, (expected_ensembl, ensembl_result)
+
+          ambiguous_aliases = sorted(
+              alias for alias, ids in resolver._alias_index.items() if len(ids) > 1
+          )
+          assert ambiguous_aliases, "real HGNC release contained no ambiguous alias test case"
+          ambiguous_result = resolver.resolve(ambiguous_aliases[0])
+          assert ambiguous_result.status == HGNCResolutionStatus.AMBIGUOUS
+          assert ambiguous_result.hgnc_id is None
+
+          split_symbols = sorted(
+              symbol for symbol, rows in resolver._withdrawn.items()
+              if any(len(targets) > 1 for status, targets in rows if status.casefold() == "merged/split")
+          )
+          assert split_symbols, "real HGNC release contained no split-withdrawal test case"
+          split_result = resolver.resolve(split_symbols[0])
+          assert split_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert split_result.hgnc_id is None
+
+          manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+          resource_id = uuid4()
+          resource = Resource(
+              id=resource_id,
+              organization_id=None,
+              name="HGNC human gene nomenclature crosswalk",
+              provider="HGNC",
+              resource_type="GENE_NOMENCLATURE",
+              version=HGNC_ARCHIVE_RELEASE,
+              genome_build=None,
+              access_method="LOCAL",
+              license_text="CC0-1.0",
+              checksum=manifest_sha256,
+              location=str(manifest_path),
+              status="CANDIDATE",
+              population_definition=None,
+              metadata_json={
+                  "source_contract": {
+                      "publisher": "HUGO Gene Nomenclature Committee",
+                      "canonical_source_url": "https://www.genenames.org/download/archive/",
+                      "artifact_url": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/hgnc_complete_set_2026-10-06.txt",
+                      "release_identity": HGNC_ARCHIVE_RELEASE,
+                      "access_mode": "PUBLIC",
+                      "license_status": "VERIFIED",
+                      "license_url": "https://www.genenames.org/about/license/",
+                      "checksum_status": "NOT_PUBLISHED",
+                      "authority_evidence_url": "https://www.genenames.org/download/archive/",
+                  },
+                  "execution": {
+                      "provider_id": "HGNC",
+                      "provider_version": HGNC_ARCHIVE_RELEASE,
+                      "access_method": "LOCAL",
+                      "location": str(manifest_path),
+                  },
+              },
+          )
+          staging = ResourceStaging(
+              id=uuid4(),
+              resource_id=resource_id,
+              resource_version=HGNC_ARCHIVE_RELEASE,
+              staging_key=f"HGNC:{HGNC_ARCHIVE_RELEASE}:manifest",
+              source_uri="https://www.genenames.org/download/archive/",
+              destination_uri=str(manifest_path),
+              storage_backend="LOCAL_FILESYSTEM",
+              status="STAGED",
+              expected_sha256=manifest_sha256,
+              observed_sha256=manifest_sha256,
+              expected_size_bytes=manifest_path.stat().st_size,
+              observed_size_bytes=manifest_path.stat().st_size,
+              metadata_json={"integrity": "SHA256_VERIFIED"},
+          )
+          qualification = qualify_resource(
+              resource,
+              staging=staging,
+              qualification_version="siraloom-hgnc-2026-10-06-v1",
+          )
+          assert qualification.passed, json.dumps(qualification.checks, indent=2)
+
+          report = {
+              "status": "QUALIFICATION_CHECKS_PASSED",
+              "release": HGNC_ARCHIVE_RELEASE,
+              "publisher": manifest["publisher"],
+              "license": manifest["license"],
+              "files": manifest["files"],
+              "manifest_sha256": manifest_sha256,
+              "approved_gene_count": len(resolver._approved),
+              "approved_symbol_count": len(resolver._approved_symbols),
+              "alias_symbol_count": len(resolver._alias_index),
+              "previous_symbol_count": len(resolver._previous),
+              "ensembl_gene_id_count": len(resolver._ensembl),
+              "withdrawn_symbol_count": len(resolver._withdrawn),
+              "known_answer_count": len(known_answers),
+              "ambiguous_alias_test": ambiguous_result.normalized_identifier,
+              "split_withdrawn_symbol_test": split_result.normalized_identifier,
+              "resource_qualification": qualification.checks,
+          }
+          Path(os.environ["REPORT_PATH"]).write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+      - name: Preserve acquired official source files and qualification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hgnc-2026-10-06-qualified-source
+          path: |
+            ${{ runner.temp }}/hgnc-2026-10-06/
+            ${{ runner.temp }}/hgnc-qualification-report.json
+          if-no-files-found: error
+          retention-days: 30
