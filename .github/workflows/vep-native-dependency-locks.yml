@@ -39,8 +39,8 @@ jobs:
         shell: bash -el {0}
         run: |
           set -euo pipefail
-          micromamba create -y -n vep-lock -c conda-forge --strict-channel-priority \\
-            "perl=5.38" cpanminus htslib mariadb-connector-c \\
+          micromamba create -y -n vep-lock -c conda-forge --strict-channel-priority \
+            "perl=5.38" cpanminus htslib mariadb-connector-c \
             c-compiler cxx-compiler make pkg-config zlib bzip2 xz openssl libcurl
           micromamba activate vep-lock
           test "$(perl -e 'print $^V')" != ""
@@ -77,12 +77,12 @@ jobs:
         shell: bash -el {0}
         run: |
           set -euo pipefail
-          python scripts/generate_vep_dependency_lock.py \\
-            --architecture "${{ matrix.architecture }}" \\
-            --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile \\
-            --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" \\
-            --conda-lock "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock" \\
-            --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" \\
+          python scripts/generate_vep_dependency_lock.py \
+            --architecture "${{ matrix.architecture }}" \
+            --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile \
+            --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" \
+            --conda-lock "$RUNNER_TEMP/vep-lock-output/conda-explicit.lock" \
+            --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" \
             --output "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json"
           cp "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json" .
       - uses: actions/upload-artifact@v4
