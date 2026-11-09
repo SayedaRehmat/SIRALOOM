@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import hashlib
+import multiprocessing
 import os
+import signal
+import time
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
@@ -25,6 +28,47 @@ from backend.app.infrastructure.db.models import (
     ResourceQualification, User, Variant, WorkflowStep,
 )
 from backend.app.partition_scheduler import configure_partition
+
+
+def _run_gene_disease_worker_until_killed(analysis_id: str, ready_event) -> None:
+    """Execute the real task body in a child process and pause after evidence commit."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session, sessionmaker
+
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+    queue = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    workflow = importlib.import_module("backend.app.workflows.variant")
+    child_engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+    db_module.SessionLocal = sessionmaker(
+        bind=child_engine, expire_on_commit=False, class_=Session
+    )
+    db_module.engine = child_engine
+    real_save = workflow._save_batch_checkpoint
+
+    def pause_after_durable_commit(
+        db, step, start, end, *, status, attempt=None, metadata=None, commit=True
+    ):
+        if step.step_id == "build_evidence" and status == "SUCCEEDED":
+            # run_variant_analysis has committed all Evidence rows immediately
+            # before invoking this checkpoint callback.
+            ready_event.set()
+            while True:
+                time.sleep(1)
+        return real_save(
+            db, step, start, end, status=status, attempt=attempt,
+            metadata=metadata, commit=commit,
+        )
+
+    workflow._save_batch_checkpoint = pause_after_durable_commit
+    queue.run_analysis_task.push_request(
+        id="c1-gene-disease-replay", retries=0,
+        delivery_info={"redelivered": False},
+    )
+    try:
+        queue.run_analysis_task.run(analysis_id)
+    finally:
+        queue.run_analysis_task.pop_request()
+        child_engine.dispose()
 
 
 @pytest.mark.integration
@@ -114,9 +158,7 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         contract=clingen_contract, contract_hash="b" * 64,
     )
 
-    crashed = {"value": False}
     stop_after_evidence = {"value": False}
-    real_save_checkpoint = workflow._save_batch_checkpoint
     real_step = workflow._step
 
     try:
@@ -308,36 +350,31 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             lambda _db, *, resource, **_kwargs: executions[resource.id],
         )
 
-        def crash_after_durable_evidence_commit(
-            db, step, start, end, *, status, attempt=None, metadata=None, commit=True
-        ):
-            if step.step_id == "build_evidence" and status == "SUCCEEDED" and not crashed["value"]:
-                # The production workflow committed Evidence rows immediately
-                # before this checkpoint call. Simulate abrupt worker death here.
-                crashed["value"] = True
-                raise SystemExit(75)
-            return real_save_checkpoint(
-                db, step, start, end, status=status, attempt=attempt,
-                metadata=metadata, commit=commit,
-            )
-
         def stop_before_acmg(db, received_analysis_id, step_id):
             if step_id == "acmg_assessment" and stop_after_evidence["value"]:
                 raise SystemExit(74)
             return real_step(db, received_analysis_id, step_id)
 
-        monkeypatch.setattr(workflow, "_save_batch_checkpoint", crash_after_durable_evidence_commit)
-        monkeypatch.setattr(workflow, "_step", stop_before_acmg)
-
-        queue.run_analysis_task.push_request(
-            id="c1-gene-disease-replay", retries=0,
-            delivery_info={"redelivered": False},
+        # Run the actual Celery task body in a separate OS process. The child
+        # pauses at the production checkpoint boundary after the Evidence commit;
+        # the parent then SIGKILLs that process, proving recovery after real worker
+        # process loss rather than an exception-based persistence retry.
+        ready = multiprocessing.get_context("fork").Event()
+        worker = multiprocessing.get_context("fork").Process(
+            target=_run_gene_disease_worker_until_killed,
+            args=(str(analysis_id), ready),
+            daemon=True,
         )
-        try:
-            with pytest.raises(SystemExit, match="75"):
-                queue.run_analysis_task.run(str(analysis_id))
-        finally:
-            queue.run_analysis_task.pop_request()
+        worker.start()
+        assert ready.wait(timeout=90), (
+            "worker did not reach the post-evidence-commit/pre-checkpoint boundary; "
+            f"exit_code={worker.exitcode}"
+        )
+        os.kill(worker.pid, signal.SIGKILL)
+        worker.join(timeout=30)
+        assert not worker.is_alive()
+        assert worker.exitcode == -signal.SIGKILL
+        monkeypatch.setattr(workflow, "_step", stop_before_acmg)
 
         with LocalSession() as db:
             first_attempt = list(db.scalars(select(Evidence).where(
@@ -357,7 +394,6 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         # query executions and evidence rows are reused; only the missing batch
         # success checkpoint is written.
         stop_after_evidence["value"] = True
-        monkeypatch.setattr(workflow, "_save_batch_checkpoint", real_save_checkpoint)
         queue.run_analysis_task.push_request(
             id="c1-gene-disease-replay", retries=0,
             delivery_info={"redelivered": True},
