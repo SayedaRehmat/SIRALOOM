@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""Create a candidate VEP lock from native Carton and Conda resolution outputs."""
+"""Create a candidate VEP lock from native Carton and OS package resolution outputs."""
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import platform
+import subprocess
 import sys
 from pathlib import Path
 
 ARCHES = {"x86_64", "aarch64"}
 ARCHIVE_SUFFIXES = (".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".zip")
+PERL_VERSION = "5.38.5"
+PERL_SOURCE_URL = "https://www.cpan.org/src/5.0/perl-5.38.5.tar.gz"
+PERL_SOURCE_SHA256 = "b7667d3ff309068852af7853910aaccec26c839d717402121b664ac705e07bfe"
 
 
 def sha256(path: Path) -> str:
@@ -26,7 +30,7 @@ def main() -> int:
     parser.add_argument("--architecture", required=True, choices=sorted(ARCHES))
     parser.add_argument("--cpanfile", type=Path, required=True)
     parser.add_argument("--snapshot", type=Path, required=True)
-    parser.add_argument("--conda-lock", type=Path, required=True)
+    parser.add_argument("--build-manifest", type=Path, required=True)
     parser.add_argument("--cache-dir", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -38,9 +42,12 @@ def main() -> int:
     snapshot = args.snapshot.read_text(encoding="utf-8")
     if "DISTRIBUTIONS\\n" not in snapshot or "CHECKSUM\\n" not in snapshot:
         raise SystemExit("Carton snapshot is incomplete: missing DISTRIBUTIONS or CHECKSUM section")
-    conda_lock = args.conda_lock.read_text(encoding="utf-8")
-    if "@EXPLICIT" not in conda_lock:
-        raise SystemExit("Conda lock is not an explicit artifact-level lock")
+
+    build_manifest = json.loads(args.build_manifest.read_text(encoding="utf-8"))
+    if build_manifest.get("architecture") != args.architecture:
+        raise SystemExit("native build-package manifest architecture mismatch")
+    if not build_manifest.get("downloaded_debs"):
+        raise SystemExit("native build-package manifest has no hashed Debian packages")
 
     archives = []
     for path in sorted(args.cache_dir.iterdir()):
@@ -53,11 +60,10 @@ def main() -> int:
     if not archives:
         raise SystemExit("Carton vendor/cache contains no distribution archives")
 
-    perl_version = __import__("subprocess").check_output(
-        ["perl", "-e", "print $^V"], text=True
-    ).strip()
-    if not perl_version.startswith("v5.38."):
-        raise SystemExit(f"unsupported Perl candidate; expected 5.38.x, got {perl_version}")
+    perl_version = subprocess.check_output(["perl", "-e", "print $^V"], text=True).strip()
+    if perl_version != "v" + PERL_VERSION:
+        raise SystemExit(f"Perl source build mismatch: expected v{PERL_VERSION}, got {perl_version}")
+    carton_version = subprocess.check_output(["carton", "--version"], text=True).strip()
 
     payload = {
         "schema": "siraloom.vep-dependency-lock.v1",
@@ -67,14 +73,19 @@ def main() -> int:
         "architecture": args.architecture,
         "platform": "linux-64" if args.architecture == "x86_64" else "linux-aarch64",
         "qualification_status": "CANDIDATE",
-        "lock_scope": "native_conda_and_cpan_runtime_resolution",
-        "perl_version": perl_version,
+        "lock_scope": "native_perl_cpan_and_os_build_dependency_resolution",
+        "perl": {
+            "version": perl_version,
+            "source_url": PERL_SOURCE_URL,
+            "source_sha256": PERL_SOURCE_SHA256,
+        },
+        "carton_version": carton_version,
         "cpanfile_sha256": sha256(args.cpanfile),
         "cpanfile": args.cpanfile.read_text(encoding="utf-8"),
         "carton_snapshot": snapshot,
         "carton_snapshot_sha256": sha256(args.snapshot),
-        "conda_explicit_lock": conda_lock,
-        "conda_explicit_lock_sha256": sha256(args.conda_lock),
+        "native_build_manifest": build_manifest,
+        "native_build_manifest_sha256": sha256(args.build_manifest),
         "cpan_distribution_archives": archives,
         "archive_count": len(archives),
         "limitations": [
