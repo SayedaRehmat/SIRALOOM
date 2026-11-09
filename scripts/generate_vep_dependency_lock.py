@@ -40,7 +40,7 @@ def main() -> int:
         raise SystemExit(f"native architecture mismatch: expected {args.architecture}, got {actual_arch}")
 
     snapshot = args.snapshot.read_text(encoding="utf-8")
-    if "DISTRIBUTIONS\\n" not in snapshot or "CHECKSUM\\n" not in snapshot:
+    if "DISTRIBUTIONS\n" not in snapshot or "CHECKSUM\n" not in snapshot:
         raise SystemExit("Carton snapshot is incomplete: missing DISTRIBUTIONS or CHECKSUM section")
 
     build_manifest = json.loads(args.build_manifest.read_text(encoding="utf-8"))
@@ -77,7 +77,8 @@ def main() -> int:
         "perl": {
             "version": perl_version,
             "source_url": PERL_SOURCE_URL,
-            "source_sha256": PERL_SOURCE_SHA256,\n            "lifecycle_status": "end_of_life",
+            "source_sha256": PERL_SOURCE_SHA256,
+            "lifecycle_status": "end_of_life",
         },
         "carton_version": carton_version,
         "cpanfile_sha256": sha256(args.cpanfile),
@@ -89,13 +90,14 @@ def main() -> int:
         "cpan_distribution_archives": archives,
         "archive_count": len(archives),
         "limitations": [
-            "Candidate dependency lock only; not a VEP image or scientific qualification.",\n            "Perl 5.38 reached end of life on 2025-08-03; this compatibility candidate cannot be production-promoted without an approved security exception or a separately qualified supported Perl release.",
+            "Candidate dependency lock only; not a VEP image or scientific qualification.",
+            "Perl 5.38 reached end of life on 2025-08-03; this compatibility candidate cannot be production-promoted without an approved security exception or a separately qualified supported Perl release.",
             "Bio::DB::HTS and HTSlib must pass native build and runtime tests.",
             "GRCh37/GRCh38 cache manifests, plugin locks, annotation fixtures, offline execution, and recovery qualification remain separate gates.",
         ],
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {args.output} with {len(archives)} hashed CPAN archives for {args.architecture}")
     return 0
 
