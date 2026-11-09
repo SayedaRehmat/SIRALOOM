@@ -12,7 +12,6 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 from urllib.request import Request, urlopen
 
 HGNC_ARCHIVE_RELEASE = "2026-10-06"
@@ -175,7 +174,7 @@ class HGNCResolver:
         self._alias_index: dict[str, set[str]] = {}
         self._previous: dict[str, set[str]] = {}
         self._ensembl: dict[str, set[str]] = {}
-        self._withdrawn: dict[str, list[tuple[str, str, str]]] = {}
+        self._withdrawn: dict[str, list[tuple[str, tuple[tuple[str, str, str], ...]]]] = {}
         for row in genes:
             hgnc_id = row["hgnc_id"].strip().upper()
             symbol = row["symbol"].strip().upper()
@@ -219,7 +218,10 @@ class HGNCResolver:
             return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, "hgnc_id")
         ensembl = ENSEMBL_GENE_RE.fullmatch(normalized)
         if ensembl:
-            return self._resolve_candidates(original, normalized, self._ensembl.get(ensembl.group(1), set()), HGNCResolutionStatus.ENSEMBL_GENE_ID, "ensembl_gene_id")
+            candidates = self._ensembl.get(ensembl.group(1), set())
+            if not candidates:
+                return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, "ensembl_gene_id")
+            return self._resolve_candidates(original, normalized, candidates, HGNCResolutionStatus.ENSEMBL_GENE_ID, "ensembl_gene_id")
         approved = self._approved_symbols.get(normalized, set())
         if len(approved) == 1:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
@@ -228,10 +230,13 @@ class HGNCResolver:
         # Alias and previous-symbol namespaces are resolved independently so
         # collisions are surfaced rather than silently selecting one record.
         alias_candidates = self._alias_candidates(normalized)
-        if alias_candidates:
-            return self._resolve_candidates(original, normalized, alias_candidates, HGNCResolutionStatus.ALIAS_SYMBOL, "alias_symbol")
         previous_candidates = self._previous.get(normalized, set())
-        if previous_candidates:
+        historical_candidates = alias_candidates | previous_candidates
+        if historical_candidates:
+            if len(historical_candidates) > 1:
+                return self._ambiguous(original, normalized, historical_candidates, "historical_symbol")
+            if alias_candidates:
+                return self._resolve_candidates(original, normalized, alias_candidates, HGNCResolutionStatus.ALIAS_SYMBOL, "alias_symbol")
             return self._resolve_candidates(original, normalized, previous_candidates, HGNCResolutionStatus.PREVIOUS_SYMBOL, "prev_symbol")
         withdrawn = self._withdrawn.get(normalized, [])
         if withdrawn:
