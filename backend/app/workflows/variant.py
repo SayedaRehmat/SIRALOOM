@@ -5062,9 +5062,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if gene:
                             variant_gene = str(gene).strip().upper()
                             variant_reconciliations = tuple(
-                                gene_disease_reconciliations_by_symbol.get(variant_gene, {})[key]
+                                gene_disease_reconciliations_by_symbol.get(str(variant_gene).strip().upper(), {})[key]
                                 for key in sorted(
-                                    gene_disease_reconciliations_by_symbol.get(variant_gene, {})
+                                    gene_disease_reconciliations_by_symbol.get(str(variant_gene).strip().upper(), {})
                                 )
                             )
                             if variant_reconciliations:
