@@ -77,11 +77,8 @@ from backend.app.domain.resource_execution import (
     start_resource_execution,
 )
 from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
-from backend.app.domain.gene_disease_reconciliation import (
-    GeneDiseaseSource,
-    GeneDiseaseSourceAssertion,
-    reconcile_gene_disease_assertions,
-)
+from backend.app.domain.gene_disease_reconciliation import reconcile_gene_disease_assertions
+from backend.app.domain.gene_disease_source_assertions import build_gene_disease_source_assertions
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.schemas import CanonicalVariant
@@ -4832,42 +4829,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")
                         if gene:
                             variant_gene = str(gene).strip().upper()
-                            source_assertions: list[GeneDiseaseSourceAssertion] = []
-                            if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None:
-                                for model in g2p_models:
-                                    if model.gene_symbol.strip().upper() != variant_gene:
-                                        continue
-                                    source_assertions.append(GeneDiseaseSourceAssertion(
-                                        source=GeneDiseaseSource.G2P,
-                                        source_record_id=model.source_record_id,
-                                        gene_symbol=model.gene_symbol,
-                                        hgnc_id=None,
-                                        mondo_id=model.disease_mondo,
-                                        resource_id=str(g2p_execution.resource_id),
-                                        resource_name=g2p_resource.name,
-                                        resource_version=str(g2p_execution.resource_version),
-                                        resource_sha256=g2p_provider.sha256,
-                                        raw_assertion=dict(model.raw),
-                                        allelic_requirement=model.allelic_requirement,
-                                        inheritance_modes=tuple(model.inheritance_modes),
-                                        molecular_mechanism=model.molecular_mechanism,
-                                    ))
-                            if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None:
-                                for assertion in clingen_gdv_assertions_by_gene.get(variant_gene, ()):
-                                    source_assertions.append(GeneDiseaseSourceAssertion(
-                                        source=GeneDiseaseSource.CLINGEN_GDV,
-                                        source_record_id=assertion.source_record_id,
-                                        gene_symbol=assertion.gene,
-                                        hgnc_id=assertion.hgnc_id,
-                                        mondo_id=assertion.mondo_id,
-                                        resource_id=str(clingen_gdv_execution.resource_id),
-                                        resource_name=clingen_gdv_resource.name,
-                                        resource_version=str(clingen_gdv_execution.resource_version),
-                                        resource_sha256=str(clingen_gdv_provider.sha256 or ""),
-                                        raw_assertion=dict(assertion.payload),
-                                        validity=assertion.classification,
-                                        inheritance_modes=(assertion.moi,) if assertion.moi else (),
-                                    ))
+                            variant_g2p_models = [
+                                model for model in g2p_models
+                                if model.gene_symbol.strip().upper() == variant_gene
+                            ] if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None else []
+                            variant_clingen_assertions = (
+                                clingen_gdv_assertions_by_gene.get(variant_gene, ())
+                                if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None
+                                else ()
+                            )
+                            source_assertions = build_gene_disease_source_assertions(
+                                g2p_models=variant_g2p_models,
+                                clingen_assertions=variant_clingen_assertions,
+                                g2p_resource_id=str(g2p_execution.resource_id) if g2p_execution else None,
+                                g2p_resource_name=g2p_resource.name if g2p_resource else None,
+                                g2p_resource_version=str(g2p_execution.resource_version) if g2p_execution else None,
+                                g2p_resource_sha256=g2p_provider.sha256 if g2p_provider else None,
+                                clingen_resource_id=str(clingen_gdv_execution.resource_id) if clingen_gdv_execution else None,
+                                clingen_resource_name=clingen_gdv_resource.name if clingen_gdv_resource else None,
+                                clingen_resource_version=str(clingen_gdv_execution.resource_version) if clingen_gdv_execution else None,
+                                clingen_resource_sha256=clingen_gdv_provider.sha256 if clingen_gdv_provider else None,
+                            )
                             if source_assertions:
                                 reconciliations = reconcile_gene_disease_assertions(source_assertions)
                                 records.extend(engine.build_from_gene_disease_reconciliations(
