@@ -114,13 +114,14 @@ def _dimension(
     *,
     g2p_unmapped: tuple[str, ...] = (),
     clingen_unmapped: tuple[str, ...] = (),
+    allow_partial_overlap: bool = False,
 ) -> DimensionReconciliation:
     left, right = _canonical(g2p), _canonical(clingen)
     left_unmapped, right_unmapped = _canonical(g2p_unmapped), _canonical(clingen_unmapped)
     if left and right:
         if left == right:
             status = DimensionStatus.UNMAPPED if left_unmapped or right_unmapped else DimensionStatus.AGREE
-        elif set(left).intersection(right):
+        elif allow_partial_overlap and set(left).intersection(right):
             status = DimensionStatus.PARTIAL_AGREEMENT
         else:
             status = DimensionStatus.CONFLICT
@@ -245,6 +246,7 @@ def reconcile_gene_disease_assertions(
                     for x in clingen
                     for value in (*x.unmapped_inheritance_modes, *(("UNKNOWN",) if "UNKNOWN" in x.inheritance_modes else ()))
                 ),
+                allow_partial_overlap=True,
             ),
             "molecular_mechanism": _dimension(
                 tuple(x.molecular_mechanism for x in g2p if x.molecular_mechanism),
