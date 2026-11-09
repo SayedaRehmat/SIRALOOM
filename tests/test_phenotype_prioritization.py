@@ -256,3 +256,32 @@ def test_no_known_disease_relationship_is_not_mislabelled_as_refuted():
         hpo_ontology=Ontology(),
     )
     assert result["candidates"][0]["association_evidence_state"] == "NO_KNOWN_DISEASE_RELATIONSHIP_REQUIRES_REVIEW"
+
+
+
+def test_unmapped_or_incomplete_inheritance_comparison_is_not_coerced_to_no_conflict():
+    association = {
+        **_association(),
+        "inheritance_mode_conflict": None,
+        "inheritance_mode_sources": {
+            "g2p_allelic_requirement": "biallelic_autosomal",
+            "clingen_moi_assertions": ["XL"],
+            "comparison_status": "UNMAPPED",
+        },
+    }
+    result = prioritize_disease_context(
+        patient_observations=[],
+        gene_disease_records=[association],
+        annotations_by_disease={"mondo:0000001": [Hpoa("HP:0000001")]},
+        hpoa_provenance={
+            "resource_id": "00000000-0000-0000-0000-000000000002",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+        },
+        hpo_ontology=Ontology(),
+    )
+    inheritance = result["candidates"][0]["inheritance"]
+    assert inheritance["mode_conflict"] is None
+    assert inheritance["qualification_status"] == (
+        "REQUIRES_REVIEW_FOR_UNMAPPED_OR_INCOMPLETE_SOURCE_EVIDENCE"
+    )
