@@ -31,7 +31,7 @@ def resolver(tmp_path):
     _write_tsv(complete, GENE_FIELDS, [
         {"hgnc_id": "HGNC:1", "symbol": "GENEA", "alias_symbol": "OLD_A|SHARED", "prev_symbol": "PREV_A", "ensembl_gene_id": "ENSG00000123456"},
         {"hgnc_id": "HGNC:2", "symbol": "GENEB", "alias_symbol": "SHARED", "prev_symbol": "PREV_B", "ensembl_gene_id": "ENSG00000654321"},
-        {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
+        {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "SPLIT_X", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
         {"hgnc_id": "HGNC:90", "status": "Merged/Split", "withdrawn_symbol": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
