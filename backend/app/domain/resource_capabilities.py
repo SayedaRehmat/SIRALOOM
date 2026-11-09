@@ -159,7 +159,6 @@ def requirements_for_workflow(
         CapabilityRequirement(ResourceCapability.POPULATION_FREQUENCY),
         CapabilityRequirement(ResourceCapability.CLINICAL_VARIANT),
         CapabilityRequirement(ResourceCapability.GENE_DISEASE),
-        CapabilityRequirement(ResourceCapability.GENE_NOMENCLATURE),
         CapabilityRequirement(
             ResourceCapability.PHENOTYPE,
             required=phenotype_requested,
