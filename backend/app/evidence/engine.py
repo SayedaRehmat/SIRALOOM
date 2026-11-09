@@ -319,6 +319,9 @@ class EvidenceEngine:
                         "resource_name": row["resource_name"],
                         "resource_version": row["resource_version"],
                         "resource_sha256": row["resource_sha256"],
+                        "source_record_sha256": row.get("source_record_sha256"),
+                        "request_fingerprint": row.get("request_fingerprint"),
+                        "response_sha256": row.get("response_sha256"),
                         "raw_assertion": row.get("raw_assertion") or {},
                     })
             if not sources:

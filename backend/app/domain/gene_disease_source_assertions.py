@@ -10,6 +10,8 @@ def build_gene_disease_source_assertions(
     g2p_resource_version: str | None, g2p_resource_sha256: str | None,
     clingen_resource_id: str | None, clingen_resource_name: str | None,
     clingen_resource_version: str | None, clingen_resource_sha256: str | None,
+    g2p_request_fingerprint: str | None = None, g2p_response_sha256: str | None = None,
+    clingen_request_fingerprint: str | None = None, clingen_response_sha256: str | None = None,
 ) -> tuple[GeneDiseaseSourceAssertion, ...]:
     """Adapt actual provider records; never infer cross-namespace identifiers."""
     result: list[GeneDiseaseSourceAssertion] = []
@@ -21,7 +23,9 @@ def build_gene_disease_source_assertions(
             gene_symbol=model.gene_symbol, hgnc_id=None, mondo_id=model.disease_mondo,
             resource_id=g2p_resource_id, resource_name=g2p_resource_name,
             resource_version=g2p_resource_version, resource_sha256=g2p_resource_sha256,
-            raw_assertion=dict(model.raw), allelic_requirement=model.allelic_requirement,
+            raw_assertion=dict(model.raw), source_record_sha256=model.record_sha256,
+            request_fingerprint=g2p_request_fingerprint, response_sha256=g2p_response_sha256,
+            allelic_requirement=model.allelic_requirement,
             inheritance_modes=tuple(model.inheritance_modes), molecular_mechanism=model.molecular_mechanism,
         ))
     for assertion in clingen_assertions:
@@ -32,7 +36,9 @@ def build_gene_disease_source_assertions(
             gene_symbol=assertion.gene, hgnc_id=assertion.hgnc_id, mondo_id=assertion.mondo_id,
             resource_id=clingen_resource_id, resource_name=clingen_resource_name,
             resource_version=clingen_resource_version, resource_sha256=clingen_resource_sha256,
-            raw_assertion=dict(assertion.payload), validity=assertion.classification,
+            raw_assertion=dict(assertion.payload), source_record_sha256=assertion.record_sha256,
+            request_fingerprint=clingen_request_fingerprint, response_sha256=clingen_response_sha256,
+            validity=assertion.classification,
             inheritance_modes=(assertion.moi,) if assertion.moi else (),
         ))
     return tuple(result)

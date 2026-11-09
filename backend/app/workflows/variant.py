@@ -4849,6 +4849,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 clingen_resource_name=clingen_gdv_resource.name if clingen_gdv_resource else None,
                                 clingen_resource_version=str(clingen_gdv_execution.resource_version) if clingen_gdv_execution else None,
                                 clingen_resource_sha256=clingen_gdv_provider.sha256 if clingen_gdv_provider else None,
+                                g2p_request_fingerprint=g2p_request_fingerprint if g2p_provider else None,
+                                g2p_response_sha256=g2p_response_sha256 if g2p_provider else None,
+                                clingen_request_fingerprint=validity_request_fingerprint if clingen_gdv_provider else None,
+                                clingen_response_sha256=validity_response_sha256 if clingen_gdv_provider else None,
                             )
                             if source_assertions:
                                 reconciliations = reconcile_gene_disease_assertions(source_assertions)
@@ -5017,7 +5021,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     })
 
                         for record in records:
-                            if record.resource_id is not None:
+                            if (
+                                record.evidence_type == "GENE_DISEASE"
+                                and record.payload.get("interpretive_use") == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY"
+                            ):
+                                # One evidence row contains assertions from two independently
+                                # governed resources. Their identities remain in payload.source_provenance;
+                                # do not falsely bind the combined record to the annotation resource.
+                                provenance = {
+                                    "resource_id": None,
+                                    "source_record_id": record.source_record_id,
+                                    "request_fingerprint": record.request_fingerprint,
+                                    "response_sha256": record.response_sha256,
+                                    "request_metadata": record.request_metadata or {},
+                                    "observed_at": record.observed_at,
+                                    "source_name": record.source_name,
+                                    "source_version": record.source_version,
+                                }
+                            elif record.resource_id is not None:
                                 provenance = {
                                     "resource_id": record.resource_id,
                                     "source_record_id": record.source_record_id,

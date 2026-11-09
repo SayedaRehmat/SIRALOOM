@@ -51,6 +51,9 @@ class GeneDiseaseSourceAssertion:
     resource_version: str
     resource_sha256: str
     raw_assertion: Mapping[str, Any]
+    source_record_sha256: str | None = None
+    request_fingerprint: str | None = None
+    response_sha256: str | None = None
     validity: str | None = None
     allelic_requirement: str | None = None
     inheritance_modes: tuple[str, ...] = ()
