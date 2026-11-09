@@ -26,11 +26,11 @@ No proposal has been assigned a canonical `VCF-REQ` ID. The canonical 226-record
 - `MUST` and `MUST NOT` remain mandatory/prohibitive.
 - `SHOULD` statements at L0400 and L0401 remain recommendations; they are not turned into hard parser rejection rules.
 - VCF recommendations that are BCF requirements at L0129 and L0301 are not promoted into VCF-text requirements. BCF remains a separate scope.
-- The recommended optional INFO `Source` and `Version` attributes at L0151 remain optional. If supplied, L0175's quoting and semantic content rules apply.
+- The recommended optional INFO `Source` and `Version` attributes at L0151 remain optional. If supplied, L0175's quoting and semantic content rules apply. L0173/L0174 are scoped to the INFO metadata subsection in which they occur; this adjudication does not silently generalize their source locators to every structured metadata type.
 - The recommendation for a local-allele abstraction API at L0715 is implementation guidance, not a VCF file-conformance rule.
 - L0411 is a producer-side reference-sequence conversion obligation. It is retained for upstream producer/reference provenance; SIRALOOM must not silently rewrite an incoming REF allele.
 - L0406 is split into the simple-indel anchor rule, the position-1 right-padding exception, and the permitted optional padding behavior for complex alleles.
-- L0407 separates symbolic-ALT padding from the special `<*>` reference-confidence convention. The spanning-deletion `*` allele is not conflated with `<*>`.
+- L0407 separates symbolic-ALT padding from the special `<*>` reference-confidence convention: the generic symbolic-ALT padding rule excludes `<*>`, whose reference-call interval includes POS. The spanning-deletion `*` allele is not conflated with `<*>`.
 - L0488 is not treated as fully covered by END deprecation or END-to-LEN fallback. It proposes the independent computed-END consistency rule.
 - L0502 preserves the existing LAA-presence and GT-first requirements but adds the separate LAA ordering obligation.
 - L1989 preserves the difference between recommended CN field presence and mandatory consistency when those fields are present.
