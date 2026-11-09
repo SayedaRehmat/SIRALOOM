@@ -55,6 +55,7 @@ def test_gene_disease_reconciliation_evidence_is_deduplicated_after_crash_replay
             db.add(User(id=user_id, organization_id=organization_id, display_name="C1 integration", role="ADMIN", status="ACTIVE"))
             db.flush()
             db.add(Case(id=case_id, organization_id=organization_id, case_identifier=f"C1-{case_id}", status="OPEN", clinical_context={}, created_by=user_id))
+            db.flush()  # The Analysis foreign key requires the Case row to exist first.
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, analysis_type="VCF", workflow_id="integration",
                 workflow_version="1", status="COMPLETED", reference_build="GRCh38",
