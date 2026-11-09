@@ -85,6 +85,7 @@ def test_write_failure_provenance_preserves_transfer_diagnostics(tmp_path):
     )
 
     report = json.loads(output.read_text(encoding="utf-8"))
+    assert output.read_bytes().endswith(b"\n")
     assert report["status"] == "FAILED"
     assert report["reference_build"] == "GRCh37"
     assert report["failed_stage"] == "asset_download_and_checksum_verification"
