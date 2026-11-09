@@ -36,6 +36,9 @@ class HGNCArchiveProvider:
         self.resolver = resolver
         self.release = resolver.release
         self.sha256 = manifest_sha256
+        self.complete_sha256 = resolver.complete_sha256
+        self.withdrawn_sha256 = resolver.withdrawn_sha256
+        self._resolution_cache: dict[str, HGNCResolution] = {}
 
     @staticmethod
     def _sha256(path: Path) -> str:
@@ -147,7 +150,10 @@ class HGNCArchiveProvider:
         return cls(resolver=resolver, manifest_sha256=manifest_sha256)
 
     def resolve(self, identifier: str) -> HGNCResolution:
-        return self.resolver.resolve(identifier)
+        key = str(identifier)
+        if key not in self._resolution_cache:
+            self._resolution_cache[key] = self.resolver.resolve(identifier)
+        return self._resolution_cache[key]
 
     def resolve_many(self, identifiers: list[str] | tuple[str, ...]) -> tuple[HGNCResolution, ...]:
         return tuple(self.resolve(identifier) for identifier in identifiers)
