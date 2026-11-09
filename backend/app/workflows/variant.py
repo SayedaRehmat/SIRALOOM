@@ -4331,6 +4331,13 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 gene_disease_records = list(clinical_input_snapshot["gene_disease_evidence"])
                 literature_records = clinical_input_snapshot["literature_evidence"]
                 g2p_gene_disease_records: list[dict[str, object]] = []
+                g2p_models: list[Any] = []
+                g2p_request_fingerprint = None
+                g2p_response_sha256 = None
+                validity_assertions: list[Any] = []
+                validity_request_fingerprint = None
+                validity_response_sha256 = None
+                gene_disease_reconciliations_by_symbol: dict[str, dict[str, Any]] = {}
                 if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None:
                     gene_symbols: set[str] = set()
                     for payload in db.scalars(
