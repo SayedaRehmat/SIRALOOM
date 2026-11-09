@@ -96,7 +96,7 @@ jobs:
           test -s cpanfile.snapshot || { echo "::error::Carton install completed without creating cpanfile.snapshot"; ls -la; exit 1; }
           "$PERL_PREFIX/bin/carton" bundle
           test -d vendor/cache || { echo "::error::Carton bundle did not create vendor/cache"; find . -maxdepth 4 -type d -print; exit 1; }
-          archive_count="$(find vendor/cache -type f \\( -name '*.tar.gz' -o -name '*.tgz' -o -name '*.tar.bz2' -o -name '*.tar.xz' -o -name '*.zip' \\) | wc -l)"
+          archive_count="$(( $(find vendor/cache -type f -name '*.tar.gz' | wc -l) + $(find vendor/cache -type f -name '*.tgz' | wc -l) ))"
           test "$archive_count" -gt 0 || { echo "::error::Carton bundle contains no distribution archives"; find vendor/cache -maxdepth 4 -type f -print | head -100; exit 1; }
           mkdir -p "$RUNNER_TEMP/vep-lock-output"
           cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
