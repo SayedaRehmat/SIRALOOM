@@ -13,7 +13,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from backend.app.domain.local_uri import local_path_from_uri\nfrom backend.app.domain.hgnc_crosswalk import (\n    HGNC_ARCHIVE_RELEASE,\n    HGNCResolver,\n)
+from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.hgnc_crosswalk import (
+    HGNC_ARCHIVE_RELEASE,
+    HGNCResolver,
+)
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
