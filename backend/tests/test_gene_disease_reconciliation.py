@@ -162,3 +162,28 @@ def test_unmapped_inheritance_assertion_is_not_reported_as_agreement():
     assert result.dimensions["inheritance_mode"].status == DimensionStatus.UNMAPPED
     assert result.dimensions["inheritance_mode"].clingen_unmapped_values == ("x-linked inheritance",)
     assert "SOURCE_DIMENSION_UNMAPPED" in result.review_reasons
+
+
+
+def test_partial_inheritance_mode_overlap_is_not_misreported_as_total_conflict():
+    g2p = assertion(
+        GeneDiseaseSource.G2P,
+        "g1",
+        hgnc="HGNC:34",
+        modes=("AUTOSOMAL_RECESSIVE",),
+    )
+    clingen_ar = assertion(
+        GeneDiseaseSource.CLINGEN_GDV,
+        "c-ar",
+        hgnc="HGNC:34",
+        modes=("AUTOSOMAL_RECESSIVE",),
+    )
+    clingen_ad = assertion(
+        GeneDiseaseSource.CLINGEN_GDV,
+        "c-ad",
+        hgnc="HGNC:34",
+        modes=("AUTOSOMAL_DOMINANT",),
+    )
+    result, = reconcile_gene_disease_assertions([g2p, clingen_ar, clingen_ad])
+    assert result.dimensions["inheritance_mode"].status == DimensionStatus.PARTIAL_AGREEMENT
+    assert "SOURCE_DIMENSION_PARTIAL_AGREEMENT" in result.review_reasons
