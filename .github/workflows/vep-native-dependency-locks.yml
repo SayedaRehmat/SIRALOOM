@@ -76,7 +76,12 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="$PERL_PREFIX/bin:$PATH"
-          "$PERL_PREFIX/bin/perl" /usr/bin/cpanm --notest Carton@1.0.35
+          # Bootstrap the cpanminus application into the custom Perl prefix.
+          # Ubuntu's /usr/bin/cpanm is tied to the system Perl and cannot be
+          # executed by the isolated Perl 5.38.5 interpreter.
+          sudo env "PATH=$PERL_PREFIX/bin:$PATH" cpanm --local-lib-contained="$PERL_PREFIX" --notest App::cpanminus@1.7048
+          test -x "$PERL_PREFIX/bin/cpanm"
+          "$PERL_PREFIX/bin/cpanm" --notest Carton@1.0.35
           carton --version
           mkdir -p "$RUNNER_TEMP/vep-carton"
           cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
