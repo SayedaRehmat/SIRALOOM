@@ -166,3 +166,35 @@ def test_g2p_native_hgnc_id_does_not_bypass_qualified_resource_gate():
     assert assertions[0].hgnc_id is None
     assert assertions[0].gene_identifier_resolution["status"] == "NOT_CONFIGURED"
     assert assertions[0].gene_identifier_resolution["source_native_hgnc_id"] == "HGNC:1"
+
+
+
+@pytest.mark.parametrize(
+    ("allelic_requirement", "g2p_modes", "clingen_moi"),
+    [
+        ("monoallelic_autosomal", ("AUTOSOMAL_DOMINANT",), "AD"),
+        ("biallelic_autosomal", ("AUTOSOMAL_RECESSIVE",), "AR"),
+        ("semidominant", ("AUTOSOMAL_SEMIDOMINANT",), "SD"),
+    ],
+)
+def test_official_clingen_moi_codes_normalize_to_the_same_controlled_modes(
+    allelic_requirement, g2p_modes, clingen_moi
+):
+    model = _g2p_model()
+    model.allelic_requirement = allelic_requirement
+    model.inheritance_modes = g2p_modes
+    assertions = _build([model], [_clingen_assertion(clingen_moi)], _QualifiedHGNCResolver())
+    reconciliation = reconcile_gene_disease_assertions(assertions)[0]
+    assert reconciliation.dimensions["inheritance_mode"].status == DimensionStatus.AGREE
+
+
+@pytest.mark.parametrize("clingen_moi", ["XL", "UD"])
+def test_generic_x_linked_and_undetermined_clingen_codes_remain_unmapped(clingen_moi):
+    assertions = _build(
+        [_g2p_model()],
+        [_clingen_assertion(clingen_moi)],
+        _QualifiedHGNCResolver(),
+    )
+    inheritance = reconcile_gene_disease_assertions(assertions)[0].dimensions["inheritance_mode"]
+    assert inheritance.status == DimensionStatus.UNMAPPED
+    assert inheritance.clingen_unmapped_values == (clingen_moi.casefold(),)
