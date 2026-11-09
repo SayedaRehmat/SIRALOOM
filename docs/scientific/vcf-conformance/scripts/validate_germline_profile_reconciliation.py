@@ -91,8 +91,32 @@ def main() -> int:
             fail(f"{requirement_id}: code-symbol mapping was altered")
         if evidence["review_status"] != source["review"]["status"]:
             fail(f"{requirement_id}: review status was altered")
-        if len(evidence["tests"]) != len(source["tests"]):
-            fail(f"{requirement_id}: test evidence count was altered")
+        expected_tests = [
+            {
+                "test_id": test["test_id"],
+                "test_kind": test["test_kind"],
+                "execution_status": test["execution_status"],
+                "execution_commit": test.get("execution_commit"),
+                "evidence_uri": test.get("evidence_uri"),
+            }
+            for test in source["tests"]
+        ]
+        if evidence["tests"] != expected_tests:
+            fail(f"{requirement_id}: test evidence was altered")
+        if evidence["implementation_commit"] != source["implementation"]["implementation_commit"]:
+            fail(f"{requirement_id}: implementation commit was altered")
+        if evidence["second_review_status"] != source["review"]["second_review_status"]:
+            fail(f"{requirement_id}: second-review status was altered")
+        if evidence["independent_review_required"] != source["review"]["independent_second_review_required"]:
+            fail(f"{requirement_id}: independent-review requirement was altered")
+        expected_evidence_status = (
+            "FAIL" if any(test["execution_status"] == "FAIL" for test in source["tests"])
+            else "PASS" if source["implementation"]["code_symbols"]
+            and any(test["execution_status"] == "PASS" for test in source["tests"])
+            else "UNRESOLVED"
+        )
+        if evidence["evidence_status"] != expected_evidence_status:
+            fail(f"{requirement_id}: evidence status was upgraded or downgraded")
         for profile_id in PROFILES:
             disposition = item["profile_dispositions"][profile_id]["scope_disposition"]
             if disposition not in DISPOSITIONS:
