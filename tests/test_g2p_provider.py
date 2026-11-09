@@ -97,6 +97,8 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
         ("biallelic_autosomal", ("AUTOSOMAL_RECESSIVE",)),
         ("monoallelic_X_hemizygous", ("X_LINKED_RECESSIVE",)),
         ("monoallelic_X_heterozygous", ("X_LINKED_DOMINANT",)),
+        ("monoallelic_Y_hemizygous", ("Y_LINKED",)),
+        ("monoallelic_y_hemizygous", ("Y_LINKED",)),
         ("semidominant", ("AUTOSOMAL_SEMIDOMINANT",)),
         ("unrecognized_requirement", ("UNKNOWN",)),
     ],
