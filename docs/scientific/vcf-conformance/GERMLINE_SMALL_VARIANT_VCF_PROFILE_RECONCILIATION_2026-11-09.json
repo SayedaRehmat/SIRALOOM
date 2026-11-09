@@ -15963,7 +15963,7 @@
     "path": "docs/scientific/vcf-conformance/VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.json",
     "markdown_path": "docs/scientific/vcf-conformance/VCF45_SOURCE_CANDIDATE_ADJUDICATION_PHASE1_2026-11-09.md",
     "schema_path": "docs/scientific/vcf-conformance/vcf45-source-candidate-adjudication.schema.json",
-    "artifact_blob_sha": "daf4330e4838f4e41b574d212455711ba44120d9",
+    "artifact_blob_sha": "28c126f1de109fd51780c87a3b9a1b21bfd2bfe0",
     "status": "AUTHOR_ADJUDICATION_PENDING_INDEPENDENT_REVIEW",
     "candidate_count": 51,
     "potential_normative_or_mixed_count": 50,
