@@ -394,8 +394,8 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             )
             assert missing_mondo["g2p_assertions"][0]["source_record_id"] == "G2P:G2P002"
             assert missing_mondo["g2p_assertions"][0]["mondo_id"] is None
-            assert all(row["clinical_conclusion"] is False for row in replayed)
-            assert all(row["requires_human_review"] for row in replayed)
+            assert all(row.payload["clinical_conclusion"] is False for row in replayed)
+            assert all(row.payload["requires_human_review"] for row in replayed)
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "build_evidence",
