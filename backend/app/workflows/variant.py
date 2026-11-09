@@ -4621,8 +4621,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 requested_resource_id=hgnc_resource.id,
                                 fallback_resource_id=None,
                                 metadata={
+                                    **(hgnc_metadata or {}),
                                     "execution_kind": "HGNC_GENE_IDENTIFIER_RESOLUTION",
                                     "identifier_count": len(hgnc_identifiers),
+                                    "identifiers": hgnc_identifiers,
                                     "input_sha256": hgnc_request_fingerprint,
                                     "output_sha256": hgnc_response_sha256,
                                     "hgnc_release": hgnc_provider.release,
