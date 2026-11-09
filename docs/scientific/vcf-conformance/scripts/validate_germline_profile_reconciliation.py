@@ -237,7 +237,7 @@ def main() -> int:
             "profile-to-adjudication artifact blob mismatch: "
             f"expected {expected_adjudication_blob}, got {adjudication_blob}"
         )
-        adjudication_schema = json.loads(ADJUDICATION_SCHEMA_PATH.read_text(encoding="utf-8"))
+    adjudication_schema = json.loads(ADJUDICATION_SCHEMA_PATH.read_text(encoding="utf-8"))
     adjudication = json.loads(ADJUDICATION_PATH.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(adjudication_schema)
     schema_errors = sorted(
