@@ -96,7 +96,7 @@ jobs:
           "$PERL_PREFIX/bin/carton" bundle
           test -s cpanfile.snapshot
           test -d vendor/cache
-          archive_count="$(find vendor/cache -type f \\\n            \\( -name '*.tar.gz' -o -name '*.tgz' -o -name '*.tar.bz2' -o -name '*.tar.xz' -o -name '*.zip' \\) | wc -l)"
+          archive_count="$(find vendor/cache -type f -name '*.tar.gz' -o -type f -name '*.tgz' -o -type f -name '*.tar.bz2' -o -type f -name '*.tar.xz' -o -type f -name '*.zip' | wc -l)"
           test "$archive_count" -gt 0
           cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
           cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
