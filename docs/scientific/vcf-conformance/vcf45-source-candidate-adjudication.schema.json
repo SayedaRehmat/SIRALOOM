@@ -235,7 +235,10 @@
                   ]
                 },
                 "review_status": {
-                  "const": "PROPOSED_NOT_CANONICAL"
+                  "enum": [
+                    "PROPOSED_NOT_CANONICAL",
+                    "PROPOSED_CANONICAL_REQUIREMENT_REFINEMENT"
+                  ]
                 }
               }
             }
