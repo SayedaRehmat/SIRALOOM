@@ -34,9 +34,9 @@ def resolver(tmp_path):
         {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "SPLIT_X", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
-        {"hgnc_id": "HGNC:90", "status": "Merged/Split", "withdrawn_symbol": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
-        {"hgnc_id": "HGNC:91", "status": "Entry Withdrawn", "withdrawn_symbol": "RETIRED_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
-        {"hgnc_id": "HGNC:92", "status": "Merged/Split", "withdrawn_symbol": "SPLIT_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved,HGNC:2|GENEB|Approved"},
+        {"HGNC_ID": "HGNC:90", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
+        {"HGNC_ID": "HGNC:91", "STATUS": "Entry Withdrawn", "WITHDRAWN_SYMBOL": "RETIRED_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
+        {"HGNC_ID": "HGNC:92", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "SPLIT_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved,HGNC:2|GENEB|Approved"},
     ])
     return HGNCResolver(complete, withdrawn, release=HGNC_ARCHIVE_RELEASE)
 
@@ -105,7 +105,7 @@ def test_duplicate_release_identity_is_rejected(tmp_path):
         {"hgnc_id": "HGNC:1", "symbol": "B", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
-        {"hgnc_id": "HGNC:90", "status": "Entry Withdrawn", "withdrawn_symbol": "OLD", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
+        {"HGNC_ID": "HGNC:90", "STATUS": "Entry Withdrawn", "WITHDRAWN_SYMBOL": "OLD", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
     ])
     with pytest.raises(HGNCResourceError, match="duplicate approved HGNC ID"):
         HGNCResolver(complete, withdrawn, release=HGNC_ARCHIVE_RELEASE)
