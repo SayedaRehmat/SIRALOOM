@@ -35,9 +35,9 @@
       "MAP_EXISTING_REQUIREMENT": 4,
       "PROPOSE_NEW_ATOMIC_REQUIREMENT": 27,
       "RECOMMENDATION_OR_PERMISSION_EXCLUDE_NORMATIVE": 5,
-      "INFORMATIVE_EXCLUDE_NORMATIVE": 2,
+      "INFORMATIVE_EXCLUDE_NORMATIVE": 1,
       "SPLIT_MIXED_CANDIDATE": 8,
-      "FUTURE_PHASE_REQUIREMENT": 5
+      "FUTURE_PHASE_REQUIREMENT": 6
     },
     "proposed_atomic_requirement_count": 51,
     "existing_requirement_mapping_edges": 11,
@@ -2516,7 +2516,7 @@
         "current_requirement_ids": []
       },
       "source_modality": "MUST_FOR_PRODUCER",
-      "adjudication_decision": "INFORMATIVE_EXCLUDE_NORMATIVE",
+      "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
       "existing_requirement_mapping": [],
       "proposed_atomic_requirements": [
         {
@@ -2534,7 +2534,7 @@
         "GERMLINE_GVCF": "NOT_APPLICABLE"
       },
       "retained_workstream": "REFERENCE_PACKAGE_AND_UPSTREAM_PRODUCER_PROVENANCE",
-      "rationale": "This is a producer-side conversion instruction for an ambiguous underlying reference sequence, not an additional reader-side input rule. Incoming VCF REF is already constrained to A/C/G/T/N by L403; SIRALOOM must not silently rewrite user-supplied REF alleles to an alphabetically selected base.",
+      "rationale": "This is a normative producer-side conversion rule for ambiguous underlying reference sequences, not an additional reader-side input rule. Preserve it as an upstream producer/reference-provenance requirement. Incoming VCF REF is already constrained to A/C/G/T/N by L403; SIRALOOM must not silently rewrite user-supplied REF alleles to an alphabetically selected base.",
       "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
       "related_existing_requirement_ids": [],
       "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
