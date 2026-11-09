@@ -168,6 +168,8 @@ def test_gene_disease_reconciliation_evidence_is_deduplicated_after_crash_replay
     finally:
         with Session(engine) as db:
             db.query(Evidence).filter(Evidence.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(Annotation).filter(Annotation.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(OrganizationMembership.organization_id == organization_id).delete(synchronize_session=False)
             db.query(Variant).filter(Variant.id == variant_id).delete(synchronize_session=False)
             db.query(Analysis).filter(Analysis.id == analysis_id).delete(synchronize_session=False)
             db.query(Case).filter(Case.id == case_id).delete(synchronize_session=False)
