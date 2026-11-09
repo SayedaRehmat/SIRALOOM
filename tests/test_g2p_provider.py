@@ -9,7 +9,7 @@ from backend.app.domain.resource_source_contract import ResourceExecutionContrac
 
 
 HEADER = (
-    "G2P ID,Gene symbol,Disease name,Disease MONDO,Allelic requirement,"
+    "G2P ID,Gene symbol,HGNC ID,Disease name,Disease MONDO,Allelic requirement,"
     "Molecular mechanism,Confidence,Publication,Publication phenotypes,"
     "Cross cutting modifier,Publication variant types,"
     "Evidence based variant consequence,Publication molecular mechanism evidence\n"
@@ -18,7 +18,7 @@ HEADER = (
 
 def _write(path, rows=None):
     path.write_text(HEADER + (rows or (
-        "G2P00123,GENE1,Example disorder,MONDO:0000001,biallelic_autosomal,"
+        "G2P00123,GENE1,HGNC:1,Example disorder,MONDO:0000001,biallelic_autosomal,"
         "loss of function,definitive,PMID:123,HP:0001250;HP:0001263,"
         "consanguinity,frameshift_variant;stop_gained,absent_gene_product,"
         "functional evidence\n"
@@ -35,6 +35,7 @@ def test_g2p_provider_pins_release_checksum_and_preserves_model_fields(tmp_path)
     assert len(models) == 1
     model = models[0]
     assert model.source_record_id == "G2P:G2P00123"
+    assert model.hgnc_id == "HGNC:1"
     assert model.disease_mondo == "MONDO:0000001"
     assert model.allelic_requirement == "biallelic_autosomal"
     assert model.molecular_mechanism == "loss of function"
@@ -83,7 +84,7 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
         G2PProvider(resource_path=str(path), expected_sha256=digest, release="latest")
     malformed = _write(
         tmp_path / "bad.csv",
-        "G2P00123,GENE1,Example disorder,MONDO:1,biallelic_autosomal,"
+        "G2P00123,GENE1,HGNC:1,Example disorder,MONDO:1,biallelic_autosomal,"
         "loss of function,definitive,PMID:123,HP:0001250,,,,\n",
     )
     with pytest.raises(G2PError, match="MONDO"):
@@ -108,7 +109,7 @@ def test_g2p_allelic_requirement_mapping_preserves_dominant_recessive_and_unknow
 ):
     path = _write(
         tmp_path / "g2p.csv",
-        "G2P00123,GENE1,Example disorder,MONDO:0000001,"
+        "G2P00123,GENE1,HGNC:1,Example disorder,MONDO:0000001,"
         f"{allelic_requirement},loss of function,definitive,PMID:123,,,,,\n",
     )
     provider = G2PProvider(
@@ -135,8 +136,8 @@ def test_g2p_accepts_date_pinned_archive_release(tmp_path):
 
     path = tmp_path / "g2p.csv"
     path.write_text(
-        "g2p id,gene symbol,disease name,allelic requirement,molecular mechanism,confidence,publication\n"
-        "G2P:1,GENE1,Disease,monoallelic autosomal,loss of function,definitive,PMID:1\n",
+        "g2p id,gene symbol,hgnc id,disease name,allelic requirement,molecular mechanism,confidence,publication\n"
+        "G2P:1,GENE1,HGNC:1,Disease,monoallelic autosomal,loss of function,definitive,PMID:1\n",
         encoding="utf-8",
     )
     import hashlib
@@ -147,3 +148,18 @@ def test_g2p_accepts_date_pinned_archive_release(tmp_path):
         release="2026-11-08",
     )
     assert provider.release == "2026-11-08"
+
+
+
+def test_g2p_rejects_malformed_source_native_hgnc_identifier(tmp_path):
+    path = _write(
+        tmp_path / "bad-hgnc.csv",
+        "G2P00123,GENE1,HGNC:bad,Example disorder,MONDO:0000001,biallelic_autosomal,"
+        "loss of function,definitive,PMID:123,,,,,\n",
+    )
+    with pytest.raises(G2PError, match="invalid HGNC"):
+        G2PProvider(
+            resource_path=str(path),
+            expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            release="2026-11-08",
+        )
