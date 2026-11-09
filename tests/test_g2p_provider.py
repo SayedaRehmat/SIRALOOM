@@ -29,7 +29,7 @@ def _write(path, rows=None):
 def test_g2p_provider_pins_release_checksum_and_preserves_model_fields(tmp_path):
     path = _write(tmp_path / "g2p.csv")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    provider = G2PProvider(resource_path=str(path), expected_sha256=digest, release="v21.0.0")
+    provider = G2PProvider(resource_path=str(path), expected_sha256=digest, release="2026-11-08")
     models = provider.query_gene(gene="gene1")
 
     assert len(models) == 1
@@ -57,10 +57,10 @@ def test_g2p_provider_requires_local_execution_and_explicit_resource_pins(tmp_pa
         access_method="LOCAL",
         endpoint=None,
         location=str(path),
-        dataset="v21.0.0",
-        toolchain={"release": "v21.0.0", "sha256": digest},
+        dataset="2026-11-08",
+        toolchain={"release": "2026-11-08", "sha256": digest},
     )
-    assert G2PProvider.from_execution_contract(type("Resolved", (), {"contract": contract})()).release == "v21.0.0"
+    assert G2PProvider.from_execution_contract(type("Resolved", (), {"contract": contract})()).release == "2026-11-08"
 
     remote = ResourceExecutionContract(
         provider_id="Gene2Phenotype",
@@ -68,8 +68,8 @@ def test_g2p_provider_requires_local_execution_and_explicit_resource_pins(tmp_pa
         access_method="HTTPS",
         endpoint="https://www.ebi.ac.uk/gene2phenotype/",
         location=None,
-        dataset="v21.0.0",
-        toolchain={"release": "v21.0.0", "sha256": digest},
+        dataset="2026-11-08",
+        toolchain={"release": "2026-11-08", "sha256": digest},
     )
     with pytest.raises(G2PError, match="local export"):
         G2PProvider.from_execution_contract(type("Resolved", (), {"contract": remote})())
@@ -78,7 +78,7 @@ def test_g2p_provider_requires_local_execution_and_explicit_resource_pins(tmp_pa
 def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_path):
     path = _write(tmp_path / "g2p.csv")
     with pytest.raises(G2PError, match="checksum"):
-        G2PProvider(resource_path=str(path), expected_sha256="0" * 64, release="v21.0.0")
+        G2PProvider(resource_path=str(path), expected_sha256="0" * 64, release="2026-11-08")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     with pytest.raises(G2PError, match="release"):
         G2PProvider(resource_path=str(path), expected_sha256=digest, release="latest")
@@ -88,7 +88,7 @@ def test_g2p_provider_rejects_wrong_checksum_release_and_malformed_mondo(tmp_pat
         "loss of function,definitive,PMID:123,HP:0001250,,,,\n",
     )
     with pytest.raises(G2PError, match="MONDO"):
-        G2PProvider(resource_path=str(malformed), expected_sha256=hashlib.sha256(malformed.read_bytes()).hexdigest(), release="v21.0.0")
+        G2PProvider(resource_path=str(malformed), expected_sha256=hashlib.sha256(malformed.read_bytes()).hexdigest(), release="2026-11-08")
 
 
 @pytest.mark.parametrize(
@@ -115,7 +115,7 @@ def test_g2p_allelic_requirement_mapping_preserves_dominant_recessive_and_unknow
     provider = G2PProvider(
         resource_path=str(path),
         expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
-        release="v21.0.0",
+        release="2026-11-08",
     )
     assert provider.query_gene(gene="GENE1")[0].inheritance_modes == expected
 
@@ -206,4 +206,15 @@ def test_g2p_rejects_duplicate_headers_extra_columns_and_missing_hgnc_column(tmp
             resource_path=str(missing),
             expected_sha256=hashlib.sha256(missing.read_bytes()).hexdigest(),
             release="2026-11-08",
+        )
+
+
+
+def test_g2p_rejects_impossible_calendar_release_date(tmp_path):
+    path = _write(tmp_path / "g2p.csv")
+    with pytest.raises(G2PError, match="calendar date"):
+        G2PProvider(
+            resource_path=str(path),
+            expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            release="2026-13-40",
         )
