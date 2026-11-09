@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
+          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
           sudo apt-get update
           sudo apt-get --download-only install -y $PACKAGES
           python3 - <<'PY'
