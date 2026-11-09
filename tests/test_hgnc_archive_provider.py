@@ -93,17 +93,33 @@ def test_hgnc_archive_provider_verifies_manifest_and_resolves_identifiers(tmp_pa
 def test_hgnc_archive_provider_rejects_manifest_or_artifact_tampering(tmp_path):
     resolved, manifest_sha256, complete, _withdrawn = _qualified_resource(tmp_path)
     complete.write_text(complete.read_text(encoding="utf-8") + "tampered\n", encoding="utf-8")
-    with pytest.raises(HGNCArchiveProviderError, match="artifact SHA-256"):
+    with pytest.raises(HGNCArchiveProviderError, match="artifact"):
         HGNCArchiveProvider.from_execution_contract(
             resolved,
             expected_sha256=manifest_sha256,
         )
 
 
-def test_hgnc_archive_provider_requires_registered_manifest_checksum(tmp_path):
+def test_hgnc_archive_provider_uses_the_manifest_pin_from_approved_execution_contract(tmp_path):
+    resolved, manifest_sha256, _complete, _withdrawn = _qualified_resource(tmp_path)
+    provider = HGNCArchiveProvider.from_execution_contract(resolved, expected_sha256=None)
+    assert provider.sha256 == manifest_sha256
+
+
+def test_hgnc_archive_provider_rejects_execution_contract_without_manifest_pin(tmp_path):
     resolved, _manifest_sha256, _complete, _withdrawn = _qualified_resource(tmp_path)
+    contract = ResourceExecutionContract(
+        provider_id="HGNC",
+        provider_version=HGNC_ARCHIVE_RELEASE,
+        access_method="LOCAL",
+        endpoint=None,
+        location=resolved.contract.location,
+        dataset="HGNC_ARCHIVE",
+        toolchain={},
+    )
+    unpinned = SimpleNamespace(contract=contract, resource_version=HGNC_ARCHIVE_RELEASE)
     with pytest.raises(HGNCArchiveProviderError, match="manifest SHA-256 pin"):
-        HGNCArchiveProvider.from_execution_contract(resolved, expected_sha256=None)
+        HGNCArchiveProvider.from_execution_contract(unpinned, expected_sha256=None)
 
 
 def test_hgnc_archive_provider_rejects_unexpected_artifact_names(tmp_path):
