@@ -18,6 +18,7 @@ from backend.app.domain.resource_capabilities import (
     COMPUTATIONAL_PREDICTOR,
     DISEASE_PHENOTYPE_ASSOCIATION,
     GENE_DISEASE,
+    GENE_NOMENCLATURE,
     INTERNAL_LAB_EVIDENCE,
     LITERATURE_PROVIDER,
     PHENOTYPE_ONTOLOGY,
@@ -58,6 +59,7 @@ class AnalysisResourceProfile:
 _COMMON_OPTIONAL = (
     ProfileResourceRequirement(CLINICAL_DATABASE, False, ("CLINVAR",)),
     ProfileResourceRequirement(GENE_DISEASE, False, ("Gene2Phenotype", "OMIM"), genome_build_required=False, license_required=True),
+    ProfileResourceRequirement(GENE_NOMENCLATURE, False, ("HGNC",), genome_build_required=False),
     ProfileResourceRequirement(PHENOTYPE_ONTOLOGY, False, ("HPO",), genome_build_required=False),
     ProfileResourceRequirement(
         DISEASE_PHENOTYPE_ASSOCIATION,
