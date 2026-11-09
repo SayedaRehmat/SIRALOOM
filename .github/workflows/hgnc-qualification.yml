@@ -5,9 +5,11 @@ on:
   push:
     paths:
       - "backend/app/domain/hgnc_crosswalk.py"
+      - "backend/app/domain/hgnc_resource_registration.py"
       - "backend/app/domain/resource_qualification.py"
       - "tests/test_hgnc_crosswalk.py"
       - "tests/test_hgnc_resource_qualification.py"
+      - "tests/test_hgnc_resource_registration.py"
       - ".github/workflows/hgnc-qualification.yml"
 
 permissions:
