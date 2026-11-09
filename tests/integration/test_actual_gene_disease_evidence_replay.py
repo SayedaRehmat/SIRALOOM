@@ -149,6 +149,19 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 clinical_context={}, language="en", created_by=user_id,
             ))
             db.flush()
+            # Artifact.analysis_id is an immediate PostgreSQL foreign key.
+            # Persist the Analysis first, then attach its immutable input artifacts.
+            analysis = Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="integration",
+                status=AnalysisStatus.QUEUED, queue_task_id="c1-gene-disease-replay",
+                reference_build="GRCh38", configuration={},
+                started_at=None, completed_at=None, created_by=user_id,
+                analysis_version=1,
+            )
+            db.add(analysis)
+            db.flush()
             source_artifact = store.put_file(
                 db=db, case_id=case_id, analysis_id=analysis_id,
                 source_path=source_vcf, filename="source.vcf",
@@ -161,20 +174,11 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 artifact_type="NORMALIZED_VCF", media_type="text/plain",
                 genome_build="GRCh38", metadata={},
             )
-            db.flush()
-            db.add(Analysis(
-                id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
-                workflow_id="variant-v1", workflow_version="integration",
-                status=AnalysisStatus.QUEUED, queue_task_id="c1-gene-disease-replay",
-                reference_build="GRCh38",
-                configuration={
-                    "input_artifact_id": str(source_artifact.id),
-                    "evidence_batch_size": 250,
-                },
-                started_at=None, completed_at=None, created_by=user_id,
-                analysis_version=1,
-            ))
+            analysis.configuration = {
+                "input_artifact_id": str(source_artifact.id),
+                "evidence_batch_size": 250,
+            }
+            db.add(analysis)
             db.flush()
             db.add_all([
                 Variant(
