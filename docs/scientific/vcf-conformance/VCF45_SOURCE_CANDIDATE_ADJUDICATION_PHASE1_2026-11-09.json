@@ -23,7 +23,7 @@
   "method": {
     "candidate_selection": "All 50 POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION candidates plus the single AMBIGUOUS_SCOPE candidate from the source-gap register.",
     "source_review": "Pinned VCFv4.5.tex source lines and three lines of surrounding context on each side were re-read. Decisions distinguish reader obligations from producer recommendations, BCF-only rules, optional metadata, descriptive context, and future variant semantics.",
-    "semantic_mapping": "Existing requirement mappings are semantic, not exact-line-locator matches. Partial mappings are explicitly called out in rationale and paired with proposed atomic requirements where the existing requirement does not cover the complete source behavior.",
+    "semantic_mapping": "Direct mappings denote source semantics already captured by the cited canonical requirement. Related IDs denote partial/contextual relationships only and are not counted as complete coverage. Refinements preserve the existing canonical requirement and explicitly propose the missing condition. All proposals remain non-canonical pending cross-version reconciliation and review.",
     "requirement_policy": "Proposals are not inserted into the canonical ledger until cross-version reconciliation, atomicity review, schema validation and independent review are complete. No implementation or test status is inferred from a proposal.",
     "modality_policy": "MUST/MUST NOT, SHOULD, MAY, recommendation, optionality and descriptive context are kept distinct. Recommendation-only statements are not promoted to hard rejection rules."
   },
@@ -39,8 +39,9 @@
       "SPLIT_MIXED_CANDIDATE": 8,
       "FUTURE_PHASE_REQUIREMENT": 5
     },
-    "proposed_atomic_requirement_count": 47,
-    "existing_requirement_mapping_edges": 17
+    "proposed_atomic_requirement_count": 51,
+    "existing_requirement_mapping_edges": 11,
+    "related_existing_requirement_edges": 5
   },
   "records": [
     {
@@ -106,7 +107,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "This sentence introduces the percent-encoding table; the eight table entries are already represented as atomic requirements. The candidate is explanatory lead-in, not an additional ninth escape rule.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "DIRECT_SEMANTIC_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0104",
@@ -172,7 +175,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Requires all ## meta-information lines to precede the #CHROM header and all data records. Existing REQ-000003 only places ##fileformat first; it does not state this broader ordering rule.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0107",
@@ -238,7 +243,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Defines grammar and value constraints for unstructured meta-information lines. Not covered by the fileformat declaration requirements.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0119",
@@ -304,7 +311,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Structured meta-information IDs must be unique within the same ##key type. Existing duplicate FORMAT-key requirement is narrower and does not cover INFO/FILTER/contig or other structured meta-information IDs.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0126",
@@ -370,7 +379,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Serialization rule for optional structured-line attributes: quoted strings even when values are numeric. No existing requirement covers this syntax.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0129",
@@ -426,7 +437,9 @@
       },
       "retained_workstream": "BCF_FUTURE_OR_SEPARATE_SCOPE",
       "rationale": "The text explicitly says recommended for VCF and required for BCF. Do not promote the VCF recommendation into a MUST. BCF is not one of the Phase 1 text-VCF input profiles.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0130",
@@ -482,7 +495,9 @@
       },
       "retained_workstream": "PHASE1_REFERENCE_IDENTITY_POLICY",
       "rationale": "Clarifies that reference/contig tags are optional in VCF. It supplies context for L129 rather than a separate parser obligation. Preserve optionality; reference identity may still be required by SIRALOOM's clinical pipeline under its own operational policy, not by this VCF sentence.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0133",
@@ -548,7 +563,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Reader must not depend on ordering of attributes within a structured meta-information line. This is distinct from human-readable recommended ordering and not represented by current registry.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0135",
@@ -614,7 +631,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Optionality of meta-information lines does not waive syntax validation: any line present must be well-formed. Distinct from required fileformat and header declarations.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0136",
@@ -680,7 +699,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Except for ##fileformat, meta-information lines may appear in any order. This is a parser order-independence rule and must not be confused with L104, which places all meta-information before #CHROM.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0151",
@@ -755,7 +776,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The source combines mandatory INFO declaration attributes (ID, Number, Type, Description) with recommended optional Source and Version attributes. These have different normative force and must not be encoded as one all-required rule.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0159",
@@ -821,7 +844,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Defines fixed integer Number cardinality: a field declared Number=n has exactly n values. Existing reserved-field rows record individual key metadata but do not enforce generic cardinality for arbitrary declared INFO/FORMAT fields.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0164",
@@ -887,7 +912,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Generic Number=A cardinality/order rule. Existing AC/AF/EC descriptions are field-specific and do not establish generic Number=A semantics.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0166",
@@ -953,7 +980,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Generic Number=R cardinality/order rule. Existing AD/ADF/ADR descriptions do not establish this for all fields declared Number=R.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0168",
@@ -1002,8 +1031,7 @@
       "source_modality": "MUST",
       "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
       "existing_requirement_mapping": [
-        "VCF-REQ-000136",
-        "VCF-REQ-000033"
+        "VCF-REQ-000136"
       ],
       "proposed_atomic_requirements": [],
       "phase1_profile_disposition": {
@@ -1012,7 +1040,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The candidate explicitly delegates Number=G ordering to the genotype-ordering section. REQ-000136 captures VCFv4.3-4.5 arbitrary-ploidy genotype ordering; REQ-000033 captures the broader genotype-likelihood ordering statement. Map rather than duplicate.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "DIRECT_SEMANTIC_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0172",
@@ -1078,7 +1108,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Flag INFO values are absent (key-only) and Flag declarations must use Number=0. This is not the same as a zero-length field rule; it constrains the metadata schema and record representation.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0173",
@@ -1144,7 +1176,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Description attributes must be double-quoted. Separate from escaping of quote and backslash characters.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0174",
@@ -1210,7 +1244,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Escaping rules for quote and backslash inside quoted structured metadata values are independently testable and not covered by the existing percent-encoding rules for data fields.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0175",
@@ -1276,7 +1312,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Source and Version are optional per L151, but when supplied they must be quoted and carry annotation-source and exact-version semantics. Do not convert optional presence into mandatory presence.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0178",
@@ -1342,7 +1380,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "FILTER metadata has required ID and Description fields. Not represented by INFO or FORMAT declaration rules.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0185",
@@ -1408,7 +1448,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "FORMAT metadata has required ID, Number, Type and Description fields. REQ-000017 concerns the record FORMAT column and sample-value alignment, not the metadata declaration schema.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0258",
@@ -1457,14 +1499,26 @@
       "source_modality": "MUST_NOT",
       "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
       "existing_requirement_mapping": [],
-      "proposed_atomic_requirements": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0258-1",
+          "atomic_statement": "Symbolic structural-variant type identifiers are case-sensitive strings and contain no whitespace, commas or angle brackets.",
+          "observable_acceptance_condition": "A future SV parser accepts valid case-sensitive symbolic type identifiers and rejects identifiers containing prohibited characters.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST_NOT",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
       "phase1_profile_disposition": {
         "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
         "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
       },
       "retained_workstream": "STRUCTURAL_VARIANT",
       "rationale": "The lexical restrictions apply to symbolic structural-variant ALT type identifiers. Retain for the structural-variant parser/routing phase; Phase 1 must still recognize and preserve symbolic records sufficiently to route them safely.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0259",
@@ -1513,14 +1567,26 @@
       "source_modality": "MUST",
       "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
       "existing_requirement_mapping": [],
-      "proposed_atomic_requirements": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0259-1",
+          "atomic_statement": "The first-level symbolic structural-variant type is one of the VCFv4.5 reserved top-level types enumerated in the specification.",
+          "observable_acceptance_condition": "A future SV parser validates the complete enumerated top-level type set and retains the subtype grammar separately.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
       "phase1_profile_disposition": {
         "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
         "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
       },
       "retained_workstream": "STRUCTURAL_VARIANT",
       "rationale": "Enumerated top-level symbolic SV type domain. Preserve the full enumerated set for later SV interpretation; Phase 1 only needs recognition and explicit routing.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0265",
@@ -1576,7 +1642,12 @@
       },
       "retained_workstream": "CNV",
       "rationale": "CNV is one member of the symbolic SV type enumeration, with copy-number-specific semantics. Preserve its definition for the CNV phase.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_proposal_ids": [
+        "VCF45-PROP-0259-1"
+      ],
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0301",
@@ -1632,7 +1703,9 @@
       },
       "retained_workstream": "BCF_FUTURE_OR_SEPARATE_SCOPE",
       "rationale": "Again distinguishes recommended VCF header contig tags from required BCF entries. BCF-only obligation is outside Phase 1 VCF-text scope; preserve the VCF recommendation but do not require these tags solely on this basis.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0302",
@@ -1707,7 +1780,9 @@
       },
       "retained_workstream": "PHASE1_REFERENCE_IDENTITY_POLICY",
       "rationale": "When a ##contig declaration is present, its structured metadata must include ID; optional attributes may include reserved length, md5 and URL. The existence of a ##contig line is recommended for VCF, not mandatory.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0322",
@@ -1773,7 +1848,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Defines allowed lexical characters and first-character restrictions for reference-sequence/contig identifiers. Required to parse CHROM and reconcile contig names safely.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0329",
@@ -1839,7 +1916,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Contig identifiers must not collide with reserved symbolic allele names. Prevents ambiguity between reference names and symbolic ALT syntax.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0391",
@@ -1905,7 +1984,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "All records for one CHROM form a contiguous block. This is distinct from numeric POS ordering within each CHROM (L394) and must be tested separately.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0392",
@@ -1971,7 +2052,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "CHROM is a required string field with no whitespace. This is a distinct fixed-column lexical contract.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0397",
@@ -2037,7 +2120,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "POS is a required integer field. Coordinate origin and telomere boundary values are specified in adjacent L393/L396, but this candidate specifically establishes its declared field type.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0400",
@@ -2093,7 +2178,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The exact source uses 'should', not 'must'. Duplicate IDs are discouraged, but the reader must not promote this to a hard VCFv4.5 rejection unless a separate lab policy explicitly does so.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0401",
@@ -2149,7 +2236,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The exact source uses 'should'. A missing ID marker is recommended when no identifier exists; do not misstate this as a MUST.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0403",
@@ -2215,7 +2304,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "REF allele strings are restricted to A,C,G,T,N (case-insensitive); multiple bases are allowed. This is central to small-variant REF validation.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0406",
@@ -2299,7 +2390,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The sentence contains the ordinary simple-indel anchor rule, a contig-position-1 exception, and a distinct permission that complex substitutions with non-empty alleles need not be padded. These are separate behaviors and must be split.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0407",
@@ -2374,7 +2467,9 @@
       },
       "retained_workstream": "GVCF_AND_SYMBOLIC_ALLELE_ROUTING",
       "rationale": "The generic symbolic-ALT padding rule and the <*> reference-block exception must be separated. The exception is specifically important for gVCF and cannot be generalized to the spanning-deletion '*' allele.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0411",
@@ -2423,14 +2518,26 @@
       "source_modality": "MUST_FOR_PRODUCER",
       "adjudication_decision": "INFORMATIVE_EXCLUDE_NORMATIVE",
       "existing_requirement_mapping": [],
-      "proposed_atomic_requirements": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-0411-1",
+          "atomic_statement": "When a VCF producer uses a reference sequence containing IUPAC ambiguity codes outside the VCF REF alphabet, it converts each ambiguous reference base to the alphabetically first concrete base before emitting the VCF REF allele.",
+          "observable_acceptance_condition": "An upstream producer conformance test verifies the prescribed conversion for each unsupported IUPAC ambiguity symbol; SIRALOOM's reader never silently rewrites incoming REF values.",
+          "requirement_domain": "UPSTREAM_VCF_PRODUCER",
+          "normative_force": "MUST",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_NOT_CANONICAL"
+        }
+      ],
       "phase1_profile_disposition": {
         "GERMLINE_VARIANT_VCF": "NOT_APPLICABLE",
         "GERMLINE_GVCF": "NOT_APPLICABLE"
       },
       "retained_workstream": "REFERENCE_PACKAGE_AND_UPSTREAM_PRODUCER_PROVENANCE",
       "rationale": "This is a producer-side conversion instruction for an ambiguous underlying reference sequence, not an additional reader-side input rule. Incoming VCF REF is already constrained to A/C/G/T/N by L403; SIRALOOM must not silently rewrite user-supplied REF alleles to an alphabetically selected base.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0416",
@@ -2514,7 +2621,9 @@
       },
       "retained_workstream": "PHASE1_ALLELE_ROUTING_AND_FUTURE_SV",
       "rationale": "ALT grammar combines sequence alleles, spanning-deletion '*', missing '.', unspecified <*> reference-confidence allele, symbolic SV alleles and breakend strings. Phase 1 must distinguish all classes, process small-variant alleles and '*' correctly, and route unsupported symbolic SV/BND without pretending they are malformed.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0417",
@@ -2580,7 +2689,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "When no alternate alleles are present, ALT must be the missing marker '.'. Distinct from GT missing-value semantics.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0422",
@@ -2646,7 +2757,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "QUAL is Float and unknown quality must be represented with the missing marker. Existing registry does not capture QUAL field type/missing semantics.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0425",
@@ -2712,7 +2825,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The string '0' is reserved and prohibited as a FILTER value. Distinct from the missing FILTER state.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0426",
@@ -2778,7 +2893,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "If filters have not been applied, FILTER must be '.'. This distinguishes unfiltered from passed (PASS) and failed-filter records.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0429",
@@ -2844,7 +2961,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "Defines INFO subfield grammar and optional value/list structure. Existing encoding requirements cover escaped characters but not the complete key[=value,...] grammar.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0433",
@@ -2919,7 +3038,9 @@
       },
       "retained_workstream": "PHASE1_VCF_CORE",
       "rationale": "The line contains two independently testable constraints: the allowed INFO key regular expression (including legacy 1000G) and the prohibition on duplicate INFO keys in a record.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0488",
@@ -2967,10 +3088,7 @@
       },
       "source_modality": "MUST_WHEN_END_PRESENT",
       "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
-      "existing_requirement_mapping": [
-        "VCF-REQ-000106",
-        "VCF-REQ-000129"
-      ],
+      "existing_requirement_mapping": [],
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-0488-1",
@@ -2988,7 +3106,12 @@
       },
       "retained_workstream": "PHASE1_END_AND_GVCF_BLOCK_COORDINATES",
       "rationale": "Existing requirements capture END deprecation and a backwards-compatibility inference from END to LEN, but not the computed END value itself. This sentence is a maximum across REF end, symbolic SVLEN end, and <*> FORMAT LEN end; create a distinct conditional requirement and retain structural branches for future SV.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000106",
+        "VCF-REQ-000129"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY"
     },
     {
       "candidate_id": "VCFv4.5:L0502",
@@ -3037,8 +3160,7 @@
       "source_modality": "MUST_WHEN_LOCAL_ALLELE_FIELDS_PRESENT",
       "adjudication_decision": "MAP_EXISTING_REQUIREMENT",
       "existing_requirement_mapping": [
-        "VCF-REQ-000053",
-        "VCF-REQ-000019"
+        "VCF-REQ-000053"
       ],
       "proposed_atomic_requirements": [
         {
@@ -3057,7 +3179,11 @@
       },
       "retained_workstream": "PHASE1_LOCAL_ALLELE",
       "rationale": "REQ-000053 covers the LAA-presence dependency and REQ-000019 covers GT-first. The additional requirement that LAA precede all other non-GT fields is not covered and needs its own atomic requirement.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000019"
+      ],
+      "mapping_relation": "PARTIAL_COVERAGE_PLUS_NEW_ORDERING_REQUIREMENT"
     },
     {
       "candidate_id": "VCFv4.5:L0715",
@@ -3113,7 +3239,9 @@
       },
       "retained_workstream": "PARSER_LIBRARY_API_DESIGN",
       "rationale": "This is explicitly an API design recommendation for VCF libraries, not a file-format conformance obligation. Do not create a parser rejection rule from it.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L0726",
@@ -3161,9 +3289,7 @@
       },
       "source_modality": "MUST",
       "adjudication_decision": "FUTURE_PHASE_REQUIREMENT",
-      "existing_requirement_mapping": [
-        "VCF-REQ-000075"
-      ],
+      "existing_requirement_mapping": [],
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-0726-1",
@@ -3181,7 +3307,11 @@
       },
       "retained_workstream": "BASE_MODIFICATION",
       "rationale": "The 0..1 range constrains base-modification M values. REQ-000075 records Number=M cardinality but not value range. This is a valid future base-modification semantic requirement, not a Phase 1 SNV/indel or gVCF reference-block acceptance requirement unless base modifications are explicitly supported.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000075"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY"
     },
     {
       "candidate_id": "VCFv4.5:L1989",
@@ -3229,9 +3359,7 @@
       },
       "source_modality": "SHOULD_PLUS_MUST_WHEN_PRESENT",
       "adjudication_decision": "SPLIT_MIXED_CANDIDATE",
-      "existing_requirement_mapping": [
-        "VCF-REQ-000096"
-      ],
+      "existing_requirement_mapping": [],
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-1989-1",
@@ -3258,7 +3386,11 @@
       },
       "retained_workstream": "CNV_AND_TANDEM_REPEAT",
       "rationale": "The source mixes a SHOULD for presence of INFO/FORMAT CN with a MUST consistency rule conditional on those fields being present. The CN semantics are future CNV/TR scope; existing REQ-000096 addresses a different SVLEN consistency condition and is not a substitute.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [
+        "VCF-REQ-000096"
+      ],
+      "mapping_relation": "RELATED_CONTEXT_ONLY_NOT_SEMANTIC_SUBSTITUTE"
     },
     {
       "candidate_id": "VCFv4.5:L1996",
@@ -3324,7 +3456,9 @@
       },
       "retained_workstream": "TANDEM_REPEAT",
       "rationale": "RUS or RUL is mandatory for each <CNV:TR> allele. This is a future tandem-repeat semantic requirement and must be retained rather than implemented in the Phase 1 small-variant release.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "NO_EXISTING_REQUIREMENT_MAPPING"
     },
     {
       "candidate_id": "VCFv4.5:L2027",
@@ -3375,14 +3509,26 @@
       "existing_requirement_mapping": [
         "VCF-REQ-000091"
       ],
-      "proposed_atomic_requirements": [],
+      "proposed_atomic_requirements": [
+        {
+          "proposal_id": "VCF45-PROP-2027-REFINE-000091",
+          "atomic_statement": "For <CNV:TR> alleles, RN may be omitted when no allele has more than one repeat sequence; RN must be specified when any <CNV:TR> allele has RN greater than 1.",
+          "observable_acceptance_condition": "A future tandem-repeat validator accepts omission of RN for single-repeat alleles and rejects omission when any allele requires RN greater than 1, while preserving the existing default of one when RN is absent.",
+          "requirement_domain": "FUTURE_VARIANT",
+          "normative_force": "MUST_WHEN_RN_GT_1",
+          "phase": "FUTURE_PHASE",
+          "review_status": "PROPOSED_CANONICAL_REQUIREMENT_REFINEMENT"
+        }
+      ],
       "phase1_profile_disposition": {
         "GERMLINE_VARIANT_VCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION",
         "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
       },
       "retained_workstream": "TANDEM_REPEAT",
       "rationale": "This condition refines the existing RN default/absence rule: RN may be omitted when each relevant allele has at most one repeat record; RN is required when any <CNV:TR> allele has RN greater than 1. Existing REQ-000091 should be amended or explicitly cross-referenced, not duplicated.",
-      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW"
+      "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
+      "related_existing_requirement_ids": [],
+      "mapping_relation": "REFINES_EXISTING_REQUIREMENT"
     }
   ],
   "controls": {
