@@ -55,7 +55,7 @@ The overlay enumerates the requirement IDs and existing repository assets retain
 - VCFv4.5 base modifications;
 - pedigree/haplotype metadata.
 
-The current PSO/BND implementation and regression tests are retained. The last recorded full workflow passed on `f7636dfa0b83886f3a52e6f317657c5f8c63433c` (run [42370069178](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42370069178)). The current PR head `e8ddc2a0d108ee8ca7486c2beb547ffa7edc6212` is a documentation-only child of that tested commit. This new profile branch has not been tested.
+The current PSO/BND implementation and regression tests are retained. The last recorded full workflow passed on `f7636dfa0b83886f3a52e6f317657c5f8c63433c` (run [42370069178](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42370069178)). The current PR #293 head `e8ddc2a0d108ee8ca7486c2beb547ffa7edc6212` is a documentation-only child of that tested commit. Separately, the profile overlay schema and integrity validator passed on profile-branch commit `c7dc2dc92cd0d00199a08ccd0ca7a43456918212` (run [42576161367](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42576161367)). That run validates schema and reconciliation integrity only; it does not exercise VCF/gVCF runtime behavior or clinical processing.
 
 ## 6. Source-to-ledger gaps requiring new atomic requirements or separate policy records
 
