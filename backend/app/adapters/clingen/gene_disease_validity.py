@@ -39,8 +39,14 @@ class GeneDiseaseAssertion:
 
 def _normalize_mondo_id(value: str | None) -> str | None:
     raw = str(value or "").strip()
+    if not raw:
+        return None
     match = re.fullmatch(r"MONDO[:_](\d{7})", raw, flags=re.IGNORECASE)
-    return f"MONDO:{match.group(1)}" if match else (raw or None)
+    if not match:
+        raise ClinGenGeneDiseaseValidityError(
+            f"ClinGen export contains an invalid MONDO identifier: {raw!r}"
+        )
+    return f"MONDO:{match.group(1)}"
 
 
 class ClinGenGeneDiseaseValidityProvider:
@@ -146,10 +152,14 @@ class ClinGenGeneDiseaseValidityProvider:
             raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity header not found")
 
         headers = [x.strip() for x in rows[header_index]]
+        if len({header.casefold() for header in headers}) != len(headers):
+            raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity export contains duplicate headers")
         indexed: dict[str, list[GeneDiseaseAssertion]] = {}
         for row in rows[header_index + 1:]:
             if not row or row[0].startswith("+"):
                 continue
+            if len(row) > len(headers) and any(str(value).strip() for value in row[len(headers):]):
+                raise ClinGenGeneDiseaseValidityError("ClinGen Gene-Disease Validity row contains unexpected extra columns")
             if len(row) < len(headers):
                 row = row + [""] * (len(headers) - len(row))
             data = {headers[i]: row[i].strip() for i in range(len(headers))}
@@ -159,12 +169,20 @@ class ClinGenGeneDiseaseValidityProvider:
             canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
             digest = hashlib.sha256(canonical).hexdigest()
             report = data.get("ONLINE REPORT") or None
-            record_id = report.rsplit("/", 1)[-1] if report else f"{gene_symbol}:{data.get('DISEASE ID (MONDO)','')}"
+            record_id = report.rsplit("/", 1)[-1] if report else ""
+            hgnc_id = data.get("GENE ID (HGNC)") or None
+            if hgnc_id and not re.fullmatch(r"HGNC:\\d+", hgnc_id, flags=re.IGNORECASE):
+                raise ClinGenGeneDiseaseValidityError(
+                    f"ClinGen export contains an invalid HGNC identifier: {hgnc_id!r}"
+                )
+            mondo_id = _normalize_mondo_id(data.get("DISEASE ID (MONDO)"))
+            if not record_id:
+                record_id = f"{gene_symbol}:{mondo_id or data.get('DISEASE LABEL','')}:{digest[:16]}"
             assertion = GeneDiseaseAssertion(
                 gene=gene_symbol,
-                hgnc_id=data.get("GENE ID (HGNC)") or None,
+                hgnc_id=hgnc_id,
                 disease=data.get("DISEASE LABEL", ""),
-                mondo_id=_normalize_mondo_id(data.get("DISEASE ID (MONDO)")),
+                mondo_id=mondo_id,
                 moi=data.get("MOI") or None,
                 sop=data.get("SOP") or None,
                 classification=data.get("CLASSIFICATION") or None,
