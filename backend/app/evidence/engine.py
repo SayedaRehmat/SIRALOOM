@@ -326,7 +326,7 @@ class EvidenceEngine:
             payload["interpretive_use"] = "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY"
             payload["clinical_conclusion"] = False
             payload["source_provenance"] = sources
-            out.append(self._record(
+            record = self._record(
                 variant_id=variant_id,
                 evidence_type="GENE_DISEASE",
                 statement=(
@@ -338,8 +338,10 @@ class EvidenceEngine:
                 source_name="SIRALOOM gene-disease reconciliation",
                 source_version="1",
                 payload=payload,
-                source_record_id=payload["reconciliation_id"],
                 request_metadata={"source_provenance": sources},
+            )
+            out.append(EvidenceRecord(
+                **{**record.__dict__, "source_record_id": payload["reconciliation_id"]}
             ))
         return out
 
