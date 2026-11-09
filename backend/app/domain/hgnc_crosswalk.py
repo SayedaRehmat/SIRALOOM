@@ -6,6 +6,7 @@ SHA-256 digests and release identity.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -276,3 +277,18 @@ class HGNCResolver:
             original, normalized, status, hgnc_id,
             self._approved[hgnc_id]["symbol"], field, (hgnc_id,)
         )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Acquire the pinned official HGNC crosswalk release.")
+    parser.add_argument("command", choices=("acquire",))
+    parser.add_argument("--destination", required=True, type=Path)
+    parser.add_argument("--release", default=HGNC_ARCHIVE_RELEASE)
+    args = parser.parse_args()
+    manifest = acquire_hgnc_release(args.destination, release=args.release)
+    print(json.dumps(manifest, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
