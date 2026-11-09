@@ -73,7 +73,6 @@ The reconciliation engine preserves source records and returns explicit identity
 - G2P_ONLY / CLINGEN_ONLY: source-local assertions that do not have an exact counterpart.
 - UNMATCHABLE_MISSING_MONDO: a source record lacks a disease identifier required for the cross-source join.
 - UNMATCHABLE_IDENTIFIER_NAMESPACE: gene identity cannot be resolved into the canonical HGNC namespace.
-- UNMATCHABLE_NO_GENE_IDENTIFIER: no usable gene identifier is present.
 
 A matched identity does not mean the sources agree on every evidence dimension. Each dimension is compared separately, and the complete raw source assertions remain available for review.
 
