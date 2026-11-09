@@ -315,6 +315,14 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                     "toolchain": {"release": "2026-11-08", "sha256": "a" * 64},
                 }
             }
+            hgnc = _resource(
+                db,
+                organization_id=organization_id,
+                name="HGNC nomenclature archive",
+                provider="HGNC",
+                resource_type="GENE_NOMENCLATURE",
+                version="2026-10-06",
+            )
             db.add(g2p)
             db.commit()
 
@@ -333,6 +341,8 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
             assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].execution.resource_id == gdv.id
             assert selected["GENE_DISEASE"].resource.id == g2p.id
             assert selected["GENE_DISEASE"].execution.resource_id == g2p.id
+            assert selected["GENE_NOMENCLATURE"].resource.id == hgnc.id
+            assert selected["GENE_NOMENCLATURE"].execution.resource_id == hgnc.id
     finally:
         engine.dispose()
 
