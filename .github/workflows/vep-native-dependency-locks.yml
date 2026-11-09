@@ -52,7 +52,7 @@ jobs:
               raise SystemExit("apt did not retain downloaded prerequisite packages for hashing")
           out = Path("${{ runner.temp }}/vep-lock-output")
           out.mkdir(parents=True, exist_ok=True)
-          (out / "native-build-manifest.json").write_text(json.dumps({"architecture": platform.machine(), "runner_os": "ubuntu-24.04", "downloaded_debs": debs}, indent=2, sort_keys=True) + "\\n")
+          (out / "native-build-manifest.json").write_text(json.dumps({"architecture": platform.machine(), "runner_os": "ubuntu-24.04", "downloaded_debs": debs}, indent=2, sort_keys=True) + "\n")
           PY
           sudo apt-get install -y $PACKAGES
       - name: Build checksum-pinned Perl 5.38.5
@@ -70,7 +70,7 @@ jobs:
           make install
           echo "$PERL_PREFIX/bin" >> "$GITHUB_PATH"
           echo "PERL_PREFIX=$PERL_PREFIX" >> "$GITHUB_ENV"
-          "$PERL_PREFIX/bin/perl" -e 'die "wrong Perl version" unless $^V eq v5.38.5; print "$^V\\n"'
+          "$PERL_PREFIX/bin/perl" -e 'die "wrong Perl version" unless $^V eq v5.38.5; print "$^V\n"'
       - name: Resolve combined Ensembl runtime dependencies
         shell: bash
         run: |
