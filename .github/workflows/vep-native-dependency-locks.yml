@@ -75,7 +75,7 @@ jobs:
       - name: Resolve combined Ensembl runtime dependencies
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           export PATH="$PERL_PREFIX/bin:$PATH"
           # Bootstrap the cpanminus application into the custom Perl prefix.
           # Ubuntu's /usr/bin/cpanm is tied to the system Perl and cannot be
@@ -93,13 +93,17 @@ jobs:
           cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
           cd "$RUNNER_TEMP/vep-carton"
           "$PERL_PREFIX/bin/carton" install
+          test -s cpanfile.snapshot || { echo "::error::Carton install completed without creating cpanfile.snapshot"; ls -la; exit 1; }
           "$PERL_PREFIX/bin/carton" bundle
-          test -s cpanfile.snapshot
-          test -d vendor/cache
-          archive_count="$(find vendor/cache -type f -name '*.tar.gz' -o -type f -name '*.tgz' -o -type f -name '*.tar.bz2' -o -type f -name '*.tar.xz' -o -type f -name '*.zip' | wc -l)"
-          test "$archive_count" -gt 0
+          test -d vendor/cache || { echo "::error::Carton bundle did not create vendor/cache"; find . -maxdepth 4 -type d -print; exit 1; }
+          archive_count="$(find vendor/cache -type f \\( -name '*.tar.gz' -o -name '*.tgz' -o -name '*.tar.bz2' -o -name '*.tar.xz' -o -name '*.zip' \\) | wc -l)"
+          test "$archive_count" -gt 0 || { echo "::error::Carton bundle contains no distribution archives"; find vendor/cache -maxdepth 4 -type f -print | head -100; exit 1; }
+          mkdir -p "$RUNNER_TEMP/vep-lock-output"
           cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
           cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
+          test -s "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
+          test "$(find "$RUNNER_TEMP/vep-lock-output/vendor-cache" -type f | wc -l)" -gt 0
+          echo "Resolved snapshot and $archive_count cached distribution archives for $GITHUB_JOB."
       - name: Preserve CPAN build diagnostics on dependency-resolution failure
         if: failure()
         uses: actions/upload-artifact@v4
