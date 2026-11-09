@@ -218,3 +218,18 @@ def test_g2p_rejects_impossible_calendar_release_date(tmp_path):
             expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
             release="2026-13-40",
         )
+
+
+
+def test_g2p_normalizes_numeric_hgnc_accession_without_symbol_inference(tmp_path):
+    path = _write(
+        tmp_path / "numeric-hgnc.csv",
+        "G2P00123,GENE1,1090,Example disorder,MONDO:0000001,biallelic_autosomal,"
+        "loss of function,definitive,PMID:123,,,,,\n",
+    )
+    provider = G2PProvider(
+        resource_path=str(path),
+        expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        release="2026-11-08",
+    )
+    assert provider.query_gene(gene="GENE1")[0].hgnc_id == "HGNC:1090"
