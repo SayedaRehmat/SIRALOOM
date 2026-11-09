@@ -15,6 +15,7 @@ BASE = ROOT / "docs/scientific/vcf-conformance"
 SCHEMA_PATH = BASE / "germline-small-variant-vcf-profile-reconciliation.schema.json"
 PROFILE_PATH = BASE / "GERMLINE_SMALL_VARIANT_VCF_PROFILE_RECONCILIATION_2026-11-09.json"
 LEDGER_PATH = BASE / "atomic-requirements.v1.json"
+SOURCE_GAP_REGISTER_PATH = BASE / "VCF45_SOURCE_TO_LEDGER_GAP_REGISTER_2026-11-07.json"
 PROFILES = ("GERMLINE_VARIANT_VCF", "GERMLINE_GVCF")
 DISPOSITIONS = {
     "CORE_REQUIRED",
@@ -132,7 +133,7 @@ def main() -> int:
         if observed != expected:
             fail(f"{profile_id}: disposition counts differ; observed={observed}, expected={expected}")
     print("PASS: two-profile dispositions and aggregate counts are internally consistent")
-    print("PASS: canonical version applicability, implementation mappings, test counts, and review states are preserved")
+    print("PASS: canonical version applicability, implementation mappings, exact test evidence, and review states are preserved")
     print("PASS: every canonical requirement is retained for Phase 1 or a future workstream")
 
     gap_ids = [item["gap_id"] for item in profile["source_gap_candidates"]]
@@ -146,6 +147,84 @@ def main() -> int:
         "PASS: source-gap IDs are unique and future workstream references resolve "
         f"({len(profile['source_gap_candidates'])} gaps; "
         f"{len(profile['preserved_future_workstreams'])} workstreams)"
+    )
+
+    gap_register_raw = SOURCE_GAP_REGISTER_PATH.read_bytes()
+    gap_register_sha = git_blob_sha1(gap_register_raw)
+    gap_register = json.loads(gap_register_raw)
+    reconciliation = profile["source_gap_register_reconciliation"]
+    if gap_register_sha != reconciliation["source_gap_register_blob_sha"]:
+        fail(
+            "source-gap register blob mismatch: "
+            f"expected {reconciliation['source_gap_register_blob_sha']}, got {gap_register_sha}"
+        )
+    if gap_register["input_artifacts"]["canonical_ledger_blob_sha"] != reconciliation["historical_canonical_ledger_blob_sha"]:
+        fail("historical source-gap register ledger hash does not match its recorded input")
+    if reconciliation["current_canonical_ledger_blob_sha"] != actual_blob:
+        fail("source-gap recheck is not bound to the current canonical ledger blob")
+
+    source_candidates = {item["candidate_id"]: item for item in gap_register["gaps"]}
+    triage_items = profile["source_candidate_profile_triage"]
+    triage = {item["candidate_id"]: item for item in triage_items}
+    if len(source_candidates) != 94 or len(triage_items) != 94 or len(triage) != 94:
+        fail(
+            "source candidate count/uniqueness failure: "
+            f"source={len(source_candidates)}, triage_records={len(triage_items)}, "
+            f"triage_unique={len(triage)}"
+        )
+    if set(source_candidates) != set(triage):
+        fail("source candidate IDs do not match the source-gap register")
+    exact_overlaps = 0
+    candidate_counts = {name: Counter() for name in PROFILES}
+    for candidate_id, source_candidate in source_candidates.items():
+        item = triage[candidate_id]
+        for key, source_key in (
+            ("source_line", "source_line"),
+            ("source_text", "source_text"),
+            ("source_context", "source_context"),
+            ("original_primary_disposition", "primary_disposition"),
+            ("original_traceability_disposition", "traceability_disposition"),
+            ("source_current_requirement_ids", "current_requirement_ids"),
+        ):
+            if item[key] != source_candidate[source_key]:
+                fail(f"{candidate_id}: source candidate content differs from its register")
+        line = source_candidate["source_line"]
+        has_overlap = any(
+            reference.get("source_file") == "VCFv4.5.tex"
+            and reference.get("locator", {}).get("start_line") is not None
+            and reference.get("locator", {}).get("end_line") is not None
+            and reference["locator"]["start_line"] <= line <= reference["locator"]["end_line"]
+            for requirement in ledger["requirements"]
+            for reference in requirement.get("source_references", [])
+        )
+        if has_overlap:
+            exact_overlaps += 1
+        if item["future_retention"]["retain"] is not True:
+            fail(f"{candidate_id}: source candidate retention is false")
+        for profile_id in PROFILES:
+            disposition = item["profile_dispositions"][profile_id]["scope_disposition"]
+            if disposition not in DISPOSITIONS:
+                fail(f"{candidate_id}: invalid {profile_id} source-candidate disposition")
+            candidate_counts[profile_id][disposition] += 1
+
+    expected_recheck = reconciliation["exact_locator_recheck_against_current_ledger"]
+    if expected_recheck["candidate_lines"] != 94:
+        fail("source-gap register candidate-line count is not 94")
+    if expected_recheck["exact_locator_overlap"] != exact_overlaps:
+        fail(
+            "source-gap exact-locator overlap count mismatch: "
+            f"expected {expected_recheck['exact_locator_overlap']}, got {exact_overlaps}"
+        )
+    if expected_recheck["no_exact_locator_overlap"] != 94 - exact_overlaps:
+        fail("source-gap no-overlap count is inconsistent")
+    for profile_id in PROFILES:
+        if dict(candidate_counts[profile_id]) != reconciliation["candidate_disposition_counts"][profile_id]:
+            fail(f"{profile_id}: source-candidate disposition counts differ")
+    if reconciliation["original_register_counts"] != gap_register["counts"]:
+        fail("source-gap register summary counts differ from the source artifact")
+    print(
+        "PASS: all 94 source-gap candidates are mapped to both profiles and checked against "
+        f"the current ledger ({exact_overlaps} exact locator overlaps)"
     )
     print("NOTE: this validator checks reconciliation integrity, not scientific correctness or laboratory qualification.")
     return 0
