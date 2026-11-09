@@ -14,7 +14,7 @@ from backend.app.domain.hgnc_crosswalk import (
 
 
 GENE_FIELDS = ["hgnc_id", "symbol", "alias_symbol", "prev_symbol", "ensembl_gene_id"]
-WITHDRAWN_FIELDS = ["hgnc_id", "status", "withdrawn_symbol", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS"]
+WITHDRAWN_FIELDS = ["HGNC_ID", "STATUS", "WITHDRAWN_SYMBOL", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS"]
 
 
 def _write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
