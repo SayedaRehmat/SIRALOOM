@@ -163,3 +163,47 @@ def test_g2p_rejects_malformed_source_native_hgnc_identifier(tmp_path):
             expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
             release="2026-11-08",
         )
+
+
+
+def test_g2p_rejects_duplicate_headers_extra_columns_and_missing_hgnc_column(tmp_path):
+    duplicate = tmp_path / "duplicate.csv"
+    duplicate.write_text(
+        HEADER.replace("Gene symbol,HGNC ID", "Gene symbol,Gene symbol")
+        + "G2P00123,GENE1,GENE1,Example disorder,MONDO:0000001,biallelic_autosomal,"
+        "loss of function,definitive,PMID:123,,,,,\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(G2PError, match="duplicate"):
+        G2PProvider(
+            resource_path=str(duplicate),
+            expected_sha256=hashlib.sha256(duplicate.read_bytes()).hexdigest(),
+            release="2026-11-08",
+        )
+
+    extra = tmp_path / "extra.csv"
+    extra.write_text(
+        HEADER
+        + "G2P00123,GENE1,HGNC:1,Example disorder,MONDO:0000001,biallelic_autosomal,"
+        "loss of function,definitive,PMID:123,,,,,UNEXPECTED\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(G2PError, match="extra columns"):
+        G2PProvider(
+            resource_path=str(extra),
+            expected_sha256=hashlib.sha256(extra.read_bytes()).hexdigest(),
+            release="2026-11-08",
+        )
+
+    missing = tmp_path / "missing-hgnc.csv"
+    missing.write_text(
+        "G2P ID,Gene symbol,Disease name,Disease MONDO,Allelic requirement,Molecular mechanism,Confidence\n"
+        "G2P00123,GENE1,Example disorder,MONDO:0000001,biallelic_autosomal,loss of function,definitive\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(G2PError, match="hgnc_id"):
+        G2PProvider(
+            resource_path=str(missing),
+            expected_sha256=hashlib.sha256(missing.read_bytes()).hexdigest(),
+            release="2026-11-08",
+        )
