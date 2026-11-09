@@ -627,6 +627,18 @@
                 "type": "string"
               }
             }
+          },
+          "source_version_applicability": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "related_version_delta": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
