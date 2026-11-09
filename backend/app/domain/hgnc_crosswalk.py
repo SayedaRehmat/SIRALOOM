@@ -219,7 +219,7 @@ class HGNCResolver:
         ensembl = ENSEMBL_GENE_RE.fullmatch(normalized)
         if ensembl:
             return self._resolve_candidates(original, normalized, self._ensembl.get(ensembl.group(1), set()), HGNCResolutionStatus.ENSEMBL_GENE_ID, "ensembl_gene_id")
-        approved = self._aliases.get(normalized, set())
+        approved = self._approved_symbols.get(normalized, set())
         if len(approved) == 1:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
         if len(approved) > 1:
