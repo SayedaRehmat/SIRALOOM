@@ -1162,8 +1162,8 @@
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-0173-1",
-          "atomic_statement": "The Description attribute in structured meta-information lines is enclosed in double quotes.",
-          "observable_acceptance_condition": "A reader validates the quoted Description serialization in supported structured metadata declarations.",
+          "atomic_statement": "The Description attribute in a structured ##INFO declaration is enclosed in double quotes.",
+          "observable_acceptance_condition": "A reader validates that the Description value in a ##INFO declaration is serialized as a quoted string.",
           "requirement_domain": "VCF_CORE",
           "normative_force": "MUST",
           "phase": "PHASE1",
@@ -1230,8 +1230,8 @@
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-0174-1",
-          "atomic_statement": "A double-quote inside a quoted structured meta-information value is escaped with backslash, and a literal backslash is escaped as a doubled backslash.",
-          "observable_acceptance_condition": "A reader decodes valid escaped quote/backslash sequences and rejects invalid escape encodings in supported structured metadata.",
+          "atomic_statement": "Within a quoted ##INFO Description value, a double-quote is escaped with a backslash and a literal backslash is escaped as a doubled backslash.",
+          "observable_acceptance_condition": "A reader correctly decodes escaped quote and backslash characters in ##INFO Description values and rejects invalid escape sequences.",
           "requirement_domain": "VCF_CORE",
           "normative_force": "MUST",
           "phase": "PHASE1",
@@ -2444,8 +2444,8 @@
       "proposed_atomic_requirements": [
         {
           "proposal_id": "VCF45-PROP-0407-1",
-          "atomic_statement": "A symbolic ALT allele uses a padding base and POS identifies the base preceding the polymorphism, except where the specification defines a construct-specific rule.",
-          "observable_acceptance_condition": "The parser recognizes symbolic ALT syntax and applies the correct padding convention before routing unsupported structural classes.",
+          "atomic_statement": "For any symbolic ALT other than <*>, the required padding base precedes the polymorphism and POS identifies that preceding base.",
+          "observable_acceptance_condition": "A reader validates symbolic-ALT padding against the exact construct class and does not apply this generic rule to the VCFv4.5 <*> exception.",
           "requirement_domain": "GVCF",
           "normative_force": "MUST_WITH_EXCEPTION",
           "phase": "PHASE1",
