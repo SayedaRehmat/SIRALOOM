@@ -22,7 +22,7 @@
   },
   "method": {
     "candidate_selection": "All 50 POTENTIAL_NORMATIVE_OR_MIXED_OBLIGATION candidates plus the single AMBIGUOUS_SCOPE candidate from the source-gap register.",
-    "source_review": "Pinned VCFv4.5.tex source lines and three lines of surrounding context on each side were re-read. Decisions distinguish reader obligations from producer recommendations, BCF-only rules, optional metadata, descriptive context, and future variant semantics.",
+    "source_review": "Pinned VCFv4.5.tex source lines and three lines of surrounding context on each side were re-read. Decisions distinguish reader obligations from producer recommendations, BCF-only rules, optional metadata, descriptive context, and future variant semantics. For mixed sentences, proposal-level normative force is split so MUST, SHOULD, MAY and optional metadata are not collapsed into one force label.",
     "semantic_mapping": "Direct mappings denote source semantics already captured by the cited canonical requirement. Related IDs denote partial/contextual relationships only and are not counted as complete coverage. Refinements preserve the existing canonical requirement and explicitly propose the missing condition. All proposals remain non-canonical pending cross-version reconciliation and review.",
     "requirement_policy": "Proposals are not inserted into the canonical ledger until cross-version reconciliation, atomicity review, schema validation and independent review are complete. No implementation or test status is inferred from a proposal.",
     "modality_policy": "MUST/MUST NOT, SHOULD, MAY, recommendation, optionality and descriptive context are kept distinct. Recommendation-only statements are not promoted to hard rejection rules."
@@ -756,7 +756,7 @@
           "atomic_statement": "A structured ##INFO declaration contains ID, Number, Type and Description attributes.",
           "observable_acceptance_condition": "A reader rejects a ##INFO declaration missing any of ID, Number, Type or Description.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "MUST_PLUS_RECOMMENDED",
+          "normative_force": "MUST",
           "phase": "PHASE1",
           "review_status": "PROPOSED_NOT_CANONICAL"
         },
@@ -765,7 +765,7 @@
           "atomic_statement": "Source and Version are recommended optional attributes on ##INFO declarations; their absence is valid.",
           "observable_acceptance_condition": "A reader accepts an ##INFO declaration without Source and/or Version and preserves them when supplied.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "MUST_PLUS_RECOMMENDED",
+          "normative_force": "RECOMMENDED_OPTIONAL",
           "phase": "PHASE1",
           "review_status": "PROPOSED_NOT_CANONICAL"
         }
@@ -1641,7 +1641,7 @@
         "GERMLINE_GVCF": "OUT_OF_SCOPE_EXPLICIT_REJECTION"
       },
       "retained_workstream": "CNV",
-      "rationale": "CNV is one member of the symbolic SV type enumeration, with copy-number-specific semantics. Preserve its definition for the CNV phase.",
+      "rationale": "This line defines the CNV member of the top-level symbolic SV type enumeration introduced at L259. It is not a separate parser rule; preserve the CNV definition as a future CNV glossary/semantic entry and link it to the single enumerated-domain proposal at L259.",
       "status": "AUTHOR_ADJUDICATED_PENDING_INDEPENDENT_REVIEW",
       "related_proposal_ids": [
         "VCF45-PROP-0259-1"
@@ -1766,8 +1766,8 @@
         },
         {
           "proposal_id": "VCF45-PROP-0302-2",
-          "atomic_statement": "The reserved optional ##contig attributes length, md5 and URL are parsed according to their declared types and preserved when present.",
-          "observable_acceptance_condition": "A reader validates and preserves recognized optional contig attributes without requiring their presence.",
+          "atomic_statement": "The reserved optional ##contig attributes length, md5 and URL are recognized and preserved when present.",
+          "observable_acceptance_condition": "A reader retains the raw values of recognized optional length, md5 and URL attributes without requiring their presence or inventing validation semantics not specified in the pinned source.",
           "requirement_domain": "VCF_CORE",
           "normative_force": "MUST_WHEN_PRESENT",
           "phase": "PHASE1",
@@ -2361,7 +2361,7 @@
           "atomic_statement": "A simple insertion or deletion is represented with a padding base preceding the variant, with POS identifying that padding base.",
           "observable_acceptance_condition": "A reader validates the anchor-base representation and coordinate span for ordinary simple insertions/deletions.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "MUST_PLUS_MAY",
+          "normative_force": "MUST",
           "phase": "PHASE1",
           "review_status": "PROPOSED_NOT_CANONICAL"
         },
@@ -2370,7 +2370,7 @@
           "atomic_statement": "For a simple insertion or deletion at contig position 1, the padding base follows the variant and POS identifies that following base.",
           "observable_acceptance_condition": "Boundary tests at POS=1 validate right-padding without an impossible preceding base.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "MUST_PLUS_MAY",
+          "normative_force": "MUST",
           "phase": "PHASE1",
           "review_status": "PROPOSED_NOT_CANONICAL"
         },
@@ -2379,7 +2379,7 @@
           "atomic_statement": "For complex substitutions or other alleles where every allele string is non-empty, padding is not required but is permitted.",
           "observable_acceptance_condition": "A reader accepts both permitted padded and unpadded complex alleles without changing their biological sequence.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "MUST_PLUS_MAY",
+          "normative_force": "MAY",
           "phase": "PHASE1",
           "review_status": "PROPOSED_NOT_CANONICAL"
         }
@@ -3366,7 +3366,7 @@
           "atomic_statement": "INFO and FORMAT CN are recommended for <CNV:TR> records.",
           "observable_acceptance_condition": "A future CNV/TR implementation accepts their absence without treating it as a format violation.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "SHOULD_PLUS_MUST_WHEN_PRESENT",
+          "normative_force": "SHOULD",
           "phase": "FUTURE_PHASE",
           "review_status": "PROPOSED_NOT_CANONICAL"
         },
@@ -3375,7 +3375,7 @@
           "atomic_statement": "When INFO CN or FORMAT CN is present for <CNV:TR>, its value corresponds to sample allelic length divided by reference allelic length, with INFO CN allele-specific and FORMAT CN overall.",
           "observable_acceptance_condition": "A future CNV/TR implementation validates the appropriate ratio semantics and distinguishes INFO versus FORMAT scope.",
           "requirement_domain": "VCF_CORE",
-          "normative_force": "SHOULD_PLUS_MUST_WHEN_PRESENT",
+          "normative_force": "MUST_WHEN_PRESENT",
           "phase": "FUTURE_PHASE",
           "review_status": "PROPOSED_NOT_CANONICAL"
         }
