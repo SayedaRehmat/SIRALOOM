@@ -229,7 +229,15 @@ def main() -> int:
         "PASS: all 94 source-gap candidates are mapped to both profiles and checked against "
         f"the current ledger ({exact_overlaps} exact locator overlaps)"
     )
-    adjudication_schema = json.loads(ADJUDICATION_SCHEMA_PATH.read_text(encoding="utf-8"))
+    adjudication_raw = ADJUDICATION_PATH.read_bytes()
+    adjudication_blob = git_blob_sha1(adjudication_raw)
+    expected_adjudication_blob = profile["source_candidate_semantic_adjudication"]["artifact_blob_sha"]
+    if adjudication_blob != expected_adjudication_blob:
+        fail(
+            "profile-to-adjudication artifact blob mismatch: "
+            f"expected {expected_adjudication_blob}, got {adjudication_blob}"
+        )
+        adjudication_schema = json.loads(ADJUDICATION_SCHEMA_PATH.read_text(encoding="utf-8"))
     adjudication = json.loads(ADJUDICATION_PATH.read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(adjudication_schema)
     schema_errors = sorted(
