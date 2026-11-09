@@ -27,7 +27,7 @@ HGNC_WITHDRAWN_URL = (
 HGNC_PUBLISHER = "HUGO Gene Nomenclature Committee"
 HGNC_LICENSE = "CC0-1.0"
 HGNC_ID_RE = re.compile(r"^HGNC:[0-9]+$", re.IGNORECASE)
-ENSEMBL_GENE_RE = re.compile(r"^(ENSG[0-9]{11})(?:\\.[0-9]+)?$", re.IGNORECASE)
+ENSEMBL_GENE_RE = re.compile(r"^(ENSG[0-9]{11})(?:\.[0-9]+)?$", re.IGNORECASE)
 
 
 class HGNCResourceError(ValueError):
@@ -75,7 +75,7 @@ def _read_tsv(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     if not path.is_file() or path.stat().st_size == 0:
         raise HGNCResourceError(f"HGNC artifact missing or empty: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\\t")
+        reader = csv.DictReader(handle, delimiter="\t")
         if not reader.fieldnames:
             raise HGNCResourceError(f"HGNC artifact has no header: {path}")
         rows = list(reader)
@@ -140,7 +140,7 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
     if manifest_path.exists():
         raise HGNCResourceError(f"refusing to overwrite acquisition manifest: {manifest_path}")
     manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\\n", encoding="utf-8"
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return manifest
 
