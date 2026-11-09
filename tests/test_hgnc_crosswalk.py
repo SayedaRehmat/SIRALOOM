@@ -19,7 +19,7 @@ WITHDRAWN_FIELDS = ["hgnc_id", "status", "withdrawn_symbol", "merged_into_report
 
 def _write_tsv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\\t")
+        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t")
         writer.writeheader()
         writer.writerows(rows)
 
