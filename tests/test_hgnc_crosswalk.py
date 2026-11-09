@@ -114,3 +114,68 @@ def test_duplicate_release_identity_is_rejected(tmp_path):
 def test_unsupported_release_is_rejected(tmp_path):
     with pytest.raises(HGNCResourceError, match="unsupported HGNC release"):
         HGNCResolver(tmp_path / "missing", tmp_path / "missing2", release="latest")
+
+
+def test_pinned_acquisition_preserves_both_artifacts_and_local_digests(tmp_path, monkeypatch):
+    import io
+    import json
+
+    from backend.app.domain import hgnc_crosswalk
+
+    payloads = {
+        hgnc_crosswalk.HGNC_COMPLETE_URL: b"complete-set-bytes",
+        hgnc_crosswalk.HGNC_WITHDRAWN_URL: b"withdrawn-bytes",
+    }
+
+    class Response(io.BytesIO):
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    def fake_urlopen(request, timeout):
+        assert timeout == 120
+        return Response(payloads[request.full_url])
+
+    monkeypatch.setattr(hgnc_crosswalk, "urlopen", fake_urlopen)
+    manifest = hgnc_crosswalk.acquire_hgnc_release(tmp_path)
+
+    assert manifest["release"] == HGNC_ARCHIVE_RELEASE
+    assert manifest["checksum_semantics"] == "LOCAL_SHA256; HGNC_DOES_NOT_PUBLISH_FILE_CHECKSUMS"
+    assert (tmp_path / "hgnc_complete_set.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_COMPLETE_URL]
+    assert (tmp_path / "withdrawn.txt").read_bytes() == payloads[hgnc_crosswalk.HGNC_WITHDRAWN_URL]
+    persisted = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+    assert persisted == manifest
+    assert len({item["sha256"] for item in manifest["files"]}) == 2
+
+
+def test_acquisition_failure_cleans_partial_temporary_files(tmp_path, monkeypatch):
+    import io
+
+    from backend.app.domain import hgnc_crosswalk
+
+    calls = 0
+
+    class Response(io.BytesIO):
+        def __init__(self, data, status):
+            super().__init__(data)
+            self.status = status
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            self.close()
+
+    def fake_urlopen(_request, timeout):
+        nonlocal calls
+        calls += 1
+        return Response(b"first-artifact" if calls == 1 else b"", 200 if calls == 1 else 503)
+
+    monkeypatch.setattr(hgnc_crosswalk, "urlopen", fake_urlopen)
+    with pytest.raises(HGNCResourceError, match="HTTP 503"):
+        hgnc_crosswalk.acquire_hgnc_release(tmp_path)
+    assert list(tmp_path.iterdir()) == []
