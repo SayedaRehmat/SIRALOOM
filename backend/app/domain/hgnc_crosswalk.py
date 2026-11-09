@@ -11,6 +11,7 @@ import csv
 import hashlib
 import json
 import os
+import shutil
 import tempfile
 import re
 from dataclasses import dataclass
@@ -112,7 +113,12 @@ def _sha256(path: Path) -> str:
 
 
 def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEASE) -> dict:
-    """Atomically acquire the immutable official snapshot and preserve source bytes.
+    """Acquire and atomically publish the exact official HGNC archive package.
+
+    Both source artifacts and the manifest are completed and fsynced inside a
+    private sibling staging directory. A single same-filesystem directory
+    rename publishes the complete package; an interrupted acquisition never
+    exposes a partially populated destination directory.
 
     Local SHA-256 values provide reproducible byte identity. HGNC does not
     publish per-file cryptographic checksums, so these are not represented as
@@ -122,18 +128,19 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
         raise HGNCResourceError(
             f"unsupported pinned HGNC release {release!r}; expected {HGNC_ARCHIVE_RELEASE}"
         )
-    destination = destination.resolve()
-    destination.mkdir(parents=True, exist_ok=True)
+    destination = destination.expanduser().resolve()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists() or destination.is_symlink():
+        raise HGNCResourceError("HGNC release destination already exists")
+
     artifacts = (
         ("hgnc_complete_set.txt", HGNC_COMPLETE_URL),
         ("withdrawn.txt", HGNC_WITHDRAWN_URL),
     )
-    final_paths = [destination / filename for filename, _ in artifacts]
-    manifest_path = destination / "manifest.json"
-    if any(path.exists() for path in (*final_paths, manifest_path)):
-        raise HGNCResourceError("destination already contains one or more HGNC release files")
-    temporary_paths: list[Path] = []
-    published_paths: list[Path] = []
+    staging_dir = Path(
+        tempfile.mkdtemp(prefix=f".{destination.name}.staging-", dir=destination.parent)
+    )
+    published = False
     try:
         manifest_files = []
         for filename, url in artifacts:
@@ -141,23 +148,23 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
             with urlopen(request, timeout=120) as response:
                 if response.status != 200:
                     raise HGNCResourceError(f"HGNC download failed with HTTP {response.status}: {url}")
-                with tempfile.NamedTemporaryFile(
-                    mode="wb", dir=destination, prefix=f".{filename}.", delete=False
-                ) as output:
-                    temporary = Path(output.name)
-                    temporary_paths.append(temporary)
+                temporary = staging_dir / f".{filename}.part"
+                with temporary.open("xb") as output:
                     while chunk := response.read(1024 * 1024):
                         output.write(chunk)
                     output.flush()
                     os.fsync(output.fileno())
             if temporary.stat().st_size == 0:
                 raise HGNCResourceError(f"HGNC download returned an empty artifact: {url}")
+            final_artifact = staging_dir / filename
+            os.replace(temporary, final_artifact)
             manifest_files.append({
                 "filename": filename,
                 "source_url": url,
-                "sha256": _sha256(temporary),
-                "size_bytes": temporary.stat().st_size,
+                "sha256": _sha256(final_artifact),
+                "size_bytes": final_artifact.stat().st_size,
             })
+
         manifest = {
             "schema": "siraloom.hgnc-acquisition.v1",
             "publisher": HGNC_PUBLISHER,
@@ -169,28 +176,36 @@ def acquire_hgnc_release(destination: Path, *, release: str = HGNC_ARCHIVE_RELEA
             "checksum_semantics": "LOCAL_SHA256; HGNC_DOES_NOT_PUBLISH_FILE_CHECKSUMS",
             "files": manifest_files,
         }
-        with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8", dir=destination, prefix=".manifest.", delete=False
-        ) as output:
-            manifest_temporary = Path(output.name)
-            temporary_paths.append(manifest_temporary)
+        manifest_temporary = staging_dir / ".manifest.json.part"
+        with manifest_temporary.open("x", encoding="utf-8") as output:
             output.write(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
             output.flush()
             os.fsync(output.fileno())
-        for temporary, final_path in zip(temporary_paths[:2], final_paths):
-            os.replace(temporary, final_path)
-            published_paths.append(final_path)
-        os.replace(manifest_temporary, manifest_path)
-        published_paths.append(manifest_path)
+        os.replace(manifest_temporary, staging_dir / "manifest.json")
+
+        # Persist the complete directory contents before making the directory
+        # visible at its final path.
+        staging_fd = os.open(staging_dir, os.O_RDONLY)
+        try:
+            os.fsync(staging_fd)
+        finally:
+            os.close(staging_fd)
+
+        # The staging directory is a sibling of destination, so this rename is
+        # a same-filesystem atomic publication of all three package files.
+        os.rename(staging_dir, destination)
+        published = True
+
+        parent_fd = os.open(destination.parent, os.O_RDONLY)
+        try:
+            os.fsync(parent_fd)
+        finally:
+            os.close(parent_fd)
         return manifest
     except Exception:
-        for path in (*temporary_paths, *published_paths):
-            try:
-                path.unlink(missing_ok=True)
-            except OSError:
-                pass
+        if not published:
+            shutil.rmtree(staging_dir, ignore_errors=True)
         raise
-
 
 class HGNCResolver:
     """Exact resolver over one validated pair of HGNC release artifacts."""
@@ -241,17 +256,27 @@ class HGNCResolver:
                 match = ENSEMBL_GENE_RE.fullmatch(ensembl_id.upper())
                 if match:
                     self._ensembl.setdefault(match.group(1), set()).add(hgnc_id)
+        self._withdrawn_ids: dict[str, list[tuple[str, tuple[tuple[str, str, str], ...]]]] = {}
         for row in withdrawn:
+            withdrawn_id = row["hgnc_id"].strip().upper()
             symbol = row["withdrawn_symbol"].strip().upper()
-            if not symbol:
-                continue
             status = row["status"].strip()
+            if not status:
+                raise HGNCResourceError("withdrawn set contains a record without a status")
+            if status.casefold() not in {"merged/split", "entry withdrawn"}:
+                raise HGNCResourceError(f"withdrawn set contains an unsupported status: {status!r}")
             targets = []
             for raw_target in (row.get("merged_into_report") or "").split(","):
                 parts = [part.strip() for part in raw_target.split("|")]
                 if len(parts) >= 2 and HGNC_ID_RE.fullmatch(parts[0].upper()):
                     targets.append((parts[0].upper(), parts[1].upper(), parts[2] if len(parts) > 2 else ""))
-            self._withdrawn.setdefault(symbol, []).append((status, tuple(targets)))
+            target_tuple = tuple(targets)
+            if withdrawn_id:
+                if not HGNC_ID_RE.fullmatch(withdrawn_id):
+                    raise HGNCResourceError(f"withdrawn set contains invalid HGNC ID: {withdrawn_id!r}")
+                self._withdrawn_ids.setdefault(withdrawn_id, []).append((status, target_tuple))
+            if symbol:
+                self._withdrawn.setdefault(symbol, []).append((status, target_tuple))
         self.complete_sha256 = _sha256(complete_set_path)
         self.withdrawn_sha256 = _sha256(withdrawn_path)
 
@@ -264,6 +289,11 @@ class HGNCResolver:
         if HGNC_ID_RE.fullmatch(normalized):
             if normalized in self._approved:
                 return self._result(original, normalized, normalized, HGNCResolutionStatus.HGNC_ID, "hgnc_id")
+            withdrawn_id = self._withdrawn_ids.get(normalized, [])
+            if withdrawn_id:
+                return self._resolve_withdrawn(
+                    original, normalized, withdrawn_id, "withdrawn_hgnc_id"
+                )
             return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, "hgnc_id")
         ensembl = ENSEMBL_GENE_RE.fullmatch(normalized)
         if ensembl:
@@ -278,18 +308,8 @@ class HGNCResolver:
             return self._ambiguous(original, normalized, approved, "symbol")
         withdrawn = self._withdrawn.get(normalized, [])
         if withdrawn:
-            targets = {
-                target[0]
-                for _status, rows in withdrawn
-                for target in rows
-                if target[0] in self._approved
-            }
-            if len(targets) == 1 and all(status.casefold() == "merged/split" for status, _ in withdrawn):
-                target_id = next(iter(targets))
-                return self._result(original, normalized, target_id, HGNCResolutionStatus.WITHDRAWN_MERGED, "withdrawn_symbol")
-            return HGNCResolution(
-                original, normalized, HGNCResolutionStatus.WITHDRAWN_UNRESOLVED,
-                None, None, "withdrawn_symbol", tuple(sorted(targets))
+            return self._resolve_withdrawn(
+                original, normalized, withdrawn, "withdrawn_symbol"
             )
         # Alias and previous-symbol namespaces are resolved independently so
         # collisions are surfaced rather than silently selecting one record.
@@ -303,6 +323,23 @@ class HGNCResolver:
                 return self._resolve_candidates(original, normalized, alias_candidates, HGNCResolutionStatus.ALIAS_SYMBOL, "alias_symbol")
             return self._resolve_candidates(original, normalized, previous_candidates, HGNCResolutionStatus.PREVIOUS_SYMBOL, "prev_symbol")
         return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, None)
+
+    def _resolve_withdrawn(self, original, normalized, records, field):
+        targets = {
+            target[0]
+            for _status, rows in records
+            for target in rows
+            if target[0] in self._approved
+        }
+        if len(targets) == 1 and all(status.casefold() == "merged/split" for status, _ in records):
+            target_id = next(iter(targets))
+            return self._result(
+                original, normalized, target_id, HGNCResolutionStatus.WITHDRAWN_MERGED, field
+            )
+        return HGNCResolution(
+            original, normalized, HGNCResolutionStatus.WITHDRAWN_UNRESOLVED,
+            None, None, field, tuple(sorted(targets))
+        )
 
     def _alias_candidates(self, normalized: str) -> set[str]:
         return self._alias_index.get(normalized, set())
