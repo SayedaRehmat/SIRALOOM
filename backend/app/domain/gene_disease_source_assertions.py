@@ -7,7 +7,7 @@ from backend.app.domain.gene_disease_reconciliation import (
     GeneDiseaseSource,
     GeneDiseaseSourceAssertion,
 )
-from backend.app.domain.hgnc_crosswalk import HGNCResolutionStatus, HGNCResolver
+from backend.app.domain.hgnc_crosswalk import HGNCResolutionStatus
 from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
 
 
@@ -22,10 +22,12 @@ _RESOLVABLE_HGNC_STATUSES = frozenset({
 
 
 def _resolve_hgnc_identifier(
-    resolver: HGNCResolver | None,
+    resolver: Any | None,
     identifier: str | None,
     *,
     native_hgnc_id: str | None = None,
+    request_fingerprint: str | None = None,
+    response_sha256: str | None = None,
 ) -> tuple[str | None, dict[str, Any]]:
     raw_identifier = str(identifier or "").strip()
     if resolver is None:
@@ -34,6 +36,8 @@ def _resolve_hgnc_identifier(
             "status": "NOT_CONFIGURED",
             "input": raw_identifier or native_hgnc_id,
             "resolved_hgnc_id": native_hgnc_id,
+            "request_fingerprint": request_fingerprint,
+            "response_sha256": response_sha256,
         }
     if not raw_identifier:
         return None, {
@@ -45,6 +49,8 @@ def _resolve_hgnc_identifier(
             "input": raw_identifier,
             "resolved_hgnc_id": None,
             "candidate_hgnc_ids": [],
+            "request_fingerprint": request_fingerprint,
+            "response_sha256": response_sha256,
         }
     resolution = resolver.resolve(raw_identifier)
     canonical_hgnc_id = (
@@ -62,6 +68,8 @@ def _resolve_hgnc_identifier(
         "matched_field": resolution.matched_field,
         "resolved_hgnc_id": canonical_hgnc_id,
         "candidate_hgnc_ids": list(resolution.candidate_hgnc_ids),
+        "request_fingerprint": request_fingerprint,
+        "response_sha256": response_sha256,
     }
 
 
@@ -81,7 +89,9 @@ def build_gene_disease_source_assertions(
     g2p_response_sha256: str | None = None,
     clingen_request_fingerprint: str | None = None,
     clingen_response_sha256: str | None = None,
-    hgnc_resolver: HGNCResolver | None = None,
+    hgnc_resolver: Any | None = None,
+    hgnc_request_fingerprint: str | None = None,
+    hgnc_response_sha256: str | None = None,
 ) -> tuple[GeneDiseaseSourceAssertion, ...]:
     """Adapt source records without equating gene namespaces or MOI labels implicitly.
 
@@ -97,6 +107,8 @@ def build_gene_disease_source_assertions(
         hgnc_id, identifier_resolution = _resolve_hgnc_identifier(
             hgnc_resolver,
             model.gene_symbol,
+            request_fingerprint=hgnc_request_fingerprint,
+            response_sha256=hgnc_response_sha256,
         )
         raw_modes = tuple(model.inheritance_modes)
         unmapped_modes = ()
@@ -131,6 +143,8 @@ def build_gene_disease_source_assertions(
             hgnc_resolver,
             native_hgnc_id or assertion.gene,
             native_hgnc_id=native_hgnc_id,
+            request_fingerprint=hgnc_request_fingerprint,
+            response_sha256=hgnc_response_sha256,
         )
         normalized_moi = normalize_clingen_moi_label(assertion.moi)
         unmapped_moi = (
