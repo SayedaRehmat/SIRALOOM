@@ -25,7 +25,9 @@ from typing import Any
 
 
 class AcquisitionError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.details = dict(details or {})
 
 
 def digest_file(path: Path, algorithm: str) -> str:
@@ -34,6 +36,37 @@ def digest_file(path: Path, algorithm: str) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def write_failure_provenance(
+    path: Path,
+    *,
+    build: str,
+    dataset: str | None,
+    failed_stage: str,
+    failed_asset: str | None,
+    error: Exception,
+) -> None:
+    """Persist safe, structured diagnostics when public asset acquisition fails."""
+    payload = {
+        "schema_version": "1",
+        "status": "FAILED",
+        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "dataset": dataset,
+        "reference_build": build,
+        "failed_stage": failed_stage,
+        "failed_asset": failed_asset,
+        "exception_type": type(error).__name__,
+        "error": str(error),
+        "details": getattr(error, "details", {}) or {},
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
 
 
 def download_verified(url: str, destination: Path, expected_md5: str) -> dict[str, Any]:
@@ -51,9 +84,21 @@ def download_verified(url: str, destination: Path, expected_md5: str) -> dict[st
             response_context = urllib.request.urlopen(request, timeout=180)
         except urllib.error.HTTPError as exc:
             raise AcquisitionError(f"HTTP {exc.code} fetching pinned asset URL: {url}") from exc
+        response_metadata: dict[str, Any] = {}
         with os.fdopen(fd, "wb") as output, response_context as response:
+            response_metadata = {
+                "requested_url": url,
+                "final_url": response.geturl(),
+                "http_status": response.status,
+                "content_length": response.headers.get("Content-Length"),
+                "content_encoding": response.headers.get("Content-Encoding"),
+                "content_type": response.headers.get("Content-Type"),
+            }
             if response.status != 200:
-                raise AcquisitionError(f"Unexpected HTTP status {response.status} for pinned asset URL: {url}")
+                raise AcquisitionError(
+                    f"Unexpected HTTP status {response.status} for pinned asset URL: {url}",
+                    details={"stage": "asset_download", "response": response_metadata},
+                )
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
@@ -64,10 +109,34 @@ def download_verified(url: str, destination: Path, expected_md5: str) -> dict[st
                 size += len(chunk)
             output.flush()
             os.fsync(output.fileno())
+        content_length = response_metadata.get("content_length")
+        if content_length and content_length.isdigit() and int(content_length) != size:
+            raise AcquisitionError(
+                f"Downloaded asset size does not match HTTP Content-Length for {url}: "
+                f"expected {content_length}, observed {size}",
+                details={
+                    "stage": "asset_transfer_integrity",
+                    "url": url,
+                    "expected_content_length": int(content_length),
+                    "observed_size_bytes": size,
+                    "observed_md5": md5.hexdigest(),
+                    "observed_sha256": sha256.hexdigest(),
+                    "response": response_metadata,
+                },
+            )
         observed_md5 = md5.hexdigest()
         if observed_md5.lower() != expected_md5.lower():
             raise AcquisitionError(
-                f"Official MD5 mismatch for {url}: expected {expected_md5}, observed {observed_md5}"
+                f"Official MD5 mismatch for {url}: expected {expected_md5}, observed {observed_md5}",
+                details={
+                    "stage": "asset_checksum_verification",
+                    "url": url,
+                    "expected_md5": expected_md5.lower(),
+                    "observed_md5": observed_md5,
+                    "observed_sha256": sha256.hexdigest(),
+                    "size_bytes": size,
+                    "response": response_metadata,
+                },
             )
         os.replace(temporary, destination)
         return {
@@ -201,8 +270,13 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--provenance-out", type=Path, required=True)
     args = parser.parse_args()
+    manifest: dict[str, Any] = {}
+    current_stage = "manifest_validation"
+    current_asset: str | None = None
     try:
         manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict):
+            raise AcquisitionError("Public asset manifest root must be a JSON object.")
         if manifest.get("schema_version") != "2" or manifest.get("dataset") != "NIST_GIAB_HG001_NISTv4.2.1":
             raise AcquisitionError("Unexpected public asset manifest identity/schema.")
         if args.output_dir.exists() and any(args.output_dir.iterdir()):
@@ -212,16 +286,21 @@ def main() -> int:
         if len(entries) != 4:
             raise AcquisitionError(f"{args.build} must declare reference FASTA, truth VCF, TBI and BED.")
         acquired: dict[str, Any] = {}
+        current_stage = "asset_download_and_checksum_verification"
         for key, url, expected_md5 in entries:
+            current_asset = key
             if key in acquired or not isinstance(expected_md5, str) or len(expected_md5) != 32:
                 raise AcquisitionError(f"Invalid or duplicate asset declaration: {key}")
             filename = Path(urllib.parse.urlparse(url).path).name
             if key == "reference_source_fasta":
                 filename = f"{args.build}.source.{filename}"
             acquired[key] = download_verified(url, args.output_dir / filename, expected_md5)
+        current_asset = None
+        current_stage = "reference_package_construction"
         source_fasta = Path(acquired["reference_source_fasta"]["path"])
         reference_name = "GRCh37_hs37d5.bgz" if args.build == "GRCh37" else "GRCh38_no_alt.bgz"
         reference = build_bgzf_reference(source_fasta, args.output_dir / reference_name)
+        current_stage = "provenance_publication"
         report = {
             "schema_version": "2",
             "status": "ASSETS_ACQUIRED_AND_CHECKSUM_VERIFIED",
@@ -244,6 +323,21 @@ def main() -> int:
         print(json.dumps({"status": report["status"], "build": args.build, "assets": len(acquired), "provenance": str(args.provenance_out)}, indent=2))
         return 0
     except (AcquisitionError, OSError, KeyError, ValueError, urllib.error.URLError, json.JSONDecodeError) as exc:
+        failure_path = args.provenance_out.with_name("acquisition-failure.json")
+        try:
+            write_failure_provenance(
+                failure_path,
+                build=args.build,
+                dataset=manifest.get("dataset") if isinstance(manifest, dict) else None,
+                failed_stage=current_stage,
+                failed_asset=current_asset,
+                error=exc,
+            )
+        except OSError as write_error:
+            print(
+                f"Unable to write acquisition failure provenance: {type(write_error).__name__}: {write_error}",
+                file=sys.stderr,
+            )
         print(f"GIAB asset acquisition failed: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
 

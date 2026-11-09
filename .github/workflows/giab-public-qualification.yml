@@ -65,7 +65,7 @@ jobs:
         shell: bash -l {0}
         run: |
           set -euo pipefail
-          pytest -q tests/test_vcf_validation.py tests/test_vcf_scale_benchmark.py tests/test_reference_package.py
+          pytest -q tests/test_vcf_validation.py tests/test_vcf_scale_benchmark.py tests/test_reference_package.py tests/test_giab_public_asset_acquisition.py tests/test_giab_public_qualification_workflow.py
 
       - name: Acquire NIST assets and verify official MD5 plus local SHA-256
         shell: bash -l {0}
@@ -136,6 +136,7 @@ jobs:
             "workflow_run_id":"${{ github.run_id }}",
             "workflow_attempt":"${{ github.run_attempt }}",
             "asset_provenance":"asset-provenance.json",
+            "acquisition_failure_report":"acquisition-failure.json",
             "benchmark_report":"evidence/scale/vcf-scale-benchmark.json",
             "failure_report":"evidence/scale/vcf-scale-benchmark.failure.json",
             "qualification_boundary":"Public HG001 input-processing evidence only; not independent caller concordance, clinical validation, laboratory qualification, or production deployment qualification."
@@ -150,6 +151,20 @@ jobs:
           name: siraloom-giab-hg001-${{ matrix.build }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/giab-${{ matrix.build }}/asset-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/acquisition-failure.json
             ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/**
+          if-no-files-found: warn
+          retention-days: 90
+      - name: Preserve compact qualification review bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siraloom-giab-hg001-${{ matrix.build }}-${{ github.run_id }}-${{ github.run_attempt }}-review
+          path: |
+            ${{ runner.temp }}/giab-${{ matrix.build }}/asset-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/acquisition-failure.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/run-provenance.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/scale/vcf-scale-benchmark.json
+            ${{ runner.temp }}/giab-${{ matrix.build }}/evidence/scale/vcf-scale-benchmark.failure.json
           if-no-files-found: warn
           retention-days: 90
