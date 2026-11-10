@@ -75,6 +75,8 @@ type CaseWorkspace = {
 };
 
 type NotificationItem = { notification_id: string; notification_type: string; status: string; title: string; body: string; case_id?: string | null; analysis_id?: string | null; candidate_id?: string | null; metadata?: Record<string, unknown>; created_at?: string; read_at?: string | null; };
+type ClinicalRequestSummary = { request_id: string; request_identifier: string; status: string; current_revision_id?: string | null };
+
 type CaseArtifact = { artifact_id: string; filename: string; artifact_type: string; size_bytes: number; sha256: string; genome_build?: string | null; validation_status?: string | null; validation_dispatch_status?: string | null; validation_dispatch_error?: string | null; metadata?: Record<string, unknown>; created_at?: string; specimen_id?: string | null; paired_artifact_id?: string | null; };
 
 type AuditEvent = {
@@ -234,6 +236,8 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [artifactId, setArtifactId] = useState("");
   const [caseArtifacts, setCaseArtifacts] = useState<CaseArtifact[]>([]);
+  const [clinicalRequests, setClinicalRequests] = useState<ClinicalRequestSummary[]>([]);
+  const [clinicalRequestId, setClinicalRequestId] = useState("");
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -372,6 +376,25 @@ export default function Home() {
   }, [caseId, t]);
 
   useEffect(() => { void refreshCaseArtifacts(); }, [refreshCaseArtifacts, stepStatusSignature]);
+
+  useEffect(() => {
+    let active = true;
+    setClinicalRequests([]);
+    setClinicalRequestId("");
+    if (!caseId) return () => { active = false; };
+    apiFetch(`/cases/${caseId}/clinical-requests`)
+      .then((rows) => {
+        if (!active) return;
+        const requests = Array.isArray(rows) ? rows as ClinicalRequestSummary[] : [];
+        setClinicalRequests(requests);
+        const accepted = requests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id);
+        if (accepted.length === 1) setClinicalRequestId(accepted[0].request_id);
+      })
+      .catch((error) => {
+        if (active) setMessage(error instanceof Error ? error.message : "Unable to load clinical requests.");
+      });
+    return () => { active = false; };
+  }, [caseId]);
 
   const hasPendingArtifactValidation = caseArtifacts.some(
     (artifact) => artifact.validation_status === "PENDING" && artifact.validation_dispatch_status !== "FAILED",
@@ -786,6 +809,10 @@ export default function Home() {
       setMessage(t("workspace.caseVcfRequired"));
       return;
     }
+    if (!clinicalRequestId) {
+      setMessage("Select a currently accepted clinical request before starting variant interpretation.");
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
@@ -796,6 +823,7 @@ export default function Home() {
           input_artifact_id: artifactId,
           assay_id: assayId || null,
           analysis_type: "VARIANT_INTERPRETATION",
+          clinical_request_id: clinicalRequestId,
           workflow_id: "variant-v1",
           workflow_version: "2.1",
           reference_build: genomeBuild,
@@ -1216,6 +1244,15 @@ export default function Home() {
               ))}
             </select>
             {!assayId && <small>{t("workspace.assayQcGateNotice")}</small>}
+          </label>
+          <label>Accepted clinical request
+            <select value={clinicalRequestId} onChange={(event) => setClinicalRequestId(event.target.value)}>
+              <option value="">Select an accepted request…</option>
+              {clinicalRequests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id).map((request) => (
+                <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>
+              ))}
+            </select>
+            {clinicalRequests.length === 0 && <small>No clinical requests are recorded for this case. Create, verify and accept a request before clinical variant interpretation.</small>}
           </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
