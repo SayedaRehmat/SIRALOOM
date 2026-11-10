@@ -286,3 +286,19 @@ def test_corpus_validator_never_treats_no_record_as_reference_genotype(tmp_path)
 
     with pytest.raises(CorpusValidationError, match="must remain null, not reference"):
         validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_rejects_unpreserved_reviewer_attestation(tmp_path):
+    manifest = _manifest(tmp_path)
+    manifest["cases"][0]["reviewers"][0]["attestation_sha256"] = "0" * 64
+
+    with pytest.raises(CorpusValidationError, match="not bound to a preserved artifact"):
+        validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_rejects_unpreserved_access_approval(tmp_path):
+    manifest = _manifest(tmp_path)
+    manifest["cases"][0]["source"]["access_approval_sha256"] = "0" * 64
+
+    with pytest.raises(CorpusValidationError, match="access approval does not match"):
+        validate_corpus(manifest, tmp_path)
