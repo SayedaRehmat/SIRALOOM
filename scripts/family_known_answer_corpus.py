@@ -128,7 +128,10 @@ def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[s
     if len(source_manifests) != 1 or source.get("source_snapshot_sha256").lower() != source_manifests[0]:
         raise CorpusValidationError(f"{case_id}: source snapshot hash does not match the preserved source manifest")
     access_approvals = artifact_hashes.get("ACCESS_APPROVAL", [])
-    if len(access_approvals) != 1 or source.get("access_approval_sha256") != access_approvals[0]:
+    access_approval_sha256 = source.get("access_approval_sha256")
+    if not _is_sha256(access_approval_sha256):
+        raise CorpusValidationError(f"{case_id}: access_approval_sha256 must be SHA-256")
+    if len(access_approvals) != 1 or access_approval_sha256.lower() != access_approvals[0]:
         raise CorpusValidationError(f"{case_id}: source access approval does not match its preserved artifact")
     if source.get("access_status") != "APPROVED":
         raise CorpusValidationError(f"{case_id}: source access status is not APPROVED")
@@ -252,7 +255,9 @@ def _validate_evidence(case: dict[str, Any], case_id: str, source_vcf_hashes: se
         if not isinstance(variant, dict):
             raise CorpusValidationError(f"{case_id}: variant entries must be objects")
         _required_text(variant.get("variant_id"), f"{case_id}.variant.variant_id")
-        _required_text(variant.get("phase_state"), f"{case_id}.variant.phase_state")
+        phase_state = _required_text(variant.get("phase_state"), f"{case_id}.variant.phase_state")
+        if phase_state not in ALLOWED_PHASE_STATES:
+            raise CorpusValidationError(f"{case_id}: unsupported variant phase state {phase_state}")
         _required_text(variant.get("callability_state"), f"{case_id}.variant.callability_state")
         _required_text(variant.get("quality_state"), f"{case_id}.variant.quality_state")
         if not _is_sha256(variant.get("source_record_sha256")):
@@ -365,6 +370,28 @@ def _validate_reviewers(
         if attestation_sha256 in reviewer_attestation_ids:
             raise CorpusValidationError(f"{case_id}: each independent reviewer requires a distinct attestation artifact")
         reviewer_attestation_ids.add(attestation_sha256)
+    adjudication = case.get("adjudication")
+    if adjudication is not None:
+        if not isinstance(adjudication, dict) or adjudication.get("status") != "RESOLVED":
+            raise CorpusValidationError(f"{case_id}: adjudication must have RESOLVED status")
+        adjudicator_id = _required_text(adjudication.get("adjudicator_id"), f"{case_id}.adjudication.adjudicator_id")
+        if adjudicator_id in reviewer_ids or adjudicator_id == case_author_id or adjudicator_id in implementation_author_ids:
+            raise CorpusValidationError(f"{case_id}: adjudicator must be independent of case authors and initial reviewers")
+        _required_text(adjudication.get("qualification_category"), f"{case_id}.adjudication.qualification_category")
+        _required_text(adjudication.get("adjudicated_at"), f"{case_id}.adjudication.adjudicated_at")
+        _required_text(adjudication.get("rationale"), f"{case_id}.adjudication.rationale")
+        if adjudication.get("independence_attested") is not True or adjudication.get("conflict_of_interest_checked") is not True:
+            raise CorpusValidationError(f"{case_id}: adjudicator independence and conflict checks are required")
+        if not _is_sha256(adjudication.get("initial_disagreement_sha256")):
+            raise CorpusValidationError(f"{case_id}: initial reviewer disagreement record must be SHA-256 pinned")
+        if adjudication.get("final_expected_outcome_sha256") != expected_sha256:
+            raise CorpusValidationError(f"{case_id}: adjudication does not bind to the final expected outcome")
+        adjudication_attestation = adjudication.get("attestation_sha256")
+        if not _is_sha256(adjudication_attestation) or adjudication_attestation.lower() not in attestation_hashes:
+            raise CorpusValidationError(f"{case_id}: adjudicator attestation is not bound to a preserved artifact")
+        if adjudication_attestation.lower() in reviewer_attestation_ids:
+            raise CorpusValidationError(f"{case_id}: adjudicator requires a distinct attestation artifact")
+        _required_text(adjudication.get("attestation_reference"), f"{case_id}.adjudication.attestation_reference")
 
 
 def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict[str, Any]:
@@ -376,8 +403,8 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
         raise CorpusValidationError("Corpus must contain at least one family case")
     root = Path(artifact_root).resolve()
     implementation_authors = manifest.get("implementation_author_ids", [])
-    if not isinstance(implementation_authors, list) or any(not isinstance(item, str) or not item.strip() for item in implementation_authors):
-        raise CorpusValidationError("implementation_author_ids must be a list of non-empty opaque IDs")
+    if not isinstance(implementation_authors, list) or not implementation_authors or any(not isinstance(item, str) or not item.strip() for item in implementation_authors):
+        raise CorpusValidationError("implementation_author_ids must be a non-empty list of non-empty opaque IDs")
     implementation_author_ids = set(implementation_authors)
     case_ids: set[str] = set()
     coverage: dict[str, set[str]] = {
