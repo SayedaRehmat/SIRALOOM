@@ -102,7 +102,7 @@ def _artifact_path(root: Path, relative_path: str) -> Path:
     return candidate
 
 
-def _validate_source(case: dict[str, Any], case_id: str) -> None:
+def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[str, str]) -> None:
     source = case.get("source")
     if not isinstance(source, dict):
         raise CorpusValidationError(f"{case_id}: source must be an object")
@@ -113,6 +113,8 @@ def _validate_source(case: dict[str, Any], case_id: str) -> None:
     _required_text(source.get("data_use_permission_reference"), f"{case_id}.source.data_use_permission_reference")
     if not _is_sha256(source.get("source_snapshot_sha256")):
         raise CorpusValidationError(f"{case_id}: source_snapshot_sha256 must be SHA-256")
+    if source.get("source_snapshot_sha256").lower() != artifact_hashes.get("SOURCE_MANIFEST"):
+        raise CorpusValidationError(f"{case_id}: source snapshot hash does not match the preserved source manifest")
     if source.get("access_status") != "APPROVED":
         raise CorpusValidationError(f"{case_id}: source access status is not APPROVED")
     if source.get("redistribution_status") not in {
@@ -122,11 +124,12 @@ def _validate_source(case: dict[str, Any], case_id: str) -> None:
         raise CorpusValidationError(f"{case_id}: redistribution permission is not explicit")
 
 
-def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> None:
+def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[str, str]:
     artifacts = case.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise CorpusValidationError(f"{case_id}: artifacts must be a non-empty list")
     observed_roles: set[str] = set()
+    role_hashes: dict[str, str] = {}
     observed_paths: set[str] = set()
     for index, artifact in enumerate(artifacts):
         if not isinstance(artifact, dict):
@@ -142,6 +145,10 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> None:
             raise CorpusValidationError(f"{case_id}: duplicate artifact path {relative_path}")
         observed_paths.add(relative_path)
         observed_roles.add(role)
+        if role == "SOURCE_MANIFEST":
+            if role in role_hashes:
+                raise CorpusValidationError(f"{case_id}: exactly one SOURCE_MANIFEST artifact is required")
+            role_hashes[role] = digest.lower()
         artifact_path = _artifact_path(root, relative_path)
         if not artifact_path.is_file():
             raise CorpusValidationError(f"{case_id}: artifact is missing: {relative_path}")
@@ -158,6 +165,7 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> None:
         raise CorpusValidationError(
             f"{case_id}: required evidence artifacts are missing: {', '.join(missing_roles)}"
         )
+    return role_hashes
 
 
 def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
@@ -346,8 +354,8 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
         test_role = _required_text(case.get("test_role"), f"{case_id}.test_role")
         if test_role not in ALLOWED_TEST_ROLES:
             raise CorpusValidationError(f"{case_id}: unsupported test_role")
-        _validate_source(case, case_id)
-        _validate_artifacts(case, case_id, root)
+        artifact_hashes = _validate_artifacts(case, case_id, root)
+        _validate_source(case, case_id, artifact_hashes)
         _validate_evidence(case, case_id)
         expected_sha256 = _validate_expected(case, case_id)
         _validate_reviewers(case, case_id, expected_sha256, implementation_author_ids)
