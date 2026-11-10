@@ -1414,7 +1414,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 db,
                 case=case,
                 analysis_configuration=analysis.configuration,
-                analysis_type=analysis.analysis_type,
+                analysis_type=getattr(analysis, "analysis_type", None),
             )
         except ValueError as exc:
             analysis.status = AnalysisStatus.BLOCKED
