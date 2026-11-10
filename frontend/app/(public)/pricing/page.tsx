@@ -5,13 +5,13 @@ import { SiteShell } from "../../../components/site-shell";
 import { useLanguage } from "../../../lib/i18n";
 
 export default function Pricing() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isArabic = language === "ar";
 
   const plans = isArabic
     ? [
         {
-          number: "04",
+          number: "01",
           name: "أساسي",
           monthly: "$249",
           annual: "$2,490",
