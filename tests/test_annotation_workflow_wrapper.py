@@ -78,19 +78,19 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
             db.commit()
             db.add(Analysis(
                 id=parent_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.SUCCEEDED, queue_task_id=None,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.commit()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=parent_id,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id=task_id,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=2,
             ))
             db.commit()
@@ -437,10 +437,10 @@ def test_run_variant_analysis_resolves_case_without_local_name_shadowing(
             db.commit()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id=None,
-                reference_build="GRCh38", configuration={}, started_at=None,
+                reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=None,
                 completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.commit()
@@ -522,11 +522,11 @@ def test_worker_rejects_unbound_or_invalid_analysis_input_before_reading(
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.RUNNING, queue_task_id=None,
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(artifact_id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(artifact_id)},
                 started_at=None, completed_at=None, created_by=user_id, analysis_version=1,
             ))
             db.flush()
@@ -607,10 +607,10 @@ def test_terminal_provenance_is_persisted_before_analysis_succeeds(tmp_path):
         db.flush()
         db.add(Analysis(
             id=analysis_id, case_id=case_id, parent_analysis_id=None,
-            assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+            assay_id=None, analysis_type="RESEARCH",
             workflow_id="variant-v1", workflow_version="test",
             status=AnalysisStatus.REQUIRES_REVIEW, queue_task_id=None,
-            reference_build="GRCh38", configuration={}, started_at=datetime.now(timezone.utc),
+            reference_build="GRCh38", configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker contract test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, }, started_at=datetime.now(timezone.utc),
             completed_at=None, created_by=user_id, analysis_version=1,
         ))
         db.flush()
