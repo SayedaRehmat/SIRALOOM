@@ -254,6 +254,12 @@ export default function Home() {
   });
   const [verificationEvidence, setVerificationEvidence] = useState("");
   const [decisionReason, setDecisionReason] = useState("");
+  const [capabilityAssignments, setCapabilityAssignments] = useState<Array<Record<string, any>>>([]);
+  const [capabilityUserId, setCapabilityUserId] = useState("");
+  const [capabilityName, setCapabilityName] = useState("REFERRER_VERIFY");
+  const [capabilityReason, setCapabilityReason] = useState("");
+  const [capabilityExpiry, setCapabilityExpiry] = useState("");
+
 
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
@@ -944,6 +950,59 @@ export default function Home() {
     }
   };
 
+  const refreshCapabilities = async () => {
+    try {
+      const rows = await apiFetch("/organizations/capabilities");
+      setCapabilityAssignments(Array.isArray(rows) ? rows : []);
+      setMessage("Organization capability assignments loaded.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load capability assignments.");
+    }
+  };
+
+  const grantOrganizationCapability = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!capabilityUserId.trim() || !capabilityReason.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/organizations/capabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: capabilityUserId.trim(),
+          capability: capabilityName,
+          reason: capabilityReason.trim(),
+          expires_at: capabilityExpiry ? new Date(capabilityExpiry).toISOString() : null,
+        }),
+      });
+      await refreshCapabilities();
+      setMessage("Organization capability granted and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to grant capability.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const revokeOrganizationCapability = async (assignmentId: string) => {
+    const reason = window.prompt("Reason for revoking this capability:");
+    if (!reason?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/capabilities/${assignmentId}/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      await refreshCapabilities();
+      setMessage("Organization capability revoked and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to revoke capability.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
       setMessage(t("workspace.caseVcfRequired"));
@@ -1445,6 +1504,33 @@ export default function Home() {
           </div>
           <ul className="compact-list">
             {clinicalRequests.map((request) => <li key={request.request_id}><strong>{request.request_identifier}</strong> — {request.status}{request.current_revision_id ? " · revision recorded" : " · no revision"}</li>)}
+          </ul>
+        </section>
+
+        <section className="panel workflow-panel">
+          <div className="panel-head"><div><div className="section-kicker">Organization governance</div><h3>Capability administration</h3></div>
+            <button className="secondary" type="button" onClick={refreshCapabilities} disabled={busy}>Load assignments</button>
+          </div>
+          <p className="muted">Grant and revoke organization-scoped operational capabilities. Clinical-attestation grants remain disabled until professional qualification verification is governed and implemented.</p>
+          <form onSubmit={grantOrganizationCapability} className="form-grid">
+            <label>Organization member user ID<input required value={capabilityUserId} onChange={(event) => setCapabilityUserId(event.target.value)} placeholder="UUID of an existing organization member" /></label>
+            <label>Capability<select value={capabilityName} onChange={(event) => setCapabilityName(event.target.value)}>
+              <option value="REFERRER_VERIFY">Verify external referrers</option>
+              <option value="ACCESSION_DECIDE">Make accession decisions</option>
+              <option value="CAPABILITY_ADMIN">Administer capabilities</option>
+              <option value="HISTORY_RECONCILE">Reconcile historical cases</option>
+            </select></label>
+            <label>Grant reason<input required value={capabilityReason} onChange={(event) => setCapabilityReason(event.target.value)} /></label>
+            <label>Optional expiry (local time)<input type="datetime-local" value={capabilityExpiry} onChange={(event) => setCapabilityExpiry(event.target.value)} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Grant capability</button></div>
+          </form>
+          <ul className="compact-list">
+            {capabilityAssignments.map((assignment) => <li key={assignment.assignment_id}>
+              <strong>{assignment.capability}</strong> — {assignment.user_id}
+              <span> · {assignment.revoked_at ? "REVOKED" : assignment.expires_at && Date.parse(assignment.expires_at) <= Date.now() ? "EXPIRED" : "ACTIVE"}</span>
+              {assignment.revocation_reason && <small>Revocation reason: {assignment.revocation_reason}</small>}
+              {!assignment.revoked_at && <button className="secondary" type="button" disabled={busy} onClick={() => revokeOrganizationCapability(assignment.assignment_id)}>Revoke</button>}
+            </li>)}
           </ul>
         </section>
 
