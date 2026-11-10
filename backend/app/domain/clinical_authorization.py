@@ -11,7 +11,7 @@ from backend.app.infrastructure.db.clinical_requests import (
     ClinicalRequest,
     ClinicalRequestRevision,
 )
-from backend.app.infrastructure.db.models import Case
+from backend.app.infrastructure.db.models import Artifact, Case, Specimen
 
 
 class ClinicalAuthorizationError(ValueError):
@@ -145,3 +145,56 @@ def assert_analysis_clinical_authorization(
             raise ClinicalAuthorizationError(
                 "Clinical request acceptance changed after analysis creation; create a new authorized analysis"
             )
+    artifact_id_value = config.get("input_artifact_id")
+    try:
+        artifact_id = UUID(str(artifact_id_value))
+    except (TypeError, ValueError) as exc:
+        raise ClinicalAuthorizationError(
+            "Clinical analysis has no valid persisted input-artifact identity"
+        ) from exc
+    artifact = db.get(Artifact, artifact_id)
+    if (
+        artifact is None
+        or artifact.case_id != case.id
+        or artifact.validation_status != "VALID"
+        or artifact.artifact_type != "VCF"
+    ):
+        raise ClinicalAuthorizationError(
+            "Clinical analysis input VCF is missing, invalid, or no longer linked to this case"
+        )
+
+    specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
+    if specimen is None or specimen.case_id != case.id:
+        raise ClinicalAuthorizationError(
+            "Clinical analysis input VCF is no longer linked to a specimen in this case"
+        )
+    expected_sample = (specimen.metadata_json or {}).get("vcf_sample_name")
+    sample_names = ((artifact.metadata_json or {}).get("validation") or {}).get("sample_names")
+    if (
+        not isinstance(expected_sample, str)
+        or not expected_sample.strip()
+        or expected_sample != config.get("vcf_sample_name")
+        or not isinstance(sample_names, list)
+        or expected_sample not in sample_names
+        or str(specimen.id) != str(config.get("specimen_id"))
+    ):
+        raise ClinicalAuthorizationError(
+            "Clinical analysis specimen-to-VCF sample mapping changed or is not verifiable"
+        )
+
+    from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
+
+    eligibility = evaluate_small_variant_eligibility(
+        (artifact.metadata_json or {}).get("validation")
+    )
+    eligibility_snapshot = config.get("workflow_eligibility")
+    if (
+        eligibility["status"] != "ELIGIBLE"
+        or not isinstance(eligibility_snapshot, dict)
+        or eligibility_snapshot.get("status") != "ELIGIBLE"
+        or eligibility_snapshot.get("scope") != "SNV_SMALL_INDEL"
+        or eligibility_snapshot.get("validation_artifact_sha256") != artifact.sha256
+    ):
+        raise ClinicalAuthorizationError(
+            "Clinical analysis VCF is outside the SNV/small-indel workflow scope or its eligibility evidence changed"
+        )
