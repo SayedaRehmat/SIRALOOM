@@ -415,6 +415,7 @@ export default function Home() {
     setClinicalRequests([]);
     setClinicalRequestId("");
     setAccessionRequestId("");
+    setSelectedRequestDetail(null);
     if (!caseId) return () => { active = false; };
     apiFetch(`/cases/${caseId}/clinical-requests`)
       .then((rows) => {
@@ -876,6 +877,7 @@ export default function Home() {
       });
       setAccessionRequestId(created.request_id);
       await refreshClinicalRequests();
+      await loadClinicalRequestDetail(created.request_id);
       setMessage("Clinical request created as DRAFT. Submit it for accession review.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to create clinical request.");
@@ -895,6 +897,7 @@ export default function Home() {
         body: JSON.stringify(revision),
       });
       await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
       setMessage("A new immutable request revision was created. Submit it for reassessment.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to revise clinical request.");
@@ -909,6 +912,7 @@ export default function Home() {
     try {
       await apiFetch(`/clinical-requests/${accessionRequestId}/submit`, { method: "POST" });
       await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
       setMessage("Clinical request submitted for accession review.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to submit clinical request.");
@@ -944,6 +948,7 @@ export default function Home() {
         }),
       });
       await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
       setClinicalRequestId(accessionRequestId);
       setMessage("Request accepted. It is now eligible for clinical analysis, subject to the other readiness gates.");
     } catch (error) {
@@ -1117,6 +1122,7 @@ export default function Home() {
         }),
       });
       await refreshClinicalRequests();
+      await loadClinicalRequestDetail(accessionRequestId);
       setClinicalRequestId(accessionRequestId);
       setMessage("Request accepted under the recorded approved-procedure exception.");
     } catch (error) {
