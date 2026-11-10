@@ -112,7 +112,7 @@ class ProcedureInput(BaseModel):
     procedure_version: str = Field(min_length=1, max_length=100)
     effective_at: datetime
     expires_at: datetime | None = None
-    approval_evidence_reference: str = Field(min_length=1, max_length=1000)
+    procedure_evidence_reference: str = Field(min_length=1, max_length=1000)
     allows_unverified_referrer_exception: bool = False
 
     @model_validator(mode="after")
@@ -417,6 +417,7 @@ def list_accession_procedures(
             "expires_at": row.expires_at.isoformat() if row.expires_at else None,
             "created_by": str(row.created_by) if row.created_by else None,
             "approved_by": str(row.approved_by) if row.approved_by else None,
+            "procedure_evidence_reference": row.procedure_evidence_reference,
             "approval_evidence_reference": row.approval_evidence_reference,
             "allows_unverified_referrer_exception": row.allows_unverified_referrer_exception,
         }
@@ -439,7 +440,8 @@ def create_accession_procedure(body: ProcedureInput, db: Session = Depends(get_d
         expires_at=body.expires_at,
         approved_by=None,
         created_by=principal.user_id,
-        approval_evidence_reference=body.approval_evidence_reference.strip(),
+        procedure_evidence_reference=body.procedure_evidence_reference.strip(),
+        approval_evidence_reference=None,
         allows_unverified_referrer_exception=body.allows_unverified_referrer_exception,
     )
     db.add(row)
