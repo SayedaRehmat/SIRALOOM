@@ -41,7 +41,7 @@ def _case_payload(db: Session, case: Case) -> dict:
     ).all()
     return {
         "case_id": str(case.id), "case_identifier": case.case_identifier, "organization_id": str(case.organization_id),
-        "status": case.status, "language": case.language, "clinical_context": case.clinical_context or {},
+        "status": case.status, "accession_reconciliation_status": case.accession_reconciliation_status, "language": case.language, "clinical_context": case.clinical_context or {},
         "created_by": str(case.created_by), "created_at": case.created_at.isoformat(), "updated_at": case.updated_at.isoformat(),
         "assays": [{
             "assay_id": str(assay.id), "name": assay.name,
