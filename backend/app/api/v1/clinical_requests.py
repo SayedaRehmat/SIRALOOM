@@ -93,6 +93,13 @@ class CapabilityGrantInput(BaseModel):
     reason: str = Field(min_length=1, max_length=2000)
     expires_at: datetime | None = None
 
+    @model_validator(mode="after")
+    def validate_expiry(self):
+        if self.expires_at is not None:
+            if self.expires_at.tzinfo is None or self.expires_at.utcoffset() is None:
+                raise ValueError("Capability expiry must include a timezone")
+        return self
+
 
 class CapabilityRevokeInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -315,6 +322,36 @@ def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depend
     AuditService(db).record(event_type=f"ACCESSION_{body.decision}", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="ACCESSION_DECISION", subject_id=str(decision.id), operation=body.decision, after_state={"request_id": str(request.id), "revision_id": str(request.current_revision_id), "verification_id": str(verification_id) if verification_id else None, "exception_procedure_id": str(exception_id) if exception_id else None}, reason=body.reason)
     db.commit()
     return {"decision_id": str(decision.id), "request_id": str(request.id), "status": request.status}
+
+
+@router.get("/organizations/capabilities")
+def list_capabilities(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role != "organization_admin":
+        _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
+    rows = db.scalars(
+        select(OrganizationCapabilityAssignment)
+        .where(OrganizationCapabilityAssignment.organization_id == principal.organization_id)
+        .order_by(OrganizationCapabilityAssignment.created_at.desc())
+    ).all()
+    return [
+        {
+            "assignment_id": str(row.id),
+            "user_id": str(row.user_id),
+            "capability": row.capability,
+            "granted_by": str(row.granted_by),
+            "grant_reason": row.grant_reason,
+            "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+            "revoked_at": row.revoked_at.isoformat() if row.revoked_at else None,
+            "revoked_by": str(row.revoked_by) if row.revoked_by else None,
+            "revocation_reason": row.revocation_reason,
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in rows
+    ]
 
 
 @router.post("/organizations/capabilities", status_code=201)
