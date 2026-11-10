@@ -159,6 +159,16 @@ def _revision_payload(row):
     return {"revision_id": str(row.id), "version": row.version, "fingerprint": row.fingerprint, "payload": row.payload, "created_by": str(row.created_by), "created_at": row.created_at.isoformat()}
 
 
+def _assert_accession_decision_state(request: ClinicalRequest) -> None:
+    """Only a currently submitted revision may receive an accession decision.
+
+    A request returned for more information or marked for reassessment must be
+    revised and resubmitted before another decision can be recorded.
+    """
+    if request.status not in {"SUBMITTED", "UNDER_REVIEW"} or not request.current_revision_id:
+        raise HTTPException(409, "Request must have a current submitted revision before an accession decision")
+
+
 @router.post("/cases/{case_id}/clinical-requests", status_code=201)
 def create_clinical_request(case_id: UUID, body: RequestCreate, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     case = db.get(Case, case_id)
@@ -255,8 +265,7 @@ def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depend
     request, case = _request_or_404(db, request_id, principal, "read")
     _require_capability(db, request.organization_id, principal.user_id, "ACCESSION_DECIDE")
     request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update())
-    if request.status not in {"SUBMITTED", "UNDER_REVIEW", "NEEDS_INFORMATION", "REASSESSMENT_REQUIRED"} or not request.current_revision_id:
-        raise HTTPException(409, "Request cannot receive an accession decision in its current state")
+    _assert_accession_decision_state(request)
     verification_id = None
     exception_id = None
     if body.decision == "ACCEPT":
