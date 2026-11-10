@@ -231,7 +231,7 @@ def main() -> None:
     parser.add_argument("--report", required=True, type=Path)
     args = parser.parse_args()
     report = qualify(args.hgnc_directory, args.acquisition_directory, args.managed_directory)
-    args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
