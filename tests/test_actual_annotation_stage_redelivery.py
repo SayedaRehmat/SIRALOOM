@@ -103,11 +103,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.QUEUED, queue_task_id=task_id,
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(source_artifact.id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical worker redelivery integration test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(source_artifact.id)},
                 started_at=None, completed_at=None, created_by=user_id,
                 analysis_version=1,
             ))
