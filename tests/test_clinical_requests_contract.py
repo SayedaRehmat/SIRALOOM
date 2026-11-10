@@ -230,3 +230,60 @@ def test_capability_revocation_is_recorded_and_repeat_revocation_is_rejected(mon
             principal=principal,
         )
     assert exc.value.status_code == 409
+
+
+def test_capability_expiry_requires_timezone_aware_timestamp():
+    from backend.app.api.v1.clinical_requests import CapabilityGrantInput
+
+    with pytest.raises(ValueError, match="timezone"):
+        CapabilityGrantInput(
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            reason="Accession duty assignment",
+            expires_at=datetime(2030, 1, 1),
+        )
+    valid = CapabilityGrantInput(
+        user_id=uuid4(),
+        capability="ACCESSION_DECIDE",
+        reason="Accession duty assignment",
+        expires_at=datetime(2030, 1, 1, tzinfo=UTC),
+    )
+    assert valid.expires_at.tzinfo is not None
+
+
+def test_capability_listing_is_organization_scoped_and_includes_revocation_history(monkeypatch):
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import list_capabilities
+
+    organization_id = uuid4()
+    principal = SimpleNamespace(
+        user_id=uuid4(),
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    rows = [
+        SimpleNamespace(
+            id=uuid4(),
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            granted_by=principal.user_id,
+            grant_reason="Accession rota",
+            expires_at=None,
+            revoked_at=datetime.now(UTC),
+            revoked_by=principal.user_id,
+            revocation_reason="Role ended",
+            created_at=datetime.now(UTC),
+        )
+    ]
+
+    class FakeDB:
+        def scalars(self, statement):
+            sql = str(statement)
+            assert "organization_capability_assignments.organization_id" in sql
+            return SimpleNamespace(all=lambda: rows)
+
+    monkeypatch.setattr(routes, "_membership", lambda *_args, **_kwargs: None)
+    result = list_capabilities(db=FakeDB(), principal=principal)
+    assert len(result) == 1
+    assert result[0]["revocation_reason"] == "Role ended"
+    assert result[0]["revoked_at"] is not None
