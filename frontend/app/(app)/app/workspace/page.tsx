@@ -67,6 +67,7 @@ type CaseWorkspace = {
   case_id: string;
   case_identifier: string;
   status: string;
+  accession_reconciliation_status?: string;
   language: string;
   clinical_context: Record<string, unknown>;
   specimens: Array<Record<string, unknown> & { metadata?: Record<string, unknown> }>;
@@ -223,6 +224,9 @@ export default function Home() {
   const [caseWorkspace, setCaseWorkspace] = useState<CaseWorkspace | null>(null);
   const [caseLoadError, setCaseLoadError] = useState("");
   const [caseLoadAttempt, setCaseLoadAttempt] = useState(0);
+  const [legacyEvidenceReference, setLegacyEvidenceReference] = useState("");
+  const [legacyReviewedScope, setLegacyReviewedScope] = useState("");
+  const [legacyReconciliationReason, setLegacyReconciliationReason] = useState("");
   const caseIdRef = useRef("");
   const [specimenIdentifier, setSpecimenIdentifier] = useState("");
   const [specimenType, setSpecimenType] = useState("Blood");
@@ -864,6 +868,27 @@ export default function Home() {
     if (!clinicalRequestId && accepted.length === 1) setClinicalRequestId(accepted[0].request_id);
   };
 
+  const reconcileLegacyCase = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!caseId || !legacyEvidenceReference.trim() || !legacyReviewedScope.trim() || !legacyReconciliationReason.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/cases/" + caseId + "/accession-reconciliation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_evidence_reference: legacyEvidenceReference.trim(),
+          reviewed_scope: legacyReviewedScope.trim(),
+          reason: legacyReconciliationReason.trim(),
+        }),
+      });
+      const refreshed = await apiFetch("/cases/" + caseId);
+      setCaseWorkspace(refreshed);
+      setMessage("Historical accession review recorded. No clinical request or acceptance was created.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to reconcile historical case records.");
+    } finally { setBusy(false); }
+  };
   const createClinicalRequest = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!caseId) return;
@@ -1594,6 +1619,17 @@ export default function Home() {
           {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}
         </section>
 
+        {caseWorkspace?.accession_reconciliation_status === "LEGACY_UNRECONCILED" && <section className="panel workflow-panel">
+          <div className="section-kicker">Historical case controls</div>
+          <h3>Reconcile legacy accession history</h3>
+          <p className="muted">This records review of existing source evidence only. It does not create a historical clinical request, referrer verification or accession acceptance. New clinical analysis still requires a valid accepted request.</p>
+          <form onSubmit={reconcileLegacyCase} className="form-grid">
+            <label>Controlled historical source evidence reference<input required value={legacyEvidenceReference} onChange={(event) => setLegacyEvidenceReference(event.target.value)} /></label>
+            <label>Records and scope reviewed<textarea required value={legacyReviewedScope} onChange={(event) => setLegacyReviewedScope(event.target.value)} /></label>
+            <label>Reconciliation rationale<textarea required value={legacyReconciliationReason} onChange={(event) => setLegacyReconciliationReason(event.target.value)} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Record historical reconciliation</button></div>
+          </form>
+        </section>}
         <section className="panel workflow-panel">
           <div className="panel-head">
             <div><div className="section-kicker">S1-01 / S1-02</div><h3>Clinical request and accession</h3></div>
