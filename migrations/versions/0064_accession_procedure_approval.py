@@ -16,7 +16,16 @@ def upgrade():
     # Add the new source-evidence column without renaming the old column.
     # This avoids SQLite batch-rebuild column-order cycles while preserving
     # every existing procedure-document reference.
-    with op.batch_alter_table("accession_procedures") as batch:
+    with op.batch_alter_table(
+        "accession_procedures",
+        recreate="always",
+        partial_reordering=[(
+            "id", "organization_id", "procedure_identifier", "procedure_version",
+            "status", "effective_at", "expires_at", "approved_by", "created_by",
+            "procedure_evidence_reference", "approval_evidence_reference",
+            "allows_unverified_referrer_exception", "created_at",
+        )],
+    ) as batch:
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=True)
         batch.add_column(sa.Column("created_by", sa.Uuid(), nullable=True))
@@ -47,7 +56,16 @@ def upgrade():
         "WHERE status = 'APPROVED'"
     ))
 
-    with op.batch_alter_table("accession_procedures") as batch:
+    with op.batch_alter_table(
+        "accession_procedures",
+        recreate="always",
+        partial_reordering=[(
+            "id", "organization_id", "procedure_identifier", "procedure_version",
+            "status", "effective_at", "expires_at", "approved_by", "created_by",
+            "procedure_evidence_reference", "approval_evidence_reference",
+            "allows_unverified_referrer_exception", "created_at",
+        )],
+    ) as batch:
         batch.create_check_constraint(
             "ck_accession_procedure_evidence_reference",
             "procedure_evidence_reference IS NOT NULL",
