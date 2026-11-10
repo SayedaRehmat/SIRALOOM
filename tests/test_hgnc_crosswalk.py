@@ -32,11 +32,13 @@ def resolver(tmp_path):
         {"hgnc_id": "HGNC:1", "symbol": "GENEA", "alias_symbol": "OLD_A|SHARED", "prev_symbol": "PREV_A", "ensembl_gene_id": "ENSG00000123456"},
         {"hgnc_id": "HGNC:2", "symbol": "GENEB", "alias_symbol": "SHARED", "prev_symbol": "PREV_B", "ensembl_gene_id": "ENSG00000654321"},
         {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "SPLIT_X", "prev_symbol": "", "ensembl_gene_id": ""},
+        {"hgnc_id": "HGNC:4", "symbol": "COLLIDING", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
         {"HGNC_ID": "HGNC:90", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
         {"HGNC_ID": "HGNC:91", "STATUS": "Entry Withdrawn", "WITHDRAWN_SYMBOL": "RETIRED_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": ""},
         {"HGNC_ID": "HGNC:92", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "SPLIT_X", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved,HGNC:2|GENEB|Approved"},
+        {"HGNC_ID": "HGNC:93", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "COLLIDING", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:2|GENEB|Approved"},
     ])
     return HGNCResolver(complete, withdrawn, release=HGNC_ARCHIVE_RELEASE)
 
@@ -59,6 +61,13 @@ def test_ambiguous_alias_is_not_arbitrarily_selected(resolver):
     assert result.status == Status.AMBIGUOUS
     assert result.hgnc_id is None
     assert result.candidate_hgnc_ids == ("HGNC:1", "HGNC:2")
+
+
+def test_withdrawn_symbol_collision_with_current_approved_symbol_is_ambiguous(resolver):
+    result = resolver.resolve("COLLIDING")
+    assert result.status == Status.AMBIGUOUS
+    assert result.hgnc_id is None
+    assert result.candidate_hgnc_ids == ("HGNC:2", "HGNC:4")
 
 
 def test_previous_symbol_resolves_exactly(resolver):
@@ -108,6 +117,7 @@ def test_unknown_and_invalid_identifiers_are_not_fuzzy_matched(resolver):
     assert resolver.resolve("GENE-A").status == Status.NOT_FOUND
     assert resolver.resolve("").status == Status.INVALID
     assert resolver.resolve("ENST00000123456").status == Status.NOT_FOUND
+    assert resolver.resolve(None).status == Status.INVALID
 
 
 def test_duplicate_release_identity_is_rejected(tmp_path):
