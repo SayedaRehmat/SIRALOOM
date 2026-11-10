@@ -394,6 +394,36 @@ def revoke_capability(assignment_id: UUID, body: CapabilityRevokeInput, db: Sess
     return {"assignment_id": str(row.id), "revoked": True}
 
 
+@router.get("/organizations/accession-procedures")
+def list_accession_procedures(
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role not in {"organization_admin", "lab_director"}:
+        _require_capability(db, principal.organization_id, principal.user_id, "ACCESSION_DECIDE")
+    rows = db.scalars(
+        select(AccessionProcedure)
+        .where(AccessionProcedure.organization_id == principal.organization_id)
+        .order_by(AccessionProcedure.created_at.desc())
+    ).all()
+    return [
+        {
+            "procedure_id": str(row.id),
+            "procedure_identifier": row.procedure_identifier,
+            "procedure_version": row.procedure_version,
+            "status": row.status,
+            "effective_at": row.effective_at.isoformat(),
+            "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+            "created_by": str(row.created_by) if row.created_by else None,
+            "approved_by": str(row.approved_by) if row.approved_by else None,
+            "approval_evidence_reference": row.approval_evidence_reference,
+            "allows_unverified_referrer_exception": row.allows_unverified_referrer_exception,
+        }
+        for row in rows
+    ]
+
+
 @router.post("/organizations/accession-procedures", status_code=201)
 def create_accession_procedure(body: ProcedureInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     _membership(db, principal.organization_id, principal.user_id)
