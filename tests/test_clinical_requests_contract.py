@@ -295,3 +295,80 @@ def test_capability_listing_is_organization_scoped_and_includes_revocation_histo
     assert len(result) == 1
     assert result[0]["revocation_reason"] == "Role ended"
     assert result[0]["revoked_at"] is not None
+
+def test_historical_reconciliation_requires_evidence_and_never_creates_a_request(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import (
+        CaseAccessionReconciliationInput,
+        reconcile_case_accession_history,
+    )
+    from backend.app.infrastructure.db.clinical_requests import CaseAccessionReconciliation
+
+    organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
+    case = SimpleNamespace(
+        id=case_id,
+        organization_id=organization_id,
+        accession_reconciliation_status="LEGACY_UNRECONCILED",
+    )
+    added = []
+
+    class FakeAudit:
+        def __init__(self, db):
+            pass
+
+        def record(self, **kwargs):
+            return None
+
+    class FakeDB:
+        def get(self, model, key, **kwargs):
+            return case if model.__name__ == "Case" and key == case_id else None
+
+        def refresh(self, instance, **kwargs):
+            return None
+
+        def add(self, row):
+            added.append(row)
+
+        def commit(self):
+            return None
+
+    monkeypatch.setattr(routes, "AuditService", FakeAudit)
+    monkeypatch.setattr(routes, "require_case_permission", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(routes, "_require_capability", lambda *_args, **_kwargs: None)
+    principal = SimpleNamespace(
+        user_id=user_id,
+        organization_id=organization_id,
+        role="lab_director",
+    )
+    result = reconcile_case_accession_history(
+        case_id,
+        CaseAccessionReconciliationInput(
+            source_evidence_reference="ARCHIVE-CASE-FILE-001",
+            reviewed_scope="Original referral, specimen receipt and signed laboratory record",
+            reason="Historical records reviewed against controlled source documents.",
+        ),
+        db=FakeDB(),
+        principal=principal,
+    )
+    assert result["status"] == "RECONCILED"
+    assert case.accession_reconciliation_status == "RECONCILED"
+    assert len(added) == 1
+    assert isinstance(added[0], CaseAccessionReconciliation)
+    assert added[0].prior_status == "LEGACY_UNRECONCILED"
+    assert added[0].new_status == "RECONCILED"
+    assert not any(type(row).__name__ == "ClinicalRequest" for row in added)
+
+    with pytest.raises(HTTPException) as exc:
+        reconcile_case_accession_history(
+            case_id,
+            CaseAccessionReconciliationInput(
+                source_evidence_reference="ARCHIVE-CASE-FILE-001",
+                reviewed_scope="Reviewed again",
+                reason="Duplicate reconciliation attempt.",
+            ),
+            db=FakeDB(),
+            principal=principal,
+        )
+    assert exc.value.status_code == 409
+
