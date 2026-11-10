@@ -243,7 +243,7 @@ def get_clinical_request(request_id: UUID, db: Session = Depends(get_db), princi
 @router.post("/clinical-requests/{request_id}/revisions", status_code=201)
 def create_request_revision(request_id: UUID, body: RevisionInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     request, case = _request_or_404(db, request_id, principal, "write")
-    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update())
+    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update().execution_options(populate_existing=True))
     if request.status in {"REJECTED", "CLOSED"}:
         raise HTTPException(409, "Closed or rejected requests cannot be revised")
     payload = body.model_dump(mode="json")
