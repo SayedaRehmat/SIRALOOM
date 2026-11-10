@@ -203,6 +203,46 @@ def _qualify_gene_disease_provider(
     execution = dict(metadata.get("execution") or {})
     toolchain = dict(execution.get("toolchain") or {})
     release = str(toolchain.get("release") or "")
+    manifest_path_value = str(toolchain.get("manifest_path") or metadata.get("acquisition_manifest_path") or "")
+    manifest_sha_expected = str(toolchain.get("manifest_sha256") or metadata.get("acquisition_manifest_sha256") or "").lower()
+    if not manifest_path_value or not manifest_sha_expected:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_NOT_PINNED")
+        return
+    manifest_path = Path(manifest_path_value)
+    if not manifest_path.is_file() or _sha256(manifest_path) != manifest_sha_expected:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_DIGEST_MISMATCH")
+        return
+    try:
+        acquisition_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if acquisition_manifest.get("schema") != "siraloom.gene-disease-acquisition.v1":
+            raise ValueError("unsupported acquisition manifest schema")
+        manifest_records = [
+            item for item in acquisition_manifest.get("artifacts", [])
+            if item.get("provider") == resource.provider
+        ]
+        if len(manifest_records) != 1:
+            raise ValueError("acquisition manifest must contain exactly one matching provider artifact")
+        manifest_record = manifest_records[0]
+        if (
+            manifest_record.get("release_identity") != release
+            or manifest_record.get("sha256") != expected_sha
+            or manifest_record.get("size_bytes") != path.stat().st_size
+            or manifest_record.get("requested_url") != metadata.get("source_requested_url")
+            or manifest_record.get("final_url") != metadata.get("source_final_url")
+        ):
+            raise ValueError("acquisition manifest does not identify the registered source bytes and endpoint")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_INVALID")
+        checks["gene_disease_acquisition_manifest"] = {"status": "BLOCKED", "error": str(exc)[:2000]}
+        return
+    checks["gene_disease_acquisition_manifest"] = {
+        "status": "VERIFIED",
+        "sha256": manifest_sha_expected,
+        "acquired_at_utc": acquisition_manifest.get("acquired_at_utc"),
+        "release_identity_kind": manifest_record.get("release_identity_kind"),
+        "requested_url": manifest_record.get("requested_url"),
+        "final_url": manifest_record.get("final_url"),
+    }
     if release != resource.version:
         blockers.append("GENE_DISEASE_RELEASE_IDENTITY_MISMATCH")
         checks["gene_disease_source"] = {"status": "BLOCKED", "resource_version": resource.version, "declared_release": release}
