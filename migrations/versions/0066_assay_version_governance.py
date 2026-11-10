@@ -47,6 +47,9 @@ def upgrade():
             CREATE FUNCTION siraloom_reject_assay_identity_mutation()
             RETURNS trigger AS $siraloom$
             BEGIN
+                IF TG_OP = 'DELETE' THEN
+                    RAISE EXCEPTION 'assay versions are retained; create a new version instead of deleting';
+                END IF;
                 IF NEW.organization_id IS DISTINCT FROM OLD.organization_id
                    OR NEW.name IS DISTINCT FROM OLD.name
                    OR NEW.version IS DISTINCT FROM OLD.version
@@ -61,7 +64,7 @@ def upgrade():
         """)
         op.execute("""
             CREATE TRIGGER trg_assay_identity_immutable
-            BEFORE UPDATE ON assays
+            BEFORE UPDATE OR DELETE ON assays
             FOR EACH ROW EXECUTE FUNCTION siraloom_reject_assay_identity_mutation()
         """)
     elif connection.dialect.name == "sqlite":
@@ -78,6 +81,13 @@ def upgrade():
                 SELECT RAISE(ABORT, 'assay identity and configuration are immutable; create a new version');
             END
         """)
+        op.execute("""
+            CREATE TRIGGER trg_assay_no_delete
+            BEFORE DELETE ON assays
+            BEGIN
+                SELECT RAISE(ABORT, 'assay versions are retained; create a new version instead of deleting');
+            END
+        """)
 
 
 def downgrade():
@@ -87,6 +97,7 @@ def downgrade():
         op.execute("DROP FUNCTION IF EXISTS siraloom_reject_assay_identity_mutation()")
     elif connection.dialect.name == "sqlite":
         op.execute("DROP TRIGGER IF EXISTS trg_assay_identity_immutable")
+        op.execute("DROP TRIGGER IF EXISTS trg_assay_no_delete")
     with op.batch_alter_table("assays") as batch:
         batch.drop_constraint("ck_assay_status", type_="check")
         batch.drop_constraint("uq_assay_org_name_version", type_="unique")
