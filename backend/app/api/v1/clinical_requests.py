@@ -160,13 +160,20 @@ def _membership(db: Session, organization_id: UUID, user_id: UUID):
 def _require_capability(db: Session, organization_id: UUID, user_id: UUID, capability: str):
     _membership(db, organization_id, user_id)
     now = datetime.now(UTC)
-    grant = db.scalar(select(OrganizationCapabilityAssignment).where(
-        OrganizationCapabilityAssignment.organization_id == organization_id,
-        OrganizationCapabilityAssignment.user_id == user_id,
-        OrganizationCapabilityAssignment.capability == capability,
-        OrganizationCapabilityAssignment.revoked_at.is_(None),
-        (OrganizationCapabilityAssignment.expires_at.is_(None) | (OrganizationCapabilityAssignment.expires_at > now)),
-    ).order_by(OrganizationCapabilityAssignment.created_at.desc()).limit(1))
+    grant = db.scalar(
+        select(OrganizationCapabilityAssignment)
+        .where(
+            OrganizationCapabilityAssignment.organization_id == organization_id,
+            OrganizationCapabilityAssignment.user_id == user_id,
+            OrganizationCapabilityAssignment.capability == capability,
+            OrganizationCapabilityAssignment.revoked_at.is_(None),
+            (OrganizationCapabilityAssignment.expires_at.is_(None) | (OrganizationCapabilityAssignment.expires_at > now)),
+        )
+        .order_by(OrganizationCapabilityAssignment.created_at.desc())
+        .limit(1)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if grant is None:
         raise HTTPException(403, f"Missing organization capability: {capability}")
     return grant
