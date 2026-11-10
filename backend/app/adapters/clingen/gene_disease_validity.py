@@ -124,7 +124,7 @@ class ClinGenGeneDiseaseValidityProvider:
         # sequence \n. Normalize this transport representation before parsing release metadata
         # and CSV rows. The acquired source bytes remain unchanged.
         raw_text = raw_text.replace("\\n", "\n")
-        release_match = re.search(r"(?im)^\s*FILE CREATED:\s*(\d{4}-\d{2}-\d{2})\s*$", raw_text)
+        release_match = re.search(r"FILE CREATED:\s*(\d{4}-\d{2}-\d{2})", raw_text, flags=re.IGNORECASE)
         self.release_date = release_match.group(1) if release_match else None
         if self.expected_release is not None and self.release_date != self.expected_release:
             raise ClinGenGeneDiseaseValidityError(
