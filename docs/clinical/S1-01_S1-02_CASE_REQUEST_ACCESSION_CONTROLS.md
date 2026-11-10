@@ -40,7 +40,7 @@ Ordinary acceptance is blocked unless an applicable verification record is verif
 
 ### Approved-procedure exception
 
-An exception requires a laboratory-controlled approved procedure record with a stable identifier, version, approval authority, effective date, scope, and supporting evidence reference. The accession decision must reference that exact procedure version and include a rationale. Expired, withdrawn, out-of-scope, or unapproved procedures cannot authorize an exception. Exception acceptance remains visibly distinct from verified-referrer acceptance; outstanding verification remains open and auditable.
+An exception requires a laboratory-controlled procedure record with a stable identifier, version, effective date, expiry where applicable, and a controlled procedure-document evidence reference. Registration creates PENDING_APPROVAL and does not make the procedure effective. A different authorized organization procedure authority must approve it, recording a separate approval-evidence reference; the submitter cannot approve their own procedure. Only APPROVED, currently effective, non-withdrawn procedures that explicitly permit an unverified-referrer exception may authorize that exception. The accession decision references the exact procedure version and includes a rationale. Procedure-document evidence and independent approval evidence are stored separately and preserved. Exception acceptance remains visibly distinct from verified-referrer acceptance; outstanding verification remains open and auditable.
 
 ## Capability and permission principles
 
@@ -96,6 +96,15 @@ Cases that predate this workflow and lack documentary evidence are marked `LEGAC
 - Expired/revoked grants cannot authorize new actions.
 - Revocation preserves historical attribution.
 - Stale token role claims cannot override current organization membership or capability state.
+
+### Procedure approval separation of duties
+
+- Procedure registration is pending and cannot authorize an exception.
+- The procedure submitter cannot approve the same procedure version.
+- Approval requires a distinct evidence reference and is audited.
+- Procedure document evidence is never overwritten by approval evidence.
+- Withdrawal is audited and prevents future exception use.
+- Downgrade must refuse to discard pending or approved procedure history.
 
 ### Clinical attestation
 - Accession capability alone cannot create clinical attestation.
