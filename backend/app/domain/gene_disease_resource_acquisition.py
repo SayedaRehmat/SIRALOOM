@@ -87,7 +87,7 @@ def _clingen_file_created(path: Path) -> str:
             line = handle.readline()
             if not line:
                 break
-            match = re.search(r"FILE CREATED:\\s*(\\d{4}-\\d{2}-\\d{2})", line, re.IGNORECASE)
+            match = re.search(r"FILE CREATED:\s*(\d{4}-\d{2}-\d{2})", line, re.IGNORECASE)
             if match:
                 return match.group(1)
     raise GeneDiseaseAcquisitionError("ClinGen export is missing its FILE CREATED release identity")
@@ -145,7 +145,7 @@ def acquire_gene_disease_snapshots(destination: str | Path) -> dict:
     ) as handle:
         temporary_manifest = Path(handle.name)
         json.dump(manifest, handle, indent=2, sort_keys=True)
-        handle.write("\\n")
+        handle.write("\n")
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(temporary_manifest, manifest_path)
