@@ -23,6 +23,7 @@ def upgrade():
         batch.create_foreign_key(
             "fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"]
         )
+        batch.alter_column("approval_evidence_reference", existing_type=sa.Text(), nullable=True)
         batch.add_column(sa.Column("procedure_evidence_reference", sa.Text(), nullable=True))
         batch.create_check_constraint(
             "ck_accession_procedure_status",
