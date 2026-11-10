@@ -231,3 +231,33 @@ def test_corpus_validator_requires_reviewer_signoff_for_exact_expected_outcome(t
 
     with pytest.raises(CorpusValidationError, match="did not approve the current expected outcome"):
         validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_allows_reused_sample_names_across_distinct_source_vcfs(tmp_path):
+    manifest = _manifest(tmp_path)
+    case = manifest["cases"][0]
+    payload = b"separate source VCF for parent"
+    parent_vcf = tmp_path / case["case_id"] / "parent-source.vcf"
+    parent_vcf.write_bytes(payload)
+    parent_sha = _sha(payload)
+    case["artifacts"].append({
+        "role": "SOURCE_VCF",
+        "path": f'{case["case_id"]}/parent-source.vcf',
+        "sha256": parent_sha,
+        "size_bytes": len(payload),
+    })
+    parent = case["evidence"]["family_members"][1]
+    parent["sample_name"] = case["evidence"]["family_members"][0]["sample_name"]
+    parent["source_artifact_sha256"] = parent_sha
+
+    report = validate_corpus(manifest, tmp_path)
+
+    assert report["status"] == "QUALIFIED"
+
+
+def test_corpus_validator_rejects_source_snapshot_hash_not_bound_to_manifest_artifact(tmp_path):
+    manifest = _manifest(tmp_path)
+    manifest["cases"][0]["source"]["source_snapshot_sha256"] = "0" * 64
+
+    with pytest.raises(CorpusValidationError, match="does not match the preserved source manifest"):
+        validate_corpus(manifest, tmp_path)
