@@ -123,7 +123,8 @@ def acquire_gene_disease_snapshots(destination: str | Path) -> dict:
     acquisition_date = acquired_at.date().isoformat()
     manifest = {
         "schema": "siraloom.gene-disease-acquisition.v1",
-        "acquisition_started_at_utc": acquisition_started_at.isoformat(),\n        "acquired_at_utc": acquired_at.isoformat(),
+        "acquisition_started_at_utc": acquisition_started_at.isoformat(),
+        "acquired_at_utc": acquired_at.isoformat(),
         "acquisition_date_utc": acquisition_date,
         "artifacts": [
             {
