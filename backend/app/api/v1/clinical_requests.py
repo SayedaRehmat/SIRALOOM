@@ -79,6 +79,12 @@ class DecisionInput(BaseModel):
     verification_id: UUID | None = None
     exception_procedure_id: UUID | None = None
 
+    @model_validator(mode="after")
+    def validate_acceptance_basis(self):
+        if self.verification_id and self.exception_procedure_id:
+            raise ValueError("Choose either referrer verification or an approved-procedure exception, not both")
+        return self
+
 
 class CapabilityGrantInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -258,6 +264,12 @@ def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depend
             verification = db.get(ReferrerVerification, body.verification_id)
             if verification is None or verification.request_id != request.id or verification.revision_id != request.current_revision_id or verification.status != "VERIFIED":
                 raise HTTPException(422, "Verified referrer evidence must apply to the current request revision")
+            latest_verification = db.scalar(select(ReferrerVerification).where(
+                ReferrerVerification.request_id == request.id,
+                ReferrerVerification.revision_id == request.current_revision_id,
+            ).order_by(ReferrerVerification.verified_at.desc()).limit(1))
+            if latest_verification is None or latest_verification.id != verification.id:
+                raise HTTPException(422, "Acceptance must reference the latest referrer verification for the current request revision")
             verification_id = verification.id
         elif body.exception_procedure_id:
             procedure = db.get(AccessionProcedure, body.exception_procedure_id)
