@@ -18,13 +18,20 @@ from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Case, OrganizationMembership
 from backend.app.infrastructure.db.clinical_requests import (
-    AccessionDecision, AccessionProcedure, ClinicalAttestation, ClinicalRequest,
+    AccessionDecision, AccessionProcedure, CaseAccessionReconciliation, ClinicalAttestation, ClinicalRequest,
     ClinicalRequestRevision, OrganizationCapabilityAssignment, ReferrerVerification,
 )
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(tags=["clinical-requests"])
 CAPABILITIES = {"REFERRER_VERIFY", "ACCESSION_DECIDE", "CLINICAL_ATTEST", "CAPABILITY_ADMIN", "HISTORY_RECONCILE"}
+
+
+class CaseAccessionReconciliationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    source_evidence_reference: str = Field(min_length=1, max_length=1000)
+    reviewed_scope: str = Field(min_length=1, max_length=2000)
+    reason: str = Field(min_length=1, max_length=2000)
 
 
 class RequestCreate(BaseModel):
@@ -357,6 +364,93 @@ def list_capabilities(
             "revoked_at": row.revoked_at.isoformat() if row.revoked_at else None,
             "revoked_by": str(row.revoked_by) if row.revoked_by else None,
             "revocation_reason": row.revocation_reason,
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in rows
+    ]
+
+
+@router.post("/cases/{case_id}/accession-reconciliation", status_code=201)
+def reconcile_case_accession_history(
+    case_id: UUID,
+    body: CaseAccessionReconciliationInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id, with_for_update=True)
+    if case is None or case.organization_id != principal.organization_id:
+        raise HTTPException(404, "Case not found")
+    db.refresh(case, with_for_update=True)
+    require_case_permission(case, principal, db, "write")
+    _require_capability(db, case.organization_id, principal.user_id, "HISTORY_RECONCILE")
+    if case.accession_reconciliation_status != "LEGACY_UNRECONCILED":
+        raise HTTPException(409, "Only legacy-unreconciled cases can be reconciled")
+    source_reference = body.source_evidence_reference.strip()
+    reviewed_scope = body.reviewed_scope.strip()
+    reason = body.reason.strip()
+    if not source_reference or not reviewed_scope or not reason:
+        raise HTTPException(422, "Evidence reference, reviewed scope and reason are required")
+    row = CaseAccessionReconciliation(
+        id=uuid4(),
+        case_id=case.id,
+        organization_id=case.organization_id,
+        prior_status="LEGACY_UNRECONCILED",
+        new_status="RECONCILED",
+        source_evidence_reference=source_reference,
+        reviewed_scope=reviewed_scope,
+        reason=reason,
+        actor_id=principal.user_id,
+    )
+    db.add(row)
+    case.accession_reconciliation_status = "RECONCILED"
+    AuditService(db).record(
+        event_type="CASE_ACCESSION_HISTORY_RECONCILED",
+        case_id=case.id,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="CASE",
+        subject_id=str(case.id),
+        operation="RECONCILE",
+        before_state={"accession_reconciliation_status": "LEGACY_UNRECONCILED"},
+        after_state={"accession_reconciliation_status": "RECONCILED", "reconciliation_id": str(row.id)},
+        reason=reason,
+    )
+    db.commit()
+    return {
+        "reconciliation_id": str(row.id),
+        "case_id": str(case.id),
+        "status": case.accession_reconciliation_status,
+        "source_evidence_reference": row.source_evidence_reference,
+        "reviewed_scope": row.reviewed_scope,
+        "reason": row.reason,
+    }
+
+
+@router.get("/cases/{case_id}/accession-reconciliation")
+def get_case_accession_reconciliation(
+    case_id: UUID,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    case = db.get(Case, case_id)
+    if case is None or case.organization_id != principal.organization_id:
+        raise HTTPException(404, "Case not found")
+    require_case_permission(case, principal, db, "read")
+    rows = db.scalars(
+        select(CaseAccessionReconciliation)
+        .where(CaseAccessionReconciliation.case_id == case.id)
+        .order_by(CaseAccessionReconciliation.created_at)
+    ).all()
+    return [
+        {
+            "reconciliation_id": str(row.id),
+            "prior_status": row.prior_status,
+            "new_status": row.new_status,
+            "source_evidence_reference": row.source_evidence_reference,
+            "reviewed_scope": row.reviewed_scope,
+            "reason": row.reason,
+            "actor_id": str(row.actor_id),
             "created_at": row.created_at.isoformat(),
         }
         for row in rows
