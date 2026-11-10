@@ -114,8 +114,9 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
     # Preserve old cases without manufacturing historical referral/acceptance evidence.
-    op.add_column("cases", sa.Column("accession_reconciliation_status", sa.Text(), nullable=False, server_default="LEGACY_UNRECONCILED"))
-    op.create_check_constraint("ck_case_accession_reconciliation_status", "cases", "accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')")
+    with op.batch_alter_table("cases") as batch:
+        batch.add_column(sa.Column("accession_reconciliation_status", sa.Text(), nullable=False, server_default="LEGACY_UNRECONCILED"))
+        batch.create_check_constraint("ck_case_accession_reconciliation_status", "accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')")
 
 
 def downgrade():
@@ -124,8 +125,9 @@ def downgrade():
         count = connection.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
         if count:
             raise RuntimeError(f"Refusing to downgrade: {table} contains clinical history.")
-    op.drop_constraint("ck_case_accession_reconciliation_status", "cases", type_="check")
-    op.drop_column("cases", "accession_reconciliation_status")
+    with op.batch_alter_table("cases") as batch:
+        batch.drop_constraint("ck_case_accession_reconciliation_status", type_="check")
+        batch.drop_column("accession_reconciliation_status")
     op.drop_table("clinical_attestations")
     op.drop_index("ix_org_capability_active", table_name="organization_capability_assignments")
     op.drop_table("organization_capability_assignments")
