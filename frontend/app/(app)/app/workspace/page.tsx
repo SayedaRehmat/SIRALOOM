@@ -1034,7 +1034,7 @@ export default function Home() {
           procedure_version: procedureVersion,
           effective_at: new Date(procedureEffectiveAt).toISOString(),
           expires_at: procedureExpiryAt ? new Date(procedureExpiryAt).toISOString() : null,
-          approval_evidence_reference: procedureEvidence.trim(),
+          procedure_evidence_reference: procedureEvidence.trim(),
           allows_unverified_referrer_exception: procedureAllowsException,
         }),
       });
@@ -1659,7 +1659,7 @@ export default function Home() {
           <ul className="compact-list">
             {accessionProcedures.map((procedure) => <li key={procedure.procedure_id}>
               <strong>{procedure.procedure_identifier} v{procedure.procedure_version}</strong> — {procedure.status}
-              <small>{procedure.allows_unverified_referrer_exception ? "Allows unverified-referrer exception" : "No unverified-referrer exception"} · {procedure.approval_evidence_reference}</small>
+              <small>{procedure.allows_unverified_referrer_exception ? "Allows unverified-referrer exception" : "No unverified-referrer exception"} · {procedure.procedure_evidence_reference} · approval evidence: {procedure.approval_evidence_reference ?? "not approved"}</small>
               {procedure.status === "PENDING_APPROVAL" && <button className="secondary" type="button" disabled={busy} onClick={() => approveAccessionProcedure(procedure.procedure_id)}>Approve (independent reviewer)</button>}
               {procedure.status !== "WITHDRAWN" && <button className="secondary" type="button" disabled={busy} onClick={() => withdrawAccessionProcedure(procedure.procedure_id)}>Withdraw</button>}
             </li>)}
