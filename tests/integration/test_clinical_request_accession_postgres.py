@@ -14,7 +14,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError, IntegrityError
 
 from backend.app.api.v1 import clinical_requests as routes
 from backend.app.api.v1.clinical_requests import DecisionInput, RevisionInput
@@ -25,7 +25,7 @@ from backend.app.infrastructure.db.clinical_requests import (
     ClinicalRequestRevision,
     ReferrerVerification,
 )
-from backend.app.infrastructure.db.models import Case, Organization, User
+from backend.app.infrastructure.db.models import Assay, Case, Organization, User
 
 
 def _postgres_engine():
@@ -280,6 +280,63 @@ def test_postgres_database_rejects_self_approved_exception_procedure():
         with Session(engine) as db:
             db.add(procedure)
             with pytest.raises(IntegrityError):
+                db.commit()
+            db.rollback()
+    finally:
+        engine.dispose()
+
+@pytest.mark.integration
+def test_postgres_assay_version_is_unique_immutable_and_not_deletable():
+    engine = _postgres_engine()
+    seeded = _seed_request(engine, "ASSAY-VERSION-GOVERNANCE")
+    assay_id = uuid4()
+    configuration = {
+        "rules": [
+            {"metric": "coverage", "direction": "MIN", "threshold": 20, "severity": "FAIL"}
+        ]
+    }
+    try:
+        with Session(engine) as db:
+            db.add(Assay(
+                id=assay_id,
+                organization_id=seeded["organization_id"],
+                name="Germline WGS",
+                version="1.0",
+                assay_type="GERMLINE",
+                configuration=configuration,
+                status="ACTIVE",
+            ))
+            db.commit()
+
+        with Session(engine) as db:
+            db.add(Assay(
+                id=uuid4(),
+                organization_id=seeded["organization_id"],
+                name="Germline WGS",
+                version="1.0",
+                assay_type="GERMLINE",
+                configuration=configuration,
+                status="ACTIVE",
+            ))
+            with pytest.raises(IntegrityError):
+                db.commit()
+            db.rollback()
+
+        with Session(engine) as db:
+            assay = db.get(Assay, assay_id)
+            assay.configuration = {
+                "rules": [
+                    {"metric": "coverage", "direction": "MIN", "threshold": 30, "severity": "FAIL"}
+                ]
+            }
+            with pytest.raises(DBAPIError):
+                db.commit()
+            db.rollback()
+
+        with Session(engine) as db:
+            assay = db.get(Assay, assay_id)
+            db.delete(assay)
+            with pytest.raises(DBAPIError):
                 db.commit()
             db.rollback()
     finally:
