@@ -45,6 +45,7 @@ ALLOWED_DE_NOVO_STATES = frozenset({
     "NOT_APPLICABLE",
 })
 REQUIRED_ARTIFACT_ROLES = frozenset({
+    "SOURCE_MANIFEST",
     "SOURCE_VCF",
     "NORMALIZED_VCF",
     "PEDIGREE",
@@ -181,6 +182,8 @@ def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
     if not isinstance(variants, list) or not variants:
         raise CorpusValidationError(f"{case_id}: at least one variant evidence record is required")
     member_ids = set()
+    sample_names = set()
+    proband_count = 0
     for member in family_members:
         if not isinstance(member, dict):
             raise CorpusValidationError(f"{case_id}: family member entries must be objects")
@@ -188,9 +191,17 @@ def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
         if member_id in member_ids:
             raise CorpusValidationError(f"{case_id}: duplicate family member ID {member_id}")
         member_ids.add(member_id)
-        _required_text(member.get("sample_name"), f"{case_id}.family_member.sample_name")
+        sample_name = _required_text(member.get("sample_name"), f"{case_id}.family_member.sample_name")
+        if sample_name in sample_names:
+            raise CorpusValidationError(f"{case_id}: duplicate VCF sample name {sample_name}")
+        sample_names.add(sample_name)
         _required_text(member.get("role"), f"{case_id}.family_member.role")
+        if not isinstance(member.get("is_proband"), bool):
+            raise CorpusValidationError(f"{case_id}: family member is_proband must be explicit boolean")
+        proband_count += int(member["is_proband"])
         _required_text(member.get("identity_status"), f"{case_id}.family_member.identity_status")
+    if proband_count != 1:
+        raise CorpusValidationError(f"{case_id}: exactly one family proband is required")
     for relationship in relationships:
         if not isinstance(relationship, dict):
             raise CorpusValidationError(f"{case_id}: relationship entries must be objects")
@@ -207,6 +218,26 @@ def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
         _required_text(variant.get("phase_state"), f"{case_id}.variant.phase_state")
         _required_text(variant.get("callability_state"), f"{case_id}.variant.callability_state")
         _required_text(variant.get("quality_state"), f"{case_id}.variant.quality_state")
+        if not _is_sha256(variant.get("source_record_sha256")):
+            raise CorpusValidationError(f"{case_id}: variant source_record_sha256 must be SHA-256")
+        genotypes = variant.get("genotypes")
+        if not isinstance(genotypes, list) or len(genotypes) != len(member_ids):
+            raise CorpusValidationError(f"{case_id}: each variant requires one genotype state per family member")
+        genotype_members = set()
+        for genotype in genotypes:
+            if not isinstance(genotype, dict):
+                raise CorpusValidationError(f"{case_id}: genotype entries must be objects")
+            member_id = _required_text(genotype.get("member_id"), f"{case_id}.genotype.member_id")
+            if member_id not in member_ids or member_id in genotype_members:
+                raise CorpusValidationError(f"{case_id}: genotype member mapping is missing, duplicated, or unknown")
+            genotype_members.add(member_id)
+            call_state = _required_text(genotype.get("call_state"), f"{case_id}.genotype.call_state")
+            if call_state not in {"NO_RECORD", "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_NO_CALL", "CALL_PRESENT", "OTHER_ALT_PRESENT", "OTHER_ALT_AND_MISSING", "INVALID_CALL"}:
+                raise CorpusValidationError(f"{case_id}: unsupported family genotype call state {call_state}")
+            if call_state in {"NO_RECORD", "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_NO_CALL"} and genotype.get("genotype") == "0/0":
+                raise CorpusValidationError(f"{case_id}: missing/no-record calls cannot be imputed as reference")
+            _required_text(genotype.get("callability_state"), f"{case_id}.genotype.callability_state")
+            _required_text(genotype.get("quality_state"), f"{case_id}.genotype.quality_state")
 
 
 def _validate_expected(case: dict[str, Any], case_id: str) -> str:
@@ -230,6 +261,10 @@ def _validate_expected(case: dict[str, Any], case_id: str) -> str:
         raise CorpusValidationError(f"{case_id}: unsupported de novo evidence state")
     if expected.get("clinical_conclusion") is not False:
         raise CorpusValidationError(f"{case_id}: corpus expected outcomes cannot assert clinical conclusions")
+    if not isinstance(expected.get("supporting_evidence"), list) or not expected["supporting_evidence"]:
+        raise CorpusValidationError(f"{case_id}: expected supporting_evidence must be a non-empty list")
+    if not isinstance(expected.get("blocking_evidence"), list) or not expected["blocking_evidence"]:
+        raise CorpusValidationError(f"{case_id}: expected blocking_evidence must be a non-empty list")
     return _canonical_sha256(expected)
 
 
@@ -256,6 +291,10 @@ def _validate_reviewers(
         _required_text(reviewer.get("qualification_category"), f"{case_id}.reviewer.qualification_category")
         _required_text(reviewer.get("reviewed_at"), f"{case_id}.reviewer.reviewed_at")
         _required_text(reviewer.get("review_scope"), f"{case_id}.reviewer.review_scope")
+        _required_text(reviewer.get("rationale"), f"{case_id}.reviewer.rationale")
+        _required_text(reviewer.get("attestation_reference"), f"{case_id}.reviewer.attestation_reference")
+        if reviewer.get("source_material_reviewed") is not True:
+            raise CorpusValidationError(f"{case_id}: reviewers must attest that source material was reviewed")
         if reviewer.get("decision") != "APPROVED":
             raise CorpusValidationError(f"{case_id}: every qualifying reviewer must approve the case")
         if reviewer.get("independence_attested") is not True:
