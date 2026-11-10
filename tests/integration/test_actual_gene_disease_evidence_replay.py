@@ -311,6 +311,24 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                     location=str(clingen_path), status="ACTIVE",
                     population_definition=None, metadata_json={},
                 ),
+                Resource(
+                    id=hpo_resource_id, organization_id=None,
+                    name="Pinned HPO OBO integration release",
+                    provider="HPO", resource_type="PHENOTYPE_ONTOLOGY",
+                    version=hpo_release, genome_build=None, access_method="LOCAL",
+                    license_text="Integration fixture", checksum=hpo_sha,
+                    location=str(hpo_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
+                Resource(
+                    id=hpoa_resource_id, organization_id=organization_id,
+                    name="Pinned HPOA integration release",
+                    provider="HPOA", resource_type="DISEASE_PHENOTYPE_ASSOCIATION",
+                    version=hpoa_release, genome_build=None, access_method="LOCAL",
+                    license_text="HPOA integration permission", checksum=hpoa_sha,
+                    location=str(hpoa_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
             ]
             db.add_all(resources)
             db.flush()
