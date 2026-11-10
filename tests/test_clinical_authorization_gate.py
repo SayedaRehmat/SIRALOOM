@@ -250,3 +250,44 @@ def test_clinical_worker_gate_blocks_changed_specimen_sample_mapping():
                 )
     finally:
         engine.dispose()
+
+def test_clinical_worker_gate_blocks_assay_configuration_mutation():
+    engine, case_id, _artifact_id, _specimen_id, assay_id, configuration = _clinical_fixture()
+    try:
+        with Session(engine) as db:
+            assay = db.get(Assay, assay_id)
+            assay.configuration = {
+                "rules": [
+                    {"metric": "coverage", "direction": "MIN", "threshold": 30, "severity": "FAIL"}
+                ]
+            }
+            db.commit()
+        with Session(engine) as db:
+            case = db.get(Case, case_id)
+            with pytest.raises(ClinicalAuthorizationError, match="assay identity or QC configuration changed"):
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=configuration,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    analysis_assay_id=assay_id,
+                )
+    finally:
+        engine.dispose()
+
+
+def test_clinical_worker_gate_requires_persisted_assay_foreign_key():
+    engine, case_id, _artifact_id, _specimen_id, _assay_id, configuration = _clinical_fixture()
+    try:
+        with Session(engine) as db:
+            case = db.get(Case, case_id)
+            with pytest.raises(ClinicalAuthorizationError, match="assay_id does not match"):
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=configuration,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    analysis_assay_id=None,
+                )
+    finally:
+        engine.dispose()
