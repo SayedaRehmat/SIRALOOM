@@ -84,7 +84,7 @@ def _case(tmp_path, case_id, category, test_role):
             "license_or_terms": "SYNTHETIC_NO_PATIENT_DATA",
             "attribution": "Synthetic validator test data; not a clinical known-answer case",
             "data_use_permission_reference": "TEST_FIXTURE_ONLY",
-            "source_snapshot_sha256": "c" * 64,
+            "source_snapshot_sha256": artifacts[0]["sha256"],
             "access_status": "APPROVED",
             "redistribution_status": "PERMITTED",
         },
