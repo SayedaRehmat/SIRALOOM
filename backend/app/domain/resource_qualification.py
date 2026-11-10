@@ -185,6 +185,74 @@ def _qualify_hgnc(resource: Resource, manifest_path: Path | None, blockers: list
         checks["hgnc_crosswalk"] = {"status": "BLOCKED", "error": str(exc)[:2000]}
 
 
+def _qualify_gene_disease_provider(
+    resource: Resource,
+    path: Path | None,
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Run the production provider parser against exact staged, digest-pinned bytes."""
+    if path is None or not path.is_file():
+        blockers.append("GENE_DISEASE_SOURCE_ARTIFACT_MISSING")
+        return
+    expected_sha = str(resource.checksum or "").lower()
+    if not expected_sha or _sha256(path) != expected_sha:
+        blockers.append("GENE_DISEASE_SOURCE_DIGEST_MISMATCH")
+        return
+    metadata = dict(resource.metadata_json or {})
+    execution = dict(metadata.get("execution") or {})
+    toolchain = dict(execution.get("toolchain") or {})
+    release = str(toolchain.get("release") or "")
+    if release != resource.version:
+        blockers.append("GENE_DISEASE_RELEASE_IDENTITY_MISMATCH")
+        checks["gene_disease_source"] = {"status": "BLOCKED", "resource_version": resource.version, "declared_release": release}
+        return
+    try:
+        if resource.provider == "Gene2Phenotype":
+            from backend.app.adapters.gene_disease.g2p import G2PProvider
+            provider = G2PProvider(resource_path=str(path), expected_sha256=expected_sha, release=release)
+            records = tuple(provider._records)
+            record_ids = [record.source_record_id for record in records]
+            mondo_missing = sum(record.disease_mondo is None for record in records)
+            gene_ids_present = sum(record.hgnc_id is not None for record in records)
+            source_schema = "G2P_CSV"
+        elif resource.provider == "ClinGen Gene-Disease Validity":
+            from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
+            provider = ClinGenGeneDiseaseValidityProvider(resource_path=str(path), expected_sha256=expected_sha, expected_release=release)
+            index = provider._load_index()
+            records = tuple(record for group in index.values() for record in group)
+            record_ids = [record.source_record_id for record in records]
+            mondo_missing = sum(record.mondo_id is None for record in records)
+            gene_ids_present = sum(record.hgnc_id is not None for record in records)
+            source_schema = "CLINGEN_GENE_VALIDITY_CSV"
+            if provider.release_date != release:
+                raise ValueError("ClinGen FILE CREATED does not match pinned resource release")
+        else:
+            return
+        if not records:
+            raise ValueError("provider parser returned no gene-disease assertions")
+        if len(record_ids) != len(set(record_ids)):
+            raise ValueError("provider export contains duplicate source record identifiers")
+        checks["gene_disease_source"] = {
+            "status": "PROVIDER_PARSER_QUALIFIED",
+            "provider": resource.provider,
+            "schema": source_schema,
+            "release": release,
+            "sha256": expected_sha,
+            "record_count": len(records),
+            "unique_source_record_count": len(set(record_ids)),
+            "records_missing_mondo": mondo_missing,
+            "records_with_native_hgnc_id": gene_ids_present,
+            "records_without_native_hgnc_id": len(records) - gene_ids_present,
+            "raw_artifact_preserved": True,
+            "parser": "production_provider_adapter",
+            "clinical_validity_claim": False,
+        }
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        blockers.append("GENE_DISEASE_PROVIDER_QUALIFICATION_FAILED")
+        checks["gene_disease_source"] = {"status": "BLOCKED", "provider": resource.provider, "error": str(exc)[:2000]}
+
+
 def qualify_resource(
     resource: Resource,
     *,
@@ -285,6 +353,8 @@ def qualify_resource(
         blockers.append("LICENSE_NOT_VERIFIED")
     if resource.provider == "HGNC":
         _qualify_hgnc(resource, path, blockers, checks)
+    if resource.provider in {"Gene2Phenotype", "ClinGen Gene-Disease Validity"}:
+        _qualify_gene_disease_provider(resource, path, blockers, checks)
     if resource.provider == "NCBI ClinVar":
         _qualify_clinvar(resource, path, checks)
     if resource.provider == "VEP":
