@@ -20,7 +20,7 @@ def _sha(value):
 
 def _case(tmp_path, case_id, category, test_role):
     artifacts = []
-    for role in ("SOURCE_MANIFEST", "SOURCE_VCF", "NORMALIZED_VCF", "PEDIGREE", "PHENOTYPE"):
+    for role in ("SOURCE_MANIFEST", "ACCESS_APPROVAL", "SOURCE_VCF", "NORMALIZED_VCF", "PEDIGREE", "PHENOTYPE"):
         relative = f"{case_id}/{role.lower()}.txt"
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -28,6 +28,19 @@ def _case(tmp_path, case_id, category, test_role):
         path.write_bytes(payload)
         artifacts.append({
             "role": role,
+            "path": relative,
+            "sha256": _sha(payload),
+            "size_bytes": len(payload),
+        })
+    reviewer_attestation_hashes = []
+    for reviewer_number in (1, 2):
+        relative = f"{case_id}/reviewer-{reviewer_number}.attestation"
+        path = tmp_path / relative
+        payload = f"{case_id}:REVIEWER_ATTESTATION:{reviewer_number}".encode()
+        path.write_bytes(payload)
+        reviewer_attestation_hashes.append(_sha(payload))
+        artifacts.append({
+            "role": "REVIEWER_ATTESTATION",
             "path": relative,
             "sha256": _sha(payload),
             "size_bytes": len(payload),
@@ -51,17 +64,14 @@ def _case(tmp_path, case_id, category, test_role):
             "reviewed_at": "2026-11-10",
             "review_scope": "FAMILY_GENOTYPE_AND_EXPECTED_EVIDENCE_STATE",
             "rationale": "Synthetic validator test only",
-            "attestation_reference": "TEST_ONLY_ATTESTATION",
-            "source_material_reviewed": True,
-            "rationale": "Synthetic validator test only",
-            "attestation_reference": "TEST_ONLY_ATTESTATION",
+            "attestation_reference": f"{case_id}/reviewer-1.attestation",
             "source_material_reviewed": True,
             "decision": "APPROVED",
             "independence_attested": True,
             "implementation_independence_attested": True,
             "conflict_of_interest_checked": True,
             "expected_outcome_sha256": expected_sha,
-            "attestation_sha256": "a" * 64,
+            "attestation_sha256": reviewer_attestation_hashes[0],
         },
         {
             "reviewer_id": f"reviewer-{case_id}-2",
@@ -69,14 +79,14 @@ def _case(tmp_path, case_id, category, test_role):
             "reviewed_at": "2026-11-10",
             "review_scope": "FAMILY_GENOTYPE_AND_EXPECTED_EVIDENCE_STATE",
             "rationale": "Synthetic validator test only",
-            "attestation_reference": "TEST_ONLY_ATTESTATION",
+            "attestation_reference": f"{case_id}/reviewer-2.attestation",
             "source_material_reviewed": True,
             "decision": "APPROVED",
             "independence_attested": True,
             "implementation_independence_attested": True,
             "conflict_of_interest_checked": True,
             "expected_outcome_sha256": expected_sha,
-            "attestation_sha256": "b" * 64,
+            "attestation_sha256": reviewer_attestation_hashes[1],
         },
     ]
     return {
@@ -91,7 +101,8 @@ def _case(tmp_path, case_id, category, test_role):
             "license_or_terms": "SYNTHETIC_NO_PATIENT_DATA",
             "attribution": "Synthetic validator test data; not a clinical known-answer case",
             "data_use_permission_reference": "TEST_FIXTURE_ONLY",
-            "source_snapshot_sha256": artifacts[0]["sha256"],
+            "source_snapshot_sha256": next(item["sha256"] for item in artifacts if item["role"] == "SOURCE_MANIFEST"),
+            "access_approval_sha256": next(item["sha256"] for item in artifacts if item["role"] == "ACCESS_APPROVAL"),
             "access_status": "APPROVED",
             "redistribution_status": "PERMITTED",
         },
@@ -159,7 +170,7 @@ def _manifest(tmp_path):
 def test_corpus_validator_accepts_complete_reviewed_structure_without_claiming_clinical_truth(tmp_path):
     report = validate_corpus(_manifest(tmp_path), tmp_path)
 
-    assert report["status"] == "QUALIFIED"
+    assert report["status"] == "MANIFEST_VALIDATION_PASSED"
     assert report["case_count"] == len(REQUIRED_CATEGORIES) * len(ALLOWED_TEST_ROLES)
     assert report["clinical_conclusions_performed"] is False
     assert set(report["category_coverage"]) == set(REQUIRED_CATEGORIES)
@@ -258,7 +269,7 @@ def test_corpus_validator_allows_reused_sample_names_across_distinct_source_vcfs
 
     report = validate_corpus(manifest, tmp_path)
 
-    assert report["status"] == "QUALIFIED"
+    assert report["status"] == "MANIFEST_VALIDATION_PASSED"
 
 
 def test_corpus_validator_rejects_source_snapshot_hash_not_bound_to_manifest_artifact(tmp_path):
