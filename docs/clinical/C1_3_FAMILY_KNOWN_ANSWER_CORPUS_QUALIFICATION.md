@@ -57,6 +57,8 @@ A source is eligible only when its access terms, data-use permissions, provenanc
 
 **Access rule:** do not download, commit, or redistribute controlled family genomic data until the relevant data-access approval, consent/data-use terms, and repository storage policy are confirmed. Do not place identifiable or re-identifiable family data in public Git history. Prefer de-identified, minimized, source-hash-pinned fixtures; keep restricted source bytes in approved access-controlled storage.
 
+**Population-representation boundary:** UDN and GREGoR are candidate family-genomics sources, not presumed GCC/Middle East or consanguinity-representative cohorts. Each selected case must preserve only source-recorded ancestry/population context and explicit consanguinity evidence (or record NOT_REPORTED). Never infer consanguinity from a homozygous genotype, surname, geography, or phenotype. The generic inheritance-mechanics corpus and the target-market validation stratum must be reported separately. Before making GCC/consanguineous-population performance claims, add an independently reviewed GCC/consanguineous family stratum with source-supported family structure and consented genotype evidence.
+
 ## 4. Required case coverage and expected answers
 
 Every case must identify which hypothesis it tests and the exact evidence that makes its expected answer determinate. Each category needs at least one informative case and an adversarial/insufficient-evidence control. Multiple categories may be represented by one family only when the evidence independently supports each assertion.
