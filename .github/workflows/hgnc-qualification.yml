@@ -36,7 +36,8 @@ on:
       - "backend/tests/test_gene_disease_reconciliation.py"
       - "tests/test_hgnc_resource_qualification.py"
       - "tests/test_hgnc_resource_registration.py"
-      - ".github/workflows/hgnc-qualification.yml"  push:
+      - ".github/workflows/hgnc-qualification.yml"
+  push:
     paths:
       - "scripts/qualify_official_gene_disease_sources.py"
       - "backend/app/domain/gene_disease_resource_acquisition.py"
