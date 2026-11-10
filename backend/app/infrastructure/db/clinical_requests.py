@@ -69,7 +69,8 @@ class AccessionProcedure(Base):
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", name="fk_accession_procedures_approved_by_users"), nullable=True)
     created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", name="fk_accession_procedures_created_by_users"), nullable=True)
-    approval_evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    procedure_evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    approval_evidence_reference: Mapped[str | None] = mapped_column(Text, nullable=True)
     allows_unverified_referrer_exception: Mapped[bool] = mapped_column(nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     __table_args__ = (
