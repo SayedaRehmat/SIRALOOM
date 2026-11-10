@@ -21,6 +21,10 @@ def upgrade():
             "ck_accession_procedure_status",
             "status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')",
         )
+        batch.create_check_constraint(
+            "ck_accession_procedure_approved_by",
+            "(status != 'APPROVED') OR (approved_by IS NOT NULL)",
+        )
 
 
 def downgrade():
@@ -33,6 +37,7 @@ def downgrade():
             "Refusing to downgrade while pending accession procedures exist."
         )
     with op.batch_alter_table("accession_procedures") as batch:
+        batch.drop_constraint("ck_accession_procedure_approved_by", type_="check")
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.drop_column("created_by")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=False)
