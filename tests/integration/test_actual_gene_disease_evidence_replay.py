@@ -507,6 +507,9 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             assert phenotype_payload["contextual_order"] == 1
             assert phenotype_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
             assert phenotype_payload["hpoa_provenance"]["resource_id"] == str(hpoa_resource_id)
+            assert phenotype_payload["hpoa_provenance"]["resource_name"] == "Pinned HPOA integration release"
+            assert len(phenotype_payload["hpoa_provenance"]["request_fingerprint"]) == 64
+            assert len(phenotype_payload["hpoa_provenance"]["response_sha256"]) == 64
             assert phenotype_payload["clinical_prioritization_validated"] is False
             assert phenotype_payload["human_review_required"] is True
             assert phenotype_payload["interpretive_use"] == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
@@ -614,6 +617,8 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         assert api_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
         assert api_payload["clinical_prioritization_validated"] is False
         assert api_payload["human_review_required"] is True
+        assert len(api_payload["hpoa_provenance"]["request_fingerprint"]) == 64
+        assert len(api_payload["hpoa_provenance"]["response_sha256"]) == 64
     finally:
         # Test-specific rows are removed in FK-safe order. Audit events are
         # removed with this isolated integration analysis as in other PG tests.
