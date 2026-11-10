@@ -38,7 +38,7 @@ def upgrade():
         )
         batch.create_check_constraint(
             "ck_accession_procedure_approved_by",
-            "(status != 'APPROVED') OR (approved_by IS NOT NULL)",
+            "(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by)",
         )
 
 
