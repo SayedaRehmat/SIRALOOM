@@ -283,6 +283,7 @@ def create_request_revision(request_id: UUID, body: RevisionInput, db: Session =
 @router.post("/clinical-requests/{request_id}/submit")
 def submit_request(request_id: UUID, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     request, case = _request_or_404(db, request_id, principal, "write")
+    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update().execution_options(populate_existing=True))
     if request.status not in {"DRAFT", "NEEDS_INFORMATION", "REASSESSMENT_REQUIRED"} or not request.current_revision_id:
         raise HTTPException(409, "Request cannot be submitted from its current state")
     request.status = "SUBMITTED"
@@ -295,6 +296,7 @@ def submit_request(request_id: UUID, db: Session = Depends(get_db), principal: P
 def verify_referrer(request_id: UUID, body: VerificationInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     request, case = _request_or_404(db, request_id, principal, "read")
     _require_capability(db, request.organization_id, principal.user_id, "REFERRER_VERIFY")
+    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update().execution_options(populate_existing=True))
     if request.status not in {"SUBMITTED", "UNDER_REVIEW"} or not request.current_revision_id:
         raise HTTPException(409, "Referrer verification requires a submitted request revision")
     row = ReferrerVerification(id=uuid4(), request_id=request.id, revision_id=request.current_revision_id, status=body.status, method=body.method.strip(), evidence_reference=body.evidence_reference.strip(), outcome_note=body.outcome_note.strip(), verified_by=principal.user_id)
@@ -325,7 +327,7 @@ def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depend
                 raise HTTPException(422, "Acceptance must reference the latest referrer verification for the current request revision")
             verification_id = verification.id
         elif body.exception_procedure_id:
-            procedure = db.get(AccessionProcedure, body.exception_procedure_id)
+            procedure = db.get(AccessionProcedure, body.exception_procedure_id, with_for_update=True)
             now = datetime.now(UTC)
             if procedure is None or procedure.organization_id != request.organization_id or procedure.status != "APPROVED" or not procedure.allows_unverified_referrer_exception or procedure.effective_at > now or (procedure.expires_at and procedure.expires_at <= now):
                 raise HTTPException(422, "A current, approved, in-scope exception procedure is required")
