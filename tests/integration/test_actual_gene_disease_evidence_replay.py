@@ -508,7 +508,7 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             )))
             assert len(phenotype_first_attempt) == 2
             phenotype_first_ids = {row.evidence_fingerprint for row in phenotype_first_attempt}
-            phenotype_first_attempt.sort(key=lambda row: row.payload[\"contextual_order\"])
+            phenotype_first_attempt.sort(key=lambda row: row.payload["contextual_order"])
             phenotype_payload = phenotype_first_attempt[0].payload
             assert phenotype_first_attempt[0].direction == "NEUTRAL"
             assert phenotype_payload["contextual_order"] == 1
