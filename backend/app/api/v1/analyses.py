@@ -134,6 +134,7 @@ def create(
             reference_build=payload.reference_build,
             configuration=payload.configuration,
             created_by=principal.user_id,
+            clinical_request_id=payload.clinical_request_id,
             resource_profile_id=payload.resource_profile_id,
             toolchain_profile_id=payload.toolchain_profile_id,
             commit=False,
