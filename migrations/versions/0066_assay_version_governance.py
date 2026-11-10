@@ -32,15 +32,29 @@ def upgrade():
             "Cannot enforce assay status lifecycle: unsupported assay statuses exist."
         )
 
-    with op.batch_alter_table("assays") as batch:
-        batch.create_unique_constraint(
+    if connection.dialect.name == "postgresql":
+        # Keep dependent analyses.assay_id foreign keys intact; do not rebuild
+        # the parent table on PostgreSQL.
+        op.create_unique_constraint(
             "uq_assay_org_name_version",
+            "assays",
             ["organization_id", "name", "version"],
         )
-        batch.create_check_constraint(
+        op.create_check_constraint(
             "ck_assay_status",
+            "assays",
             "status IN ('ACTIVE','INACTIVE')",
         )
+    else:
+        with op.batch_alter_table("assays") as batch:
+            batch.create_unique_constraint(
+                "uq_assay_org_name_version",
+                ["organization_id", "name", "version"],
+            )
+            batch.create_check_constraint(
+                "ck_assay_status",
+                "status IN ('ACTIVE','INACTIVE')",
+            )
 
     if connection.dialect.name == "postgresql":
         op.execute("""
@@ -95,9 +109,11 @@ def downgrade():
     if connection.dialect.name == "postgresql":
         op.execute("DROP TRIGGER IF EXISTS trg_assay_identity_immutable ON assays")
         op.execute("DROP FUNCTION IF EXISTS siraloom_reject_assay_identity_mutation()")
-    elif connection.dialect.name == "sqlite":
+        op.drop_constraint("ck_assay_status", "assays", type_="check")
+        op.drop_constraint("uq_assay_org_name_version", "assays", type_="unique")
+    else:
         op.execute("DROP TRIGGER IF EXISTS trg_assay_identity_immutable")
         op.execute("DROP TRIGGER IF EXISTS trg_assay_no_delete")
-    with op.batch_alter_table("assays") as batch:
-        batch.drop_constraint("ck_assay_status", type_="check")
-        batch.drop_constraint("uq_assay_org_name_version", type_="unique")
+        with op.batch_alter_table("assays") as batch:
+            batch.drop_constraint("ck_assay_status", type_="check")
+            batch.drop_constraint("uq_assay_org_name_version", type_="unique")
