@@ -24,7 +24,7 @@ export default function Terms() {
 
         <section>
           <h2>Payments and refunds</h2>
-          <p>Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides customer service for payment inquiries and handles refunds.</p>
+          <p>Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer service inquiries and handles returns.</p>
           <p>Purchases, refund eligibility and subscription cancellation are subject to Paddle's <a href="https://www.paddle.com/legal/refund-policy" target="_blank" rel="noreferrer">Refund Policy</a> and applicable law. See our <Link href="/refund-policy">Refund Policy</Link> for details.</p>
         </section>
 
