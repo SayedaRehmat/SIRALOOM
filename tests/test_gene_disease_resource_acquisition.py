@@ -171,3 +171,52 @@ def test_official_reconciliation_qualification_script_is_syntax_valid():
     script = Path(__file__).resolve().parents[1] / "scripts" / "qualify_official_gene_disease_sources.py"
     source = script.read_text(encoding="utf-8")
     compile(source, str(script), "exec")
+
+
+def test_download_rejects_unapproved_redirect_and_preserves_no_partial_file(tmp_path, monkeypatch):
+    class Response:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def geturl(self):
+            return "https://attacker.invalid/payload.csv"
+
+        def read(self, _size):
+            return b"payload"
+
+    monkeypatch.setattr(acquisition, "urlopen", lambda *_args, **_kwargs: Response())
+    destination = tmp_path / "source.csv"
+    with pytest.raises(acquisition.GeneDiseaseAcquisitionError, match="unapproved endpoint"):
+        acquisition._download_atomic(acquisition.G2P_URL, destination)
+    assert not destination.exists()
+
+
+def test_download_enforces_maximum_source_size(tmp_path, monkeypatch):
+    class Response:
+        def __init__(self):
+            self.remaining = acquisition.MAX_SOURCE_BYTES + 1
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def geturl(self):
+            return acquisition.G2P_URL
+
+        def read(self, size):
+            if self.remaining <= 0:
+                return b""
+            amount = min(size, self.remaining)
+            self.remaining -= amount
+            return b"x" * amount
+
+    monkeypatch.setattr(acquisition, "urlopen", lambda *_args, **_kwargs: Response())
+    destination = tmp_path / "oversized.csv"
+    with pytest.raises(acquisition.GeneDiseaseAcquisitionError, match="exceeds"):
+        acquisition._download_atomic(acquisition.G2P_URL, destination)
+    assert not destination.exists()
