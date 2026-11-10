@@ -342,10 +342,10 @@ jobs:
           PY
       - name: Verify official G2P and ClinGen reconciliation through the pinned HGNC release
         run: |
-          uv run --locked python scripts/qualify_official_gene_disease_sources.py \\
-            --hgnc-directory "$RUNNER_TEMP/hgnc-2026-10-06" \\
-            --acquisition-directory "$RUNNER_TEMP/gene-disease-acquired" \\
-            --managed-directory "$RUNNER_TEMP/gene-disease-managed" \\
+          uv run --locked python scripts/qualify_official_gene_disease_sources.py \
+            --hgnc-directory "$RUNNER_TEMP/hgnc-2026-10-06" \
+            --acquisition-directory "$RUNNER_TEMP/gene-disease-acquired" \
+            --managed-directory "$RUNNER_TEMP/gene-disease-managed" \
             --report "$RUNNER_TEMP/gene-disease-reconciliation-qualification.json"
       - name: Preserve exact G2P and ClinGen source bytes and qualification manifest
         uses: actions/upload-artifact@v4
