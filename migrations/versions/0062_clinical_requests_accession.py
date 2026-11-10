@@ -42,7 +42,6 @@ def upgrade():
         sa.UniqueConstraint("request_id", "fingerprint", name="uq_clinical_request_revision_fingerprint"),
         sa.CheckConstraint("version > 0", name="ck_clinical_request_revision_positive"),
     )
-    op.create_foreign_key("fk_clinical_request_current_revision", "clinical_requests", "clinical_request_revisions", ["current_revision_id"], ["id"])
     op.create_table(
         "referrer_verifications",
         sa.Column("id", sa.Uuid(), primary_key=True),
@@ -133,7 +132,6 @@ def downgrade():
     op.drop_table("accession_decisions")
     op.drop_table("accession_procedures")
     op.drop_table("referrer_verifications")
-    op.drop_constraint("fk_clinical_request_current_revision", "clinical_requests", type_="foreignkey")
     op.drop_table("clinical_request_revisions")
     op.drop_index("ix_clinical_requests_org_case", table_name="clinical_requests")
     op.drop_table("clinical_requests")
