@@ -239,6 +239,7 @@ export default function Home() {
   const [clinicalRequests, setClinicalRequests] = useState<ClinicalRequestSummary[]>([]);
   const [clinicalRequestId, setClinicalRequestId] = useState("");
   const [accessionRequestId, setAccessionRequestId] = useState("");
+  const [selectedRequestDetail, setSelectedRequestDetail] = useState<Record<string, any> | null>(null);
   const [requestForm, setRequestForm] = useState({
     request_identifier: "",
     requested_examination: "Germline SNV and small-indel interpretation",
@@ -837,6 +838,19 @@ export default function Home() {
     }
   };
 
+  const loadClinicalRequestDetail = async (requestId: string) => {
+    if (!requestId) { setSelectedRequestDetail(null); return; }
+    const detail = await apiFetch("/clinical-requests/" + requestId);
+    setSelectedRequestDetail(detail);
+  };
+
+  const selectAccessionRequest = async (requestId: string) => {
+    setAccessionRequestId(requestId);
+    setSelectedRequestDetail(null);
+    if (!requestId) return;
+    try { await loadClinicalRequestDetail(requestId); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Unable to load request history."); }
+  };
   const refreshClinicalRequests = async () => {
     if (!caseId) return;
     const rows = await apiFetch(`/cases/${caseId}/clinical-requests`);
@@ -1596,7 +1610,7 @@ export default function Home() {
           <div className="keyline"><strong>Recorded requests</strong></div>
           <div className="form-grid">
             <label>Request to manage
-              <select value={accessionRequestId} onChange={(event) => setAccessionRequestId(event.target.value)}>
+              <select value={accessionRequestId} onChange={(event) => { void selectAccessionRequest(event.target.value); }}>
                 <option value="">Select a request</option>
                 {clinicalRequests.map((request) => <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>)}
               </select>
@@ -1614,6 +1628,16 @@ export default function Home() {
           <ul className="compact-list">
             {clinicalRequests.map((request) => <li key={request.request_id}><strong>{request.request_identifier}</strong> — {request.status}{request.current_revision_id ? " · revision recorded" : " · no revision"}</li>)}
           </ul>
+          {selectedRequestDetail && <div className="request-history">
+            <h4>Immutable request history</h4>
+            <p><strong>Request:</strong> {selectedRequestDetail.request_identifier} · {selectedRequestDetail.status}</p>
+            <h5>Revisions</h5>
+            <ul className="compact-list">{(selectedRequestDetail.revisions ?? []).map((revision: any) => <li key={revision.revision_id}><strong>Revision {revision.version}</strong> · {revision.fingerprint}<small>{revision.created_at}</small></li>)}</ul>
+            <h5>Referrer verifications</h5>
+            <ul className="compact-list">{(selectedRequestDetail.verifications ?? []).map((verification: any) => <li key={verification.verification_id}><strong>{verification.status}</strong> · {verification.method}<small>{verification.evidence_reference} · {verification.verified_at}</small></li>)}</ul>
+            <h5>Accession decisions</h5>
+            <ul className="compact-list">{(selectedRequestDetail.decisions ?? []).map((decision: any) => <li key={decision.decision_id}><strong>{decision.decision}</strong> · {decision.reason}<small>Revision {decision.revision_id} · verification {decision.verification_id ?? "none"} · exception procedure {decision.exception_procedure_id ?? "none"} · {decision.created_at}</small></li>)}</ul>
+          </div>}
         </section>
 
         <section className="panel workflow-panel">
