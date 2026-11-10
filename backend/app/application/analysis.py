@@ -381,7 +381,7 @@ def enqueue_analysis(
                     db,
                     case=case,
                     analysis_configuration=analysis.configuration,
-                    analysis_type=analysis.analysis_type,
+                    analysis_type=getattr(analysis, "analysis_type", None),
                 )
             except ValueError as exc:
                 raise ValueError(str(exc)) from exc
@@ -453,7 +453,7 @@ def resume_analysis(
         db,
         case=case,
         analysis_configuration=locked.configuration,
-        analysis_type=locked.analysis_type,
+        analysis_type=getattr(locked, "analysis_type", None),
     )
 
     dispatch = _create_dispatch_locked(db, locked)
