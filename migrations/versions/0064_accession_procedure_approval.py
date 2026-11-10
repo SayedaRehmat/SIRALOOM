@@ -23,7 +23,15 @@ def upgrade():
             existing_type=sa.Text(),
             existing_nullable=False,
         )
-        batch.add_column(sa.Column("approval_evidence_reference", sa.Text(), nullable=True))
+        batch.add_column(sa.Column("approval_evidence_reference", sa.Text(), nullable=True))        # A procedure previously marked APPROVED under the single-person model
+        # is not grandfathered into the new separation-of-duties policy.
+        # Preserve its former approver as the submitter and require fresh
+        # independent approval before it can authorize an exception.
+        op.execute(sa.text("""
+            UPDATE accession_procedures
+            SET created_by = approved_by, approved_by = NULL, status = 'PENDING_APPROVAL'
+            WHERE status = 'APPROVED'
+        """))
         batch.create_check_constraint(
             "ck_accession_procedure_status",
             "status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')",
