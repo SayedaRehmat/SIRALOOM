@@ -130,6 +130,22 @@ def create_analysis(
     except ValueError as exc:
         raise ValueError(str(exc)) from exc
     analysis_configuration["clinical_authorization"] = clinical_authorization
+    if clinical_authorization.get("mode") == "CLINICAL":
+        from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
+
+        eligibility = evaluate_small_variant_eligibility(
+            (artifact.metadata_json or {}).get("validation")
+        )
+        if eligibility["status"] != "ELIGIBLE":
+            detail = "; ".join(eligibility["reasons"])
+            raise ValueError(
+                "VCF is not eligible for the initial SNV/small-indel clinical workflow: "
+                + detail
+            )
+        analysis_configuration["workflow_eligibility"] = {
+            **eligibility,
+            "validation_artifact_sha256": artifact.sha256,
+        }
     configured_toolchain_id = analysis_configuration.get("toolchain_profile_id")
     if toolchain_profile_id and configured_toolchain_id and str(toolchain_profile_id) != str(configured_toolchain_id):
         raise ValueError("toolchain_profile_id conflicts with configuration.toolchain_profile_id")
