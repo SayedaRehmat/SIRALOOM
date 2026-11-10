@@ -362,7 +362,11 @@ def start(
     # Persist preflight recovery inside this transaction before enqueue_analysis
     # refreshes the locked row to fence concurrent starts.
     db.flush()
-    task_id = enqueue_analysis(db, analysis)
+    try:
+        task_id = enqueue_analysis(db, analysis)
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     return {
         "analysis_id": str(analysis_id),
