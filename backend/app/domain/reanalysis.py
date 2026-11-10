@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, aliased
 from backend.app.auth.authorization import case_read_recipient_user_ids
 from backend.app.domain.evidence import evidence_fingerprint
 from backend.app.infrastructure.audit.service import AuditService
+from backend.app.domain.clinical_authorization import assert_analysis_clinical_authorization
 from backend.app.infrastructure.db.models import (
     ACMGAssessment,
     Analysis,
@@ -588,6 +589,14 @@ def create_reanalysis(db: Session, *, parent: Analysis, trigger_type: str, reque
         candidate = db.scalar(select(ReanalysisCandidate).where(ReanalysisCandidate.child_analysis_id == duplicate.id)) if change_event_id else None
         return duplicate, candidate
     case = db.get(Case, parent.case_id)
+    if case is None:
+        raise ValueError("Reanalysis case not found")
+    assert_analysis_clinical_authorization(
+        db,
+        case=case,
+        analysis_configuration=parent.configuration,
+        analysis_type=parent.analysis_type,
+    )
     child_configuration = dict(parent.configuration or {})
     child_configuration["reanalysis"] = {
         "parent_analysis_id": str(parent.id),
