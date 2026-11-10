@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+import hashlib
+import json
 from uuid import UUID, uuid4
 
 # Backward-compatible patch seam for existing application tests and callers.
@@ -26,6 +28,7 @@ from backend.app.domain.resource_profile_resolver import (
 from backend.app.infrastructure.db.models import (
     Analysis,
     AnalysisDispatch,
+    Assay,
     Artifact,
     Case,
     Specimen,
@@ -130,6 +133,45 @@ def create_analysis(
     except ValueError as exc:
         raise ValueError(str(exc)) from exc
     analysis_configuration["clinical_authorization"] = clinical_authorization
+    if clinical_authorization.get("mode") == "CLINICAL":
+        if assay_id is None:
+            raise ValueError("Clinical analysis requires a versioned active assay with QC rules")
+        assay = db.get(Assay, assay_id)
+        if (
+            assay is None
+            or assay.organization_id != case.organization_id
+            or assay.status != "ACTIVE"
+            or not assay.name.strip()
+            or not assay.version.strip()
+            or not assay.assay_type.strip()
+        ):
+            raise ValueError("Clinical analysis assay is missing, inactive, or outside this organization")
+        from backend.app.quality import normalize_rules
+
+        try:
+            qc_rules = normalize_rules(assay.configuration or {})
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Clinical assay QC configuration is invalid: {exc}") from exc
+        if not qc_rules:
+            raise ValueError("Clinical analysis requires an active assay with at least one QC rule")
+        assay_configuration = assay.configuration or {}
+        assay_configuration_sha256 = hashlib.sha256(
+            json.dumps(assay_configuration, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        assay_snapshot = {
+            "assay_id": str(assay.id),
+            "name": assay.name,
+            "version": assay.version,
+            "assay_type": assay.assay_type,
+            "configuration": assay_configuration,
+            "configuration_sha256": assay_configuration_sha256,
+        }
+        assay_snapshot_sha256 = hashlib.sha256(
+            json.dumps(assay_snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        analysis_configuration["assay_id"] = str(assay.id)
+        analysis_configuration["assay_snapshot"] = assay_snapshot
+        analysis_configuration["assay_snapshot_sha256"] = assay_snapshot_sha256
     if clinical_authorization.get("mode") == "CLINICAL":
         from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
 
