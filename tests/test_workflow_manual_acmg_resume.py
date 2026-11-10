@@ -88,11 +88,11 @@ def test_manual_acmg_approval_resumes_workflow_to_next_human_gate(monkeypatch, t
             db.flush()
             db.add(Analysis(
                 id=analysis_id, case_id=case_id, parent_analysis_id=None,
-                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                assay_id=None, analysis_type="RESEARCH",
                 workflow_id="variant-v1", workflow_version="test",
                 status=AnalysisStatus.REQUIRES_REVIEW, queue_task_id="manual-acmg-resume-test",
                 reference_build="GRCh38",
-                configuration={"input_artifact_id": str(input_artifact.id)},
+                configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "input_artifact_id": str(input_artifact.id)},
                 started_at=datetime.now(timezone.utc), completed_at=None,
                 created_by=user_id, analysis_version=1,
             ))
