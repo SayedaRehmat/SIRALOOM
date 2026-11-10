@@ -277,7 +277,9 @@ def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depend
 
 @router.post("/organizations/capabilities", status_code=201)
 def grant_capability(body: CapabilityGrantInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role != "organization_admin":
+        _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
     if body.user_id == principal.user_id:
         raise HTTPException(403, "Users cannot grant capabilities to themselves")
     _membership(db, principal.organization_id, body.user_id)
@@ -290,7 +292,9 @@ def grant_capability(body: CapabilityGrantInput, db: Session = Depends(get_db), 
 
 @router.post("/organizations/capabilities/{assignment_id}/revoke")
 def revoke_capability(assignment_id: UUID, body: CapabilityRevokeInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role != "organization_admin":
+        _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
     row = db.get(OrganizationCapabilityAssignment, assignment_id)
     if row is None or row.organization_id != principal.organization_id:
         raise HTTPException(404, "Capability assignment not found")
