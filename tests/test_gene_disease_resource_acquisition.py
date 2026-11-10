@@ -165,3 +165,9 @@ def test_provider_qualification_blocks_manifest_tampering(tmp_path):
     resource_qualification._qualify_gene_disease_provider(resource, artifact, blockers, checks)
     assert "GENE_DISEASE_ACQUISITION_MANIFEST_DIGEST_MISMATCH" in blockers
     assert "gene_disease_source" not in checks
+
+
+def test_official_reconciliation_qualification_script_is_syntax_valid():
+    script = Path(__file__).resolve().parents[1] / "scripts" / "qualify_official_gene_disease_sources.py"
+    source = script.read_text(encoding="utf-8")
+    compile(source, str(script), "exec")
