@@ -7,7 +7,7 @@ from fastapi import HTTPException
 
 from backend.app.api.v1.clinical_requests import (
     CapabilityGrantInput, DecisionInput, ProcedureInput, RequestCreate, RevisionInput, VerificationInput,
-    _require_capability, grant_capability, approve_accession_procedure,
+    _require_capability, grant_capability, approve_accession_procedure, revoke_capability,
 )
 from backend.app.infrastructure.db.clinical_requests import AccessionProcedure, OrganizationCapabilityAssignment
 from types import SimpleNamespace
@@ -168,4 +168,65 @@ def test_clinical_attestation_capability_cannot_be_granted_without_qualification
     )
     with pytest.raises(HTTPException) as exc:
         grant_capability(body, db=FakeDB(), principal=principal)
+    assert exc.value.status_code == 409
+
+
+def test_capability_revocation_is_recorded_and_repeat_revocation_is_rejected(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import clinical_requests as routes
+    from backend.app.api.v1.clinical_requests import CapabilityRevokeInput
+
+    actor_id, organization_id, assignment_id, target_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    assignment = SimpleNamespace(
+        id=assignment_id,
+        organization_id=organization_id,
+        user_id=target_id,
+        revoked_at=None,
+        revoked_by=None,
+        revocation_reason=None,
+        capability="ACCESSION_DECIDE",
+    )
+
+    class FakeAudit:
+        def __init__(self, db):
+            pass
+
+        def record(self, **kwargs):
+            return None
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+        def get(self, model, key):
+            return assignment if model is OrganizationCapabilityAssignment else None
+
+        def commit(self):
+            return None
+
+    monkeypatch.setattr(routes, "AuditService", FakeAudit)
+    principal = SimpleNamespace(
+        user_id=actor_id,
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    result = revoke_capability(
+        assignment_id,
+        CapabilityRevokeInput(reason="Access role ended"),
+        db=FakeDB(),
+        principal=principal,
+    )
+    assert result["revoked"] is True
+    assert assignment.revoked_by == actor_id
+    assert assignment.revocation_reason == "Access role ended"
+
+    with pytest.raises(HTTPException) as exc:
+        revoke_capability(
+            assignment_id,
+            CapabilityRevokeInput(reason="Duplicate revoke"),
+            db=FakeDB(),
+            principal=principal,
+        )
     assert exc.value.status_code == 409
