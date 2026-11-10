@@ -29,7 +29,7 @@ def _clinical_fixture():
     request_id, revision_id, verification_id, decision_id = (
         uuid4(), uuid4(), uuid4(), uuid4()
     )
-    with Session(engine) as db:
+    with Session(engine, expire_on_commit=False) as db:
         organization = Organization(
             id=organization_id,
             name="Eligibility Test Lab",
