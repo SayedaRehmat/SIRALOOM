@@ -1406,6 +1406,36 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         case = db.get(Case, analysis.case_id)
         if case is None:
             raise RuntimeError(f"Analysis case not found: {analysis.case_id}")
+        from backend.app.domain.clinical_authorization import (
+            assert_analysis_clinical_authorization,
+        )
+        try:
+            assert_analysis_clinical_authorization(
+                db,
+                case=case,
+                analysis_configuration=analysis.configuration,
+                analysis_type=analysis.analysis_type,
+            )
+        except ValueError as exc:
+            analysis.status = AnalysisStatus.BLOCKED
+            analysis.completed_at = datetime.now(timezone.utc)
+            blocked_configuration = dict(analysis.configuration or {})
+            blocked_configuration["clinical_authorization_block"] = str(exc)
+            analysis.configuration = blocked_configuration
+            db.add(analysis)
+            AuditService(db).record(
+                event_type="CLINICAL_ANALYSIS_AUTHORIZATION_BLOCKED",
+                case_id=analysis.case_id,
+                analysis_id=analysis.id,
+                actor_type="SYSTEM",
+                actor_id="clinical-authorization-gate",
+                subject_type="ANALYSIS",
+                subject_id=str(analysis.id),
+                operation="BLOCK",
+                reason=str(exc),
+            )
+            db.commit()
+            return
         try:
             artifacts = artifact_store_for_organization(
                 db, organization_id=case.organization_id
