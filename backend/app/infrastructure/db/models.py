@@ -170,7 +170,10 @@ class Case(Base):
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "case_identifier"),
+        CheckConstraint("accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')", name="ck_case_accession_reconciliation_status"),
+    )
 
 
 class ClinicalIntakeRevision(Base):
