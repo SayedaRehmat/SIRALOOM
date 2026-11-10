@@ -86,7 +86,7 @@ def create(payload: CaseCreate, db: Session = Depends(get_db), principal: Princi
         return _existing_case_create_response(existing, payload, principal, db)
     case = Case(
         id=uuid4(), organization_id=principal.organization_id, case_identifier=payload.case_identifier,
-        status=CaseStatus.DRAFT, language=payload.language, clinical_context=payload.clinical_context,
+        status=CaseStatus.DRAFT, accession_reconciliation_status="NEW_WORKFLOW", language=payload.language, clinical_context=payload.clinical_context,
         created_by=principal.user_id,
     )
     db.add(case)
