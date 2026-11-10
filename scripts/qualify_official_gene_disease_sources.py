@@ -166,7 +166,7 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
 
     merged_symbols = sorted(
         symbol for symbol in hgnc._withdrawn
-        if hgnc.resolve(symbol).status.value == "WITHDRAWN_MERGED"
+        if hgnc.resolve(symbol).status == "WITHDRAWN_MERGED"
     )
     if not merged_symbols:
         raise AssertionError("No single-target withdrawn HGNC symbol available in pinned release")
@@ -184,7 +184,7 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
     if not ambiguous_aliases:
         raise AssertionError("No ambiguous alias available in the pinned HGNC release")
     ambiguous_alias = ambiguous_aliases[0]
-    if hgnc.resolve(ambiguous_alias).status.value != "AMBIGUOUS":
+    if hgnc.resolve(ambiguous_alias).status != "AMBIGUOUS":
         raise AssertionError("Selected multi-target alias did not produce an AMBIGUOUS HGNC result")
     ambiguous_target = sorted(hgnc._alias_index[ambiguous_alias])[0]
     ambiguous_assertions, ambiguous_reconciliations = _one_synthetic_pair(
@@ -221,7 +221,7 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
         "retired_symbol_known_answer": {
             "input": retired_symbol,
             "hgnc_id": retired_resolution.hgnc_id,
-            "status": retired_resolution.status.value,
+            "status": retired_resolution.status,
         },
         "ambiguous_alias_known_answer": {
             "input": ambiguous_alias,
