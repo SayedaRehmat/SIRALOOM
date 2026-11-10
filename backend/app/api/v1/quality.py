@@ -74,14 +74,14 @@ def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depe
     assay_type = body.assay_type.strip()
     if not name or not version or not assay_type:
         raise HTTPException(422, "Assay name, version and type must be non-empty after trimming")
-    existing = db.scalar(
+    existing = db.scalars(
         select(Assay.id).where(
             Assay.organization_id == principal.organization_id,
             Assay.name == name,
             Assay.version == version,
         )
-    )
-    if existing is not None:
+    ).all()
+    if existing:
         raise HTTPException(409, "An assay with this organization, name and version already exists")
     row = Assay(
         id=uuid4(),
