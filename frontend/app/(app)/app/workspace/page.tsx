@@ -238,6 +238,23 @@ export default function Home() {
   const [caseArtifacts, setCaseArtifacts] = useState<CaseArtifact[]>([]);
   const [clinicalRequests, setClinicalRequests] = useState<ClinicalRequestSummary[]>([]);
   const [clinicalRequestId, setClinicalRequestId] = useState("");
+  const [accessionRequestId, setAccessionRequestId] = useState("");
+  const [requestForm, setRequestForm] = useState({
+    request_identifier: "",
+    requested_examination: "Germline SNV and small-indel interpretation",
+    referral_indication: "",
+    clinical_question: "",
+    referrer_name: "",
+    referrer_role: "",
+    referrer_organization: "",
+    referrer_identifier: "",
+    referrer_contact: "",
+    referral_channel: "SECURE_PORTAL",
+    source_evidence_reference: "",
+  });
+  const [verificationEvidence, setVerificationEvidence] = useState("");
+  const [decisionReason, setDecisionReason] = useState("");
+
   const [analysisId, setAnalysisId] = useState("");
   const [analysis, setAnalysis] = useState<any>(null);
   const [variants, setVariants] = useState<Variant[]>([]);
@@ -804,6 +821,129 @@ export default function Home() {
     }
   };
 
+  const refreshClinicalRequests = async () => {
+    if (!caseId) return;
+    const rows = await apiFetch(`/cases/${caseId}/clinical-requests`);
+    const requests = Array.isArray(rows) ? rows as ClinicalRequestSummary[] : [];
+    setClinicalRequests(requests);
+    if (accessionRequestId && !requests.some((request) => request.request_id === accessionRequestId)) {
+      setAccessionRequestId("");
+    }
+    const accepted = requests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id);
+    if (!clinicalRequestId && accepted.length === 1) setClinicalRequestId(accepted[0].request_id);
+  };
+
+  const createClinicalRequest = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!caseId) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const created = await apiFetch(`/cases/${caseId}/clinical-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestForm),
+      });
+      setAccessionRequestId(created.request_id);
+      await refreshClinicalRequests();
+      setMessage("Clinical request created as DRAFT. Submit it for accession review.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to create clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reviseClinicalRequest = async () => {
+    if (!accessionRequestId) return;
+    setBusy(true);
+    try {
+      const { request_identifier: _ignored, ...revision } = requestForm;
+      await apiFetch(`/clinical-requests/${accessionRequestId}/revisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(revision),
+      });
+      await refreshClinicalRequests();
+      setMessage("A new immutable request revision was created. Submit it for reassessment.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to revise clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitClinicalRequest = async () => {
+    if (!accessionRequestId) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/submit`, { method: "POST" });
+      await refreshClinicalRequests();
+      setMessage("Clinical request submitted for accession review.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to submit clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verifyAndAcceptClinicalRequest = async () => {
+    if (!accessionRequestId || !verificationEvidence.trim() || !decisionReason.trim()) {
+      setMessage("Provide referrer-verification evidence and an accession decision reason.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const verification = await apiFetch(`/clinical-requests/${accessionRequestId}/verify-referrer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "VERIFIED",
+          method: "Institutional directory and documented callback",
+          evidence_reference: verificationEvidence.trim(),
+          outcome_note: "Referrer identity and referral authority verified.",
+        }),
+      });
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision: "ACCEPT",
+          reason: decisionReason.trim(),
+          verification_id: verification.verification_id,
+        }),
+      });
+      await refreshClinicalRequests();
+      setClinicalRequestId(accessionRequestId);
+      setMessage("Request accepted. It is now eligible for clinical analysis, subject to the other readiness gates.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to verify and accept clinical request.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const decideClinicalRequest = async (decision: "REJECT" | "NEEDS_INFORMATION") => {
+    if (!accessionRequestId || !decisionReason.trim()) {
+      setMessage("Provide a reason for the accession decision.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, reason: decisionReason.trim() }),
+      });
+      await refreshClinicalRequests();
+      setMessage(`Accession decision recorded: ${decision.replaceAll("_", " ")}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to record accession decision.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
       setMessage(t("workspace.caseVcfRequired"));
@@ -1264,6 +1404,48 @@ export default function Home() {
             <button className="primary" onClick={createAndStart} disabled={busy || !caseId || !artifactId}>{t("workspace.startAnalysis")}</button>
           </div>
           {artifactId && <div className="keyline"><span>{t("workspace.artifactId")}</span><code>{artifactId}</code></div>}
+        </section>
+
+        <section className="panel workflow-panel">
+          <div className="panel-head">
+            <div><div className="section-kicker">S1-01 / S1-02</div><h3>Clinical request and accession</h3></div>
+          </div>
+          <p className="muted">Create an external-referrer request, preserve revisions, submit it, and record verification before acceptance. Acceptance is a separate accession decision.</p>
+          <form onSubmit={createClinicalRequest} className="form-grid">
+            <label>Request identifier<input required value={requestForm.request_identifier} onChange={(event) => setRequestForm((current) => ({ ...current, request_identifier: event.target.value }))} /></label>
+            <label>Requested examination<input required value={requestForm.requested_examination} onChange={(event) => setRequestForm((current) => ({ ...current, requested_examination: event.target.value }))} /></label>
+            <label>Referral indication<textarea required value={requestForm.referral_indication} onChange={(event) => setRequestForm((current) => ({ ...current, referral_indication: event.target.value }))} /></label>
+            <label>Clinical question<textarea required value={requestForm.clinical_question} onChange={(event) => setRequestForm((current) => ({ ...current, clinical_question: event.target.value }))} /></label>
+            <label>External referrer name<input required value={requestForm.referrer_name} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_name: event.target.value }))} /></label>
+            <label>Referrer role<input value={requestForm.referrer_role} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_role: event.target.value }))} /></label>
+            <label>Referrer organization<input value={requestForm.referrer_organization} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_organization: event.target.value }))} /></label>
+            <label>Professional identifier<input value={requestForm.referrer_identifier} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_identifier: event.target.value }))} /></label>
+            <label>Referrer contact<input value={requestForm.referrer_contact} onChange={(event) => setRequestForm((current) => ({ ...current, referrer_contact: event.target.value }))} /></label>
+            <label>Referral channel<select value={requestForm.referral_channel} onChange={(event) => setRequestForm((current) => ({ ...current, referral_channel: event.target.value }))}><option value="SECURE_PORTAL">Secure portal</option><option value="SECURE_EMAIL">Secure email</option><option value="PAPER">Paper referral</option><option value="INTERNAL">Internal referral</option><option value="OTHER">Other</option></select></label>
+            <label>Referral source evidence reference<input value={requestForm.source_evidence_reference} onChange={(event) => setRequestForm((current) => ({ ...current, source_evidence_reference: event.target.value }))} /></label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy || !caseId}>Create request</button></div>
+          </form>
+          <div className="keyline"><strong>Recorded requests</strong></div>
+          <div className="form-grid">
+            <label>Request to manage
+              <select value={accessionRequestId} onChange={(event) => setAccessionRequestId(event.target.value)}>
+                <option value="">Select a request</option>
+                {clinicalRequests.map((request) => <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>)}
+              </select>
+            </label>
+            <label>Referrer verification evidence reference<input value={verificationEvidence} onChange={(event) => setVerificationEvidence(event.target.value)} placeholder="Controlled directory / callback record" /></label>
+            <label>Accession decision reason<textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} placeholder="Document the basis for the decision" /></label>
+          </div>
+          <div className="actions-row">
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={reviseClinicalRequest}>Create new revision</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={submitClinicalRequest}>Submit / resubmit</button>
+            <button className="primary" type="button" disabled={busy || !accessionRequestId} onClick={verifyAndAcceptClinicalRequest}>Verify referrer and accept</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={() => decideClinicalRequest("NEEDS_INFORMATION")}>Request information</button>
+            <button className="secondary" type="button" disabled={busy || !accessionRequestId} onClick={() => decideClinicalRequest("REJECT")}>Reject request</button>
+          </div>
+          <ul className="compact-list">
+            {clinicalRequests.map((request) => <li key={request.request_id}><strong>{request.request_identifier}</strong> — {request.status}{request.current_revision_id ? " · revision recorded" : " · no revision"}</li>)}
+          </ul>
         </section>
 
         <section id="analysis-workflow" className="panel workflow-panel">
