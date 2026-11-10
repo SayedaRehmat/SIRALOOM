@@ -2,6 +2,9 @@ name: HGNC pinned release qualification
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - feature/pedigree-lifecycle-accessible-editor-20261108
   push:
     paths:
       - "scripts/qualify_official_gene_disease_sources.py"
