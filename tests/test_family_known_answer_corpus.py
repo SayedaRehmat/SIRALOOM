@@ -20,7 +20,7 @@ def _sha(value):
 
 def _case(tmp_path, case_id, category, test_role):
     artifacts = []
-    for role in ("SOURCE_VCF", "NORMALIZED_VCF", "PEDIGREE", "PHENOTYPE"):
+    for role in ("SOURCE_MANIFEST", "SOURCE_VCF", "NORMALIZED_VCF", "PEDIGREE", "PHENOTYPE"):
         relative = f"{case_id}/{role.lower()}.txt"
         path = tmp_path / relative
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,6 +37,8 @@ def _case(tmp_path, case_id, category, test_role):
         "phase_state": "UNRESOLVED",
         "de_novo_evidence_state": "INSUFFICIENT_EVIDENCE",
         "clinical_conclusion": False,
+        "supporting_evidence": ["synthetic fixture evidence"],
+        "blocking_evidence": ["clinical qualification not performed"],
     }
     expected_sha = hashlib.sha256(
         json.dumps(expected, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
@@ -47,6 +49,9 @@ def _case(tmp_path, case_id, category, test_role):
             "qualification_category": "CLINICAL_MOLECULAR_GENETICS",
             "reviewed_at": "2026-11-10",
             "review_scope": "FAMILY_GENOTYPE_AND_EXPECTED_EVIDENCE_STATE",
+            "rationale": "Synthetic validator test only",
+            "attestation_reference": "TEST_ONLY_ATTESTATION",
+            "source_material_reviewed": True,
             "decision": "APPROVED",
             "independence_attested": True,
             "implementation_independence_attested": True,
@@ -100,8 +105,8 @@ def _case(tmp_path, case_id, category, test_role):
             "sample_identity_status": "NOT_CLINICALLY_QUALIFIED_TEST_ONLY",
             "family_relationship_status": "NOT_CLINICALLY_QUALIFIED_TEST_ONLY",
             "family_members": [
-                {"member_id": "member-proband", "sample_name": "SYNTHETIC_PROBAND", "role": "PROBAND", "identity_status": "TEST_ONLY"},
-                {"member_id": "member-parent", "sample_name": "SYNTHETIC_PARENT", "role": "MOTHER", "identity_status": "TEST_ONLY"},
+                {"member_id": "member-proband", "sample_name": "SYNTHETIC_PROBAND", "role": "PROBAND", "identity_status": "TEST_ONLY", "is_proband": True},
+                {"member_id": "member-parent", "sample_name": "SYNTHETIC_PARENT", "role": "MOTHER", "identity_status": "TEST_ONLY", "is_proband": False},
             ],
             "relationships": [
                 {
@@ -117,6 +122,11 @@ def _case(tmp_path, case_id, category, test_role):
                     "phase_state": "UNRESOLVED",
                     "callability_state": "NOT_ASSESSED",
                     "quality_state": "NOT_ASSESSED",
+                    "source_record_sha256": "d" * 64,
+                    "genotypes": [
+                        {"member_id": "member-proband", "call_state": "CALL_PRESENT", "genotype": "0/1", "callability_state": "NOT_ASSESSED", "quality_state": "NOT_ASSESSED"},
+                        {"member_id": "member-parent", "call_state": "NO_RECORD", "genotype": None, "callability_state": "NOT_ASSESSED", "quality_state": "NOT_ASSESSED"},
+                    ],
                 }
             ],
         },
