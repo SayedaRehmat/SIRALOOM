@@ -43,6 +43,7 @@ def _case(tmp_path, case_id, category, test_role):
     expected_sha = hashlib.sha256(
         json.dumps(expected, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
     ).hexdigest()
+    source_vcf_sha256 = next(item["sha256"] for item in artifacts if item["role"] == "SOURCE_VCF")
     reviewers = [
         {
             "reviewer_id": f"reviewer-{case_id}-1",
@@ -105,8 +106,8 @@ def _case(tmp_path, case_id, category, test_role):
             "sample_identity_status": "NOT_CLINICALLY_QUALIFIED_TEST_ONLY",
             "family_relationship_status": "NOT_CLINICALLY_QUALIFIED_TEST_ONLY",
             "family_members": [
-                {"member_id": "member-proband", "sample_name": "SYNTHETIC_PROBAND", "role": "PROBAND", "identity_status": "TEST_ONLY", "is_proband": True},
-                {"member_id": "member-parent", "sample_name": "SYNTHETIC_PARENT", "role": "MOTHER", "identity_status": "TEST_ONLY", "is_proband": False},
+                {"member_id": "member-proband", "sample_name": "SYNTHETIC_PROBAND", "role": "PROBAND", "identity_status": "TEST_ONLY", "is_proband": True, "source_artifact_sha256": source_vcf_sha256, "binding_id": "binding-proband", "binding_fingerprint": "e" * 64, "analysis_id": "analysis-proband"},
+                {"member_id": "member-parent", "sample_name": "SYNTHETIC_PARENT", "role": "MOTHER", "identity_status": "TEST_ONLY", "is_proband": False, "source_artifact_sha256": source_vcf_sha256, "binding_id": "binding-parent", "binding_fingerprint": "f" * 64, "analysis_id": "analysis-parent"},
             ],
             "relationships": [
                 {
