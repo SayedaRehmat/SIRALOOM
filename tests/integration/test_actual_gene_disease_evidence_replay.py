@@ -358,6 +358,23 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                     qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
                 ),
             ])
+            db.add(PhenotypeObservation(
+                id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                hpo_id="HP:0001250", canonical_hpo_id="HP:0001250",
+                record_fingerprint="9" * 64, label="Seizures",
+                present=True, phenotype_status="PRESENT",
+                onset=None, severity=None, subject_member_id=None,
+                observed_at=datetime.now(timezone.utc),
+                clinical_attributes={}, ontology_resolution={
+                    "status": "CURRENT", "canonical_id": "HP:0001250",
+                    "resource_version": hpo_release, "resource_sha256": hpo_sha,
+                },
+                source="CLINICAL_INPUT", evidence={"source": "integration_fixture"},
+            ))
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="organization_admin", status="ACTIVE",
+            ))
             db.add_all([
                 Annotation(
                     id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
