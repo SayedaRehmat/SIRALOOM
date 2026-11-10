@@ -43,7 +43,7 @@ class RequestCreate(BaseModel):
 
     @model_validator(mode="after")
     def clean(self):
-        for name in self.model_fields:
+        for name in type(self).model_fields:
             value = getattr(self, name)
             if isinstance(value, str):
                 setattr(self, name, value.strip())
@@ -107,6 +107,17 @@ class ProcedureInput(BaseModel):
     expires_at: datetime | None = None
     approval_evidence_reference: str = Field(min_length=1, max_length=1000)
     allows_unverified_referrer_exception: bool = False
+
+    @model_validator(mode="after")
+    def validate_effective_window(self):
+        if self.effective_at.tzinfo is None or self.effective_at.utcoffset() is None:
+            raise ValueError("Procedure effective_at must include a timezone")
+        if self.expires_at is not None:
+            if self.expires_at.tzinfo is None or self.expires_at.utcoffset() is None:
+                raise ValueError("Procedure expires_at must include a timezone")
+            if self.expires_at <= self.effective_at:
+                raise ValueError("Procedure expires_at must be later than effective_at")
+        return self
 
 
 class AttestationInput(BaseModel):
