@@ -14,6 +14,7 @@ import shutil
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 from sqlalchemy.orm import Session
@@ -29,6 +30,11 @@ CLINGEN_URL = "https://search.clinicalgenome.org/kb/gene-validity/download"
 G2P_TERMS = "https://www.ebi.ac.uk/about/terms-of-use/"
 CLINGEN_LICENSE = "https://www.clinicalgenome.org/docs/terms-of-use/"
 CLINGEN_DOWNLOADS = "https://search.clinicalgenome.org/kb/downloads"
+_ALLOWED_DOWNLOAD_HOSTS = {
+    G2P_URL: frozenset({"www.ebi.ac.uk", "ebi.ac.uk", "ftp.ebi.ac.uk"}),
+    CLINGEN_URL: frozenset({"search.clinicalgenome.org", "clinicalgenome.org", "www.clinicalgenome.org"}),
+}
+MAX_SOURCE_BYTES = 250 * 1024 * 1024
 
 
 class GeneDiseaseAcquisitionError(RuntimeError):
@@ -54,8 +60,12 @@ def _download_atomic(url: str, destination: Path) -> tuple[str, int, str]:
     try:
         with urlopen(request, timeout=120) as response:
             final_url = response.geturl()
-            if not final_url.startswith("https://"):
-                raise GeneDiseaseAcquisitionError("Publisher download redirected away from HTTPS")
+            final_host = (urlparse(final_url).hostname or "").casefold()
+            allowed_hosts = _ALLOWED_DOWNLOAD_HOSTS.get(url, frozenset())
+            if not final_url.startswith("https://") or final_host not in allowed_hosts:
+                raise GeneDiseaseAcquisitionError(
+                    f"Publisher download redirected to an unapproved endpoint: {final_url}"
+                )
             with tempfile.NamedTemporaryFile(
                 mode="wb", dir=destination.parent, prefix=f".{destination.name}.", delete=False
             ) as output:
@@ -66,9 +76,13 @@ def _download_atomic(url: str, destination: Path) -> tuple[str, int, str]:
                     chunk = response.read(1024 * 1024)
                     if not chunk:
                         break
+                    size += len(chunk)
+                    if size > MAX_SOURCE_BYTES:
+                        raise GeneDiseaseAcquisitionError(
+                            f"Publisher source artifact exceeds the {MAX_SOURCE_BYTES}-byte acquisition limit"
+                        )
                     output.write(chunk)
                     digest.update(chunk)
-                    size += len(chunk)
                 output.flush()
                 os.fsync(output.fileno())
         if size <= 0:
