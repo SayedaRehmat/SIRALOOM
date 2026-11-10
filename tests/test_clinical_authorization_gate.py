@@ -1,3 +1,5 @@
+import hashlib
+import json
 from uuid import uuid4
 
 import pytest
@@ -16,7 +18,7 @@ from backend.app.infrastructure.db.clinical_requests import (
     ClinicalRequestRevision,
     ReferrerVerification,
 )
-from backend.app.infrastructure.db.models import Artifact, Case, Organization, Specimen, User
+from backend.app.infrastructure.db.models import Artifact, Assay, Case, Organization, Specimen, User
 
 
 def _clinical_fixture():
@@ -45,6 +47,22 @@ def _clinical_fixture():
             status="ACTIVE",
         )
         db.add(user)
+        db.flush()
+        assay_configuration = {
+            "rules": [
+                {"metric": "coverage", "direction": "MIN", "threshold": 20, "severity": "FAIL"}
+            ]
+        }
+        assay = Assay(
+            id=uuid4(),
+            organization_id=organization_id,
+            name="Clinical Germline Assay",
+            version="1.0",
+            assay_type="GERMLINE",
+            configuration=assay_configuration,
+            status="ACTIVE",
+        )
+        db.add(assay)
         db.flush()
         case = Case(
             id=case_id,
@@ -138,6 +156,19 @@ def _clinical_fixture():
         db.commit()
     workflow_eligibility = evaluate_small_variant_eligibility(validation)
     workflow_eligibility["validation_artifact_sha256"] = "a" * 64
+    assay_snapshot = {
+        "assay_id": str(assay.id),
+        "name": assay.name,
+        "version": assay.version,
+        "assay_type": assay.assay_type,
+        "configuration": assay_configuration,
+        "configuration_sha256": hashlib.sha256(
+            json.dumps(assay_configuration, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+    }
+    assay_snapshot_sha256 = hashlib.sha256(
+        json.dumps(assay_snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     configuration = {
         "clinical_authorization": {
             "mode": "CLINICAL",
@@ -151,6 +182,9 @@ def _clinical_fixture():
         "specimen_id": str(specimen_id),
         "vcf_sample_name": "SAMPLE-01",
         "workflow_eligibility": workflow_eligibility,
+        "assay_id": str(assay.id),
+        "assay_snapshot": assay_snapshot,
+        "assay_snapshot_sha256": assay_snapshot_sha256,
     }
     return engine, case_id, artifact_id, specimen_id, configuration
 
