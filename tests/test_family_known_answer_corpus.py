@@ -267,3 +267,11 @@ def test_corpus_validator_rejects_source_snapshot_hash_not_bound_to_manifest_art
 
     with pytest.raises(CorpusValidationError, match="does not match the preserved source manifest"):
         validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_never_treats_no_record_as_reference_genotype(tmp_path):
+    manifest = _manifest(tmp_path)
+    manifest["cases"][0]["evidence"]["variants"][0]["genotypes"][1]["genotype"] = "0|0"
+
+    with pytest.raises(CorpusValidationError, match="must remain null, not reference"):
+        validate_corpus(manifest, tmp_path)
