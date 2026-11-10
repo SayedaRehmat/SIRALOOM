@@ -303,6 +303,10 @@ class Assay(Base):
     configuration: Mapped[dict] = mapped_column(JSON, default=dict)
     status: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "name", "version", name="uq_assay_org_name_version"),
+        CheckConstraint("status IN ('ACTIVE','INACTIVE')", name="ck_assay_status"),
+    )
 
 class Analysis(Base):
     __tablename__ = "analyses"
