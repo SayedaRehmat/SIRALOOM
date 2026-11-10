@@ -164,6 +164,7 @@ class Case(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
+    accession_reconciliation_status: Mapped[str] = mapped_column(Text, nullable=False, default="NEW_WORKFLOW", server_default="NEW_WORKFLOW")
     clinical_context: Mapped[dict] = mapped_column(JSON, default=dict)
     language: Mapped[str] = mapped_column(Text, default="en")
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
