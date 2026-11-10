@@ -131,9 +131,25 @@ HGNC resolution is recorded as a resource execution within the analysis. Runtime
 - Conflicting, partial, unmapped, incomplete, or source-only evidence remains visible and requires human review.
 - Technical resource qualification, organization approval, clinical validation, and laboratory accreditation are separate activities.
 
-## 8. Verification state and remaining gates
+## 8. Acquisition and technical qualification implementation
 
-The current code adds deterministic resolver binding, source-native HGNC preservation, strict identifier parsing, exact HGNC+MONDO reconciliation, source-versioned identities, explicit MOI mapping, and review statuses. Synthetic regression tests cover these behaviors.
+The current branch implements the following source-ingestion boundary:
+
+- G2P is acquired from the official all-panels download endpoint. Its on-the-fly export is versioned by the UTC acquisition date and exact local SHA-256; it is not represented as a publisher-issued static archive.
+- ClinGen GDV is acquired from the official gene-validity CSV endpoint. The publisher's `FILE CREATED` date is the source release identity; the local SHA-256 distinguishes the exact byte snapshot because the endpoint is generated in real time.
+- The downloader preserves unmodified response bytes, requested and final HTTPS URLs, acquisition timestamp, release identity kind, byte size and local SHA-256 in an immutable manifest. It refuses to overwrite a populated acquisition directory.
+- The managed resource copy is made atomically and verified against the acquisition manifest before registration.
+- Both providers are registered as CANDIDATE resources, staged through the existing resource staging lifecycle, and passed to server-side `qualify_resource()`.
+- Provider-specific qualification executes the production G2P and ClinGen parsers against the staged local bytes, verifies the source digest and manifest binding, checks release identity, requires non-empty records and unique source record identifiers, and records counts for missing MONDO and native HGNC identifiers.
+- A local SHA-256 is explicitly labelled as a locally calculated content pin, not a publisher checksum. G2P's EMBL-EBI Terms of Use and upstream contributor restrictions are retained; ClinGen curated GDV content is recorded under CC0 1.0 with attribution requested.
+- Technical qualification does not activate or approve either resource for a laboratory.
+
+The workflow `.github/workflows/hgnc-qualification.yml` now includes deterministic acquisition/qualification tests and a PostgreSQL-backed real-source qualification job. It preserves acquired source files, managed copies and the qualification report as a 30-day Actions artifact.
+
+## 9. Verification state and remaining gates
+
+
+The current code adds deterministic resolver binding, source-native HGNC preservation, strict identifier parsing, exact HGNC+MONDO reconciliation, source-versioned identities, explicit MOI mapping, and review statuses. Synthetic regression tests cover these behaviors. G2P/ClinGen acquisition, manifest binding, production-parser qualification, and PostgreSQL registration are now implemented in this branch; actual downloaded-release qualification remains unverified until the dedicated workflow completes successfully.
 
 The following are still required before G2P/ClinGen can be described as fully qualified for a laboratory:
 
