@@ -620,14 +620,21 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         with LocalSession() as db:
             db.query(Evidence).filter(Evidence.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(Annotation).filter(Annotation.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(PhenotypeObservation).filter(PhenotypeObservation.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(OrganizationMembership.organization_id == organization_id).delete(synchronize_session=False)
             db.query(ResourceExecutionRecord).filter(ResourceExecutionRecord.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(WorkflowStep).filter(WorkflowStep.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(AnalysisPartition).filter(AnalysisPartition.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(Artifact).filter(Artifact.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(AuditEvent).filter(AuditEvent.analysis_id == analysis_id).delete(synchronize_session=False)
             db.query(Analysis).filter(Analysis.id == analysis_id).delete(synchronize_session=False)
-            db.query(ResourceQualification).filter(ResourceQualification.id.in_([g2p_qualification_id, clingen_qualification_id])).delete(synchronize_session=False)
-            db.query(Resource).filter(Resource.id.in_([g2p_resource_id, clingen_resource_id])).delete(synchronize_session=False)
+            db.query(ResourceQualification).filter(ResourceQualification.id.in_([
+                g2p_qualification_id, clingen_qualification_id,
+                hpo_qualification_id, hpoa_qualification_id,
+            ])).delete(synchronize_session=False)
+            db.query(Resource).filter(Resource.id.in_([
+                g2p_resource_id, clingen_resource_id, hpo_resource_id, hpoa_resource_id,
+            ])).delete(synchronize_session=False)
             db.query(Variant).filter(Variant.id.in_(variant_ids)).delete(synchronize_session=False)
             db.query(Case).filter(Case.id == case_id).delete(synchronize_session=False)
             db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
