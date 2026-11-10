@@ -60,7 +60,17 @@ def test_context_order_uses_only_present_proband_terms_and_preserves_provenance(
             {"id": "u1", "canonical_hpo_id": "HP:0000001", "phenotype_status": "UNKNOWN"},
         ],
         gene_disease_records=[_association()],
-        hpoa_provenance={"resource_id": "00000000-0000-0000-0000-000000000002", "resource_version": "2026-09-02", "resource_sha256": "f" * 64},
+        hpoa_provenance={
+            "resource_id": "00000000-0000-0000-0000-000000000002",
+            "resource_name": "Pinned HPOA",
+            "resource_version": "2026-09-02",
+            "resource_sha256": "f" * 64,
+            "request_fingerprint": "1" * 64,
+            "response_sha256": "2" * 64,
+            "qualification_id": "00000000-0000-0000-0000-000000000003",
+            "qualification_version": "hpoa-qualification-v1",
+            "contract_hash": "3" * 64,
+        },
         annotations_by_disease={
             "mondo:0000001": [
                 Hpoa("HP:0000001", frequency="1/2"),
@@ -82,6 +92,12 @@ def test_context_order_uses_only_present_proband_terms_and_preserves_provenance(
     assert candidate["inheritance"]["modes"] == ["AUTOSOMAL_RECESSIVE"]
     assert candidate["inheritance"]["penetrance"]["status"] == "UNKNOWN"
     assert candidate["association_provenance"]["resource_version"] == "2026-10"
+    assert candidate["hpoa_provenance"]["resource_name"] == "Pinned HPOA"
+    assert candidate["hpoa_provenance"]["request_fingerprint"] == "1" * 64
+    assert candidate["hpoa_provenance"]["response_sha256"] == "2" * 64
+    assert candidate["hpoa_provenance"]["qualification_id"] == "00000000-0000-0000-0000-000000000003"
+    assert candidate["hpoa_provenance"]["qualification_version"] == "hpoa-qualification-v1"
+    assert candidate["hpoa_provenance"]["contract_hash"] == "3" * 64
 
 
 def test_context_order_is_deterministic_for_equal_match_counts():
