@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type ApiFetch = (path: string, init?: RequestInit) => Promise<any>;
 type Props = { caseId: string; apiFetch: ApiFetch };
@@ -69,7 +69,7 @@ export default function PedigreeIntake({ caseId, apiFetch }: Props) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const addMember = async (event: React.FormEvent<HTMLFormElement>) => {
+  const addMember = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
     setError("");
