@@ -192,7 +192,7 @@ class ClinGenGeneDiseaseValidityProvider:
                 online_report=report,
                 classification_date=data.get("CLASSIFICATION DATE") or None,
                 expert_panel=data.get("GCEP") or None,
-                source_record_id=f"ClinGen-GDV:{record_id}",
+                source_record_id=f"ClinGen-GDV:{record_id}:{digest[:16]}",
                 payload=data,
                 record_sha256=digest,
             )
