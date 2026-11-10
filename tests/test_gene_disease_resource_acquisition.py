@@ -14,18 +14,18 @@ G2P_CSV = (
     "G2P ID,Gene symbol,HGNC ID,Disease name,Disease MONDO,Allelic requirement,"
     "Molecular mechanism,Confidence,Publication,Publication phenotypes,"
     "Cross cutting modifier,Publication variant types,"
-    "Evidence based variant consequence,Publication molecular mechanism evidence\\n"
+    "Evidence based variant consequence,Publication molecular mechanism evidence\n"
     "G2P001,GENE1,HGNC:1,Example disorder,MONDO:0000001,biallelic_autosomal,"
-    "loss of function,definitive,PMID:1,HP:0001250,,,,\\n"
+    "loss of function,definitive,PMID:1,HP:0001250,,,,\n"
 ).encode()
 
 CLINGEN_CSV = (
-    "CLINGEN GENE VALIDITY CURATIONS\\n"
-    "FILE CREATED: 2026-11-10\\n"
+    "CLINGEN GENE VALIDITY CURATIONS\n"
+    "FILE CREATED: 2026-11-10\n"
     "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,CLASSIFICATION,"
-    "ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\\n"
+    "ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\n"
     "GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP10,Definitive,"
-    "https://search.clinicalgenome.org/kb/gene-validity/example,2026-11-10,Expert Panel,AR\\n"
+    "https://search.clinicalgenome.org/kb/gene-validity/example,2026-11-10,Expert Panel,AR\n"
 ).encode()
 
 
@@ -73,7 +73,7 @@ def test_acquisition_refuses_to_overwrite_existing_release_directory(tmp_path):
 
 def test_clingen_release_identity_requires_publisher_file_created_date(tmp_path):
     path = tmp_path / "clingen.csv"
-    path.write_text("CLINGEN GENE VALIDITY CURATIONS\\nGENE SYMBOL,GENE ID (HGNC)\\n", encoding="utf-8")
+    path.write_text("CLINGEN GENE VALIDITY CURATIONS\nGENE SYMBOL,GENE ID (HGNC)\n", encoding="utf-8")
     with pytest.raises(acquisition.GeneDiseaseAcquisitionError, match="FILE CREATED"):
         acquisition._clingen_file_created(path)
 
