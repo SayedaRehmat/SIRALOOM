@@ -100,6 +100,7 @@ Cases that predate this workflow and lack documentary evidence are marked `LEGAC
 ### Procedure approval separation of duties
 
 - Procedure registration is pending and cannot authorize an exception.
+- Any legacy procedure previously marked approved without independent approval is returned to pending approval during migration; no old single-person approval is grandfathered.
 - The procedure submitter cannot approve the same procedure version.
 - Approval requires a distinct evidence reference and is audited.
 - Procedure document evidence is never overwritten by approval evidence.
