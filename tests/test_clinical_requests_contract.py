@@ -6,10 +6,11 @@ import pytest
 from fastapi import HTTPException
 
 from backend.app.api.v1.clinical_requests import (
-    DecisionInput, ProcedureInput, RequestCreate, RevisionInput, VerificationInput,
-    _require_capability,
+    CapabilityGrantInput, DecisionInput, ProcedureInput, RequestCreate, RevisionInput, VerificationInput,
+    _require_capability, grant_capability, approve_accession_procedure,
 )
-from backend.app.infrastructure.db.clinical_requests import OrganizationCapabilityAssignment
+from backend.app.infrastructure.db.clinical_requests import AccessionProcedure, OrganizationCapabilityAssignment
+from types import SimpleNamespace
 
 
 def _request_payload():
@@ -92,3 +93,79 @@ def test_capability_records_preserve_grant_and_revocation_history():
     assignment.revocation_reason = "Role changed"
     assert assignment.revoked_at is not None
     assert assignment.revocation_reason == "Role changed"
+
+
+def test_pending_procedure_is_not_effective_and_requires_a_separate_approver():
+    procedure = AccessionProcedure(
+        id=uuid4(),
+        organization_id=uuid4(),
+        procedure_identifier="SOP-ACC-004",
+        procedure_version="3.1",
+        status="PENDING_APPROVAL",
+        effective_at=datetime.now(UTC) - timedelta(days=1),
+        expires_at=None,
+        approved_by=None,
+        created_by=uuid4(),
+        approval_evidence_reference="CONTROLLED-DOCUMENT-17",
+        allows_unverified_referrer_exception=True,
+    )
+    assert procedure.status == "PENDING_APPROVAL"
+    assert procedure.approved_by is None
+
+
+def test_procedure_submitter_cannot_approve_their_own_procedure():
+    from fastapi import HTTPException
+    from backend.app.api.v1.clinical_requests import ProcedureApprovalInput
+
+    user_id, organization_id, procedure_id = uuid4(), uuid4(), uuid4()
+    procedure = SimpleNamespace(
+        id=procedure_id,
+        organization_id=organization_id,
+        status="PENDING_APPROVAL",
+        created_by=user_id,
+    )
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+        def get(self, model, key):
+            return procedure if model is AccessionProcedure else None
+
+    principal = SimpleNamespace(
+        user_id=user_id,
+        organization_id=organization_id,
+        role="lab_director",
+    )
+    with pytest.raises(HTTPException) as exc:
+        approve_accession_procedure(
+            procedure_id,
+            ProcedureApprovalInput(approval_evidence_reference="QMS-APPROVAL-17"),
+            db=FakeDB(),
+            principal=principal,
+        )
+    assert exc.value.status_code == 403
+
+
+def test_clinical_attestation_capability_cannot_be_granted_without_qualification_workflow():
+    from fastapi import HTTPException
+
+    user_id, organization_id = uuid4(), uuid4()
+
+    class FakeDB:
+        def scalar(self, statement):
+            return SimpleNamespace(id=uuid4())
+
+    principal = SimpleNamespace(
+        user_id=uuid4(),
+        organization_id=organization_id,
+        role="organization_admin",
+    )
+    body = CapabilityGrantInput(
+        user_id=user_id,
+        capability="CLINICAL_ATTEST",
+        reason="Clinical genetics authority",
+    )
+    with pytest.raises(HTTPException) as exc:
+        grant_capability(body, db=FakeDB(), principal=principal)
+    assert exc.value.status_code == 409
