@@ -248,7 +248,13 @@ def test_capability_expiry_requires_timezone_aware_timestamp():
         capability="ACCESSION_DECIDE",
         reason="Accession duty assignment",
         expires_at=datetime(2030, 1, 1, tzinfo=UTC),
-    )
+    )    with pytest.raises(ValueError, match="future"):
+        CapabilityGrantInput(
+            user_id=uuid4(),
+            capability="ACCESSION_DECIDE",
+            reason="Already expired",
+            expires_at=datetime(2020, 1, 1, tzinfo=UTC),
+        )
     assert valid.expires_at.tzinfo is not None
 
 
