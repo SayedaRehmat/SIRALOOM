@@ -30,9 +30,10 @@ def resolver(tmp_path):
     withdrawn = tmp_path / "withdrawn.txt"
     _write_tsv(complete, GENE_FIELDS, [
         {"hgnc_id": "HGNC:1", "symbol": "GENEA", "alias_symbol": "OLD_A|SHARED", "prev_symbol": "PREV_A", "ensembl_gene_id": "ENSG00000123456"},
-        {"hgnc_id": "HGNC:2", "symbol": "GENEB", "alias_symbol": "SHARED", "prev_symbol": "PREV_B", "ensembl_gene_id": "ENSG00000654321"},
+        {"hgnc_id": "HGNC:2", "symbol": "GENEB", "alias_symbol": "SHARED|ALIAS_COLLISION", "prev_symbol": "PREV_B", "ensembl_gene_id": "ENSG00000654321"},
         {"hgnc_id": "HGNC:3", "symbol": "GENEC", "alias_symbol": "SPLIT_X", "prev_symbol": "", "ensembl_gene_id": ""},
         {"hgnc_id": "HGNC:4", "symbol": "COLLIDING", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
+        {"hgnc_id": "HGNC:5", "symbol": "ALIAS_COLLISION", "alias_symbol": "", "prev_symbol": "", "ensembl_gene_id": ""},
     ])
     _write_tsv(withdrawn, WITHDRAWN_FIELDS, [
         {"HGNC_ID": "HGNC:90", "STATUS": "Merged/Split", "WITHDRAWN_SYMBOL": "RETIRED_A", "MERGED_INTO_REPORT(S) i.e. HGNC_ID|SYMBOL|STATUS": "HGNC:1|GENEA|Approved"},
@@ -68,6 +69,13 @@ def test_withdrawn_symbol_collision_with_current_approved_symbol_is_ambiguous(re
     assert result.status == Status.AMBIGUOUS
     assert result.hgnc_id is None
     assert result.candidate_hgnc_ids == ("HGNC:2", "HGNC:4")
+
+
+def test_alias_collision_with_current_approved_symbol_is_ambiguous(resolver):
+    result = resolver.resolve("ALIAS_COLLISION")
+    assert result.status == Status.AMBIGUOUS
+    assert result.hgnc_id is None
+    assert result.candidate_hgnc_ids == ("HGNC:2", "HGNC:5")
 
 
 def test_previous_symbol_resolves_exactly(resolver):
