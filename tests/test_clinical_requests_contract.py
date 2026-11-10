@@ -106,7 +106,8 @@ def test_pending_procedure_is_not_effective_and_requires_a_separate_approver():
         expires_at=None,
         approved_by=None,
         created_by=uuid4(),
-        approval_evidence_reference="CONTROLLED-DOCUMENT-17",
+        procedure_evidence_reference="CONTROLLED-DOCUMENT-17",
+        approval_evidence_reference=None,
         allows_unverified_referrer_exception=True,
     )
     assert procedure.status == "PENDING_APPROVAL"
