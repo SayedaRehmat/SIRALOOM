@@ -161,7 +161,9 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
     hpo_sha = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
     hpoa_sha = hashlib.sha256(hpoa_path.read_bytes()).hexdigest()
     g2p_resource_id, clingen_resource_id = uuid4(), uuid4()
+    hpo_resource_id, hpoa_resource_id = uuid4(), uuid4()
     g2p_qualification_id, clingen_qualification_id = uuid4(), uuid4()
+    hpo_qualification_id, hpoa_qualification_id = uuid4(), uuid4()
     release = "2026-11-08"
 
     g2p_contract = ResourceExecutionContract(
@@ -188,6 +190,30 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         qualification_id=clingen_qualification_id,
         qualification_version="integration-qualified-v1",
         contract=clingen_contract, contract_hash="b" * 64,
+    )
+
+    hpo_contract = ResourceExecutionContract(
+        provider_id="HPO", provider_version="OBO",
+        access_method="LOCAL", endpoint=None, location=str(hpo_path),
+        dataset=hpo_release, toolchain={"release": hpo_release, "sha256": hpo_sha},
+    )
+    hpoa_contract = ResourceExecutionContract(
+        provider_id="HPOA", provider_version="HPOA_TSV",
+        access_method="LOCAL", endpoint=None, location=str(hpoa_path),
+        dataset=hpoa_release,
+        toolchain={"release": hpoa_release, "hpo_release": hpo_release, "sha256": hpoa_sha},
+    )
+    hpo_execution = ResolvedResourceExecution(
+        resource_id=hpo_resource_id, resource_version=hpo_release,
+        qualification_id=hpo_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=hpo_contract, contract_hash="e" * 64,
+    )
+    hpoa_execution = ResolvedResourceExecution(
+        resource_id=hpoa_resource_id, resource_version=hpoa_release,
+        qualification_id=hpoa_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=hpoa_contract, contract_hash="f" * 64,
     )
 
     stop_after_evidence = {"value": False}
