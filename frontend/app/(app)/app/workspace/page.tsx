@@ -10,6 +10,7 @@ import { clearUploadIdempotencyAttempt, getOrCreateUploadIdempotencyAttempt } fr
 import { canFinalizeClinicalReports, canSubmitReportSignout } from "../../../../lib/report-permissions.mjs";
 import PhenotypeIntake from "../../../../components/PhenotypeIntake";
 import ClinicalContextIntake from "../../../../components/ClinicalContextIntake";
+import PedigreeIntake from "../../../../components/PedigreeIntake";
 
 type Step = {
   step_id: string;
@@ -1529,6 +1530,7 @@ export default function Home() {
         </section>
       )}
 
+      {caseId && <PedigreeIntake caseId={caseId} apiFetch={apiFetch} />}
       {caseId && <ClinicalContextIntake caseId={caseId} apiFetch={apiFetch} />}
       {caseId && <PhenotypeIntake caseId={caseId} apiFetch={apiFetch} />}
 
