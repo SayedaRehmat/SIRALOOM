@@ -49,7 +49,7 @@ There is no single universal phenotype-ranking algorithm or single gene-inherita
 - Preserve the current HPO/HPOA source-pinned inputs and explicit phenotype states.
 - Keep the current deterministic exact/IS-A output labelled contextual and unqualified.
 - Audit phenotype capture and exports against Phenopackets v2 and the GA4GH pedigree mapping.
-- Evaluate a pinned offline Exomiser release/data bundle as a candidate clinical prioritization provider. Review license, data redistribution terms, runtime, HPO/disease-resource versions, inheritance semantics and reproducibility before selecting it.
+- Evaluate a pinned offline Exomiser release/data bundle as a candidate phenotype-prioritization provider, not as SIRALOOM's complete inheritance engine. Current Exomiser documentation lists AD, AR, X_RECESSIVE and UNDEFINED inheritance modes; this does not cover the full SIRALOOM target (including X-linked dominant and all required complex family evidence states). Jannovar documentation also describes reduced specificity for larger pedigrees. Exomiser therefore cannot replace C1.4's complete disease-specific family evidence workflow. Review its AGPL-3.0 software license, data redistribution terms, runtime, HPO/disease-resource versions and reproducibility before any commercial SaaS integration.
 - Compare its outputs with the existing method on public, documented known-answer cases. Do not implement a replacement home-grown score.
 - Enable clinical ranking only after independent validation and explicit laboratory approval.
 
@@ -77,7 +77,23 @@ There is no single universal phenotype-ranking algorithm or single gene-inherita
 - Prevent duplicate evidence use and criterion double counting under the existing ACMG evidence engine.
 - Require independent known-answer tests for each criterion and strength before clinical use.
 
-## 5. Current code assessment
+## 5. Exomiser due-diligence findings
+
+Exomiser is an established open-source prioritization tool and a candidate implementation to evaluate; it is not a clinical standard that all laboratories must use.
+
+- The published 15.1.1 documentation describes offline VCF + HPO analysis and a data bundle with phenotype and assembly-specific genomic resources. Its installation documentation reports approximately 80 GB of downloads, Java 21+, and version-coupled phenotype / GRCh37 / GRCh38 data.
+- The documented Exomiser inheritanceModes configuration lists AUTOSOMAL_DOMINANT, AUTOSOMAL_RECESSIVE, X_RECESSIVE and UNDEFINED. That documented set is insufficient as the sole engine for SIRALOOM's intended disease-specific model coverage.
+- Jannovar's own inheritance documentation warns that larger pedigrees can lose specificity (reduced ability to exclude incompatible variants), although sensitivity is retained. This must be represented in any use/qualification.
+- The Monarch Exomiser project page identifies the software as AGPL-3.0. Commercial SaaS deployment requires a legal review of the exact distribution, modification and network-use model before adoption.
+- Therefore: evaluate Exomiser for phenotype ranking and as a comparison baseline only. Do not delegate complete C1.4 inheritance conclusions or ACMG/ClinGen criterion assignments to it. No Exomiser dependency is approved or added by this document.
+
+References:
+- Exomiser 15.1.1 installation and resource requirements: https://exomiser.readthedocs.io/en/development/installation.html
+- Exomiser inheritance modes: https://exomiser.readthedocs.io/en/stable/advanced_analysis.html
+- Jannovar pedigree/inheritance limitations: https://app.readthedocs.org/projects/jannovar/downloads/pdf/develop/
+- Exomiser license listing: https://next.monarchinitiative.org/tools/exomiser
+
+## 6. Current code assessment
 
 | Code / area | Current behavior | Required disposition |
 |---|---|---|
@@ -87,7 +103,7 @@ There is no single universal phenotype-ranking algorithm or single gene-inherita
 | backend/app/inheritance.py and pedigree workflow | Existing conservative sufficiency/review boundary; historical M10 heuristic retired. | Preserve. Do not restore M10 scores or heuristic status conclusions. |
 | ACMG/ClinGen evidence engine | Existing classification architecture. | Add only criteria-specific, source-backed evidence adapters after their specifications and qualification fixtures are ready. |
 
-## 6. Release gates
+## 7. Release gates
 
 - Every rule has a source URL, exact version/date, source record or specification section, and implementation mapping.
 - Every external resource is acquired, checksum-pinned, qualified and organization-approved before production use.
@@ -98,7 +114,7 @@ There is no single universal phenotype-ranking algorithm or single gene-inherita
 - Tenant authorization, immutable snapshots, crash/replay and report provenance remain intact.
 - No clinical-readiness claim is made until laboratory validation, SOP approval, qualified review and applicable regulatory/quality requirements are satisfied.
 
-## 7. Authoritative references
+## 8. Authoritative references
 
 - Richards et al. (2015), ACMG/AMP sequence variant interpretation: https://doi.org/10.1038/gim.2015.30
 - ClinGen SVI PP1/BS4/PP4 recommendations: https://clinicalgenome.org/docs/clingen-guidance-for-use-of-the-pp1-bs4-co-segregation-and-pp4-phenotype-specificity-criteria-for-sequence-variant/
