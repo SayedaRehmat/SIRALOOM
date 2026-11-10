@@ -259,6 +259,15 @@ export default function Home() {
   const [capabilityName, setCapabilityName] = useState("REFERRER_VERIFY");
   const [capabilityReason, setCapabilityReason] = useState("");
   const [capabilityExpiry, setCapabilityExpiry] = useState("");
+  const [accessionProcedures, setAccessionProcedures] = useState<Array<Record<string, any>>>([]);
+  const [procedureIdentifier, setProcedureIdentifier] = useState("");
+  const [procedureVersion, setProcedureVersion] = useState("");
+  const [procedureEffectiveAt, setProcedureEffectiveAt] = useState("");
+  const [procedureExpiryAt, setProcedureExpiryAt] = useState("");
+  const [procedureEvidence, setProcedureEvidence] = useState("");
+  const [procedureAllowsException, setProcedureAllowsException] = useState(false);
+  const [exceptionProcedureId, setExceptionProcedureId] = useState("");
+
 
 
   const [analysisId, setAnalysisId] = useState("");
@@ -1003,6 +1012,105 @@ export default function Home() {
     }
   };
 
+  const refreshAccessionProcedures = async () => {
+    try {
+      const rows = await apiFetch("/organizations/accession-procedures");
+      setAccessionProcedures(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to load accession procedures.");
+    }
+  };
+
+  const registerAccessionProcedure = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!procedureEffectiveAt || !procedureEvidence.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch("/organizations/accession-procedures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          procedure_identifier: procedureIdentifier,
+          procedure_version: procedureVersion,
+          effective_at: new Date(procedureEffectiveAt).toISOString(),
+          expires_at: procedureExpiryAt ? new Date(procedureExpiryAt).toISOString() : null,
+          approval_evidence_reference: procedureEvidence.trim(),
+          allows_unverified_referrer_exception: procedureAllowsException,
+        }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Procedure submitted as PENDING_APPROVAL. A different authorized person must approve it.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to register accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const approveAccessionProcedure = async (procedureId: string) => {
+    const evidence = window.prompt("Controlled approval evidence reference:");
+    if (!evidence?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/accession-procedures/${procedureId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approval_evidence_reference: evidence.trim() }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Accession procedure independently approved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to approve accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const withdrawAccessionProcedure = async (procedureId: string) => {
+    const reason = window.prompt("Reason for withdrawing this procedure:");
+    if (!reason?.trim()) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/organizations/accession-procedures/${procedureId}/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      await refreshAccessionProcedures();
+      setMessage("Accession procedure withdrawn and audited.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to withdraw accession procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const acceptUsingApprovedProcedure = async () => {
+    if (!accessionRequestId || !exceptionProcedureId || !decisionReason.trim()) {
+      setMessage("Select an approved exception procedure and provide the decision reason.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await apiFetch(`/clinical-requests/${accessionRequestId}/decisions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision: "ACCEPT",
+          reason: decisionReason.trim(),
+          exception_procedure_id: exceptionProcedureId,
+        }),
+      });
+      await refreshClinicalRequests();
+      setClinicalRequestId(accessionRequestId);
+      setMessage("Request accepted under the recorded approved-procedure exception.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to accept request under exception procedure.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const createAndStart = async () => {
     if (!caseId || !artifactId) {
       setMessage(t("workspace.caseVcfRequired"));
@@ -1532,6 +1640,37 @@ export default function Home() {
               {!assignment.revoked_at && <button className="secondary" type="button" disabled={busy} onClick={() => revokeOrganizationCapability(assignment.assignment_id)}>Revoke</button>}
             </li>)}
           </ul>
+        </section>
+
+        <section className="panel workflow-panel">
+          <div className="panel-head"><div><div className="section-kicker">Controlled laboratory procedures</div><h3>Accession exception procedures</h3></div>
+            <button className="secondary" type="button" onClick={refreshAccessionProcedures} disabled={busy}>Load procedures</button>
+          </div>
+          <p className="muted">An exception is usable only when the laboratory procedure is approved by a different authorized person, currently effective, and explicitly permits an unverified-referrer exception.</p>
+          <form onSubmit={registerAccessionProcedure} className="form-grid">
+            <label>Procedure identifier<input required value={procedureIdentifier} onChange={(event) => setProcedureIdentifier(event.target.value)} /></label>
+            <label>Procedure version<input required value={procedureVersion} onChange={(event) => setProcedureVersion(event.target.value)} /></label>
+            <label>Effective from<input required type="datetime-local" value={procedureEffectiveAt} onChange={(event) => setProcedureEffectiveAt(event.target.value)} /></label>
+            <label>Expires at (optional)<input type="datetime-local" value={procedureExpiryAt} onChange={(event) => setProcedureExpiryAt(event.target.value)} /></label>
+            <label>Controlled document / evidence reference<input required value={procedureEvidence} onChange={(event) => setProcedureEvidence(event.target.value)} /></label>
+            <label><input type="checkbox" checked={procedureAllowsException} onChange={(event) => setProcedureAllowsException(event.target.checked)} /> Procedure explicitly permits exception to referrer verification</label>
+            <div className="actions-row"><button className="primary" type="submit" disabled={busy}>Submit procedure for approval</button></div>
+          </form>
+          <ul className="compact-list">
+            {accessionProcedures.map((procedure) => <li key={procedure.procedure_id}>
+              <strong>{procedure.procedure_identifier} v{procedure.procedure_version}</strong> — {procedure.status}
+              <small>{procedure.allows_unverified_referrer_exception ? "Allows unverified-referrer exception" : "No unverified-referrer exception"} · {procedure.approval_evidence_reference}</small>
+              {procedure.status === "PENDING_APPROVAL" && <button className="secondary" type="button" disabled={busy} onClick={() => approveAccessionProcedure(procedure.procedure_id)}>Approve (independent reviewer)</button>}
+              {procedure.status !== "WITHDRAWN" && <button className="secondary" type="button" disabled={busy} onClick={() => withdrawAccessionProcedure(procedure.procedure_id)}>Withdraw</button>}
+            </li>)}
+          </ul>
+          <label>Approved exception procedure for selected request
+            <select value={exceptionProcedureId} onChange={(event) => setExceptionProcedureId(event.target.value)}>
+              <option value="">Select an approved exception procedure</option>
+              {accessionProcedures.filter((procedure) => procedure.status === "APPROVED" && procedure.allows_unverified_referrer_exception).map((procedure) => <option key={procedure.procedure_id} value={procedure.procedure_id}>{procedure.procedure_identifier} v{procedure.procedure_version}</option>)}
+            </select>
+          </label>
+          <button className="secondary" type="button" disabled={busy || !accessionRequestId || !exceptionProcedureId} onClick={acceptUsingApprovedProcedure}>Accept using approved exception procedure</button>
         </section>
 
         <section id="analysis-workflow" className="panel workflow-panel">
