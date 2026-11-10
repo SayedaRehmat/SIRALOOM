@@ -9,6 +9,25 @@ from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import now
 
 
+class CaseAccessionReconciliation(Base):
+    __tablename__ = "case_accession_reconciliations"
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    prior_status: Mapped[str] = mapped_column(String(40), nullable=False)
+    new_status: Mapped[str] = mapped_column(String(40), nullable=False)
+    source_evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
+    reviewed_scope: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("case_id", name="uq_case_accession_reconciliation_case"),
+        CheckConstraint("prior_status = 'LEGACY_UNRECONCILED'", name="ck_case_reconciliation_prior_legacy"),
+        CheckConstraint("new_status = 'RECONCILED'", name="ck_case_reconciliation_new_reconciled"),
+    )
+
+
 class ClinicalRequest(Base):
     __tablename__ = "clinical_requests"
     id: Mapped[UUID] = mapped_column(primary_key=True)
