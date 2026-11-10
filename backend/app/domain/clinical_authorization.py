@@ -108,6 +108,7 @@ def assert_analysis_clinical_authorization(
     case: Case,
     analysis_configuration: dict[str, Any] | None,
     analysis_type: str,
+    analysis_assay_id: UUID | None = None,
 ) -> None:
     """Recheck the captured authorization before dispatch and worker execution."""
     config = dict(analysis_configuration or {})
@@ -152,6 +153,10 @@ def assert_analysis_clinical_authorization(
         assay_id = UUID(str(assay_id_value))
     except (TypeError, ValueError) as exc:
         raise ClinicalAuthorizationError("Clinical analysis has no valid assay identity snapshot") from exc
+    if analysis_assay_id is None or analysis_assay_id != assay_id:
+        raise ClinicalAuthorizationError(
+            "Persisted analysis assay_id does not match its clinical assay snapshot"
+        )
     assay = db.get(Assay, assay_id)
     assay_snapshot = config.get("assay_snapshot")
     if assay is None or assay.organization_id != case.organization_id or not isinstance(assay_snapshot, dict):
