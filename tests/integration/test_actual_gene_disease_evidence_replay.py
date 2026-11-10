@@ -114,7 +114,9 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         "G2P001,GENE1,,Example one,MONDO:0000001,biallelic_autosomal,"
         "loss of function,definitive,PMID:1,HP:0001250,,,,\n"
         "G2P002,GENE2,,Example two,,biallelic_autosomal,"
-        "loss of function,definitive,PMID:2,HP:0001263,,,,\n",
+        "loss of function,definitive,PMID:2,HP:0001263,,,,\n"
+        "G2P003,GENE1,,Example two,MONDO:0000002,biallelic_autosomal,"
+        "loss of function,definitive,PMID:3,HP:0001263,,,,\n",
         encoding="utf-8",
     )
     clingen_path = tmp_path / "clingen.csv"
@@ -153,7 +155,9 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         "database_id\tdisease_name\tqualifier\thpo_id\treference\tevidence\t"
         "onset\tfrequency\tsex\tmodifier\taspect\tbiocuration\n"
         "MONDO:0000001\tExample one\t\tHP:0001250\tPMID:1\tPCS\t"
-        "\t1/2\t\t\tP\tHPO:curator[2026-01-01]\n",
+        "\t1/2\t\t\tP\tHPO:curator[2026-01-01]\n"
+        "MONDO:0000002\tExample two\t\tHP:0001263\tPMID:2\tPCS\t"
+        "\t1/3\t\t\tP\tHPO:curator[2026-01-01]\n",
         encoding="utf-8",
     )
     g2p_sha = hashlib.sha256(g2p_path.read_bytes()).hexdigest()
@@ -493,7 +497,7 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.payload["interpretive_use"].as_string()
                 == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY",
             )))
-            assert len(first_attempt) == 4
+            assert len(first_attempt) == 5
             first_ids = {row.evidence_fingerprint for row in first_attempt}
             phenotype_first_attempt = list(db.scalars(select(Evidence).where(
                 Evidence.analysis_id == analysis_id,
@@ -502,8 +506,9 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.payload["interpretive_use"].as_string()
                 == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
             )))
-            assert len(phenotype_first_attempt) == 1
+            assert len(phenotype_first_attempt) == 2
             phenotype_first_ids = {row.evidence_fingerprint for row in phenotype_first_attempt}
+            phenotype_first_attempt.sort(key=lambda row: row.payload[\"contextual_order\"])
             phenotype_payload = phenotype_first_attempt[0].payload
             assert phenotype_first_attempt[0].direction == "NEUTRAL"
             assert phenotype_payload["contextual_order"] == 1
@@ -541,7 +546,7 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.payload["interpretive_use"].as_string()
                 == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY",
             )))
-            assert len(replayed) == 4
+            assert len(replayed) == 5
             assert {row.evidence_fingerprint for row in replayed} == first_ids
             phenotype_replayed = list(db.scalars(select(Evidence).where(
                 Evidence.analysis_id == analysis_id,
@@ -550,7 +555,7 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.payload["interpretive_use"].as_string()
                 == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
             )))
-            assert len(phenotype_replayed) == 1
+            assert len(phenotype_replayed) == 2
             assert {row.evidence_fingerprint for row in phenotype_replayed} == phenotype_first_ids
             by_variant = {
                 variant_id: [
@@ -617,13 +622,16 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             item for item in response.json()["variant_context"]["phenotype_evidence"]
             if item["payload"].get("interpretive_use") == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
         ]
-        assert len(api_phenotype) == 1
+        assert len(api_phenotype) == 2
+        api_phenotype.sort(key=lambda item: item["payload"]["contextual_order"])
+        assert [item["payload"]["contextual_order"] for item in api_phenotype] == [1, 2]
         api_payload = api_phenotype[0]["payload"]
         assert api_phenotype[0]["direction"] == "NEUTRAL"
         assert api_payload["contextual_order"] == 1
         assert api_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
         assert api_payload["clinical_prioritization_validated"] is False
         assert api_payload["human_review_required"] is True
+        assert api_phenotype[1]["payload"]["matched_patient_term_count"] == 0
         assert len(api_payload["hpoa_provenance"]["request_fingerprint"]) == 64
         assert len(api_payload["hpoa_provenance"]["response_sha256"]) == 64
     finally:
