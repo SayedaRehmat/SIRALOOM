@@ -194,6 +194,7 @@ def assert_analysis_clinical_authorization(
         or eligibility_snapshot.get("status") != "ELIGIBLE"
         or eligibility_snapshot.get("scope") != "SNV_SMALL_INDEL"
         or eligibility_snapshot.get("validation_artifact_sha256") != artifact.sha256
+        or eligibility_snapshot.get("validation_fingerprint") != eligibility.get("validation_fingerprint")
     ):
         raise ClinicalAuthorizationError(
             "Clinical analysis VCF is outside the SNV/small-indel workflow scope or its eligibility evidence changed"
