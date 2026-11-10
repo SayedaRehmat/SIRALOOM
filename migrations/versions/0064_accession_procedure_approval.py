@@ -17,7 +17,13 @@ def upgrade():
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=True)
         batch.add_column(sa.Column("created_by", sa.Uuid(), nullable=True))
-        batch.create_foreign_key("fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"])
+        batch.create_foreign_key("fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"])        batch.alter_column(
+            "approval_evidence_reference",
+            new_column_name="procedure_evidence_reference",
+            existing_type=sa.Text(),
+            existing_nullable=False,
+        )
+        batch.add_column(sa.Column("approval_evidence_reference", sa.Text(), nullable=True))
         batch.create_check_constraint(
             "ck_accession_procedure_status",
             "status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')",
@@ -31,7 +37,11 @@ def upgrade():
 def downgrade():
     connection = op.get_bind()
     unsafe_rows = connection.execute(
-        sa.text("SELECT COUNT(*) FROM accession_procedures WHERE status = 'PENDING_APPROVAL' OR approved_by IS NULL")
+        sa.text(
+            "SELECT COUNT(*) FROM accession_procedures "
+            "WHERE status = 'PENDING_APPROVAL' OR approved_by IS NULL "
+            "OR approval_evidence_reference IS NOT NULL"
+        )
     ).scalar_one()
     if unsafe_rows:
         raise RuntimeError(
@@ -42,6 +52,13 @@ def downgrade():
         batch.drop_constraint("ck_accession_procedure_approved_by", type_="check")
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.drop_column("created_by")
+        batch.drop_column("approval_evidence_reference")
+        batch.alter_column(
+            "procedure_evidence_reference",
+            new_column_name="approval_evidence_reference",
+            existing_type=sa.Text(),
+            existing_nullable=False,
+        )
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=False)
         batch.create_check_constraint(
             "ck_accession_procedure_status",
