@@ -288,7 +288,7 @@ def _qualify_gene_disease_provider(
             "parser": "production_provider_adapter",
             "clinical_validity_claim": False,
         }
-    except (OSError, ValueError, TypeError, KeyError) as exc:
+    except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
         blockers.append("GENE_DISEASE_PROVIDER_QUALIFICATION_FAILED")
         checks["gene_disease_source"] = {"status": "BLOCKED", "provider": resource.provider, "error": str(exc)[:2000]}
 
