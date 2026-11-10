@@ -46,7 +46,7 @@ def upgrade():
     with op.batch_alter_table("accession_procedures") as batch:
         batch.create_check_constraint(
             "ck_accession_procedure_approved_by",
-            "(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by)",
+            "(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by AND approval_evidence_reference IS NOT NULL)",
         )
 
 
