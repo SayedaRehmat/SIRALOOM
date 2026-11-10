@@ -199,6 +199,18 @@ def register_and_qualify_gene_disease_snapshots(
         raise GeneDiseaseAcquisitionError("Unsupported gene-disease acquisition manifest")
     if len(manifest.get("artifacts", [])) != 2:
         raise GeneDiseaseAcquisitionError("Manifest must contain exactly G2P and ClinGen artifacts")
+    manifest_sha256 = _sha256(manifest_path)
+    manifest_release = str(manifest.get("acquisition_date_utc") or "")
+    managed_manifest_path = (
+        managed_root / "acquisition-manifests"
+        / f"{manifest_release}-{manifest_sha256[:12]}" / "manifest.json"
+    )
+    _copy_verified(
+        manifest_path,
+        managed_manifest_path,
+        sha256=manifest_sha256,
+        size_bytes=manifest_path.stat().st_size,
+    )
     outputs = []
     for item in manifest["artifacts"]:
         provider = item["provider"]
