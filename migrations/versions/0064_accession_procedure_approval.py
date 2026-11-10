@@ -29,12 +29,12 @@ def upgrade():
 
 def downgrade():
     connection = op.get_bind()
-    pending = connection.execute(
-        sa.text("SELECT COUNT(*) FROM accession_procedures WHERE status = 'PENDING_APPROVAL'")
+    unsafe_rows = connection.execute(
+        sa.text("SELECT COUNT(*) FROM accession_procedures WHERE status = 'PENDING_APPROVAL' OR approved_by IS NULL")
     ).scalar_one()
-    if pending:
+    if unsafe_rows:
         raise RuntimeError(
-            "Refusing to downgrade while pending accession procedures exist."
+            "Refusing to downgrade while pending or unapproved accession procedure history exists."
         )
     with op.batch_alter_table("accession_procedures") as batch:
         batch.drop_constraint("ck_accession_procedure_approved_by", type_="check")
