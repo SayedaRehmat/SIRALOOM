@@ -124,11 +124,11 @@ jobs:
           export PATH="$PERL_PREFIX/bin:$PATH"
           cd "$RUNNER_TEMP/vep-carton"
           rm -rf local
-          # Enforce offline behavior at the network layer; --cached alone is not
-          # proof that Carton cannot fall back to a remote mirror.
-          sudo iptables -P OUTPUT DROP
-          sudo ip6tables -P OUTPUT DROP
-          "$PERL_PREFIX/bin/carton" install --deployment --cached
+          # Enforce offline behavior only for this process tree. A network
+          # namespace has no external interfaces, while the runner retains
+          # connectivity for lock generation and artifact upload afterwards.
+          command -v unshare
+          sudo unshare --net --mount-proc -- "$PERL_PREFIX/bin/carton" install --deployment --cached
           test -d local
       - name: Emit architecture-specific lock with archive SHA-256 values
         shell: bash
