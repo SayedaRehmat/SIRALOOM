@@ -165,3 +165,26 @@ def test_clingen_fallback_record_ids_include_row_digest(tmp_path):
     assertions = provider.query_gene(gene="GENE1")
     assert len(assertions) == 2
     assert len({item.source_record_id for item in assertions}) == 2
+
+
+def test_clingen_source_record_identity_is_unique_for_multiple_rows_sharing_report(tmp_path):
+    path = tmp_path / "clingen-shared-report.csv"
+    report = "https://search.clinicalgenome.org/kb/gene-validity/shared-assertion"
+    path.write_text(
+        "CLINGEN GENE VALIDITY CURATIONS\\n"
+        "FILE CREATED: 2026-11-08\\n"
+        "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\\n"
+        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Definitive,{report},2026-11-08,Expert Panel,AR\\n"
+        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Strong,{report},2026-11-08,Expert Panel,AR\\n",
+        encoding="utf-8",
+    )
+    provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(path),
+        expected_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        expected_release="2026-11-08",
+    )
+    assertions = provider.query_gene(gene="GENE1")
+    assert len(assertions) == 2
+    assert assertions[0].online_report == assertions[1].online_report == report
+    assert len({item.source_record_id for item in assertions}) == 2
+    assert len({item.record_sha256 for item in assertions}) == 2
