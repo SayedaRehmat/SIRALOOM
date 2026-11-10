@@ -130,6 +130,12 @@ The corpus lifecycle is:
 
 Only QUALIFIED cases may count toward C1.3 scientific qualification. Synthetic fixtures may be used for deterministic software unit/regression tests, but must be explicitly labelled SYNTHETIC and cannot substitute for independent real-family clinical validation. A synthetic fixture's reviewer attestation must review the scenario and expected logic, not imply that it represents an observed patient family.
 
+### Manifest-validator boundary
+
+The C1.3 validator checks manifest structure, source/VCF/pedigree/phenotype/access-approval artifact hashes, sample-to-source-artifact bindings, explicit missing-call states, reviewer attestation artifact hashes, expected-outcome fingerprints, and category/control coverage. A passing report is named MANIFEST_VALIDATION_PASSED; it is not a clinical qualification certificate.
+
+The validator cannot authenticate a reviewer's professional identity or credential, independently establish reviewer independence, interpret legal consent/data-use terms, or determine whether a clinical expected answer is correct. Those are external governance and clinical-review responsibilities. Their signed records must be retained and independently verified before the case status is accepted as QUALIFIED. The test suite uses synthetic temporary data solely to test this validator; those test records are not family known-answer cases.
+
 ## 7. Qualification exit criteria
 
 C1.3 is complete only when:
