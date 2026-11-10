@@ -4,6 +4,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
 from backend.app.domain.clinical_authorization import (
     ClinicalAuthorizationError,
     assert_analysis_clinical_authorization,
@@ -135,6 +136,8 @@ def _clinical_fixture():
         )
         db.add(decision)
         db.commit()
+    workflow_eligibility = evaluate_small_variant_eligibility(validation)
+    workflow_eligibility["validation_artifact_sha256"] = "a" * 64
     configuration = {
         "clinical_authorization": {
             "mode": "CLINICAL",
@@ -147,13 +150,7 @@ def _clinical_fixture():
         "input_artifact_id": str(artifact_id),
         "specimen_id": str(specimen_id),
         "vcf_sample_name": "SAMPLE-01",
-        "workflow_eligibility": {
-            "scope": "SNV_SMALL_INDEL",
-            "status": "ELIGIBLE",
-            "reason_codes": [],
-            "reasons": [],
-            "validation_artifact_sha256": "a" * 64,
-        },
+        "workflow_eligibility": workflow_eligibility,
     }
     return engine, case_id, artifact_id, specimen_id, configuration
 
