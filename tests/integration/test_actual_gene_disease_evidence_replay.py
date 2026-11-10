@@ -433,20 +433,26 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             SimpleNamespace(resource=resources[0]),
             SimpleNamespace(resource=resources[1]),
         ]
+        capability_candidates = {
+            workflow.ResourceCapability.GENE_DISEASE: candidates,
+            workflow.ResourceCapability.PHENOTYPE: [SimpleNamespace(resource=resources[2])],
+            workflow.ResourceCapability.DISEASE_PHENOTYPE: [SimpleNamespace(resource=resources[3])],
+        }
         executions = {
             g2p_resource_id: g2p_execution,
             clingen_resource_id: clingen_execution,
+            hpo_resource_id: hpo_execution,
+            hpoa_resource_id: hpoa_execution,
         }
 
         def fake_plan(*_args, **kwargs):
             requirements = kwargs.get("requirements", ())
-            wanted = {
-                requirement.capability for requirement in requirements
-            }
+            wanted = {requirement.capability for requirement in requirements}
             return SimpleNamespace(
                 profile_type="TRIAL_PUBLIC", profile_version="integration",
                 unavailable_optional=[],
-                for_capability=lambda capability: candidates if capability in wanted and capability == workflow.ResourceCapability.GENE_DISEASE else [],
+                for_capability=lambda capability: capability_candidates.get(capability, [])
+                if capability in wanted else [],
             )
 
         monkeypatch.setattr(workflow, "build_resource_execution_plan", fake_plan)
