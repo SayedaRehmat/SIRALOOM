@@ -120,6 +120,16 @@ class ProcedureInput(BaseModel):
         return self
 
 
+class ProcedureApprovalInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    approval_evidence_reference: str = Field(min_length=1, max_length=1000)
+
+
+class ProcedureWithdrawalInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=1, max_length=2000)
+
+
 class AttestationInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     request_revision_id: UUID
@@ -314,6 +324,11 @@ def grant_capability(body: CapabilityGrantInput, db: Session = Depends(get_db), 
         _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
     if body.user_id == principal.user_id:
         raise HTTPException(403, "Users cannot grant capabilities to themselves")
+    if body.capability == "CLINICAL_ATTEST":
+        raise HTTPException(
+            409,
+            "Clinical-attestation capability is disabled until a governed professional-qualification verification workflow is available",
+        )
     _membership(db, principal.organization_id, body.user_id)
     row = OrganizationCapabilityAssignment(id=uuid4(), organization_id=principal.organization_id, user_id=body.user_id, capability=body.capability, granted_by=principal.user_id, grant_reason=body.reason.strip(), expires_at=body.expires_at)
     db.add(row)
@@ -346,10 +361,105 @@ def revoke_capability(assignment_id: UUID, body: CapabilityRevokeInput, db: Sess
 def create_accession_procedure(body: ProcedureInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     _membership(db, principal.organization_id, principal.user_id)
     if principal.role not in {"organization_admin", "lab_director"}:
-        raise HTTPException(403, "Only designated organization procedure authorities may register an approved procedure")
-    row = AccessionProcedure(id=uuid4(), organization_id=principal.organization_id, procedure_identifier=body.procedure_identifier.strip(), procedure_version=body.procedure_version.strip(), status="APPROVED", effective_at=body.effective_at, expires_at=body.expires_at, approved_by=principal.user_id, approval_evidence_reference=body.approval_evidence_reference.strip(), allows_unverified_referrer_exception=body.allows_unverified_referrer_exception)
+        raise HTTPException(403, "Only designated organization procedure authorities may register a procedure")
+    row = AccessionProcedure(
+        id=uuid4(),
+        organization_id=principal.organization_id,
+        procedure_identifier=body.procedure_identifier.strip(),
+        procedure_version=body.procedure_version.strip(),
+        status="PENDING_APPROVAL",
+        effective_at=body.effective_at,
+        expires_at=body.expires_at,
+        approved_by=None,
+        created_by=principal.user_id,
+        approval_evidence_reference=body.approval_evidence_reference.strip(),
+        allows_unverified_referrer_exception=body.allows_unverified_referrer_exception,
+    )
     db.add(row)
-    AuditService(db).record(event_type="ACCESSION_PROCEDURE_REGISTERED", case_id=None, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="ACCESSION_PROCEDURE", subject_id=str(row.id), operation="REGISTER", after_state={"procedure_identifier": row.procedure_identifier, "procedure_version": row.procedure_version, "exception_allowed": row.allows_unverified_referrer_exception})
+    AuditService(db).record(
+        event_type="ACCESSION_PROCEDURE_SUBMITTED_FOR_APPROVAL",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="ACCESSION_PROCEDURE",
+        subject_id=str(row.id),
+        operation="SUBMIT",
+        after_state={"procedure_identifier": row.procedure_identifier, "procedure_version": row.procedure_version, "exception_allowed": row.allows_unverified_referrer_exception},
+        reason="Procedure is pending independent approval and cannot authorize an accession exception.",
+    )
+    db.commit()
+    return {"procedure_id": str(row.id), "status": row.status}
+
+
+@router.post("/organizations/accession-procedures/{procedure_id}/approve")
+def approve_accession_procedure(
+    procedure_id: UUID,
+    body: ProcedureApprovalInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(403, "Only designated organization procedure authorities may approve a procedure")
+    row = db.get(AccessionProcedure, procedure_id)
+    if row is None or row.organization_id != principal.organization_id:
+        raise HTTPException(404, "Accession procedure not found")
+    if row.status != "PENDING_APPROVAL":
+        raise HTTPException(409, "Only a pending procedure can be approved")
+    if row.created_by == principal.user_id:
+        raise HTTPException(403, "The procedure submitter cannot approve their own procedure")
+    evidence = body.approval_evidence_reference.strip()
+    if not evidence:
+        raise HTTPException(422, "Approval evidence reference is required")
+    row.status = "APPROVED"
+    row.approved_by = principal.user_id
+    row.approval_evidence_reference = evidence
+    AuditService(db).record(
+        event_type="ACCESSION_PROCEDURE_APPROVED",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="ACCESSION_PROCEDURE",
+        subject_id=str(row.id),
+        operation="APPROVE",
+        after_state={"procedure_identifier": row.procedure_identifier, "procedure_version": row.procedure_version, "approval_evidence_reference": evidence},
+    )
+    db.commit()
+    return {"procedure_id": str(row.id), "status": row.status, "approved_by": str(row.approved_by)}
+
+
+@router.post("/organizations/accession-procedures/{procedure_id}/withdraw")
+def withdraw_accession_procedure(
+    procedure_id: UUID,
+    body: ProcedureWithdrawalInput,
+    db: Session = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    _membership(db, principal.organization_id, principal.user_id)
+    if principal.role not in {"organization_admin", "lab_director"}:
+        raise HTTPException(403, "Only designated organization procedure authorities may withdraw a procedure")
+    row = db.get(AccessionProcedure, procedure_id)
+    if row is None or row.organization_id != principal.organization_id:
+        raise HTTPException(404, "Accession procedure not found")
+    if row.status == "WITHDRAWN":
+        raise HTTPException(409, "Accession procedure is already withdrawn")
+    previous_status = row.status
+    row.status = "WITHDRAWN"
+    AuditService(db).record(
+        event_type="ACCESSION_PROCEDURE_WITHDRAWN",
+        case_id=None,
+        analysis_id=None,
+        actor_type="HUMAN",
+        actor_id=str(principal.user_id),
+        subject_type="ACCESSION_PROCEDURE",
+        subject_id=str(row.id),
+        operation="WITHDRAW",
+        before_state={"status": previous_status},
+        after_state={"status": row.status},
+        reason=body.reason,
+    )
     db.commit()
     return {"procedure_id": str(row.id), "status": row.status}
 
