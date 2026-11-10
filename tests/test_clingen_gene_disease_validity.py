@@ -44,10 +44,11 @@ def test_clingen_gene_disease_validity_pins_release_checksum_and_exact_pair(tmp_
 
 def test_clingen_release_date_is_detected_in_literal_newline_export(tmp_path):
     path = _write_export(tmp_path / "clingen-literal-newlines.csv")
-    path.write_text(
-        path.read_text(encoding="utf-8").replace("\n", r"\n"),
-        encoding="utf-8",
+    content = path.read_text(encoding="utf-8").replace(
+        "FILE CREATED: 2026-11-08",
+        "CLINGEN GENE VALIDITY CURATIONS FILE CREATED: 2026-11-08",
     )
+    path.write_text(content.replace("\n", r"\n"), encoding="utf-8")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     provider = ClinGenGeneDiseaseValidityProvider(
         resource_path=str(path),
