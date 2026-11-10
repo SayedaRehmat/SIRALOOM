@@ -1,6 +1,14 @@
 name: VEP native dependency lock generation
 
 on:
+  push:
+    branches:
+      - feat/vep-115-reproducible-native-profiles-20261108
+    paths:
+      - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
+      - "configs/bioinformatics/profiles/vep-115.2-capability-*.cpanfile"
+      - "scripts/generate_vep_dependency_lock.py"
+      - ".github/workflows/vep-native-dependency-locks.yml"
   pull_request:
     paths:
       - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
