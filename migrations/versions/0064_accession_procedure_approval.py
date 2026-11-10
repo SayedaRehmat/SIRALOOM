@@ -13,29 +13,37 @@ depends_on = None
 
 
 def upgrade():
+    # Expand the table and preserve the old evidence as the controlled
+    # procedure-document reference. Legacy approvals are requeued below.
     with op.batch_alter_table("accession_procedures") as batch:
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=True)
         batch.add_column(sa.Column("created_by", sa.Uuid(), nullable=True))
-        batch.create_foreign_key("fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"])        batch.alter_column(
+        batch.create_foreign_key(
+            "fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"]
+        )
+        batch.alter_column(
             "approval_evidence_reference",
             new_column_name="procedure_evidence_reference",
             existing_type=sa.Text(),
             existing_nullable=False,
         )
-        batch.add_column(sa.Column("approval_evidence_reference", sa.Text(), nullable=True))        # A procedure previously marked APPROVED under the single-person model
-        # is not grandfathered into the new separation-of-duties policy.
-        # Preserve its former approver as the submitter and require fresh
-        # independent approval before it can authorize an exception.
-        op.execute(sa.text("""
-            UPDATE accession_procedures
-            SET created_by = approved_by, approved_by = NULL, status = 'PENDING_APPROVAL'
-            WHERE status = 'APPROVED'
-        """))
+        batch.add_column(sa.Column("approval_evidence_reference", sa.Text(), nullable=True))
         batch.create_check_constraint(
             "ck_accession_procedure_status",
             "status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')",
         )
+
+    # A procedure previously marked APPROVED under the single-person model
+    # is not grandfathered into the new separation-of-duties policy. Preserve
+    # its former approver as the submitter and require fresh independent approval.
+    op.execute(sa.text(
+        "UPDATE accession_procedures SET created_by = approved_by, "
+        "approved_by = NULL, status = 'PENDING_APPROVAL' "
+        "WHERE status = 'APPROVED'"
+    ))
+
+    with op.batch_alter_table("accession_procedures") as batch:
         batch.create_check_constraint(
             "ck_accession_procedure_approved_by",
             "(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by)",
@@ -53,7 +61,7 @@ def downgrade():
     ).scalar_one()
     if unsafe_rows:
         raise RuntimeError(
-            "Refusing to downgrade while pending or unapproved accession procedure history exists."
+            "Refusing to downgrade while pending or independently approved procedure history exists."
         )
     with op.batch_alter_table("accession_procedures") as batch:
         batch.drop_constraint("fk_accession_procedures_created_by_users", type_="foreignkey")
