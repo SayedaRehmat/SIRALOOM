@@ -16,7 +16,8 @@ def upgrade():
     with op.batch_alter_table("accession_procedures") as batch:
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=True)
-        batch.add_column(sa.Column("created_by", sa.Uuid(), sa.ForeignKey("users.id"), nullable=True))
+        batch.add_column(sa.Column("created_by", sa.Uuid(), nullable=True))
+        batch.create_foreign_key("fk_accession_procedures_created_by_users", "users", ["created_by"], ["id"])
         batch.create_check_constraint(
             "ck_accession_procedure_status",
             "status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')",
@@ -37,6 +38,7 @@ def downgrade():
             "Refusing to downgrade while pending or unapproved accession procedure history exists."
         )
     with op.batch_alter_table("accession_procedures") as batch:
+        batch.drop_constraint("fk_accession_procedures_created_by_users", type_="foreignkey")
         batch.drop_constraint("ck_accession_procedure_approved_by", type_="check")
         batch.drop_constraint("ck_accession_procedure_status", type_="check")
         batch.drop_column("created_by")
