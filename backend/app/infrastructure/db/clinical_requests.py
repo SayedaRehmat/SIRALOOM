@@ -76,7 +76,7 @@ class AccessionProcedure(Base):
     __table_args__ = (
         UniqueConstraint("organization_id", "procedure_identifier", "procedure_version", name="uq_accession_procedure_version"),
         CheckConstraint("status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')", name="ck_accession_procedure_status"),
-        CheckConstraint("(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by)", name="ck_accession_procedure_approved_by"),
+        CheckConstraint("(status != 'APPROVED') OR (approved_by IS NOT NULL AND created_by IS NOT NULL AND approved_by != created_by AND approval_evidence_reference IS NOT NULL)", name="ck_accession_procedure_approved_by"),
     )
 
 
