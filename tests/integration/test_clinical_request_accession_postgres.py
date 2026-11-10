@@ -14,11 +14,13 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from backend.app.api.v1 import clinical_requests as routes
 from backend.app.api.v1.clinical_requests import DecisionInput, RevisionInput
 from backend.app.infrastructure.db.clinical_requests import (
     AccessionDecision,
+    AccessionProcedure,
     ClinicalRequest,
     ClinicalRequestRevision,
     ReferrerVerification,
@@ -252,5 +254,33 @@ def test_postgres_revision_after_acceptance_preserves_historical_decision(monkey
             assert len(decisions) == 1
             assert decisions[0].revision_id == seeded["revision_id"]
             assert decisions[0].decision == "ACCEPT"
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_database_rejects_self_approved_exception_procedure():
+    engine = _postgres_engine()
+    seeded = _seed_request(engine, "PROCEDURE-SEPARATION")
+    procedure = AccessionProcedure(
+        id=uuid4(),
+        organization_id=seeded["organization_id"],
+        procedure_identifier=f"SOP-{uuid4().hex[:10]}",
+        procedure_version="1.0",
+        status="APPROVED",
+        effective_at=datetime.now(UTC),
+        expires_at=None,
+        approved_by=seeded["user_id"],
+        created_by=seeded["user_id"],
+        procedure_evidence_reference="CONTROLLED-SOP-REFERENCE",
+        approval_evidence_reference="APPROVAL-EVIDENCE-REFERENCE",
+        allows_unverified_referrer_exception=True,
+    )
+    try:
+        with Session(engine) as db:
+            db.add(procedure)
+            with pytest.raises(IntegrityError):
+                db.commit()
+            db.rollback()
     finally:
         engine.dispose()
