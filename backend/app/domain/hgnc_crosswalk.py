@@ -300,6 +300,11 @@ class HGNCResolver:
                 raise HGNCResourceError(f"{label} SHA-256 does not match the qualified manifest")
 
     def resolve(self, identifier: str) -> HGNCResolution:
+        if not isinstance(identifier, str):
+            original = str(identifier)
+            return HGNCResolution(
+                original, "", HGNCResolutionStatus.INVALID, None, None, None
+            )
         original = identifier
         raw = identifier.strip()
         normalized = raw.upper()
@@ -321,15 +326,39 @@ class HGNCResolver:
                 return HGNCResolution(original, normalized, HGNCResolutionStatus.NOT_FOUND, None, None, "ensembl_gene_id")
             return self._resolve_candidates(original, normalized, candidates, HGNCResolutionStatus.ENSEMBL_GENE_ID, "ensembl_gene_id")
         approved = self._approved_symbols.get(normalized, set())
+        withdrawn = self._withdrawn.get(normalized, [])
+        if withdrawn:
+            # A historical withdrawn symbol can collide with a currently
+            # approved symbol. Never let the current symbol silently shadow
+            # the historical identity: both records must resolve to one and
+            # the same approved HGNC accession, otherwise the input is
+            # ambiguous or remains unresolved.
+            historical = self._resolve_withdrawn(
+                original, normalized, withdrawn, "withdrawn_symbol"
+            )
+            if not approved:
+                return historical
+            if historical.hgnc_id is None:
+                return HGNCResolution(
+                    original,
+                    normalized,
+                    HGNCResolutionStatus.WITHDRAWN_UNRESOLVED,
+                    None,
+                    None,
+                    "withdrawn_symbol",
+                    tuple(sorted(approved | set(historical.candidate_hgnc_ids))),
+                )
+            combined = approved | {historical.hgnc_id}
+            if len(combined) > 1:
+                return self._ambiguous(original, normalized, combined, "approved_and_withdrawn_symbol")
+            return self._resolve_candidates(
+                original, normalized, combined,
+                HGNCResolutionStatus.APPROVED_SYMBOL, "symbol",
+            )
         if len(approved) == 1:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
         if len(approved) > 1:
             return self._ambiguous(original, normalized, approved, "symbol")
-        withdrawn = self._withdrawn.get(normalized, [])
-        if withdrawn:
-            return self._resolve_withdrawn(
-                original, normalized, withdrawn, "withdrawn_symbol"
-            )
         # Alias and previous-symbol namespaces are resolved independently so
         # collisions are surfaced rather than silently selecting one record.
         alias_candidates = self._alias_candidates(normalized)
