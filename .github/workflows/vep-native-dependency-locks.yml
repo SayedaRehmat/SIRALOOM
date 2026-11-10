@@ -1,0 +1,198 @@
+name: VEP native dependency lock generation
+
+on:
+  push:
+    branches:
+      - feat/vep-115-reproducible-native-profiles-20261108
+    paths:
+      - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
+      - "configs/bioinformatics/profiles/vep-115.2-capability-*.cpanfile"
+      - "scripts/generate_vep_dependency_lock.py"
+      - ".github/workflows/vep-native-dependency-locks.yml"
+  pull_request:
+    paths:
+      - "configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile"
+      - "configs/bioinformatics/profiles/vep-115.2-capability-*.cpanfile"
+      - "scripts/generate_vep_dependency_lock.py"
+      - ".github/workflows/vep-native-dependency-locks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vep-native-locks-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: Resolve and reproduce VEP dependencies (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: x86_64
+            runner: ubuntu-24.04
+          - architecture: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - name: Install pinned native build prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGES="build-essential cpanminus pkg-config libhts-dev libmariadb-dev libmariadb-dev-compat libxml2-dev libsqlite3-dev zlib1g-dev libbz2-dev liblzma-dev libcurl4-gnutls-dev libssl-dev libgdbm-dev libdb-dev libncurses-dev libreadline-dev"
+          sudo apt-get update
+          sudo apt-get --download-only install -y $PACKAGES
+          python3 - <<'PY'
+          import glob, hashlib, json, platform, subprocess
+          from pathlib import Path
+          debs = []
+          for filename in sorted(glob.glob("/var/cache/apt/archives/*.deb")):
+              path = Path(filename)
+              def field(name):
+                  return subprocess.check_output(["dpkg-deb", "-f", filename, name], text=True).strip()
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              debs.append({"filename": path.name, "package": field("Package"), "version": field("Version"), "architecture": field("Architecture"), "size_bytes": path.stat().st_size, "sha256": digest})
+          if not debs:
+              raise SystemExit("apt did not retain downloaded prerequisite packages for hashing")
+          out = Path("${{ runner.temp }}/vep-lock-output")
+          out.mkdir(parents=True, exist_ok=True)
+          (out / "native-build-manifest.json").write_text(json.dumps({"architecture": platform.machine(), "runner_os": "ubuntu-24.04", "downloaded_debs": debs}, indent=2, sort_keys=True) + "\n")
+          PY
+          sudo apt-get install -y $PACKAGES
+      - name: Build checksum-pinned Perl 5.38.5
+        shell: bash
+        run: |
+          set -euo pipefail
+          PERL_PREFIX="$HOME/opt/perl-5.38.5"
+          curl --fail --location --retry 3 https://www.cpan.org/src/5.0/perl-5.38.5.tar.gz --output "$RUNNER_TEMP/perl-5.38.5.tar.gz"
+          echo "b7667d3ff309068852af7853910aaccec26c839d717402121b664ac705e07bfe  $RUNNER_TEMP/perl-5.38.5.tar.gz" | sha256sum --check -
+          tar -xzf "$RUNNER_TEMP/perl-5.38.5.tar.gz" -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/perl-5.38.5"
+          ./Configure -des -Dprefix="$PERL_PREFIX" -Duseshrplib
+          make -j2
+          make test
+          make install
+          echo "$PERL_PREFIX/bin" >> "$GITHUB_PATH"
+          echo "PERL_PREFIX=$PERL_PREFIX" >> "$GITHUB_ENV"
+          "$PERL_PREFIX/bin/perl" -e 'die "wrong Perl version" unless $^V eq v5.38.5; print "$^V\n"'
+      - name: Resolve combined Ensembl runtime dependencies
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export PATH="$PERL_PREFIX/bin:$PATH"
+          # Bootstrap the cpanminus application into the custom Perl prefix.
+          # Ubuntu's /usr/bin/cpanm is tied to the system Perl and cannot be
+          # executed by the isolated Perl 5.38.5 interpreter.
+          # Install as the runner user: sudo would create root-owned files in
+          # the runner-owned Perl prefix and make subsequent module installs fail.
+          /usr/bin/cpanm --local-lib-contained="$PERL_PREFIX" --notest App::cpanminus@1.7048
+          test -x "$PERL_PREFIX/bin/cpanm"
+          export PERL5LIB="$PERL_PREFIX/lib/perl5${PERL5LIB:+:$PERL5LIB}"
+          echo "PERL5LIB=$PERL5LIB" >> "$GITHUB_ENV"
+          "$PERL_PREFIX/bin/perl" "$PERL_PREFIX/bin/cpanm" --local-lib-contained="$PERL_PREFIX" --notest Carton@1.0.35
+          test -x "$PERL_PREFIX/bin/carton"
+          "$PERL_PREFIX/bin/carton" --version
+          mkdir -p "$RUNNER_TEMP/vep-carton"
+          cp configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile "$RUNNER_TEMP/vep-carton/cpanfile"
+          cd "$RUNNER_TEMP/vep-carton"
+          "$PERL_PREFIX/bin/carton" install
+          test -s cpanfile.snapshot || { echo "::error::Carton install completed without creating cpanfile.snapshot"; ls -la; exit 1; }
+          "$PERL_PREFIX/bin/carton" bundle
+          test -d vendor/cache || { echo "::error::Carton bundle did not create vendor/cache"; find . -maxdepth 4 -type d -print; exit 1; }
+          archive_count="$(( $(find vendor/cache -type f -name '*.tar.gz' | wc -l) + $(find vendor/cache -type f -name '*.tgz' | wc -l) ))"
+          test "$archive_count" -gt 0 || { echo "::error::Carton bundle contains no distribution archives"; find vendor/cache -maxdepth 4 -type f -print | head -100; exit 1; }
+          mkdir -p "$RUNNER_TEMP/vep-lock-output"
+          cp cpanfile.snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
+          cp -a vendor/cache "$RUNNER_TEMP/vep-lock-output/vendor-cache"
+          test -s "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot"
+          test "$(find "$RUNNER_TEMP/vep-lock-output/vendor-cache" -type f | wc -l)" -gt 0
+          echo "Resolved snapshot and $archive_count cached distribution archives for $GITHUB_JOB."
+      - name: Preserve CPAN build diagnostics on dependency-resolution failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vep-cpan-build-diagnostics-${{ matrix.architecture }}
+          path: |
+            ~/.cpanm/work/**/build.log
+            ~/.cpanm/work/**/Makefile
+            ~/.cpanm/work/**/MYMETA.json
+            ~/.cpanm/work/**/MYMETA.yml
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify clean offline reinstall from the resolved snapshot and archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PERL_PREFIX/bin:$PATH"
+          cd "$RUNNER_TEMP/vep-carton"
+          rm -rf local
+          # Enforce offline behavior only for this process tree. A network
+          # namespace has no external interfaces, while the runner retains
+          # connectivity for lock generation and artifact upload afterwards.
+          command -v unshare
+          sudo unshare --net --mount-proc -- "$PERL_PREFIX/bin/carton" install --deployment --cached
+          test -d local
+      - name: Emit architecture-specific lock with archive SHA-256 values
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PERL_PREFIX/bin:$PATH"
+          python3 scripts/generate_vep_dependency_lock.py --architecture "${{ matrix.architecture }}" --cpanfile configs/bioinformatics/profiles/vep-115.2-runtime.cpanfile --snapshot "$RUNNER_TEMP/vep-lock-output/cpanfile.snapshot" --build-manifest "$RUNNER_TEMP/vep-lock-output/native-build-manifest.json" --cache-dir "$RUNNER_TEMP/vep-lock-output/vendor-cache" --output "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json"
+          cp "$RUNNER_TEMP/vep-lock-output/vep-115.2-${{ matrix.architecture }}.lock.json" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vep-dependency-lock-${{ matrix.architecture }}
+          path: vep-115.2-${{ matrix.architecture }}.lock.json
+          if-no-files-found: error
+          retention-days: 30
+
+  commit-locks:
+    name: Commit both native dependency locks
+    needs: resolve
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          persist-credentials: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vep-dependency-lock-*
+          path: generated-vep-locks
+          merge-multiple: true
+      - name: Verify both locks and commit
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          test -s generated-vep-locks/vep-115.2-x86_64.lock.json
+          test -s generated-vep-locks/vep-115.2-aarch64.lock.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          expected = {"vep-115.2-x86_64.lock.json": "x86_64", "vep-115.2-aarch64.lock.json": "aarch64"}
+          for filename, arch in expected.items():
+              data = json.loads((Path("generated-vep-locks") / filename).read_text())
+              assert data["schema"] == "siraloom.vep-dependency-lock.v1"
+              assert data["architecture"] == arch
+              assert data["qualification_status"] == "CANDIDATE"
+              assert data["archive_count"] > 0
+          PY
+          mkdir -p configs/bioinformatics/profiles
+          cp generated-vep-locks/*.json configs/bioinformatics/profiles/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add configs/bioinformatics/profiles/vep-115.2-*.lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency locks already match the generated native results."
+          else
+            git commit -m "build: generate native VEP dependency locks"
+            git push origin "HEAD:$TARGET_BRANCH"
+          fi
