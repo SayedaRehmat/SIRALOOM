@@ -302,3 +302,65 @@ def test_corpus_validator_rejects_unpreserved_access_approval(tmp_path):
 
     with pytest.raises(CorpusValidationError, match="access approval does not match"):
         validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_accepts_independent_adjudication_with_preserved_attestation(tmp_path):
+    manifest = _manifest(tmp_path)
+    case = manifest["cases"][0]
+    payload = b"independent adjudicator attestation"
+    relative = f'{case["case_id"]}/adjudicator.attestation'
+    attestation_path = tmp_path / relative
+    attestation_path.write_bytes(payload)
+    attestation_sha = _sha(payload)
+    case["artifacts"].append({
+        "role": "REVIEWER_ATTESTATION",
+        "path": relative,
+        "sha256": attestation_sha,
+        "size_bytes": len(payload),
+    })
+    case["adjudication"] = {
+        "status": "RESOLVED",
+        "adjudicator_id": "independent-adjudicator",
+        "qualification_category": "CLINICAL_GENETICS",
+        "adjudicated_at": "2026-11-10",
+        "rationale": "Resolved the documented reviewer disagreement",
+        "independence_attested": True,
+        "conflict_of_interest_checked": True,
+        "initial_disagreement_sha256": "d" * 64,
+        "final_expected_outcome_sha256": case["reviewers"][0]["expected_outcome_sha256"],
+        "attestation_sha256": attestation_sha,
+        "attestation_reference": relative,
+    }
+
+    report = validate_corpus(manifest, tmp_path)
+
+    assert report["status"] == "MANIFEST_VALIDATION_PASSED"
+
+
+def test_corpus_validator_rejects_adjudicator_who_was_an_initial_reviewer(tmp_path):
+    manifest = _manifest(tmp_path)
+    case = manifest["cases"][0]
+    case["adjudication"] = {
+        "status": "RESOLVED",
+        "adjudicator_id": case["reviewers"][0]["reviewer_id"],
+        "qualification_category": "CLINICAL_GENETICS",
+        "adjudicated_at": "2026-11-10",
+        "rationale": "Invalid self-adjudication",
+        "independence_attested": True,
+        "conflict_of_interest_checked": True,
+        "initial_disagreement_sha256": "d" * 64,
+        "final_expected_outcome_sha256": case["reviewers"][0]["expected_outcome_sha256"],
+        "attestation_sha256": case["reviewers"][0]["attestation_sha256"],
+        "attestation_reference": case["reviewers"][0]["attestation_reference"],
+    }
+
+    with pytest.raises(CorpusValidationError, match="adjudicator must be independent"):
+        validate_corpus(manifest, tmp_path)
+
+
+def test_corpus_validator_requires_implementation_author_inventory(tmp_path):
+    manifest = _manifest(tmp_path)
+    manifest["implementation_author_ids"] = []
+
+    with pytest.raises(CorpusValidationError, match="implementation_author_ids must be a non-empty list"):
+        validate_corpus(manifest, tmp_path)
