@@ -11,7 +11,7 @@ export default function Pricing() {
   const plans = isArabic
     ? [
         {
-          number: "01",
+          number: "04",
           name: "أساسي",
           monthly: "$249",
           annual: "$2,490",
@@ -173,11 +173,17 @@ export default function Pricing() {
   return (
     <SiteShell>
       <main className="content-page public-content pricing-page">
-        <p className="eyebrow">{copy.eyebrow}</p>
-        <h1>{copy.title}</h1>
-        <p className="lead">{copy.lead}</p>
+        <p className="eyebrow">{t("public.pricing.eyebrow")}</p>
+        <h1>{t("public.pricing.title")}</h1>
+        <p className="lead">{t("public.pricing.lead")}</p>
 
         <div className="pricing-grid">
+          <article className="pricing-card featured">
+            <span>01</span>
+            <h2>{t("public.pricing.trialTitle")}</h2>
+            <p>{t("public.pricing.trialBody")}</p>
+            <Link className="button" href="/signup">{t("public.pricing.trialCta")}</Link>
+          </article>
           {plans.map((plan) => (
             <article className={plan.featured ? "pricing-card featured" : "pricing-card"} key={plan.number}>
               <span>{plan.number}</span>
