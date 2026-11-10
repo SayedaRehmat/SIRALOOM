@@ -152,9 +152,38 @@ C1.3 is complete only when:
 
 **C1.4 inheritance compatibility remains blocked until these criteria pass.** No clinical inheritance conclusions are enabled by the C1.2 source qualification result.
 
-## 8. Immediate next work
+## 8. C1.2 real-source qualification execution record
 
-1. Preserve the successful C1.2 real-source artifacts and qualification report from workflow run 42776452798.
+The latest verified real-source qualification run before C1.3 implementation changes is [GitHub Actions run 42778129927](https://github.com/SayedaRehmat/SIRALOOM/actions/runs/42778129927), on commit 3f90769f3283212f2e0cd32090caf89b5c69d765 (2026-11-10). The workflow completed successfully, including the actual official-source acquisition, PostgreSQL registration/qualification, and exact-match script.
+
+| Source/result | Verified value |
+|---|---|
+| HGNC release | 2026-10-06 |
+| HGNC manifest SHA-256 | f405cf03e3cd39f38c09a33be742f3dc9a5d662bce31f554eebb77efec341386 |
+| G2P release identity | 2026-11-10 |
+| G2P records | 3,856 |
+| G2P source SHA-256 | 0a372a9871a19092ffb57249086b746ae0a718ae73d59b3ba1926099fcb7b154 |
+| ClinGen release identity | 2026-11-10 |
+| ClinGen records | 3,729 |
+| ClinGen source SHA-256 | 66f8fe8a6ade2e059327be689bb4c53ad307b7c40898e55a068a258c73b0a889 |
+| Reconciliation records | 6,539 |
+| Exact HGNC + MONDO matches | 902 |
+| Missing-MONDO G2P records | 422; explicitly unmatchable |
+| Unique alias | (P)RR → HGNC:18305; MATCHED |
+| Withdrawn/merged symbol | A1S9T → HGNC:12469; WITHDRAWN_MERGED |
+| Ambiguous alias | 2F1 → HGNC:10991 / HGNC:6380; UNRESOLVED_NO_MATCH |
+
+The exact-match script reported REAL_SOURCE_HGNC_RECONCILIATION_QUALIFICATION_PASSED and activation_or_clinical_conclusion=NOT_PERFORMED.
+
+The workflow preserved two downloadable artifacts:
+- G2P/ClinGen source snapshots and qualification reports: artifact digest sha256:e6f47388bbdfa246374e232dccbe590b8a69642dd8e9cf4ae7a075418dbdc8e8, 2,157,589 bytes.
+- HGNC 2026-10-06 qualified source package: artifact digest sha256:75143f349f0446a8baa32e8ed213bafae948c59379dc145d43d23fe3767dedba, 8,317,846 bytes.
+
+These GitHub artifacts expire on 2026-12-10. They must be downloaded into approved, access-controlled resource storage before expiry; do not copy controlled or licence-restricted source bytes into the public repository. Artifact digest and exact run identity must be retained with the resource records.
+
+## 9. Immediate next work
+
+1. Preserve the successful C1.2 real-source artifacts and qualification report from workflow run 42778129927 before their 2026-12-10 expiry.
 2. Start the GREGoR AnVIL/dbGaP data-access review for phs003047.v5 and the UDN dbGaP Authorized Access review for phs001232.v8.p3; request only the minimum family SNV/INDEL callset, genotype, pedigree, phenotype, and callability metadata needed for approved known-answer cases.
 3. Evaluate the GREGoR/duoNovo phs003047.v4 source for the de novo technical subset; do not treat technical truth as clinical diagnosis truth.
 4. Do not start with EGA CRAM processing. Use it only if an approved external pipeline provides a source-bound VCF callset; FASTQ/CRAM alignment and calling are not SIRALOOM responsibilities.
