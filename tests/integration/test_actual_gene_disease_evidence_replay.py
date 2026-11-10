@@ -495,6 +495,21 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             )))
             assert len(first_attempt) == 4
             first_ids = {row.evidence_fingerprint for row in first_attempt}
+            phenotype_first_attempt = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.variant_id == variant_ids[0],
+                Evidence.evidence_type == "PHENOTYPE",
+            )))
+            assert len(phenotype_first_attempt) == 1
+            phenotype_first_ids = {row.evidence_fingerprint for row in phenotype_first_attempt}
+            phenotype_payload = phenotype_first_attempt[0].payload
+            assert phenotype_first_attempt[0].direction == "NEUTRAL"
+            assert phenotype_payload["contextual_order"] == 1
+            assert phenotype_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
+            assert phenotype_payload["hpoa_provenance"]["resource_id"] == str(hpoa_resource_id)
+            assert phenotype_payload["clinical_prioritization_validated"] is False
+            assert phenotype_payload["human_review_required"] is True
+            assert phenotype_payload["interpretive_use"] == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
             step = db.scalar(select(WorkflowStep).where(
                 WorkflowStep.analysis_id == analysis_id,
                 WorkflowStep.step_id == "build_evidence",
@@ -523,6 +538,13 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             )))
             assert len(replayed) == 4
             assert {row.evidence_fingerprint for row in replayed} == first_ids
+            phenotype_replayed = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.variant_id == variant_ids[0],
+                Evidence.evidence_type == "PHENOTYPE",
+            )))
+            assert len(phenotype_replayed) == 1
+            assert {row.evidence_fingerprint for row in phenotype_replayed} == phenotype_first_ids
             by_variant = {
                 variant_id: [
                     row.payload for row in replayed if row.variant_id == variant_id
@@ -558,8 +580,40 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             } >= {
                 "G2P_GENE_DISEASE_MODEL_QUERY",
                 "CLINGEN_GDV_GENE_DISEASE_MODEL_QUERY",
+                "HPOA_DISEASE_ANNOTATION_QUERY",
+                "HPO_ONTOLOGY_TERM_RESOLUTION",
             }
             assert all(row.status in {"SUCCESS", "NO_DATA"} for row in executions)
+
+        previous_overrides = app.dependency_overrides.copy()
+
+        def override_get_db():
+            with LocalSession() as db:
+                yield db
+
+        app.dependency_overrides[get_db] = override_get_db
+        app.dependency_overrides[get_current_principal] = lambda: Principal(
+            user_id=user_id,
+            organization_id=organization_id,
+            role="organization_admin",
+            subject=str(user_id),
+        )
+        try:
+            response = TestClient(app).get(
+                f"/api/v1/analyses/{analysis_id}/variants/{variant_ids[0]}/review"
+            )
+        finally:
+            app.dependency_overrides.clear()
+            app.dependency_overrides.update(previous_overrides)
+        assert response.status_code == 200, response.text
+        api_phenotype = response.json()["variant_context"]["phenotype_evidence"]
+        assert len(api_phenotype) == 1
+        api_payload = api_phenotype[0]["payload"]
+        assert api_phenotype[0]["direction"] == "NEUTRAL"
+        assert api_payload["contextual_order"] == 1
+        assert api_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
+        assert api_payload["clinical_prioritization_validated"] is False
+        assert api_payload["human_review_required"] is True
     finally:
         # Test-specific rows are removed in FK-safe order. Audit events are
         # removed with this isolated integration analysis as in other PG tests.
