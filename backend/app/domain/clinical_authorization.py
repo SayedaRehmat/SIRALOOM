@@ -114,6 +114,9 @@ def assert_analysis_clinical_authorization(
         analysis_type == "RESEARCH"
         and isinstance(snapshot, dict)
         and snapshot.get("mode") == "RESEARCH_NON_CLINICAL"
+        and config.get("workflow_purpose") == "RESEARCH"
+        and isinstance(config.get("research_justification"), str)
+        and config["research_justification"].strip()
     ):
         return
     if not isinstance(snapshot, dict) or snapshot.get("mode") != "CLINICAL":
