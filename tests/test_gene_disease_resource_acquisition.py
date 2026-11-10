@@ -195,9 +195,11 @@ def test_download_rejects_unapproved_redirect_and_preserves_no_partial_file(tmp_
 
 
 def test_download_enforces_maximum_source_size(tmp_path, monkeypatch):
+    monkeypatch.setattr(acquisition, "MAX_SOURCE_BYTES", 10)
+
     class Response:
         def __init__(self):
-            self.remaining = acquisition.MAX_SOURCE_BYTES + 1
+            self.remaining = 11
 
         def __enter__(self):
             return self
