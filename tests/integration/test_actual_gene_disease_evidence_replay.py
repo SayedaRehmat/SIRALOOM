@@ -103,13 +103,13 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
     ]
     g2p_path = tmp_path / "g2p.csv"
     g2p_path.write_text(
-        "G2P ID,Gene symbol,Disease name,Disease MONDO,Allelic requirement,"
+        "G2P ID,Gene symbol,HGNC ID,Disease name,Disease MONDO,Allelic requirement,"
         "Molecular mechanism,Confidence,Publication,Publication phenotypes,"
         "Cross cutting modifier,Publication variant types,"
         "Evidence based variant consequence,Publication molecular mechanism evidence\n"
-        "G2P001,GENE1,Example one,MONDO:0000001,biallelic_autosomal,"
+        "G2P001,GENE1,,Example one,MONDO:0000001,biallelic_autosomal,"
         "loss of function,definitive,PMID:1,HP:0001250,,,,\n"
-        "G2P002,GENE2,Example two,,biallelic_autosomal,"
+        "G2P002,GENE2,,Example two,,biallelic_autosomal,"
         "loss of function,definitive,PMID:2,HP:0001263,,,,\n",
         encoding="utf-8",
     )
