@@ -17,7 +17,7 @@ def upgrade():
         "clinical_requests",
         sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column("case_id", sa.Uuid(), sa.ForeignKey("cases.id"), nullable=False),
-        sa.Column("organization_id", sa.Uuid(), sa.ForeignKey("organizations.id"), nullable=False),
+        sa.Column("organization_id", sa.Uuid(), sa.ForeignKey("organizations.id", name="fk_accession_procedures_organization_id_organizations"), nullable=False),
         sa.Column("request_identifier", sa.Text(), nullable=False),
         sa.Column("status", sa.Text(), nullable=False, server_default="DRAFT"),
         sa.Column("current_revision_id", sa.Uuid(), nullable=True),
