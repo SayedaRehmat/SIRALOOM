@@ -37,3 +37,32 @@ def test_accession_decision_requires_current_revision():
     with pytest.raises(HTTPException) as exc:
         _assert_accession_decision_state(request)
     assert exc.value.status_code == 409
+
+
+from datetime import UTC, datetime, timedelta
+from pydantic import ValidationError
+from backend.app.api.v1.clinical_requests import ProcedureInput
+
+
+def test_accession_procedure_requires_timezone_aware_effective_date():
+    with pytest.raises(ValidationError):
+        ProcedureInput(
+            procedure_identifier="SOP-ACC-1",
+            procedure_version="1",
+            effective_at=datetime(2026, 1, 1),
+            approval_evidence_reference="QMS-1",
+            allows_unverified_referrer_exception=True,
+        )
+
+
+def test_accession_procedure_expiry_must_follow_effective_date():
+    effective = datetime.now(UTC)
+    with pytest.raises(ValidationError):
+        ProcedureInput(
+            procedure_identifier="SOP-ACC-1",
+            procedure_version="1",
+            effective_at=effective,
+            expires_at=effective - timedelta(seconds=1),
+            approval_evidence_reference="QMS-1",
+            allows_unverified_referrer_exception=True,
+        )
