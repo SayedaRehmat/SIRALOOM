@@ -120,14 +120,16 @@ class ClinGenGeneDiseaseValidityProvider:
         if self.sha256 is None:
             self.sha256 = hashlib.sha256(self.path.read_bytes()).hexdigest()
         raw_text = self.path.read_text(encoding="utf-8-sig")
-        release_match = re.search(r"(?im)^\s*FILE CREATED:\s*(\d{4}-\d{2}-\d{2})\s*$", raw_text)
+        # Some governed transfers preserve newline characters as the literal two-character
+        # sequence \\n. Normalize this transport representation before parsing release metadata
+        # and CSV rows. The acquired source bytes remain unchanged.
+        raw_text = raw_text.replace("\\\\n", "\\n")
+        release_match = re.search(r"(?im)^\\s*FILE CREATED:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$", raw_text)
         self.release_date = release_match.group(1) if release_match else None
         if self.expected_release is not None and self.release_date != self.expected_release:
             raise ClinGenGeneDiseaseValidityError(
                 f"ClinGen release mismatch: resource pins {self.expected_release}, file declares {self.release_date or 'no FILE CREATED date'}"
             )
-        # Some governed transfers preserve newline characters as the literal two-character sequence \\n        # Normalize that transport artifact before CSV parsing.
-        raw_text = raw_text.replace("\\n", "\n")
         from io import StringIO
         sample = raw_text[:8192]
         delimiter = self.delimiter or ("\t" if "\t" in sample and sample.count("\t") >= sample.count(",") else ",")
