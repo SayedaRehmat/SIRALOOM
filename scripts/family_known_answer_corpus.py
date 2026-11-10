@@ -1,8 +1,9 @@
-"""Validate the source, evidence, review, and coverage gates for C1.3.
+"""Validate C1.3 corpus manifest structure, evidence hashes, and review attestations.
 
 This is a qualification utility, not a runtime inheritance engine. It never
-computes clinical inheritance conclusions. Only independently reviewed,
-source-pinned cases may count toward the C1.3 corpus gate.
+computes clinical inheritance conclusions and cannot authenticate reviewer
+credentials, legal permissions, or the clinical correctness of an answer.
+Those external governance checks remain mandatory.
 """
 from __future__ import annotations
 
@@ -46,6 +47,8 @@ ALLOWED_DE_NOVO_STATES = frozenset({
 })
 REQUIRED_ARTIFACT_ROLES = frozenset({
     "SOURCE_MANIFEST",
+    "ACCESS_APPROVAL",
+    "REVIEWER_ATTESTATION",
     "SOURCE_VCF",
     "NORMALIZED_VCF",
     "PEDIGREE",
@@ -124,6 +127,9 @@ def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[s
     source_manifests = artifact_hashes.get("SOURCE_MANIFEST", [])
     if len(source_manifests) != 1 or source.get("source_snapshot_sha256").lower() != source_manifests[0]:
         raise CorpusValidationError(f"{case_id}: source snapshot hash does not match the preserved source manifest")
+    access_approvals = artifact_hashes.get("ACCESS_APPROVAL", [])
+    if len(access_approvals) != 1 or source.get("access_approval_sha256") != access_approvals[0]:
+        raise CorpusValidationError(f"{case_id}: source access approval does not match its preserved artifact")
     if source.get("access_status") != "APPROVED":
         raise CorpusValidationError(f"{case_id}: source access status is not APPROVED")
     if source.get("redistribution_status") not in {
@@ -154,11 +160,11 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[
             raise CorpusValidationError(f"{case_id}: duplicate artifact path {relative_path}")
         observed_paths.add(relative_path)
         observed_roles.add(role)
-        if role == "SOURCE_MANIFEST":
+        if role in {"SOURCE_MANIFEST", "ACCESS_APPROVAL"}:
             if role in role_hashes:
-                raise CorpusValidationError(f"{case_id}: exactly one SOURCE_MANIFEST artifact is required")
+                raise CorpusValidationError(f"{case_id}: exactly one {role} artifact is required")
             role_hashes.setdefault(role, []).append(digest.lower())
-        elif role == "SOURCE_VCF":
+        elif role in {"SOURCE_VCF", "REVIEWER_ATTESTATION"}:
             role_hashes.setdefault(role, []).append(digest.lower())
         artifact_path = _artifact_path(root, relative_path)
         if not artifact_path.is_file():
@@ -317,6 +323,7 @@ def _validate_reviewers(
     case_id: str,
     expected_sha256: str,
     implementation_author_ids: set[str],
+    attestation_hashes: set[str],
 ) -> None:
     reviewers = case.get("reviewers")
     if not isinstance(reviewers, list) or len(reviewers) < 2:
@@ -351,6 +358,8 @@ def _validate_reviewers(
             raise CorpusValidationError(f"{case_id}: reviewers did not approve the current expected outcome")
         if not _is_sha256(reviewer.get("attestation_sha256")):
             raise CorpusValidationError(f"{case_id}: reviewer attestation SHA-256 is required")
+        if reviewer.get("attestation_sha256").lower() not in attestation_hashes:
+            raise CorpusValidationError(f"{case_id}: reviewer attestation hash is not bound to a preserved artifact")
 
 
 def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict[str, Any]:
@@ -394,7 +403,13 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
         _validate_source(case, case_id, artifact_hashes)
         _validate_evidence(case, case_id, set(artifact_hashes.get("SOURCE_VCF", [])))
         expected_sha256 = _validate_expected(case, case_id)
-        _validate_reviewers(case, case_id, expected_sha256, implementation_author_ids)
+        _validate_reviewers(
+            case,
+            case_id,
+            expected_sha256,
+            implementation_author_ids,
+            set(artifact_hashes.get("REVIEWER_ATTESTATION", [])),
+        )
         for category in categories:
             coverage[category].add(test_role)
         case_summaries.append({
@@ -411,9 +426,9 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
     }
     return {
         "schema": SCHEMA,
-        "status": "QUALIFIED" if not missing_coverage else "BLOCKED_INCOMPLETE_COVERAGE",
+        "status": "MANIFEST_VALIDATION_PASSED" if not missing_coverage else "BLOCKED_INCOMPLETE_COVERAGE",
         "case_count": len(case_summaries),
-        "qualified_case_count": len(case_summaries),
+        "claimed_qualified_case_count": len(case_summaries),
         "category_coverage": {
             category: sorted(roles) for category, roles in sorted(coverage.items())
         },
@@ -446,7 +461,7 @@ def main() -> int:
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2, sort_keys=True))
-    return 0 if report["status"] == "QUALIFIED" else 1
+    return 0 if report["status"] == "MANIFEST_VALIDATION_PASSED" else 1
 
 
 if __name__ == "__main__":
