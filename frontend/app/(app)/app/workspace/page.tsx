@@ -810,7 +810,7 @@ export default function Home() {
       return;
     }
     if (!clinicalRequestId) {
-      setMessage("Select a currently accepted clinical request before starting variant interpretation.");
+      setMessage(t("workspace.selectAcceptedClinicalRequest"));
       return;
     }
     setBusy(true);
@@ -1245,14 +1245,14 @@ export default function Home() {
             </select>
             {!assayId && <small>{t("workspace.assayQcGateNotice")}</small>}
           </label>
-          <label>Accepted clinical request
+          <label>{t("workspace.acceptedClinicalRequest")}
             <select value={clinicalRequestId} onChange={(event) => setClinicalRequestId(event.target.value)}>
-              <option value="">Select an accepted request…</option>
+              <option value="">{t("workspace.selectAcceptedClinicalRequest")}</option>
               {clinicalRequests.filter((request) => request.status === "ACCEPTED" && request.current_revision_id).map((request) => (
                 <option key={request.request_id} value={request.request_id}>{request.request_identifier} · {request.status}</option>
               ))}
             </select>
-            {clinicalRequests.length === 0 && <small>No clinical requests are recorded for this case. Create, verify and accept a request before clinical variant interpretation.</small>}
+            {clinicalRequests.length === 0 && <small>{t("workspace.noAcceptedClinicalRequest")}</small>}
           </label>
           <div className="dropzone">
             <div className="drop-icon">VCF</div>
