@@ -5,7 +5,38 @@ on:
   pull_request:
     branches:
       - feature/pedigree-lifecycle-accessible-editor-20261108
-  push:
+    paths:
+      - "scripts/qualify_official_gene_disease_sources.py"
+      - "backend/app/domain/gene_disease_resource_acquisition.py"
+      - "backend/app/domain/resource_source_contract.py"
+      - "backend/app/domain/hgnc_crosswalk.py"
+      - "backend/app/domain/hgnc_resource_registration.py"
+      - "backend/app/domain/resource_qualification.py"
+      - "backend/app/adapters/nomenclature/hgnc.py"
+      - "backend/app/adapters/gene_disease/g2p.py"
+      - "backend/app/adapters/clingen/gene_disease_validity.py"
+      - "backend/app/domain/resource_capabilities.py"
+      - "backend/app/domain/analysis_resource_profiles.py"
+      - "backend/app/domain/workflow_resource_contracts.py"
+      - "backend/app/domain/resource_execution.py"
+      - "backend/app/domain/provider_registry.py"
+      - "backend/app/domain/gene_disease_reconciliation.py"
+      - "backend/app/domain/gene_disease_source_assertions.py"
+      - "backend/app/domain/inheritance_review_context.py"
+      - "backend/app/domain/phenotype_prioritization.py"
+      - "backend/app/workflows/variant.py"
+      - "tests/test_gene_disease_resource_acquisition.py"
+      - "tests/test_hgnc_crosswalk.py"
+      - "tests/test_hgnc_archive_provider.py"
+      - "tests/test_gene_disease_source_assertions.py"
+      - "tests/test_clingen_gene_disease_validity.py"
+      - "tests/test_g2p_provider.py"
+      - "tests/test_resource_profile_registry_integration.py"
+      - "tests/test_phenotype_prioritization.py"
+      - "backend/tests/test_gene_disease_reconciliation.py"
+      - "tests/test_hgnc_resource_qualification.py"
+      - "tests/test_hgnc_resource_registration.py"
+      - ".github/workflows/hgnc-qualification.yml"  push:
     paths:
       - "scripts/qualify_official_gene_disease_sources.py"
       - "backend/app/domain/gene_disease_resource_acquisition.py"
