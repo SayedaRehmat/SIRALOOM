@@ -12,21 +12,25 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
 from backend.app.adapters.gene_disease.g2p import G2PProvider
+from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.domain.enums import AnalysisStatus, StepStatus
 from backend.app.domain.resource_execution import ResolvedResourceExecution
 from backend.app.domain.resource_source_contract import ResourceExecutionContract
 from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
 from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.db.session import get_db
+from backend.app.main import app
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis, AnalysisPartition, Annotation, Artifact, AuditEvent, Case,
-    Evidence, Organization, Resource, ResourceExecutionRecord,
-    ResourceQualification, User, Variant, WorkflowStep,
+    Evidence, Organization, OrganizationMembership, PhenotypeObservation,
+    Resource, ResourceExecutionRecord, ResourceQualification, User, Variant, WorkflowStep,
 )
 from backend.app.partition_scheduler import configure_partition
 
