@@ -121,11 +121,11 @@ def _create(db: Session, case_id, artifact_id, user_id):
         case_id=case_id,
         input_artifact_id=artifact_id,
         assay_id=None,
-        analysis_type="VARIANT_INTERPRETATION",
+        analysis_type="RESEARCH",
         workflow_id="siraloom.variant",
         workflow_version="1.0",
         reference_build="GRCh38",
-        configuration={},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
         created_by=user_id,
         commit=False,
     )
