@@ -16,7 +16,7 @@ class ClinicalRequest(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     request_identifier: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, default="DRAFT")
-    current_revision_id: Mapped[UUID | None] = mapped_column(ForeignKey("clinical_request_revisions.id", use_alter=True))
+    current_revision_id: Mapped[UUID | None] = mapped_column(nullable=True)
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now, nullable=False)
