@@ -34,7 +34,7 @@ def upgrade():
             "ck_accession_procedure_status", "accession_procedures", type_="check"
         )
         op.alter_column(
-            "approved_by", "accession_procedures",
+            "accession_procedures", "approved_by",
             existing_type=sa.Uuid(), nullable=True,
         )
         op.add_column(
@@ -45,7 +45,7 @@ def upgrade():
             "accession_procedures", "users", ["created_by"], ["id"],
         )
         op.alter_column(
-            "approval_evidence_reference", "accession_procedures",
+            "accession_procedures", "approval_evidence_reference",
             existing_type=sa.Text(), nullable=True,
         )
         op.add_column(
