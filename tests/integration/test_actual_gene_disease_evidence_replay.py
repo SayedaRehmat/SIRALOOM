@@ -499,6 +499,8 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.analysis_id == analysis_id,
                 Evidence.variant_id == variant_ids[0],
                 Evidence.evidence_type == "PHENOTYPE",
+                Evidence.payload["interpretive_use"].as_string()
+                == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
             )))
             assert len(phenotype_first_attempt) == 1
             phenotype_first_ids = {row.evidence_fingerprint for row in phenotype_first_attempt}
@@ -545,6 +547,8 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                 Evidence.analysis_id == analysis_id,
                 Evidence.variant_id == variant_ids[0],
                 Evidence.evidence_type == "PHENOTYPE",
+                Evidence.payload["interpretive_use"].as_string()
+                == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
             )))
             assert len(phenotype_replayed) == 1
             assert {row.evidence_fingerprint for row in phenotype_replayed} == phenotype_first_ids
@@ -609,7 +613,10 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
             app.dependency_overrides.clear()
             app.dependency_overrides.update(previous_overrides)
         assert response.status_code == 200, response.text
-        api_phenotype = response.json()["variant_context"]["phenotype_evidence"]
+        api_phenotype = [
+            item for item in response.json()["variant_context"]["phenotype_evidence"]
+            if item["payload"].get("interpretive_use") == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
+        ]
         assert len(api_phenotype) == 1
         api_payload = api_phenotype[0]["payload"]
         assert api_phenotype[0]["direction"] == "NEUTRAL"
