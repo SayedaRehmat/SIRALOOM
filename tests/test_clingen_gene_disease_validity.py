@@ -42,6 +42,24 @@ def test_clingen_gene_disease_validity_pins_release_checksum_and_exact_pair(tmp_
     assert assertions[0].record_sha256
 
 
+def test_clingen_release_date_is_detected_in_literal_newline_export(tmp_path):
+    path = _write_export(tmp_path / "clingen-literal-newlines.csv")
+    path.write_text(
+        path.read_text(encoding="utf-8").replace("\n", r"\n"),
+        encoding="utf-8",
+    )
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    provider = ClinGenGeneDiseaseValidityProvider(
+        resource_path=str(path),
+        expected_sha256=digest,
+        expected_release="2026-11-08",
+    )
+    assertions = provider.query_gene(gene="GENE1")
+    assert provider.release_date == "2026-11-08"
+    assert len(assertions) == 1
+    assert assertions[0].mondo_id == "MONDO:0000001"
+
+
 def test_clingen_gene_disease_validity_rejects_release_or_checksum_drift(tmp_path):
     path = _write_export(tmp_path / "clingen.csv")
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
