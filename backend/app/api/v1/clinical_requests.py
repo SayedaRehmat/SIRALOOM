@@ -98,6 +98,8 @@ class CapabilityGrantInput(BaseModel):
         if self.expires_at is not None:
             if self.expires_at.tzinfo is None or self.expires_at.utcoffset() is None:
                 raise ValueError("Capability expiry must include a timezone")
+            if self.expires_at <= datetime.now(UTC):
+                raise ValueError("Capability expiry must be in the future")
         return self
 
 
