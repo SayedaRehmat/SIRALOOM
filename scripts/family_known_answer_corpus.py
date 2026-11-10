@@ -109,6 +109,9 @@ def _validate_source(case: dict[str, Any], case_id: str) -> None:
     _required_text(source.get("publication_url"), f"{case_id}.source.publication_url")
     _required_text(source.get("license_or_terms"), f"{case_id}.source.license_or_terms")
     _required_text(source.get("attribution"), f"{case_id}.source.attribution")
+    _required_text(source.get("data_use_permission_reference"), f"{case_id}.source.data_use_permission_reference")
+    if not _is_sha256(source.get("source_snapshot_sha256")):
+        raise CorpusValidationError(f"{case_id}: source_snapshot_sha256 must be SHA-256")
     if source.get("access_status") != "APPROVED":
         raise CorpusValidationError(f"{case_id}: source access status is not APPROVED")
     if source.get("redistribution_status") not in {
@@ -230,7 +233,12 @@ def _validate_expected(case: dict[str, Any], case_id: str) -> str:
     return _canonical_sha256(expected)
 
 
-def _validate_reviewers(case: dict[str, Any], case_id: str, expected_sha256: str) -> None:
+def _validate_reviewers(
+    case: dict[str, Any],
+    case_id: str,
+    expected_sha256: str,
+    implementation_author_ids: set[str],
+) -> None:
     reviewers = case.get("reviewers")
     if not isinstance(reviewers, list) or len(reviewers) < 2:
         raise CorpusValidationError(f"{case_id}: at least two independent reviewers are required")
@@ -243,14 +251,17 @@ def _validate_reviewers(case: dict[str, Any], case_id: str, expected_sha256: str
         if reviewer_id in reviewer_ids:
             raise CorpusValidationError(f"{case_id}: reviewer IDs must be distinct")
         reviewer_ids.add(reviewer_id)
-        if reviewer_id == case_author_id:
-            raise CorpusValidationError(f"{case_id}: case authors cannot independently review their own case")
+        if reviewer_id == case_author_id or reviewer_id in implementation_author_ids:
+            raise CorpusValidationError(f"{case_id}: case or implementation authors cannot independently review this case")
         _required_text(reviewer.get("qualification_category"), f"{case_id}.reviewer.qualification_category")
         _required_text(reviewer.get("reviewed_at"), f"{case_id}.reviewer.reviewed_at")
+        _required_text(reviewer.get("review_scope"), f"{case_id}.reviewer.review_scope")
         if reviewer.get("decision") != "APPROVED":
             raise CorpusValidationError(f"{case_id}: every qualifying reviewer must approve the case")
         if reviewer.get("independence_attested") is not True:
             raise CorpusValidationError(f"{case_id}: reviewer independence attestation is required")
+        if reviewer.get("implementation_independence_attested") is not True:
+            raise CorpusValidationError(f"{case_id}: independence from implementation authors must be attested")
         if reviewer.get("conflict_of_interest_checked") is not True:
             raise CorpusValidationError(f"{case_id}: reviewer conflict-of-interest check is required")
         if reviewer.get("expected_outcome_sha256") != expected_sha256:
@@ -267,6 +278,10 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
     if not isinstance(cases, list) or not cases:
         raise CorpusValidationError("Corpus must contain at least one family case")
     root = Path(artifact_root).resolve()
+    implementation_authors = manifest.get("implementation_author_ids", [])
+    if not isinstance(implementation_authors, list) or any(not isinstance(item, str) or not item.strip() for item in implementation_authors):
+        raise CorpusValidationError("implementation_author_ids must be a list of non-empty opaque IDs")
+    implementation_author_ids = set(implementation_authors)
     case_ids: set[str] = set()
     coverage: dict[str, set[str]] = {
         category: set() for category in REQUIRED_CATEGORIES
@@ -296,7 +311,7 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
         _validate_artifacts(case, case_id, root)
         _validate_evidence(case, case_id)
         expected_sha256 = _validate_expected(case, case_id)
-        _validate_reviewers(case, case_id, expected_sha256)
+        _validate_reviewers(case, case_id, expected_sha256, implementation_author_ids)
         for category in categories:
             coverage[category].add(test_role)
         case_summaries.append({
