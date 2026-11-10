@@ -299,7 +299,7 @@ def verify_referrer(request_id: UUID, body: VerificationInput, db: Session = Dep
 def decide_accession(request_id: UUID, body: DecisionInput, db: Session = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     request, case = _request_or_404(db, request_id, principal, "read")
     _require_capability(db, request.organization_id, principal.user_id, "ACCESSION_DECIDE")
-    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update())
+    request = db.scalar(select(ClinicalRequest).where(ClinicalRequest.id == request.id).with_for_update().execution_options(populate_existing=True))
     _assert_accession_decision_state(request)
     verification_id = None
     exception_id = None
