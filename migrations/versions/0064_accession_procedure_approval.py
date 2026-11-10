@@ -85,6 +85,7 @@ def downgrade():
         batch.drop_column("created_by")
         batch.drop_column("procedure_evidence_reference")
         batch.alter_column("approved_by", existing_type=sa.Uuid(), nullable=False)
+        batch.alter_column("approval_evidence_reference", existing_type=sa.Text(), nullable=False)
         batch.create_check_constraint(
             "ck_accession_procedure_status",
             "status IN ('APPROVED','WITHDRAWN')",
