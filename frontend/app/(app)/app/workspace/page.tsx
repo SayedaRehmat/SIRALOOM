@@ -413,6 +413,7 @@ export default function Home() {
     let active = true;
     setClinicalRequests([]);
     setClinicalRequestId("");
+    setAccessionRequestId("");
     if (!caseId) return () => { active = false; };
     apiFetch(`/cases/${caseId}/clinical-requests`)
       .then((rows) => {
