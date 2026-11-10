@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "backend/app/domain/gene_disease_resource_acquisition.py"
+      - "backend/app/domain/resource_source_contract.py"
       - "backend/app/domain/hgnc_crosswalk.py"
       - "backend/app/domain/hgnc_resource_registration.py"
       - "backend/app/domain/resource_qualification.py"
@@ -20,6 +22,7 @@ on:
       - "backend/app/domain/inheritance_review_context.py"
       - "backend/app/domain/phenotype_prioritization.py"
       - "backend/app/workflows/variant.py"
+      - "tests/test_gene_disease_resource_acquisition.py"
       - "tests/test_hgnc_crosswalk.py"
       - "tests/test_hgnc_archive_provider.py"
       - "tests/test_gene_disease_source_assertions.py"
@@ -66,6 +69,7 @@ jobs:
       - name: Run deterministic HGNC resolver and resource lifecycle tests
         run: >-
           uv run --locked pytest -q
+          tests/test_gene_disease_resource_acquisition.py
           tests/test_hgnc_crosswalk.py
           tests/test_hgnc_archive_provider.py
           tests/test_hgnc_resource_qualification.py
@@ -265,6 +269,86 @@ jobs:
           )
           print(json.dumps(report, indent=2, sort_keys=True))
           PY
+      - name: Acquire and qualify official G2P and ClinGen GDV snapshots
+        env:
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom_hgnc
+          ACQUISITION_DIR: ${{ runner.temp }}/gene-disease-acquired
+          MANAGED_DIR: ${{ runner.temp }}/gene-disease-managed
+        run: |
+          uv run --locked python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from sqlalchemy import create_engine
+          from sqlalchemy.orm import Session
+
+          from backend.app.domain.gene_disease_resource_acquisition import (
+              acquire_gene_disease_snapshots,
+              register_and_qualify_gene_disease_snapshots,
+          )
+          from backend.app.infrastructure.db.base import Base
+          from backend.app.infrastructure.db.models import (
+              Organization, Resource, ResourceQualification, ResourceStaging, User,
+          )
+
+          acquisition_dir = Path(os.environ["ACQUISITION_DIR"])
+          managed_dir = Path(os.environ["MANAGED_DIR"])
+          manifest = acquire_gene_disease_snapshots(acquisition_dir)
+          engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+          Base.metadata.create_all(
+              engine,
+              tables=[
+                  Organization.__table__,
+                  User.__table__,
+                  Resource.__table__,
+                  ResourceStaging.__table__,
+                  ResourceQualification.__table__,
+              ],
+          )
+          report = []
+          with Session(engine, expire_on_commit=False) as db:
+              results = register_and_qualify_gene_disease_snapshots(
+                  db,
+                  acquisition_directory=acquisition_dir,
+                  managed_directory=managed_dir,
+              )
+              for resource, staging, persisted, qualification in results:
+                  assert qualification.passed, json.dumps(qualification.checks, indent=2)
+                  assert resource.status == "QUALIFIED"
+                  assert staging.status == "STAGED"
+                  assert persisted.status == "QUALIFIED"
+                  report.append({
+                      "provider": resource.provider,
+                      "resource_id": str(resource.id),
+                      "version": resource.version,
+                      "sha256": resource.checksum,
+                      "resource_status": resource.status,
+                      "staging_status": staging.status,
+                      "qualification_status": persisted.status,
+                      "checks": qualification.checks,
+                  })
+              db.commit()
+          output = {
+              "status": "OFFICIAL_SOURCE_TECHNICAL_QUALIFICATION_PASSED",
+              "acquired_at_utc": manifest["acquired_at_utc"],
+              "artifacts": manifest["artifacts"],
+              "resources": report,
+              "activation_or_lab_approval": "NOT_PERFORMED",
+          }
+          report_path = Path(os.environ["RUNNER_TEMP"]) / "gene-disease-source-qualification.json"
+          report_path.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(output, indent=2, sort_keys=True))
+          PY
+      - name: Preserve exact G2P and ClinGen source bytes and qualification manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: g2p-clingen-official-source-snapshots
+          path: |
+            ${{ runner.temp }}/gene-disease-acquired/
+            ${{ runner.temp }}/gene-disease-managed/
+            ${{ runner.temp }}/gene-disease-source-qualification.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Preserve acquired official source files and qualification report
         uses: actions/upload-artifact@v4
         with:
