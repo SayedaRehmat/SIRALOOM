@@ -30,6 +30,7 @@ The provider input must be built from the SIRALOOM clinical record, not re-infer
 - Proband phenotype profile is kept separate from relatives' phenotype profiles. Relatives may be used only when the provider's documented model explicitly supports pedigree/family phenotypes and the relevant laboratory policy permits it.
 - Preserve disease annotation source, release, identifier namespace, evidence, frequency and NOT qualifier.
 - Preserve all raw provider output, version, model/data release, parameters, input fingerprint and output digest.
+- Execute phenotype providers inside the governed SIRALOOM environment. Do not send identifiable patient phenotypes, pedigree details or VCF data to public demonstration websites or unapproved third-party APIs. Any remote provider requires explicit organizational approval, data-processing/security review and an appropriate contract before PHI is transmitted.
 
 Do not silently discard negative/excluded phenotypes or convert them to positive terms. Do not merge sibling/parent findings into the proband profile. A provider's probability, likelihood ratio or score is not a diagnosis and is not an ACMG evidence code by itself.
 
