@@ -78,16 +78,16 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
     g2p_item = records["Gene2Phenotype"]
     clingen_item = records["ClinGen Gene-Disease Validity"]
     g2p_path = managed_directory / "Gene2Phenotype" / (
-        f'{g2p_item["release_identity"]}-{g2p_item["sha256"][:12]}' / g2p_item["filename"]
+        f'{g2p_item["release_identity"]}-{g2p_item["sha256"][:12]}') / g2p_item["filename"]
     )
     clingen_path = managed_directory / "ClinGen_Gene-Disease_Validity" / (
-        f'{clingen_item["release_identity"]}-{clingen_item["sha256"][:12]}' / clingen_item["filename"]
+        f'{clingen_item["release_identity"]}-{clingen_item["sha256"][:12]}') / clingen_item["filename"]
     )
     # The managed directory name is provider.replace(" ", "_"); ClinGen's name
     # contains a hyphen exactly as declared by the registered provider.
     if not clingen_path.is_file():
         clingen_path = managed_directory / "ClinGen_Gene-Disease_Validity" / (
-            f'{clingen_item["release_identity"]}-{clingen_item["sha256"][:12]}' / clingen_item["filename"]
+            f'{clingen_item["release_identity"]}-{clingen_item["sha256"][:12]}') / clingen_item["filename"]
         )
     if not g2p_path.is_file() or not clingen_path.is_file():
         raise RuntimeError("Managed G2P/ClinGen source artifacts are missing")
