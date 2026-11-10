@@ -67,7 +67,7 @@ def test_exception_procedure_requires_an_explicit_version_and_approval_evidence(
         procedure_identifier="SOP-ACC-004",
         procedure_version="3.1",
         effective_at=datetime.now(UTC) - timedelta(days=1),
-        approval_evidence_reference="QMS-APPROVAL-2026-17",
+        procedure_evidence_reference="QMS-CONTROLLED-DOCUMENT-17",
         allows_unverified_referrer_exception=True,
     )
     assert body.procedure_version == "3.1"
