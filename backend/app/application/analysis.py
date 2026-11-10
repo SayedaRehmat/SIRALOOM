@@ -446,5 +446,15 @@ def resume_analysis(
             f"Analysis cannot be resumed from status {locked.status}"
         )
 
+    case = db.get(Case, locked.case_id)
+    if case is None:
+        raise ValueError("Analysis case not found")
+    assert_analysis_clinical_authorization(
+        db,
+        case=case,
+        analysis_configuration=locked.configuration,
+        analysis_type=locked.analysis_type,
+    )
+
     dispatch = _create_dispatch_locked(db, locked)
     return _publish_dispatch_after_commit(db, dispatch)
