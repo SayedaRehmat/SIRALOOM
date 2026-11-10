@@ -170,3 +170,12 @@ Create synthetic, explicitly labelled fixtures and independently reviewed expect
 
 ---
 **Acceptance rule:** no claim of clinical readiness based solely on unit tests, a visually convincing graph, a similarity score, or a successful export. Clinical use requires source governance, analytical validation, laboratory-specific validation, documented SOPs, qualified personnel review, and traceable sign-out.
+
+
+## 10. C1.3 family known-answer corpus execution
+
+The C1.2 source qualification gate is now verified on the current C1 branch. C1.3 is the active next milestone. Its source inventory, required case coverage, per-case evidence contract, independent reviewer workflow, access constraints, and exit criteria are maintained in:
+
+- [C1.3 Family Known-Answer Corpus Qualification](C1_3_FAMILY_KNOWN_ANSWER_CORPUS_QUALIFICATION.md)
+
+The existing PAVS fixtures remain proband-only and are not counted as family inheritance known answers. No inheritance compatibility conclusions may be enabled until the C1.3 exit criteria pass.
