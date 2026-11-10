@@ -298,8 +298,32 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
                 name="ClinGen Gene-Disease Validity",
                 provider="ClinGen Gene-Disease Validity",
                 resource_type="EVIDENCE",
-                version="GeneValidity",
+                version="2026-11-08",
             )
+            g2p = _resource(
+                db,
+                organization_id=organization_id,
+                name="Gene2Phenotype",
+                provider="Gene2Phenotype",
+                resource_type="GENE_DISEASE",
+                version="2026-11-08",
+            )
+            g2p.license_text = "Gene2Phenotype data terms; institutional research use."
+            g2p.metadata_json = {
+                "execution": {
+                    "provider_version": "G2P_CSV",
+                    "toolchain": {"release": "2026-11-08", "sha256": "a" * 64},
+                }
+            }
+            hgnc = _resource(
+                db,
+                organization_id=organization_id,
+                name="HGNC nomenclature archive",
+                provider="HGNC",
+                resource_type="GENE_NOMENCLATURE",
+                version="2026-10-06",
+            )
+            db.add(g2p)
             db.commit()
 
             plan = resolve_analysis_resource_profile(
@@ -315,6 +339,10 @@ def test_profile_pins_optional_clingen_evidence_resources_by_distinct_capability
             assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].resource.id == gdv.id
             assert selected["CLINGEN_VARIANT_ASSERTION"].execution.resource_id == vp.id
             assert selected["CLINGEN_GENE_DISEASE_VALIDITY"].execution.resource_id == gdv.id
+            assert selected["GENE_DISEASE"].resource.id == g2p.id
+            assert selected["GENE_DISEASE"].execution.resource_id == g2p.id
+            assert selected["GENE_NOMENCLATURE"].resource.id == hgnc.id
+            assert selected["GENE_NOMENCLATURE"].execution.resource_id == hgnc.id
     finally:
         engine.dispose()
 

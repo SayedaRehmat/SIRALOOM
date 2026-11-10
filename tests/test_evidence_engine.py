@@ -253,3 +253,216 @@ def test_direct_clinvar_evidence_preserves_release_scv_and_rcv_identity():
     assert record.payload["rcv_accessions"] == ["RCV000000001.2", "RCV000000002.7"]
     assert record.payload["vcv"]["accession"] == "VCV000000001"
     assert record.payload["interpretive_use"] == "DIRECT_CLINVAR_RELEASE_EVIDENCE_REQUIRES_REVIEW"
+
+
+def test_phenotype_prioritization_becomes_neutral_reviewable_evidence():
+    engine = EvidenceEngine()
+    records = engine.build_from_phenotype_prioritization(
+        variant_id=uuid4(),
+        prioritization={
+            "method": "HPOA_EXACT_AND_IS_A_CONTEXT_ORDER_V1",
+            "clinical_prioritization_validated": False,
+            "human_review_required": True,
+            "candidates": [
+                {
+                    "gene": "GENE1",
+                    "disease_id": "MONDO:0000001",
+                    "disease_name": "Example disease",
+                    "contextual_order": 1,
+                    "matched_patient_term_count": 2,
+                    "matched_terms": [{"patient_hpo_id": "HP:0000001", "patient_observation_ids": ["obs-1"]}],
+                    "potential_discordances": [],
+                    "unmatched_present_patient_terms": [],
+                    "association_validity": "STRONG",
+                    "molecular_mechanism": "loss_of_function",
+                    "inheritance": {
+                        "modes": ["AUTOSOMAL_RECESSIVE"],
+                        "penetrance": {"status": "UNKNOWN"},
+                        "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
+                    },
+                    "association_provenance": {
+                        "resource_id": "00000000-0000-0000-0000-000000000001",
+                        "resource_version": "2026-10",
+                        "source_record_id": "GENE1:MONDO:0000001",
+                        "resource_sha256": "a" * 64,
+                    },
+                    "hpoa_provenance": {
+                        "resource_id": "00000000-0000-0000-0000-000000000002",
+                        "resource_release": "2026-09-02",
+                        "resource_sha256": "b" * 64,
+                        "ontology_release": "2026-09-01",
+                        "ontology_sha256": "c" * 64,
+                    },
+                }
+            ],
+        },
+    )
+    assert [record.evidence_type for record in records] == ["PHENOTYPE", "GENE_DISEASE"]
+    assert all(record.direction == "NEUTRAL" for record in records)
+    assert records[0].payload["contextual_order"] == 1
+    assert records[0].payload["clinical_prioritization_validated"] is False
+    assert records[1].source_record_id == "GENE1:MONDO:0000001"
+    assert records[1].payload["molecular_mechanism"] == "loss_of_function"
+
+
+def test_phenotype_prioritization_evidence_rejects_unreviewed_or_classification_like_payload():
+    engine = EvidenceEngine()
+    with pytest.raises(Exception, match="explicitly unvalidated"):
+        engine.build_from_phenotype_prioritization(
+            variant_id=uuid4(),
+            prioritization={
+                "clinical_prioritization_validated": True,
+                "human_review_required": True,
+                "candidates": [],
+            },
+        )
+
+
+def test_phenotype_candidate_evidence_is_neutral_and_keeps_both_source_provenances():
+    from uuid import uuid4
+
+    variant_id = uuid4()
+    g2p_resource_id = uuid4()
+    prioritization = {
+        "method": "HPOA_EXACT_AND_IS_A_CONTEXT_ORDER_V1",
+        "clinical_prioritization_validated": False,
+        "human_review_required": True,
+        "candidates": [{
+            "gene": "GENE1",
+            "disease_id": "MONDO:0000001",
+            "disease_name": "Example disorder",
+            "contextual_order": 1,
+            "matched_patient_term_count": 1,
+            "matched_terms": [{
+                "patient_hpo_id": "HP:0000003",
+                "disease_hpo_id": "HP:0000001",
+                "patient_observation_ids": ["obs-1"],
+                "match_type": "IS_A",
+            }],
+            "potential_discordances": [],
+            "unmatched_present_patient_terms": [],
+            "association_validity": "Definitive",
+            "association_validity_provenance": {
+                "resource_id": str(uuid4()),
+                "resource_name": "ClinGen Gene-Disease Validity",
+                "resource_version": "GeneValidity",
+                "resource_sha256": "c" * 64,
+            },
+            "clingen_validity_assertions": [],
+            "g2p_confidence": "definitive",
+            "molecular_mechanism": "loss of function",
+            "inheritance": {
+                "modes": ["AUTOSOMAL_RECESSIVE"],
+                "mode_sources": {"g2p_allelic_requirement": "biallelic_autosomal"},
+                "mode_conflict": False,
+                "penetrance": {"status": "NOT_RECORDED"},
+                "penetrance_provenance": {"source": "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"},
+                "qualification_status": "REQUIRES_INDEPENDENT_QUALIFICATION",
+            },
+            "association_provenance": {
+                "resource_id": str(g2p_resource_id),
+                "resource_name": "Gene2Phenotype",
+                "resource_version": "2026-11-08",
+                "source_record_id": "G2P:G2P001",
+                "source_record_sha256": "b" * 64,
+                "request_fingerprint": "a" * 64,
+                "resource_sha256": "d" * 64,
+                "response_sha256": "e" * 64,
+                "validity_provenance": {
+                    "resource_id": str(uuid4()),
+                    "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                },
+            },
+            "hpoa_provenance": {
+                "resource_id": str(uuid4()),
+                "resource_release": "2026-09-02",
+                "resource_sha256": "f" * 64,
+                "response_sha256": "e" * 64,
+            },
+        }],
+    }
+    records = EvidenceEngine().build_from_phenotype_prioritization(
+        variant_id=variant_id,
+        prioritization=prioritization,
+        gene_filter="GENE1",
+    )
+    phenotype = next(item for item in records if item.evidence_type == "PHENOTYPE")
+    association = next(item for item in records if item.evidence_type == "GENE_DISEASE")
+    assert all(item.direction == "NEUTRAL" for item in records)
+    assert phenotype.payload["contextual_order"] == 1
+    assert association.payload["matched_terms"][0]["patient_observation_ids"] == ["obs-1"]
+    assert association.payload["association_validity_provenance"]["resource_name"] == "ClinGen Gene-Disease Validity"
+    assert association.payload["inheritance"]["penetrance_provenance"]["source"] == "NOT_PROVIDED_BY_G2P_OR_CLINGEN_GDV"
+    assert association.resource_id == g2p_resource_id
+    assert association.source_record_id == "G2P:G2P001"
+    assert association.request_fingerprint == "a" * 64
+    assert association.response_sha256 == "e" * 64
+    assert phenotype.response_sha256 == "e" * 64
+
+
+def test_gene_disease_reconciliation_builds_neutral_source_preserving_evidence():
+    from uuid import uuid4
+
+    from backend.app.domain.gene_disease_reconciliation import (
+        GeneDiseaseSource,
+        GeneDiseaseSourceAssertion,
+        reconcile_gene_disease_assertions,
+    )
+
+    digest = "a" * 64
+    assertions = [
+        GeneDiseaseSourceAssertion(
+            source=GeneDiseaseSource.G2P,
+            source_record_id="G2P:1",
+            gene_symbol="ABCA4",
+            hgnc_id=None,
+            mondo_id="MONDO:0000001",
+            resource_id="00000000-0000-0000-0000-000000000001",
+            resource_name="Gene2Phenotype",
+            resource_version="2026-11-08",
+            resource_sha256=digest,
+            raw_assertion={"mechanism": "source raw value"},
+        ),
+    ]
+    reconciliations = reconcile_gene_disease_assertions(assertions)
+    records = EvidenceEngine().build_from_gene_disease_reconciliations(
+        variant_id=uuid4(), reconciliations=reconciliations
+    )
+    assert len(records) == 1
+    assert records[0].evidence_type == "GENE_DISEASE"
+    assert records[0].direction == "NEUTRAL"
+    assert records[0].source_record_id == reconciliations[0].reconciliation_id
+    assert records[0].payload["clinical_conclusion"] is False
+    assert records[0].payload["source_provenance"][0]["raw_assertion"] == {
+        "mechanism": "source raw value"
+    }
+
+
+def test_gene_disease_reconciliation_evidence_rejects_missing_source_provenance():
+    from uuid import uuid4
+
+    from backend.app.domain.gene_disease_reconciliation import (
+        GeneDiseaseSource,
+        GeneDiseaseSourceAssertion,
+        reconcile_gene_disease_assertions,
+    )
+
+    assertion = GeneDiseaseSourceAssertion(
+        source=GeneDiseaseSource.G2P,
+        source_record_id="G2P:1",
+        gene_symbol="ABCA4",
+        hgnc_id=None,
+        mondo_id="MONDO:0000001",
+        resource_id=None,
+        resource_name="Gene2Phenotype",
+        resource_version="2026-11-08",
+        resource_sha256="a" * 64,
+        raw_assertion={},
+    )
+    result = reconcile_gene_disease_assertions([assertion])
+    # The domain contract itself requires complete provenance, so malformed
+    # source evidence cannot be constructed or passed into EvidenceEngine.
+    records = EvidenceEngine().build_from_gene_disease_reconciliations(
+        variant_id=uuid4(), reconciliations=result
+    )
+    assert records[0].payload["source_provenance"][0]["resource_version"] == "2026-11-08"

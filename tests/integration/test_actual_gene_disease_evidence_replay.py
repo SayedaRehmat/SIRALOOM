@@ -1,0 +1,663 @@
+"""Exercise governed G2P/ClinGen evidence assembly and crash replay in the real workflow."""
+from __future__ import annotations
+
+import hashlib
+import importlib
+import multiprocessing
+import os
+import signal
+import time
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from uuid import uuid4
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session, sessionmaker
+
+from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
+from backend.app.adapters.gene_disease.g2p import G2PProvider
+from backend.app.auth.principal import Principal, get_current_principal
+from backend.app.domain.enums import AnalysisStatus, StepStatus
+from backend.app.domain.resource_execution import ResolvedResourceExecution
+from backend.app.domain.resource_source_contract import ResourceExecutionContract
+from backend.app.domain.variant_identity import canonical_key, stable_variant_uuid
+from backend.app.infrastructure.artifacts.store import ArtifactStore
+from backend.app.infrastructure.db.session import get_db
+from backend.app.main import app
+from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.models import (
+    Analysis, AnalysisPartition, Annotation, Artifact, AuditEvent, Case,
+    Evidence, Organization, OrganizationMembership, PhenotypeObservation,
+    Resource, ResourceExecutionRecord, ResourceQualification, User, Variant, WorkflowStep,
+)
+from backend.app.partition_scheduler import configure_partition
+
+
+def _run_gene_disease_worker_until_killed(analysis_id: str, ready_event) -> None:
+    """Execute the real task body in a child process and pause after evidence commit."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session, sessionmaker
+
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+    queue = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    workflow = importlib.import_module("backend.app.workflows.variant")
+    child_engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+    db_module.SessionLocal = sessionmaker(
+        bind=child_engine, expire_on_commit=False, class_=Session
+    )
+    db_module.engine = child_engine
+    real_save = workflow._save_batch_checkpoint
+
+    def pause_after_durable_commit(
+        db, step, start, end, *, status, attempt=None, metadata=None, commit=True
+    ):
+        if step.step_id == "build_evidence" and status == "SUCCEEDED":
+            # run_variant_analysis has committed all Evidence rows immediately
+            # before invoking this checkpoint callback.
+            ready_event.set()
+            while True:
+                time.sleep(1)
+        return real_save(
+            db, step, start, end, status=status, attempt=attempt,
+            metadata=metadata, commit=commit,
+        )
+
+    workflow._save_batch_checkpoint = pause_after_durable_commit
+    queue.run_analysis_task.push_request(
+        id="c1-gene-disease-replay", retries=0,
+        delivery_info={"redelivered": False},
+    )
+    try:
+        queue.run_analysis_task.run(analysis_id)
+    finally:
+        queue.run_analysis_task.pop_request()
+        child_engine.dispose()
+
+
+@pytest.mark.integration
+def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
+    monkeypatch, tmp_path
+):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL workflow integration test requires DATABASE_URL")
+
+    import importlib
+    queue = importlib.import_module("backend.app.infrastructure.queue.celery_app")
+    db_module = importlib.import_module("backend.app.infrastructure.db.session")
+    workflow = importlib.import_module("backend.app.workflows.variant")
+
+    engine = create_engine(database_url, pool_pre_ping=True)
+    Base.metadata.create_all(engine)
+    LocalSession = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
+    store = ArtifactStore(tmp_path / "gene-disease-artifacts")
+
+    organization_id, user_id, case_id, analysis_id = (
+        uuid4(), uuid4(), uuid4(), uuid4()
+    )
+    variant_specs = [
+        ("GENE1", "1", 101, "A", "G"),
+        ("GENE2", "1", 202, "C", "T"),
+    ]
+    variant_ids = [
+        stable_variant_uuid(canonical_key("GRCh38", chrom, pos, ref, alt))
+        for _gene, chrom, pos, ref, alt in variant_specs
+    ]
+    g2p_path = tmp_path / "g2p.csv"
+    g2p_path.write_text(
+        "G2P ID,Gene symbol,HGNC ID,Disease name,Disease MONDO,Allelic requirement,"
+        "Molecular mechanism,Confidence,Publication,Publication phenotypes,"
+        "Cross cutting modifier,Publication variant types,"
+        "Evidence based variant consequence,Publication molecular mechanism evidence\n"
+        "G2P001,GENE1,,Example one,MONDO:0000001,biallelic_autosomal,"
+        "loss of function,definitive,PMID:1,HP:0001250,,,,\n"
+        "G2P002,GENE2,,Example two,,biallelic_autosomal,"
+        "loss of function,definitive,PMID:2,HP:0001263,,,,\n"
+        "G2P003,GENE1,,Example two,MONDO:0000002,biallelic_autosomal,"
+        "loss of function,definitive,PMID:3,HP:0001263,,,,\n",
+        encoding="utf-8",
+    )
+    clingen_path = tmp_path / "clingen.csv"
+    clingen_path.write_text(
+        "CLINGEN GENE VALIDITY CURATIONS\n"
+        "FILE CREATED: 2026-11-08\n"
+        "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,"
+        "CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\n"
+        "GENE1,HGNC:1,Example one,MONDO_0000001,SOP9,Definitive,"
+        "https://search.clinicalgenome.org/kb/gene-validity/example1,"
+        "2026-11-08,Expert Panel,Autosomal recessive inheritance\n"
+        "GENE2,HGNC:2,Example two,MONDO_0000002,SOP9,Strong,"
+        "https://search.clinicalgenome.org/kb/gene-validity/example2,"
+        "2026-11-08,Expert Panel,Autosomal recessive inheritance\n",
+        encoding="utf-8",
+    )
+    hpo_release = "2026-09-01"
+    hpoa_release = "2026-09-02"
+    hpo_path = tmp_path / "hp.obo"
+    hpo_path.write_text(
+        "format-version: 1.2\n"
+        f"data-version: releases/{hpo_release}\n"
+        "ontology: hp.obo\n\n"
+        "[Term]\n"
+        "id: HP:0001250\n"
+        "name: Seizures\n\n"
+        "[Term]\n"
+        "id: HP:0001263\n"
+        "name: Global developmental delay\n",
+        encoding="utf-8",
+    )
+    hpoa_path = tmp_path / "phenotype.hpoa"
+    hpoa_path.write_text(
+        f"#version: {hpoa_release}\n"
+        f"#hpo-version: http://purl.obolibrary.org/obo/hp/releases/{hpo_release}/hp.json\n"
+        "database_id\tdisease_name\tqualifier\thpo_id\treference\tevidence\t"
+        "onset\tfrequency\tsex\tmodifier\taspect\tbiocuration\n"
+        "MONDO:0000001\tExample one\t\tHP:0001250\tPMID:1\tPCS\t"
+        "\t1/2\t\t\tP\tHPO:curator[2026-01-01]\n"
+        "MONDO:0000002\tExample two\t\tHP:0001263\tPMID:2\tPCS\t"
+        "\t1/3\t\t\tP\tHPO:curator[2026-01-01]\n",
+        encoding="utf-8",
+    )
+    g2p_sha = hashlib.sha256(g2p_path.read_bytes()).hexdigest()
+    clingen_sha = hashlib.sha256(clingen_path.read_bytes()).hexdigest()
+    hpo_sha = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
+    hpoa_sha = hashlib.sha256(hpoa_path.read_bytes()).hexdigest()
+    g2p_resource_id, clingen_resource_id = uuid4(), uuid4()
+    hpo_resource_id, hpoa_resource_id = uuid4(), uuid4()
+    g2p_qualification_id, clingen_qualification_id = uuid4(), uuid4()
+    hpo_qualification_id, hpoa_qualification_id = uuid4(), uuid4()
+    release = "2026-11-08"
+
+    g2p_contract = ResourceExecutionContract(
+        provider_id=G2PProvider.provider_id,
+        provider_version=G2PProvider.provider_version,
+        access_method="LOCAL", endpoint=None, location=str(g2p_path),
+        dataset=release, toolchain={"release": release, "sha256": g2p_sha},
+    )
+    clingen_contract = ResourceExecutionContract(
+        provider_id=ClinGenGeneDiseaseValidityProvider.provider_id,
+        provider_version=ClinGenGeneDiseaseValidityProvider.provider_version,
+        access_method="LOCAL", endpoint=None, location=str(clingen_path),
+        dataset="ClinGen-GDV",
+        toolchain={"release": release, "sha256": clingen_sha},
+    )
+    g2p_execution = ResolvedResourceExecution(
+        resource_id=g2p_resource_id, resource_version=release,
+        qualification_id=g2p_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=g2p_contract, contract_hash="a" * 64,
+    )
+    clingen_execution = ResolvedResourceExecution(
+        resource_id=clingen_resource_id, resource_version=release,
+        qualification_id=clingen_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=clingen_contract, contract_hash="b" * 64,
+    )
+
+    hpo_contract = ResourceExecutionContract(
+        provider_id="HPO", provider_version="OBO",
+        access_method="LOCAL", endpoint=None, location=str(hpo_path),
+        dataset=hpo_release, toolchain={"release": hpo_release, "sha256": hpo_sha},
+    )
+    hpoa_contract = ResourceExecutionContract(
+        provider_id="HPOA", provider_version="HPOA_TSV",
+        access_method="LOCAL", endpoint=None, location=str(hpoa_path),
+        dataset=hpoa_release,
+        toolchain={"release": hpoa_release, "hpo_release": hpo_release, "sha256": hpoa_sha},
+    )
+    hpo_execution = ResolvedResourceExecution(
+        resource_id=hpo_resource_id, resource_version=hpo_release,
+        qualification_id=hpo_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=hpo_contract, contract_hash="e" * 64,
+    )
+    hpoa_execution = ResolvedResourceExecution(
+        resource_id=hpoa_resource_id, resource_version=hpoa_release,
+        qualification_id=hpoa_qualification_id,
+        qualification_version="integration-qualified-v1",
+        contract=hpoa_contract, contract_hash="f" * 64,
+    )
+
+    stop_after_evidence = {"value": False}
+    real_step = workflow._step
+
+    try:
+        source_vcf = tmp_path / "source.vcf"
+        normalized_vcf = tmp_path / "normalized.vcf"
+        vcf_text = (
+            "##fileformat=VCFv4.2\n##contig=<ID=1,length=1000000>\n"
+            "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+            "1\t101\t.\tA\tG\t.\tPASS\t.\n"
+            "1\t202\t.\tC\tT\t.\tPASS\t.\n"
+        )
+        source_vcf.write_text(vcf_text, encoding="utf-8")
+        normalized_vcf.write_text(vcf_text, encoding="utf-8")
+
+        with LocalSession() as db:
+            db.add(Organization(
+                id=organization_id, name="C1 Gene-Disease Workflow Lab",
+                external_identifier=str(organization_id),
+            ))
+            db.flush()
+            db.add(User(
+                id=user_id, organization_id=organization_id,
+                external_subject=str(user_id), email=f"{user_id}@test.local",
+                display_name="C1 Workflow Test", role="ADMIN", status="ACTIVE",
+            ))
+            db.flush()
+            db.add(Case(
+                id=case_id, organization_id=organization_id,
+                case_identifier=f"C1-GD-{case_id}", status="OPEN",
+                clinical_context={}, language="en", created_by=user_id,
+            ))
+            db.flush()
+            # Artifact.analysis_id is an immediate PostgreSQL foreign key.
+            # Persist the Analysis first, then attach its immutable input artifacts.
+            analysis = Analysis(
+                id=analysis_id, case_id=case_id, parent_analysis_id=None,
+                assay_id=None, analysis_type="VARIANT_INTERPRETATION",
+                workflow_id="variant-v1", workflow_version="integration",
+                status=AnalysisStatus.QUEUED, queue_task_id="c1-gene-disease-replay",
+                reference_build="GRCh38", configuration={},
+                started_at=None, completed_at=None, created_by=user_id,
+                analysis_version=1,
+            )
+            db.add(analysis)
+            db.flush()
+            source_artifact = store.put_file(
+                db=db, case_id=case_id, analysis_id=analysis_id,
+                source_path=source_vcf, filename="source.vcf",
+                artifact_type="SOURCE_VCF", media_type="text/plain",
+                genome_build="GRCh38", metadata={},
+            )
+            normalized_artifact = store.put_file(
+                db=db, case_id=case_id, analysis_id=analysis_id,
+                source_path=normalized_vcf, filename="normalized.vcf",
+                artifact_type="NORMALIZED_VCF", media_type="text/plain",
+                genome_build="GRCh38", metadata={},
+            )
+            analysis.configuration = {
+                "input_artifact_id": str(source_artifact.id),
+                "evidence_batch_size": 250,
+            }
+            db.add(analysis)
+            db.flush()
+            db.add_all([
+                Variant(
+                    id=variant_id, genome_build="GRCh38", chromosome=chrom,
+                    position=position, reference=ref, alternate=alt,
+                    normalization_status="NORMALIZED",
+                    canonical_key=canonical_key("GRCh38", chrom, position, ref, alt),
+                    identifiers={},
+                )
+                for variant_id, (_gene, chrom, position, ref, alt)
+                in zip(variant_ids, variant_specs)
+            ])
+            resources = [
+                Resource(
+                    id=g2p_resource_id, organization_id=organization_id,
+                    name="Pinned G2P integration export",
+                    provider=G2PProvider.provider_id, resource_type="GENE_DISEASE",
+                    version=release, genome_build=None, access_method="LOCAL",
+                    license_text="Integration fixture", checksum=g2p_sha,
+                    location=str(g2p_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
+                Resource(
+                    id=clingen_resource_id, organization_id=organization_id,
+                    name="Pinned ClinGen GDV integration export",
+                    provider=ClinGenGeneDiseaseValidityProvider.provider_id,
+                    resource_type="GENE_DISEASE", version=release,
+                    genome_build=None, access_method="LOCAL",
+                    license_text="Integration fixture", checksum=clingen_sha,
+                    location=str(clingen_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
+                Resource(
+                    id=hpo_resource_id, organization_id=None,
+                    name="Pinned HPO OBO integration release",
+                    provider="HPO", resource_type="PHENOTYPE_ONTOLOGY",
+                    version=hpo_release, genome_build=None, access_method="LOCAL",
+                    license_text="Integration fixture", checksum=hpo_sha,
+                    location=str(hpo_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
+                Resource(
+                    id=hpoa_resource_id, organization_id=organization_id,
+                    name="Pinned HPOA integration release",
+                    provider="HPOA", resource_type="DISEASE_PHENOTYPE_ASSOCIATION",
+                    version=hpoa_release, genome_build=None, access_method="LOCAL",
+                    license_text="HPOA integration permission", checksum=hpoa_sha,
+                    location=str(hpoa_path), status="ACTIVE",
+                    population_definition=None, metadata_json={},
+                ),
+            ]
+            db.add_all(resources)
+            db.flush()
+            db.add_all([
+                ResourceQualification(
+                    id=g2p_qualification_id, resource_id=g2p_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": g2p_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
+                ResourceQualification(
+                    id=clingen_qualification_id, resource_id=clingen_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": clingen_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
+                ResourceQualification(
+                    id=hpo_qualification_id, resource_id=hpo_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": hpo_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
+                ResourceQualification(
+                    id=hpoa_qualification_id, resource_id=hpoa_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": hpoa_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
+            ])
+            db.add(PhenotypeObservation(
+                id=uuid4(), case_id=case_id, analysis_id=analysis_id,
+                hpo_id="HP:0001250", canonical_hpo_id="HP:0001250",
+                record_fingerprint="9" * 64, label="Seizures",
+                present=True, phenotype_status="PRESENT",
+                onset=None, severity=None, subject_member_id=None,
+                observed_at=datetime.now(timezone.utc),
+                clinical_attributes={}, ontology_resolution={
+                    "status": "CURRENT", "canonical_id": "HP:0001250",
+                    "resource_version": hpo_release, "resource_sha256": hpo_sha,
+                },
+                source="CLINICAL_INPUT", evidence={"source": "integration_fixture"},
+            ))
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="organization_admin", status="ACTIVE",
+            ))
+            db.add_all([
+                Annotation(
+                    id=uuid4(), variant_id=variant_id, analysis_id=analysis_id,
+                    provider_name="VEP", provider_version="115",
+                    resource_id=None, resource_name="Pinned VEP fixture",
+                    resource_version="115", request_fingerprint="c" * 64,
+                    response_sha256="d" * 64, request_metadata={},
+                    retry_count=0,
+                    payload={"normalized": {
+                        "gene": {"symbol": gene},
+                        "consequence": "missense_variant",
+                        "hgvs": {"c": f"c.{position}A>G"},
+                    }},
+                )
+                for variant_id, (gene, _chrom, position, _ref, _alt)
+                in zip(variant_ids, variant_specs)
+            ])
+            steps = [
+                ("validate_input", 1, StepStatus.SUCCEEDED, {"validation_profile": {}}, [str(source_artifact.id)]),
+                ("normalize", 2, StepStatus.SUCCEEDED, {"partition_count": 1}, [str(normalized_artifact.id)]),
+                ("annotate", 3, StepStatus.SUCCEEDED, {}, []),
+                ("population", 4, StepStatus.SUCCEEDED, {}, []),
+                ("build_evidence", 5, StepStatus.PENDING, {}, []),
+                ("acmg_assessment", 6, StepStatus.PENDING, {}, []),
+                ("review", 7, StepStatus.PENDING, {}, []),
+                ("reportability", 8, StepStatus.PENDING, {}, []),
+                ("report", 9, StepStatus.PENDING, {}, []),
+                ("export_provenance", 10, StepStatus.PENDING, {}, []),
+            ]
+            for step_id, order, status, metadata, outputs in steps:
+                db.add(WorkflowStep(
+                    id=uuid4(), analysis_id=analysis_id, step_id=step_id,
+                    step_order=order, status=status, attempt=0,
+                    input_artifacts=[], output_artifacts=outputs,
+                    metadata_json=metadata,
+                ))
+            partition = AnalysisPartition(
+                id=uuid4(), analysis_id=analysis_id, step_id="normalize",
+                partition_key="0:2", ordinal=0, record_start=0, record_end=2,
+                variant_count=2, status="SUCCEEDED",
+                metadata_json={"variant_ids": [str(value) for value in variant_ids]},
+                resource_class="STANDARD", cpu_request=1.0, memory_mb=1024,
+                attempt=1, lease_owner=None, lease_token=None, lease_expires_at=None,
+            )
+            configure_partition(partition, "STANDARD")
+            partition.status = "SUCCEEDED"
+            db.add(partition)
+            db.commit()
+
+        monkeypatch.setattr(db_module, "SessionLocal", LocalSession)
+        monkeypatch.setattr(db_module, "engine", engine)
+        monkeypatch.setattr(workflow, "artifact_store_for_organization", lambda *_a, **_k: store)
+        monkeypatch.setattr(workflow, "artifact_store_for_uri", lambda *_a, **_k: store)
+
+        candidates = [
+            SimpleNamespace(resource=resources[0]),
+            SimpleNamespace(resource=resources[1]),
+        ]
+        capability_candidates = {
+            workflow.ResourceCapability.GENE_DISEASE: candidates,
+            workflow.ResourceCapability.PHENOTYPE: [SimpleNamespace(resource=resources[2])],
+            workflow.ResourceCapability.DISEASE_PHENOTYPE: [SimpleNamespace(resource=resources[3])],
+        }
+        executions = {
+            g2p_resource_id: g2p_execution,
+            clingen_resource_id: clingen_execution,
+            hpo_resource_id: hpo_execution,
+            hpoa_resource_id: hpoa_execution,
+        }
+
+        def fake_plan(*_args, **kwargs):
+            requirements = kwargs.get("requirements", ())
+            wanted = {requirement.capability for requirement in requirements}
+            return SimpleNamespace(
+                profile_type="TRIAL_PUBLIC", profile_version="integration",
+                unavailable_optional=[],
+                for_capability=lambda capability: capability_candidates.get(capability, [])
+                if capability in wanted else [],
+            )
+
+        monkeypatch.setattr(workflow, "build_resource_execution_plan", fake_plan)
+        monkeypatch.setattr(
+            workflow, "resolve_resource_execution",
+            lambda _db, *, resource, **_kwargs: executions[resource.id],
+        )
+
+        def stop_before_acmg(db, received_analysis_id, step_id):
+            if step_id == "acmg_assessment" and stop_after_evidence["value"]:
+                raise SystemExit(74)
+            return real_step(db, received_analysis_id, step_id)
+
+        # Run the actual Celery task body in a separate OS process. The child
+        # pauses at the production checkpoint boundary after the Evidence commit;
+        # the parent then SIGKILLs that process, proving recovery after real worker
+        # process loss rather than an exception-based persistence retry.
+        ready = multiprocessing.get_context("fork").Event()
+        worker = multiprocessing.get_context("fork").Process(
+            target=_run_gene_disease_worker_until_killed,
+            args=(str(analysis_id), ready),
+            daemon=True,
+        )
+        worker.start()
+        assert ready.wait(timeout=90), (
+            "worker did not reach the post-evidence-commit/pre-checkpoint boundary; "
+            f"exit_code={worker.exitcode}"
+        )
+        os.kill(worker.pid, signal.SIGKILL)
+        worker.join(timeout=30)
+        assert not worker.is_alive()
+        assert worker.exitcode == -signal.SIGKILL
+        monkeypatch.setattr(workflow, "_step", stop_before_acmg)
+
+        with LocalSession() as db:
+            first_attempt = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.payload["interpretive_use"].as_string()
+                == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY",
+            )))
+            assert len(first_attempt) == 5
+            first_ids = {row.evidence_fingerprint for row in first_attempt}
+            phenotype_first_attempt = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.variant_id == variant_ids[0],
+                Evidence.evidence_type == "PHENOTYPE",
+                Evidence.payload["interpretive_use"].as_string()
+                == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
+            )))
+            assert len(phenotype_first_attempt) == 2
+            phenotype_first_ids = {row.evidence_fingerprint for row in phenotype_first_attempt}
+            phenotype_first_attempt.sort(key=lambda row: row.payload["contextual_order"])
+            phenotype_payload = phenotype_first_attempt[0].payload
+            assert phenotype_first_attempt[0].direction == "NEUTRAL"
+            assert phenotype_payload["contextual_order"] == 1
+            assert phenotype_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
+            assert phenotype_payload["hpoa_provenance"]["resource_id"] == str(hpoa_resource_id)
+            assert phenotype_payload["hpoa_provenance"]["resource_name"] == "Pinned HPOA integration release"
+            assert len(phenotype_payload["hpoa_provenance"]["request_fingerprint"]) == 64
+            assert len(phenotype_payload["hpoa_provenance"]["response_sha256"]) == 64
+            assert phenotype_payload["clinical_prioritization_validated"] is False
+            assert phenotype_payload["human_review_required"] is True
+            assert phenotype_payload["interpretive_use"] == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
+            step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "build_evidence",
+            ))
+            assert step.metadata_json["batches"]["0:2"]["status"] == "RUNNING"
+
+        # Redeliver through the real Celery task wrapper. The durable provider
+        # query executions and evidence rows are reused; only the missing batch
+        # success checkpoint is written.
+        stop_after_evidence["value"] = True
+        queue.run_analysis_task.push_request(
+            id="c1-gene-disease-replay", retries=0,
+            delivery_info={"redelivered": True},
+        )
+        try:
+            with pytest.raises(SystemExit, match="74"):
+                queue.run_analysis_task.run(str(analysis_id))
+        finally:
+            queue.run_analysis_task.pop_request()
+
+        with LocalSession() as db:
+            replayed = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.payload["interpretive_use"].as_string()
+                == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY",
+            )))
+            assert len(replayed) == 5
+            assert {row.evidence_fingerprint for row in replayed} == first_ids
+            phenotype_replayed = list(db.scalars(select(Evidence).where(
+                Evidence.analysis_id == analysis_id,
+                Evidence.variant_id == variant_ids[0],
+                Evidence.evidence_type == "PHENOTYPE",
+                Evidence.payload["interpretive_use"].as_string()
+                == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
+            )))
+            assert len(phenotype_replayed) == 2
+            assert {row.evidence_fingerprint for row in phenotype_replayed} == phenotype_first_ids
+            by_variant = {
+                variant_id: [
+                    row.payload for row in replayed if row.variant_id == variant_id
+                ]
+                for variant_id in variant_ids
+            }
+            gene1 = by_variant[variant_ids[0]]
+            gene2 = by_variant[variant_ids[1]]
+            assert {row["status"] for row in gene1} == {"G2P_ONLY", "CLINGEN_ONLY"}
+            assert {row["status"] for row in gene2} == {
+                "UNMATCHABLE_MISSING_MONDO", "CLINGEN_ONLY"
+            }
+            missing_mondo = next(
+                row for row in gene2
+                if row["status"] == "UNMATCHABLE_MISSING_MONDO"
+            )
+            assert missing_mondo["g2p_assertions"][0]["source_record_id"] == "G2P:G2P002"
+            assert missing_mondo["g2p_assertions"][0]["mondo_id"] is None
+            assert all(row.payload["clinical_conclusion"] is False for row in replayed)
+            assert all(row.payload["requires_human_review"] for row in replayed)
+            step = db.scalar(select(WorkflowStep).where(
+                WorkflowStep.analysis_id == analysis_id,
+                WorkflowStep.step_id == "build_evidence",
+            ))
+            assert step.metadata_json["batches"]["0:2"]["status"] == "SUCCEEDED"
+            assert step.status in {StepStatus.SUCCEEDED, StepStatus.REQUIRES_REVIEW}
+            executions = list(db.scalars(select(ResourceExecutionRecord).where(
+                ResourceExecutionRecord.analysis_id == analysis_id,
+                ResourceExecutionRecord.step_id == "build_evidence",
+            )))
+            assert {
+                row.metadata_json.get("execution_kind") for row in executions
+            } >= {
+                "G2P_GENE_DISEASE_MODEL_QUERY",
+                "CLINGEN_GDV_GENE_DISEASE_MODEL_QUERY",
+                "HPOA_DISEASE_ANNOTATION_QUERY",
+                "HPO_ONTOLOGY_TERM_RESOLUTION",
+            }
+            assert all(row.status in {"SUCCESS", "NO_DATA"} for row in executions)
+
+        previous_overrides = app.dependency_overrides.copy()
+
+        def override_get_db():
+            with LocalSession() as db:
+                yield db
+
+        app.dependency_overrides[get_db] = override_get_db
+        app.dependency_overrides[get_current_principal] = lambda: Principal(
+            user_id=user_id,
+            organization_id=organization_id,
+            role="organization_admin",
+            subject=str(user_id),
+        )
+        try:
+            response = TestClient(app).get(
+                f"/api/v1/analyses/{analysis_id}/variants/{variant_ids[0]}/review"
+            )
+        finally:
+            app.dependency_overrides.clear()
+            app.dependency_overrides.update(previous_overrides)
+        assert response.status_code == 200, response.text
+        api_phenotype = [
+            item for item in response.json()["variant_context"]["phenotype_evidence"]
+            if item["payload"].get("interpretive_use") == "CONTEXTUAL_CANDIDATE_ORDERING_ONLY"
+        ]
+        assert len(api_phenotype) == 2
+        api_phenotype.sort(key=lambda item: item["payload"]["contextual_order"])
+        assert [item["payload"]["contextual_order"] for item in api_phenotype] == [1, 2]
+        api_payload = api_phenotype[0]["payload"]
+        assert api_phenotype[0]["direction"] == "NEUTRAL"
+        assert api_payload["contextual_order"] == 1
+        assert api_payload["matched_terms"][0]["patient_hpo_id"] == "HP:0001250"
+        assert api_payload["clinical_prioritization_validated"] is False
+        assert api_payload["human_review_required"] is True
+        assert api_phenotype[1]["payload"]["matched_patient_term_count"] == 0
+        assert len(api_payload["hpoa_provenance"]["request_fingerprint"]) == 64
+        assert len(api_payload["hpoa_provenance"]["response_sha256"]) == 64
+    finally:
+        # Test-specific rows are removed in FK-safe order. Audit events are
+        # removed with this isolated integration analysis as in other PG tests.
+        with LocalSession() as db:
+            db.query(Evidence).filter(Evidence.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(Annotation).filter(Annotation.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(PhenotypeObservation).filter(PhenotypeObservation.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(OrganizationMembership).filter(OrganizationMembership.organization_id == organization_id).delete(synchronize_session=False)
+            db.query(ResourceExecutionRecord).filter(ResourceExecutionRecord.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(WorkflowStep).filter(WorkflowStep.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(AnalysisPartition).filter(AnalysisPartition.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(Artifact).filter(Artifact.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(AuditEvent).filter(AuditEvent.analysis_id == analysis_id).delete(synchronize_session=False)
+            db.query(Analysis).filter(Analysis.id == analysis_id).delete(synchronize_session=False)
+            db.query(ResourceQualification).filter(ResourceQualification.id.in_([
+                g2p_qualification_id, clingen_qualification_id,
+                hpo_qualification_id, hpoa_qualification_id,
+            ])).delete(synchronize_session=False)
+            db.query(Resource).filter(Resource.id.in_([
+                g2p_resource_id, clingen_resource_id, hpo_resource_id, hpoa_resource_id,
+            ])).delete(synchronize_session=False)
+            db.query(Variant).filter(Variant.id.in_(variant_ids)).delete(synchronize_session=False)
+            db.query(Case).filter(Case.id == case_id).delete(synchronize_session=False)
+            db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
+            db.query(Organization).filter(Organization.id == organization_id).delete(synchronize_session=False)
+            db.commit()
+        engine.dispose()

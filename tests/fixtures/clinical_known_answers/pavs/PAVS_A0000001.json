@@ -1,0 +1,241 @@
+{
+  "id": "PAVS:A0000001",
+  "subject": {
+    "id": "PAVS:A0000001",
+    "sex": "MALE",
+    "extensions": [
+      {
+        "name": "consanguinity",
+        "value": {
+          "ontologyClass": {
+            "id": "HP:0025820",
+            "label": "Offspring of consanguineous parents"
+          }
+        }
+      },
+      {
+        "name": "familyHistory",
+        "value": {
+          "ontologyClass": {
+            "id": "HP:0032316",
+            "label": "Positive family history"
+          }
+        }
+      },
+      {
+        "name": "geographicOrigin",
+        "value": {
+          "id": "GAZ:00005279",
+          "label": "Saudi Arabia"
+        }
+      }
+    ]
+  },
+  "phenotypicFeatures": [
+    {
+      "type": {
+        "id": "HP:0001263",
+        "label": "Global developmental delay"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0040189",
+        "label": "Scaling skin"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0000126",
+        "label": "Hydronephrosis"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HP:0000076",
+        "label": "Vesicoureteral reflux"
+      },
+      "excluded": false
+    },
+    {
+      "type": {
+        "id": "HANCESTRO:0852",
+        "label": "Middle Eastern"
+      },
+      "excluded": false
+    }
+  ],
+  "metaData": {
+    "created": "2026-02-24",
+    "createdBy": "PAVS pipeline",
+    "submittedBy": "Robert Hoehndorf",
+    "resources": [
+      {
+        "id": "hp",
+        "name": "Human Phenotype Ontology",
+        "url": "https://hpo.jax.org",
+        "version": "2024-08-13",
+        "namespacePrefix": "HP",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HP_"
+      },
+      {
+        "id": "geno",
+        "name": "Genotype Ontology",
+        "url": "https://github.com/oborel/obo-relations",
+        "namespacePrefix": "GENO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GENO_"
+      },
+      {
+        "id": "omim",
+        "name": "Online Mendelian Inheritance in Man",
+        "url": "https://www.omim.org",
+        "namespacePrefix": "OMIM",
+        "iriPrefix": "https://www.omim.org/entry/"
+      },
+      {
+        "id": "mondo",
+        "name": "Monarch Disease Ontology",
+        "url": "http://purl.obolibrary.org/obo/mondo.obo",
+        "namespacePrefix": "MONDO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/MONDO_"
+      },
+      {
+        "id": "hancestro",
+        "name": "Human Ancestry Ontology",
+        "url": "https://github.com/EBISPOT/ancestro",
+        "namespacePrefix": "HANCESTRO",
+        "iriPrefix": "http://purl.obolibrary.org/obo/HANCESTRO_"
+      },
+      {
+        "id": "gaz",
+        "name": "Gazetteer",
+        "url": "http://purl.obolibrary.org/obo/gaz.obo",
+        "namespacePrefix": "GAZ",
+        "iriPrefix": "http://purl.obolibrary.org/obo/GAZ_"
+      }
+    ],
+    "phenopacketSchemaVersion": "2.0",
+    "externalReferences": [
+      {
+        "id": "pavs:source:ahmed-variants",
+        "description": "Source dataset: ahmed-variants"
+      },
+      {
+        "id": "PMID:28454995",
+        "reference": "https://pubmed.ncbi.nlm.nih.gov/28454995/"
+      }
+    ]
+  },
+  "diseases": [
+    {
+      "term": {
+        "id": "MONDO:0010088",
+        "label": "mucosulfatidosis"
+      },
+      "modeOfInheritance": {
+        "id": "HP:0000007",
+        "label": "Autosomal recessive inheritance"
+      }
+    }
+  ],
+  "interpretations": [
+    {
+      "id": "interp-PAVS:A0000001",
+      "progressStatus": "SOLVED",
+      "diagnosis": {
+        "disease": {
+          "id": "MONDO:0010088",
+          "label": "mucosulfatidosis"
+        },
+        "genomicInterpretations": [
+          {
+            "subjectOrBiosampleId": "PAVS:A0000001",
+            "interpretationStatus": "CAUSATIVE",
+            "variantInterpretation": {
+              "acmgPathogenicityClassification": "LIKELY_PATHOGENIC",
+              "therapeuticActionability": "UNKNOWN_ACTIONABILITY",
+              "variationDescriptor": {
+                "id": "PAVS:A0000001_SUMF1",
+                "moleculeContext": "genomic",
+                "geneContext": {
+                  "symbol": "SUMF1",
+                  "valueId": "NCBIGene:285362"
+                },
+                "expressions": [
+                  {
+                    "syntax": "hgvs.c",
+                    "value": "ENST00000272902.10:c.785A>G"
+                  },
+                  {
+                    "syntax": "hgvs.g",
+                    "value": "NC_000003.12:g.4417183A>G"
+                  },
+                  {
+                    "syntax": "hgvs.p",
+                    "value": "ENSP00000272902.5:p.Gln262Arg"
+                  }
+                ],
+                "vcfRecord": {
+                  "genomeAssembly": "hg38",
+                  "chrom": "chr3",
+                  "pos": 4417183,
+                  "ref": "A",
+                  "alt": "G"
+                },
+                "allelicState": {
+                  "id": "GENO:0000136",
+                  "label": "homozygous"
+                },
+                "extensions": [
+                  {
+                    "name": "vep_consequence",
+                    "value": "missense_variant"
+                  },
+                  {
+                    "name": "vep_impact",
+                    "value": "MODERATE"
+                  },
+                  {
+                    "name": "vep_sift",
+                    "value": "deleterious(0.01)"
+                  },
+                  {
+                    "name": "vep_polyphen",
+                    "value": "possibly_damaging(0.813)"
+                  },
+                  {
+                    "name": "vep_domains",
+                    "value": "Pfam/PF03781"
+                  },
+                  {
+                    "name": "gnomad_pli",
+                    "value": "1.2003e-16"
+                  },
+                  {
+                    "name": "gnomad_loeuf",
+                    "value": "1.2540e+00"
+                  },
+                  {
+                    "name": "expressed_in",
+                    "value": "skin:100|aorta:98|thyroid_gland:96|coronary_artery:94|ectocervix:92|esophagus_mucosa:92|renal_medulla:92|tibial_nerve:92|vagina:92|ovary:83|subcutaneous_adipose_tissue:83|tibial_artery:83|endocervix:77|lower_leg_skin:77|lung:77|mammary_gland:77|minor_salivary_gland:77|suprapubic_skin:77|uterus:77"
+                  },
+                  {
+                    "name": "go_biological_process",
+                    "value": "post-translational protein modification|glycosphingolipid catabolic process|protein oxidation"
+                  },
+                  {
+                    "name": "mouse_mp_labels",
+                    "value": "abnormal long bone epiphysis morphology|abnormal long bone metaphysis morphology|abnormal microglial cell morphology|kyphosis|abnormal craniofacial morphology|short limbs|tremors|decreased Purkinje cell number|decreased body size|limb grasping|postnatal growth retardation|seizures|premature death|abnormal astrocyte morphology|abnormal macrophage morphology|abnormal joint morphology|abnormal thoracic vertebrae morphology|increased neuron apoptosis|increased hepatocyte apoptosis|abnormal cerebella"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

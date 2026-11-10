@@ -692,6 +692,17 @@ export type TranslationKey =
   | "review.phenotypeMatchTerms"
   | "review.phenotypeMatchUnvalidated"
   | "review.phenotypeMatchNoTerms"
+  | "review.candidateContext"
+  | "review.candidateOrder"
+  | "review.matchedPhenotypeCount"
+  | "review.associationValidity"
+  | "review.associationEvidenceState"
+  | "review.g2pConfidence"
+  | "review.molecularMechanism"
+  | "review.inheritanceModes"
+  | "review.penetrance"
+  | "review.modeConflict"
+  | "review.candidateContextUnvalidated"
   | "review.hpoaAssertions"
   | "review.hpoaDisease"
   | "review.hpoaNot"
@@ -1355,6 +1366,17 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.phenotypeMatchTerms": "Patient terms matching disease annotations",
     "review.phenotypeMatchUnvalidated": "This term overlap is limited context for human review. It has not been clinically validated and must not be used alone for diagnosis, classification, or sign-out.",
     "review.phenotypeMatchNoTerms": "No present patient phenotype terms matched the disease annotations under the pinned ontology.",
+    "review.candidateContext": "Phenotype-driven candidate context",
+    "review.candidateOrder": "Contextual order",
+    "review.matchedPhenotypeCount": "Distinct matched patient phenotype terms",
+    "review.associationValidity": "Gene–disease validity (ClinGen)",
+    "review.associationEvidenceState": "Source evidence state",
+    "review.g2pConfidence": "G2P curation confidence",
+    "review.molecularMechanism": "Curated molecular mechanism",
+    "review.inheritanceModes": "Source-reported inheritance modes",
+    "review.penetrance": "Penetrance",
+    "review.modeConflict": "Inheritance source conflict: review required",
+    "review.candidateContextUnvalidated": "Contextual ordering is not a diagnostic score or clinical conclusion. Verify the source assertions and family evidence during human review.",
     "review.hpoaAssertions": "HPO disease-phenotype assertions",
     "review.hpoaDisease": "Disease identifier",
     "review.hpoaNot": "NOT reported",
@@ -2437,6 +2459,17 @@ export const messages: Record<CatalogLanguage, Record<TranslationKey, string>> =
     "review.phenotypeMatchTerms": "مصطلحات المريض المطابقة لتوصيفات المرض",
     "review.phenotypeMatchUnvalidated": "هذا التداخل بين المصطلحات سياق محدود للمراجعة البشرية. لم يُتحقق من صلاحيته سريرياً ولا يجوز استخدامه وحده للتشخيص أو التصنيف أو اعتماد التقرير.",
     "review.phenotypeMatchNoTerms": "لم تتطابق أي مصطلحات ظاهرية إيجابية للمريض مع توصيفات المرض وفق إصدار الأنطولوجيا المثبت.",
+    "review.candidateContext": "سياق المرشح المستند إلى النمط الظاهري",
+    "review.candidateOrder": "الترتيب السياقي",
+    "review.matchedPhenotypeCount": "عدد مصطلحات المريض الظاهرية المتطابقة والمميزة",
+    "review.associationValidity": "صلاحية علاقة الجين بالمرض (ClinGen)",
+    "review.associationEvidenceState": "حالة أدلة المصادر",
+    "review.g2pConfidence": "ثقة مراجعة G2P",
+    "review.molecularMechanism": "الآلية الجزيئية المنسوبة في المصدر",
+    "review.inheritanceModes": "أنماط الوراثة الواردة في المصادر",
+    "review.penetrance": "النفوذية",
+    "review.modeConflict": "تعارض بين مصادر نمط الوراثة: يلزم التحقق",
+    "review.candidateContextUnvalidated": "الترتيب السياقي ليس درجة تشخيصية أو استنتاجًا سريريًا. يجب التحقق من تأكيدات المصادر وأدلة الأسرة أثناء المراجعة البشرية.",
     "review.hpoaAssertions": "تأكيدات HPO للنمط الظاهري المرتبط بالمرض",
     "review.hpoaDisease": "معرّف المرض",
     "review.hpoaNot": "منفي صراحةً (NOT)",

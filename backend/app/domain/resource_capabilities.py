@@ -20,6 +20,7 @@ class ResourceCapability(StrEnum):
     POPULATION_FREQUENCY = "POPULATION_FREQUENCY"
     CLINICAL_VARIANT = "CLINICAL_VARIANT"
     GENE_DISEASE = "GENE_DISEASE"
+    GENE_NOMENCLATURE = "GENE_NOMENCLATURE"
     PHENOTYPE = "PHENOTYPE"
     DISEASE_PHENOTYPE = "DISEASE_PHENOTYPE"
     COMPUTATIONAL = "COMPUTATIONAL"
@@ -124,6 +125,12 @@ def infer_capabilities(
         ("ClinGen Gene-Disease Validity", "EVIDENCE"): {
             ResourceCapability.GENE_DISEASE,
         },
+        ("Gene2Phenotype", "EVIDENCE"): {
+            ResourceCapability.GENE_DISEASE,
+        },
+        ("HGNC", "GENE_NOMENCLATURE"): {
+            ResourceCapability.GENE_NOMENCLATURE,
+        },
         ("ClinGen CSpec", "ACMG_SPECIFICATION"): {
             ResourceCapability.ACMG_SPECIFICATION,
         },
@@ -194,6 +201,7 @@ DISEASE_ONTOLOGY = "DISEASE_ONTOLOGY"
 GENE_PANEL = "GENE_PANEL"
 DOSAGE_SENSITIVITY = "DOSAGE_SENSITIVITY"
 GENE_DISEASE = ResourceCapability.GENE_DISEASE.value
+GENE_NOMENCLATURE = ResourceCapability.GENE_NOMENCLATURE.value
 CLINGEN_VARIANT_ASSERTION = "CLINGEN_VARIANT_ASSERTION"
 CLINGEN_GENE_DISEASE_VALIDITY = "CLINGEN_GENE_DISEASE_VALIDITY"
 
@@ -263,6 +271,14 @@ _RESOURCE_PROFILE_CAPABILITIES = {
         ("gene", "disease"), ("gene_disease_validity", "curation_metadata"),
         ("LOCAL", "API", "HTTPS"), ("LOCAL", "REMOTE_API"), False, True, False,
         (), (), ("GENE_DISEASE",), True, True, True,
+    ),
+    GENE_NOMENCLATURE: ScientificResourceCapability(
+        GENE_NOMENCLATURE,
+        "Versioned HGNC approved-symbol, alias, previous-symbol and withdrawn-identifier crosswalk.",
+        ("gene_symbol_or_hgnc_identifier",),
+        ("canonical_hgnc_identifier", "identifier_resolution_status", "candidate_hgnc_identifiers"),
+        ("LOCAL", "FILE", "LOCAL_ONLY"), ("LOCAL",), False, True, True,
+        (), (), ("GENE_IDENTIFIER_RESOLUTION",), False, True, False,
     ),
     PHENOTYPE_ONTOLOGY: ScientificResourceCapability(
         PHENOTYPE_ONTOLOGY,
@@ -342,6 +358,10 @@ _SCIENTIFIC_PROVIDERS = {
     "PUBMED": ScientificProvider("PUBMED", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "PMC": ScientificProvider("PMC", LITERATURE_PROVIDER, ("API", "HTTPS")),
     "OMIM": ScientificProvider("OMIM", GENE_DISEASE, ("LOCAL", "API", "HTTPS"), True),
+    "GENE2PHENOTYPE": ScientificProvider(
+        "GENE2PHENOTYPE", GENE_DISEASE, ("LOCAL", "FILE", "LOCAL_ONLY"), True
+    ),
+    "HGNC": ScientificProvider("HGNC", GENE_NOMENCLATURE, ("LOCAL", "FILE", "LOCAL_ONLY")),
     "SPLICEAI": ScientificProvider("SPLICEAI", SPLICING_PREDICTOR, ("LOCAL", "API", "HTTPS"), True),
     "DBNSFP": ScientificProvider("DBNSFP", COMPUTATIONAL_PREDICTOR, ("LOCAL", "FILE")),
     "CADD": ScientificProvider("CADD", COMPUTATIONAL_PREDICTOR, ("LOCAL", "API", "HTTPS")),
@@ -373,7 +393,7 @@ def get_resource_capability(resource_type: str):
 def supported_resource_types() -> tuple[str, ...]:
     return tuple(sorted({
         REFERENCE_PACKAGE, ANNOTATION_ENGINE, ANNOTATION_CACHE, POPULATION,
-        POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, PHENOTYPE_ONTOLOGY,
+        POPULATION_SECONDARY, CLINICAL_DATABASE, GENE_DISEASE, GENE_NOMENCLATURE, PHENOTYPE_ONTOLOGY,
         DISEASE_PHENOTYPE_ASSOCIATION,
         COMPUTATIONAL_PREDICTOR, SPLICING_PREDICTOR, FUNCTIONAL_EVIDENCE,
         LITERATURE_PROVIDER, ACMG_RULE_SPECIFICATION, VARIANT_IDENTITY,

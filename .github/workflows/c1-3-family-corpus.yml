@@ -1,0 +1,45 @@
+name: C1.3 family known-answer corpus contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/c1-phenotype-inheritance-qualification-20261108
+    paths:
+      - "scripts/family_known_answer_corpus.py"
+      - "tests/test_family_known_answer_corpus.py"
+      - "docs/clinical/C1_3_FAMILY_KNOWN_ANSWER_CORPUS_QUALIFICATION.md"
+      - ".github/workflows/c1-3-family-corpus.yml"
+  pull_request:
+    branches:
+      - feature/pedigree-lifecycle-accessible-editor-20261108
+    paths:
+      - "scripts/family_known_answer_corpus.py"
+      - "tests/test_family_known_answer_corpus.py"
+      - "docs/clinical/C1_3_FAMILY_KNOWN_ANSWER_CORPUS_QUALIFICATION.md"
+      - ".github/workflows/c1-3-family-corpus.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  corpus-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install repository-locked test environment
+        run: |
+          python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
+          uv lock --check
+          uv sync --locked --extra dev
+      - name: Test C1.3 corpus manifest, provenance, genotype, and reviewer gates
+        run: uv run --locked pytest -q tests/test_family_known_answer_corpus.py
+      - name: Compile corpus qualification utility
+        run: uv run --locked python -m py_compile scripts/family_known_answer_corpus.py

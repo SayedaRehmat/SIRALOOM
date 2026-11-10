@@ -149,6 +149,7 @@ def _assert_profile_bound_resource_execution(
             "CLINGEN_VARIANT_ASSERTION",
             "CLINGEN_GENE_DISEASE_VALIDITY",
             "GENE_DISEASE",
+            "GENE_NOMENCLATURE",
             "PHENOTYPE_ONTOLOGY",
             "DISEASE_PHENOTYPE_ASSOCIATION",
             "COMPUTATIONAL_PREDICTOR",

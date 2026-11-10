@@ -7,12 +7,17 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import json
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from backend.app.domain.local_uri import local_path_from_uri
+from backend.app.domain.hgnc_crosswalk import (
+    HGNC_ARCHIVE_RELEASE,
+    HGNCResolver,
+)
 from backend.app.domain.resource_source_contract import (
     ResourceSourceContractError,
     validate_execution_contract,
@@ -118,6 +123,176 @@ def _qualify_vep_runtime(execution: Any, blockers: list[str], checks: dict[str, 
         }
 
 
+def _qualify_hgnc(resource: Resource, manifest_path: Path | None, blockers: list[str], checks: dict[str, Any]) -> None:
+    """Validate exact pinned HGNC artifacts and deterministic crosswalk structure."""
+    checks["provider"] = "HGNCArchiveProvider"
+    checks["hgnc_release"] = resource.version
+    if manifest_path is None or not manifest_path.is_file():
+        blockers.append("HGNC_ACQUISITION_MANIFEST_MISSING")
+        return
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("schema") != "siraloom.hgnc-acquisition.v1":
+            raise ValueError("unsupported acquisition manifest schema")
+        if manifest.get("release") != HGNC_ARCHIVE_RELEASE or resource.version != HGNC_ARCHIVE_RELEASE:
+            raise ValueError("HGNC release identity does not match pinned qualification")
+        if manifest.get("publisher") != "HUGO Gene Nomenclature Committee":
+            raise ValueError("unexpected HGNC publisher")
+        if manifest.get("license") != "CC0-1.0":
+            raise ValueError("HGNC license identity is not CC0-1.0")
+        files = {item.get("filename"): item for item in manifest.get("files", [])}
+        expected = {
+            "hgnc_complete_set.txt": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/hgnc_complete_set_2026-10-06.txt",
+            "withdrawn.txt": "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/quarterly/tsv/withdrawn_2026-10-06.txt",
+        }
+        paths = {}
+        for filename, source_url in expected.items():
+            record = files.get(filename)
+            if not record or record.get("source_url") != source_url:
+                raise ValueError(f"unexpected or missing pinned source artifact: {filename}")
+            artifact = manifest_path.parent / filename
+            if not artifact.is_file() or artifact.stat().st_size <= 0:
+                raise ValueError(f"HGNC artifact missing or empty: {filename}")
+            observed = _sha256(artifact)
+            if observed != record.get("sha256") or artifact.stat().st_size != record.get("size_bytes"):
+                raise ValueError(f"HGNC artifact integrity mismatch: {filename}")
+            paths[filename] = artifact
+        resolver = HGNCResolver(
+            paths["hgnc_complete_set.txt"], paths["withdrawn.txt"],
+            release=HGNC_ARCHIVE_RELEASE,
+        )
+        checks["hgnc_crosswalk"] = {
+            "status": "STRUCTURALLY_VALIDATED",
+            "release": HGNC_ARCHIVE_RELEASE,
+            "approved_gene_count": len(resolver._approved),
+            "approved_symbol_count": len(resolver._approved_symbols),
+            "alias_symbol_count": len(resolver._alias_index),
+            "previous_symbol_count": len(resolver._previous),
+            "ensembl_gene_id_count": len(resolver._ensembl),
+            "withdrawn_symbol_count": len(resolver._withdrawn),
+            "complete_set_sha256": resolver.complete_sha256,
+            "withdrawn_sha256": resolver.withdrawn_sha256,
+            "checksum_semantics": manifest.get("checksum_semantics"),
+            "upstream_checksums_published": False,
+        }
+        if len(resolver._approved) < 10000:
+            raise ValueError("HGNC complete set is implausibly small")
+        if not resolver._ensembl:
+            raise ValueError("HGNC complete set contains no Ensembl gene identifiers")
+        checks["hgnc_crosswalk"]["status"] = "QUALIFICATION_CHECKS_PASSED"
+    except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+        blockers.append("HGNC_CROSSWALK_QUALIFICATION_FAILED")
+        checks["hgnc_crosswalk"] = {"status": "BLOCKED", "error": str(exc)[:2000]}
+
+
+def _qualify_gene_disease_provider(
+    resource: Resource,
+    path: Path | None,
+    blockers: list[str],
+    checks: dict[str, Any],
+) -> None:
+    """Run the production provider parser against exact staged, digest-pinned bytes."""
+    if path is None or not path.is_file():
+        blockers.append("GENE_DISEASE_SOURCE_ARTIFACT_MISSING")
+        return
+    expected_sha = str(resource.checksum or "").lower()
+    if not expected_sha or _sha256(path) != expected_sha:
+        blockers.append("GENE_DISEASE_SOURCE_DIGEST_MISMATCH")
+        return
+    metadata = dict(resource.metadata_json or {})
+    execution = dict(metadata.get("execution") or {})
+    toolchain = dict(execution.get("toolchain") or {})
+    release = str(toolchain.get("release") or "")
+    manifest_path_value = str(toolchain.get("manifest_path") or metadata.get("acquisition_manifest_path") or "")
+    manifest_sha_expected = str(toolchain.get("manifest_sha256") or metadata.get("acquisition_manifest_sha256") or "").lower()
+    if not manifest_path_value or not manifest_sha_expected:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_NOT_PINNED")
+        return
+    manifest_path = Path(manifest_path_value)
+    if not manifest_path.is_file() or _sha256(manifest_path) != manifest_sha_expected:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_DIGEST_MISMATCH")
+        return
+    try:
+        acquisition_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if acquisition_manifest.get("schema") != "siraloom.gene-disease-acquisition.v1":
+            raise ValueError("unsupported acquisition manifest schema")
+        manifest_records = [
+            item for item in acquisition_manifest.get("artifacts", [])
+            if item.get("provider") == resource.provider
+        ]
+        if len(manifest_records) != 1:
+            raise ValueError("acquisition manifest must contain exactly one matching provider artifact")
+        manifest_record = manifest_records[0]
+        if (
+            manifest_record.get("release_identity") != release
+            or manifest_record.get("sha256") != expected_sha
+            or manifest_record.get("size_bytes") != path.stat().st_size
+            or manifest_record.get("requested_url") != metadata.get("source_requested_url")
+            or manifest_record.get("final_url") != metadata.get("source_final_url")
+        ):
+            raise ValueError("acquisition manifest does not identify the registered source bytes and endpoint")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        blockers.append("GENE_DISEASE_ACQUISITION_MANIFEST_INVALID")
+        checks["gene_disease_acquisition_manifest"] = {"status": "BLOCKED", "error": str(exc)[:2000]}
+        return
+    checks["gene_disease_acquisition_manifest"] = {
+        "status": "VERIFIED",
+        "sha256": manifest_sha_expected,
+        "acquired_at_utc": acquisition_manifest.get("acquired_at_utc"),
+        "release_identity_kind": manifest_record.get("release_identity_kind"),
+        "requested_url": manifest_record.get("requested_url"),
+        "final_url": manifest_record.get("final_url"),
+    }
+    if release != resource.version:
+        blockers.append("GENE_DISEASE_RELEASE_IDENTITY_MISMATCH")
+        checks["gene_disease_source"] = {"status": "BLOCKED", "resource_version": resource.version, "declared_release": release}
+        return
+    try:
+        if resource.provider == "Gene2Phenotype":
+            from backend.app.adapters.gene_disease.g2p import G2PProvider
+            provider = G2PProvider(resource_path=str(path), expected_sha256=expected_sha, release=release)
+            records = tuple(provider._records)
+            record_ids = [record.source_record_id for record in records]
+            mondo_missing = sum(record.disease_mondo is None for record in records)
+            gene_ids_present = sum(record.hgnc_id is not None for record in records)
+            source_schema = "G2P_CSV"
+        elif resource.provider == "ClinGen Gene-Disease Validity":
+            from backend.app.adapters.clingen.gene_disease_validity import ClinGenGeneDiseaseValidityProvider
+            provider = ClinGenGeneDiseaseValidityProvider(resource_path=str(path), expected_sha256=expected_sha, expected_release=release)
+            index = provider._load_index()
+            records = tuple(record for group in index.values() for record in group)
+            record_ids = [record.source_record_id for record in records]
+            mondo_missing = sum(record.mondo_id is None for record in records)
+            gene_ids_present = sum(record.hgnc_id is not None for record in records)
+            source_schema = "CLINGEN_GENE_VALIDITY_CSV"
+            if provider.release_date != release:
+                raise ValueError("ClinGen FILE CREATED does not match pinned resource release")
+        else:
+            return
+        if not records:
+            raise ValueError("provider parser returned no gene-disease assertions")
+        if len(record_ids) != len(set(record_ids)):
+            raise ValueError("provider export contains duplicate source record identifiers")
+        checks["gene_disease_source"] = {
+            "status": "PROVIDER_PARSER_QUALIFIED",
+            "provider": resource.provider,
+            "schema": source_schema,
+            "release": release,
+            "sha256": expected_sha,
+            "record_count": len(records),
+            "unique_source_record_count": len(set(record_ids)),
+            "records_missing_mondo": mondo_missing,
+            "records_with_native_hgnc_id": gene_ids_present,
+            "records_without_native_hgnc_id": len(records) - gene_ids_present,
+            "raw_artifact_preserved": True,
+            "parser": "production_provider_adapter",
+            "clinical_validity_claim": False,
+        }
+    except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+        blockers.append("GENE_DISEASE_PROVIDER_QUALIFICATION_FAILED")
+        checks["gene_disease_source"] = {"status": "BLOCKED", "provider": resource.provider, "error": str(exc)[:2000]}
+
+
 def qualify_resource(
     resource: Resource,
     *,
@@ -210,12 +385,16 @@ def qualify_resource(
         blockers.append("STAGED_ARTIFACT_MISSING")
     else:
         blockers.append("STAGING_REQUIRED")
-    if contract.checksum_status in {"NOT_PUBLISHED", "UNKNOWN", "TRANSPORT_DIGEST_ONLY"}:
+    if contract.checksum_status in {"NOT_PUBLISHED", "UNKNOWN", "TRANSPORT_DIGEST_ONLY"} and resource.provider != "HGNC":
         blockers.append("AUTHORITATIVE_CHECKSUM_UNVERIFIED")
     if contract.license_status in {"REVIEW_REQUIRED", "UNKNOWN", "RESTRICTED"}:
         blockers.append("LICENSE_REVIEW_REQUIRED")
     if contract.access_mode == "LICENSE_REQUIRED" and contract.license_status != "VERIFIED":
         blockers.append("LICENSE_NOT_VERIFIED")
+    if resource.provider == "HGNC":
+        _qualify_hgnc(resource, path, blockers, checks)
+    if resource.provider in {"Gene2Phenotype", "ClinGen Gene-Disease Validity"}:
+        _qualify_gene_disease_provider(resource, path, blockers, checks)
     if resource.provider == "NCBI ClinVar":
         _qualify_clinvar(resource, path, checks)
     if resource.provider == "VEP":

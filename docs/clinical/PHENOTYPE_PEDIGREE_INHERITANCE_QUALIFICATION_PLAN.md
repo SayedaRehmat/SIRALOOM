@@ -170,3 +170,19 @@ Create synthetic, explicitly labelled fixtures and independently reviewed expect
 
 ---
 **Acceptance rule:** no claim of clinical readiness based solely on unit tests, a visually convincing graph, a similarity score, or a successful export. Clinical use requires source governance, analytical validation, laboratory-specific validation, documented SOPs, qualified personnel review, and traceable sign-out.
+
+
+
+The C1.1 provider-selection decision and public benchmark qualification plan is defined in [C1.1 Phenotype Provider Selection and Qualification](C1_1_PHENOTYPE_PROVIDER_SELECTION_AND_QUALIFICATION.md). No clinical prioritization provider is selected or approved until its benchmark and commercial data/software licensing gates pass.
+
+## 11. Clinical-laboratory standard implementation map
+
+The binding source-to-function requirements, current code disposition, implementation order, and release gates for phenotype, pedigree, disease-specific inheritance, segregation, and ACMG/ClinGen evidence are defined in [C1 Phenotype and Inheritance Standard Implementation Map](C1_PHENOTYPE_INHERITANCE_STANDARD_IMPLEMENTATION_MAP.md). This map is the implementation authority for subsequent C1 work. The existing exact/IS-A HPO context ordering remains non-clinical and unqualified; no home-grown phenotype score or inheritance conclusion may be enabled.
+
+## 10. C1.3 family known-answer corpus execution
+
+The C1.2 source qualification gate is now verified on the current C1 branch. C1.3 is the active next milestone. Its source inventory, required case coverage, per-case evidence contract, independent reviewer workflow, access constraints, and exit criteria are maintained in:
+
+- [C1.3 Family Known-Answer Corpus Qualification](C1_3_FAMILY_KNOWN_ANSWER_CORPUS_QUALIFICATION.md)
+
+The existing PAVS fixtures remain proband-only and are not counted as family inheritance known answers. No inheritance compatibility conclusions may be enabled until the C1.3 exit criteria pass.

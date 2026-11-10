@@ -87,9 +87,13 @@ def register_builtin_providers() -> ProviderRegistry:
     This function deliberately does not fabricate implementations for the
     future 50+ resource catalog.
     """
-    if registry.list():
-        return registry
 
+    def register_if_missing(**kwargs):
+        if registry.resolve(
+            provider_id=kwargs["provider_id"],
+            provider_version=kwargs["provider_version"],
+        ) is None:
+            registry.register(**kwargs)
     from backend.app.adapters.annotation.genebe import GeneBeProvider
     from backend.app.adapters.annotation.vep import VEPProvider
     from backend.app.adapters.clingen.cspec_provider import ClinGenCSpecProvider
@@ -99,6 +103,8 @@ def register_builtin_providers() -> ProviderRegistry:
     from backend.app.adapters.clingen.variant_pathogenicity import (
         ClinGenVariantPathogenicityProvider,
     )
+    from backend.app.adapters.gene_disease.g2p import G2PProvider
+    from backend.app.adapters.nomenclature.hgnc import HGNCArchiveProvider
     from backend.app.adapters.phenotype.hpo_obo import HPOOboProvider
     from backend.app.adapters.phenotype.hpoa import HPOAProvider
     from backend.app.adapters.population.gnomad import (
@@ -107,7 +113,7 @@ def register_builtin_providers() -> ProviderRegistry:
     )
     from backend.app.domain.resource_capabilities import ResourceCapability
 
-    registry.register(
+    register_if_missing(
         provider_id=VEPProvider.provider_id,
         provider_version="*",
         factory=VEPProvider.from_execution_contract,
@@ -117,7 +123,7 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=GeneBeProvider.provider_id,
         provider_version=GeneBeProvider.provider_version,
         factory=GeneBeProvider.from_execution_contract,
@@ -131,7 +137,7 @@ def register_builtin_providers() -> ProviderRegistry:
             trial_only=True,
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=GnomADGraphQLProvider.provider_id,
         provider_version=GnomADGraphQLProvider.provider_version,
         factory=GnomADGraphQLProvider.from_execution_contract,
@@ -141,7 +147,7 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=ClinGenVariantPathogenicityProvider.provider_id,
         provider_version="*",
         factory=ClinGenVariantPathogenicityProvider.from_execution_contract,
@@ -151,7 +157,7 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=ClinGenGeneDiseaseValidityProvider.provider_id,
         provider_version="*",
         factory=ClinGenGeneDiseaseValidityProvider.from_execution_contract,
@@ -161,7 +167,27 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
+        provider_id=G2PProvider.provider_id,
+        provider_version=G2PProvider.provider_version,
+        factory=G2PProvider.from_resource_contract,
+        descriptor=ProviderCapability(
+            provider_id=G2PProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.GENE_DISEASE}),
+            supported_builds=frozenset({"GRCh37", "GRCh38"}),
+        ),
+    )
+    register_if_missing(
+        provider_id=HGNCArchiveProvider.provider_id,
+        provider_version="*",
+        factory=HGNCArchiveProvider.from_execution_contract,
+        descriptor=ProviderCapability(
+            provider_id=HGNCArchiveProvider.provider_id,
+            capabilities=frozenset({ResourceCapability.GENE_NOMENCLATURE}),
+            supported_builds=frozenset(),
+        ),
+    )
+    register_if_missing(
         provider_id=ClinGenCSpecProvider.provider_id,
         provider_version="*",
         factory=ClinGenCSpecProvider.from_execution_contract,
@@ -171,7 +197,7 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=LocalGnomADTabixProvider.provider_id,
         provider_version=LocalGnomADTabixProvider.provider_version,
         factory=LocalGnomADTabixProvider.from_execution_contract,
@@ -181,7 +207,7 @@ def register_builtin_providers() -> ProviderRegistry:
             supported_builds=frozenset({"GRCh37", "GRCh38"}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=HPOOboProvider.provider_id,
         provider_version="*",
         factory=HPOOboProvider.from_execution_contract,
@@ -190,7 +216,7 @@ def register_builtin_providers() -> ProviderRegistry:
             capabilities=frozenset({ResourceCapability.PHENOTYPE}),
         ),
     )
-    registry.register(
+    register_if_missing(
         provider_id=HPOAProvider.provider_id,
         provider_version=HPOAProvider.provider_version,
         factory=HPOAProvider.from_execution_contract,

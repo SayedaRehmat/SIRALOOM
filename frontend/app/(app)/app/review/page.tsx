@@ -36,10 +36,33 @@ function EvidenceCard({e}:{e:Evidence}){
  const assertions=e.source==="HPOA"&&Array.isArray(e.payload?.assertions)?e.payload.assertions:[];
  const patientComparison=e.source==="HPOA"&&e.payload?.patient_comparison&&typeof e.payload.patient_comparison==="object"?e.payload.patient_comparison:null;
  const phenotypeMatch=e.type==="GENE_DISEASE"?phenotypeContextView(e.payload?.phenotype_match):null;
+ const candidateContext=e.type==="GENE_DISEASE"&&Number.isInteger(e.payload?.contextual_order)?e.payload:null;
  const hasProvenance=Boolean(e.resource_id||e.request_fingerprint||e.response_sha256);
  return <article className="clinical-evidence-card">
   <div className="evidence-card-head"><span className="badge neutral">{pretty(e.type)}</span><span className={`badge ${e.direction==="SUPPORTS"?"success":e.direction==="CONTRADICTS"?"danger":"neutral"}`}>{pretty(e.direction)}</span></div>
   <strong>{e.source||"Unspecified source"}{e.source_version?` · ${e.source_version}`:""}</strong><p>{e.statement}</p>
+  {candidateContext&&<section className="phenotype-match-review" aria-label={t("review.candidateContext")}>
+   <strong>{t("review.candidateContext")}: {candidateContext.candidate_gene||candidateContext.gene||"—"} / {candidateContext.disease_id||"—"}</strong>
+   <p>{t("review.candidateOrder")}: {candidateContext.contextual_order}</p>
+   <p>{t("review.matchedPhenotypeCount")}: {candidateContext.matched_patient_term_count??0}</p>
+   {Array.isArray(candidateContext.matched_terms)&&candidateContext.matched_terms.length>0&&<ul>{candidateContext.matched_terms.map((item:any,index:number)=><li key={`${item.patient_hpo_id||"patient"}-${item.assertion_hpo_id||"assertion"}-${index}`}>{item.patient_hpo_id||"—"} → {item.assertion_hpo_id||"—"} ({pretty(item.match_type||item.match_kind||"ontology match")})</li>)}</ul>}
+   <p>{t("review.associationValidity")}: {pretty(candidateContext.association_validity||"NOT_RECORDED")}</p>
+   <p>{t("review.associationEvidenceState")}: {pretty(candidateContext.association_evidence_state||"UNRESOLVED_REQUIRES_REVIEW")}</p>
+   <p>{t("review.g2pConfidence")}: {pretty(candidateContext.g2p_confidence||"NOT_RECORDED")}</p>
+   <p>{t("review.molecularMechanism")}: {pretty(candidateContext.molecular_mechanism||"NOT_RECORDED")}</p>
+   <p>{t("review.inheritanceModes")}: {Array.isArray(candidateContext.inheritance?.modes)?candidateContext.inheritance.modes.map(pretty).join(", "):"—"}</p>
+   <p>{t("review.penetrance")}: {pretty(candidateContext.inheritance?.penetrance?.status||"NOT_RECORDED")} ({candidateContext.inheritance?.penetrance_provenance?.source||"—"})</p>
+   {candidateContext.inheritance?.mode_conflict&&<p role="alert">{t("review.modeConflict")}</p>}
+   {candidateContext.association_validity_provenance&&<small>{candidateContext.association_validity_provenance.resource_name||"ClinGen"} · {candidateContext.association_validity_provenance.resource_version||"—"} · {candidateContext.association_validity_provenance.matched_assertion_count??0} matched assertion(s)</small>}
+   {(candidateContext.association_validity_provenance||e.payload?.association_provenance)&&<details className="evidence-provenance"><summary>{t("review.provenance")}</summary><dl>
+    {candidateContext.association_validity_provenance?.resource_id&&<><dt>{t("review.resourceId")} · ClinGen</dt><dd><code>{candidateContext.association_validity_provenance.resource_id}</code></dd></>}
+    {candidateContext.association_validity_provenance?.resource_sha256&&<><dt>{t("review.responseDigest")} · ClinGen resource</dt><dd><code>{candidateContext.association_validity_provenance.resource_sha256}</code></dd></>}
+    {e.payload?.association_provenance?.source_record_id&&<><dt>{t("review.sourceRecord")} · G2P</dt><dd><code>{e.payload.association_provenance.source_record_id}</code></dd></>}
+    {e.payload?.association_provenance?.source_record_sha256&&<><dt>{t("review.responseDigest")} · G2P record</dt><dd><code>{e.payload.association_provenance.source_record_sha256}</code></dd></>}
+    {e.payload?.association_provenance?.resource_sha256&&<><dt>{t("review.responseDigest")} · G2P resource</dt><dd><code>{e.payload.association_provenance.resource_sha256}</code></dd></>}
+   </dl></details>}
+   <p className="phenotype-match-review-note">{t("review.candidateContextUnvalidated")}</p>
+  </section>}
   {phenotypeMatch&&<section className="phenotype-match-review" aria-label={t("review.phenotypeMatchStatus")}>
    <strong>{t("review.phenotypeMatchStatus")}: {pretty(phenotypeMatch.status)}</strong>
    {phenotypeMatch.matchedTerms.length>0&&<p>{t("review.phenotypeMatchTerms")}: {phenotypeMatch.matchedTerms.join(", ")}</p>}

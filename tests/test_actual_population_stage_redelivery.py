@@ -138,6 +138,8 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             encoding="utf-8",
         )
         clingen_gdv_path.write_text(
+            "CLINGEN GENE VALIDITY CURATIONS\n"
+            "FILE CREATED: 2026-09-01\n"
             "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),MOI,SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP\n"
             "GENE1,HGNC:1,Disease X,MONDO:0000001,Autosomal recessive,6,Definitive,https://example.test/report/fixture,2026-09-01,Fixture GCEP\n",
             encoding="utf-8",
@@ -448,7 +450,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     name="Fixture ClinGen Gene-Disease Validity",
                     provider="ClinGen Gene-Disease Validity",
                     resource_type="EVIDENCE",
-                    version="fixture-v1",
+                    version="2026-09-01",
                     genome_build=None,
                     access_method="LOCAL",
                     license_text="Test fixture only",
@@ -471,6 +473,11 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                         location=str(path),
                         dataset="fixture-v1",
                         execution_scope="ORGANIZATION_MANAGED",
+                        toolchain=(
+                            {"release": "2026-09-01"}
+                            if provider_id == "ClinGen Gene-Disease Validity"
+                            else None
+                        ),
                     )
                     db.add(ResourceQualification(
                         id=qualification_id,
@@ -1182,9 +1189,9 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
             ).all()))
             assert replayed_evidence_ids == evidence_ids_before_replay
             if clingen_enabled:
-                for resource_id, source_name, expected_type in (
-                    (clingen_vp_resource_id, "Fixture ClinGen Variant Pathogenicity", "CLINICAL_DATABASE"),
-                    (clingen_gdv_resource_id, "Fixture ClinGen Gene-Disease Validity", "GENE_DISEASE"),
+                for resource_id, source_name, expected_type, expected_version in (
+                    (clingen_vp_resource_id, "Fixture ClinGen Variant Pathogenicity", "CLINICAL_DATABASE", "fixture-v1"),
+                    (clingen_gdv_resource_id, "Fixture ClinGen Gene-Disease Validity", "GENE_DISEASE", "2026-09-01"),
                 ):
                     executions = db.scalars(select(ResourceExecutionRecord).where(
                         ResourceExecutionRecord.analysis_id == analysis_id,
@@ -1208,7 +1215,7 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
                     )).all()
                     assert len(source_evidence) == 1
                     assert source_evidence[0].evidence_type == expected_type
-                    assert source_evidence[0].source_version == "fixture-v1"
+                    assert source_evidence[0].source_version == expected_version
                     assert len(source_evidence[0].response_sha256) == 64
                 assertions = db.scalars(select(ACMGSourceAssertion).where(
                     ACMGSourceAssertion.analysis_id == analysis_id,

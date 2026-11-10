@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from types import SimpleNamespace
+from typing import Any
 from uuid import UUID, uuid5
 
 from sqlalchemy import func, or_, select
@@ -28,6 +29,8 @@ from backend.app.adapters.clingen.variant_pathogenicity import (
     ClinGenVariantPathogenicityError,
     ClinGenVariantPathogenicityProvider,
 )
+from backend.app.adapters.gene_disease.g2p import G2PError, G2PProvider
+from backend.app.adapters.nomenclature.hgnc import HGNCArchiveProvider, HGNCArchiveProviderError
 from backend.app.adapters.evidence.clinvar import ClinVarProviderError, ClinVarVCVProvider
 from backend.app.adapters.phenotype.hpo_obo import HPOOntologyError
 from backend.app.adapters.phenotype.hpoa import HPOAError
@@ -75,6 +78,9 @@ from backend.app.domain.resource_execution import (
     resolve_resource_execution,
     start_resource_execution,
 )
+from backend.app.domain.inheritance_review_context import normalize_clingen_moi_label
+from backend.app.domain.gene_disease_reconciliation import reconcile_gene_disease_assertions
+from backend.app.domain.gene_disease_source_assertions import build_gene_disease_source_assertions
 from backend.app.domain.resource_execution_plan import build_resource_execution_plan
 from backend.app.domain.resource_fallback import resolve_resource_with_fallback
 from backend.app.domain.schemas import CanonicalVariant
@@ -3824,6 +3830,14 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 clingen_gdv_provider = None
                 clingen_gdv_execution = None
                 clingen_gdv_metadata = None
+                g2p_resource = None
+                g2p_provider = None
+                g2p_execution = None
+                g2p_metadata = None
+                hgnc_resource = None
+                hgnc_provider = None
+                hgnc_execution = None
+                hgnc_metadata = None
                 hpo_resource = None
                 hpo_execution = None
                 hpo_ontology = None
@@ -3886,12 +3900,34 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "message": str(exc),
                                 "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
                             })
+                        try:
+                            g2p_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability="GENE_DISEASE",
+                                provider_id=G2PProvider.provider_id,
+                            )
+                            g2p_candidates = [(item.resource, item.execution) for item in g2p_runtime]
+                        except ProfileRuntimeResourceError as exc:
+                            g2p_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": "GENE_DISEASE",
+                            })
                     else:
                         gdv_plan = build_resource_execution_plan(db, organization_id=case_for_clingen.organization_id, requirements=(CapabilityRequirement(ResourceCapability.GENE_DISEASE),))
-                        gdv_candidates = [
+                        gene_disease_resources = [
                             (item.resource, resolve_resource_execution(db, resource=item.resource))
                             for item in gdv_plan.for_capability(ResourceCapability.GENE_DISEASE)
-                            if item.resource.provider == ClinGenGeneDiseaseValidityProvider.provider_id
+                        ]
+                        gdv_candidates = [
+                            item for item in gene_disease_resources
+                            if item[0].provider == ClinGenGeneDiseaseValidityProvider.provider_id
+                        ]
+                        g2p_candidates = [
+                            item for item in gene_disease_resources
+                            if item[0].provider == G2PProvider.provider_id
                         ]
                     if gdv_candidates:
                         if len(gdv_candidates) != 1:
@@ -3899,8 +3935,129 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 "The analysis resource plan selected multiple ClinGen gene-disease resources."
                             )
                         clingen_gdv_resource, clingen_gdv_execution = gdv_candidates[0]
-                        clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(resolved=clingen_gdv_execution)
-                        clingen_gdv_metadata = {**clingen_gdv_execution.snapshot, "resource_name": clingen_gdv_resource.name, "resource_checksum": clingen_gdv_resource.checksum}
+                        gdv_toolchain = dict(clingen_gdv_execution.contract.toolchain or {})
+                        gdv_expected_sha256 = (
+                            clingen_gdv_resource.checksum
+                            or gdv_toolchain.get("sha256")
+                            or gdv_toolchain.get("checksum")
+                        )
+                        if not gdv_expected_sha256:
+                            provider_limitations.append({
+                                "code": "CLINGEN_GDV_CHECKSUM_REQUIRED",
+                                "message": "The approved ClinGen Gene-Disease Validity export must have a SHA-256 pin.",
+                                "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            })
+                            clingen_gdv_resource = clingen_gdv_execution = None
+                        else:
+                            try:
+                                clingen_gdv_provider = ClinGenGeneDiseaseValidityProvider.from_execution_contract(
+                                    resolved=clingen_gdv_execution,
+                                    expected_sha256=str(gdv_expected_sha256),
+                                )
+                                clingen_gdv_metadata = {
+                                    **clingen_gdv_execution.snapshot,
+                                    "resource_name": clingen_gdv_resource.name,
+                                    "resource_checksum": gdv_expected_sha256,
+                                }
+                            except ClinGenGeneDiseaseValidityError as exc:
+                                provider_limitations.append({
+                                    "code": "CLINGEN_GDV_RESOURCE_UNAVAILABLE",
+                                    "message": str(exc),
+                                    "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                                })
+                                clingen_gdv_provider = None
+                                clingen_gdv_resource = clingen_gdv_execution = None
+                    if g2p_candidates:
+                        if len(g2p_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple Gene2Phenotype resources."
+                            )
+                        g2p_resource, g2p_execution = g2p_candidates[0]
+                        try:
+                            g2p_provider = G2PProvider.from_execution_contract(resolved=g2p_execution)
+                            if g2p_resource.version != g2p_provider.release:
+                                raise G2PError(
+                                    "G2P resource version does not match the release declared by its pinned export."
+                                )
+                            if str(g2p_resource.checksum or "").lower().removeprefix("sha256:") != g2p_provider.sha256:
+                                raise G2PError(
+                                    "G2P resource checksum does not match its qualified local export."
+                                )
+                            g2p_metadata = {
+                                **g2p_execution.snapshot,
+                                "resource_name": g2p_resource.name,
+                                "resource_checksum": g2p_resource.checksum,
+                                "g2p_release": g2p_provider.release,
+                            }
+                        except G2PError as exc:
+                            provider_limitations.append({
+                                "code": "G2P_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": "GENE_DISEASE",
+                            })
+                            g2p_resource = g2p_execution = g2p_provider = g2p_metadata = None
+                    if profile_bound_analysis:
+                        try:
+                            hgnc_runtime = resolve_profile_runtime_resources(
+                                db,
+                                analysis_id=analysis.id,
+                                capability=ResourceCapability.GENE_NOMENCLATURE.value,
+                                provider_id=HGNCArchiveProvider.provider_id,
+                            )
+                            hgnc_candidates = [
+                                (item.resource, item.execution) for item in hgnc_runtime
+                            ]
+                        except ProfileRuntimeResourceError as exc:
+                            hgnc_candidates = []
+                            provider_limitations.append({
+                                "code": exc.code,
+                                "message": str(exc),
+                                "resource_capability": ResourceCapability.GENE_NOMENCLATURE.value,
+                            })
+                    else:
+                        hgnc_plan = build_resource_execution_plan(
+                            db,
+                            organization_id=case_for_clingen.organization_id,
+                            requirements=(CapabilityRequirement(ResourceCapability.GENE_NOMENCLATURE),),
+                        )
+                        hgnc_candidates = [
+                            (item.resource, resolve_resource_execution(db, resource=item.resource))
+                            for item in hgnc_plan.for_capability(ResourceCapability.GENE_NOMENCLATURE)
+                            if item.resource.provider == HGNCArchiveProvider.provider_id
+                        ]
+                    if hgnc_candidates:
+                        if len(hgnc_candidates) != 1:
+                            raise ResourceExecutionError(
+                                "The analysis resource plan selected multiple HGNC nomenclature resources."
+                            )
+                        hgnc_resource, hgnc_execution = hgnc_candidates[0]
+                        try:
+                            hgnc_provider = HGNCArchiveProvider.from_execution_contract(
+                                resolved=hgnc_execution,
+                                expected_sha256=hgnc_resource.checksum,
+                            )
+                            if hgnc_resource.version != hgnc_provider.release:
+                                raise HGNCArchiveProviderError(
+                                    "HGNC resource version does not match the pinned archive release."
+                                )
+                            if str(hgnc_resource.checksum or "").lower().removeprefix("sha256:") != hgnc_provider.sha256:
+                                raise HGNCArchiveProviderError(
+                                    "HGNC resource checksum does not match its qualified manifest."
+                                )
+                            hgnc_metadata = {
+                                **hgnc_execution.snapshot,
+                                "resource_name": hgnc_resource.name,
+                                "resource_checksum": hgnc_resource.checksum,
+                                "hgnc_release": hgnc_provider.release,
+                            }
+                        except HGNCArchiveProviderError as exc:
+                            provider_limitations.append({
+                                "code": "HGNC_RESOURCE_UNAVAILABLE",
+                                "message": str(exc),
+                                "resource_capability": ResourceCapability.GENE_NOMENCLATURE.value,
+                            })
+                            hgnc_resource = hgnc_execution = hgnc_provider = hgnc_metadata = None
+
                     try:
                         if profile_bound_analysis:
                             hpo_runtime = resolve_profile_runtime_resources(
@@ -4153,17 +4310,495 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 except ValueError as exc:
                     raise RuntimeError(str(exc)) from exc
 
+                proband_observations = patient_phenotype_observations(clinical_input_snapshot)
                 case_hpo_terms = [
                     {
+                        "id": row.get("observation_id") or row.get("id"),
                         "hpo_id": row["hpo_id"],
+                        "canonical_hpo_id": row.get("canonical_hpo_id") or row["hpo_id"],
                         "label": row.get("label"),
                         "present": row.get("present"),
                         "phenotype_status": row["phenotype_status"],
+                        "subject_member_id": row.get("subject_member_id"),
                     }
-                    for row in patient_phenotype_observations(clinical_input_snapshot)
+                    for row in proband_observations
                 ]
-                gene_disease_records = clinical_input_snapshot["gene_disease_evidence"]
+                pedigree_snapshot = clinical_input_snapshot.get("pedigree_context") or {}
+                proband_member_ids = [
+                    str(member.get("member_id"))
+                    for member in pedigree_snapshot.get("members", [])
+                    if isinstance(member, dict) and member.get("is_proband") and member.get("member_id")
+                ]
+                gene_disease_records = list(clinical_input_snapshot["gene_disease_evidence"])
                 literature_records = clinical_input_snapshot["literature_evidence"]
+                g2p_gene_disease_records: list[dict[str, object]] = []
+                g2p_models: list[Any] = []
+                g2p_request_fingerprint = None
+                g2p_response_sha256 = None
+                validity_assertions: list[Any] = []
+                validity_query_error = None
+                validity_request_fingerprint = None
+                validity_response_sha256 = None
+                gene_disease_reconciliations_by_symbol: dict[str, dict[str, Any]] = {}
+                if g2p_provider is not None and g2p_resource is not None and g2p_execution is not None:
+                    gene_symbols: set[str] = set()
+                    for payload in db.scalars(
+                        select(Annotation.payload).where(Annotation.analysis_id == analysis.id)
+                    ).yield_per(1000):
+                        normalized_payload = payload.get("normalized") if isinstance(payload, dict) and isinstance(payload.get("normalized"), dict) else (payload or {})
+                        gene_value = normalized_payload.get("gene")
+                        gene_symbol = gene_value.get("symbol") if isinstance(gene_value, dict) else gene_value
+                        gene_symbol = gene_symbol or normalized_payload.get("gene_symbol")
+                        if gene_symbol and str(gene_symbol).strip():
+                            gene_symbols.add(str(gene_symbol).strip().upper())
+                    gene_symbols.update(
+                        str(item.get("gene") or "").strip().upper()
+                        for item in gene_disease_records
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    g2p_models = [
+                        model
+                        for gene_symbol in sorted(gene_symbols)
+                        for model in g2p_provider.query_gene(gene=gene_symbol)
+                    ]
+                    g2p_request = {
+                        "analysis_id": str(analysis.id),
+                        "resource_id": str(g2p_execution.resource_id),
+                        "resource_version": g2p_execution.resource_version,
+                        "contract_hash": g2p_execution.contract_hash,
+                        "genes": sorted(gene_symbols),
+                    }
+                    g2p_request_fingerprint = hashlib.sha256(
+                        json.dumps(g2p_request, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    g2p_response_material = [
+                        {"source_record_id": model.source_record_id, "record_sha256": model.record_sha256}
+                        for model in g2p_models
+                    ]
+                    g2p_response_sha256 = hashlib.sha256(
+                        json.dumps(g2p_response_material, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    if not _succeeded_evidence_execution(
+                        db,
+                        analysis_id=analysis.id,
+                        resource_id=g2p_execution.resource_id,
+                        batch_key="g2p-gene-disease-models",
+                        request_fingerprint=g2p_request_fingerprint,
+                        execution_kind="G2P_GENE_DISEASE_MODEL_QUERY",
+                    ):
+                        g2p_execution_row = start_resource_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="build_evidence",
+                            attempt=max(1, int(evidence_step.attempt or 0)),
+                            batch_key="g2p-gene-disease-models",
+                            resolved=g2p_execution,
+                            requested_resource_id=g2p_resource.id,
+                            fallback_resource_id=None,
+                            metadata={
+                                "execution_kind": "G2P_GENE_DISEASE_MODEL_QUERY",
+                                "gene_count": len(gene_symbols),
+                                "model_count": len(g2p_models),
+                                "input_sha256": g2p_request_fingerprint,
+                                "output_sha256": g2p_response_sha256,
+                                "g2p_release": g2p_provider.release,
+                            },
+                        )
+                        complete_resource_execution(
+                            db,
+                            g2p_execution_row,
+                            status="SUCCESS" if g2p_models else "NO_DATA",
+                            request_fingerprint=g2p_request_fingerprint,
+                            response_sha256=g2p_response_sha256,
+                        )
+                    for model in g2p_models:
+                        if not model.disease_mondo:
+                            continue
+                        record = {
+                            "gene": model.gene_symbol,
+                            "disease": model.disease_name,
+                            "disease_name": model.disease_name,
+                            "disease_id": model.disease_mondo,
+                            # G2P confidence is not ClinGen gene-disease validity.
+                            # Keep validity explicitly unrecorded until an exact
+                            # ClinGen gene+MONDO assertion is joined below.
+                            "validity_status": "NOT_RECORDED",
+                            "g2p_confidence": model.confidence,
+                            "molecular_mechanism": model.molecular_mechanism,
+                            "inheritance_modes": list(model.inheritance_modes),
+                            "penetrance": model.penetrance,
+                            "resource_id": str(g2p_execution.resource_id),
+                            "resource_name": g2p_resource.name,
+                            "resource_version": g2p_execution.resource_version,
+                            "resource_sha256": g2p_provider.sha256,
+                            "response_sha256": g2p_response_sha256,
+                            "source_url": G2PProvider.source_url,
+                            "download_url": G2PProvider.download_url,
+                            "archive_url": G2PProvider.archive_url,
+                            "terms_url": G2PProvider.terms_url,
+                            "attribution": "Gene2Phenotype, EMBL-EBI",
+                            "request_fingerprint": g2p_request_fingerprint,
+                            "source_record_id": model.source_record_id,
+                            "source_record_sha256": model.record_sha256,
+                            "g2p_confidence": model.confidence,
+                            "g2p_allelic_requirement": model.allelic_requirement,
+                            "g2p_publications": list(model.publications),
+                            "g2p_cross_cutting_modifiers": list(model.cross_cutting_modifiers),
+                            "g2p_variant_types": list(model.variant_types),
+                            "g2p_variant_consequences": list(model.variant_consequences),
+                            "g2p_mechanism_evidence": list(model.mechanism_evidence),
+                            "hpo_terms": list(model.phenotypes),
+                        }
+                        g2p_gene_disease_records.append(record)
+                    gene_disease_records.extend(g2p_gene_disease_records)
+
+                # Query the pinned ClinGen export once for all genes in this
+                # analysis. The resulting assertions are reused for candidate
+                # joins and per-variant evidence; no per-variant re-query occurs.
+                clingen_gdv_assertions_by_gene: dict[str, list[Any]] = {}
+                if (
+                    clingen_gdv_provider is not None
+                    and clingen_gdv_resource is not None
+                    and clingen_gdv_execution is not None
+                ):
+                    gene_symbols_for_validity: set[str] = set()
+                    for payload in db.scalars(
+                        select(Annotation.payload).where(Annotation.analysis_id == analysis.id)
+                    ).yield_per(1000):
+                        normalized_payload = payload.get("normalized") if isinstance(payload, dict) and isinstance(payload.get("normalized"), dict) else (payload or {})
+                        gene_value = normalized_payload.get("gene")
+                        gene_symbol = gene_value.get("symbol") if isinstance(gene_value, dict) else gene_value
+                        gene_symbol = gene_symbol or normalized_payload.get("gene_symbol")
+                        if gene_symbol and str(gene_symbol).strip():
+                            gene_symbols_for_validity.add(str(gene_symbol).strip().upper())
+                    gene_symbols_for_validity.update(
+                        str(item.get("gene") or "").strip().upper()
+                        for item in gene_disease_records
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    gene_symbols_for_validity.update(
+                        str(item.get("gene") or "").strip().upper()
+                        for item in g2p_gene_disease_records
+                        if isinstance(item, dict) and str(item.get("gene") or "").strip()
+                    )
+                    gene_symbols_for_validity = sorted(gene_symbols_for_validity)
+                    validity_request = {
+                        "analysis_id": str(analysis.id),
+                        "resource_id": str(clingen_gdv_execution.resource_id),
+                        "resource_version": clingen_gdv_execution.resource_version,
+                        "contract_hash": clingen_gdv_execution.contract_hash,
+                        "genes": gene_symbols_for_validity,
+                    }
+                    validity_request_fingerprint = hashlib.sha256(
+                        json.dumps(validity_request, sort_keys=True, separators=(",", ":")).encode()
+                    ).hexdigest()
+                    validity_assertions = []
+                    validity_query_error = None
+                    try:
+                        for gene_symbol in gene_symbols_for_validity:
+                            gene_assertions = clingen_gdv_provider.query_gene(gene=gene_symbol)
+                            clingen_gdv_assertions_by_gene[gene_symbol] = gene_assertions
+                            validity_assertions.extend(gene_assertions)
+                    except ClinGenGeneDiseaseValidityError as exc:
+                        validity_query_error = str(exc)
+                        validity_assertions = []
+                        clingen_gdv_assertions_by_gene.clear()
+                        provider_limitations.append({
+                            "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
+                            "message": validity_query_error,
+                            "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
+                        })
+                    validity_response_material = [
+                        {
+                            "source_record_id": assertion.source_record_id,
+                            "record_sha256": assertion.record_sha256,
+                        }
+                        for assertion in validity_assertions
+                    ]
+                    validity_response_sha256 = hashlib.sha256(
+                        json.dumps(
+                            validity_response_material,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    if not _succeeded_evidence_execution(
+                        db,
+                        analysis_id=analysis.id,
+                        resource_id=clingen_gdv_execution.resource_id,
+                        batch_key="clingen-gdv-gene-disease-models",
+                        request_fingerprint=validity_request_fingerprint,
+                        execution_kind="CLINGEN_GDV_GENE_DISEASE_MODEL_QUERY",
+                    ):
+                        validity_execution_row = start_resource_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            step_id="build_evidence",
+                            attempt=max(1, int(evidence_step.attempt or 0)),
+                            batch_key="clingen-gdv-gene-disease-models",
+                            resolved=clingen_gdv_execution,
+                            requested_resource_id=clingen_gdv_resource.id,
+                            fallback_resource_id=None,
+                            metadata={
+                                "execution_kind": "CLINGEN_GDV_GENE_DISEASE_MODEL_QUERY",
+                                "gene_count": len(gene_symbols_for_validity),
+                                "assertion_count": len(validity_assertions),
+                                "input_sha256": validity_request_fingerprint,
+                                "output_sha256": validity_response_sha256,
+                            },
+                        )
+                        complete_resource_execution(
+                            db,
+                            validity_execution_row,
+                            status=(
+                                "FAILED"
+                                if validity_query_error
+                                else "SUCCESS" if validity_assertions else "NO_DATA"
+                            ),
+                            request_fingerprint=validity_request_fingerprint,
+                            response_sha256=validity_response_sha256,
+                            error_code=(
+                                "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED"
+                                if validity_query_error else None
+                            ),
+                            error_message=validity_query_error,
+                        )
+                    hgnc_request_fingerprint = None
+                    hgnc_response_sha256 = None
+                    if hgnc_provider is not None and hgnc_resource is not None and hgnc_execution is not None:
+                        hgnc_identifiers = sorted({
+                            str(model.gene_symbol).strip()
+                            for model in g2p_models
+                            if str(model.gene_symbol or "").strip()
+                        } | {
+                            str(assertion.hgnc_id or assertion.gene).strip()
+                            for assertion in validity_assertions
+                            if str(assertion.hgnc_id or assertion.gene or "").strip()
+                        })
+                        hgnc_request = {
+                            "analysis_id": str(analysis.id),
+                            "resource_id": str(hgnc_execution.resource_id),
+                            "resource_version": hgnc_execution.resource_version,
+                            "contract_hash": hgnc_execution.contract_hash,
+                            "identifiers": hgnc_identifiers,
+                        }
+                        hgnc_request_fingerprint = hashlib.sha256(
+                            json.dumps(hgnc_request, sort_keys=True, separators=(",", ":")).encode()
+                        ).hexdigest()
+                        hgnc_resolutions = hgnc_provider.resolve_many(hgnc_identifiers)
+                        hgnc_response_material = [
+                            {
+                                "input": item.input_identifier,
+                                "status": item.status,
+                                "hgnc_id": item.hgnc_id,
+                                "approved_symbol": item.approved_symbol,
+                                "candidate_hgnc_ids": list(item.candidate_hgnc_ids),
+                            }
+                            for item in hgnc_resolutions
+                        ]
+                        hgnc_response_sha256 = hashlib.sha256(
+                            json.dumps(
+                                hgnc_response_material,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode()
+                        ).hexdigest()
+                        if not _succeeded_evidence_execution(
+                            db,
+                            analysis_id=analysis.id,
+                            resource_id=hgnc_execution.resource_id,
+                            batch_key="hgnc-gene-identifier-resolution",
+                            request_fingerprint=hgnc_request_fingerprint,
+                            execution_kind="HGNC_GENE_IDENTIFIER_RESOLUTION",
+                        ):
+                            hgnc_execution_row = start_resource_execution(
+                                db,
+                                analysis_id=analysis.id,
+                                step_id="build_evidence",
+                                attempt=max(1, int(evidence_step.attempt or 0)),
+                                batch_key="hgnc-gene-identifier-resolution",
+                                resolved=hgnc_execution,
+                                requested_resource_id=hgnc_resource.id,
+                                fallback_resource_id=None,
+                                metadata={
+                                    **(hgnc_metadata or {}),
+                                    "execution_kind": "HGNC_GENE_IDENTIFIER_RESOLUTION",
+                                    "identifier_count": len(hgnc_identifiers),
+                                    "identifiers": hgnc_identifiers,
+                                    "input_sha256": hgnc_request_fingerprint,
+                                    "output_sha256": hgnc_response_sha256,
+                                    "hgnc_release": hgnc_provider.release,
+                                    "complete_set_sha256": hgnc_provider.complete_sha256,
+                                    "withdrawn_sha256": hgnc_provider.withdrawn_sha256,
+                                },
+                            )
+                            complete_resource_execution(
+                                db,
+                                hgnc_execution_row,
+                                status="SUCCESS" if hgnc_identifiers else "NO_DATA",
+                                request_fingerprint=hgnc_request_fingerprint,
+                                response_sha256=hgnc_response_sha256,
+                            )
+
+                    analysis_gene_disease_source_assertions = build_gene_disease_source_assertions(
+                        g2p_models=g2p_models,
+                        clingen_assertions=validity_assertions,
+                        g2p_resource_id=str(g2p_execution.resource_id) if g2p_execution else None,
+                        g2p_resource_name=g2p_resource.name if g2p_resource else None,
+                        g2p_resource_version=str(g2p_execution.resource_version) if g2p_execution else None,
+                        g2p_resource_sha256=g2p_provider.sha256 if g2p_provider else None,
+                        clingen_resource_id=str(clingen_gdv_execution.resource_id) if clingen_gdv_execution else None,
+                        clingen_resource_name=clingen_gdv_resource.name if clingen_gdv_resource else None,
+                        clingen_resource_version=str(clingen_gdv_execution.resource_version) if clingen_gdv_execution else None,
+                        clingen_resource_sha256=clingen_gdv_provider.sha256 if clingen_gdv_provider else None,
+                        g2p_request_fingerprint=g2p_request_fingerprint,
+                        g2p_response_sha256=g2p_response_sha256,
+                        clingen_request_fingerprint=validity_request_fingerprint,
+                        clingen_response_sha256=validity_response_sha256,
+                        hgnc_resolver=hgnc_provider,
+                        hgnc_request_fingerprint=hgnc_request_fingerprint,
+                        hgnc_response_sha256=hgnc_response_sha256,
+                    )
+                    analysis_gene_disease_reconciliations = reconcile_gene_disease_assertions(
+                        analysis_gene_disease_source_assertions
+                    )
+                    for reconciliation in analysis_gene_disease_reconciliations:
+                        for assertion in (*reconciliation.g2p_assertions, *reconciliation.clingen_assertions):
+                            if assertion.gene_symbol:
+                                symbol = assertion.gene_symbol.strip().upper()
+                                gene_disease_reconciliations_by_symbol.setdefault(symbol, {})[
+                                    reconciliation.reconciliation_id
+                                ] = reconciliation
+
+                    reconciliation_by_g2p_record_id = {
+                        assertion.source_record_id: reconciliation
+                        for reconciliation in analysis_gene_disease_reconciliations
+                        for assertion in reconciliation.g2p_assertions
+                    }
+                    for model_record in g2p_gene_disease_records:
+                        reconciliation = reconciliation_by_g2p_record_id.get(
+                            str(model_record.get("source_record_id") or "")
+                        )
+                        model_record["clingen_validity_assertions"] = []
+                        model_record["validity_status"] = "NOT_RECORDED"
+                        model_record["inheritance_mode_conflict"] = None
+                        if reconciliation is None:
+                            cross_source_status = (
+                                "BLOCKED_NO_GOVERNED_HGNC_MAPPING"
+                                if hgnc_provider is None
+                                else "NO_SOURCE_RECONCILIATION"
+                            )
+                            model_record["gene_identifier_resolution"] = None
+                            model_record["inheritance_mode_sources"] = {
+                                "g2p_allelic_requirement": model_record.get("g2p_allelic_requirement"),
+                                "g2p_modes": model_record.get("inheritance_modes") or [],
+                                "clingen_moi_assertions": [],
+                                "clingen_moi_modes": [],
+                                "unmapped_clingen_moi": [],
+                                "comparison_status": "NOT_COMPARABLE",
+                            }
+                            model_record["cross_source_match_status"] = cross_source_status
+                            model_record["validity_provenance"] = {
+                                "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                                "matched_assertion_count": 0,
+                                "cross_source_match_status": cross_source_status,
+                            }
+                            continue
+
+                        g2p_assertion = next(
+                            (
+                                assertion
+                                for assertion in reconciliation.g2p_assertions
+                                if assertion.source_record_id == model_record.get("source_record_id")
+                            ),
+                            None,
+                        )
+                        model_record["gene_identifier_resolution"] = (
+                            dict(g2p_assertion.gene_identifier_resolution or {})
+                            if g2p_assertion is not None
+                            else None
+                        )
+                        model_record["canonical_hgnc_id"] = (
+                            reconciliation.gene_identifier
+                            if getattr(reconciliation.gene_identifier_namespace, "value", None) == "HGNC"
+                            else None
+                        )
+                        model_record["cross_source_match_status"] = reconciliation.status.value
+                        inheritance = reconciliation.dimensions["inheritance_mode"]
+                        model_record["inheritance_mode_sources"] = {
+                            "g2p_allelic_requirement": model_record.get("g2p_allelic_requirement"),
+                            "g2p_modes": list(inheritance.g2p_values),
+                            "clingen_moi_assertions": [
+                                assertion.raw_assertion.get("MOI")
+                                for assertion in reconciliation.clingen_assertions
+                                if assertion.raw_assertion.get("MOI")
+                            ],
+                            "clingen_moi_modes": list(inheritance.clingen_values),
+                            "unmapped_clingen_moi": list(inheritance.clingen_unmapped_values),
+                            "comparison_status": inheritance.status.value,
+                            "reconciliation_id": reconciliation.reconciliation_id,
+                        }
+                        if inheritance.status.value == "CONFLICT":
+                            model_record["inheritance_mode_conflict"] = True
+                        elif inheritance.status.value == "AGREE":
+                            model_record["inheritance_mode_conflict"] = False
+
+                        if reconciliation.status.value == "MATCHED" and reconciliation.clingen_assertions:
+                            model_record["clingen_validity_assertions"] = [
+                                {
+                                    "source_record_id": assertion.source_record_id,
+                                    "classification": assertion.validity,
+                                    "moi": list(assertion.inheritance_modes),
+                                    "unmapped_moi": list(assertion.unmapped_inheritance_modes),
+                                    "resource_id": assertion.resource_id,
+                                    "resource_version": assertion.resource_version,
+                                    "resource_sha256": assertion.resource_sha256,
+                                    "source_record_sha256": assertion.source_record_sha256,
+                                    "raw_assertion": dict(assertion.raw_assertion),
+                                }
+                                for assertion in reconciliation.clingen_assertions
+                            ]
+                            if len(reconciliation.clingen_assertions) == 1:
+                                model_record["validity_status"] = (
+                                    reconciliation.clingen_assertions[0].validity or "NOT_RECORDED"
+                                )
+                            cross_source_status = (
+                                "MATCHED_HGNC_AND_MONDO"
+                                if len(reconciliation.clingen_assertions) == 1
+                                else "MATCHED_MULTIPLE_CLINGEN_ASSERTIONS_REQUIRES_REVIEW"
+                            )
+                        elif reconciliation.status.value == "UNMATCHABLE_MISSING_MONDO":
+                            cross_source_status = "BLOCKED_MISSING_MONDO"
+                        elif getattr(reconciliation.gene_identifier_namespace, "value", None) != "HGNC":
+                            cross_source_status = "BLOCKED_HGNC_IDENTIFIER_UNRESOLVED"
+                        elif clingen_gdv_provider is None:
+                            cross_source_status = "CLINGEN_SOURCE_NOT_AVAILABLE"
+                        elif validity_query_error:
+                            cross_source_status = "CLINGEN_QUERY_FAILED"
+                        else:
+                            cross_source_status = "NO_EXACT_CLINGEN_GENE_DISEASE_ASSERTION"
+                        model_record["cross_source_match_status"] = cross_source_status
+                        model_record["validity_provenance"] = {
+                            "source": "CLINGEN_GENE_DISEASE_VALIDITY",
+                            "resource_id": str(clingen_gdv_execution.resource_id) if clingen_gdv_execution else None,
+                            "resource_name": clingen_gdv_resource.name if clingen_gdv_resource else None,
+                            "resource_version": clingen_gdv_execution.resource_version if clingen_gdv_execution else None,
+                            "resource_sha256": clingen_gdv_provider.sha256 if clingen_gdv_provider else None,
+                            "query_fingerprint": validity_request_fingerprint,
+                            "response_sha256": validity_response_sha256,
+                            "matched_assertion_count": len(reconciliation.clingen_assertions),
+                            "matched_source_record_ids": [
+                                assertion.source_record_id for assertion in reconciliation.clingen_assertions
+                            ],
+                            "cross_source_match_status": cross_source_status,
+                            "hgnc_release": hgnc_provider.release if hgnc_provider else None,
+                            "hgnc_manifest_sha256": hgnc_provider.sha256 if hgnc_provider else None,
+                            "hgnc_request_fingerprint": hgnc_request_fingerprint,
+                            "hgnc_response_sha256": hgnc_response_sha256,
+                            "source_url": ClinGenGeneDiseaseValidityProvider.source_url,
+                            "methodology_url": ClinGenGeneDiseaseValidityProvider.methodology_url,
+                        }
+
                 hpoa_disease_annotations: dict[str, tuple] = {}
                 hpoa_provenance = None
                 if hpoa_provider is not None and hpoa_resource is not None and hpoa_execution is not None:
@@ -4201,6 +4836,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         ).hexdigest()
                         hpoa_provenance = {
                             **(hpoa_resource_metadata or {}),
+                            "resource_id": str(hpoa_execution.resource_id),
+                            "resource_name": hpoa_resource.name,
+                            "resource_version": hpoa_execution.resource_version,
+                            "resource_release": hpoa_provider.release,
+                            "resource_sha256": hpoa_provider.sha256,
                             "request_fingerprint": hpoa_request_fingerprint,
                             "response_sha256": hpoa_response_sha256,
                         }
@@ -4241,6 +4881,33 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 request_fingerprint=hpoa_request_fingerprint,
                                 response_sha256=hpoa_response_sha256,
                             )
+
+                phenotype_prioritization = None
+                if (
+                    g2p_gene_disease_records
+                    and hpoa_provenance is not None
+                    and hpo_ontology is not None
+                    and hpoa_disease_annotations
+                ):
+                    from backend.app.domain.phenotype_prioritization import (
+                        PhenotypePrioritizationError,
+                        prioritize_disease_context,
+                    )
+                    try:
+                        phenotype_prioritization = prioritize_disease_context(
+                            patient_observations=case_hpo_terms,
+                            gene_disease_records=g2p_gene_disease_records,
+                            annotations_by_disease=hpoa_disease_annotations,
+                            hpoa_provenance=hpoa_provenance,
+                            hpo_ontology=hpo_ontology,
+                            proband_member_ids=proband_member_ids,
+                        )
+                    except PhenotypePrioritizationError as exc:
+                        provider_limitations.append({
+                            "code": "PHENOTYPE_PRIORITIZATION_REQUIRES_REVIEW",
+                            "message": str(exc),
+                            "resource_capability": "PHENOTYPE",
+                        })
 
                 created = 0
                 batch_size = int(analysis.configuration.get("evidence_batch_size", 250) or 250)
@@ -4384,8 +5051,27 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 patient_hpo_terms=case_hpo_terms,
                                 hpo_ontology=hpo_ontology,
                             ))
+                        if phenotype_prioritization is not None and gene_symbol:
+                            records.extend(engine.build_from_phenotype_prioritization(
+                                variant_id=row.id,
+                                prioritization=phenotype_prioritization,
+                                gene_filter=gene_symbol,
+                            ))
 
                         gene = gene_symbol or ((normalized.get("gene") or {}).get("symbol")) or normalized.get("gene_symbol")
+                        if gene:
+                            variant_gene = str(gene).strip().upper()
+                            variant_reconciliations = tuple(
+                                gene_disease_reconciliations_by_symbol.get(str(variant_gene).strip().upper(), {})[key]
+                                for key in sorted(
+                                    gene_disease_reconciliations_by_symbol.get(str(variant_gene).strip().upper(), {})
+                                )
+                            )
+                            if variant_reconciliations:
+                                records.extend(engine.build_from_gene_disease_reconciliations(
+                                    variant_id=row.id,
+                                    reconciliations=variant_reconciliations,
+                                ))
                         hgvs_values: list[str] = []
                         for consequence in normalized.get("hgvs_consequences") or []:
                             if isinstance(consequence, str):
@@ -4436,31 +5122,21 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     })
 
                         if clingen_gdv_provider is not None and clingen_gdv_resource is not None and clingen_gdv_execution is not None and gene:
-                            query_material = {"analysis_id": str(analysis.id), "variant_id": str(row.id), "gene": gene, "resource_id": str(clingen_gdv_execution.resource_id), "resource_version": clingen_gdv_execution.resource_version, "contract_hash": clingen_gdv_execution.contract_hash}
-                            request_fingerprint = hashlib.sha256(json.dumps(query_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                            if not _succeeded_evidence_execution(
-                                db,
-                                analysis_id=analysis.id,
-                                resource_id=clingen_gdv_execution.resource_id,
-                                batch_key=key,
-                                request_fingerprint=request_fingerprint,
-                                execution_kind="CLINGEN_GENE_DISEASE_VALIDITY_QUERY",
-                            ):
-                                execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_gdv_execution, requested_resource_id=clingen_gdv_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY", "query": query_material})
-                                try:
-                                    assertions = clingen_gdv_provider.query_gene(gene=gene)
-                                    response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
-                                    response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-                                    complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
-                                    records.extend(engine.build_from_clingen_gene_disease_assertions(variant_id=row.id, assertions=assertions, resource_id=clingen_gdv_execution.resource_id, resource_name=clingen_gdv_resource.name, resource_version=clingen_gdv_execution.resource_version, request_fingerprint=request_fingerprint, execution_metadata={**clingen_gdv_metadata, "query": query_material, "response_sha256": response_sha256}))
-                                except ClinGenGeneDiseaseValidityError as exc:
-                                    complete_resource_execution(db, execution_row, status="FAILED", request_fingerprint=request_fingerprint, error_code="CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED", error_message=str(exc))
-                                    provider_limitations.append({
-                                        "code": "CLINGEN_GENE_DISEASE_VALIDITY_QUERY_FAILED",
-                                        "message": str(exc),
-                                        "resource_capability": "CLINGEN_GENE_DISEASE_VALIDITY",
-                                        "variant_id": str(row.id),
-                                    })
+                            assertions = clingen_gdv_assertions_by_gene.get(gene.strip().upper(), [])
+                            if assertions:
+                                records.extend(engine.build_from_clingen_gene_disease_assertions(
+                                    variant_id=row.id,
+                                    assertions=assertions,
+                                    resource_id=clingen_gdv_execution.resource_id,
+                                    resource_name=clingen_gdv_resource.name,
+                                    resource_version=clingen_gdv_execution.resource_version,
+                                    request_fingerprint=validity_request_fingerprint,
+                                    execution_metadata={
+                                        **clingen_gdv_metadata,
+                                        "query": validity_request,
+                                        "response_sha256": validity_response_sha256,
+                                    },
+                                ))
                         if clinvar_provider is not None and clinvar_resource is not None and clinvar_execution is not None:
                             query_material = {
                                 "analysis_id": str(analysis.id),
@@ -4557,7 +5233,24 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     })
 
                         for record in records:
-                            if record.resource_id is not None:
+                            if (
+                                record.evidence_type == "GENE_DISEASE"
+                                and record.payload.get("interpretive_use") == "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY"
+                            ):
+                                # One evidence row contains assertions from two independently
+                                # governed resources. Their identities remain in payload.source_provenance;
+                                # do not falsely bind the combined record to the annotation resource.
+                                provenance = {
+                                    "resource_id": None,
+                                    "source_record_id": record.source_record_id,
+                                    "request_fingerprint": record.request_fingerprint,
+                                    "response_sha256": record.response_sha256,
+                                    "request_metadata": record.request_metadata or {},
+                                    "observed_at": record.observed_at,
+                                    "source_name": record.source_name,
+                                    "source_version": record.source_version,
+                                }
+                            elif record.resource_id is not None:
                                 provenance = {
                                     "resource_id": record.resource_id,
                                     "source_record_id": record.source_record_id,

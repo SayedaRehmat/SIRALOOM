@@ -281,6 +281,73 @@ class EvidenceEngine:
             ))
         return out
 
+    def build_from_gene_disease_reconciliations(
+        self,
+        *,
+        variant_id: UUID,
+        reconciliations: Iterable[Any],
+    ) -> list[EvidenceRecord]:
+        """Create neutral, source-preserving evidence from reconciliation results.
+
+        Each source assertion retains its own resource identity, release,
+        checksum and raw record. No combined source is represented as though
+        it came from one provider.
+        """
+        out: list[EvidenceRecord] = []
+        for reconciliation in reconciliations:
+            serializer = getattr(reconciliation, "to_dict", None)
+            if not callable(serializer):
+                raise EvidenceEngineError("Gene-disease reconciliation must expose to_dict()")
+            payload = serializer()
+            if not isinstance(payload, dict) or not payload.get("reconciliation_id"):
+                raise EvidenceEngineError("Gene-disease reconciliation lacks a stable identity")
+            sources = []
+            for source_key in ("g2p_assertions", "clingen_assertions"):
+                rows = payload.get(source_key) or []
+                if not isinstance(rows, (list, tuple)):
+                    raise EvidenceEngineError("Gene-disease source assertions must be a sequence")
+                for row in rows:
+                    if not isinstance(row, dict):
+                        raise EvidenceEngineError("Gene-disease source assertion must be an object")
+                    required = ("source_record_id", "resource_name", "resource_version", "resource_sha256")
+                    if any(not row.get(key) for key in required):
+                        raise EvidenceEngineError("Gene-disease source assertion has incomplete provenance")
+                    sources.append({
+                        "source": row.get("source"),
+                        "source_record_id": row["source_record_id"],
+                        "resource_id": row.get("resource_id"),
+                        "resource_name": row["resource_name"],
+                        "resource_version": row["resource_version"],
+                        "resource_sha256": row["resource_sha256"],
+                        "source_record_sha256": row.get("source_record_sha256"),
+                        "request_fingerprint": row.get("request_fingerprint"),
+                        "response_sha256": row.get("response_sha256"),
+                        "raw_assertion": row.get("raw_assertion") or {},
+                    })
+            if not sources:
+                raise EvidenceEngineError("Gene-disease reconciliation has no source assertions")
+            payload["interpretive_use"] = "GENE_DISEASE_RECONCILIATION_CONTEXT_ONLY"
+            payload["clinical_conclusion"] = False
+            payload["source_provenance"] = sources
+            record = self._record(
+                variant_id=variant_id,
+                evidence_type="GENE_DISEASE",
+                statement=(
+                    "Independent gene-disease source assertions were reconciled for reviewer context; "
+                    "source disagreement or missing identifiers require human review and no variant "
+                    "pathogenicity or inheritance conclusion is produced."
+                ),
+                direction="NEUTRAL",
+                source_name="SIRALOOM gene-disease reconciliation",
+                source_version="1",
+                payload=payload,
+                request_metadata={"source_provenance": sources},
+            )
+            out.append(EvidenceRecord(
+                **{**record.__dict__, "source_record_id": payload["reconciliation_id"]}
+            ))
+        return out
+
     def build_from_clingen_gene_disease_assertions(
         self,
         *,
@@ -328,6 +395,133 @@ class EvidenceEngine:
                     "request_fingerprint": request_fingerprint,
                     "response_sha256": getattr(assertion, "record_sha256", None),
                     "request_metadata": execution_metadata,
+                }
+            ))
+        return out
+
+    def build_from_phenotype_prioritization(
+        self,
+        *,
+        variant_id: UUID,
+        prioritization: dict[str, Any],
+        gene_filter: str | None = None,
+    ) -> list[EvidenceRecord]:
+        """Persist candidate context as neutral phenotype/gene-disease evidence.
+
+        Candidate order is only a reviewer navigation aid. The method refuses
+        unqualified or malformed payloads and never emits pathogenicity direction.
+        """
+        if not isinstance(prioritization, dict):
+            raise EvidenceEngineError("Phenotype prioritization must be an object")
+        if prioritization.get("clinical_prioritization_validated") is not False:
+            raise EvidenceEngineError("Unqualified phenotype context must remain explicitly unvalidated")
+        if prioritization.get("human_review_required") is not True:
+            raise EvidenceEngineError("Phenotype prioritization must require human review")
+        candidates = prioritization.get("candidates")
+        if not isinstance(candidates, list):
+            raise EvidenceEngineError("Phenotype prioritization candidates must be a list")
+
+        out: list[EvidenceRecord] = []
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                raise EvidenceEngineError("Every phenotype candidate must be an object")
+            gene = _normalize_text(candidate.get("gene"))
+            if gene_filter and (gene or "").upper() != gene_filter.strip().upper():
+                continue
+            disease_id = _normalize_text(candidate.get("disease_id"))
+            association = candidate.get("association_provenance")
+            hpoa = candidate.get("hpoa_provenance")
+            inheritance = candidate.get("inheritance")
+            if not gene or not disease_id or not isinstance(association, dict):
+                raise EvidenceEngineError("Phenotype candidate lacks gene/disease provenance")
+            if not isinstance(hpoa, dict) or not isinstance(inheritance, dict):
+                raise EvidenceEngineError("Phenotype candidate lacks HPOA or inheritance context")
+            source_record_id = _normalize_text(association.get("source_record_id"))
+            resource_version = _normalize_text(association.get("resource_version"))
+            if not source_record_id or not resource_version:
+                raise EvidenceEngineError("Gene-disease candidate lacks source record identity")
+            contextual_order = candidate.get("contextual_order")
+            if not isinstance(contextual_order, int) or isinstance(contextual_order, bool) or contextual_order < 1:
+                raise EvidenceEngineError("Phenotype candidate contextual_order must be a positive integer")
+            phenotype_payload = {
+                "candidate_gene": gene,
+                "disease_id": disease_id,
+                "disease_name": candidate.get("disease_name"),
+                "contextual_order": contextual_order,
+                "matched_patient_term_count": candidate.get("matched_patient_term_count", 0),
+                "matched_terms": candidate.get("matched_terms") or [],
+                "potential_discordances": candidate.get("potential_discordances") or [],
+                "unmatched_present_patient_terms": candidate.get("unmatched_present_patient_terms") or [],
+                "hpoa_provenance": hpoa,
+                "method": prioritization.get("method"),
+                "interpretive_use": "CONTEXTUAL_CANDIDATE_ORDERING_ONLY",
+                "clinical_prioritization_validated": False,
+                "human_review_required": True,
+            }
+            phenotype_record = self._record(
+                variant_id=variant_id,
+                evidence_type="PHENOTYPE",
+                statement=(
+                    f"Phenotype context placed {gene}/{disease_id} at contextual order {contextual_order}; "
+                    "this is an unqualified reviewer navigation aid, not a diagnosis."
+                ),
+                direction="NEUTRAL",
+                source_name=str(hpoa.get("resource_name") or "HPOA"),
+                source_version=str(hpoa.get("resource_release") or ""),
+                payload=phenotype_payload,
+                resource_id=UUID(str(hpoa["resource_id"])) if hpoa.get("resource_id") else None,
+                request_fingerprint=hpoa.get("request_fingerprint"),
+                response_sha256=hpoa.get("response_sha256"),
+                request_metadata=dict(hpoa),
+            )
+            out.append(EvidenceRecord(
+                **{
+                    **phenotype_record.__dict__,
+                    "source_record_id": f"HPOA:{disease_id}",
+                }
+            ))
+
+            gene_disease_payload = {
+                "gene": gene,
+                "disease_id": disease_id,
+                "disease_name": candidate.get("disease_name"),
+                "contextual_order": contextual_order,
+                "matched_patient_term_count": candidate.get("matched_patient_term_count", 0),
+                "matched_terms": candidate.get("matched_terms") or [],
+                "potential_discordances": candidate.get("potential_discordances") or [],
+                "unmatched_present_patient_terms": candidate.get("unmatched_present_patient_terms") or [],
+                "association_validity": candidate.get("association_validity"),
+                "association_evidence_state": candidate.get("association_evidence_state"),
+                "association_validity_provenance": candidate.get("association_validity_provenance"),
+                "clingen_validity_assertions": candidate.get("clingen_validity_assertions") or [],
+                "g2p_confidence": candidate.get("g2p_confidence"),
+                "molecular_mechanism": candidate.get("molecular_mechanism"),
+                "inheritance": inheritance,
+                "association_provenance": association,
+                "interpretive_use": "GENE_DISEASE_VALIDITY_CONTEXT_NOT_VARIANT_PATHOGENICITY",
+                "clinical_prioritization_validated": False,
+                "human_review_required": True,
+            }
+            gene_record = self._record(
+                variant_id=variant_id,
+                evidence_type="GENE_DISEASE",
+                statement=(
+                    f"Governed gene-disease association context is available for {gene}/{disease_id}; "
+                    "it is not a variant pathogenicity classification."
+                ),
+                direction="NEUTRAL",
+                source_name=str(association.get("resource_name") or "Gene2Phenotype"),
+                source_version=resource_version,
+                payload=gene_disease_payload,
+                resource_id=UUID(str(association["resource_id"])) if association.get("resource_id") else None,
+                request_fingerprint=association.get("request_fingerprint"),
+                response_sha256=association.get("response_sha256"),
+                request_metadata=dict(association),
+            )
+            out.append(EvidenceRecord(
+                **{
+                    **gene_record.__dict__,
+                    "source_record_id": source_record_id,
                 }
             ))
         return out

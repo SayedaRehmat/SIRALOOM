@@ -1,0 +1,372 @@
+name: HGNC pinned release qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/c1-phenotype-inheritance-qualification-20261108
+    paths:
+      - "scripts/qualify_official_gene_disease_sources.py"
+      - "backend/app/domain/gene_disease_resource_acquisition.py"
+      - "backend/app/domain/resource_source_contract.py"
+      - "backend/app/domain/hgnc_crosswalk.py"
+      - "backend/app/domain/hgnc_resource_registration.py"
+      - "backend/app/domain/resource_qualification.py"
+      - "backend/app/adapters/nomenclature/hgnc.py"
+      - "backend/app/adapters/gene_disease/g2p.py"
+      - "backend/app/adapters/clingen/gene_disease_validity.py"
+      - "backend/app/domain/resource_capabilities.py"
+      - "backend/app/domain/analysis_resource_profiles.py"
+      - "backend/app/domain/workflow_resource_contracts.py"
+      - "backend/app/domain/resource_execution.py"
+      - "backend/app/domain/provider_registry.py"
+      - "backend/app/domain/gene_disease_reconciliation.py"
+      - "backend/app/domain/gene_disease_source_assertions.py"
+      - "backend/app/domain/inheritance_review_context.py"
+      - "backend/app/domain/phenotype_prioritization.py"
+      - "backend/app/workflows/variant.py"
+      - "tests/test_gene_disease_resource_acquisition.py"
+      - "tests/test_hgnc_crosswalk.py"
+      - "tests/test_hgnc_archive_provider.py"
+      - "tests/test_gene_disease_source_assertions.py"
+      - "tests/test_clingen_gene_disease_validity.py"
+      - "tests/test_g2p_provider.py"
+      - "tests/test_resource_profile_registry_integration.py"
+      - "tests/test_phenotype_prioritization.py"
+      - "backend/tests/test_gene_disease_reconciliation.py"
+      - "tests/test_hgnc_resource_qualification.py"
+      - "tests/test_hgnc_resource_registration.py"
+      - ".github/workflows/hgnc-qualification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-and-qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: siraloom
+          POSTGRES_PASSWORD: siraloom
+          POSTGRES_DB: siraloom_hgnc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U siraloom -d siraloom_hgnc"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install repository-locked qualification environment
+        run: |
+          python -m pip install --disable-pip-version-check --no-deps "uv==0.10.0"
+          uv lock --check
+          uv sync --locked --extra dev
+      - name: Run deterministic HGNC resolver and resource lifecycle tests
+        run: >-
+          uv run --locked pytest -q
+          tests/test_gene_disease_resource_acquisition.py
+          tests/test_hgnc_crosswalk.py
+          tests/test_hgnc_archive_provider.py
+          tests/test_hgnc_resource_qualification.py
+          tests/test_hgnc_resource_registration.py
+          tests/test_gene_disease_source_assertions.py
+          tests/test_clingen_gene_disease_validity.py
+          tests/test_g2p_provider.py
+          tests/test_resource_profile_registry_integration.py
+          tests/test_phenotype_prioritization.py
+          backend/tests/test_gene_disease_reconciliation.py
+      - name: Acquire exact official HGNC quarterly release
+        run: |
+          uv run --locked python -m backend.app.domain.hgnc_crosswalk acquire \
+            --release 2026-10-06 \
+            --destination "$RUNNER_TEMP/hgnc-2026-10-06"
+      - name: Validate real HGNC release and resource qualification
+        env:
+          HGNC_DIR: ${{ runner.temp }}/hgnc-2026-10-06
+          REPORT_PATH: ${{ runner.temp }}/hgnc-qualification-report.json
+          MANAGED_DIR: ${{ runner.temp }}/hgnc-managed/hgnc-2026-10-06
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom_hgnc
+        run: |
+          uv run --locked python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          from sqlalchemy import create_engine
+          from sqlalchemy.orm import Session
+
+          from backend.app.domain.hgnc_crosswalk import (
+              HGNC_ARCHIVE_RELEASE,
+              HGNCResolutionStatus,
+              HGNCResolver,
+          )
+          from backend.app.domain.hgnc_resource_registration import register_and_qualify_hgnc_release
+          from backend.app.infrastructure.db.base import Base
+          from backend.app.infrastructure.db.models import (
+              Organization,
+              Resource,
+              ResourceQualification,
+              ResourceStaging,
+              User,
+          )
+
+          directory = Path(os.environ["HGNC_DIR"])
+          manifest_path = directory / "manifest.json"
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          resolver = HGNCResolver(
+              directory / "hgnc_complete_set.txt",
+              directory / "withdrawn.txt",
+              release=HGNC_ARCHIVE_RELEASE,
+          )
+
+          known_answers = {
+              "BRCA1": ("HGNC:1100", "ENSG00000012048"),
+              "CFTR": ("HGNC:1884", "ENSG00000001626"),
+              "TP53": ("HGNC:11998", "ENSG00000141510"),
+              "FBN1": ("HGNC:3603", "ENSG00000166147"),
+              "HBB": ("HGNC:4827", "ENSG00000244734"),
+          }
+          for symbol, (expected_hgnc, expected_ensembl) in known_answers.items():
+              symbol_result = resolver.resolve(symbol)
+              ensembl_result = resolver.resolve(expected_ensembl)
+              assert symbol_result.hgnc_id == expected_hgnc, (symbol, symbol_result)
+              assert ensembl_result.hgnc_id == expected_hgnc, (expected_ensembl, ensembl_result)
+
+          ambiguous_aliases = sorted(
+              alias for alias, ids in resolver._alias_index.items() if len(ids) > 1
+          )
+          assert ambiguous_aliases, "real HGNC release contained no ambiguous alias test case"
+          ambiguous_result = resolver.resolve(ambiguous_aliases[0])
+          assert ambiguous_result.status == HGNCResolutionStatus.AMBIGUOUS
+          assert ambiguous_result.hgnc_id is None
+
+          split_symbols = sorted(
+              symbol for symbol, rows in resolver._withdrawn.items()
+              if any(len({target[0] for target in targets}) > 1 for status, targets in rows if status.casefold() == "merged/split")
+          )
+          assert split_symbols, "real HGNC release contained no split-withdrawal test case"
+          split_result = resolver.resolve(split_symbols[0])
+          assert split_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert split_result.hgnc_id is None
+
+          approved_symbols = set(resolver._approved_symbols)
+          previous_symbols = set(resolver._previous)
+          unique_aliases = sorted(
+              alias for alias, ids in resolver._alias_index.items()
+              if len(ids) == 1 and alias not in approved_symbols and alias not in previous_symbols
+          )
+          assert unique_aliases, "real HGNC release contained no unambiguous alias test case"
+          alias_result = resolver.resolve(unique_aliases[0])
+          assert alias_result.status == HGNCResolutionStatus.ALIAS_SYMBOL
+          assert alias_result.hgnc_id is not None
+
+          unique_previous = sorted(
+              symbol for symbol, ids in resolver._previous.items()
+              if len(ids) == 1 and symbol not in approved_symbols
+              and symbol not in resolver._alias_index and symbol not in resolver._withdrawn
+          )
+          assert unique_previous, "real HGNC release contained no unambiguous previous-symbol test case"
+          previous_result = resolver.resolve(unique_previous[0])
+          assert previous_result.status == HGNCResolutionStatus.PREVIOUS_SYMBOL
+          assert previous_result.hgnc_id is not None
+
+          merged_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if all(status.casefold() == "merged/split" for status, _ in records)
+              and len({
+                  target[0] for _status, targets in records for target in targets
+                  if target[0] in resolver._approved
+              }) == 1
+          )
+          assert merged_accessions, "real HGNC release contained no single-target withdrawn accession"
+          merged_accession_result = resolver.resolve(merged_accessions[0])
+          assert merged_accession_result.status == HGNCResolutionStatus.WITHDRAWN_MERGED
+          assert merged_accession_result.hgnc_id is not None
+
+          entry_withdrawn_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if any(status.casefold() == "entry withdrawn" for status, _ in records)
+          )
+          assert entry_withdrawn_accessions, "real HGNC release contained no entry-withdrawn accession"
+          entry_withdrawn_result = resolver.resolve(entry_withdrawn_accessions[0])
+          assert entry_withdrawn_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert entry_withdrawn_result.hgnc_id is None
+
+          split_accessions = sorted(
+              hgnc_id for hgnc_id, records in resolver._withdrawn_ids.items()
+              if len({
+                  target[0] for _status, targets in records for target in targets
+                  if target[0] in resolver._approved
+              }) > 1
+          )
+          assert split_accessions, "real HGNC release contained no split withdrawn accession"
+          split_accession_result = resolver.resolve(split_accessions[0])
+          assert split_accession_result.status == HGNCResolutionStatus.WITHDRAWN_UNRESOLVED
+          assert split_accession_result.hgnc_id is None
+
+          engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+          Base.metadata.create_all(
+              engine,
+              tables=[
+                  Organization.__table__,
+                  User.__table__,
+                  Resource.__table__,
+                  ResourceStaging.__table__,
+                  ResourceQualification.__table__,
+              ],
+          )
+          with Session(engine, expire_on_commit=False) as db:
+              resource, staging, persisted_qualification, qualification = register_and_qualify_hgnc_release(
+                  db,
+                  acquisition_directory=directory,
+                  managed_directory=Path(os.environ["MANAGED_DIR"]),
+              )
+              assert qualification.passed, json.dumps(qualification.checks, indent=2)
+              assert resource.status == "QUALIFIED"
+              assert staging.status == "STAGED"
+              assert persisted_qualification.status == "QUALIFIED"
+              db.commit()
+
+          manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+          report = {
+              "status": "QUALIFICATION_CHECKS_PASSED",
+              "release": HGNC_ARCHIVE_RELEASE,
+              "publisher": manifest["publisher"],
+              "license": manifest["license"],
+              "files": manifest["files"],
+              "manifest_sha256": manifest_sha256,
+              "approved_gene_count": len(resolver._approved),
+              "approved_symbol_count": len(resolver._approved_symbols),
+              "alias_symbol_count": len(resolver._alias_index),
+              "previous_symbol_count": len(resolver._previous),
+              "ensembl_gene_id_count": len(resolver._ensembl),
+              "withdrawn_symbol_count": len(resolver._withdrawn),
+              "known_answer_count": len(known_answers),
+              "ambiguous_alias_test": ambiguous_result.normalized_identifier,
+              "unique_alias_test": alias_result.normalized_identifier,
+              "previous_symbol_test": previous_result.normalized_identifier,
+              "split_withdrawn_symbol_test": split_result.normalized_identifier,
+              "withdrawn_merged_accession_test": merged_accession_result.normalized_identifier,
+              "entry_withdrawn_accession_test": entry_withdrawn_result.normalized_identifier,
+              "split_withdrawn_accession_test": split_accession_result.normalized_identifier,
+              "resource_id": str(resource.id),
+              "staging_id": str(staging.id),
+              "qualification_id": str(persisted_qualification.id),
+              "resource_status": resource.status,
+              "staging_status": staging.status,
+              "qualification_status": persisted_qualification.status,
+              "resource_qualification": qualification.checks,
+          }
+          Path(os.environ["REPORT_PATH"]).write_text(
+              json.dumps(report, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+      - name: Acquire and qualify official G2P and ClinGen GDV snapshots
+        env:
+          DATABASE_URL: postgresql+psycopg://siraloom:siraloom@localhost:5432/siraloom_hgnc
+          ACQUISITION_DIR: ${{ runner.temp }}/gene-disease-acquired
+          MANAGED_DIR: ${{ runner.temp }}/gene-disease-managed
+        run: |
+          uv run --locked python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from sqlalchemy import create_engine
+          from sqlalchemy.orm import Session
+
+          from backend.app.domain.gene_disease_resource_acquisition import (
+              acquire_gene_disease_snapshots,
+              register_and_qualify_gene_disease_snapshots,
+          )
+          from backend.app.infrastructure.db.base import Base
+          from backend.app.infrastructure.db.models import (
+              Organization, Resource, ResourceQualification, ResourceStaging, User,
+          )
+
+          acquisition_dir = Path(os.environ["ACQUISITION_DIR"])
+          managed_dir = Path(os.environ["MANAGED_DIR"])
+          manifest = acquire_gene_disease_snapshots(acquisition_dir)
+          engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+          Base.metadata.create_all(
+              engine,
+              tables=[
+                  Organization.__table__,
+                  User.__table__,
+                  Resource.__table__,
+                  ResourceStaging.__table__,
+                  ResourceQualification.__table__,
+              ],
+          )
+          report = []
+          with Session(engine, expire_on_commit=False) as db:
+              results = register_and_qualify_gene_disease_snapshots(
+                  db,
+                  acquisition_directory=acquisition_dir,
+                  managed_directory=managed_dir,
+              )
+              for resource, staging, persisted, qualification in results:
+                  assert qualification.passed, json.dumps(qualification.checks, indent=2)
+                  assert resource.status == "QUALIFIED"
+                  assert staging.status == "STAGED"
+                  assert persisted.status == "QUALIFIED"
+                  report.append({
+                      "provider": resource.provider,
+                      "resource_id": str(resource.id),
+                      "version": resource.version,
+                      "sha256": resource.checksum,
+                      "resource_status": resource.status,
+                      "staging_status": staging.status,
+                      "qualification_status": persisted.status,
+                      "checks": qualification.checks,
+                  })
+              db.commit()
+          output = {
+              "status": "OFFICIAL_SOURCE_TECHNICAL_QUALIFICATION_PASSED",
+              "acquired_at_utc": manifest["acquired_at_utc"],
+              "artifacts": manifest["artifacts"],
+              "resources": report,
+              "activation_or_lab_approval": "NOT_PERFORMED",
+          }
+          report_path = Path(os.environ["RUNNER_TEMP"]) / "gene-disease-source-qualification.json"
+          report_path.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(output, indent=2, sort_keys=True))
+          PY
+      - name: Verify official G2P and ClinGen reconciliation through the pinned HGNC release
+        run: |
+          uv run --locked python scripts/qualify_official_gene_disease_sources.py \
+            --hgnc-directory "$RUNNER_TEMP/hgnc-2026-10-06" \
+            --acquisition-directory "$RUNNER_TEMP/gene-disease-acquired" \
+            --managed-directory "$RUNNER_TEMP/gene-disease-managed" \
+            --report "$RUNNER_TEMP/gene-disease-reconciliation-qualification.json"
+      - name: Preserve exact G2P and ClinGen source bytes and qualification manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: g2p-clingen-official-source-snapshots
+          path: |
+            ${{ runner.temp }}/gene-disease-acquired/
+            ${{ runner.temp }}/gene-disease-managed/
+            ${{ runner.temp }}/gene-disease-source-qualification.json
+            ${{ runner.temp }}/gene-disease-reconciliation-qualification.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve acquired official source files and qualification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hgnc-2026-10-06-qualified-source
+          path: |
+            ${{ runner.temp }}/hgnc-2026-10-06/
+            ${{ runner.temp }}/hgnc-managed/
+            ${{ runner.temp }}/hgnc-qualification-report.json
+          if-no-files-found: error
+          retention-days: 30
