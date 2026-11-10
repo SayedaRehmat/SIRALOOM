@@ -164,12 +164,21 @@ class Case(Base):
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"))
     case_identifier: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text)
+    accession_reconciliation_status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="NEW_WORKFLOW", server_default="NEW_WORKFLOW"
+    )
     clinical_context: Mapped[dict] = mapped_column(JSON, default=dict)
     language: Mapped[str] = mapped_column(Text, default="en")
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
-    __table_args__ = (UniqueConstraint("organization_id", "case_identifier"),)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "case_identifier"),
+        CheckConstraint(
+            "accession_reconciliation_status IN ('LEGACY_UNRECONCILED','NEW_WORKFLOW','RECONCILED')",
+            name="ck_case_accession_reconciliation_status",
+        ),
+    )
 
 
 class ClinicalIntakeRevision(Base):
@@ -371,6 +380,41 @@ class Artifact(Base):
     validation_status: Mapped[str] = mapped_column(Text, default="PENDING")
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+class ArtifactValidationDispatch(Base):
+    """Durable outbox and execution fence for artifact intake validation."""
+    __tablename__ = "artifact_validation_dispatches"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    artifact_id: Mapped[UUID] = mapped_column(
+        ForeignKey("artifacts.id"), nullable=False, unique=True
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        ForeignKey("organizations.id"), nullable=False
+    )
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="PENDING")
+    task_id: Mapped[str | None] = mapped_column(Text)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text)
+    toolchain_profile_id: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_bcftools_version: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_htslib_version: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_queue: Mapped[str] = mapped_column(Text, nullable=False)
+    toolchain_snapshot: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('PENDING', 'PUBLISHED', 'RUNNING', 'RETRYING', 'COMPLETED', 'FAILED')",
+            name="ck_artifact_validation_dispatch_status",
+        ),
+        Index("ix_artifact_validation_dispatch_status_created", "status", "created_at"),
+        Index("ix_artifact_validation_dispatch_case_status", "case_id", "status"),
+    )
+
 
 class TechnicalQCObservation(Base):
     __tablename__ = "technical_qc_observations"
