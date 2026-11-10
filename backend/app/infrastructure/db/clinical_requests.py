@@ -67,13 +67,15 @@ class AccessionProcedure(Base):
     status: Mapped[str] = mapped_column(Text, nullable=False)
     effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    approved_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     approval_evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
     allows_unverified_referrer_exception: Mapped[bool] = mapped_column(nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
     __table_args__ = (
         UniqueConstraint("organization_id", "procedure_identifier", "procedure_version", name="uq_accession_procedure_version"),
-        CheckConstraint("status IN ('APPROVED','WITHDRAWN')", name="ck_accession_procedure_status"),
+        CheckConstraint("status IN ('PENDING_APPROVAL','APPROVED','WITHDRAWN')", name="ck_accession_procedure_status"),
+        CheckConstraint("(status != 'APPROVED') OR (approved_by IS NOT NULL)", name="ck_accession_procedure_approved_by"),
     )
 
 
