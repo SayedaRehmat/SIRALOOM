@@ -81,6 +81,14 @@ def _is_sha256(value: Any) -> bool:
     )
 
 
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
 def _required_text(value: Any, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise CorpusValidationError(f"Required non-empty text is missing: {field}")
@@ -155,7 +163,7 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[
         artifact_path = _artifact_path(root, relative_path)
         if not artifact_path.is_file():
             raise CorpusValidationError(f"{case_id}: artifact is missing: {relative_path}")
-        actual_digest = hashlib.sha256(artifact_path.read_bytes()).hexdigest()
+        actual_digest = _sha256_file(artifact_path)
         if actual_digest != digest.lower():
             raise CorpusValidationError(f"{case_id}: artifact SHA-256 mismatch: {relative_path}")
         size_bytes = artifact.get("size_bytes")
@@ -257,8 +265,21 @@ def _validate_evidence(case: dict[str, Any], case_id: str, source_vcf_hashes: se
             call_state = _required_text(genotype.get("call_state"), f"{case_id}.genotype.call_state")
             if call_state not in {"NO_RECORD", "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_NO_CALL", "CALL_PRESENT", "OTHER_ALT_PRESENT", "OTHER_ALT_AND_MISSING", "INVALID_CALL"}:
                 raise CorpusValidationError(f"{case_id}: unsupported family genotype call state {call_state}")
-            if call_state in {"NO_RECORD", "GENOTYPE_UNAVAILABLE", "NO_CALL", "PARTIAL_NO_CALL"} and genotype.get("genotype") == "0/0":
-                raise CorpusValidationError(f"{case_id}: missing/no-record calls cannot be imputed as reference")
+            genotype_value = genotype.get("genotype")
+            if call_state in {"NO_RECORD", "GENOTYPE_UNAVAILABLE"} and genotype_value is not None:
+                raise CorpusValidationError(f"{case_id}: no-record/unavailable genotypes must remain null, not reference")
+            if call_state == "NO_CALL" and genotype_value not in {"./.", ".|."}:
+                raise CorpusValidationError(f"{case_id}: no-call genotype must be explicitly fully missing")
+            if call_state == "PARTIAL_NO_CALL" and (
+                not isinstance(genotype_value, str)
+                or "." not in genotype_value
+                or not any(allele in "0123456789" for allele in genotype_value)
+            ):
+                raise CorpusValidationError(f"{case_id}: partial no-call must preserve its partial GT")
+            if call_state in {"CALL_PRESENT", "OTHER_ALT_PRESENT", "OTHER_ALT_AND_MISSING", "INVALID_CALL"}:
+                _required_text(genotype_value, f"{case_id}.genotype.genotype")
+            if call_state == "CALL_PRESENT" and "." in genotype_value:
+                raise CorpusValidationError(f"{case_id}: CALL_PRESENT cannot contain a missing allele")
             _required_text(genotype.get("callability_state"), f"{case_id}.genotype.callability_state")
             _required_text(genotype.get("quality_state"), f"{case_id}.genotype.quality_state")
 
