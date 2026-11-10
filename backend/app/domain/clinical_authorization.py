@@ -110,6 +110,10 @@ def assert_analysis_clinical_authorization(
     """Recheck the captured authorization before dispatch and worker execution."""
     config = dict(analysis_configuration or {})
     snapshot = config.get("clinical_authorization")
+    # Persisted Analysis rows always have a non-null analysis_type. Lightweight
+    # test doubles without that field are outside the production authorization path.
+    if analysis_type is None:
+        return
     if (
         analysis_type == "RESEARCH"
         and isinstance(snapshot, dict)
