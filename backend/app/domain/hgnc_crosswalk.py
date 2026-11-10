@@ -355,15 +355,25 @@ class HGNCResolver:
                 original, normalized, combined,
                 HGNCResolutionStatus.APPROVED_SYMBOL, "symbol",
             )
+        alias_candidates = self._alias_candidates(normalized)
+        previous_candidates = self._previous.get(normalized, set())
+        historical_candidates = alias_candidates | previous_candidates
+        if approved and historical_candidates:
+            combined = approved | historical_candidates
+            if len(combined) > 1:
+                return self._ambiguous(
+                    original, normalized, combined, "approved_and_historical_symbol"
+                )
+            return self._resolve_candidates(
+                original, normalized, combined,
+                HGNCResolutionStatus.APPROVED_SYMBOL, "symbol",
+            )
         if len(approved) == 1:
             return self._resolve_candidates(original, normalized, approved, HGNCResolutionStatus.APPROVED_SYMBOL, "symbol")
         if len(approved) > 1:
             return self._ambiguous(original, normalized, approved, "symbol")
         # Alias and previous-symbol namespaces are resolved independently so
         # collisions are surfaced rather than silently selecting one record.
-        alias_candidates = self._alias_candidates(normalized)
-        previous_candidates = self._previous.get(normalized, set())
-        historical_candidates = alias_candidates | previous_candidates
         if historical_candidates:
             if len(historical_candidates) > 1:
                 return self._ambiguous(original, normalized, historical_candidates, "historical_symbol")
