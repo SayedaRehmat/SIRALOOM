@@ -131,8 +131,35 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
         "2026-11-08,Expert Panel,Autosomal recessive inheritance\n",
         encoding="utf-8",
     )
+    hpo_release = "2026-09-01"
+    hpoa_release = "2026-09-02"
+    hpo_path = tmp_path / "hp.obo"
+    hpo_path.write_text(
+        "format-version: 1.2\\n"
+        f"data-version: releases/{hpo_release}\\n"
+        "ontology: hp.obo\\n\\n"
+        "[Term]\\n"
+        "id: HP:0001250\\n"
+        "name: Seizures\\n\\n"
+        "[Term]\\n"
+        "id: HP:0001263\\n"
+        "name: Global developmental delay\\n",
+        encoding="utf-8",
+    )
+    hpoa_path = tmp_path / "phenotype.hpoa"
+    hpoa_path.write_text(
+        f"#version: {hpoa_release}\\n"
+        f"#hpo-version: http://purl.obolibrary.org/obo/hp/releases/{hpo_release}/hp.json\\n"
+        "database_id\\tdisease_name\\tqualifier\\thpo_id\\treference\\tevidence\\t"
+        "onset\\tfrequency\\tsex\\tmodifier\\taspect\\tbiocuration\\n"
+        "MONDO:0000001\\tExample one\\t\\tHP:0001250\\tPMID:1\\tPCS\\t"
+        "\\t1/2\\t\\t\\tP\\tHPO:curator[2026-01-01]\\n",
+        encoding="utf-8",
+    )
     g2p_sha = hashlib.sha256(g2p_path.read_bytes()).hexdigest()
     clingen_sha = hashlib.sha256(clingen_path.read_bytes()).hexdigest()
+    hpo_sha = hashlib.sha256(hpo_path.read_bytes()).hexdigest()
+    hpoa_sha = hashlib.sha256(hpoa_path.read_bytes()).hexdigest()
     g2p_resource_id, clingen_resource_id = uuid4(), uuid4()
     g2p_qualification_id, clingen_qualification_id = uuid4(), uuid4()
     release = "2026-11-08"
