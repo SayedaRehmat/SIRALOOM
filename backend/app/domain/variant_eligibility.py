@@ -1,6 +1,8 @@
 """Fail-closed eligibility for the initial SNV and small-indel product scope."""
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 
@@ -61,6 +63,9 @@ def evaluate_small_variant_eligibility(validation: dict[str, Any] | None) -> dic
             "reasons": ["Validation counters are invalid: " + ", ".join(invalid)],
         }
 
+    validation_fingerprint = hashlib.sha256(
+        json.dumps(validation, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     reasons = []
     reason_codes = []
     for field, description in UNSUPPORTED_VALIDATION_COUNTERS.items():
@@ -78,4 +83,5 @@ def evaluate_small_variant_eligibility(validation: dict[str, Any] | None) -> dic
         "status": "INELIGIBLE" if reason_codes else "ELIGIBLE",
         "reason_codes": reason_codes,
         "reasons": reasons,
+        "validation_fingerprint": validation_fingerprint,
     }
