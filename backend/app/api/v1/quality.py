@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, FiniteFloat
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
     READ_ROLES,
@@ -68,12 +69,38 @@ def create_assay(body: AssayInput, db=Depends(get_db), principal: Principal=Depe
         raise HTTPException(400, f"Invalid assay QC configuration: {exc}") from exc
     if body.status == "ACTIVE" and not rules:
         raise HTTPException(400, "An active assay QC profile requires at least one valid QC rule")
-    row = Assay(id=uuid4(), organization_id=principal.organization_id, name=body.name.strip(), version=body.version.strip(),
-                assay_type=body.assay_type.strip(), configuration=body.configuration, status=body.status)
+    name = body.name.strip()
+    version = body.version.strip()
+    assay_type = body.assay_type.strip()
+    if not name or not version or not assay_type:
+        raise HTTPException(422, "Assay name, version and type must be non-empty after trimming")
+    existing = db.scalar(
+        select(Assay.id).where(
+            Assay.organization_id == principal.organization_id,
+            Assay.name == name,
+            Assay.version == version,
+        )
+    )
+    if existing is not None:
+        raise HTTPException(409, "An assay with this organization, name and version already exists")
+    row = Assay(
+        id=uuid4(),
+        organization_id=principal.organization_id,
+        name=name,
+        version=version,
+        assay_type=assay_type,
+        configuration=body.configuration,
+        status=body.status,
+    )
     db.add(row)
     AuditService(db).record(event_type="ASSAY_PROFILE_CREATED", case_id=None, analysis_id=None, actor_type="HUMAN",
         actor_id=str(principal.user_id), subject_type="ASSAY", subject_id=str(row.id), operation="CREATE", after_state=_assay(row))
-    db.commit(); return _assay(row)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(409, "An assay with this organization, name and version already exists") from exc
+    return _assay(row)
 
 @router.get("/assays")
 def list_assays(db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
