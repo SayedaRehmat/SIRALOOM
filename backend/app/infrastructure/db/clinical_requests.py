@@ -61,14 +61,14 @@ class ReferrerVerification(Base):
 class AccessionProcedure(Base):
     __tablename__ = "accession_procedures"
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id", name="fk_accession_procedures_organization_id_organizations"), nullable=False)
     procedure_identifier: Mapped[str] = mapped_column(Text, nullable=False)
     procedure_version: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False)
     effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", name="fk_accession_procedures_approved_by_users"), nullable=True)
+    created_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", name="fk_accession_procedures_created_by_users"), nullable=True)
     approval_evidence_reference: Mapped[str] = mapped_column(Text, nullable=False)
     allows_unverified_referrer_exception: Mapped[bool] = mapped_column(nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
