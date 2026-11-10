@@ -329,6 +329,7 @@ def _validate_reviewers(
     if not isinstance(reviewers, list) or len(reviewers) < 2:
         raise CorpusValidationError(f"{case_id}: at least two independent reviewers are required")
     reviewer_ids: set[str] = set()
+    reviewer_attestation_ids: set[str] = set()
     case_author_id = _required_text(case.get("case_author_id"), f"{case_id}.case_author_id")
     for reviewer in reviewers:
         if not isinstance(reviewer, dict):
@@ -358,8 +359,12 @@ def _validate_reviewers(
             raise CorpusValidationError(f"{case_id}: reviewers did not approve the current expected outcome")
         if not _is_sha256(reviewer.get("attestation_sha256")):
             raise CorpusValidationError(f"{case_id}: reviewer attestation SHA-256 is required")
-        if reviewer.get("attestation_sha256").lower() not in attestation_hashes:
+        attestation_sha256 = reviewer.get("attestation_sha256").lower()
+        if attestation_sha256 not in attestation_hashes:
             raise CorpusValidationError(f"{case_id}: reviewer attestation hash is not bound to a preserved artifact")
+        if attestation_sha256 in reviewer_attestation_ids:
+            raise CorpusValidationError(f"{case_id}: each independent reviewer requires a distinct attestation artifact")
+        reviewer_attestation_ids.add(attestation_sha256)
 
 
 def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict[str, Any]:
