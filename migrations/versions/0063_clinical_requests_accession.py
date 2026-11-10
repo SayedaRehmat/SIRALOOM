@@ -64,7 +64,7 @@ def upgrade():
         sa.Column("status", sa.Text(), nullable=False),
         sa.Column("effective_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True)),
-        sa.Column("approved_by", sa.Uuid(), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("approved_by", sa.Uuid(), sa.ForeignKey("users.id", name="fk_accession_procedures_approved_by_users"), nullable=False),
         sa.Column("approval_evidence_reference", sa.Text(), nullable=False),
         sa.Column("allows_unverified_referrer_exception", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
