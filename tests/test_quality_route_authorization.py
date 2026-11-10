@@ -315,3 +315,24 @@ def test_assay_creation_persists_only_valid_active_qc_profile(monkeypatch):
     assert result["configuration"]["rules"][0]["metric"] == "mean_depth"
     assert len(db.added) == 1
 
+
+def test_assay_creation_rejects_duplicate_organization_name_and_version(monkeypatch):
+    from fastapi import HTTPException
+    from backend.app.api.v1 import quality
+
+    db = _DB([])
+    db.scalars = lambda _query: _Scalars([uuid4()])
+    principal = Principal(user_id=uuid4(), organization_id=uuid4(), role="lab_director", subject="test")
+    monkeypatch.setattr(quality, "require_role", lambda *_args: None)
+    with pytest.raises(HTTPException) as exc:
+        quality.create_assay(
+            quality.AssayInput(
+                name="Assay",
+                version="1",
+                assay_type="WGS",
+                configuration={"rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
+            ),
+            db,
+            principal,
+        )
+    assert exc.value.status_code == 409
