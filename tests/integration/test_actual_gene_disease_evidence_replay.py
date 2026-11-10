@@ -345,6 +345,18 @@ def test_actual_gene_disease_evidence_workflow_replays_after_worker_loss(
                     status="QUALIFIED", checks_json={"execution_contract": clingen_contract.as_dict()},
                     qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
                 ),
+                ResourceQualification(
+                    id=hpo_qualification_id, resource_id=hpo_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": hpo_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
+                ResourceQualification(
+                    id=hpoa_qualification_id, resource_id=hpoa_resource_id,
+                    qualification_version="integration-qualified-v1",
+                    status="QUALIFIED", checks_json={"execution_contract": hpoa_contract.as_dict()},
+                    qualified_by=user_id, qualified_at=datetime.now(timezone.utc),
+                ),
             ])
             db.add_all([
                 Annotation(
