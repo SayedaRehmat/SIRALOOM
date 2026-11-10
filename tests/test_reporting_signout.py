@@ -66,18 +66,18 @@ def seed_finalizable_report():
     assay = Assay(
         id=uuid4(), organization_id=org.id, name="Test Assay",
         version="1", assay_type="WGS", status="ACTIVE",
-        configuration={"rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, "rules": [{"metric": "mean_depth", "direction": "MIN", "threshold": 20}]},
     )
     analysis = Analysis(
         id=uuid4(),
         case_id=case.id,
         assay_id=assay.id,
-        analysis_type="VARIANT_INTERPRETATION",
+        analysis_type="RESEARCH",
         workflow_id="variant-v1",
         workflow_version="2.1",
         status="SUCCEEDED",
         reference_build="GRCh38",
-        configuration={},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
         created_by=reviewer.id,
     )
     variant = Variant(
@@ -207,12 +207,12 @@ def test_report_is_not_eligible_until_reportability_is_final():
     analysis = Analysis(
         id=uuid4(),
         case_id=case.id,
-        analysis_type="VARIANT_INTERPRETATION",
+        analysis_type="RESEARCH",
         workflow_id="variant-v1",
         workflow_version="2.1",
         status="SUCCEEDED",
         reference_build="GRCh38",
-        configuration={},
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Non-clinical workflow infrastructure test", "clinical_authorization": {"mode": "RESEARCH_NON_CLINICAL"}, },
         created_by=user.id,
     )
     variant = Variant(
