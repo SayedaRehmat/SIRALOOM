@@ -102,7 +102,7 @@ def _artifact_path(root: Path, relative_path: str) -> Path:
     return candidate
 
 
-def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[str, str]) -> None:
+def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[str, list[str]]) -> None:
     source = case.get("source")
     if not isinstance(source, dict):
         raise CorpusValidationError(f"{case_id}: source must be an object")
@@ -113,7 +113,8 @@ def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[s
     _required_text(source.get("data_use_permission_reference"), f"{case_id}.source.data_use_permission_reference")
     if not _is_sha256(source.get("source_snapshot_sha256")):
         raise CorpusValidationError(f"{case_id}: source_snapshot_sha256 must be SHA-256")
-    if source.get("source_snapshot_sha256").lower() != artifact_hashes.get("SOURCE_MANIFEST"):
+    source_manifests = artifact_hashes.get("SOURCE_MANIFEST", [])
+    if len(source_manifests) != 1 or source.get("source_snapshot_sha256").lower() != source_manifests[0]:
         raise CorpusValidationError(f"{case_id}: source snapshot hash does not match the preserved source manifest")
     if source.get("access_status") != "APPROVED":
         raise CorpusValidationError(f"{case_id}: source access status is not APPROVED")
@@ -124,12 +125,12 @@ def _validate_source(case: dict[str, Any], case_id: str, artifact_hashes: dict[s
         raise CorpusValidationError(f"{case_id}: redistribution permission is not explicit")
 
 
-def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[str, str]:
+def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[str, list[str]]:
     artifacts = case.get("artifacts")
     if not isinstance(artifacts, list) or not artifacts:
         raise CorpusValidationError(f"{case_id}: artifacts must be a non-empty list")
     observed_roles: set[str] = set()
-    role_hashes: dict[str, str] = {}
+    role_hashes: dict[str, list[str]] = {}
     observed_paths: set[str] = set()
     for index, artifact in enumerate(artifacts):
         if not isinstance(artifact, dict):
@@ -148,7 +149,9 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[
         if role == "SOURCE_MANIFEST":
             if role in role_hashes:
                 raise CorpusValidationError(f"{case_id}: exactly one SOURCE_MANIFEST artifact is required")
-            role_hashes[role] = digest.lower()
+            role_hashes.setdefault(role, []).append(digest.lower())
+        elif role == "SOURCE_VCF":
+            role_hashes.setdefault(role, []).append(digest.lower())
         artifact_path = _artifact_path(root, relative_path)
         if not artifact_path.is_file():
             raise CorpusValidationError(f"{case_id}: artifact is missing: {relative_path}")
@@ -168,7 +171,7 @@ def _validate_artifacts(case: dict[str, Any], case_id: str, root: Path) -> dict[
     return role_hashes
 
 
-def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
+def _validate_evidence(case: dict[str, Any], case_id: str, source_vcf_hashes: set[str]) -> None:
     evidence = case.get("evidence")
     if not isinstance(evidence, dict):
         raise CorpusValidationError(f"{case_id}: evidence must be an object")
@@ -190,7 +193,8 @@ def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
     if not isinstance(variants, list) or not variants:
         raise CorpusValidationError(f"{case_id}: at least one variant evidence record is required")
     member_ids = set()
-    sample_names = set()
+    sample_bindings = set()
+    binding_ids = set()
     proband_count = 0
     for member in family_members:
         if not isinstance(member, dict):
@@ -200,9 +204,20 @@ def _validate_evidence(case: dict[str, Any], case_id: str) -> None:
             raise CorpusValidationError(f"{case_id}: duplicate family member ID {member_id}")
         member_ids.add(member_id)
         sample_name = _required_text(member.get("sample_name"), f"{case_id}.family_member.sample_name")
-        if sample_name in sample_names:
-            raise CorpusValidationError(f"{case_id}: duplicate VCF sample name {sample_name}")
-        sample_names.add(sample_name)
+        source_artifact_sha256 = _required_text(member.get("source_artifact_sha256"), f"{case_id}.family_member.source_artifact_sha256").lower()
+        if source_artifact_sha256 not in source_vcf_hashes:
+            raise CorpusValidationError(f"{case_id}: family member source artifact is not a preserved SOURCE_VCF")
+        sample_binding = (source_artifact_sha256, sample_name)
+        if sample_binding in sample_bindings:
+            raise CorpusValidationError(f"{case_id}: duplicate VCF sample mapping within one source artifact")
+        sample_bindings.add(sample_binding)
+        binding_id = _required_text(member.get("binding_id"), f"{case_id}.family_member.binding_id")
+        if binding_id in binding_ids:
+            raise CorpusValidationError(f"{case_id}: duplicate family sample binding ID")
+        binding_ids.add(binding_id)
+        if not _is_sha256(member.get("binding_fingerprint")):
+            raise CorpusValidationError(f"{case_id}: family sample binding fingerprint must be SHA-256")
+        _required_text(member.get("analysis_id"), f"{case_id}.family_member.analysis_id")
         _required_text(member.get("role"), f"{case_id}.family_member.role")
         if not isinstance(member.get("is_proband"), bool):
             raise CorpusValidationError(f"{case_id}: family member is_proband must be explicit boolean")
@@ -356,7 +371,7 @@ def validate_corpus(manifest: dict[str, Any], artifact_root: str | Path) -> dict
             raise CorpusValidationError(f"{case_id}: unsupported test_role")
         artifact_hashes = _validate_artifacts(case, case_id, root)
         _validate_source(case, case_id, artifact_hashes)
-        _validate_evidence(case, case_id)
+        _validate_evidence(case, case_id, set(artifact_hashes.get("SOURCE_VCF", [])))
         expected_sha256 = _validate_expected(case, case_id)
         _validate_reviewers(case, case_id, expected_sha256, implementation_author_ids)
         for category in categories:
