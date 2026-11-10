@@ -68,11 +68,19 @@ def _one_synthetic_pair(resolver, symbol: str, target_hgnc: str, *, mondo: str |
 
 def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory: Path) -> dict:
     hgnc_manifest = json.loads((hgnc_directory / "manifest.json").read_text(encoding="utf-8"))
+    if hgnc_manifest.get("release") != HGNC_ARCHIVE_RELEASE:
+        raise AssertionError("Pinned HGNC acquisition manifest release does not match the configured release")
+    hgnc_files = {item["filename"]: item for item in hgnc_manifest.get("files", [])}
     hgnc = HGNCResolver(
         hgnc_directory / "hgnc_complete_set.txt",
         hgnc_directory / "withdrawn.txt",
         release=HGNC_ARCHIVE_RELEASE,
     )
+    if (
+        hgnc.complete_sha256 != hgnc_files["hgnc_complete_set.txt"]["sha256"]
+        or hgnc.withdrawn_sha256 != hgnc_files["withdrawn.txt"]["sha256"]
+    ):
+        raise AssertionError("HGNC source artifacts do not match the pinned acquisition manifest")
     acquisition = json.loads((acquisition_directory / "manifest.json").read_text(encoding="utf-8"))
     records = {item["provider"]: item for item in acquisition["artifacts"]}
     g2p_item = records["Gene2Phenotype"]
@@ -176,6 +184,8 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
     if not ambiguous_aliases:
         raise AssertionError("No ambiguous alias available in the pinned HGNC release")
     ambiguous_alias = ambiguous_aliases[0]
+    if hgnc.resolve(ambiguous_alias).status.value != "AMBIGUOUS":
+        raise AssertionError("Selected multi-target alias did not produce an AMBIGUOUS HGNC result")
     ambiguous_target = sorted(hgnc._alias_index[ambiguous_alias])[0]
     ambiguous_assertions, ambiguous_reconciliations = _one_synthetic_pair(
         hgnc, ambiguous_alias, ambiguous_target, mondo="MONDO:0000001"
@@ -194,7 +204,7 @@ def qualify(hgnc_directory: Path, acquisition_directory: Path, managed_directory
     return {
         "status": "REAL_SOURCE_HGNC_RECONCILIATION_QUALIFICATION_PASSED",
         "hgnc_release": hgnc.release,
-        "hgnc_manifest_sha256": _sha(hgnc_manifest),
+        "hgnc_manifest_sha256": hashlib.sha256((hgnc_directory / "manifest.json").read_bytes()).hexdigest(),
         "g2p_release": g2p.release,
         "g2p_sha256": g2p.sha256,
         "g2p_record_count": len(g2p_models),
