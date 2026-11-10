@@ -171,11 +171,11 @@ def test_clingen_source_record_identity_is_unique_for_multiple_rows_sharing_repo
     path = tmp_path / "clingen-shared-report.csv"
     report = "https://search.clinicalgenome.org/kb/gene-validity/shared-assertion"
     path.write_text(
-        "CLINGEN GENE VALIDITY CURATIONS\\n"
-        "FILE CREATED: 2026-11-08\\n"
-        "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\\n"
-        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Definitive,{report},2026-11-08,Expert Panel,AR\\n"
-        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Strong,{report},2026-11-08,Expert Panel,AR\\n",
+        "CLINGEN GENE VALIDITY CURATIONS\n"
+        "FILE CREATED: 2026-11-08\n"
+        "GENE SYMBOL,GENE ID (HGNC),DISEASE LABEL,DISEASE ID (MONDO),SOP,CLASSIFICATION,ONLINE REPORT,CLASSIFICATION DATE,GCEP,MOI\n"
+        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Definitive,{report},2026-11-08,Expert Panel,AR\n"
+        f"GENE1,HGNC:1,Example disorder,MONDO:0000001,SOP9,Strong,{report},2026-11-08,Expert Panel,AR\n",
         encoding="utf-8",
     )
     provider = ClinGenGeneDiseaseValidityProvider(
