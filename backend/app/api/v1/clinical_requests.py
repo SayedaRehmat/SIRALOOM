@@ -379,7 +379,7 @@ def revoke_capability(assignment_id: UUID, body: CapabilityRevokeInput, db: Sess
     _membership(db, principal.organization_id, principal.user_id)
     if principal.role != "organization_admin":
         _require_capability(db, principal.organization_id, principal.user_id, "CAPABILITY_ADMIN")
-    row = db.get(OrganizationCapabilityAssignment, assignment_id)
+    row = db.get(OrganizationCapabilityAssignment, assignment_id, with_for_update=True)
     if row is None or row.organization_id != principal.organization_id:
         raise HTTPException(404, "Capability assignment not found")
     if row.user_id == principal.user_id:
@@ -469,7 +469,7 @@ def approve_accession_procedure(
     _membership(db, principal.organization_id, principal.user_id)
     if principal.role not in {"organization_admin", "lab_director"}:
         raise HTTPException(403, "Only designated organization procedure authorities may approve a procedure")
-    row = db.get(AccessionProcedure, procedure_id)
+    row = db.get(AccessionProcedure, procedure_id, with_for_update=True)
     if row is None or row.organization_id != principal.organization_id:
         raise HTTPException(404, "Accession procedure not found")
     if row.status != "PENDING_APPROVAL":
