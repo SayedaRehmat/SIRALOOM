@@ -37,6 +37,7 @@ class ArtifactResponse(BaseModel):
 
 class AnalysisCreate(BaseModel):
     analysis_type: str = "VARIANT_INTERPRETATION"
+    clinical_request_id: UUID | None = None
     input_artifact_id: UUID
     assay_id: UUID | None = None
     workflow_id: str = "variant-v1"
