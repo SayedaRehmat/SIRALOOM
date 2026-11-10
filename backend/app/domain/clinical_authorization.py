@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 from uuid import UUID
 
@@ -11,7 +13,7 @@ from backend.app.infrastructure.db.clinical_requests import (
     ClinicalRequest,
     ClinicalRequestRevision,
 )
-from backend.app.infrastructure.db.models import Artifact, Case, Specimen
+from backend.app.infrastructure.db.models import Artifact, Assay, Case, Specimen
 
 
 class ClinicalAuthorizationError(ValueError):
@@ -145,6 +147,38 @@ def assert_analysis_clinical_authorization(
             raise ClinicalAuthorizationError(
                 "Clinical request acceptance changed after analysis creation; create a new authorized analysis"
             )
+    assay_id_value = config.get("assay_id")
+    try:
+        assay_id = UUID(str(assay_id_value))
+    except (TypeError, ValueError) as exc:
+        raise ClinicalAuthorizationError("Clinical analysis has no valid assay identity snapshot") from exc
+    assay = db.get(Assay, assay_id)
+    assay_snapshot = config.get("assay_snapshot")
+    if assay is None or assay.organization_id != case.organization_id or not isinstance(assay_snapshot, dict):
+        raise ClinicalAuthorizationError("Clinical analysis assay snapshot is missing or outside this organization")
+    current_assay_configuration = assay.configuration or {}
+    current_assay_configuration_sha256 = hashlib.sha256(
+        json.dumps(current_assay_configuration, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    expected_assay_snapshot = {
+        "assay_id": str(assay.id),
+        "name": assay.name,
+        "version": assay.version,
+        "assay_type": assay.assay_type,
+        "configuration": current_assay_configuration,
+        "configuration_sha256": current_assay_configuration_sha256,
+    }
+    expected_assay_snapshot_sha256 = hashlib.sha256(
+        json.dumps(expected_assay_snapshot, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    if (
+        assay_snapshot != expected_assay_snapshot
+        or config.get("assay_snapshot_sha256") != expected_assay_snapshot_sha256
+    ):
+        raise ClinicalAuthorizationError(
+            "Clinical assay identity or QC configuration changed after analysis creation"
+        )
+
     artifact_id_value = config.get("input_artifact_id")
     try:
         artifact_id = UUID(str(artifact_id_value))
