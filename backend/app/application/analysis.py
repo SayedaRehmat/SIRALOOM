@@ -11,6 +11,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.enums import AnalysisStatus, ArtifactType
+from backend.app.domain.clinical_authorization import (
+    assert_analysis_clinical_authorization,
+    authorize_analysis_request,
+)
 from backend.app.domain.ingestion import normalize_build
 from backend.app.domain.resource_deployment import resolve_resource_deployment_policy
 from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
@@ -88,6 +92,7 @@ def create_analysis(
     reference_build: str,
     configuration: dict,
     created_by: UUID | None,
+    clinical_request_id: UUID | None = None,
     resource_profile_id: str | None = None,
     toolchain_profile_id: str | None = None,
     commit: bool = True,
@@ -111,6 +116,20 @@ def create_analysis(
     validate_analysis_input_artifact(artifact, reference_build, expected_sample_name)
 
     analysis_configuration = dict(configuration or {})
+    case = db.get(Case, case_id)
+    if case is None:
+        raise ValueError("Analysis case not found")
+    try:
+        clinical_authorization = authorize_analysis_request(
+            db,
+            case=case,
+            analysis_type=analysis_type,
+            configuration=analysis_configuration,
+            clinical_request_id=clinical_request_id,
+        )
+    except ValueError as exc:
+        raise ValueError(str(exc)) from exc
+    analysis_configuration["clinical_authorization"] = clinical_authorization
     configured_toolchain_id = analysis_configuration.get("toolchain_profile_id")
     if toolchain_profile_id and configured_toolchain_id and str(toolchain_profile_id) != str(configured_toolchain_id):
         raise ValueError("toolchain_profile_id conflicts with configuration.toolchain_profile_id")
@@ -357,6 +376,15 @@ def enqueue_analysis(
     if case_id is not None:
         case = db.get(Case, case_id)
         if case is not None:
+            try:
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=analysis.configuration,
+                    analysis_type=analysis.analysis_type,
+                )
+            except ValueError as exc:
+                raise ValueError(str(exc)) from exc
             policy = resolve_resource_deployment_policy(
                 db,
                 organization_id=case.organization_id,
