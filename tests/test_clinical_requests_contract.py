@@ -129,7 +129,7 @@ def test_procedure_submitter_cannot_approve_their_own_procedure():
         def scalar(self, statement):
             return SimpleNamespace(id=uuid4())
 
-        def get(self, model, key):
+        def get(self, model, key, **kwargs):
             return procedure if model is AccessionProcedure else None
 
     principal = SimpleNamespace(
@@ -200,7 +200,7 @@ def test_capability_revocation_is_recorded_and_repeat_revocation_is_rejected(mon
         def scalar(self, statement):
             return SimpleNamespace(id=uuid4())
 
-        def get(self, model, key):
+        def get(self, model, key, **kwargs):
             return assignment if model is OrganizationCapabilityAssignment else None
 
         def commit(self):
