@@ -186,11 +186,11 @@ def _clinical_fixture():
         "assay_snapshot": assay_snapshot,
         "assay_snapshot_sha256": assay_snapshot_sha256,
     }
-    return engine, case_id, artifact_id, specimen_id, configuration
+    return engine, case_id, artifact_id, specimen_id, assay.id, configuration
 
 
 def test_clinical_worker_gate_accepts_current_request_and_eligible_vcf():
-    engine, case_id, _artifact_id, _specimen_id, configuration = _clinical_fixture()
+    engine, case_id, _artifact_id, _specimen_id, assay_id, configuration = _clinical_fixture()
     try:
         with Session(engine) as db:
             case = db.get(Case, case_id)
@@ -199,13 +199,15 @@ def test_clinical_worker_gate_accepts_current_request_and_eligible_vcf():
                 case=case,
                 analysis_configuration=configuration,
                 analysis_type="VARIANT_INTERPRETATION",
+
+                analysis_assay_id=assay_id,
             )
     finally:
         engine.dispose()
 
 
 def test_clinical_worker_gate_blocks_structural_vcf_even_if_snapshot_claims_eligible():
-    engine, case_id, artifact_id, _specimen_id, configuration = _clinical_fixture()
+    engine, case_id, artifact_id, _specimen_id, assay_id, configuration = _clinical_fixture()
     try:
         with Session(engine) as db:
             artifact = db.get(Artifact, artifact_id)
@@ -221,13 +223,15 @@ def test_clinical_worker_gate_blocks_structural_vcf_even_if_snapshot_claims_elig
                     case=case,
                     analysis_configuration=configuration,
                     analysis_type="VARIANT_INTERPRETATION",
+
+                    analysis_assay_id=assay_id,
                 )
     finally:
         engine.dispose()
 
 
 def test_clinical_worker_gate_blocks_changed_specimen_sample_mapping():
-    engine, case_id, _artifact_id, specimen_id, configuration = _clinical_fixture()
+    engine, case_id, _artifact_id, specimen_id, assay_id, configuration = _clinical_fixture()
     try:
         with Session(engine) as db:
             specimen = db.get(Specimen, specimen_id)
@@ -241,6 +245,8 @@ def test_clinical_worker_gate_blocks_changed_specimen_sample_mapping():
                     case=case,
                     analysis_configuration=configuration,
                     analysis_type="VARIANT_INTERPRETATION",
+
+                    analysis_assay_id=assay_id,
                 )
     finally:
         engine.dispose()
