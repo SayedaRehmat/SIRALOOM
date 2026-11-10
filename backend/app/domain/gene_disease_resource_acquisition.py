@@ -113,16 +113,17 @@ def acquire_gene_disease_snapshots(destination: str | Path) -> dict:
     if root.exists() and any(root.iterdir()):
         raise GeneDiseaseAcquisitionError("Acquisition destination must be new or empty")
     root.mkdir(parents=True, exist_ok=True)
-    retrieved_at = datetime.now(UTC).isoformat()
+    acquisition_started_at = datetime.now(UTC)
     g2p_path = root / "G2P_all.csv"
     clingen_path = root / "ClinGen_gene_validity.csv"
     g2p_final, g2p_size, g2p_sha = _download_atomic(G2P_URL, g2p_path)
     clingen_final, clingen_size, clingen_sha = _download_atomic(CLINGEN_URL, clingen_path)
     clingen_release = _clingen_file_created(clingen_path)
-    acquisition_date = datetime.now(UTC).date().isoformat()
+    acquired_at = datetime.now(UTC)
+    acquisition_date = acquired_at.date().isoformat()
     manifest = {
         "schema": "siraloom.gene-disease-acquisition.v1",
-        "acquired_at_utc": retrieved_at,
+        "acquisition_started_at_utc": acquisition_started_at.isoformat(),\n        "acquired_at_utc": acquired_at.isoformat(),
         "acquisition_date_utc": acquisition_date,
         "artifacts": [
             {
