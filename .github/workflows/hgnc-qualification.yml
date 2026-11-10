@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "scripts/qualify_official_gene_disease_sources.py"
       - "backend/app/domain/gene_disease_resource_acquisition.py"
       - "backend/app/domain/resource_source_contract.py"
       - "backend/app/domain/hgnc_crosswalk.py"
@@ -339,6 +340,13 @@ jobs:
           report_path.write_text(json.dumps(output, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print(json.dumps(output, indent=2, sort_keys=True))
           PY
+      - name: Verify official G2P and ClinGen reconciliation through the pinned HGNC release
+        run: |
+          uv run --locked python scripts/qualify_official_gene_disease_sources.py \\
+            --hgnc-directory "$RUNNER_TEMP/hgnc-2026-10-06" \\
+            --acquisition-directory "$RUNNER_TEMP/gene-disease-acquired" \\
+            --managed-directory "$RUNNER_TEMP/gene-disease-managed" \\
+            --report "$RUNNER_TEMP/gene-disease-reconciliation-qualification.json"
       - name: Preserve exact G2P and ClinGen source bytes and qualification manifest
         uses: actions/upload-artifact@v4
         with:
@@ -347,6 +355,7 @@ jobs:
             ${{ runner.temp }}/gene-disease-acquired/
             ${{ runner.temp }}/gene-disease-managed/
             ${{ runner.temp }}/gene-disease-source-qualification.json
+            ${{ runner.temp }}/gene-disease-reconciliation-qualification.json
           if-no-files-found: error
           retention-days: 30
       - name: Preserve acquired official source files and qualification report
