@@ -68,7 +68,7 @@ def upgrade():
                    OR NEW.name IS DISTINCT FROM OLD.name
                    OR NEW.version IS DISTINCT FROM OLD.version
                    OR NEW.assay_type IS DISTINCT FROM OLD.assay_type
-                   OR NEW.configuration IS DISTINCT FROM OLD.configuration
+                   OR NEW.configuration::jsonb IS DISTINCT FROM OLD.configuration::jsonb
                    OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
                     RAISE EXCEPTION 'assay identity and configuration are immutable; create a new version';
                 END IF;
