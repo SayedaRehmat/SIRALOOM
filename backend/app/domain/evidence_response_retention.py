@@ -78,18 +78,41 @@ def approve_provider_retention(
         raise PermissionError("Terms evidence must belong to the approving organization.")
     if not (discovery.license_url or discovery.terms_url):
         raise ValueError("Exact release has no recorded license or terms URL.")
+    now = datetime.now(UTC)
     existing = db.scalar(select(ProviderRetentionApproval).where(
         ProviderRetentionApproval.organization_id == organization_id,
         ProviderRetentionApproval.resource_discovery_id == resource_discovery_id,
         ProviderRetentionApproval.status == "APPROVED",
     ))
     if existing is not None:
-        raise ValueError("An active approval already exists; revoke it before creating a replacement.")
+        existing_expiry = existing.expires_at
+        if existing_expiry is not None and existing_expiry.tzinfo is None:
+            existing_expiry = existing_expiry.replace(tzinfo=UTC)
+        if existing_expiry is None or existing_expiry > now:
+            raise ValueError("An active approval already exists; revoke it before creating a replacement.")
+        existing.status = "EXPIRED"
+        db.flush()
+        db.add(ProviderRetentionApprovalAction(
+            id=__import__("uuid").uuid4(), approval_id=existing.id,
+            organization_id=organization_id, actor_id=reviewer_id,
+            action="EXPIRE", before_status="APPROVED", after_status="EXPIRED",
+            reason="Approval expired before a replacement approval was issued.",
+            permission_scope=list(existing.permission_scope or []),
+        ))
+        AuditService(db).record(
+            event_type="PROVIDER_RETENTION_EXPIRED", case_id=None, analysis_id=None,
+            actor_type="USER", actor_id=str(reviewer_id),
+            subject_type="PROVIDER_RETENTION_APPROVAL", subject_id=str(existing.id),
+            operation="EXPIRE", before_state={"status": "APPROVED"},
+            after_state={"status": "EXPIRED"},
+            reason="Approval expired before a replacement approval was issued.",
+            payload={"organization_id": str(organization_id),
+                "resource_discovery_id": str(resource_discovery_id)},
+        )
     latest_version = db.scalar(select(ProviderRetentionApproval.version).where(
         ProviderRetentionApproval.organization_id == organization_id,
         ProviderRetentionApproval.resource_discovery_id == resource_discovery_id,
     ).order_by(ProviderRetentionApproval.version.desc()).limit(1)) or 0
-    now = datetime.now(UTC)
     approval = ProviderRetentionApproval(
         id=__import__("uuid").uuid4(), organization_id=organization_id,
         resource_id=resource.id, resource_discovery_id=discovery.id,
