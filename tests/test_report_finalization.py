@@ -83,10 +83,13 @@ def test_finalize_report_sets_final_and_supersedes(monkeypatch):
     db,u,c,a,_v=seed(True)
     draft_artifact = db.query(Artifact).first()
     prior_report_id = uuid4()
+    prior_signed_bytes = b"%PDF-prior-signed-fixture%"
+    prior_signed_path = Path(__import__("backend.app.config", fromlist=["settings"]).settings.artifact_root) / "report_v1_signed.pdf"
+    prior_signed_path.write_bytes(prior_signed_bytes)
     prior_signed_artifact = Artifact(
         id=uuid4(), case_id=c.id, analysis_id=a.id, artifact_type="REPORT_PDF",
-        filename="report_v1_signed.pdf", media_type="application/pdf", size_bytes=100,
-        sha256="b" * 64, storage_uri="file:///tmp/report_v1_signed.pdf",
+        filename="report_v1_signed.pdf", media_type="application/pdf", size_bytes=len(prior_signed_bytes),
+        sha256=hashlib.sha256(prior_signed_bytes).hexdigest(), storage_uri=prior_signed_path.as_uri(),
         genome_build="GRCh38", validation_status="VALID",
         metadata_json={
             "report_id": str(prior_report_id), "report_version": 1,
