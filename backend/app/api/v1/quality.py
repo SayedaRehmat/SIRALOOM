@@ -218,6 +218,10 @@ def decide_assay_validation(submission_id: UUID, body: AssayValidationDecisionIn
     submission = db.get(AssayValidationSubmission, submission_id)
     if submission is None or submission.organization_id != principal.organization_id:
         raise HTTPException(404, "Assay validation submission not found")
+    assay = db.get(Assay, submission.assay_id)
+    if assay is None or assay.organization_id != principal.organization_id:
+        raise HTTPException(404, "Assay validation submission not found")
+    db.refresh(assay, with_for_update=True)
     db.refresh(submission, with_for_update=True)
     latest = latest_validation_decision(db, submission.id)
     if latest is not None and (latest.decision != "APPROVE" or decision_name not in {"SUSPEND", "WITHDRAW"}):
