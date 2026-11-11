@@ -117,7 +117,11 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                 license_url="https://fixture.invalid/license", terms_url=None,
                 checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
                 authority_evidence_url="https://fixture.invalid/about", status="DISCOVERED",
-                metadata_json={},
+                metadata_json={
+                    "raw_response_retention": "PERMITTED",
+                    "raw_response_retention_reviewed_by": "test-reviewer",
+                    "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+                },
             ))
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
