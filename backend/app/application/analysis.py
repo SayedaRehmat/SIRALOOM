@@ -172,6 +172,20 @@ def create_analysis(
         analysis_configuration["assay_id"] = str(assay.id)
         analysis_configuration["assay_snapshot"] = assay_snapshot
         analysis_configuration["assay_snapshot_sha256"] = assay_snapshot_sha256
+        from backend.app.domain.assay_validation import authorize_assay_validation
+
+        try:
+            analysis_configuration["assay_validation_snapshot"] = authorize_assay_validation(
+                db,
+                assay_id=assay.id,
+                organization_id=case.organization_id,
+                workflow_id=workflow_id,
+                workflow_version=workflow_version,
+                reference_build=reference_build,
+                specimen_type=specimen.specimen_type,
+            )
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
     if clinical_authorization.get("mode") == "CLINICAL":
         from backend.app.domain.variant_eligibility import evaluate_small_variant_eligibility
 
@@ -441,6 +455,9 @@ def enqueue_analysis(
                     analysis_configuration=analysis.configuration,
                     analysis_type=getattr(analysis, "analysis_type", None),
                     analysis_assay_id=getattr(analysis, "assay_id", None),
+                    analysis_workflow_id=getattr(analysis, "workflow_id", None),
+                    analysis_workflow_version=getattr(analysis, "workflow_version", None),
+                    analysis_reference_build=getattr(analysis, "reference_build", None),
                 )
             except ValueError as exc:
                 raise ValueError(str(exc)) from exc
@@ -514,6 +531,9 @@ def resume_analysis(
         analysis_configuration=locked.configuration,
         analysis_type=getattr(locked, "analysis_type", None),
         analysis_assay_id=getattr(locked, "assay_id", None),
+        analysis_workflow_id=getattr(locked, "workflow_id", None),
+        analysis_workflow_version=getattr(locked, "workflow_version", None),
+        analysis_reference_build=getattr(locked, "reference_build", None),
     )
 
     dispatch = _create_dispatch_locked(db, locked)
