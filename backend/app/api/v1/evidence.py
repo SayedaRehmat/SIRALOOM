@@ -96,7 +96,7 @@ def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Pr
         "source_record_id": row.source_record_id,
         "response_retention": {
             "status": getattr(row, "response_retention_status", "NOT_AVAILABLE"),
-            "artifact_id": str(row.response_artifact_id) if getattr(row, "response_artifact_id", None) else None,
+            "artifact_id": str(getattr(row, "response_artifact_id", None)) if getattr(row, "response_artifact_id", None) else None,
             "sha256": getattr(row, "response_artifact_sha256", None),
             "size_bytes": getattr(row, "response_artifact_size_bytes", None),
             "reason": getattr(row, "response_retention_reason", None),
