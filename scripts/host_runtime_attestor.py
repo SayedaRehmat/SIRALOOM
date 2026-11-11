@@ -105,6 +105,8 @@ class Handler(socketserver.StreamRequestHandler):
                     raise RuntimeError("Connecting process working directory is outside the trusted installation root")
                 if root != executable_path and root not in executable_path.parents:
                     raise RuntimeError("Bare-metal worker interpreter must be inside the trusted installation root")
+                if executable_path.stat().st_uid != 0 or executable_path.stat().st_mode & 0o022:
+                    raise RuntimeError("Bare-metal worker interpreter must be root-owned and not group/world writable")
                 if self.server.release_manifest.is_symlink():
                     raise RuntimeError("Release manifest cannot be a symbolic link")
                 manifest = self.server.release_manifest.resolve(strict=True)
