@@ -234,9 +234,10 @@ def _host_runtime_image_identity() -> tuple[str, str]:
         raise RuntimeAttestationError("Trusted host runtime attestor socket is not configured")
     nonce = secrets.token_hex(32)
     request = json.dumps({"nonce": nonce}, separators=(",", ":")).encode() + b"\n"
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    client.settimeout(5)
+    client = None
     try:
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        client.settimeout(5)
         client.connect(socket_value)
         client.sendall(request)
         chunks = bytearray()
@@ -251,7 +252,8 @@ def _host_runtime_image_identity() -> tuple[str, str]:
     except (OSError, UnicodeError, ValueError, TimeoutError) as exc:
         raise RuntimeAttestationError("Cannot obtain authenticated evidence from the host runtime attestor") from exc
     finally:
-        client.close()
+        if client is not None:
+            client.close()
     if not isinstance(response, dict) or response.get("error"):
         raise RuntimeAttestationError(
             "Host runtime attestor rejected this worker process"
