@@ -593,6 +593,7 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
             from backend.app.domain.enums import AnalysisStatus
             status = AnalysisStatus.QUEUED
             queue_task_id = "redelivery-recovery-test"
+            configuration = {}
 
         def __init__(self):
             self.analysis = self.Analysis()
@@ -620,6 +621,7 @@ def test_celery_redelivery_recovers_before_resuming_analysis(monkeypatch):
     class FakeAnalysisSession:
         class Analysis:
             status = "RUNNING"
+            configuration = {}
 
         def get(self, model, received_analysis_id):
             events.append(("analysis_lookup", model.__name__, received_analysis_id))
@@ -1433,6 +1435,7 @@ def test_celery_first_delivery_skips_interrupted_worker_recovery(monkeypatch):
         def __init__(self):
             self.status = AnalysisStatus.QUEUED
             self.queue_task_id = task_id
+            self.configuration = {}
 
     fake_analysis = FakeAnalysis()
 
@@ -1505,6 +1508,7 @@ def test_celery_redelivery_closes_recovery_session_when_recovery_fails(monkeypat
         class Analysis:
             status = AnalysisStatus.QUEUED
             queue_task_id = "recovery-failure-test"
+            configuration = {}
 
         def get(self, model, received_analysis_id, **kwargs):
             if kwargs:
@@ -1829,6 +1833,7 @@ def test_celery_retry_exhaustion_finalizes_before_propagating_transient(monkeypa
         class Analysis:
             status = AnalysisStatus.QUEUED
             queue_task_id = "retry-exhaustion-test"
+            configuration = {}
 
         def get(self, model, received_analysis_id, **kwargs):
             if kwargs:
