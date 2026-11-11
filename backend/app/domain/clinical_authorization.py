@@ -163,8 +163,13 @@ def assert_analysis_clinical_authorization(
         )
     assay = db.get(Assay, assay_id)
     assay_snapshot = config.get("assay_snapshot")
-    if assay is None or assay.organization_id != case.organization_id or not isinstance(assay_snapshot, dict):
-        raise ClinicalAuthorizationError("Clinical analysis assay snapshot is missing or outside this organization")
+    if (
+        assay is None
+        or assay.organization_id != case.organization_id
+        or assay.status != "ACTIVE"
+        or not isinstance(assay_snapshot, dict)
+    ):
+        raise ClinicalAuthorizationError("Clinical analysis assay is missing, inactive, or outside this organization")
     current_assay_configuration = assay.configuration or {}
     current_assay_configuration_sha256 = hashlib.sha256(
         json.dumps(current_assay_configuration, sort_keys=True, separators=(",", ":")).encode("utf-8")
