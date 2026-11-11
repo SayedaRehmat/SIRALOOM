@@ -295,3 +295,56 @@ def test_expired_approval_prevents_new_raw_response_retention(tmp_path, monkeypa
     )
     assert result.status == "REVIEW_REQUIRED"
     assert result.artifact_id is None
+
+
+
+def test_provider_response_retry_is_idempotent_and_write_once(tmp_path, monkeypatch):
+    db, _store, _case, analysis, _variant, resource = _seed(tmp_path, monkeypatch)
+    first = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="retry-stable",
+        raw_response_bytes=b'{"stable":"bytes"}',
+    )
+    retry = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="retry-stable",
+        raw_response_bytes=b'{"stable":"bytes"}',
+    )
+    assert retry.status == "RETAINED"
+    assert retry.artifact_id == first.artifact_id
+    with pytest.raises(ValueError, match="Write-once provider response identity"):
+        retain_provider_response_bytes(
+            db, analysis=analysis, resource=resource, provider_id="TestProvider",
+            provider_version="1", request_fingerprint="retry-stable",
+            raw_response_bytes=b'{"stable":"changed"}',
+        )
+
+
+def test_reanalysis_creates_distinct_analysis_bound_response_artifact(tmp_path, monkeypatch):
+    db, _store, _case, parent, _variant, resource = _seed(tmp_path, monkeypatch)
+    first = retain_provider_response_bytes(
+        db, analysis=parent, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="same-provider-query",
+        raw_response_bytes=b'{"same":"release"}',
+    )
+    child = Analysis(
+        id=uuid4(), case_id=parent.case_id, parent_analysis_id=parent.id,
+        assay_id=None, analysis_type="RESEARCH", workflow_id="variant-v1",
+        workflow_version="test", status="COMPLETED", queue_task_id=None,
+        reference_build="GRCh38",
+        configuration={"workflow_purpose": "RESEARCH", "research_justification": "Reanalysis lineage test"},
+        started_at=None, completed_at=None, created_by=parent.created_by,
+        analysis_version=2,
+    )
+    db.add(child)
+    db.flush()
+    second = retain_provider_response_bytes(
+        db, analysis=child, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="same-provider-query",
+        raw_response_bytes=b'{"same":"release"}',
+    )
+    assert first.artifact_id != second.artifact_id
+    first_artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, first.artifact_id)
+    second_artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, second.artifact_id)
+    assert first_artifact.analysis_id == parent.id
+    assert second_artifact.analysis_id == child.id
