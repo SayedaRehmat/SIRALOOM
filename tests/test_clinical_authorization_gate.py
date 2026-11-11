@@ -1,7 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import create_engine
@@ -356,6 +356,39 @@ def test_clinical_worker_gate_requires_persisted_assay_foreign_key():
                     analysis_configuration=configuration,
                     analysis_type="VARIANT_INTERPRETATION",
                     analysis_assay_id=None,
+                )
+    finally:
+        engine.dispose()
+
+
+
+def test_clinical_worker_gate_blocks_suspended_assay_validation():
+    engine, case_id, _artifact_id, _specimen_id, assay_id, configuration = _clinical_fixture()
+    try:
+        submission_id = UUID(configuration["assay_validation_snapshot"]["submission_id"])
+        with Session(engine) as db:
+            case = db.get(Case, case_id)
+            db.add(AssayValidationDecision(
+                id=uuid4(),
+                submission_id=submission_id,
+                decision="SUSPEND",
+                reason="Laboratory suspended the assay validation pending investigation",
+                evidence_reference="controlled://quality/nonconformance/001",
+                actor_id=case.created_by,
+            ))
+            db.commit()
+        with Session(engine) as db:
+            case = db.get(Case, case_id)
+            with pytest.raises(ClinicalAuthorizationError, match="currently effective"):
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=configuration,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    analysis_assay_id=assay_id,
+                    analysis_workflow_id="variant-v1",
+                    analysis_workflow_version="2.1",
+                    analysis_reference_build="GRCh38",
                 )
     finally:
         engine.dispose()
