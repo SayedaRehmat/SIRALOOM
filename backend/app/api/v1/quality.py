@@ -134,6 +134,139 @@ def list_assays(db=Depends(get_db), principal: Principal=Depends(get_current_pri
     rows=list(db.scalars(select(Assay).where(Assay.organization_id==principal.organization_id).order_by(Assay.name, Assay.version)))
     return {"assays": [_assay(x) for x in rows]}
 
+def _validation_submission(row, decision=None):
+    return {
+        "id": str(row.id), "assay_id": str(row.assay_id), "revision": row.revision,
+        "validation_type": row.validation_type, "protocol_identifier": row.protocol_identifier,
+        "protocol_version": row.protocol_version, "intended_use": row.intended_use,
+        "specimen_types": row.specimen_types or [], "variant_classes": row.variant_classes or [],
+        "reference_builds": row.reference_builds or [], "workflow_id": row.workflow_id,
+        "workflow_version": row.workflow_version, "pipeline_components": row.pipeline_components or [],
+        "performance_specifications": row.performance_specifications or [],
+        "study_design_summary": row.study_design_summary, "sample_count": row.sample_count,
+        "evidence_manifest": row.evidence_manifest or [], "payload_sha256": row.payload_sha256,
+        "submitted_by": str(row.submitted_by), "submitted_at": row.submitted_at.isoformat(),
+        "latest_decision": ({
+            "id": str(decision.id), "decision": decision.decision, "reason": decision.reason,
+            "evidence_reference": decision.evidence_reference,
+            "effective_at": decision.effective_at.isoformat() if decision.effective_at else None,
+            "expires_at": decision.expires_at.isoformat() if decision.expires_at else None,
+            "actor_id": str(decision.actor_id), "created_at": decision.created_at.isoformat(),
+        } if decision else None),
+    }
+
+
+@router.post("/assays/{assay_id}/validations", status_code=201)
+def submit_assay_validation(assay_id: UUID, body: AssayValidationSubmissionInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, ASSAY_ADMIN_ROLES)
+    assay = db.get(Assay, assay_id)
+    if assay is None or assay.organization_id != principal.organization_id:
+        raise HTTPException(404, "Assay not found")
+    db.refresh(assay, with_for_update=True)
+    try:
+        payload = normalize_validation_submission(body.model_dump())
+    except AssayValidationError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    latest_revision = db.scalar(select(func.max(AssayValidationSubmission.revision)).where(AssayValidationSubmission.assay_id == assay.id)) or 0
+    previous = db.scalar(select(AssayValidationSubmission).where(AssayValidationSubmission.assay_id == assay.id).order_by(AssayValidationSubmission.revision.desc()).limit(1))
+    row = AssayValidationSubmission(
+        id=uuid4(), organization_id=assay.organization_id, assay_id=assay.id,
+        revision=int(latest_revision) + 1, **payload,
+        payload_sha256=validation_payload_sha256(payload),
+        supersedes_id=previous.id if previous else None, submitted_by=principal.user_id,
+    )
+    db.add(row)
+    db.flush()
+    AuditService(db).record(
+        event_type="ASSAY_VALIDATION_SUBMITTED", case_id=None, analysis_id=None,
+        actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="ASSAY_VALIDATION",
+        subject_id=str(row.id), operation="SUBMIT",
+        after_state={"assay_id": str(assay.id), "revision": row.revision, "validation_type": row.validation_type,
+                     "protocol_identifier": row.protocol_identifier, "protocol_version": row.protocol_version,
+                     "payload_sha256": row.payload_sha256, "scope": {"specimen_types": row.specimen_types,
+                     "variant_classes": row.variant_classes, "reference_builds": row.reference_builds,
+                     "workflow_id": row.workflow_id, "workflow_version": row.workflow_version},
+                     "sample_count": row.sample_count, "evidence_count": len(row.evidence_manifest)},
+    )
+    db.commit()
+    db.refresh(row)
+    return _validation_submission(row)
+
+
+@router.get("/assays/{assay_id}/validations")
+def list_assay_validations(assay_id: UUID, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, READ_ROLES)
+    assay = db.get(Assay, assay_id)
+    if assay is None or assay.organization_id != principal.organization_id:
+        raise HTTPException(404, "Assay not found")
+    rows = db.scalars(select(AssayValidationSubmission).where(
+        AssayValidationSubmission.assay_id == assay.id,
+        AssayValidationSubmission.organization_id == principal.organization_id,
+    ).order_by(AssayValidationSubmission.revision.desc())).all()
+    active = current_approved_validation(db, assay_id=assay.id, organization_id=principal.organization_id)
+    return {"assay_id": str(assay.id),
+            "current_approval_submission_id": str(active[0].id) if active else None,
+            "submissions": [_validation_submission(row, latest_validation_decision(db, row.id)) for row in rows]}
+
+
+@router.post("/assay-validations/{submission_id}/decision")
+def decide_assay_validation(submission_id: UUID, body: AssayValidationDecisionInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
+    require_role(principal, frozenset({"lab_director"}))
+    decision_name = body.decision.strip().upper()
+    if decision_name not in {"APPROVE", "REJECT", "SUSPEND", "WITHDRAW"}:
+        raise HTTPException(400, "Decision must be APPROVE, REJECT, SUSPEND or WITHDRAW")
+    submission = db.get(AssayValidationSubmission, submission_id)
+    if submission is None or submission.organization_id != principal.organization_id:
+        raise HTTPException(404, "Assay validation submission not found")
+    db.refresh(submission, with_for_update=True)
+    latest = latest_validation_decision(db, submission.id)
+    if latest is not None and (latest.decision != "APPROVE" or decision_name not in {"SUSPEND", "WITHDRAW"}):
+        raise HTTPException(409, "This validation submission has already received a terminal decision")
+    if latest is None and decision_name in {"SUSPEND", "WITHDRAW"}:
+        raise HTTPException(409, "Only an approved validation can be suspended or withdrawn")
+    if decision_name == "APPROVE":
+        if submission.submitted_by == principal.user_id:
+            raise HTTPException(403, "The validation submitter cannot approve their own submission")
+        if any(str(item.get("result", "")).upper() != "PASS" for item in (submission.performance_specifications or [])):
+            raise HTTPException(409, "Validation cannot be approved while any performance criterion is FAIL or NOT_ASSESSED")
+        if body.evidence_reference is None or not body.evidence_reference.strip():
+            raise HTTPException(422, "Approval requires a controlled approval evidence reference")
+        if body.effective_at is None or body.expires_at is None:
+            raise HTTPException(422, "Approval requires explicit effective and expiry timestamps")
+        if body.effective_at.tzinfo is None or body.expires_at.tzinfo is None:
+            raise HTTPException(422, "Approval timestamps must include timezone information")
+        if body.expires_at <= body.effective_at:
+            raise HTTPException(422, "Approval expiry must be later than its effective time")
+    row = AssayValidationDecision(
+        id=uuid4(), submission_id=submission.id, decision=decision_name, reason=body.reason.strip(),
+        evidence_reference=body.evidence_reference.strip() if body.evidence_reference else None,
+        effective_at=body.effective_at, expires_at=body.expires_at, actor_id=principal.user_id,
+    )
+    db.add(row)
+    db.flush()
+    if decision_name == "APPROVE":
+        previous_approval = current_approved_validation(db, assay_id=submission.assay_id, organization_id=submission.organization_id)
+        if previous_approval is not None and previous_approval[0].id != submission.id:
+            db.add(AssayValidationDecision(
+                id=uuid4(), submission_id=previous_approval[0].id, decision="SUPERSEDE",
+                reason="Superseded by a later approved assay validation submission",
+                evidence_reference=body.evidence_reference.strip(), actor_id=principal.user_id,
+            ))
+    AuditService(db).record(
+        event_type="ASSAY_VALIDATION_" + decision_name, case_id=None, analysis_id=None,
+        actor_type="HUMAN", actor_id=str(principal.user_id), subject_type="ASSAY_VALIDATION",
+        subject_id=str(submission.id), operation=decision_name,
+        after_state={"decision_id": str(row.id), "decision": decision_name, "reason": row.reason,
+                     "evidence_reference": row.evidence_reference,
+                     "effective_at": row.effective_at.isoformat() if row.effective_at else None,
+                     "expires_at": row.expires_at.isoformat() if row.expires_at else None},
+        reason=row.reason,
+    )
+    db.commit()
+    db.refresh(row)
+    return {"decision_id": str(row.id), "submission_id": str(submission.id),
+            "decision": row.decision, "created_at": row.created_at.isoformat()}
+
 @router.post("/analyses/{analysis_id}/quality/observations", status_code=201)
 def record_qc_observation(analysis_id: UUID, body: QCObservationInput, db=Depends(get_db), principal: Principal=Depends(get_current_principal)):
     analysis=get_accessible_analysis(analysis_id, db, principal, "write")
