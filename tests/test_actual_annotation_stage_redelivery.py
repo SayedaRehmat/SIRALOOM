@@ -135,7 +135,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                 license_url="https://fixture.invalid/license", terms_url=None,
                 checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
                 authority_evidence_url="https://fixture.invalid/about", status="DISCOVERED",
-                metadata_json={},
+                metadata_json={
+                    "raw_response_retention": "PERMITTED",
+                    "raw_response_retention_reviewed_by": "test-reviewer",
+                    "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+                },
             ))
             for order, step_id, status, metadata, outputs in [
                 (1, "validate_input", StepStatus.SUCCEEDED, {"test_checkpoint": True}, [str(source_artifact.id)]),
