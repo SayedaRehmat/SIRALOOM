@@ -82,6 +82,9 @@ def test_report_draft_waits_for_analysis_decision_lock(monkeypatch):
         eligibility_entered.set()
         return True, []
 
+    # This integration test proves lock ordering, not clinical authorization.
+    from backend.app.domain import clinical_authorization
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(reports, "get_accessible_analysis", lambda *_args: analysis_stub)
     monkeypatch.setattr(reports, "require_role", lambda *_args: None)
     monkeypatch.setattr(reports, "require_case_permission", lambda *_args: None)
