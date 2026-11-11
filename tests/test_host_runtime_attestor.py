@@ -57,7 +57,7 @@ def test_docker_identity_rejects_missing_rootfs_layer_evidence(monkeypatch):
     container_id = "a" * 64
     image_id = "sha256:" + "b" * 64
     responses = [
-        SimpleNamespace(stdout=json.dumps([{"Id": container_id, "Image": image_id}])),
+        SimpleNamespace(stdout=json.dumps([{"Id": container_id, "Image": image_id, "HostConfig": {"ReadonlyRootfs": True}}])),
         SimpleNamespace(stdout=json.dumps([{"Id": image_id, "RootFS": {"Layers": []}}])),
     ]
     monkeypatch.setattr(
