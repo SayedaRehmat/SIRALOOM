@@ -239,6 +239,43 @@ def retain_provider_response_bytes(
         f"siraloom-provider-response:{analysis.id}:{resource.id}:{request_fingerprint}",
     )
     store = store or artifact_store_for_organization(db, organization_id=case.organization_id)
+    existing = db.get(Artifact, artifact_id)
+    if existing is not None:
+        existing_metadata = dict(existing.metadata_json or {})
+        if (
+            existing.case_id != case.id or existing.analysis_id != analysis.id
+            or existing.artifact_type != "PROVIDER_RESPONSE_RAW"
+            or existing.sha256 != digest or existing.size_bytes != size
+            or existing_metadata.get("resource_id") != str(resource.id)
+            or existing_metadata.get("request_fingerprint") != request_fingerprint
+            or existing_metadata.get("provider_id") != provider_id
+            or existing_metadata.get("provider_version") != provider_version
+            or existing_metadata.get("retention_approval_id") != str(approval.id)
+        ):
+            raise ValueError("Write-once provider response identity already exists with different bytes or provenance.")
+        existing_store = artifact_store_for_uri(
+            db, organization_id=case.organization_id, storage_uri=existing.storage_uri
+        )
+        if callable(getattr(existing_store, "download_to_file", None)):
+            with tempfile.NamedTemporaryFile(prefix="siraloom-provider-retry-", delete=False) as handle:
+                retry_path = Path(handle.name)
+            try:
+                existing_store.download_to_file(
+                    existing.storage_uri, retry_path,
+                    expected_sha256=digest, expected_size_bytes=size,
+                )
+                verify_artifact_file(retry_path, sha256=digest, size_bytes=size)
+            finally:
+                retry_path.unlink(missing_ok=True)
+        else:
+            verify_artifact_file(
+                existing_store.local_path(existing.storage_uri),
+                sha256=digest, size_bytes=size,
+            )
+        return ProviderResponseRetention(
+            "RETAINED", "Idempotent retry matched the existing immutable provider response.",
+            existing.id, digest, size, str(discovery.license_status).upper(),
+        )
     with tempfile.NamedTemporaryFile(prefix="siraloom-provider-response-", suffix=".bin", delete=False) as handle:
         staged = Path(handle.name)
         handle.write(raw_response_bytes)
