@@ -28,7 +28,9 @@ def upgrade():
     ):
         with op.batch_alter_table(table) as batch_op:
             for name, type_, foreign_key in _RESPONSE_COLUMNS:
-                constraints = [sa.ForeignKey(foreign_key)] if foreign_key is not None else []
+                constraints = [
+                    sa.ForeignKey(foreign_key, name=f"fk_{table}_{name}_artifacts")
+                ] if foreign_key is not None else []
                 batch_op.add_column(
                     sa.Column(
                         name,
