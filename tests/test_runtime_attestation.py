@@ -192,3 +192,109 @@ def test_signout_rejects_missing_or_modified_runtime_attestation():
 
     with pytest.raises(runtime.RuntimeAttestationError, match="does not match"):
         runtime.assert_analysis_runtime_attested(_TamperedDB(), _analysis())
+
+
+
+def test_host_attestor_requires_fresh_signed_challenge_and_returns_immutable_identity(monkeypatch):
+    import json
+    import time
+
+    payload = {
+        "schema_version": "1",
+        "nonce": None,
+        "issued_at_unix": int(time.time()),
+        "peer_pid": 4242,
+        "peer_uid": 10001,
+        "process_start_time": "123456",
+        "process_executable": "/usr/bin/python3",
+        "process_cgroup_sha256": "d" * 64,
+        "identity_type": "docker-image-content",
+        "identity_version": "sha256:" + "e" * 64,
+        "image_sha256": "e" * 64,
+    }
+
+    class _FakeSocket:
+        def settimeout(self, _timeout):
+            pass
+
+        def connect(self, path):
+            assert path == "/run/siraloom/host-attestor.sock"
+
+        def sendall(self, request):
+            challenge = json.loads(request)["nonce"]
+            payload["nonce"] = challenge
+            self.response = (
+                json.dumps({"payload": payload, "signature": "00"}).encode() + b"\\n"
+            )
+
+        def recv(self, _size):
+            response, self.response = self.response, b""
+            return response
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/run/siraloom/host-attestor.sock")
+    monkeypatch.setattr(runtime.socket, "socket", lambda *_args: _FakeSocket())
+    verified = []
+    monkeypatch.setattr(
+        runtime,
+        "_verify_host_attestor_signature",
+        lambda message, signature: verified.append((json.loads(message), signature)),
+    )
+
+    version, digest = runtime._host_runtime_image_identity()
+
+    assert version == "sha256:" + "e" * 64
+    assert digest == "e" * 64
+    assert verified[0][0]["nonce"] == payload["nonce"]
+    assert verified[0][1] == bytes.fromhex("00")
+
+
+def test_host_attestor_rejects_stale_signed_response(monkeypatch):
+    import json
+    import time
+
+    payload = {
+        "schema_version": "1",
+        "nonce": None,
+        "issued_at_unix": int(time.time()) - 120,
+        "peer_pid": 4242,
+        "identity_version": "sha256:" + "e" * 64,
+        "image_sha256": "e" * 64,
+    }
+
+    class _FakeSocket:
+        def settimeout(self, _timeout):
+            pass
+
+        def connect(self, _path):
+            pass
+
+        def sendall(self, request):
+            payload["nonce"] = json.loads(request)["nonce"]
+            self.response = json.dumps(
+                {"payload": payload, "signature": "00"}
+            ).encode() + b"\\n"
+
+        def recv(self, _size):
+            response, self.response = self.response, b""
+            return response
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/run/attestor.sock")
+    monkeypatch.setattr(runtime.socket, "socket", lambda *_args: _FakeSocket())
+    monkeypatch.setattr(runtime, "_verify_host_attestor_signature", lambda *_args: None)
+
+    with pytest.raises(runtime.RuntimeAttestationError, match="stale"):
+        runtime._host_runtime_image_identity()
+
+
+def test_configured_host_attestor_does_not_fall_back_to_environment_digest(monkeypatch):
+    monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/missing/attestor.sock")
+    monkeypatch.setenv("SIRALOOM_RUNTIME_IMAGE_DIGEST", "sha256:" + "f" * 64)
+
+    with pytest.raises(runtime.RuntimeAttestationError, match="Cannot obtain authenticated evidence"):
+        runtime._host_runtime_image_identity()
