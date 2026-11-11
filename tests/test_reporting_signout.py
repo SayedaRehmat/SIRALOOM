@@ -1065,3 +1065,31 @@ def test_signed_report_requires_draft_artifact():
         assert "immutable draft artifact" in str(exc)
     else:
         raise AssertionError("Sign-out must require an immutable draft artifact")
+
+
+def test_signout_rechecks_current_clinical_authorization(monkeypatch):
+    db, reviewer, _analysis, report = seed_finalizable_report()
+
+    def reject_expired_authorization(*args, **kwargs):
+        raise ValueError("assay validation approval expired")
+
+    monkeypatch.setattr(
+        "backend.app.domain.clinical_authorization.assert_analysis_clinical_authorization",
+        reject_expired_authorization,
+    )
+    try:
+        with pytest.raises(
+            ReportFinalizationError,
+            match="Clinical authorization is no longer valid: assay validation approval expired",
+        ):
+            finalize_report(
+                db,
+                report_id=report.id,
+                approver_id=reviewer.id,
+                reason="Should be blocked after approval expiry",
+            )
+        db.refresh(report)
+        assert report.status == "DRAFT"
+        assert report.signed_artifact_id is None
+    finally:
+        db.close()
