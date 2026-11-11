@@ -623,6 +623,52 @@ class ResourceDiscovery(Base):
     )
 
 
+class ProviderRetentionApproval(Base):
+    """Organization-scoped, release-specific authorization for raw provider response retention."""
+    __tablename__ = "provider_retention_approvals"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_discovery_id: Mapped[UUID] = mapped_column(ForeignKey("resource_discoveries.id"), nullable=False)
+    release_identity: Mapped[str] = mapped_column(Text, nullable=False)
+    permission_scope: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    license_url: Mapped[str | None] = mapped_column(Text)
+    terms_url: Mapped[str | None] = mapped_column(Text)
+    terms_evidence_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    terms_evidence_sha256: Mapped[str | None] = mapped_column(Text)
+    reviewer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="APPROVED")
+    approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revocation_reason: Mapped[str | None] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "resource_discovery_id", "version"),
+        CheckConstraint("status IN ('APPROVED', 'REVOKED', 'EXPIRED')", name="ck_provider_retention_approval_status"),
+        CheckConstraint("json_array_length(permission_scope) > 0", name="ck_provider_retention_scope_nonempty"),
+    )
+
+
+class ProviderRetentionApprovalAction(Base):
+    """Append-only decision history for provider retention authorization."""
+    __tablename__ = "provider_retention_approval_actions"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    approval_id: Mapped[UUID] = mapped_column(ForeignKey("provider_retention_approvals.id"), nullable=False)
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    action: Mapped[str] = mapped_column(Text, nullable=False)
+    before_status: Mapped[str | None] = mapped_column(Text)
+    after_status: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    permission_scope: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        CheckConstraint("action IN ('APPROVE', 'REVOKE', 'EXPIRE')", name="ck_provider_retention_action"),
+    )
+
+
 class ResourceStaging(Base):
     """Durable staging/integrity state for a concrete resource release artifact."""
 
