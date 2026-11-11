@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 from backend.app.domain.artifact_integrity import verify_artifact_file
 from backend.app.domain.local_uri import local_path_from_uri
 from backend.app.domain.storage_profiles import artifact_store_for_uri
-from backend.app.infrastructure.db.models import ResourceReleaseArtifact, ResourceStaging
+from backend.app.infrastructure.db.models import (
+    Evidence, PopulationObservation, Resource, ResourceReleaseArtifact, ResourceStaging,
+)
 
 
 def verify_resource_release_artifact(
@@ -72,3 +74,61 @@ def find_verified_resource_release(
         return None, "NOT_AVAILABLE"
     status = verify_resource_release_artifact(db, artifact)
     return artifact, status
+
+
+
+def _verify_release_reference(
+    db: Session, *, resource_id: UUID | None, artifact_id: UUID | None,
+    digest: str | None, size_bytes: int | None, status: str,
+) -> bool:
+    resource = db.get(Resource, resource_id) if resource_id else None
+    normalized = str(status or "NOT_AVAILABLE").upper()
+    if normalized == "NOT_AVAILABLE":
+        if (
+            resource is not None
+            and str(resource.access_method or "").upper() in {"LOCAL", "FILE", "LOCAL_ONLY"}
+            and str(resource.resource_type or "").upper() in {
+                "EVIDENCE", "POPULATION", "PHENOTYPE", "CLINICAL_DATABASE"
+            }
+        ):
+            raise ValueError("Local scientific evidence is missing its immutable source-release artifact.")
+        if artifact_id is not None or digest is not None or size_bytes is not None:
+            raise ValueError("Unverified source-release reference contains artifact identity or digest.")
+        return False
+    if normalized not in {"VERIFIED", "CAPTURED"}:
+        raise ValueError(f"Unsupported source-release status: {normalized}.")
+    if artifact_id is None or resource is None or not digest or size_bytes is None:
+        raise ValueError("Source-release reference is incomplete.")
+    artifact = db.get(ResourceReleaseArtifact, artifact_id)
+    if (
+        artifact is None or artifact.resource_id != resource.id
+        or artifact.resource_version != resource.version
+        or artifact.sha256 != digest or artifact.size_bytes != size_bytes
+    ):
+        raise ValueError("Source-release artifact identity, release, digest, or size was substituted.")
+    actual_status = verify_resource_release_artifact(db, artifact)
+    if actual_status != normalized:
+        raise ValueError("Source-release verification status does not match its immutable artifact.")
+    return True
+
+
+def verify_evidence_source_release_reference(db: Session, evidence: Evidence) -> bool:
+    return _verify_release_reference(
+        db, resource_id=evidence.resource_id,
+        artifact_id=evidence.source_release_artifact_id,
+        digest=evidence.source_release_sha256,
+        size_bytes=evidence.source_release_size_bytes,
+        status=evidence.source_release_status,
+    )
+
+
+def verify_population_source_release_reference(
+    db: Session, observation: PopulationObservation,
+) -> bool:
+    return _verify_release_reference(
+        db, resource_id=observation.resource_id,
+        artifact_id=observation.source_release_artifact_id,
+        digest=observation.source_release_sha256,
+        size_bytes=observation.source_release_size_bytes,
+        status=observation.source_release_status,
+    )
