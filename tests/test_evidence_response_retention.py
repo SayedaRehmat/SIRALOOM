@@ -196,3 +196,17 @@ def test_permitted_license_retains_exact_response_bytes(tmp_path, monkeypatch):
     assert artifact.case_id == case.id
     assert artifact.analysis_id == analysis.id
     assert store.local_path(artifact.storage_uri).read_bytes() == b'{"raw":"provider bytes"}'
+
+def test_restricted_license_marks_response_not_permitted_without_storage(tmp_path, monkeypatch):
+    db, _store, _case, analysis, _variant, resource = _seed(
+        tmp_path, monkeypatch, license_status="RESTRICTED"
+    )
+    result = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource,
+        provider_id="TestProvider", provider_version="1",
+        request_fingerprint="request-1", raw_response_bytes=b"restricted-provider-bytes",
+    )
+    assert result.status == "NOT_PERMITTED"
+    assert result.artifact_id is None
+    assert result.sha256 is None
+    assert result.size_bytes is None
