@@ -1,5 +1,6 @@
 import hashlib
 import json
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -12,6 +13,8 @@ from backend.app.domain.clinical_authorization import (
     assert_analysis_clinical_authorization,
 )
 from backend.app.infrastructure.db.base import Base
+from backend.app.infrastructure.db.assay_validation import AssayValidationDecision, AssayValidationSubmission
+from backend.app.domain.assay_validation import authorize_assay_validation, normalize_validation_submission, validation_payload_sha256
 from backend.app.infrastructure.db.clinical_requests import (
     AccessionDecision,
     ClinicalRequest,
@@ -153,7 +156,57 @@ def _clinical_fixture():
             exception_procedure_id=None,
         )
         db.add(decision)
+        approver_id = uuid4()
+        db.add(User(
+            id=approver_id,
+            organization_id=organization_id,
+            external_subject=str(approver_id),
+            email=f"{approver_id}@example.test",
+            display_name="Independent Assay Approver",
+            role="LAB_DIRECTOR",
+            status="ACTIVE",
+        ))
+        validation_payload = normalize_validation_submission({
+            "validation_type": "VALIDATION",
+            "protocol_identifier": "SOP-NGS-VALIDATION",
+            "protocol_version": "1.0",
+            "intended_use": "Clinical germline SNV and small-indel interpretation",
+            "specimen_types": ["BLOOD"],
+            "variant_classes": ["SNV", "SMALL_INDEL"],
+            "reference_builds": ["GRCh38"],
+            "workflow_id": "variant-v1",
+            "workflow_version": "2.1",
+            "pipeline_components": [{"name": "SIRALOOM Variant workflow", "version": "2.1", "sha256": "b" * 64}],
+            "performance_specifications": [
+                {"metric": "analytical_sensitivity", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
+                {"metric": "analytical_sensitivity", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
+            ],
+            "study_design_summary": "Representative positive and negative specimens assessed across the declared intended-use scope.",
+            "sample_count": 50,
+            "evidence_manifest": [{"evidence_type": "VALIDATION_REPORT", "reference": "controlled://validation/report-001", "sha256": "c" * 64}],
+        })
+        submission = AssayValidationSubmission(
+            id=uuid4(), organization_id=organization_id, assay_id=assay.id, revision=1,
+            **validation_payload, payload_sha256=validation_payload_sha256(validation_payload),
+            supersedes_id=None, submitted_by=user_id,
+        )
+        db.add(submission)
+        db.flush()
+        db.add(AssayValidationDecision(
+            id=uuid4(), submission_id=submission.id, decision="APPROVE",
+            reason="Independent validation review passed",
+            evidence_reference="controlled://validation/approval-001",
+            effective_at=datetime.now(timezone.utc) - timedelta(days=1),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=365),
+            actor_id=approver_id,
+        ))
         db.commit()
+    with Session(engine) as db:
+        validation_snapshot = authorize_assay_validation(
+            db, assay_id=assay.id, organization_id=organization_id,
+            workflow_id="variant-v1", workflow_version="2.1",
+            reference_build="GRCh38", specimen_type="BLOOD",
+        )
     workflow_eligibility = evaluate_small_variant_eligibility(validation)
     workflow_eligibility["validation_artifact_sha256"] = "a" * 64
     assay_snapshot = {
@@ -185,6 +238,7 @@ def _clinical_fixture():
         "assay_id": str(assay.id),
         "assay_snapshot": assay_snapshot,
         "assay_snapshot_sha256": assay_snapshot_sha256,
+        "assay_validation_snapshot": validation_snapshot,
     }
     return engine, case_id, artifact_id, specimen_id, assay.id, configuration
 
@@ -201,6 +255,9 @@ def test_clinical_worker_gate_accepts_current_request_and_eligible_vcf():
                 analysis_type="VARIANT_INTERPRETATION",
 
                 analysis_assay_id=assay_id,
+                analysis_workflow_id="variant-v1",
+                analysis_workflow_version="2.1",
+                analysis_reference_build="GRCh38",
             )
     finally:
         engine.dispose()
