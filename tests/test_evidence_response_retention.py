@@ -296,6 +296,13 @@ def test_expired_approval_prevents_new_raw_response_retention(tmp_path, monkeypa
     )
     assert result.status == "REVIEW_REQUIRED"
     assert result.artifact_id is None
+    assert approval.status == "EXPIRED"
+    expiry_action = db.scalar(select(ProviderRetentionApprovalAction).where(
+        ProviderRetentionApprovalAction.approval_id == approval.id,
+        ProviderRetentionApprovalAction.action == "EXPIRE",
+    ))
+    assert expiry_action is not None
+    assert expiry_action.actor_id is None
 
 
 
