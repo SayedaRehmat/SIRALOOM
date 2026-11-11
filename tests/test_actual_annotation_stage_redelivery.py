@@ -48,6 +48,11 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
     Base.metadata.create_all(engine)
     LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
+    retention_module = importlib.import_module("backend.app.domain.evidence_response_retention")
+    monkeypatch.setattr(
+        retention_module, "artifact_store_for_uri",
+        lambda *_args, **_kwargs: store,
+    )
     organization_id, user_id, case_id, analysis_id, resource_id = (
         uuid4(), uuid4(), uuid4(), uuid4(), uuid4()
     )
