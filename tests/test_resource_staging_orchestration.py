@@ -17,7 +17,7 @@ from backend.app.domain.resource_staging import (
     staging_recovery_decision,
 )
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Resource, ResourceStaging
+from backend.app.infrastructure.db.models import Resource, ResourceReleaseArtifact, ResourceStaging
 
 
 class FakeResponse:
@@ -52,7 +52,7 @@ def _db():
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(
         engine,
-        tables=[Resource.__table__, ResourceStaging.__table__],
+        tables=[Resource.__table__, ResourceStaging.__table__, ResourceReleaseArtifact.__table__],
     )
     return engine, Session(engine)
 
