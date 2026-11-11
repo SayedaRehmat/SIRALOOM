@@ -6,7 +6,7 @@ import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import UUID
+from uuid import NAMESPACE_URL, UUID, uuid5
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -79,6 +79,10 @@ def retain_provider_response_bytes(
         raise ValueError("Provider response retention requires a case with organization identity.")
     digest = hashlib.sha256(raw_response_bytes).hexdigest()
     size = len(raw_response_bytes)
+    artifact_id = uuid5(
+        NAMESPACE_URL,
+        f"siraloom-provider-response:{analysis.id}:{resource.id}:{request_fingerprint}",
+    )
     store = artifact_store_for_organization(db, organization_id=case.organization_id)
     with tempfile.NamedTemporaryFile(prefix="siraloom-provider-response-", suffix=".bin", delete=False) as handle:
         staged = Path(handle.name)
@@ -95,6 +99,7 @@ def retain_provider_response_bytes(
             media_type=media_type or "application/octet-stream",
             genome_build=analysis.reference_build,
             validation_status="VALIDATED",
+            artifact_id=artifact_id,
             metadata={
                 "retention_status": "RETAINED",
                 "retention_policy": "RESOURCE_RELEASE_LICENSE_GATE_V1",
