@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.assay_validation import (
     AssayValidationError,
+    assert_pipeline_components_match_runtime,
     authorize_assay_validation,
     normalize_validation_submission,
     validation_payload_sha256,
@@ -153,3 +154,77 @@ def test_expired_assay_validation_cannot_authorize_clinical_use():
                 )
     finally:
         engine.dispose()
+
+
+def test_runtime_component_manifest_must_exactly_match_approved_digests():
+    approved = {
+        "pipeline_components": [
+            {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+            {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+        ]
+    }
+    observed = [
+        {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+        {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+    ]
+    assert_pipeline_components_match_runtime(approved, observed)
+
+
+@pytest.mark.parametrize(
+    ("observed", "message"),
+    [
+        (
+            [{"name": "bcftools", "version": "1.25", "sha256": "a" * 64}],
+            "COMPONENT_SET_MISMATCH",
+        ),
+        (
+            [
+                {"name": "bcftools", "version": "1.25", "sha256": "c" * 64},
+                {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+            ],
+            "COMPONENT_MISMATCH",
+        ),
+        (
+            [
+                {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+                {"name": "htslib", "version": "1.26", "sha256": "b" * 64},
+            ],
+            "COMPONENT_MISMATCH",
+        ),
+        (
+            [
+                {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+                {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+                {"name": "unapproved", "version": "1", "sha256": "c" * 64},
+            ],
+            "COMPONENT_SET_MISMATCH",
+        ),
+    ],
+)
+def test_runtime_component_manifest_fails_closed_on_missing_or_changed_components(
+    observed, message
+):
+    approved = {
+        "pipeline_components": [
+            {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+            {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+        ]
+    }
+    with pytest.raises(AssayValidationError, match=message):
+        assert_pipeline_components_match_runtime(approved, observed)
+
+
+def test_runtime_component_manifest_rejects_duplicate_names_and_missing_attestation():
+    approved = {
+        "pipeline_components": [
+            {"name": "bcftools", "version": "1.25", "sha256": "a" * 64}
+        ]
+    }
+    duplicate = [
+        {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+        {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+    ]
+    with pytest.raises(AssayValidationError, match="duplicate component"):
+        assert_pipeline_components_match_runtime(approved, duplicate)
+    with pytest.raises(AssayValidationError, match="attestation is missing"):
+        assert_pipeline_components_match_runtime(approved, None)
