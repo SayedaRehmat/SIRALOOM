@@ -14,6 +14,7 @@ from backend.app.infrastructure.db.clinical_requests import (
     ClinicalRequestRevision,
 )
 from backend.app.infrastructure.db.models import Artifact, Assay, Case, Specimen
+from backend.app.domain.assay_validation import AssayValidationError, assert_assay_validation_current
 
 
 class ClinicalAuthorizationError(ValueError):
@@ -109,6 +110,9 @@ def assert_analysis_clinical_authorization(
     analysis_configuration: dict[str, Any] | None,
     analysis_type: str,
     analysis_assay_id: UUID | None = None,
+    analysis_workflow_id: str | None = None,
+    analysis_workflow_version: str | None = None,
+    analysis_reference_build: str | None = None,
 ) -> None:
     """Recheck the captured authorization before dispatch and worker execution."""
     config = dict(analysis_configuration or {})
@@ -183,6 +187,30 @@ def assert_analysis_clinical_authorization(
         raise ClinicalAuthorizationError(
             "Clinical assay identity or QC configuration changed after analysis creation"
         )
+
+    specimen_id_value = config.get("specimen_id")
+    try:
+        specimen_id = UUID(str(specimen_id_value))
+    except (TypeError, ValueError) as exc:
+        raise ClinicalAuthorizationError("Clinical analysis has no valid specimen identity for assay validation") from exc
+    specimen = db.get(Specimen, specimen_id)
+    if specimen is None or specimen.case_id != case.id:
+        raise ClinicalAuthorizationError("Clinical analysis specimen is missing or outside this case")
+    if not analysis_workflow_id or not analysis_workflow_version or not analysis_reference_build:
+        raise ClinicalAuthorizationError("Clinical assay validation cannot be rechecked without workflow and reference identity")
+    try:
+        assert_assay_validation_current(
+            db,
+            assay_id=assay_id,
+            organization_id=case.organization_id,
+            snapshot=config.get("assay_validation_snapshot"),
+            workflow_id=analysis_workflow_id,
+            workflow_version=analysis_workflow_version,
+            reference_build=analysis_reference_build,
+            specimen_type=specimen.specimen_type,
+        )
+    except AssayValidationError as exc:
+        raise ClinicalAuthorizationError(str(exc)) from exc
 
     artifact_id_value = config.get("input_artifact_id")
     try:
