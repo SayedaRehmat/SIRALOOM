@@ -50,6 +50,11 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
     Base.metadata.create_all(engine)
     LocalSession = sessionmaker(bind=engine, expire_on_commit=False)
     store = ArtifactStore(tmp_path / "artifacts")
+    retention_module = importlib.import_module("backend.app.domain.evidence_response_retention")
+    monkeypatch.setattr(
+        retention_module, "artifact_store_for_uri",
+        lambda *_args, **_kwargs: store,
+    )
     organization_id, user_id, case_id = uuid4(), uuid4(), uuid4()
     parent_id, analysis_id = uuid4(), uuid4()
     resource_id = uuid4()
