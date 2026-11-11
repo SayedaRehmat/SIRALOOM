@@ -188,15 +188,6 @@ def _kubernetes_image_identity() -> tuple[str, str]:
     return "sha256:" + digest, digest
 
 
-def _current_host_pid() -> int:
-    try:
-        status = Path("/proc/self/status").read_text(encoding="utf-8")
-        line = next(item for item in status.splitlines() if item.startswith("NSpid:"))
-        return int(line.split()[1])
-    except (OSError, StopIteration, ValueError, IndexError) as exc:
-        raise RuntimeAttestationError("Cannot bind host attestation to this worker's host PID") from exc
-
-
 def _current_process_start_time() -> str:
     try:
         raw = Path("/proc/self/stat").read_text(encoding="utf-8")
@@ -277,8 +268,6 @@ def _host_runtime_image_identity() -> tuple[str, str]:
         raise RuntimeAttestationError("Host runtime attestation is stale or has an invalid timestamp")
     if not isinstance(payload.get("peer_pid"), int) or payload["peer_pid"] <= 1:
         raise RuntimeAttestationError("Host runtime attestation has no authenticated process identity")
-    if payload["peer_pid"] != _current_host_pid():
-        raise RuntimeAttestationError("Host runtime attestation is not bound to this worker's host PID")
     if payload.get("process_start_time") != _current_process_start_time():
         raise RuntimeAttestationError("Host runtime attestation is not bound to this worker process instance")
     image_digest = payload.get("image_sha256")
