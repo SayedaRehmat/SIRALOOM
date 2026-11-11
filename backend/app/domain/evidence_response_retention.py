@@ -42,6 +42,8 @@ def _retention_permission(db: Session, resource: Resource) -> tuple[str, str, Re
     status = str(discovery.license_status or "UNKNOWN").strip().upper()
     if str(discovery.status or "").strip().upper() in {"REJECTED", "WITHDRAWN", "REVOKED", "BLOCKED"}:
         return "NOT_PERMITTED", "The exact resource discovery record is not approved for use.", discovery
+    if status == "RESTRICTED":
+        return "NOT_PERMITTED", "The source release is marked RESTRICTED; raw response retention is prohibited.", discovery
     retention_scope = str((discovery.metadata_json or {}).get("raw_response_retention") or "REVIEW_REQUIRED").strip().upper()
     if retention_scope in {"PROHIBITED", "FORBIDDEN", "DENIED", "NO"}:
         return "NOT_PERMITTED", "The reviewed source terms prohibit raw response retention.", discovery
@@ -50,8 +52,6 @@ def _retention_permission(db: Session, resource: Resource) -> tuple[str, str, Re
     review_metadata = dict(discovery.metadata_json or {})
     if not str(review_metadata.get("raw_response_retention_reviewed_by") or "").strip() or not str(review_metadata.get("raw_response_retention_reviewed_at") or "").strip():
         return "REVIEW_REQUIRED", "Raw response retention permission lacks reviewer identity or review timestamp.", discovery
-    if status == "RESTRICTED":
-        return "NOT_PERMITTED", "The source release is marked RESTRICTED; raw response retention is prohibited.", discovery
     if status not in {"VERIFIED", "NOT_REQUIRED"}:
         return "REVIEW_REQUIRED", f"Raw response retention is not approved for license status {status}.", discovery
     if status == "VERIFIED" and not (discovery.license_url or discovery.terms_url):
