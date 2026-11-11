@@ -284,6 +284,9 @@ def test_clinical_worker_gate_blocks_structural_vcf_even_if_snapshot_claims_elig
                     analysis_type="VARIANT_INTERPRETATION",
 
                     analysis_assay_id=assay_id,
+                    analysis_workflow_id="variant-v1",
+                    analysis_workflow_version="2.1",
+                    analysis_reference_build="GRCh38",
                 )
     finally:
         engine.dispose()
@@ -306,6 +309,9 @@ def test_clinical_worker_gate_blocks_changed_specimen_sample_mapping():
                     analysis_type="VARIANT_INTERPRETATION",
 
                     analysis_assay_id=assay_id,
+                    analysis_workflow_id="variant-v1",
+                    analysis_workflow_version="2.1",
+                    analysis_reference_build="GRCh38",
                 )
     finally:
         engine.dispose()
@@ -330,6 +336,9 @@ def test_clinical_worker_gate_blocks_assay_configuration_mutation():
                     analysis_configuration=configuration,
                     analysis_type="VARIANT_INTERPRETATION",
                     analysis_assay_id=assay_id,
+                    analysis_workflow_id="variant-v1",
+                    analysis_workflow_version="2.1",
+                    analysis_reference_build="GRCh38",
                 )
     finally:
         engine.dispose()
