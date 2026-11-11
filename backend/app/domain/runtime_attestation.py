@@ -200,8 +200,8 @@ def _verify_host_attestor_signature(payload: bytes, signature: bytes) -> None:
     public_key_value = settings.host_runtime_attestor_public_key
     if not public_key_value:
         raise RuntimeAttestationError("A pinned host-attestor Ed25519 public key is required")
-    public_key = Path(public_key_value).resolve(strict=True)
     try:
+        public_key = Path(public_key_value).resolve(strict=True)
         key_description = subprocess.run(
             ["openssl", "pkey", "-pubin", "-in", str(public_key), "-text", "-noout"],
             check=True, capture_output=True, text=True, timeout=5,
