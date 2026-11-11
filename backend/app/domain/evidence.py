@@ -44,6 +44,10 @@ def evidence_fingerprint(
     response_artifact_sha256: str | None = None,
     response_artifact_size_bytes: int | None = None,
     response_retention_status: str = "NOT_AVAILABLE",
+    source_release_artifact_id: UUID | None = None,
+    source_release_sha256: str | None = None,
+    source_release_size_bytes: int | None = None,
+    source_release_status: str = "NOT_AVAILABLE",
 ) -> str:
     canonical = {
         "variant_id": str(variant_id),
@@ -63,6 +67,10 @@ def evidence_fingerprint(
         "response_artifact_sha256": response_artifact_sha256,
         "response_artifact_size_bytes": response_artifact_size_bytes,
         "response_retention_status": response_retention_status,
+        "source_release_artifact_id": str(source_release_artifact_id) if source_release_artifact_id else None,
+        "source_release_sha256": source_release_sha256,
+        "source_release_size_bytes": source_release_size_bytes,
+        "source_release_status": source_release_status,
     }
     blob = json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()
