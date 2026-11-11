@@ -675,7 +675,7 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
         engine,
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
-            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            Resource.__table__, ResourceDiscovery.__table__, ResourceQualification.__table__, Artifact.__table__,
             OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
