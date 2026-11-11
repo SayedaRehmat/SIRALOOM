@@ -310,7 +310,7 @@ def assert_assay_validation_current(
         reference_build=reference_build,
         specimen_type=specimen_type,
     )
-    for key in ("submission_id", "revision", "payload_sha256", "decision_id"):
+    for key in ("submission_id", "revision", "payload_sha256", "decision_id", "pipeline_components"):
         if current.get(key) != snapshot.get(key):
             raise AssayValidationError(
                 "Assay validation approval changed, expired or was withdrawn after analysis creation"
