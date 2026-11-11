@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
+from backend.app.domain.artifact_integrity import validate_integrity_expectations, verify_artifact_file
 from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
@@ -87,9 +88,70 @@ def _verify_report_source_snapshot(db: Session, report: Report, content: dict) -
         )
 
 
+def _verify_report_artifact_bytes(db: Session, report: Report) -> None:
+    """Re-verify every source artifact in the report manifest immediately before sign-out."""
+    content = report.content_json or {}
+    manifest = content.get("artifact_manifest")
+    if not isinstance(manifest, list):
+        raise ReportFinalizationError("Report snapshot is missing its evidence artifact manifest.")
+    case = db.get(Case, report.case_id)
+    if case is None or case.organization_id is None:
+        raise ReportFinalizationError("Report case organization is unavailable for artifact verification.")
+    seen: set[str] = set()
+    for item in manifest:
+        if not isinstance(item, dict):
+            raise ReportFinalizationError("Report artifact manifest contains a malformed entry.")
+        artifact_id = item.get("artifact_id")
+        try:
+            artifact_uuid = UUID(str(artifact_id))
+        except (TypeError, ValueError) as exc:
+            raise ReportFinalizationError("Report artifact manifest contains an invalid artifact ID.") from exc
+        if str(artifact_uuid) in seen:
+            raise ReportFinalizationError("Report artifact manifest contains duplicate artifact identities.")
+        seen.add(str(artifact_uuid))
+        if report.artifact_id and artifact_uuid == report.artifact_id:
+            continue
+        artifact = db.get(Artifact, artifact_uuid)
+        if artifact is None or artifact.case_id != report.case_id:
+            raise ReportFinalizationError(f"Report source artifact {artifact_id} is missing or belongs to another case.")
+        if (
+            item.get("sha256") != artifact.sha256
+            or item.get("size_bytes") != artifact.size_bytes
+            or item.get("type") != artifact.artifact_type
+            or item.get("filename") != artifact.filename
+        ):
+            raise ReportFinalizationError(f"Report source artifact {artifact_id} no longer matches its manifest identity.")
+        try:
+            validate_integrity_expectations(artifact.sha256, artifact.size_bytes)
+            store = artifact_store_for_organization(
+                db, organization_id=case.organization_id
+            )
+            if callable(getattr(store, "download_to_file", None)):
+                with tempfile.NamedTemporaryFile(prefix="siraloom-report-evidence-", delete=False) as handle:
+                    staged = Path(handle.name)
+                try:
+                    store.download_to_file(
+                        artifact.storage_uri,
+                        staged,
+                        expected_sha256=artifact.sha256,
+                        expected_size_bytes=artifact.size_bytes,
+                    )
+                    verify_artifact_file(staged, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+                finally:
+                    staged.unlink(missing_ok=True)
+            else:
+                source = store.local_path(artifact.storage_uri)
+                verify_artifact_file(source, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
+        except Exception as exc:
+            raise ReportFinalizationError(
+                f"Report source artifact {artifact_id} is unavailable or failed byte-integrity verification."
+            ) from exc
+
+
 def _verify_report_snapshot(db: Session, report: Report) -> None:
     """Reject sign-out when the draft no longer matches current approved decisions."""
     content = report.content_json or {}
+    _verify_report_artifact_bytes(db, report)
     if not has_valid_draft_artifact(db, report):
         raise ReportFinalizationError(
             "Report draft artifact is missing, has invalid lineage, or no longer matches its content"
