@@ -604,6 +604,22 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         db.add(step)
         db.commit()
 
+        # This test isolates checkpoint/retry semantics. The release approval
+        # gate is exercised against real approval rows in test_evidence_response_retention.
+        import backend.app.domain.evidence_response_retention as retention
+        from types import SimpleNamespace
+        discovery = db.scalar(select(ResourceDiscovery).where(ResourceDiscovery.resource_id == resource.id))
+        monkeypatch.setattr(
+            retention, "_retention_permission",
+            lambda _db, _resource, *, organization_id: (
+                "RETAINED", "test-only governed approval stub", discovery,
+                SimpleNamespace(
+                    id=uuid4(), version=1, reviewer_id=user_id,
+                    terms_evidence_artifact_id=uuid4(), terms_evidence_sha256="f" * 64,
+                ),
+            ),
+        )
+
         provider_calls = {"count": 0}
 
         def fake_provider_response():
