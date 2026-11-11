@@ -47,7 +47,7 @@ def upgrade():
         sa.Column("id", sa.Uuid(), primary_key=True),
         sa.Column("approval_id", sa.Uuid(), sa.ForeignKey("provider_retention_approvals.id"), nullable=False),
         sa.Column("organization_id", sa.Uuid(), sa.ForeignKey("organizations.id"), nullable=False),
-        sa.Column("actor_id", sa.Uuid(), sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("actor_id", sa.Uuid(), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("action", sa.Text(), nullable=False),
         sa.Column("before_status", sa.Text()),
         sa.Column("after_status", sa.Text(), nullable=False),
