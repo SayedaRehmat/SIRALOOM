@@ -45,6 +45,8 @@ def _isolate_report_finalization_unit_tests_from_runtime_authorization(monkeypat
     from backend.app.config import settings
 
     monkeypatch.setattr(settings, "artifact_root", str(tmp_path))
+    monkeypatch.setattr(settings, "artifact_storage_targets_json", "{}")
+    monkeypatch.setattr(settings, "organization_require_storage_profile", False)
 
     monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
