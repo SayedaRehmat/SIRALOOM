@@ -88,6 +88,7 @@ def retain_provider_response_bytes(
     case = db.get(Case, analysis.case_id)
     if case is None or case.organization_id is None:
         raise ValueError("Provider response retention requires a case with organization identity.")
+    review_metadata = dict(discovery.metadata_json or {})
     digest = hashlib.sha256(raw_response_bytes).hexdigest()
     size = len(raw_response_bytes)
     artifact_id = uuid5(
