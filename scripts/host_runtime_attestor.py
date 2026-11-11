@@ -100,20 +100,29 @@ class Handler(socketserver.StreamRequestHandler):
                 cwd = Path(f"/proc/{peer_pid}/cwd").resolve(strict=True)
                 if root != cwd and root not in cwd.parents:
                     raise RuntimeError("Connecting process working directory is outside the trusted installation root")
-                command_line = Path(f"/proc/{peer_pid}/cmdline").read_bytes().split(bytes([0]))
-                script_paths = []
-                for argument in command_line[1:]:
-                    if argument.startswith(b"/"):
-                        candidate = Path(argument.decode(errors="strict"))
-                        if candidate.exists():
-                            resolved = candidate.resolve(strict=True)
-                            if root == resolved or root in resolved.parents:
-                                script_paths.append(resolved)
-                if not script_paths:
-                    raise RuntimeError("Cannot bind the bare-metal worker to a script inside the trusted installation root")
                 manifest = self.server.release_manifest.resolve(strict=True)
                 if root != manifest.parent and root not in manifest.parents:
                     raise RuntimeError("Release manifest is outside the trusted installation root")
+                if manifest.stat().st_mode & 0o022:
+                    raise RuntimeError("Release manifest must not be group/world writable")
+                release = json.loads(manifest.read_text(encoding="utf-8"))
+                files = release.get("files") if isinstance(release, dict) else None
+                if release.get("schema_version") != "1" or not isinstance(files, list) or not files:
+                    raise RuntimeError("Release manifest must contain a non-empty version-1 file inventory")
+                seen = set()
+                for item in files:
+                    if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+                        raise RuntimeError("Release manifest contains a malformed file entry")
+                    relative = Path(item["path"])
+                    if relative.is_absolute() or ".." in relative.parts or str(relative) in seen:
+                        raise RuntimeError("Release manifest contains an unsafe or duplicate path")
+                    seen.add(str(relative))
+                    target = (root / relative).resolve(strict=True)
+                    if root not in target.parents or target.is_symlink() or not target.is_file():
+                        raise RuntimeError("Release manifest file is missing or escapes the installation root")
+                    expected = item.get("sha256")
+                    if not isinstance(expected, str) or len(expected) != 64 or sha256_file(target) != expected:
+                        raise RuntimeError(f"Installed release file does not match its manifest: {relative}")
                 image_digest = sha256_file(manifest)
                 identity_type = "bare-metal-release-manifest"
                 identity_version = f"bare-metal:{image_digest}"
