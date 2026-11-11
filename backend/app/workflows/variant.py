@@ -4538,6 +4538,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             artifact_size_bytes=population_observation.response_artifact_size_bytes,
                             retention_status=population_observation.response_retention_status,
                         )
+                    from backend.app.domain.resource_release_integrity import (
+                        verify_population_source_release_reference,
+                    )
+                    for population_observation in population_rows:
+                        verify_population_source_release_reference(db, population_observation)
                     population_by_variant: dict[str, list[dict]] = {}
                     for obs in population_rows:
                         resource = resource_rows.get(obs.resource_id)
@@ -5172,6 +5177,18 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 artifact_size_bytes=population_observation.response_artifact_size_bytes,
                                 retention_status=population_observation.response_retention_status,
                             )
+                        from backend.app.domain.resource_release_integrity import (
+                            verify_evidence_source_release_reference,
+                            verify_population_source_release_reference,
+                        )
+                        for population_observation in population_rows_for_variant:
+                            verify_population_source_release_reference(db, population_observation)
+                        persisted_evidence = db.scalars(select(Evidence).where(
+                            Evidence.analysis_id == analysis.id,
+                            Evidence.variant_id == ann.variant_id,
+                        )).all()
+                        for evidence_row in persisted_evidence:
+                            verify_evidence_source_release_reference(db, evidence_row)
                         population_resource_rows = _require_population_resource_rows(
                             db,
                             analysis_id=analysis.id,
