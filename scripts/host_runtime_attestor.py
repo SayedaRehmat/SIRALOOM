@@ -90,6 +90,20 @@ class Handler(socketserver.StreamRequestHandler):
                 raise RuntimeError("Malformed attestation challenge")
             start = process_start_time(peer_pid)
             executable = os.readlink(f"/proc/{peer_pid}/exe")
+            command_line = Path(f"/proc/{peer_pid}/cmdline").read_bytes()
+            command_arguments = [
+                item.decode(errors="replace")
+                for item in command_line.split(bytes([0]))
+                if item
+            ]
+            if not any(
+                "celery" in item.lower()
+                or item.endswith("print_runtime_component_manifest.py")
+                for item in command_arguments
+            ):
+                raise RuntimeError("Host attestor only signs a SIRALOOM Celery worker or runtime-manifest command")
+            executable_sha256 = sha256_file(Path(f"/proc/{peer_pid}/exe"))
+            command_sha256 = hashlib.sha256(command_line).hexdigest()
             cgroups = process_cgroups(peer_pid)
             if self.server.mode == "docker":
                 identity_type, identity = docker_identity(peer_pid)
@@ -156,6 +170,8 @@ class Handler(socketserver.StreamRequestHandler):
                 "peer_uid": peer_uid,
                 "process_start_time": start,
                 "process_executable": executable,
+                "process_executable_sha256": executable_sha256,
+                "process_command_sha256": command_sha256,
                 "process_cgroup_sha256": hashlib.sha256(cgroups.encode()).hexdigest(),
                 "identity_type": identity_type,
                 "identity_version": identity_version,
