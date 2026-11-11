@@ -19,6 +19,14 @@ from backend.app.infrastructure.db.assay_validation import (
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _REQUIRED_INITIAL_VARIANT_CLASSES = frozenset({"SNV", "SMALL_INDEL"})
+_REQUIRED_RUNTIME_COMPONENTS = frozenset({
+    "bcftools",
+    "htslib",
+    "native_toolchain_lock",
+    "python_dependency_lock",
+    "siraloom_variant_workflow",
+    "container_image",
+})
 
 
 class AssayValidationError(ValueError):
@@ -57,15 +65,26 @@ def normalize_validation_submission(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(components, list) or not components:
         raise AssayValidationError("pipeline_components must identify every validated pipeline component")
     normalized_components = []
+    component_names = set()
     for component in components:
         if not isinstance(component, dict):
             raise AssayValidationError("Each pipeline component must be an object")
         name = _nonempty(component.get("name"), "pipeline component name")
+        if name in component_names:
+            raise AssayValidationError(f"Duplicate pipeline component declaration: {name}")
+        component_names.add(name)
         version = _nonempty(component.get("version"), "pipeline component version")
         digest = _nonempty(component.get("sha256"), "pipeline component sha256").lower()
         if not _SHA256.fullmatch(digest):
             raise AssayValidationError(f"Pipeline component {name} must have a valid SHA-256 digest")
         normalized_components.append({"name": name, "version": version, "sha256": digest})
+    if component_names != _REQUIRED_RUNTIME_COMPONENTS:
+        missing = sorted(_REQUIRED_RUNTIME_COMPONENTS - component_names)
+        unexpected = sorted(component_names - _REQUIRED_RUNTIME_COMPONENTS)
+        raise AssayValidationError(
+            "pipeline_components must declare the complete measured runtime manifest; "
+            f"missing={missing}; unsupported={unexpected}"
+        )
 
     specifications = payload.get("performance_specifications")
     if not isinstance(specifications, list) or not specifications:
