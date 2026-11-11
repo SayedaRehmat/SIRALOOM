@@ -49,6 +49,38 @@ def _authorized_reviewer(db: Session, *, organization_id: UUID, reviewer_id: UUI
     return user
 
 
+def _expire_approval_if_due(db: Session, approval: ProviderRetentionApproval) -> bool:
+    """Persist automatic expiry as an append-only system decision."""
+    if approval.status != "APPROVED" or approval.expires_at is None:
+        return False
+    expiry = approval.expires_at
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=UTC)
+    if expiry > datetime.now(UTC):
+        return False
+    approval.status = "EXPIRED"
+    db.flush()
+    db.add(ProviderRetentionApprovalAction(
+        id=__import__("uuid").uuid4(), approval_id=approval.id,
+        organization_id=approval.organization_id, actor_id=None,
+        action="EXPIRE", before_status="APPROVED", after_status="EXPIRED",
+        reason="Approval expired under its recorded expiry condition.",
+        permission_scope=list(approval.permission_scope or []),
+    ))
+    AuditService(db).record(
+        event_type="PROVIDER_RETENTION_EXPIRED", case_id=None, analysis_id=None,
+        actor_type="SYSTEM", actor_id="siraloom:provider-retention-expiry",
+        subject_type="PROVIDER_RETENTION_APPROVAL", subject_id=str(approval.id),
+        operation="EXPIRE", before_state={"status": "APPROVED"},
+        after_state={"status": "EXPIRED"},
+        reason="Approval expired under its recorded expiry condition.",
+        payload={"organization_id": str(approval.organization_id),
+            "resource_discovery_id": str(approval.resource_discovery_id),
+            "permission_scope": list(approval.permission_scope or [])},
+    )
+    return True
+
+
 def approve_provider_retention(
     db: Session, *, organization_id: UUID, resource_discovery_id: UUID,
     reviewer_id: UUID, permission_scope: list[str], reason: str,
@@ -209,6 +241,7 @@ def _retention_permission(
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=UTC)
         if expires <= now:
+            _expire_approval_if_due(db, approval)
             return "REVIEW_REQUIRED", "The provider retention approval has expired.", discovery, approval
     if "RAW_PROVIDER_RESPONSE_RETENTION" not in set(approval.permission_scope or []):
         return "NOT_PERMITTED", "The approval does not include raw provider response retention.", discovery, approval
@@ -414,6 +447,7 @@ def verify_provider_response_reference(
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=UTC)
         if expires <= now:
+            _expire_approval_if_due(db, approval)
             raise ValueError("Provider response retention approval has expired.")
     _authorized_reviewer(db, organization_id=case.organization_id, reviewer_id=approval.reviewer_id)
     if (
