@@ -388,6 +388,10 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     "response_artifact_sha256": evidence.response_artifact_sha256,
                     "response_artifact_size_bytes": evidence.response_artifact_size_bytes,
                     "response_retention_status": evidence.response_retention_status,
+                    "source_release_artifact_id": str(evidence.source_release_artifact_id) if evidence.source_release_artifact_id else None,
+                    "source_release_sha256": evidence.source_release_sha256,
+                    "source_release_size_bytes": evidence.source_release_size_bytes,
+                    "source_release_status": evidence.source_release_status,
                     "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
                     "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
                 }
