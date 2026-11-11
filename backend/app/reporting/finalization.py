@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.phenotype_evidence import phenotype_evidence_display_payload
+from backend.app.domain.evidence import evidence_fingerprint
 from backend.app.domain.artifact_integrity import validate_integrity_expectations, verify_artifact_file
 from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
@@ -326,6 +328,29 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                 if evidence is None:
                     raise ReportFinalizationError(
                         f"Report snapshot evidence {evidence_id_raw} is missing"
+                    )
+                if evidence.response_sha256 is not None and re.fullmatch(r"[0-9a-fA-F]{64}", evidence.response_sha256) is None:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} has an invalid response SHA-256."
+                    )
+                calculated_evidence_fingerprint = evidence_fingerprint(
+                    variant_id=evidence.variant_id,
+                    analysis_id=evidence.analysis_id,
+                    evidence_type=evidence.evidence_type,
+                    statement=evidence.statement,
+                    direction=evidence.direction,
+                    source_name=evidence.source_name,
+                    source_version=evidence.source_version,
+                    observation_ids=tuple(evidence.observation_ids or []),
+                    payload=evidence.payload or {},
+                    resource_id=evidence.resource_id,
+                    source_record_id=evidence.source_record_id,
+                    request_fingerprint=evidence.request_fingerprint,
+                    response_sha256=evidence.response_sha256,
+                )
+                if calculated_evidence_fingerprint != evidence.evidence_fingerprint:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} failed its persisted evidence fingerprint."
                     )
                 current_evidence = {
                     "evidence_id": str(evidence.id),
