@@ -21,34 +21,27 @@ _RESPONSE_COLUMNS = (
 
 
 def upgrade():
-    for table in ("annotations", "population_observations", "evidence"):
-        for name, type_, foreign_key in _RESPONSE_COLUMNS:
-            constraints = [sa.ForeignKey(foreign_key)] if foreign_key is not None else []
-            op.add_column(
-                table,
-                sa.Column(
-                    name,
-                    type_,
-                    *constraints,
-                    nullable=(name != "response_retention_status"),
-                    server_default=("NOT_AVAILABLE" if name == "response_retention_status" else None),
-                ),
+    for table, constraint_name in (
+        ("annotations", "ck_annotations_response_retention_status"),
+        ("population_observations", "ck_population_response_retention_status"),
+        ("evidence", "ck_evidence_response_retention_status"),
+    ):
+        with op.batch_alter_table(table) as batch_op:
+            for name, type_, foreign_key in _RESPONSE_COLUMNS:
+                constraints = [sa.ForeignKey(foreign_key)] if foreign_key is not None else []
+                batch_op.add_column(
+                    sa.Column(
+                        name,
+                        type_,
+                        *constraints,
+                        nullable=(name != "response_retention_status"),
+                        server_default=("NOT_AVAILABLE" if name == "response_retention_status" else None),
+                    )
+                )
+            batch_op.create_check_constraint(
+                constraint_name,
+                "response_retention_status IN ('RETAINED', 'NOT_PERMITTED', 'REVIEW_REQUIRED', 'NOT_AVAILABLE')",
             )
-    op.create_check_constraint(
-        "ck_evidence_response_retention_status",
-        "evidence",
-        "response_retention_status IN ('RETAINED', 'NOT_PERMITTED', 'REVIEW_REQUIRED', 'NOT_AVAILABLE')",
-    )
-    op.create_check_constraint(
-        "ck_annotations_response_retention_status",
-        "annotations",
-        "response_retention_status IN ('RETAINED', 'NOT_PERMITTED', 'REVIEW_REQUIRED', 'NOT_AVAILABLE')",
-    )
-    op.create_check_constraint(
-        "ck_population_response_retention_status",
-        "population_observations",
-        "response_retention_status IN ('RETAINED', 'NOT_PERMITTED', 'REVIEW_REQUIRED', 'NOT_AVAILABLE')",
-    )
     connection = op.get_bind()
     if connection.dialect.name == "postgresql":
         op.execute("""
@@ -102,12 +95,12 @@ def downgrade():
     elif connection.dialect.name == "sqlite":
         op.execute("DROP TRIGGER IF EXISTS trg_raw_provider_artifact_immutable_update")
         op.execute("DROP TRIGGER IF EXISTS trg_raw_provider_artifact_immutable_delete")
-    for table, name in (
+    for table, constraint_name in (
         ("population_observations", "ck_population_response_retention_status"),
         ("annotations", "ck_annotations_response_retention_status"),
         ("evidence", "ck_evidence_response_retention_status"),
     ):
-        op.drop_constraint(name, table, type_="check")
-    for table in ("annotations", "population_observations", "evidence"):
-        for name, _type, _fk in reversed(_RESPONSE_COLUMNS):
-            op.drop_column(table, name)
+        with op.batch_alter_table(table) as batch_op:
+            batch_op.drop_constraint(constraint_name, type_="check")
+            for name, _type, _fk in reversed(_RESPONSE_COLUMNS):
+                batch_op.drop_column(name)
