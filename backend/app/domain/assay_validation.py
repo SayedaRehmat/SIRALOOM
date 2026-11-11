@@ -261,6 +261,9 @@ def authorize_assay_validation(
         "specimen_types": list(submission.specimen_types or []),
         "variant_classes": list(submission.variant_classes or []),
         "reference_builds": list(submission.reference_builds or []),
+        # Freeze the exact component declarations with the approval snapshot.
+        # Runtime attestation must compare these digests with observed worker bytes.
+        "pipeline_components": list(submission.pipeline_components or []),
         "effective_at": _utc(decision.effective_at).isoformat(),
         "expires_at": _utc(decision.expires_at).isoformat(),
     }
