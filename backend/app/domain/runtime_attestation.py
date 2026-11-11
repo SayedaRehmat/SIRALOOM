@@ -19,6 +19,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from backend.app.config import settings
+from backend.app.domain.assay_validation import AssayValidationError, assert_pipeline_components_match_runtime
 from backend.app.domain.toolchain_profiles import resolve_registered_toolchain_profile
 
 
@@ -220,10 +221,6 @@ def attest_clinical_analysis_runtime(
     """Attest, audit and persist the runtime gate before any clinical stage resumes."""
     from datetime import datetime, timezone
 
-    from backend.app.domain.assay_validation import (
-        AssayValidationError,
-        assert_pipeline_components_match_runtime,
-    )
     from backend.app.domain.enums import AnalysisStatus
     from backend.app.infrastructure.audit.service import AuditService
 
@@ -278,10 +275,6 @@ def assert_analysis_runtime_attested(db, analysis) -> None:
     """Require a valid successful worker attestation before clinical sign-out/use."""
     from sqlalchemy import select
 
-    from backend.app.domain.assay_validation import (
-        AssayValidationError,
-        assert_pipeline_components_match_runtime,
-    )
     from backend.app.infrastructure.db.models import AuditEvent
 
     events = list(db.scalars(
