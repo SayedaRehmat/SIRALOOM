@@ -605,6 +605,73 @@ if Celery is not None:
             if not claimed:
                 return {"analysis_id": analysis_id, "status": "ALREADY_CLAIMED_OR_TERMINAL"}
 
+            # Clinical execution is bound to the exact worker bytes and the
+            # image digest reported by the orchestrator for this container.
+            # This runs on every delivery/retry and before interrupted-stage
+            # recovery, so a substituted worker cannot resume clinical work.
+            persisted_analysis = claim_db.get(Analysis, UUID(analysis_id))
+            runtime_configuration = dict(persisted_analysis.configuration or {}) if persisted_analysis else {}
+            clinical_snapshot = runtime_configuration.get("clinical_authorization")
+            if isinstance(clinical_snapshot, dict) and clinical_snapshot.get("mode") == "CLINICAL":
+                from datetime import datetime, timezone
+                from backend.app.domain.assay_validation import (
+                    AssayValidationError,
+                    assert_pipeline_components_match_runtime,
+                )
+                from backend.app.domain.runtime_attestation import (
+                    RuntimeAttestationError,
+                    collect_runtime_component_manifest,
+                    runtime_manifest_sha256,
+                )
+                from backend.app.infrastructure.audit.service import AuditService
+
+                try:
+                    validation_snapshot = runtime_configuration.get("assay_validation_snapshot")
+                    observed_components = collect_runtime_component_manifest(
+                        workflow_version=str(persisted_analysis.workflow_version)
+                    )
+                    assert_pipeline_components_match_runtime(
+                        validation_snapshot, observed_components
+                    )
+                except (RuntimeAttestationError, AssayValidationError) as exc:
+                    persisted_analysis.status = "BLOCKED"
+                    persisted_analysis.completed_at = datetime.now(timezone.utc)
+                    blocked_configuration = dict(persisted_analysis.configuration or {})
+                    blocked_configuration["runtime_attestation_block"] = str(exc)
+                    persisted_analysis.configuration = blocked_configuration
+                    AuditService(claim_db).record(
+                        event_type="CLINICAL_RUNTIME_ATTESTATION_BLOCKED",
+                        case_id=persisted_analysis.case_id,
+                        analysis_id=persisted_analysis.id,
+                        actor_type="SYSTEM",
+                        actor_id="runtime-attestation-gate",
+                        subject_type="ANALYSIS",
+                        subject_id=str(persisted_analysis.id),
+                        operation="BLOCK",
+                        reason=str(exc),
+                        payload={"redelivered": redelivered, "retry": is_retry},
+                    )
+                    claim_db.commit()
+                    return {"analysis_id": analysis_id, "status": "BLOCKED", "reason": str(exc)}
+
+                AuditService(claim_db).record(
+                    event_type="CLINICAL_RUNTIME_ATTESTED",
+                    case_id=persisted_analysis.case_id,
+                    analysis_id=persisted_analysis.id,
+                    actor_type="SYSTEM",
+                    actor_id="runtime-attestation-gate",
+                    subject_type="ANALYSIS",
+                    subject_id=str(persisted_analysis.id),
+                    operation="ATTEST",
+                    payload={
+                        "manifest_sha256": runtime_manifest_sha256(observed_components),
+                        "components": observed_components,
+                        "redelivered": redelivered,
+                        "retry": is_retry,
+                    },
+                )
+                claim_db.commit()
+
             if redelivered:
                 recovery_db = SessionLocal()
                 try:
