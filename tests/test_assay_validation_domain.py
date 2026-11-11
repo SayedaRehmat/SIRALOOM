@@ -81,7 +81,8 @@ def _submit_and_approve(db, organization_id, submitter_id, approver_id, assay_id
     decision = AssayValidationDecision(
         id=uuid4(), submission_id=submission.id, decision="APPROVE",
         reason="Independent review completed", evidence_reference="controlled://approval/01",
-        effective_at=now - timedelta(days=1), expires_at=now + timedelta(days=expiry_days),
+        effective_at=now - timedelta(days=2 if expiry_days < 0 else 1),
+        expires_at=(now - timedelta(days=1)) if expiry_days < 0 else (now + timedelta(days=expiry_days)),
         actor_id=approver_id,
     )
     db.add(decision)
