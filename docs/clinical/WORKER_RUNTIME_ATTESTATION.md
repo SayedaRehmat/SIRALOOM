@@ -15,7 +15,7 @@ Before a clinical analysis can execute or resume, SIRALOOM measures and compares
 | `siraloom_variant_workflow` | Deterministic SHA-256 of Python source files under `backend/app/workflows`, plus the persisted workflow version |
 | `container_image` | Kubernetes immutable image ID, or a signed host-broker identity bound to the connecting host PID and its process/container cgroup; Docker identity includes the image config digest and ordered rootfs layer digests, while bare metal uses a root-managed release-manifest digest |
 
-A missing, extra, duplicated, malformed, or changed component blocks clinical execution. The same gate runs before interrupted-workflow recovery on redelivery and retry. The workflow and report sign-out paths also require a persisted successful runtime-attestation event.
+A missing, extra, duplicated, malformed, or changed component blocks clinical execution. The same gate runs before interrupted-workflow recovery on redelivery and retry. The workflow and report sign-out paths also require a persisted successful runtime-attestation event. For host-attested Docker/bare-metal workers, the signed host payload and signature are retained in that audit event and cryptographically reverified at downstream workflow/report use.
 
 ## Kubernetes requirements
 
@@ -129,6 +129,6 @@ A deployment change that alters any measured component requires the laboratory t
 
 ## Provenance and limitations
 
-A successful execution appends a `CLINICAL_RUNTIME_ATTESTED` event to SIRALOOM's hash-linked audit event chain, including the component manifest and its canonical manifest digest. A failed check appends `CLINICAL_RUNTIME_ATTESTATION_BLOCKED` and blocks the analysis. Workflow resumption and clinical report sign-out require the successful event to match the immutable assay-validation snapshot.
+A successful execution appends a `CLINICAL_RUNTIME_ATTESTED` event to SIRALOOM's hash-linked audit event chain, including the component manifest and its canonical manifest digest. Docker/bare-metal events also retain the signed host payload; downstream use rechecks its Ed25519 signature and binds its image/release digest to the recorded component manifest. A failed check appends `CLINICAL_RUNTIME_ATTESTATION_BLOCKED` and blocks the analysis. Workflow resumption and clinical report sign-out require the successful event to match the immutable assay-validation snapshot.
 
 This is a software execution-integrity control. It does not establish analytical performance, clinical validity, regulatory clearance, accreditation, or laboratory competence. The laboratory remains responsible for validating its intended-use method, maintaining controlled procedures, approving changes, and authorizing clinical release.
