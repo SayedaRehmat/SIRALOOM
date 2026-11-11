@@ -211,3 +211,67 @@ def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[st
 def runtime_manifest_sha256(components: list[dict[str, str]]) -> str:
     canonical = json.dumps(components, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+def attest_clinical_analysis_runtime(
+    db,
+    analysis,
+    *,
+    redelivered: bool,
+    retry: bool,
+) -> tuple[bool, str | None]:
+    """Attest, audit and persist the runtime gate before any clinical stage resumes."""
+    from datetime import datetime, timezone
+
+    from backend.app.domain.assay_validation import (
+        AssayValidationError,
+        assert_pipeline_components_match_runtime,
+    )
+    from backend.app.domain.enums import AnalysisStatus
+    from backend.app.infrastructure.audit.service import AuditService
+
+    configuration = dict(analysis.configuration or {})
+    validation_snapshot = configuration.get("assay_validation_snapshot")
+    try:
+        observed_components = collect_runtime_component_manifest(
+            workflow_version=str(analysis.workflow_version)
+        )
+        assert_pipeline_components_match_runtime(validation_snapshot, observed_components)
+    except (RuntimeAttestationError, AssayValidationError) as exc:
+        analysis.status = AnalysisStatus.BLOCKED
+        analysis.completed_at = datetime.now(timezone.utc)
+        configuration["runtime_attestation_block"] = str(exc)
+        analysis.configuration = configuration
+        db.add(analysis)
+        AuditService(db).record(
+            event_type="CLINICAL_RUNTIME_ATTESTATION_BLOCKED",
+            case_id=analysis.case_id,
+            analysis_id=analysis.id,
+            actor_type="SYSTEM",
+            actor_id="runtime-attestation-gate",
+            subject_type="ANALYSIS",
+            subject_id=str(analysis.id),
+            operation="BLOCK",
+            reason=str(exc),
+            payload={"redelivered": redelivered, "retry": retry},
+        )
+        db.commit()
+        return False, str(exc)
+
+    AuditService(db).record(
+        event_type="CLINICAL_RUNTIME_ATTESTED",
+        case_id=analysis.case_id,
+        analysis_id=analysis.id,
+        actor_type="SYSTEM",
+        actor_id="runtime-attestation-gate",
+        subject_type="ANALYSIS",
+        subject_id=str(analysis.id),
+        operation="ATTEST",
+        payload={
+            "manifest_sha256": runtime_manifest_sha256(observed_components),
+            "components": observed_components,
+            "redelivered": redelivered,
+            "retry": retry,
+        },
+    )
+    db.commit()
+    return True, None
