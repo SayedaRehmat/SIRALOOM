@@ -15,7 +15,8 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis, Case, Evidence, Organization, OrganizationMembership, Resource,
-    ProviderRetentionApproval, ResourceDiscovery, User, Variant,
+    ProviderRetentionApproval, ProviderRetentionApprovalAction,
+    ResourceDiscovery, User, Variant,
 )
 
 
@@ -348,3 +349,35 @@ def test_reanalysis_creates_distinct_analysis_bound_response_artifact(tmp_path, 
     second_artifact = db.get(__import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact, second.artifact_id)
     assert first_artifact.analysis_id == parent.id
     assert second_artifact.analysis_id == child.id
+
+
+
+def test_expired_approval_can_be_replaced_with_audited_new_version(tmp_path, monkeypatch):
+    db, _store, case, _analysis, _variant, resource = _seed(tmp_path, monkeypatch)
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+    ))
+    terms_artifact = db.get(
+        __import__("backend.app.infrastructure.db.models", fromlist=["Artifact"]).Artifact,
+        approval.terms_evidence_artifact_id,
+    )
+    reviewer = db.get(User, approval.reviewer_id)
+    discovery = db.get(ResourceDiscovery, approval.resource_discovery_id)
+    import hashlib
+    terms_sha256 = terms_artifact.sha256
+    approval.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db.flush()
+    renewed = approve_provider_retention(
+        db, organization_id=case.organization_id,
+        resource_discovery_id=discovery.id, reviewer_id=reviewer.id,
+        permission_scope=["RAW_PROVIDER_RESPONSE_RETENTION"],
+        reason="Renewed after expiry and a fresh terms review.",
+        terms_evidence_artifact_id=terms_artifact.id,
+        terms_evidence_sha256=terms_sha256,
+    )
+    assert approval.status == "EXPIRED"
+    assert renewed.version == approval.version + 1
+    actions = db.scalars(select(ProviderRetentionApprovalAction).where(
+        ProviderRetentionApprovalAction.approval_id == approval.id,
+    )).all()
+    assert any(action.action == "EXPIRE" for action in actions)
