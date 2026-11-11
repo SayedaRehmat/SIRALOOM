@@ -16,7 +16,7 @@ from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
 )
-from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_organization
+from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_uri
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
@@ -123,8 +123,8 @@ def _verify_report_artifact_bytes(db: Session, report: Report) -> None:
             raise ReportFinalizationError(f"Report source artifact {artifact_id} no longer matches its manifest identity.")
         try:
             validate_integrity_expectations(artifact.sha256, artifact.size_bytes)
-            store = artifact_store_for_organization(
-                db, organization_id=case.organization_id
+            store = artifact_store_for_uri(
+                db, organization_id=case.organization_id, storage_uri=artifact.storage_uri
             )
             if callable(getattr(store, "download_to_file", None)):
                 with tempfile.NamedTemporaryFile(prefix="siraloom-report-evidence-", delete=False) as handle:
