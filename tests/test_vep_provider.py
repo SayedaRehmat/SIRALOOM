@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -343,6 +344,9 @@ def test_vep_execution_requests_and_records_versioned_transcript_annotations(
         ) if option in expected_options
     ]
     assert result.payload[0]["allele_string"] == "A/G"
+    exact_bytes = base64.b64decode(result.metadata["raw_response_base64"], validate=True)
+    assert hashlib.sha256(exact_bytes).hexdigest() == result.response_sha256
+    assert result.metadata["raw_response_media_type"] == "application/x-ndjson"
     normalized = provider.normalize_result(
         result,
         inputs={"variants": [variant], "genome_build": assembly},
@@ -350,6 +354,7 @@ def test_vep_execution_requests_and_records_versioned_transcript_annotations(
     assert normalized.observations[0]["_siraloom_annotation_provenance"]["annotation_options"] == (
         result.metadata["annotation_options"]
     )
+    assert normalized.observations[0]["_siraloom_annotation_provenance"]["raw_response_base64"] == result.metadata["raw_response_base64"]
 
 
 def test_vep_rejects_binary_release_mismatch_before_loading_cache(monkeypatch, tmp_path):
