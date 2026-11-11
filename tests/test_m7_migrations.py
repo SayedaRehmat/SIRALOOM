@@ -34,3 +34,9 @@ def test_alembic_replays_to_head_on_sqlite(tmp_path):
     )
     assert current.returncode == 0, current.stderr
     assert "(head)" in current.stdout + current.stderr
+
+def test_postgresql_assay_immutability_trigger_compares_json_as_jsonb():
+    root = Path(__file__).resolve().parents[1]
+    migration = (root / "migrations/versions/0066_assay_version_governance.py").read_text(encoding="utf-8")
+    assert "NEW.configuration::jsonb IS DISTINCT FROM OLD.configuration::jsonb" in migration
+    assert "NEW.configuration IS DISTINCT FROM OLD.configuration" not in migration
