@@ -661,7 +661,7 @@ class ProviderRetentionApprovalAction(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     approval_id: Mapped[UUID] = mapped_column(ForeignKey("provider_retention_approvals.id"), nullable=False)
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
-    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     action: Mapped[str] = mapped_column(Text, nullable=False)
     before_status: Mapped[str | None] = mapped_column(Text)
     after_status: Mapped[str] = mapped_column(Text, nullable=False)
