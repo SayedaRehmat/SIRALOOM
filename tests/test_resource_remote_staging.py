@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from backend.app.domain.resource_remote_staging import stage_remote_artifact
 from backend.app.domain.resource_staging import ResourceStagingError, create_staging_candidate
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Resource, ResourceStaging
+from backend.app.infrastructure.db.models import Resource, ResourceReleaseArtifact, ResourceStaging
 
 
 class FakeResponse:
@@ -47,7 +47,7 @@ class FakeOpener:
 
 def _db():
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[Resource.__table__, ResourceStaging.__table__])
+    Base.metadata.create_all(engine, tables=[Resource.__table__, ResourceStaging.__table__, ResourceReleaseArtifact.__table__])
     return engine, Session(engine)
 
 
