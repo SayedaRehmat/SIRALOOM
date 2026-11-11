@@ -58,7 +58,11 @@ def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_per
         license_url="https://provider.example/license" if license_status == "VERIFIED" else None,
         terms_url=None, checksum_status="NOT_PUBLISHED", expected_sha256=None,
         expected_size_bytes=None, authority_evidence_url="https://provider.example/about",
-        status="DISCOVERED", metadata_json={},
+        status="DISCOVERED", metadata_json={
+            "raw_response_retention": retention_permission,
+            "raw_response_retention_reviewed_by": "test-reviewer",
+            "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+        },
     )
     db.add_all([organization, user, case, analysis, variant, resource, discovery])
     db.flush()
