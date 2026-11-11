@@ -64,12 +64,12 @@ from backend.app.domain.resource_staging import (
     validate_staging_destination,
 )
 from backend.app.infrastructure.db.base import Base
-from backend.app.infrastructure.db.models import Resource, ResourceStaging
+from backend.app.infrastructure.db.models import Resource, ResourceReleaseArtifact, ResourceStaging
 
 
 def _db():
     engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine, tables=[Resource.__table__, ResourceStaging.__table__])
+    Base.metadata.create_all(engine, tables=[Resource.__table__, ResourceStaging.__table__, ResourceReleaseArtifact.__table__])
     return engine, Session(engine)
 
 
@@ -151,6 +151,45 @@ def test_local_staging_is_atomic_and_checksum_verified(tmp_path: Path):
         db.close()
         engine.dispose()
 
+
+
+def test_staging_persists_immutable_exact_release_identity_and_verifies_bytes(tmp_path: Path):
+    from backend.app.domain.resource_release_integrity import (
+        find_verified_resource_release,
+    )
+
+    engine, db = _db()
+    try:
+        source = tmp_path / "incoming.fa"
+        payload = b">1\\nACGT\\n"
+        source.write_bytes(payload)
+        destination = tmp_path / "staged" / "GRCh38.fa"
+        expected = sha256(payload).hexdigest()
+        resource = _resource()
+        db.add(resource)
+        db.flush()
+        row = create_staging_candidate(
+            db, resource=resource, source_uri=str(source),
+            destination_uri=str(destination), expected_sha256=expected,
+            expected_size_bytes=len(payload),
+        )
+        stage_local_artifact(db, row, source_path=source)
+        release, status = find_verified_resource_release(
+            db, resource_id=resource.id, resource_version=resource.version,
+        )
+        assert release is not None
+        assert release.resource_staging_id == row.id
+        assert release.sha256 == expected
+        assert release.size_bytes == len(payload)
+        assert status == "VERIFIED"
+        destination.write_bytes(b"tampered")
+        with pytest.raises(Exception):
+            find_verified_resource_release(
+                db, resource_id=resource.id, resource_version=resource.version,
+            )
+    finally:
+        db.close()
+        engine.dispose()
 
 def test_checksum_mismatch_never_activates_destination(tmp_path: Path):
     engine, db = _db()
