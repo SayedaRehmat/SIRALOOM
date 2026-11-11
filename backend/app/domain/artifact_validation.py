@@ -43,6 +43,7 @@ def _copy_verified_artifact(db: Session, case: Case, artifact: Artifact, destina
             expected_sha256=artifact.sha256,
             expected_size_bytes=artifact.size_bytes,
         )
+        verify_artifact_file(destination, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
         return
     source = store.local_path(artifact.storage_uri)
     verify_artifact_file(source, sha256=artifact.sha256, size_bytes=artifact.size_bytes)
