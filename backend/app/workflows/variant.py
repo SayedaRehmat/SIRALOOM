@@ -1415,7 +1415,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 case=case,
                 analysis_configuration=analysis.configuration,
                 analysis_type=getattr(analysis, "analysis_type", None),
-                    analysis_assay_id=getattr(analysis, "assay_id", None),
+                analysis_assay_id=getattr(analysis, "assay_id", None),
+                analysis_workflow_id=getattr(analysis, "workflow_id", None),
+                analysis_workflow_version=getattr(analysis, "workflow_version", None),
+                analysis_reference_build=getattr(analysis, "reference_build", None),
             )
         except ValueError as exc:
             analysis.status = AnalysisStatus.BLOCKED
