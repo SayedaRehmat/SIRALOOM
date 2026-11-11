@@ -605,7 +605,13 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
             analysis_workflow_version=analysis.workflow_version,
             analysis_reference_build=analysis.reference_build,
         )
-    except ValueError as exc:
+        if analysis.analysis_type != "RESEARCH":
+            from backend.app.domain.runtime_attestation import (
+                RuntimeAttestationError,
+                assert_analysis_runtime_attested,
+            )
+            assert_analysis_runtime_attested(db, analysis)
+    except (ValueError, RuntimeAttestationError) as exc:
         raise ReportFinalizationError(
             f"Clinical authorization is no longer valid: {exc}"
         ) from exc
