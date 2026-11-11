@@ -224,7 +224,7 @@ def test_host_attestor_requires_fresh_signed_challenge_and_returns_immutable_ide
             challenge = json.loads(request)["nonce"]
             payload["nonce"] = challenge
             self.response = (
-                json.dumps({"payload": payload, "signature": "00"}).encode() + b"\\n"
+                json.dumps({"payload": payload, "signature": "00"}).encode() + b"\n"
             )
 
         def recv(self, _size):
@@ -275,7 +275,7 @@ def test_host_attestor_rejects_stale_signed_response(monkeypatch):
             payload["nonce"] = json.loads(request)["nonce"]
             self.response = json.dumps(
                 {"payload": payload, "signature": "00"}
-            ).encode() + b"\\n"
+            ).encode() + b"\n"
 
         def recv(self, _size):
             response, self.response = self.response, b""
