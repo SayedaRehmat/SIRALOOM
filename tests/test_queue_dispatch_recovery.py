@@ -7,7 +7,7 @@ import pytest
 def test_orphaned_dispatch_recovery_requeues_only_definitive_failures(monkeypatch):
     module = importlib.import_module("backend.app.infrastructure.queue.celery_app")
     db_session = importlib.import_module("backend.app.infrastructure.db.session")
-    analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "old-task"})()
+    analysis = type("Analysis", (), {"id": uuid4(), "case_id": uuid4(), "status": "QUEUED", "queue_task_id": "old-task", "configuration": {}})()
 
     class FakeDB:
         def scalars(self, stmt):
@@ -1032,7 +1032,7 @@ def test_redelivered_analysis_recovers_after_claim_before_workflow_starts(monkey
         def get(self, model, row_id):
             assert row_id == analysis_id
             events.append(("read_final_status", self.name))
-            return type("Analysis", (), {"status": "SUCCEEDED"})()
+            return type("Analysis", (), {"status": "SUCCEEDED", "configuration": {}})()
 
         def close(self):
             self.closed = True
