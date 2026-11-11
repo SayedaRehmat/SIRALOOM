@@ -100,8 +100,13 @@ class Handler(socketserver.StreamRequestHandler):
                 if root.stat().st_uid != 0 or root.stat().st_mode & 0o022:
                     raise RuntimeError("Bare-metal installation root must be root-owned and not group/world writable")
                 cwd = Path(f"/proc/{peer_pid}/cwd").resolve(strict=True)
+                executable_path = Path(executable.replace(" (deleted)", "")).resolve(strict=True)
                 if root != cwd and root not in cwd.parents:
                     raise RuntimeError("Connecting process working directory is outside the trusted installation root")
+                if root != executable_path and root not in executable_path.parents:
+                    raise RuntimeError("Bare-metal worker interpreter must be inside the trusted installation root")
+                if self.server.release_manifest.is_symlink():
+                    raise RuntimeError("Release manifest cannot be a symbolic link")
                 manifest = self.server.release_manifest.resolve(strict=True)
                 if root != manifest.parent and root not in manifest.parents:
                     raise RuntimeError("Release manifest is outside the trusted installation root")
@@ -120,8 +125,11 @@ class Handler(socketserver.StreamRequestHandler):
                         raise RuntimeError("Release manifest contains an unsafe or duplicate path")
                     seen.add(str(relative))
                     declared_path = root / relative
-                    if declared_path.is_symlink():
-                        raise RuntimeError("Release manifest cannot include symbolic links")
+                    current = root
+                    for part in relative.parts:
+                        current = current / part
+                        if current.is_symlink():
+                            raise RuntimeError("Release manifest cannot include symbolic links")
                     target = declared_path.resolve(strict=True)
                     if root not in target.parents or not target.is_file():
                         raise RuntimeError("Release manifest file is missing or escapes the installation root")
