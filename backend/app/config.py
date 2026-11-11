@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     bcftools_executable: str = "bcftools"
     bcftools_version: str = "1.25"
     htslib_version: str = "1.25"
+    # Optional root-managed host attestor socket and pinned Ed25519 public key.
+    host_runtime_attestor_socket: str | None = None
+    host_runtime_attestor_public_key: str | None = None
 
     genebe_enabled: bool = False
     genebe_email: str | None = None
