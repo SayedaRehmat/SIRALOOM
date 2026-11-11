@@ -164,6 +164,7 @@ def test_staging_persists_immutable_exact_release_identity_and_verifies_bytes(tm
         payload = b">1\\nACGT\\n"
         source.write_bytes(payload)
         destination = tmp_path / "staged" / "GRCh38.fa"
+        destination.parent.mkdir(parents=True, exist_ok=True)
         expected = sha256(payload).hexdigest()
         resource = _resource()
         db.add(resource)
