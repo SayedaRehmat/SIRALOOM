@@ -13,7 +13,7 @@ Before a clinical analysis can execute or resume, SIRALOOM measures and compares
 | `native_toolchain_lock` | SHA-256 of the registered platform-specific native toolchain lock |
 | `python_dependency_lock` | SHA-256 of the deployed `uv.lock` |
 | `siraloom_variant_workflow` | Deterministic SHA-256 of Python source files under `backend/app/workflows`, plus the persisted workflow version |
-| `container_image` | Immutable image digest reported by the Kubernetes API for the running container whose ID matches the worker's cgroup |
+| `container_image` | Kubernetes immutable image ID, or a signed host-broker identity bound to the connecting host PID and its process/container cgroup; Docker identity includes the image config digest and ordered rootfs layer digests, while bare metal uses a root-managed release-manifest digest |
 
 A missing, extra, duplicated, malformed, or changed component blocks clinical execution. The same gate runs before interrupted-workflow recovery on redelivery and retry. The workflow and report sign-out paths also require a persisted successful runtime-attestation event.
 
@@ -76,11 +76,40 @@ roleRef:
 
 The worker uses the in-cluster API service address, projected service-account token, and mounted CA certificate. It requires the Pod status to identify exactly one running container matching the current worker's 64-character cgroup container ID and requires an immutable `sha256` image digest in `status.containerStatuses[].imageID`.
 
-## Non-Kubernetes installations
+## Docker Compose and bare-metal host attestor
 
-Docker Compose, bare-metal, and other non-Kubernetes workers currently cannot provide the required trusted image identity through this provider. Clinical execution therefore fails closed on those installations. Do not work around this by setting an image-digest environment variable.
+Non-Kubernetes deployments can use the host-side broker in `scripts/host_runtime_attestor.py`. The broker runs outside the worker, authenticates the connecting process with Linux Unix-socket peer credentials, reads host `/proc` process/cgroup identity, obtains Docker image metadata through the host Docker Engine, and signs a fresh challenge-bound response with an Ed25519 private key. The worker verifies that signature with a pinned public key. The Docker socket and signing private key are never mounted into the worker.
 
-A separate host/container-runtime attestor is required for those deployment modes. It must obtain the running container identity and immutable image digest from the trusted host runtime, bind that identity to the worker process, and provide authenticated evidence whose trust anchor is controlled outside the worker container. This provider is not implemented yet.
+The host private key is a separate trust anchor: generate it on the host, keep it root-owned and mode 0600, and mount only the public key read-only into the worker. The public key must be pinned in the trusted worker image or supplied as a root-owned, read-only host mount; do not let an untrusted worker environment replace the trust anchor.
+
+Example key creation on the host:
+
+```bash
+sudo install -d -m 0700 /etc/siraloom/attestor
+sudo openssl genpkey -algorithm ED25519 -out /etc/siraloom/attestor/private.pem
+sudo chmod 0600 /etc/siraloom/attestor/private.pem
+sudo openssl pkey -in /etc/siraloom/attestor/private.pem -pubout -out /etc/siraloom/attestor/public.pem
+sudo chmod 0644 /etc/siraloom/attestor/public.pem
+```
+
+Run the broker as a host service with access to the Docker CLI/Engine:
+
+```bash
+sudo python scripts/host_runtime_attestor.py \
+  --socket /run/siraloom/host-attestor.sock \
+  --private-key /etc/siraloom/attestor/private.pem \
+  --mode docker
+```
+
+For Docker Compose, bind-mount only the broker socket and public key into the designated clinical worker, preferably read-only for the public key. Configure `HOST_RUNTIME_ATTESTOR_SOCKET=/run/siraloom/host-attestor.sock` and `HOST_RUNTIME_ATTESTOR_PUBLIC_KEY=/etc/siraloom/attestor/public.pem`. Do not mount `/var/run/docker.sock` into the worker. Restrict the host socket's group and mount exposure to the clinical worker service; any process that can access that socket can request a signature for its own host PID.
+
+The broker binds the host PID obtained from `SO_PEERCRED` to its current process start time and cgroup. In Docker mode it resolves the exact container from host cgroup metadata, verifies the Docker Engine container ID, obtains the immutable image config ID and ordered rootfs layer digests, and hashes that complete identity tuple. A mutable tag is never accepted as image identity.
+
+For bare metal, run the same broker with `--mode bare-metal`, `--install-root` and `--release-manifest`. The worker process must run with its working directory and executable script inside the configured installation root. The installation tree and release manifest must be root-managed and not writable by the worker account. The broker hashes the release manifest and signs that identity together with the connecting process identity. The release manifest must be generated by the deployment/release process and enumerate the exact deployed release; a hand-edited or worker-writable manifest is not evidence. This mode identifies a controlled software release rather than a container image.
+
+The worker requires OpenSSL with Ed25519 support for signature verification. The host broker requires Linux `SO_PEERCRED`, host `/proc` visibility, and Docker CLI access in Docker mode. Unsupported cgroup layouts, inaccessible process metadata, missing image layers, stale challenges, unavailable keys, or invalid signatures fail closed. Do not use `SIRALOOM_RUNTIME_IMAGE_DIGEST` or any other environment-provided digest as proof.
+
+Kubernetes remains supported and is used when no host-attestor socket is configured. If a host-attestor socket is configured, failure of that broker does not fall back to Kubernetes or an environment value.
 
 ## Capture the measured manifest
 
