@@ -613,6 +613,8 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
                     "provider_version": "api-public-v1",
                     "request_fingerprint": "request-fingerprint-1",
                     "response_sha256": "a" * 64,
+                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                    "raw_response_media_type": "application/json",
                     "observed_at": "2026-10-10T00:00:00+00:00",
                     "retry_count": 0,
                 },
