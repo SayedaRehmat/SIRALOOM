@@ -105,8 +105,8 @@ class Handler(socketserver.StreamRequestHandler):
                 manifest = self.server.release_manifest.resolve(strict=True)
                 if root != manifest.parent and root not in manifest.parents:
                     raise RuntimeError("Release manifest is outside the trusted installation root")
-                if manifest.stat().st_mode & 0o022:
-                    raise RuntimeError("Release manifest must not be group/world writable")
+                if manifest.stat().st_uid != 0 or manifest.stat().st_mode & 0o022:
+                    raise RuntimeError("Release manifest must be root-owned and not group/world writable")
                 release = json.loads(manifest.read_text(encoding="utf-8"))
                 files = release.get("files") if isinstance(release, dict) else None
                 if not isinstance(release, dict) or release.get("schema_version") != "1" or not isinstance(files, list) or not files:
@@ -166,13 +166,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--socket", required=True)
     parser.add_argument("--private-key", required=True)
+    parser.add_argument("--socket-gid", type=int)
     parser.add_argument("--mode", choices=("docker", "bare-metal"), required=True)
     parser.add_argument("--install-root")
     parser.add_argument("--release-manifest")
     args = parser.parse_args()
     key = Path(args.private_key).resolve(strict=True)
-    if key.stat().st_mode & 0o077:
-        raise SystemExit("Private signing key must not be group/world accessible")
+    if key.stat().st_uid != 0 or key.stat().st_mode & 0o077:
+        raise SystemExit("Private signing key must be root-owned and not group/world accessible")
+    key_info = subprocess.run(
+        ["openssl", "pkey", "-in", str(key), "-text", "-noout"],
+        check=True, capture_output=True, text=True, timeout=5,
+    ).stdout
+    if "ED25519" not in key_info.upper():
+        raise SystemExit("Host signing key must be Ed25519")
     if args.mode == "bare-metal" and not (args.install_root and args.release_manifest):
         parser.error("bare-metal mode requires --install-root and --release-manifest")
     socket_path = Path(args.socket)
@@ -181,6 +188,8 @@ def main() -> int:
         raise SystemExit("Refusing to replace an existing host-attestor socket")
     server = Server(str(socket_path), Handler)
     os.chmod(socket_path, 0o660)
+    if args.socket_gid is not None:
+        os.chown(socket_path, 0, args.socket_gid)
     server.private_key = key
     server.mode = args.mode
     server.install_root = Path(args.install_root) if args.install_root else None
