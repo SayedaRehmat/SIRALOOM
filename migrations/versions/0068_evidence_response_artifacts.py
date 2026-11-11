@@ -57,7 +57,10 @@ def upgrade():
                 IF OLD.artifact_type = 'PROVIDER_RESPONSE_RAW' THEN
                     RAISE EXCEPTION 'raw provider response artifacts are immutable';
                 END IF;
-                RETURN OLD;
+                IF TG_OP = 'DELETE' THEN
+                    RETURN OLD;
+                END IF;
+                RETURN NEW;
             END;
             $siraloom$ LANGUAGE plpgsql
         """)
