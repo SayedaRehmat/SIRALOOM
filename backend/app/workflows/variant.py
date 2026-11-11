@@ -3409,6 +3409,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             )
                             if existing:
                                 continue
+                            from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                            source_release, source_release_status = find_verified_resource_release(
+                                db, resource_id=resource.id, resource_version=resource.version,
+                            )
                             db.add(
                                 PopulationObservation(
                                     id=__import__("uuid").uuid4(),
@@ -3432,6 +3436,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     response_artifact_size_bytes=(response_retention.size_bytes if response_retention else None),
                                     response_retention_status=(response_retention.status if response_retention else "NOT_AVAILABLE"),
                                     response_retention_reason=(response_retention.reason if response_retention else "No provider response was returned."),
+                                    source_release_artifact_id=source_release.id if source_release else None,
+                                    source_release_sha256=source_release.sha256 if source_release else None,
+                                    source_release_size_bytes=source_release.size_bytes if source_release else None,
+                                    source_release_status=source_release_status,
                                     request_metadata=obs.request_metadata or {},
                                     observed_at=(
                                         datetime.fromisoformat(obs.observed_at)
