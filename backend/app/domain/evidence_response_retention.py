@@ -120,50 +120,55 @@ def retain_provider_response_bytes(
         staged.unlink(missing_ok=True)
 
 
-def verify_evidence_response_artifact(
+def verify_provider_response_reference(
     db: Session,
-    evidence: Evidence,
     *,
-    require_retained: bool = True,
+    analysis_id: UUID,
+    case_id: UUID,
+    resource_id: UUID | None,
+    request_fingerprint: str | None,
+    artifact_id: UUID | None,
+    artifact_sha256: str | None,
+    artifact_size_bytes: int | None,
+    retention_status: str,
+    require_retained: bool = False,
 ) -> bool:
-    """Verify evidence-to-artifact identity, tenant lineage, digest, size and actual bytes."""
-    status = str(evidence.response_retention_status or "NOT_AVAILABLE").upper()
+    """Verify a provider response reference without trusting database metadata alone."""
+    status = str(retention_status or "NOT_AVAILABLE").upper()
     if status != "RETAINED":
         if require_retained:
-            raise ValueError(
-                f"Evidence {evidence.id} has no retained provider response bytes (status={status})."
-            )
-        if evidence.response_artifact_id is not None:
-            raise ValueError("Evidence has an artifact reference but is not marked RETAINED.")
+            raise ValueError(f"Provider response bytes are not retained (status={status}).")
+        if artifact_id is not None or artifact_sha256 is not None or artifact_size_bytes is not None:
+            raise ValueError("Non-retained provider response contains an artifact reference or digest.")
+        if status not in {"NOT_PERMITTED", "REVIEW_REQUIRED", "NOT_AVAILABLE"}:
+            raise ValueError(f"Unsupported provider response retention status: {status}.")
         return False
-    if evidence.response_artifact_id is None:
-        raise ValueError("Retained evidence response is missing its artifact ID.")
-    digest = str(evidence.response_artifact_sha256 or "").lower()
-    size = evidence.response_artifact_size_bytes
+    if artifact_id is None:
+        raise ValueError("Retained provider response is missing its artifact ID.")
+    digest = str(artifact_sha256 or "").lower()
+    size = artifact_size_bytes
     validate_integrity_expectations(digest, size)
-    analysis = db.get(Analysis, evidence.analysis_id)
-    if analysis is None or analysis.case_id is None:
-        raise ValueError("Evidence analysis/case lineage is unavailable.")
-    case = db.get(Case, analysis.case_id)
-    artifact = db.get(Artifact, evidence.response_artifact_id)
-    if case is None or artifact is None:
-        raise ValueError("Evidence response artifact or owning case is missing.")
+    analysis = db.get(Analysis, analysis_id)
+    case = db.get(Case, case_id)
+    artifact = db.get(Artifact, artifact_id)
+    if analysis is None or analysis.case_id != case_id or case is None or artifact is None:
+        raise ValueError("Provider response analysis/case/artifact lineage is unavailable.")
     if (
-        artifact.case_id != case.id
-        or artifact.analysis_id != analysis.id
+        artifact.case_id != case_id
+        or artifact.analysis_id != analysis_id
         or artifact.artifact_type != "PROVIDER_RESPONSE_RAW"
         or artifact.sha256 != digest
         or artifact.size_bytes != size
     ):
-        raise ValueError("Evidence response artifact identity, case, analysis, digest or size was substituted.")
+        raise ValueError("Provider response artifact identity, case, analysis, digest or size was substituted.")
     metadata = dict(artifact.metadata_json or {})
     if (
-        metadata.get("resource_id") != str(evidence.resource_id)
-        or metadata.get("request_fingerprint") != evidence.request_fingerprint
+        metadata.get("resource_id") != str(resource_id)
+        or metadata.get("request_fingerprint") != request_fingerprint
         or metadata.get("raw_response_sha256") != digest
         or metadata.get("raw_response_size_bytes") != size
     ):
-        raise ValueError("Evidence response artifact provenance does not match the evidence record.")
+        raise ValueError("Provider response artifact provenance does not match its source record.")
     store = artifact_store_for_uri(
         db, organization_id=case.organization_id, storage_uri=artifact.storage_uri
     )
@@ -183,3 +188,23 @@ def verify_evidence_response_artifact(
             store.local_path(artifact.storage_uri), sha256=digest, size_bytes=size
         )
     return True
+
+
+def verify_evidence_response_artifact(
+    db: Session,
+    evidence: Evidence,
+    *,
+    require_retained: bool = True,
+) -> bool:
+    return verify_provider_response_reference(
+        db,
+        analysis_id=evidence.analysis_id,
+        case_id=(db.get(Analysis, evidence.analysis_id).case_id if db.get(Analysis, evidence.analysis_id) else UUID(int=0)),
+        resource_id=evidence.resource_id,
+        request_fingerprint=evidence.request_fingerprint,
+        artifact_id=evidence.response_artifact_id,
+        artifact_sha256=evidence.response_artifact_sha256,
+        artifact_size_bytes=evidence.response_artifact_size_bytes,
+        retention_status=evidence.response_retention_status,
+        require_retained=require_retained,
+    )
