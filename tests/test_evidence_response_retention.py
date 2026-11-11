@@ -15,7 +15,7 @@ from backend.app.infrastructure.db.models import (
 )
 
 
-def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED"):
+def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_permission="PERMITTED"):
     import backend.app.domain.evidence_response_retention as retention
 
     engine = create_engine("sqlite+pysqlite:///:memory:")
@@ -210,3 +210,15 @@ def test_restricted_license_marks_response_not_permitted_without_storage(tmp_pat
     assert result.artifact_id is None
     assert result.sha256 is None
     assert result.size_bytes is None
+
+def test_verified_license_without_explicit_raw_retention_scope_requires_review(tmp_path, monkeypatch):
+    db, _store, _case, analysis, _variant, resource = _seed(
+        tmp_path, monkeypatch, license_status="VERIFIED", retention_permission="UNKNOWN"
+    )
+    result = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource,
+        provider_id="TestProvider", provider_version="1",
+        request_fingerprint="request-1", raw_response_bytes=b"not-approved-for-retention",
+    )
+    assert result.status == "REVIEW_REQUIRED"
+    assert result.artifact_id is None
