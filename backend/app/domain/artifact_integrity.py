@@ -1,7 +1,9 @@
 """Byte-level integrity checks for persisted artifacts."""
 
 import hashlib
+import os
 import re
+import stat
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -46,11 +48,38 @@ def validate_integrity_expectations(sha256: str | None, size_bytes: int | None) 
 def verify_artifact_file(path: Path, *, sha256: str | None, size_bytes: int | None) -> None:
     """Verify a file against the artifact row before scientific use or delivery."""
     validate_integrity_expectations(sha256, size_bytes)
+    candidate = Path(path)
+    # Reject symlinks in every path component, not merely the final filename.
+    # This prevents a path that was originally inside an artifact root from
+    # being redirected through a symlink before the integrity check.
+    absolute = candidate.absolute()
+    current = Path(absolute.anchor)
+    for component in absolute.parts[1:]:
+        current = current / component
+        try:
+            component_stat = current.lstat()
+        except FileNotFoundError as exc:
+            raise ArtifactIntegrityError("Artifact path is missing during integrity verification.") from exc
+        if stat.S_ISLNK(component_stat.st_mode):
+            raise ArtifactIntegrityError("Artifact path contains a symbolic link.")
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(absolute, flags)
+    except OSError as exc:
+        raise ArtifactIntegrityError("Artifact cannot be opened safely for integrity verification.") from exc
     digest = hashlib.sha256()
     actual_size = 0
-    with Path(path).open("rb") as handle:
-        while chunk := handle.read(8 * 1024 * 1024):
-            digest.update(chunk)
-            actual_size += len(chunk)
+    try:
+        opened_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(opened_stat.st_mode):
+            raise ArtifactIntegrityError("Artifact integrity verification requires a regular file.")
+        with os.fdopen(descriptor, "rb", closefd=True) as handle:
+            descriptor = -1
+            while chunk := handle.read(8 * 1024 * 1024):
+                digest.update(chunk)
+                actual_size += len(chunk)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
     if actual_size != size_bytes or digest.hexdigest().lower() != sha256.lower():
         raise ArtifactIntegrityError("Artifact bytes do not match persisted SHA-256 and size metadata.")
