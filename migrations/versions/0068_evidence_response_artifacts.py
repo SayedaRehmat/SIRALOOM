@@ -23,12 +23,13 @@ _RESPONSE_COLUMNS = (
 def upgrade():
     for table in ("annotations", "population_observations", "evidence"):
         for name, type_, foreign_key in _RESPONSE_COLUMNS:
+            constraints = [foreign_key] if foreign_key is not None else []
             op.add_column(
                 table,
                 sa.Column(
                     name,
                     type_,
-                    foreign_key,
+                    *constraints,
                     nullable=(name != "response_retention_status"),
                     server_default=("NOT_AVAILABLE" if name == "response_retention_status" else None),
                 ),
