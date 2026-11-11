@@ -24,6 +24,7 @@ from backend.app.infrastructure.db.models import (
     Case,
     Organization,
     Resource,
+    ResourceDiscovery,
     ResourceExecutionRecord,
     ResourceQualification,
     User,
@@ -118,6 +119,16 @@ def _resource(db, *, provider="GeneBe", access_method="API", endpoint="https://q
         metadata_json={},
     )
     db.add(resource)
+    db.flush()
+    db.add(ResourceDiscovery(
+        id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
+        canonical_source_url="https://qualified.example/", artifact_url="https://qualified.example/release",
+        release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
+        license_url="https://qualified.example/license", terms_url=None,
+        checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
+        authority_evidence_url="https://qualified.example/about", status="DISCOVERED",
+        metadata_json={},
+    ))
     db.flush()
     qualification = ResourceQualification(
         id=uuid4(),
@@ -500,6 +511,8 @@ def test_replayed_annotation_observation_cannot_duplicate_or_change_resource_ide
             "resource_version": resource.version,
             "request_fingerprint": "request-fingerprint-v1",
             "response_sha256": "a" * 64,
+                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                    "raw_response_media_type": "application/json",
             "request_metadata": {"provider": "GeneBe", "provider_version": "api-public-v1"},
             "payload": {"raw": {"impact": "MODERATE"}, "normalized": {"impact": "MODERATE"}},
         }
@@ -698,6 +711,8 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
             "_siraloom_annotation_provenance": {
                 "provider": "GeneBe", "provider_version": "api-public-v1",
                 "request_fingerprint": "request-fingerprint-1", "response_sha256": "a" * 64,
+                "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                "raw_response_media_type": "application/json",
             },
         }]
         _persist_annotation_response_checkpoint(
@@ -853,6 +868,8 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
                 "_siraloom_annotation_provenance": {
                     "provider": "GeneBe", "provider_version": "api-public-v1",
                     "request_fingerprint": "d" * 64, "response_sha256": "e" * 64,
+                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                    "raw_response_media_type": "application/json",
                     "observed_at": "2026-10-10T00:00:00+00:00", "retry_count": 0,
                 },
             }
