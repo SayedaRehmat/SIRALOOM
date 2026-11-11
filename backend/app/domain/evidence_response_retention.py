@@ -196,10 +196,13 @@ def verify_evidence_response_artifact(
     *,
     require_retained: bool = True,
 ) -> bool:
+    analysis = db.get(Analysis, evidence.analysis_id)
+    if analysis is None:
+        raise ValueError("Evidence analysis lineage is unavailable.")
     return verify_provider_response_reference(
         db,
         analysis_id=evidence.analysis_id,
-        case_id=(db.get(Analysis, evidence.analysis_id).case_id if db.get(Analysis, evidence.analysis_id) else UUID(int=0)),
+        case_id=analysis.case_id,
         resource_id=evidence.resource_id,
         request_fingerprint=evidence.request_fingerprint,
         artifact_id=evidence.response_artifact_id,
