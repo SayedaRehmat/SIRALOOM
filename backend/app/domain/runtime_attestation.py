@@ -216,14 +216,14 @@ def _host_runtime_image_identity() -> tuple[str, str]:
     if not socket_value:
         raise RuntimeAttestationError("Trusted host runtime attestor socket is not configured")
     nonce = secrets.token_hex(32)
-    request = json.dumps({"nonce": nonce}, separators=(",", ":")).encode() + b"\\n"
+    request = json.dumps({"nonce": nonce}, separators=(",", ":")).encode() + b"\n"
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     client.settimeout(5)
     try:
         client.connect(socket_value)
         client.sendall(request)
         chunks = bytearray()
-        while not chunks.endswith(b"\\n"):
+        while not chunks.endswith(b"\n"):
             part = client.recv(65536)
             if not part:
                 raise RuntimeAttestationError("Host runtime attestor closed without a complete response")
