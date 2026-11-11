@@ -349,7 +349,7 @@ def attest_clinical_analysis_runtime(
     configuration = dict(analysis.configuration or {})
     validation_snapshot = configuration.get("assay_validation_snapshot")
     try:
-        observed_components = collect_runtime_component_manifest(
+        observed_components, host_evidence = collect_runtime_attestation_bundle(
             workflow_version=str(analysis.workflow_version)
         )
         assert_pipeline_components_match_runtime(validation_snapshot, observed_components)
@@ -386,6 +386,7 @@ def attest_clinical_analysis_runtime(
         payload={
             "manifest_sha256": runtime_manifest_sha256(observed_components),
             "components": observed_components,
+            "host_attestation": host_evidence,
             "redelivered": redelivered,
             "retry": retry,
         },
