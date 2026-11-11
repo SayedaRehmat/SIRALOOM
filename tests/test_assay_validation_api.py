@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi import HTTPException
@@ -68,7 +68,7 @@ def test_validation_submission_requires_independent_lab_director_approval_and_ex
                 assay_id, AssayValidationSubmissionInput(**_payload()), db,
                 _principal(submitter_id, organization_id, "organization_admin"),
             )
-            submission_id = uuid4() if not submitted.get("id") else __import__("uuid").UUID(submitted["id"])
+            submission_id = UUID(submitted["id"])
             submission = db.get(AssayValidationSubmission, submission_id)
             assert submission is not None
             assert submitted["latest_decision"] is None
@@ -124,7 +124,7 @@ def test_validation_with_failed_performance_criterion_cannot_be_approved():
                 assay_id, AssayValidationSubmissionInput(**_payload("FAIL")), db,
                 _principal(submitter_id, organization_id, "organization_admin"),
             )
-            submission_id = __import__("uuid").UUID(submitted["id"])
+            submission_id = UUID(submitted["id"])
             now = datetime.now(timezone.utc)
             with pytest.raises(HTTPException, match="performance criterion"):
                 decide_assay_validation(
