@@ -21,6 +21,7 @@ def _db():
         tables=[
             Resource.__table__,
             ResourceStaging.__table__,
+            ResourceReleaseArtifact.__table__,
             ResourceQualification.__table__,
         ],
     )
