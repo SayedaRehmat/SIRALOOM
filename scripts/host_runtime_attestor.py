@@ -52,7 +52,7 @@ def docker_identity(pid: int) -> tuple[str, str]:
     if len(records) != 1 or records[0].get("Id") != container_id:
         raise RuntimeError("Docker Engine did not return the exact host container")
     image_id = str(records[0].get("Image") or "")
-    if not image_id.startswith("sha256:") or len(image_id) != 71:
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", image_id):
         raise RuntimeError("Docker Engine did not report an immutable sha256 image config ID")
     image_result = subprocess.run(
         ["docker", "image", "inspect", image_id],
@@ -63,7 +63,7 @@ def docker_identity(pid: int) -> tuple[str, str]:
         raise RuntimeError("Docker Engine did not resolve the exact immutable image object")
     layers = images[0].get("RootFS", {}).get("Layers")
     if not isinstance(layers, list) or not layers or any(
-        not isinstance(layer, str) or not layer.startswith("sha256:") for layer in layers
+        not isinstance(layer, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", layer) for layer in layers
     ):
         raise RuntimeError("Docker image has no complete immutable root-filesystem layer identity")
     identity_bytes = json.dumps(
