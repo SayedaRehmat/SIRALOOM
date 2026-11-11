@@ -543,6 +543,7 @@ def _persist_annotation_response_checkpoint(
             request_fingerprint=request_fingerprint,
             raw_response_bytes=raw_response_bytes,
             media_type=raw_response_media_type,
+            store=artifacts,
         )
     else:
         from backend.app.domain.evidence_response_retention import ProviderResponseRetention
@@ -3386,6 +3387,7 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     request_fingerprint=sample_response.request_fingerprint or "",
                                     raw_response_bytes=raw_response_bytes,
                                     media_type="application/json",
+                                    store=artifacts,
                                 )
                             else:
                                 response_retention = ProviderResponseRetention(
