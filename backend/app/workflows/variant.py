@@ -3391,6 +3391,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 response_retention = ProviderResponseRetention(
                                     "NOT_AVAILABLE", "Provider adapter did not expose exact raw response bytes."
                                 )
+                        if response_retention and response_retention.status == "NOT_PERMITTED":
+                            raise ResourceConsumptionError(
+                                "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+                                response_retention.reason,
+                            )
                         for obs in obs_list:
                             existing = db.scalar(
                                 select(PopulationObservation).where(
