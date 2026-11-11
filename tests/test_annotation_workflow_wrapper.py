@@ -20,6 +20,7 @@ from backend.app.evidence.engine import EvidenceContext, EvidenceEngine
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ResourceDiscovery,
     Analysis,
     AnalysisPartition,
     Annotation,
@@ -109,6 +110,15 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                 status="ACTIVE", population_definition=None, metadata_json={},
             )
             db.add(resource)
+            db.add(ResourceDiscovery(
+                id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
+                canonical_source_url="https://fixture.invalid/", artifact_url="https://fixture.invalid/release",
+                release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
+                license_url="https://fixture.invalid/license", terms_url=None,
+                checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
+                authority_evidence_url="https://fixture.invalid/about", status="DISCOVERED",
+                metadata_json={},
+            ))
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
                 status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
@@ -155,6 +165,8 @@ def test_production_task_wrapper_recovers_annotation_and_persists_evidence(
                         "provider_version": self.provider_version,
                         "request_fingerprint": "d" * 64,
                         "response_sha256": "e" * 64,
+                        "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                        "raw_response_media_type": "application/json",
                         "observed_at": "2026-10-10T00:00:00+00:00",
                         "retry_count": 0,
                     },
