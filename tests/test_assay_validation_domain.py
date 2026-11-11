@@ -34,8 +34,8 @@ def _payload():
             {"name": "SIRALOOM Variant workflow", "version": "2.1", "sha256": "a" * 64}
         ],
         "performance_specifications": [
-            {"metric": "sensitivity", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
-            {"metric": "sensitivity", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
+            {"metric": "analytical_sensitivity", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
+            {"metric": "analytical_sensitivity", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
             {"metric": "positive_predictive_value", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
             {"metric": "positive_predictive_value", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
         ],
