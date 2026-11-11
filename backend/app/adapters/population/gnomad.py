@@ -139,7 +139,9 @@ class GnomADGraphQLProvider:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(self.endpoint, json={"query": query, "variables": variables})
                 response.raise_for_status()
-                raw_response_bytes = bytes(response.content)
+                raw_response_bytes = getattr(response, "content", None)
+                if not isinstance(raw_response_bytes, bytes):
+                    raw_response_bytes = None
                 body = response.json()
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
