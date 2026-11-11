@@ -108,6 +108,26 @@ def approve_provider_retention(
     evidence_case = db.get(Case, evidence.case_id)
     if evidence_case is None or evidence_case.organization_id != organization_id:
         raise PermissionError("Terms evidence must belong to the approving organization.")
+    terms_store = artifact_store_for_uri(
+        db, organization_id=organization_id, storage_uri=evidence.storage_uri
+    )
+    if callable(getattr(terms_store, "download_to_file", None)):
+        with tempfile.NamedTemporaryFile(prefix="siraloom-terms-approval-", delete=False) as handle:
+            terms_path = Path(handle.name)
+        try:
+            terms_store.download_to_file(
+                evidence.storage_uri, terms_path,
+                expected_sha256=evidence.sha256,
+                expected_size_bytes=evidence.size_bytes,
+            )
+            verify_artifact_file(terms_path, sha256=evidence.sha256, size_bytes=evidence.size_bytes)
+        finally:
+            terms_path.unlink(missing_ok=True)
+    else:
+        verify_artifact_file(
+            terms_store.local_path(evidence.storage_uri),
+            sha256=evidence.sha256, size_bytes=evidence.size_bytes,
+        )
     if not (discovery.license_url or discovery.terms_url):
         raise ValueError("Exact release has no recorded license or terms URL.")
     now = datetime.now(UTC)
