@@ -59,6 +59,7 @@ def retain_provider_response_bytes(
     request_fingerprint: str,
     raw_response_bytes: bytes,
     media_type: str | None = None,
+    store=None,
 ) -> ProviderResponseRetention:
     """Persist exact response bytes only after affirmative release-specific permission."""
     if not isinstance(raw_response_bytes, bytes) or not raw_response_bytes:
@@ -83,7 +84,7 @@ def retain_provider_response_bytes(
         NAMESPACE_URL,
         f"siraloom-provider-response:{analysis.id}:{resource.id}:{request_fingerprint}",
     )
-    store = artifact_store_for_organization(db, organization_id=case.organization_id)
+    store = store or artifact_store_for_organization(db, organization_id=case.organization_id)
     with tempfile.NamedTemporaryFile(prefix="siraloom-provider-response-", suffix=".bin", delete=False) as handle:
         staged = Path(handle.name)
         handle.write(raw_response_bytes)
