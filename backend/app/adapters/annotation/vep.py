@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -217,8 +218,12 @@ class VEPProvider(ScientificResourceProvider):
             if not output_json.exists():
                 raise VEPProviderError("VEP completed without producing its governed JSON output.")
 
-            raw_text = output_json.read_text(encoding="utf-8")
-            response_sha256 = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+            raw_response_bytes = output_json.read_bytes()
+            try:
+                raw_text = raw_response_bytes.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise VEPProviderError("VEP JSON output is not valid UTF-8.") from exc
+            response_sha256 = hashlib.sha256(raw_response_bytes).hexdigest()
             records: list[dict[str, Any]] = []
             for line in raw_text.splitlines():
                 line = line.strip()
@@ -239,6 +244,11 @@ class VEPProvider(ScientificResourceProvider):
                     "assembly": build,
                     "cache_version": self.cache_version,
                     "annotation_options": annotation_options,
+                    # Preserve the exact local VEP output bytes for the shared
+                    # release-specific retention gate. This metadata is transient
+                    # provider transport and is removed before checkpoint storage.
+                    "raw_response_base64": base64.b64encode(raw_response_bytes).decode("ascii"),
+                    "raw_response_media_type": "application/x-ndjson",
                 },
             )
 
@@ -308,6 +318,8 @@ class VEPProvider(ScientificResourceProvider):
                     "provider_version": self.contract.provider_version,
                     "observed_at": result.metadata.get("observed_at"),
                     "response_sha256": result.response_sha256,
+                    "raw_response_base64": result.metadata.get("raw_response_base64"),
+                    "raw_response_media_type": result.metadata.get("raw_response_media_type"),
                     "assembly": inputs.get("genome_build"),
                     "cache_version": self.cache_version,
                     "annotation_options": result.metadata.get("annotation_options", []),
