@@ -117,7 +117,9 @@ class GeneBeProvider:
             time.sleep(max(0.0, delay))
         else:
             raise last_error or GeneBeError("GeneBe request failed")
-        raw_response_bytes = bytes(response.content)
+        raw_response_bytes = getattr(response, "content", b"")
+        if not isinstance(raw_response_bytes, bytes):
+            raw_response_bytes = b""
         response_sha256 = hashlib.sha256(
             json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
