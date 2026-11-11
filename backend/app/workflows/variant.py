@@ -5001,6 +5001,29 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         if variant_row is None:
                             blocked_variants += 1; batch_blocked += 1; continue
                         population_rows_for_variant = db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == analysis.id, PopulationObservation.variant_id == ann.variant_id)).all()
+                        # Verify retained provider bytes immediately before the ACMG
+                        # assessment consumes annotation/population evidence. A
+                        # non-retained response remains explicitly unverified.
+                        from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=ann.resource_id,
+                            request_fingerprint=ann.request_fingerprint,
+                            artifact_id=ann.response_artifact_id,
+                            artifact_sha256=ann.response_artifact_sha256,
+                            artifact_size_bytes=ann.response_artifact_size_bytes,
+                            retention_status=ann.response_retention_status,
+                        )
+                        for population_observation in population_rows_for_variant:
+                            verify_provider_response_reference(
+                                db, analysis_id=analysis.id, case_id=case.id,
+                                resource_id=population_observation.resource_id,
+                                request_fingerprint=population_observation.request_fingerprint,
+                                artifact_id=population_observation.response_artifact_id,
+                                artifact_sha256=population_observation.response_artifact_sha256,
+                                artifact_size_bytes=population_observation.response_artifact_size_bytes,
+                                retention_status=population_observation.response_retention_status,
+                            )
                         population_resource_rows = _require_population_resource_rows(
                             db,
                             analysis_id=analysis.id,
