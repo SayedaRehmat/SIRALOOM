@@ -236,6 +236,8 @@ def test_host_attestor_requires_fresh_signed_challenge_and_returns_immutable_ide
 
     monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/run/siraloom/host-attestor.sock")
     monkeypatch.setattr(runtime.socket, "socket", lambda *_args: _FakeSocket())
+    monkeypatch.setattr(runtime, "_current_host_pid", lambda: 4242)
+    monkeypatch.setattr(runtime, "_current_process_start_time", lambda: "123456")
     verified = []
     monkeypatch.setattr(
         runtime,
