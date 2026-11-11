@@ -228,7 +228,7 @@ def _verify_host_attestor_signature(payload: bytes, signature: bytes) -> None:
             raise RuntimeAttestationError("Host runtime evidence has an invalid Ed25519 signature") from exc
 
 
-def _host_runtime_image_identity() -> tuple[str, str]:
+def _host_runtime_identity_evidence() -> tuple[str, str, dict[str, object]]:
     socket_value = settings.host_runtime_attestor_socket
     if not socket_value:
         raise RuntimeAttestationError("Trusted host runtime attestor socket is not configured")
@@ -284,7 +284,12 @@ def _host_runtime_image_identity() -> tuple[str, str]:
         raise RuntimeAttestationError("Host runtime attestor signature is malformed") from exc
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
     _verify_host_attestor_signature(canonical, signature)
-    return identity_version, image_digest
+    return identity_version, image_digest, {"payload": payload, "signature": signature_hex}
+
+
+def _host_runtime_image_identity() -> tuple[str, str]:
+    version, digest, _evidence = _host_runtime_identity_evidence()
+    return version, digest
 
 
 def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[str, str]]:
