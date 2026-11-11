@@ -715,6 +715,7 @@ class ResourceReleaseArtifact(Base):
     storage_backend: Mapped[str] = mapped_column(Text, nullable=False)
     sha256: Mapped[str] = mapped_column(Text, nullable=False)
     size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    integrity_status: Mapped[str] = mapped_column(Text, nullable=False)
     verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     __table_args__ = (
