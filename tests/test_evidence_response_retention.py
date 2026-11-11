@@ -1,7 +1,8 @@
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from backend.app.domain.evidence_response_retention import (
@@ -14,7 +15,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     Analysis, Case, Evidence, Organization, OrganizationMembership, Resource,
-    ResourceDiscovery, User, Variant,
+    ProviderRetentionApproval, ResourceDiscovery, User, Variant,
 )
 
 
@@ -103,6 +104,10 @@ def _persist_raw(store, db, case, analysis, resource, tmp_path, raw=b'{"source":
     import hashlib
 
     digest = hashlib.sha256(raw).hexdigest()
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
     artifact = store.put_file(
         db=db, case_id=case.id, analysis_id=analysis.id, source_path=source,
         filename="provider-response.bin", artifact_type="PROVIDER_RESPONSE_RAW",
@@ -111,6 +116,10 @@ def _persist_raw(store, db, case, analysis, resource, tmp_path, raw=b'{"source":
         metadata={
             "resource_id": str(resource.id), "request_fingerprint": "request-1",
             "raw_response_sha256": digest, "raw_response_size_bytes": len(raw),
+            "retention_approval_id": str(approval.id),
+            "retention_approval_version": approval.version,
+            "retention_approval_terms_evidence_artifact_id": str(approval.terms_evidence_artifact_id),
+            "retention_approval_terms_evidence_sha256": approval.terms_evidence_sha256,
         },
     )
     return artifact, digest, len(raw)
@@ -248,6 +257,41 @@ def test_verified_license_without_explicit_raw_retention_scope_requires_review(t
         db, analysis=analysis, resource=resource,
         provider_id="TestProvider", provider_version="1",
         request_fingerprint="request-1", raw_response_bytes=b"not-approved-for-retention",
+    )
+    assert result.status == "REVIEW_REQUIRED"
+    assert result.artifact_id is None
+
+
+
+def test_revoked_approval_blocks_future_evidence_verification(tmp_path, monkeypatch):
+    db, store, case, analysis, variant, resource = _seed(tmp_path, monkeypatch)
+    artifact, digest, size = _persist_raw(store, db, case, analysis, resource, tmp_path)
+    evidence = _evidence(analysis, variant, resource, artifact, digest, size)
+    db.add(evidence)
+    db.flush()
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+    ))
+    revoke_provider_retention(
+        db, approval_id=approval.id, actor_id=approval.reviewer_id,
+        reason="Source terms review was withdrawn.",
+    )
+    db.flush()
+    with pytest.raises(ValueError, match="missing, revoked, or out of scope"):
+        verify_evidence_response_artifact(db, evidence)
+
+
+def test_expired_approval_prevents_new_raw_response_retention(tmp_path, monkeypatch):
+    db, _store, _case, analysis, _variant, resource = _seed(tmp_path, monkeypatch)
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+    ))
+    approval.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db.flush()
+    result = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="expired-request",
+        raw_response_bytes=b"must-not-be-retained",
     )
     assert result.status == "REVIEW_REQUIRED"
     assert result.artifact_id is None
