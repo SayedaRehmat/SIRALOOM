@@ -44,6 +44,13 @@ def list_analysis_evidence(analysis_id: UUID, db: Session = Depends(get_db), pri
                 "source": row.source_name,
                 "source_version": row.source_version,
                 "source_record_id": row.source_record_id,
+                "response_retention": {
+                    "status": row.response_retention_status,
+                    "artifact_id": str(row.response_artifact_id) if row.response_artifact_id else None,
+                    "sha256": row.response_artifact_sha256,
+                    "size_bytes": row.response_artifact_size_bytes,
+                    "reason": row.response_retention_reason,
+                },
                 "observation_ids": row.observation_ids or [],
                 "payload": phenotype_evidence_display_payload(row.evidence_type, row.payload),
                 "created_by": {
@@ -87,6 +94,13 @@ def get_evidence(evidence_id: UUID, db: Session = Depends(get_db), principal: Pr
         "source": row.source_name,
         "source_version": row.source_version,
         "source_record_id": row.source_record_id,
+        "response_retention": {
+            "status": row.response_retention_status,
+            "artifact_id": str(row.response_artifact_id) if row.response_artifact_id else None,
+            "sha256": row.response_artifact_sha256,
+            "size_bytes": row.response_artifact_size_bytes,
+            "reason": row.response_retention_reason,
+        },
         "observation_ids": row.observation_ids or [],
         "payload": phenotype_evidence_display_payload(row.evidence_type, row.payload),
         "created_by": {"type": row.created_by_type, "id": row.created_by_id},
