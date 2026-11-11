@@ -193,9 +193,11 @@ class EvidenceEngine:
                     **record.__dict__,
                     "resource_id": resource_id,
                     "source_record_id": source_record_id,
-                    "request_fingerprint": request_fingerprint,
+                    "request_fingerprint": getattr(assertion, "response_request_fingerprint", None) or request_fingerprint,
                     "response_sha256": getattr(assertion, "record_sha256", None),
-                    "request_metadata": execution_metadata,
+                    "request_metadata": {**execution_metadata, "base_request_fingerprint": request_fingerprint},
+                    "raw_response_bytes": getattr(assertion, "raw_response_bytes", None),
+                    "response_media_type": "application/json" if getattr(assertion, "raw_response_bytes", None) else None,
                 }
             )
         return out
