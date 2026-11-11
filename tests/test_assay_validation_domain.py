@@ -233,3 +233,17 @@ def test_runtime_component_manifest_rejects_duplicate_names_and_missing_attestat
         assert_pipeline_components_match_runtime(approved, duplicate)
     with pytest.raises(AssayValidationError, match="attestation is missing"):
         assert_pipeline_components_match_runtime(approved, None)
+
+def test_assay_validation_requires_complete_runtime_component_manifest():
+    payload = _payload()
+    payload["pipeline_components"] = [
+        item for item in payload["pipeline_components"]
+        if item["name"] != "container_image"
+    ]
+    with pytest.raises(AssayValidationError, match="complete measured runtime manifest"):
+        normalize_validation_submission(payload)
+
+    payload = _payload()
+    payload["pipeline_components"].append(dict(payload["pipeline_components"][0]))
+    with pytest.raises(AssayValidationError, match="Duplicate pipeline component"):
+        normalize_validation_submission(payload)
