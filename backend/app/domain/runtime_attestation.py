@@ -441,6 +441,8 @@ def _assert_persisted_host_attestation(
         "bare-metal-release-manifest",
     }:
         raise RuntimeAttestationError("Persisted host runtime evidence has an unsupported identity provider")
+    if any(not isinstance(item, dict) for item in components):
+        raise RuntimeAttestationError("Persisted runtime component manifest contains malformed entries")
     image_components = [item for item in components if item.get("name") == "container_image"]
     if len(image_components) != 1:
         raise RuntimeAttestationError("Runtime manifest has no unique execution-environment identity")
