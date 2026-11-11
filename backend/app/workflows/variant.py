@@ -562,6 +562,32 @@ def _persist_annotation_response_checkpoint(
             item_provenance["response_retention_status"] = retention.status
             item_provenance["response_retention_reason"] = retention.reason
             item_provenance["response_license_status"] = retention.license_status
+    if retention.status == "NOT_PERMITTED":
+        raise ResourceConsumptionError(
+            "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+            retention.reason,
+        )
+    if retention.status != "RETAINED":
+        # Do not persist a replay artifact containing provider response records
+        # when exact raw retention is not approved. The workflow will re-query
+        # on recovery and persist only normalized fields for downstream use.
+        _save_batch_checkpoint(
+            db, step, start, end, status="RESPONSE_NOT_RETAINED",
+            attempt=int(_batch_checkpoint(step, start, end).get("attempt", 0)),
+            metadata={
+                "provider": provider_id,
+                "provider_version": provider_version,
+                "resource_id": str(resource.id),
+                "resource_version": resource.version,
+                "request_fingerprint": request_fingerprint,
+                "response_sha256": provenance["response_sha256"],
+                "response_retention_status": retention.status,
+                "response_retention_reason": retention.reason,
+            },
+            commit=False,
+        )
+        db.commit()
+        return None
     response_material = {
         "schema_version": 1,
         "analysis_id": str(analysis.id),
@@ -1320,7 +1346,11 @@ def _persist_annotation_batch_rows(
                 if provenance.get("observed_at") else None
             ),
             retry_count=int(provenance.get("retry_count", 0) or 0),
-            payload={"raw": payload, "normalized": normalized},
+            payload=(
+                {"raw": payload, "normalized": normalized}
+                if provenance.get("response_retention_status") == "RETAINED"
+                else {"normalized": normalized}
+            ),
         ))
         new_count += 1
     db.commit()
