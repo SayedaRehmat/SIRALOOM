@@ -40,6 +40,16 @@ def _retention_permission(db: Session, resource: Resource) -> tuple[str, str, Re
     if discovery is None:
         return "REVIEW_REQUIRED", "No source-discovery license record matches the exact resource release.", None
     status = str(discovery.license_status or "UNKNOWN").strip().upper()
+    if str(discovery.status or "").strip().upper() in {"REJECTED", "WITHDRAWN", "REVOKED", "BLOCKED"}:
+        return "NOT_PERMITTED", "The exact resource discovery record is not approved for use.", discovery
+    retention_scope = str((discovery.metadata_json or {}).get("raw_response_retention") or "REVIEW_REQUIRED").strip().upper()
+    if retention_scope in {"PROHIBITED", "FORBIDDEN", "DENIED", "NO"}:
+        return "NOT_PERMITTED", "The reviewed source terms prohibit raw response retention.", discovery
+    if retention_scope != "PERMITTED":
+        return "REVIEW_REQUIRED", "Raw response retention permission has not been explicitly approved in the source terms review.", discovery
+    review_metadata = dict(discovery.metadata_json or {})
+    if not str(review_metadata.get("raw_response_retention_reviewed_by") or "").strip() or not str(review_metadata.get("raw_response_retention_reviewed_at") or "").strip():
+        return "REVIEW_REQUIRED", "Raw response retention permission lacks reviewer identity or review timestamp.", discovery
     if status == "RESTRICTED":
         return "NOT_PERMITTED", "The source release is marked RESTRICTED; raw response retention is prohibited.", discovery
     if status not in {"VERIFIED", "NOT_REQUIRED"}:
@@ -107,6 +117,8 @@ def retain_provider_response_bytes(
                 "license_status": str(discovery.license_status).upper(),
                 "license_url": discovery.license_url,
                 "terms_url": discovery.terms_url,
+                "raw_response_retention_reviewed_by": review_metadata["raw_response_retention_reviewed_by"],
+                "raw_response_retention_reviewed_at": review_metadata["raw_response_retention_reviewed_at"],
                 "resource_id": str(resource.id),
                 "resource_version": resource.version,
                 "provider_id": provider_id,
