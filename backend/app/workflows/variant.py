@@ -4813,6 +4813,20 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                         "source_name": resource.name if resource else record.source_name,
                                         "source_version": resource.version if resource else record.source_version,
                                     }
+                            source_release = None
+                            source_release_status = "NOT_AVAILABLE"
+                            if provenance["resource_id"] is not None:
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                source_resource = db.get(Resource, provenance["resource_id"])
+                                if source_resource is not None:
+                                    source_release, source_release_status = find_verified_resource_release(
+                                        db, resource_id=source_resource.id,
+                                        resource_version=source_resource.version,
+                                    )
+                            provenance["source_release_artifact_id"] = source_release.id if source_release else None
+                            provenance["source_release_sha256"] = source_release.sha256 if source_release else None
+                            provenance["source_release_size_bytes"] = source_release.size_bytes if source_release else None
+                            provenance["source_release_status"] = source_release_status
                             fp = evidence_fingerprint(
                                 variant_id=record.variant_id, analysis_id=analysis.id,
                                 evidence_type=record.evidence_type, statement=record.statement,
@@ -4826,6 +4840,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 response_artifact_sha256=provenance["response_artifact_sha256"],
                                 response_artifact_size_bytes=provenance["response_artifact_size_bytes"],
                                 response_retention_status=provenance["response_retention_status"],
+                                source_release_artifact_id=provenance["source_release_artifact_id"],
+                                source_release_sha256=provenance["source_release_sha256"],
+                                source_release_size_bytes=provenance["source_release_size_bytes"],
+                                source_release_status=provenance["source_release_status"],
                             )
                             exists = db.scalar(select(Evidence).where(Evidence.analysis_id == analysis.id, Evidence.evidence_fingerprint == fp))
                             if exists:
@@ -4841,6 +4859,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 response_artifact_size_bytes=provenance["response_artifact_size_bytes"],
                                 response_retention_status=provenance["response_retention_status"],
                                 response_retention_reason=provenance["response_retention_reason"],
+                                source_release_artifact_id=provenance["source_release_artifact_id"],
+                                source_release_sha256=provenance["source_release_sha256"],
+                                source_release_size_bytes=provenance["source_release_size_bytes"],
+                                source_release_status=provenance["source_release_status"],
                                 request_metadata=provenance["request_metadata"], observed_at=provenance["observed_at"],
                                 observation_ids=[str(x) for x in record.observation_ids], payload=record.payload,
                                 created_by_type="SYSTEM", created_by_id=engine.engine_id, evidence_fingerprint=fp,
