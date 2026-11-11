@@ -546,7 +546,7 @@ def test_celery_task_retries_transient_workflow_error_with_production_countdown(
             from backend.app.domain.enums import AnalysisStatus
             if kwargs:
                 assert kwargs == {"with_for_update": True}
-            return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": task_id})()
+            return type("Analysis", (), {"id": received_analysis_id, "status": AnalysisStatus.QUEUED, "queue_task_id": task_id, "configuration": {}})()
 
         def add(self, _row):
             pass
