@@ -1,13 +1,78 @@
 "use client";
 import Link from "next/link";
 import { SiteShell } from "../../../components/site-shell";
+
 export default function Privacy() {
- return <SiteShell><main className="content-page public-content legal">
-  <p className="eyebrow">PRIVACY</p><h1>Privacy Policy</h1><p className="lead">Effective November 10, 2026</p>
-  <section><h2>Data and access</h2><p>SIRALOOM is designed for controlled, organisation-scoped access to genomic workflow records and auditable activity. Organisations using the platform are responsible for ensuring that data submitted to SIRALOOM is collected and shared lawfully, and for configuring user access and retention for their intended use.</p></section>
-  <section><h2>Payment information</h2><p>Payments made through SIRALOOM checkout are processed by Paddle.com as Merchant of Record. Payment details are submitted to Paddle and handled under its own privacy policy and buyer terms. SIRALOOM does not ask customers to send full payment-card details by email.</p></section>
-  <section><h2>Questions</h2><p>For payment-related privacy questions, contact <a href="https://paddle.net" target="_blank" rel="noreferrer">Paddle Buyer Support</a>. For SIRALOOM privacy and platform questions, email <a href="mailto:siralooms@gmail.com">siralooms@gmail.com</a>.</p></section>
-  <p className="quiet">This page describes the current privacy principles and payment arrangement. Organisations must assess their own legal and regulatory obligations before uploading personal or genomic data.</p>
-  <p className="quiet">See also our <Link href="/terms">Terms of Service</Link> and <Link href="/refund-policy">Refund Policy</Link>.</p>
- </main></SiteShell>;
+  return (
+    <SiteShell>
+      <main className="content-page public-content legal">
+        <p className="eyebrow">LEGAL</p>
+        <h1>Privacy Policy</h1>
+        <p className="lead">Effective November 11, 2026</p>
+        <section>
+          <h2>Information handled by SIRALOOM</h2>
+          <p>
+            Depending on your use and deployment, SIRALOOM may process account
+            and organisation details, user and access records, support
+            communications, and technical activity logs. The platform may also
+            process files and records submitted by a laboratory, including VCF
+            files, genomic and clinical information, case records, evidence
+            assessments and reports. Such information may include sensitive
+            personal or health data.
+          </p>
+        </section>
+        <section>
+          <h2>How information is used</h2>
+          <p>
+            Information is used to provide and operate the software, manage
+            accounts and permissions, support laboratory workflows, maintain
+            security and auditability, respond to support requests, and meet
+            applicable legal obligations.
+          </p>
+        </section>
+        <section>
+          <h2>Laboratory and customer responsibilities</h2>
+          <p>
+            The organisation using SIRALOOM is responsible for having the
+            necessary legal basis and permissions to submit personal, genomic
+            or clinical data, and for deciding who may access it. Users should
+            not upload information they are not authorised to share.
+          </p>
+          <p>
+            In a customer-managed deployment, the organisation is responsible
+            for its own hosting environment, infrastructure access, backups
+            and operational controls. Data handling in hosted deployments
+            depends on the service arrangement and applicable agreements.
+          </p>
+        </section>
+        <section>
+          <h2>Service providers and payments</h2>
+          <p>
+            SIRALOOM may use service providers needed to operate and support
+            the service, subject to the applicable arrangements. Payments made
+            through SIRALOOM checkout are processed by Paddle as Merchant of
+            Record. Paddle handles payment information under its own{" "}
+            <a href="https://www.paddle.com/legal/privacy" target="_blank" rel="noreferrer">
+              Privacy Policy
+            </a>.
+            Do not send full payment-card details to SIRALOOM by email.
+          </p>
+        </section>
+        <section>
+          <h2>Retention and privacy enquiries</h2>
+          <p>
+            Retention and deletion depend on the deployment, customer
+            configuration, applicable agreement and legal requirements.
+            Organisations should contact their SIRALOOM administrator about
+            access to or removal of laboratory records. For privacy questions,
+            contact <a href="mailto:siralooms@gmail.com">siralooms@gmail.com</a>.
+          </p>
+        </section>
+        <p className="quiet">
+          See our <Link href="/terms">Terms of Service</Link> and{" "}
+          <Link href="/refund-policy">Refund Policy</Link>.
+        </p>
+      </main>
+    </SiteShell>
+  );
 }
