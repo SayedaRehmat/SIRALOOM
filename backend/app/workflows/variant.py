@@ -4600,7 +4600,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             ):
                                 execution_row = start_resource_execution(db, analysis_id=analysis.id, step_id="build_evidence", attempt=attempt, batch_key=key, resolved=clingen_vp_execution, requested_resource_id=clingen_vp_resource.id, fallback_resource_id=None, metadata={"execution_kind": "CLINGEN_VARIANT_PATHOGENICITY_QUERY", "query": query_material})
                                 try:
-                                    assertions = clingen_vp_provider.query_variant(gene=gene, hgvs=hgvs_values)
+                                    assertions = clingen_vp_provider.query_variant(
+                                        gene=gene, hgvs=hgvs_values,
+                                        request_fingerprint=request_fingerprint,
+                                    )
                                     response_material = [{"source_record_id": x.source_record_id, "record_sha256": x.record_sha256} for x in assertions]
                                     response_sha256 = hashlib.sha256(json.dumps(response_material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
                                     complete_resource_execution(db, execution_row, status="SUCCESS" if assertions else "NO_DATA", request_fingerprint=request_fingerprint, response_sha256=response_sha256)
@@ -4737,16 +4740,39 @@ def run_variant_analysis(analysis_id: UUID) -> None:
 
                         for record in records:
                             if record.resource_id is not None:
+                                response_retention = None
+                                if record.raw_response_bytes:
+                                    record_resource = db.get(Resource, record.resource_id)
+                                    if record_resource is None:
+                                        raise RuntimeError("Evidence response resource disappeared before retention.")
+                                    from backend.app.domain.evidence_response_retention import (
+                                        ProviderResponseRetention,
+                                        retain_provider_response_bytes,
+                                    )
+                                    response_retention = retain_provider_response_bytes(
+                                        db, analysis=analysis, resource=record_resource,
+                                        provider_id="ClinGen Variant Pathogenicity",
+                                        provider_version="ERepo",
+                                        request_fingerprint=record.request_fingerprint or "",
+                                        raw_response_bytes=record.raw_response_bytes,
+                                        media_type=record.response_media_type or "application/json",
+                                        store=artifacts,
+                                    )
+                                    if response_retention.status == "NOT_PERMITTED":
+                                        raise ResourceConsumptionError(
+                                            "PROVIDER_RESPONSE_RETENTION_PROHIBITED",
+                                            response_retention.reason,
+                                        )
                                 provenance = {
                                     "resource_id": record.resource_id,
                                     "source_record_id": record.source_record_id,
                                     "request_fingerprint": record.request_fingerprint,
                                     "response_sha256": record.response_sha256,
-                                    "response_artifact_id": None,
-                                    "response_artifact_sha256": None,
-                                    "response_artifact_size_bytes": None,
-                                    "response_retention_status": "NOT_AVAILABLE",
-                                    "response_retention_reason": "This provider adapter does not yet expose retained raw response bytes.",
+                                    "response_artifact_id": response_retention.artifact_id if response_retention else None,
+                                    "response_artifact_sha256": response_retention.sha256 if response_retention else None,
+                                    "response_artifact_size_bytes": response_retention.size_bytes if response_retention else None,
+                                    "response_retention_status": response_retention.status if response_retention else "NOT_AVAILABLE",
+                                    "response_retention_reason": response_retention.reason if response_retention else "This provider adapter does not yet expose retained raw response bytes.",
                                     "request_metadata": record.request_metadata or {},
                                     "observed_at": record.observed_at,
                                     "source_name": record.source_name,
