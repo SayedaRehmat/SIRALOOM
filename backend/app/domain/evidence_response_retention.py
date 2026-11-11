@@ -334,6 +334,63 @@ def verify_provider_response_reference(
         or metadata.get("raw_response_size_bytes") != size
     ):
         raise ValueError("Provider response artifact provenance does not match its source record.")
+    approval_id = metadata.get("retention_approval_id")
+    if not approval_id:
+        raise ValueError("Provider response artifact is missing its governed retention approval reference.")
+    try:
+        approval = db.get(ProviderRetentionApproval, UUID(str(approval_id)))
+    except (TypeError, ValueError):
+        approval = None
+    if (
+        approval is None or approval.organization_id != case.organization_id
+        or approval.resource_id != resource_id
+        or approval.status != "APPROVED"
+        or "RAW_PROVIDER_RESPONSE_RETENTION" not in set(approval.permission_scope or [])
+    ):
+        raise ValueError("Provider response retention approval is missing, revoked, or out of scope.")
+    now = datetime.now(UTC)
+    if approval.expires_at is not None:
+        expires = approval.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        if expires <= now:
+            raise ValueError("Provider response retention approval has expired.")
+    _authorized_reviewer(db, organization_id=case.organization_id, reviewer_id=approval.reviewer_id)
+    if (
+        metadata.get("retention_approval_version") != approval.version
+        or metadata.get("retention_approval_terms_evidence_artifact_id") != str(approval.terms_evidence_artifact_id)
+        or metadata.get("retention_approval_terms_evidence_sha256") != approval.terms_evidence_sha256
+    ):
+        raise ValueError("Provider response artifact approval snapshot was substituted.")
+    terms_artifact = db.get(Artifact, approval.terms_evidence_artifact_id)
+    if terms_artifact is None or terms_artifact.sha256 != approval.terms_evidence_sha256:
+        raise ValueError("Provider retention terms evidence is missing or has changed.")
+    terms_case = db.get(Case, terms_artifact.case_id)
+    if terms_case is None or terms_case.organization_id != case.organization_id:
+        raise ValueError("Provider retention terms evidence belongs to another organization.")
+    terms_store = artifact_store_for_uri(
+        db, organization_id=case.organization_id, storage_uri=terms_artifact.storage_uri
+    )
+    if callable(getattr(terms_store, "download_to_file", None)):
+        with tempfile.NamedTemporaryFile(prefix="siraloom-terms-verify-", delete=False) as handle:
+            terms_staged = Path(handle.name)
+        try:
+            terms_store.download_to_file(
+                terms_artifact.storage_uri, terms_staged,
+                expected_sha256=terms_artifact.sha256,
+                expected_size_bytes=terms_artifact.size_bytes,
+            )
+            verify_artifact_file(
+                terms_staged, sha256=terms_artifact.sha256,
+                size_bytes=terms_artifact.size_bytes,
+            )
+        finally:
+            terms_staged.unlink(missing_ok=True)
+    else:
+        verify_artifact_file(
+            terms_store.local_path(terms_artifact.storage_uri),
+            sha256=terms_artifact.sha256, size_bytes=terms_artifact.size_bytes,
+        )
     store = artifact_store_for_uri(
         db, organization_id=case.organization_id, storage_uri=artifact.storage_uri
     )
