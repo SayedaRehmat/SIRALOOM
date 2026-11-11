@@ -296,3 +296,67 @@ def assert_assay_validation_current(
             raise AssayValidationError(
                 "Assay validation approval changed, expired or was withdrawn after analysis creation"
             )
+
+
+def assert_pipeline_components_match_runtime(
+    validation_snapshot: dict[str, Any] | None,
+    observed_components: list[dict[str, Any]] | None,
+) -> None:
+    """Fail closed unless every approved component exactly matches worker evidence.
+
+    The observed manifest must be collected from the executing worker, not copied
+    from the validation submission or analysis request. Names are identity keys;
+    duplicate, missing, additional, malformed, version-drifted or digest-drifted
+    components are rejected.
+    """
+    if not isinstance(validation_snapshot, dict):
+        raise AssayValidationError(
+            "Clinical analysis has no immutable assay validation component snapshot"
+        )
+    expected_items = validation_snapshot.get("pipeline_components")
+    if not isinstance(expected_items, list) or not expected_items:
+        raise AssayValidationError(
+            "Approved assay validation has no declared pipeline component digests"
+        )
+    if not isinstance(observed_components, list) or not observed_components:
+        raise AssayValidationError(
+            "Worker runtime component attestation is missing"
+        )
+
+    def index(items: list[dict[str, Any]], source: str) -> dict[str, tuple[str, str]]:
+        indexed: dict[str, tuple[str, str]] = {}
+        for item in items:
+            if not isinstance(item, dict):
+                raise AssayValidationError(
+                    f"{source} component manifest contains a malformed entry"
+                )
+            name = _nonempty(item.get("name"), f"{source} component name")
+            version = _nonempty(item.get("version"), f"{source} component version")
+            digest = _nonempty(item.get("sha256"), f"{source} component sha256").lower()
+            if not _SHA256.fullmatch(digest):
+                raise AssayValidationError(
+                    f"{source} component {name} has an invalid SHA-256 digest"
+                )
+            if name in indexed:
+                raise AssayValidationError(
+                    f"{source} component manifest contains duplicate component {name}"
+                )
+            indexed[name] = (version, digest)
+        return indexed
+
+    expected = index(expected_items, "approved")
+    observed = index(observed_components, "worker runtime")
+    if set(expected) != set(observed):
+        missing = sorted(set(expected) - set(observed))
+        unexpected = sorted(set(observed) - set(expected))
+        raise AssayValidationError(
+            "ASSAY_VALIDATION_COMPONENT_SET_MISMATCH: "
+            f"missing runtime components={missing}; unapproved runtime components={unexpected}"
+        )
+    for name in sorted(expected):
+        if expected[name] != observed[name]:
+            raise AssayValidationError(
+                "ASSAY_VALIDATION_COMPONENT_MISMATCH: "
+                f"worker runtime component {name!r} does not match the approved "
+                "version and SHA-256 digest"
+            )
