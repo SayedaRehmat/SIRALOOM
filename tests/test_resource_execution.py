@@ -516,8 +516,6 @@ def test_replayed_annotation_observation_cannot_duplicate_or_change_resource_ide
             "resource_version": resource.version,
             "request_fingerprint": "request-fingerprint-v1",
             "response_sha256": "a" * 64,
-                    "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
-                    "raw_response_media_type": "application/json",
             "request_metadata": {"provider": "GeneBe", "provider_version": "api-public-v1"},
             "payload": {"raw": {"impact": "MODERATE"}, "normalized": {"impact": "MODERATE"}},
         }
