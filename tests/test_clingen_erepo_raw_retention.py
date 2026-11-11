@@ -2,6 +2,7 @@ import hashlib
 import json
 
 from backend.app.adapters.clingen.variant_pathogenicity import ClinGenVariantPathogenicityProvider
+from backend.app.evidence.engine import EvidenceEngine
 
 
 def test_erepo_classification_responses_keep_exact_bytes_and_distinct_stable_identities(monkeypatch):
@@ -53,3 +54,31 @@ def test_erepo_per_classification_request_identity_is_retry_stable(monkeypatch):
     )[0]
     assert first.response_request_fingerprint == retry.response_request_fingerprint
     assert first.raw_response_bytes == retry.raw_response_bytes == body
+
+
+
+def test_clingen_exact_response_bytes_reach_persistable_evidence_record(monkeypatch):
+    provider = ClinGenVariantPathogenicityProvider(api_base_url="https://erepo.example")
+    monkeypatch.setattr(
+        provider, "_api_get_json",
+        lambda path, params: {"classifications": [{"uuid": "classification-1"}]},
+    )
+    body = b'{ "uuid" : "classification-1", "classification" : "Pathogenic", "gene" : "GENE1", "hgvs" : ["NM_000001.1:c.1A>G"], "caid" : "CA123" }'
+    monkeypatch.setattr(
+        provider, "_api_get_json_with_bytes",
+        lambda path, params: (json.loads(body.decode("utf-8")), body),
+    )
+    assertion = provider.query_variant(
+        gene="GENE1", hgvs=["NM_000001.1:c.1A>G"],
+        request_fingerprint="c" * 64,
+    )[0]
+    records = EvidenceEngine().build_from_clingen_variant_assertions(
+        variant_id=__import__("uuid").uuid4(), assertions=[assertion],
+        resource_id=__import__("uuid").uuid4(), resource_name="ClinGen ERepo",
+        resource_version="2026-01", request_fingerprint="c" * 64,
+        execution_metadata={"provider": "ClinGen ERepo"},
+    )
+    assert len(records) == 1
+    assert records[0].raw_response_bytes == body
+    assert records[0].request_fingerprint == assertion.response_request_fingerprint
+    assert records[0].response_media_type == "application/json"
