@@ -321,40 +321,43 @@ class FirebaseArtifactStore:
         target = Path(destination)
         target.parent.mkdir(parents=True, exist_ok=True)
         blob = self._blob_from_uri(storage_uri)
-        blob.download_to_filename(str(target))
-
-        # Every artifact uploaded by this store carries its SHA-256 in object
-        # metadata. Prefer an explicit caller expectation when available, but
-        # otherwise verify that immutable metadata before a worker can consume
-        # the downloaded file.
-        metadata_sha256 = (blob.metadata or {}).get("sha256")
-        verification_sha256 = expected_sha256 or metadata_sha256
-
-        if expected_size_bytes is not None or verification_sha256 is not None:
-            actual_sha256, actual_size_bytes = self._sha256_and_size(target)
-
-            if (
-                expected_size_bytes is not None
-                and actual_size_bytes != expected_size_bytes
+        try:
+            # Pin the read to the exact GCS object generation whose metadata
+            # and digest are being checked. Without this precondition, an
+            # object replacement between metadata lookup and download could
+            # cause a different generation to be consumed.
+            blob.reload()
+            generation = getattr(blob, "generation", None)
+            if generation is None:
+                raise RuntimeError("Cloud artifact generation is unavailable for integrity verification.")
+            metadata_sha256 = (blob.metadata or {}).get("sha256")
+            verification_sha256 = expected_sha256 or metadata_sha256
+            if not isinstance(verification_sha256, str) or len(verification_sha256) != 64:
+                raise RuntimeError("Cloud artifact SHA-256 metadata or expected digest is missing or invalid.")
+            if expected_sha256 is not None and metadata_sha256 is not None and (
+                metadata_sha256.lower() != expected_sha256.lower()
             ):
-                target.unlink(missing_ok=True)
+                raise RuntimeError("Cloud artifact metadata SHA-256 does not match the persisted artifact digest.")
+
+            blob.download_to_filename(
+                str(target),
+                if_generation_match=generation,
+            )
+            actual_sha256, actual_size_bytes = self._sha256_and_size(target)
+            if expected_size_bytes is not None and actual_size_bytes != expected_size_bytes:
                 raise RuntimeError(
                     "Cloud artifact size mismatch: "
-                    f"expected {expected_size_bytes} bytes, "
-                    f"received {actual_size_bytes} bytes."
+                    f"expected {expected_size_bytes} bytes, received {actual_size_bytes} bytes."
                 )
-
-            if (
-                verification_sha256 is not None
-                and actual_sha256.lower() != verification_sha256.lower()
-            ):
-                target.unlink(missing_ok=True)
+            if actual_sha256.lower() != verification_sha256.lower():
                 raise RuntimeError(
                     "Cloud artifact SHA-256 mismatch: "
                     f"expected {verification_sha256}, received {actual_sha256}."
                 )
-
-        return target
+            return target
+        except Exception:
+            target.unlink(missing_ok=True)
+            raise
 
     def iter_bytes(self, storage_uri: str, *, chunk_size: int = 8 * 1024 * 1024):
         """Yield bounded chunks from a cloud artifact for HTTP streaming."""
