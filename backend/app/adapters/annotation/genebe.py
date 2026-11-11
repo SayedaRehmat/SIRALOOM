@@ -3,6 +3,7 @@ from typing import Any
 from datetime import datetime, timezone
 import hashlib
 import json
+import base64
 import httpx
 import time
 from backend.app.config import settings
@@ -116,6 +117,7 @@ class GeneBeProvider:
             time.sleep(max(0.0, delay))
         else:
             raise last_error or GeneBeError("GeneBe request failed")
+        raw_response_bytes = bytes(response.content)
         response_sha256 = hashlib.sha256(
             json.dumps(data, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
@@ -127,6 +129,8 @@ class GeneBeProvider:
             "genome": genome,
             "request_fingerprint": request_fingerprint,
             "response_sha256": response_sha256,
+            "raw_response_base64": base64.b64encode(raw_response_bytes).decode("ascii"),
+            "raw_response_media_type": response.headers.get("Content-Type"),
             "observed_at": observed_at,
             "retry_count": retry_count,
         }
