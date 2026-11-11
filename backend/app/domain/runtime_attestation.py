@@ -193,6 +193,15 @@ def _verify_host_attestor_signature(payload: bytes, signature: bytes) -> None:
     if not public_key_value:
         raise RuntimeAttestationError("A pinned host-attestor Ed25519 public key is required")
     public_key = Path(public_key_value).resolve(strict=True)
+    try:
+        key_description = subprocess.run(
+            ["openssl", "pkey", "-pubin", "-in", str(public_key), "-text", "-noout"],
+            check=True, capture_output=True, text=True, timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise RuntimeAttestationError("Cannot load the pinned host-attestor public key") from exc
+    if "ED25519" not in key_description.upper():
+        raise RuntimeAttestationError("Pinned host-attestor public key must be Ed25519")
     with tempfile.TemporaryDirectory(prefix="siraloom-host-attestation-") as directory:
         root = Path(directory)
         message_path, signature_path = root / "message", root / "signature"
