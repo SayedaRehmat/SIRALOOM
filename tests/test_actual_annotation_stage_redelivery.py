@@ -17,6 +17,7 @@ from backend.app.domain.variant_identity import canonical_key, stable_variant_uu
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
+    ResourceDiscovery,
     Analysis,
     AnalysisPartition,
     Annotation,
@@ -127,6 +128,15 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                 status="ACTIVE", population_definition=None, metadata_json={},
             )
             db.add(resource)
+            db.add(ResourceDiscovery(
+                id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
+                canonical_source_url="https://fixture.invalid/", artifact_url="https://fixture.invalid/release",
+                release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
+                license_url="https://fixture.invalid/license", terms_url=None,
+                checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
+                authority_evidence_url="https://fixture.invalid/about", status="DISCOVERED",
+                metadata_json={},
+            ))
             for order, step_id, status, metadata, outputs in [
                 (1, "validate_input", StepStatus.SUCCEEDED, {"test_checkpoint": True}, [str(source_artifact.id)]),
                 (2, "normalize", StepStatus.SUCCEEDED, {"record_count": 1, "test_checkpoint": True}, [str(normalized_artifact.id)]),
@@ -196,6 +206,8 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                         "provider_version": self.provider_version,
                         "request_fingerprint": "d" * 64,
                         "response_sha256": "e" * 64,
+                        "raw_response_base64": "eyJ0ZXN0IjoicmF3In0=",
+                        "raw_response_media_type": "application/json",
                         "observed_at": "2026-10-10T00:00:00+00:00",
                         "retry_count": 0, "genome": "hg38",
                         "annotation_options": [
