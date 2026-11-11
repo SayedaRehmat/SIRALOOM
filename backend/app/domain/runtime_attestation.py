@@ -275,3 +275,51 @@ def attest_clinical_analysis_runtime(
     )
     db.commit()
     return True, None
+
+def assert_analysis_runtime_attested(db, analysis) -> None:
+    """Require a valid successful worker attestation before clinical sign-out/use."""
+    from sqlalchemy import select
+
+    from backend.app.domain.assay_validation import (
+        AssayValidationError,
+        assert_pipeline_components_match_runtime,
+    )
+    from backend.app.infrastructure.db.models import AuditEvent
+
+    events = list(db.scalars(
+        select(AuditEvent)
+        .where(
+            AuditEvent.analysis_id == analysis.id,
+            AuditEvent.event_type.in_((
+                "CLINICAL_RUNTIME_ATTESTED",
+                "CLINICAL_RUNTIME_ATTESTATION_BLOCKED",
+            )),
+        )
+        .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+        .limit(1)
+    ))
+    if not events:
+        raise RuntimeAttestationError(
+            "Clinical analysis has no persisted worker runtime attestation"
+        )
+    event = events[0]
+    if event.event_type != "CLINICAL_RUNTIME_ATTESTED":
+        raise RuntimeAttestationError(
+            "The latest worker runtime attestation blocked clinical execution"
+        )
+    if not isinstance(event.event_hash, str) or not _SHA256.fullmatch(event.event_hash):
+        raise RuntimeAttestationError("Runtime attestation audit event has no valid event-chain hash")
+    payload = event.payload if isinstance(event.payload, dict) else {}
+    components = payload.get("components")
+    if not isinstance(components, list):
+        raise RuntimeAttestationError("Runtime attestation audit event has no component manifest")
+    if payload.get("manifest_sha256") != runtime_manifest_sha256(components):
+        raise RuntimeAttestationError("Runtime attestation manifest digest does not match its recorded components")
+    configuration = dict(analysis.configuration or {})
+    snapshot = configuration.get("assay_validation_snapshot")
+    try:
+        assert_pipeline_components_match_runtime(snapshot, components)
+    except AssayValidationError as exc:
+        raise RuntimeAttestationError(
+            "Persisted runtime attestation no longer matches the approved assay-validation snapshot"
+        ) from exc
