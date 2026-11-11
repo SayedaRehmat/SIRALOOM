@@ -237,6 +237,11 @@ def decide_assay_validation(submission_id: UUID, body: AssayValidationDecisionIn
             raise HTTPException(422, "Approval timestamps must include timezone information")
         if body.expires_at <= body.effective_at:
             raise HTTPException(422, "Approval expiry must be later than its effective time")
+    previous_approval = None
+    if decision_name == "APPROVE":
+        previous_approval = current_approved_validation(
+            db, assay_id=submission.assay_id, organization_id=submission.organization_id
+        )
     row = AssayValidationDecision(
         id=uuid4(), submission_id=submission.id, decision=decision_name, reason=body.reason.strip(),
         evidence_reference=body.evidence_reference.strip() if body.evidence_reference else None,
@@ -245,7 +250,6 @@ def decide_assay_validation(submission_id: UUID, body: AssayValidationDecisionIn
     db.add(row)
     db.flush()
     if decision_name == "APPROVE":
-        previous_approval = current_approved_validation(db, assay_id=submission.assay_id, organization_id=submission.organization_id)
         if previous_approval is not None and previous_approval[0].id != submission.id:
             db.add(AssayValidationDecision(
                 id=uuid4(), submission_id=previous_approval[0].id, decision="SUPERSEDE",
