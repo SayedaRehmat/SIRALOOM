@@ -1,0 +1,52 @@
+{
+  "schema_version": "2",
+  "dataset": "NIST_GIAB_HG001_NISTv4.2.1",
+  "sample": "HG001",
+  "source_release": "NISTv4.2.1",
+  "assets": {
+    "GRCh37": [
+      [
+        "reference_source_fasta",
+        "https://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz",
+        "d10eebe06c0dbbcb04253e3294d63efc"
+      ],
+      [
+        "truth_vcf",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh37/HG001_GRCh37_1_22_v4.2.1_benchmark.vcf.gz",
+        "69f5cd5d990cf96c5844b92475624a54"
+      ],
+      [
+        "truth_tbi",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh37/HG001_GRCh37_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+        "8cfdc3bfd0174db81dc2470b997183ad"
+      ],
+      [
+        "confident_bed",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh37/HG001_GRCh37_1_22_v4.2.1_benchmark.bed",
+        "b136018367ec3abf3d9c64a252bd8036"
+      ]
+    ],
+    "GRCh38": [
+      [
+        "reference_source_fasta",
+        "https://zenodo.org/records/10557082/files/GRCh38.fasta.gz?download=1",
+        "3a3347eae0893f96ecf495d1c39e2284"
+      ],
+      [
+        "truth_vcf",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh38/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz",
+        "ec61d76ad725d808e3a9e1c8acec402a"
+      ],
+      [
+        "truth_tbi",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh38/HG001_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi",
+        "476166561e6a486aee67d727dbd102ef"
+      ],
+      [
+        "confident_bed",
+        "https://giab.s3.amazonaws.com/release/NA12878_HG001/NISTv4.2.1/GRCh38/HG001_GRCh38_1_22_v4.2.1_benchmark.bed",
+        "e1ea90c830f981d29a46043eb618e7bf"
+      ]
+    ]
+  }
+}
