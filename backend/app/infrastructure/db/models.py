@@ -780,6 +780,35 @@ class PhenotypeObservation(Base):
         ),
     )
 
+class PhenotypeObservationAmendment(Base):
+    """Append-only correction/retraction event for a clinical phenotype observation."""
+    __tablename__ = "phenotype_observation_amendments"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id"), nullable=False)
+    observation_id: Mapped[UUID] = mapped_column(ForeignKey("phenotype_observations.id"), nullable=False)
+    replacement_observation_id: Mapped[UUID | None] = mapped_column(ForeignKey("phenotype_observations.id"))
+    amendment_type: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    amendment_fingerprint: Mapped[str] = mapped_column(Text, nullable=False)
+    recorded_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, nullable=False)
+    __table_args__ = (
+        UniqueConstraint("observation_id", name="uq_phenotype_amendment_observation"),
+        UniqueConstraint("case_id", "amendment_fingerprint", name="uq_phenotype_amendment_case_fingerprint"),
+        CheckConstraint("amendment_type IN ('SUPERSEDED', 'RETRACTED')", name="ck_phenotype_amendment_type"),
+        CheckConstraint(
+            "(amendment_type = 'SUPERSEDED' AND replacement_observation_id IS NOT NULL) OR "
+            "(amendment_type = 'RETRACTED' AND replacement_observation_id IS NULL)",
+            name="ck_phenotype_amendment_replacement",
+        ),
+        CheckConstraint(
+            "replacement_observation_id IS NULL OR observation_id <> replacement_observation_id",
+            name="ck_phenotype_amendment_not_self_replacement",
+        ),
+        Index("ix_phenotype_amendments_case_recorded", "case_id", "recorded_at"),
+    )
+
+
 class PedigreeMember(Base):
     __tablename__ = "pedigree_members"
     id: Mapped[UUID] = mapped_column(primary_key=True)

@@ -1,0 +1,93 @@
+name: Clinical interoperability external conformance checks
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/adapters/phenotype/**"
+      - "scripts/validate_clinical_interop_exports.py"
+      - "tests/test_fhir_r5_phenotype_export.py"
+      - "tests/test_phenopackets_v2_export.py"
+      - "pyproject.toml"
+      - ".github/workflows/clinical-interop-conformance.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-conformance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install SIRALOOM export dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e .
+      - name: Generate deterministic synthetic exports
+        run: |
+          python scripts/validate_clinical_interop_exports.py --output-dir build/clinical-interop
+          test -s build/clinical-interop/phenopacket.json
+          test -s build/clinical-interop/family.json
+          test -s build/clinical-interop/fhir-r5-bundle.json
+
+      - name: Download and verify GA4GH Phenopacket Tools 1.0.0
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 https://github.com/phenopackets/phenopacket-tools/releases/download/v1.0.0/phenopacket-tools-cli-1.0.0-distribution.zip --output /tmp/phenopacket-tools.zip
+          echo "6e5f0873127354897ac5cc48a1c6061417a871cc69c8eb39571d52c9a9881074  /tmp/phenopacket-tools.zip" | sha256sum --check
+          mkdir -p /tmp/phenopacket-tools
+          unzip -q /tmp/phenopacket-tools.zip -d /tmp/phenopacket-tools
+          find /tmp/phenopacket-tools -type f -name "phenopacket-tools-cli-1.0.0.jar" -print -quit | grep -q .
+
+      - name: Validate GA4GH Phenopacket v2 and Family with official tools
+        run: |
+          set -euo pipefail
+          TOOL_JAR="$(find /tmp/phenopacket-tools -type f -name 'phenopacket-tools-cli-1.0.0.jar' -print -quit)"
+          java -jar "$TOOL_JAR" validate -H build/clinical-interop/phenopacket.json 2>&1 | tee build/clinical-interop/phenopacket-tools-phenopacket.csv
+          java -jar "$TOOL_JAR" validate -H -e family build/clinical-interop/family.json 2>&1 | tee build/clinical-interop/phenopacket-tools-family.csv
+
+      - name: Assert GA4GH validators emitted no ERROR findings
+        run: |
+          set -euo pipefail
+          for report in build/clinical-interop/phenopacket-tools-phenopacket.csv build/clinical-interop/phenopacket-tools-family.csv; do
+            test -s "$report"
+            if grep -Eq ',ERROR,' "$report"; then
+              cat "$report"
+              exit 1
+            fi
+          done
+
+      - name: Download and verify HL7 FHIR Validator 7.0.3
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 https://github.com/hapifhir/org.hl7.fhir.core/releases/download/7.0.3/validator_cli.jar --output /tmp/validator_cli.jar
+          echo "57aa43fb40cec5de41def81c927725fd85908eeb71509b7f9313e04d9b8ec79b  /tmp/validator_cli.jar" | sha256sum --check
+
+      - name: Validate synthetic Bundle against HL7 FHIR R5 core
+        run: |
+          set -euo pipefail
+          java -jar /tmp/validator_cli.jar build/clinical-interop/fhir-r5-bundle.json -version 5.0.0 -tx n/a -extension any 2>&1 | tee build/clinical-interop/hl7-fhir-r5-validator.log
+
+      - name: Assert FHIR R5 validator emitted no errors
+        run: |
+          set -euo pipefail
+          if grep -Eq 'Error @ ' build/clinical-interop/hl7-fhir-r5-validator.log; then
+            cat build/clinical-interop/hl7-fhir-r5-validator.log
+            exit 1
+          fi
+
+      - name: Upload external validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clinical-interop-external-validation
+          path: build/clinical-interop/
+          if-no-files-found: warn
+          retention-days: 30
