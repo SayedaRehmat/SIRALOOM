@@ -123,6 +123,7 @@ def test_clinical_use_requires_current_approved_validation_and_exact_scope():
                 reference_build="GRCh38", specimen_type="BLOOD",
             )
             assert snapshot["protocol_identifier"] == "SOP-NGS-01"
+            assert snapshot["pipeline_components"] == _payload()["pipeline_components"]
             with pytest.raises(AssayValidationError, match="workflow and version"):
                 authorize_assay_validation(
                     db, assay_id=assay_id, organization_id=organization_id,
