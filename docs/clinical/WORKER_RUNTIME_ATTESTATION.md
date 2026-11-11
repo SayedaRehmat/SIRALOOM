@@ -82,6 +82,16 @@ Docker Compose, bare-metal, and other non-Kubernetes workers currently cannot pr
 
 A separate host/container-runtime attestor is required for those deployment modes. It must obtain the running container identity and immutable image digest from the trusted host runtime, bind that identity to the worker process, and provide authenticated evidence whose trust anchor is controlled outside the worker container. This provider is not implemented yet.
 
+## Capture the measured manifest
+
+Run the following command inside the exact worker container/pod that the laboratory intends to validate:
+
+```bash
+python scripts/print_runtime_component_manifest.py --workflow-version 2.1
+```
+
+The command prints the six measured component identities and a canonical manifest digest. Retain that output as controlled validation evidence and submit the six component entries in the assay-validation record. Do not copy example/test digests into a clinical submission. Repeat measurement for each distinct worker image/profile used by the assay.
+
 ## Laboratory validation manifest
 
 An assay-validation submission must declare exactly the six component keys above. The laboratory's approved validation evidence must contain the actual expected SHA-256 values for the deployed image and every component. Example hashes in automated tests are synthetic and are not clinical validation evidence.
