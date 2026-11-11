@@ -809,7 +809,7 @@ def test_signout_rejects_mutated_acmg_evidence_snapshot():
     db.commit()
 
     from backend.app.reporting.finalization import ReportFinalizationError
-    with pytest.raises(ReportFinalizationError, match="evidence .* changed"):
+    with pytest.raises(ReportFinalizationError, match="evidence .* failed its persisted evidence fingerprint"):
         finalize_report(db, report_id=report.id, approver_id=reviewer.id, reason="Sign out")
 
 def test_signout_rejects_mutated_classification_metadata_snapshot():
