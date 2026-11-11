@@ -18,6 +18,7 @@ from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
     ResourceDiscovery,
+    OrganizationMembership,
     Analysis,
     AnalysisPartition,
     Annotation,
@@ -128,7 +129,7 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                 status="ACTIVE", population_definition=None, metadata_json={},
             )
             db.add(resource)
-            db.add(ResourceDiscovery(
+            discovery = ResourceDiscovery(
                 id=uuid4(), resource_id=resource.id, publisher="Test Publisher",
                 canonical_source_url="https://fixture.invalid/", artifact_url="https://fixture.invalid/release",
                 release_identity=resource.version, access_mode="PUBLIC", license_status="VERIFIED",
@@ -140,7 +141,30 @@ def test_actual_annotation_stage_recovers_after_row_commit_and_task_redelivery(
                     "raw_response_retention_reviewed_by": "test-reviewer",
                     "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
                 },
+            )
+            db.add(discovery)
+            db.add(OrganizationMembership(
+                id=uuid4(), organization_id=organization_id, user_id=user_id,
+                role="LAB_ADMIN", status="ACTIVE",
             ))
+            terms_path = tmp_path / "provider-terms.txt"
+            terms_bytes = b"Reviewed exact provider terms for response retention."
+            terms_path.write_bytes(terms_bytes)
+            import hashlib
+            terms_artifact = store.put_file(
+                db=db, case_id=case_id, analysis_id=None, source_path=terms_path,
+                filename="provider-terms.txt", artifact_type="LICENSE_TERMS_EVIDENCE",
+                media_type="text/plain", genome_build=None, validation_status="VALIDATED",
+                metadata={"resource_id": str(resource.id), "release_identity": resource.version},
+            )
+            from backend.app.domain.evidence_response_retention import approve_provider_retention
+            approve_provider_retention(
+                db, organization_id=organization_id, resource_discovery_id=discovery.id,
+                reviewer_id=user_id, permission_scope=["RAW_PROVIDER_RESPONSE_RETENTION"],
+                reason="Test fixture authorizes retention for this exact provider release.",
+                terms_evidence_artifact_id=terms_artifact.id,
+                terms_evidence_sha256=hashlib.sha256(terms_bytes).hexdigest(),
+            )
             for order, step_id, status, metadata, outputs in [
                 (1, "validate_input", StepStatus.SUCCEEDED, {"test_checkpoint": True}, [str(source_artifact.id)]),
                 (2, "normalize", StepStatus.SUCCEEDED, {"record_count": 1, "test_checkpoint": True}, [str(normalized_artifact.id)]),
