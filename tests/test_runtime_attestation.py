@@ -99,10 +99,10 @@ def test_runtime_attestation_success_records_hash_chained_event(monkeypatch):
     monkeypatch.setattr(service, "AuditService", _FakeAudit)
     monkeypatch.setattr(
         runtime,
-        "collect_runtime_component_manifest",
-        lambda *, workflow_version: [
+        "collect_runtime_attestation_bundle",
+        lambda *, workflow_version: ([
             {"name": "bcftools", "version": "1.25", "sha256": "a" * 64}
-        ],
+        ], None),
     )
     monkeypatch.setattr(runtime, "assert_pipeline_components_match_runtime", lambda snapshot, observed: None)
 
@@ -119,6 +119,7 @@ def test_runtime_attestation_success_records_hash_chained_event(monkeypatch):
     assert _FakeAudit.events[0]["payload"]["manifest_sha256"] == runtime.runtime_manifest_sha256(
         [{"name": "bcftools", "version": "1.25", "sha256": "a" * 64}]
     )
+    assert _FakeAudit.events[0]["payload"]["host_attestation"] is None
 
 
 def test_runtime_attestation_failure_blocks_analysis_and_records_reason(monkeypatch):
@@ -130,7 +131,7 @@ def test_runtime_attestation_failure_blocks_analysis_and_records_reason(monkeypa
     def missing_image(*, workflow_version):
         raise runtime.RuntimeAttestationError("trusted container image identity is missing")
 
-    monkeypatch.setattr(runtime, "collect_runtime_component_manifest", missing_image)
+    monkeypatch.setattr(runtime, "collect_runtime_attestation_bundle", missing_image)
     db = _FakeDB()
     analysis = _analysis()
 
