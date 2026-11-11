@@ -344,6 +344,30 @@ def test_clinical_worker_gate_blocks_assay_configuration_mutation():
         engine.dispose()
 
 
+def test_clinical_worker_gate_blocks_inactive_assay():
+    engine, case_id, _artifact_id, _specimen_id, assay_id, configuration = _clinical_fixture()
+    try:
+        with Session(engine) as db:
+            assay = db.get(Assay, assay_id)
+            assay.status = "INACTIVE"
+            db.commit()
+        with Session(engine) as db:
+            case = db.get(Case, case_id)
+            with pytest.raises(ClinicalAuthorizationError, match="assay is missing, inactive"):
+                assert_analysis_clinical_authorization(
+                    db,
+                    case=case,
+                    analysis_configuration=configuration,
+                    analysis_type="VARIANT_INTERPRETATION",
+                    analysis_assay_id=assay_id,
+                    analysis_workflow_id="variant-v1",
+                    analysis_workflow_version="2.1",
+                    analysis_reference_build="GRCh38",
+                )
+    finally:
+        engine.dispose()
+
+
 def test_clinical_worker_gate_requires_persisted_assay_foreign_key():
     engine, case_id, _artifact_id, _specimen_id, _assay_id, configuration = _clinical_fixture()
     try:
