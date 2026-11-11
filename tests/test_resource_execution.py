@@ -127,7 +127,11 @@ def _resource(db, *, provider="GeneBe", access_method="API", endpoint="https://q
         license_url="https://qualified.example/license", terms_url=None,
         checksum_status="NOT_PUBLISHED", expected_sha256=None, expected_size_bytes=None,
         authority_evidence_url="https://qualified.example/about", status="DISCOVERED",
-        metadata_json={},
+        metadata_json={
+            "raw_response_retention": "PERMITTED",
+            "raw_response_retention_reviewed_by": "test-reviewer",
+            "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
+        },
     ))
     db.flush()
     qualification = ResourceQualification(
