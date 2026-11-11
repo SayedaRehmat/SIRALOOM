@@ -49,7 +49,8 @@ def normalize_validation_submission(payload: dict[str, Any]) -> dict[str, Any]:
         raise AssayValidationError("validation_type must be VALIDATION or VERIFICATION")
 
     specimen_types = _string_list(payload.get("specimen_types"), "specimen_types")
-    variant_classes = [value.upper() for value in _string_list(payload.get("variant_classes"), "variant_classes")]
+    variant_classes = list(dict.fromkeys(value.upper() for value in _string_list(payload.get("variant_classes"), "variant_classes")))
+    specimen_types = list(dict.fromkeys(value.upper() for value in specimen_types))
     reference_builds = _string_list(payload.get("reference_builds"), "reference_builds")
 
     components = payload.get("pipeline_components")
@@ -75,13 +76,14 @@ def normalize_validation_submission(payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(item, dict):
             raise AssayValidationError("Each performance specification must be an object")
         variant_class = _nonempty(item.get("variant_class"), "performance specification variant_class").upper()
+        metric_name = _nonempty(item.get("metric"), "performance specification metric").lower()
         if variant_class not in variant_classes:
             raise AssayValidationError("Every performance specification must refer to a declared variant class")
         result = _nonempty(item.get("result"), "performance specification result").upper()
         if result not in {"PASS", "FAIL", "NOT_ASSESSED"}:
             raise AssayValidationError("Performance specification result must be PASS, FAIL or NOT_ASSESSED")
         normalized_specs.append({
-            "metric": _nonempty(item.get("metric"), "performance specification metric"),
+            "metric": metric_name,
             "variant_class": variant_class,
             "acceptance_criteria": _nonempty(item.get("acceptance_criteria"), "acceptance_criteria"),
             "observed_result": _nonempty(item.get("observed_result"), "observed_result"),
@@ -89,6 +91,18 @@ def normalize_validation_submission(payload: dict[str, Any]) -> dict[str, Any]:
             "result": result,
         })
         covered_classes.add(variant_class)
+    required_metrics = {"analytical_sensitivity", "positive_predictive_value"}
+    for variant_class in variant_classes:
+        class_metrics = {
+            item["metric"] for item in normalized_specs
+            if item["variant_class"] == variant_class
+        }
+        missing_metrics = required_metrics - class_metrics
+        if missing_metrics:
+            raise AssayValidationError(
+                f"{variant_class} requires performance specifications for: "
+                + ", ".join(sorted(missing_metrics))
+            )
     if covered_classes != set(variant_classes):
         missing = sorted(set(variant_classes) - covered_classes)
         raise AssayValidationError(
@@ -200,9 +214,9 @@ def _assert_scope(
     if specimen_type not in (submission.specimen_types or []):
         raise AssayValidationError("Approved assay validation does not cover this specimen type")
     declared = {str(value).upper() for value in (submission.variant_classes or [])}
-    if not _REQUIRED_INITIAL_VARIANT_CLASSES.issubset(declared):
+    if declared != _REQUIRED_INITIAL_VARIANT_CLASSES:
         raise AssayValidationError(
-            "Approved assay validation does not cover both SNVs and small indels supported by this clinical workflow"
+            "Approved assay validation scope must match the initial workflow exactly: SNV and small indels only"
         )
     specifications = submission.performance_specifications or []
     if any(str(item.get("result", "")).upper() != "PASS" for item in specifications):
