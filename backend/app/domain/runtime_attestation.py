@@ -394,6 +394,74 @@ def attest_clinical_analysis_runtime(
     db.commit()
     return True, None
 
+def _assert_persisted_host_attestation(
+    host_evidence: object,
+    components: list[dict[str, str]],
+    event,
+) -> None:
+    if host_evidence is None:
+        if settings.host_runtime_attestor_socket:
+            raise RuntimeAttestationError("Persisted runtime event is missing the required signed host evidence")
+        return
+    if not isinstance(host_evidence, dict):
+        raise RuntimeAttestationError("Persisted host runtime evidence is malformed")
+    payload = host_evidence.get("payload")
+    signature_hex = host_evidence.get("signature")
+    if not isinstance(payload, dict) or not isinstance(signature_hex, str):
+        raise RuntimeAttestationError("Persisted host runtime evidence is incomplete")
+    if payload.get("schema_version") != "1":
+        raise RuntimeAttestationError("Persisted host runtime evidence has an unsupported schema")
+    nonce = payload.get("nonce")
+    issued = payload.get("issued_at_unix")
+    if not isinstance(nonce, str) or not re.fullmatch(r"[0-9a-f]{64}", nonce):
+        raise RuntimeAttestationError("Persisted host runtime evidence has an invalid challenge")
+    if isinstance(issued, bool) or not isinstance(issued, int):
+        raise RuntimeAttestationError("Persisted host runtime evidence has an invalid timestamp")
+    for field in (
+        "process_start_time",
+        "process_executable",
+        "identity_type",
+        "identity_version",
+    ):
+        if not isinstance(payload.get(field), str) or not payload[field]:
+            raise RuntimeAttestationError(f"Persisted host runtime evidence is missing {field}")
+    for field in (
+        "process_executable_sha256",
+        "process_command_sha256",
+        "process_cgroup_sha256",
+        "image_sha256",
+    ):
+        value = payload.get(field)
+        if not isinstance(value, str) or not _SHA256.fullmatch(value):
+            raise RuntimeAttestationError(f"Persisted host runtime evidence has an invalid {field}")
+    if isinstance(payload.get("peer_pid"), bool) or not isinstance(payload.get("peer_pid"), int) or payload["peer_pid"] <= 1:
+        raise RuntimeAttestationError("Persisted host runtime evidence has an invalid host process ID")
+    if payload.get("identity_type") not in {
+        "docker-image-content",
+        "bare-metal-release-manifest",
+    }:
+        raise RuntimeAttestationError("Persisted host runtime evidence has an unsupported identity provider")
+    image_components = [item for item in components if item.get("name") == "container_image"]
+    if len(image_components) != 1:
+        raise RuntimeAttestationError("Runtime manifest has no unique execution-environment identity")
+    if (
+        payload["image_sha256"] != image_components[0].get("sha256")
+        or payload["identity_version"] != image_components[0].get("version")
+    ):
+        raise RuntimeAttestationError("Signed host evidence does not match the persisted runtime component manifest")
+    occurred_at = getattr(event, "occurred_at", None)
+    if occurred_at is not None:
+        event_timestamp = occurred_at.timestamp()
+        if abs(event_timestamp - issued) > 60:
+            raise RuntimeAttestationError("Signed host evidence timestamp does not match its audit event")
+    try:
+        signature = bytes.fromhex(signature_hex)
+    except ValueError as exc:
+        raise RuntimeAttestationError("Persisted host runtime signature is malformed") from exc
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+    _verify_host_attestor_signature(canonical, signature)
+
+
 def assert_analysis_runtime_attested(db, analysis) -> None:
     """Require a valid successful worker attestation before clinical sign-out/use."""
     from sqlalchemy import select
@@ -427,6 +495,7 @@ def assert_analysis_runtime_attested(db, analysis) -> None:
     components = payload.get("components")
     if not isinstance(components, list):
         raise RuntimeAttestationError("Runtime attestation audit event has no component manifest")
+    _assert_persisted_host_attestation(payload.get("host_attestation"), components, event)
     if payload.get("manifest_sha256") != runtime_manifest_sha256(components):
         raise RuntimeAttestationError("Runtime attestation manifest digest does not match its recorded components")
     configuration = dict(analysis.configuration or {})
