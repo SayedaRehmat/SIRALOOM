@@ -421,6 +421,10 @@ def verify_evidence_response_artifact(
     analysis = db.get(Analysis, evidence.analysis_id)
     if analysis is None:
         raise ValueError("Evidence analysis lineage is unavailable.")
+    from backend.app.domain.resource_release_integrity import (
+        verify_evidence_source_release_reference,
+    )
+    verify_evidence_source_release_reference(db, evidence)
     return verify_provider_response_reference(
         db,
         analysis_id=evidence.analysis_id,
