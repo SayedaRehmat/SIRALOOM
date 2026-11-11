@@ -550,6 +550,10 @@ class Annotation(Base):
     response_artifact_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     response_retention_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE", server_default="NOT_AVAILABLE")
     response_retention_reason: Mapped[str | None] = mapped_column(Text)
+    source_release_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("resource_release_artifacts.id"))
+    source_release_sha256: Mapped[str | None] = mapped_column(Text)
+    source_release_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    source_release_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE")
     request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -699,6 +703,27 @@ class ResourceStaging(Base):
     )
 
 
+class ResourceReleaseArtifact(Base):
+    """Immutable checksum-pinned bytes for one staged scientific resource release."""
+    __tablename__ = "resource_release_artifacts"
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    resource_id: Mapped[UUID] = mapped_column(ForeignKey("resources.id"), nullable=False)
+    resource_staging_id: Mapped[UUID] = mapped_column(ForeignKey("resource_stagings.id"), nullable=False, unique=True)
+    organization_id: Mapped[UUID | None] = mapped_column(ForeignKey("organizations.id"))
+    resource_version: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_uri: Mapped[str] = mapped_column(Text, nullable=False)
+    storage_backend: Mapped[str] = mapped_column(Text, nullable=False)
+    sha256: Mapped[str] = mapped_column(Text, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    __table_args__ = (
+        CheckConstraint("length(sha256) = 64", name="ck_resource_release_sha256_length"),
+        CheckConstraint("size_bytes >= 0", name="ck_resource_release_size_nonnegative"),
+        UniqueConstraint("resource_id", "resource_version", "sha256", name="uq_resource_release_identity"),
+    )
+
+
 class ResourceExecutionRecord(Base):
     """Immutable runtime snapshot of a governed resource execution."""
 
@@ -827,6 +852,10 @@ class PopulationObservation(Base):
     response_artifact_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
     response_retention_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE", server_default="NOT_AVAILABLE")
     response_retention_reason: Mapped[str | None] = mapped_column(Text)
+    source_release_artifact_id: Mapped[UUID | None] = mapped_column(ForeignKey("resource_release_artifacts.id"))
+    source_release_sha256: Mapped[str | None] = mapped_column(Text)
+    source_release_size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    source_release_status: Mapped[str] = mapped_column(Text, nullable=False, default="NOT_AVAILABLE")
     request_metadata: Mapped[dict] = mapped_column("request_metadata", JSON, default=dict)
     observed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
