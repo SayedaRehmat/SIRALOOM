@@ -14,6 +14,10 @@ import re
 import shutil
 import ssl
 import subprocess
+import secrets
+import tempfile
+import time
+import socket
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -184,6 +188,84 @@ def _kubernetes_image_identity() -> tuple[str, str]:
     return "sha256:" + digest, digest
 
 
+def _verify_host_attestor_signature(payload: bytes, signature: bytes) -> None:
+    public_key_value = settings.host_runtime_attestor_public_key
+    if not public_key_value:
+        raise RuntimeAttestationError("A pinned host-attestor Ed25519 public key is required")
+    public_key = Path(public_key_value).resolve(strict=True)
+    with tempfile.TemporaryDirectory(prefix="siraloom-host-attestation-") as directory:
+        root = Path(directory)
+        message_path, signature_path = root / "message", root / "signature"
+        message_path.write_bytes(payload)
+        signature_path.write_bytes(signature)
+        try:
+            subprocess.run(
+                [
+                    "openssl", "pkeyutl", "-verify", "-rawin", "-pubin",
+                    "-inkey", str(public_key), "-in", str(message_path),
+                    "-sigfile", str(signature_path),
+                ],
+                check=True, capture_output=True, timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise RuntimeAttestationError("Host runtime evidence has an invalid Ed25519 signature") from exc
+
+
+def _host_runtime_image_identity() -> tuple[str, str]:
+    socket_value = settings.host_runtime_attestor_socket
+    if not socket_value:
+        raise RuntimeAttestationError("Trusted host runtime attestor socket is not configured")
+    nonce = secrets.token_hex(32)
+    request = json.dumps({"nonce": nonce}, separators=(",", ":")).encode() + b"\\n"
+    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    client.settimeout(5)
+    try:
+        client.connect(socket_value)
+        client.sendall(request)
+        chunks = bytearray()
+        while not chunks.endswith(b"\\n"):
+            part = client.recv(65536)
+            if not part:
+                raise RuntimeAttestationError("Host runtime attestor closed without a complete response")
+            chunks.extend(part)
+            if len(chunks) > 1024 * 1024:
+                raise RuntimeAttestationError("Host runtime attestor response exceeds the size limit")
+        response = json.loads(bytes(chunks).decode("utf-8"))
+    except (OSError, UnicodeError, ValueError, TimeoutError) as exc:
+        raise RuntimeAttestationError("Cannot obtain authenticated evidence from the host runtime attestor") from exc
+    finally:
+        client.close()
+    if not isinstance(response, dict) or response.get("error"):
+        raise RuntimeAttestationError(
+            "Host runtime attestor rejected this worker process"
+            + (f": {response.get('error')}" if isinstance(response, dict) and response.get("error") else "")
+        )
+    payload = response.get("payload")
+    signature_hex = response.get("signature")
+    if not isinstance(payload, dict) or not isinstance(signature_hex, str):
+        raise RuntimeAttestationError("Host runtime attestor response is malformed")
+    if payload.get("nonce") != nonce or payload.get("schema_version") != "1":
+        raise RuntimeAttestationError("Host runtime attestation challenge binding is invalid")
+    issued = payload.get("issued_at_unix")
+    if isinstance(issued, bool) or not isinstance(issued, int) or abs(int(time.time()) - issued) > 30:
+        raise RuntimeAttestationError("Host runtime attestation is stale or has an invalid timestamp")
+    if not isinstance(payload.get("peer_pid"), int) or payload["peer_pid"] <= 1:
+        raise RuntimeAttestationError("Host runtime attestation has no authenticated process identity")
+    image_digest = payload.get("image_sha256")
+    identity_version = payload.get("identity_version")
+    if not isinstance(image_digest, str) or not _SHA256.fullmatch(image_digest):
+        raise RuntimeAttestationError("Host runtime attestor did not report an immutable SHA-256 identity")
+    if not isinstance(identity_version, str) or not identity_version.strip():
+        raise RuntimeAttestationError("Host runtime attestor did not report an identity version")
+    try:
+        signature = bytes.fromhex(signature_hex)
+    except ValueError as exc:
+        raise RuntimeAttestationError("Host runtime attestor signature is malformed") from exc
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("ascii")
+    _verify_host_attestor_signature(canonical, signature)
+    return identity_version, image_digest
+
+
 def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[str, str]]:
     """Measure all mandatory components from the worker that will execute analysis."""
     root = Path(__file__).resolve().parents[3]
@@ -195,7 +277,10 @@ def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[st
         raise RuntimeAttestationError("One or more locked dependency manifests are missing")
 
     workflow_digest = _sha256_tree(root / "backend" / "app" / "workflows")
-    image_version, image_digest = _kubernetes_image_identity()
+    if settings.host_runtime_attestor_socket:
+        image_version, image_digest = _host_runtime_image_identity()
+    else:
+        image_version, image_digest = _kubernetes_image_identity()
     components = [
         {"name": "bcftools", "version": bcftools_version, "sha256": _sha256_file(executable)},
         {"name": "htslib", "version": htslib_version, "sha256": _sha256_file(htslib_path)},
