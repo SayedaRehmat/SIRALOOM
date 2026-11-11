@@ -292,8 +292,10 @@ def _host_runtime_image_identity() -> tuple[str, str]:
     return version, digest
 
 
-def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[str, str]]:
-    """Measure all mandatory components from the worker that will execute analysis."""
+def collect_runtime_attestation_bundle(
+    *, workflow_version: str
+) -> tuple[list[dict[str, str]], dict[str, object] | None]:
+    """Measure runtime components and retain the independently signed identity proof."""
     root = Path(__file__).resolve().parents[3]
     executable, bcftools_version, htslib_version, htslib_path = _bcftools_and_htslib()
     profile = resolve_registered_toolchain_profile(settings.bcftools_profile_id)
@@ -303,8 +305,9 @@ def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[st
         raise RuntimeAttestationError("One or more locked dependency manifests are missing")
 
     workflow_digest = _sha256_tree(root / "backend" / "app" / "workflows")
+    host_evidence = None
     if settings.host_runtime_attestor_socket:
-        image_version, image_digest = _host_runtime_image_identity()
+        image_version, image_digest, host_evidence = _host_runtime_identity_evidence()
     else:
         image_version, image_digest = _kubernetes_image_identity()
     components = [
@@ -315,6 +318,14 @@ def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[st
         {"name": "siraloom_variant_workflow", "version": workflow_version, "sha256": workflow_digest},
         {"name": "container_image", "version": image_version, "sha256": image_digest},
     ]
+    return components, host_evidence
+
+
+def collect_runtime_component_manifest(*, workflow_version: str) -> list[dict[str, str]]:
+    """Return the measured six-component manifest for laboratory validation."""
+    components, _host_evidence = collect_runtime_attestation_bundle(
+        workflow_version=workflow_version
+    )
     return components
 
 
