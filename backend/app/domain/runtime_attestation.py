@@ -8,14 +8,12 @@ as image-digest evidence.
 from __future__ import annotations
 
 import hashlib
-import importlib.metadata
 import json
 import os
 import re
 import shutil
 import ssl
 import subprocess
-import sys
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
