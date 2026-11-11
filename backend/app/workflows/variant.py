@@ -3335,6 +3335,32 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                             db.commit()
                             raise
 
+                        response_retention = None
+                        if obs_list:
+                            raw_response_bytes = next(
+                                (obs.raw_response_bytes for obs in obs_list if obs.raw_response_bytes),
+                                None,
+                            )
+                            from backend.app.domain.evidence_response_retention import (
+                                ProviderResponseRetention,
+                                retain_provider_response_bytes,
+                            )
+                            sample_response = obs_list[0]
+                            if raw_response_bytes:
+                                response_retention = retain_provider_response_bytes(
+                                    db,
+                                    analysis=analysis,
+                                    resource=resource,
+                                    provider_id=provider.provider_id,
+                                    provider_version=provider.provider_version,
+                                    request_fingerprint=sample_response.request_fingerprint or "",
+                                    raw_response_bytes=raw_response_bytes,
+                                    media_type="application/json",
+                                )
+                            else:
+                                response_retention = ProviderResponseRetention(
+                                    "NOT_AVAILABLE", "Provider adapter did not expose exact raw response bytes."
+                                )
                         for obs in obs_list:
                             existing = db.scalar(
                                 select(PopulationObservation).where(
@@ -3364,6 +3390,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                     source_record_id=obs.source_record_id,
                                     request_fingerprint=obs.request_fingerprint,
                                     response_sha256=obs.response_sha256,
+                                    response_artifact_id=(response_retention.artifact_id if response_retention and response_retention.artifact_id else None),
+                                    response_artifact_sha256=(response_retention.sha256 if response_retention else None),
+                                    response_artifact_size_bytes=(response_retention.size_bytes if response_retention else None),
+                                    response_retention_status=(response_retention.status if response_retention else "NOT_AVAILABLE"),
+                                    response_retention_reason=(response_retention.reason if response_retention else "No provider response was returned."),
                                     request_metadata=obs.request_metadata or {},
                                     observed_at=(
                                         datetime.fromisoformat(obs.observed_at)
