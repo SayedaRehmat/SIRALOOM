@@ -305,6 +305,7 @@ def test_configured_host_attestor_does_not_fall_back_to_environment_digest(monke
 
 def test_signout_reverifies_persisted_host_signature_and_manifest_binding(monkeypatch):
     from datetime import datetime, timezone
+    import json
     import time
 
     components = [
