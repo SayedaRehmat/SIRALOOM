@@ -5,13 +5,16 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from backend.app.domain.evidence_response_retention import (
+    approve_provider_retention,
+    revoke_provider_retention,
     retain_provider_response_bytes,
     verify_evidence_response_artifact,
 )
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, Evidence, Organization, Resource, ResourceDiscovery, User, Variant,
+    Analysis, Case, Evidence, Organization, OrganizationMembership, Resource,
+    ResourceDiscovery, User, Variant,
 )
 
 
@@ -24,6 +27,10 @@ def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_per
     organization = Organization(id=uuid4(), name="Retention test lab")
     user = User(
         id=uuid4(), organization_id=organization.id, display_name="Reviewer",
+        role="LAB_ADMIN", status="ACTIVE",
+    )
+    membership = OrganizationMembership(
+        id=uuid4(), organization_id=organization.id, user_id=user.id,
         role="LAB_ADMIN", status="ACTIVE",
     )
     case = Case(
@@ -56,7 +63,7 @@ def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_per
         release_identity=resource.version, access_mode="PUBLIC",
         license_status=license_status,
         license_url="https://provider.example/license" if license_status == "VERIFIED" else None,
-        terms_url=None, checksum_status="NOT_PUBLISHED", expected_sha256=None,
+        terms_url="https://provider.example/terms", checksum_status="NOT_PUBLISHED", expected_sha256=None,
         expected_size_bytes=None, authority_evidence_url="https://provider.example/about",
         status="DISCOVERED", metadata_json={
             "raw_response_retention": retention_permission,
@@ -64,11 +71,29 @@ def _seed(tmp_path, monkeypatch, *, license_status="NOT_REQUIRED", retention_per
             "raw_response_retention_reviewed_at": "2026-11-11T00:00:00Z",
         },
     )
-    db.add_all([organization, user, case, analysis, variant, resource, discovery])
+    db.add_all([organization, user, membership, case, analysis, variant, resource, discovery])
     db.flush()
     store = ArtifactStore(tmp_path / "artifact-store")
     monkeypatch.setattr(retention, "artifact_store_for_organization", lambda *_args, **_kwargs: store)
     monkeypatch.setattr(retention, "artifact_store_for_uri", lambda *_args, **_kwargs: store)
+    if retention_permission == "PERMITTED" and license_status in {"VERIFIED", "NOT_REQUIRED"}:
+        import hashlib
+        terms_path = tmp_path / f"terms-{uuid4().hex}.txt"
+        terms_bytes = b"Reviewed provider license and raw response retention terms."
+        terms_path.write_bytes(terms_bytes)
+        terms_artifact = store.put_file(
+            db=db, case_id=case.id, analysis_id=None, source_path=terms_path,
+            filename="provider-terms.txt", artifact_type="LICENSE_TERMS_EVIDENCE",
+            media_type="text/plain", genome_build=None, validation_status="VALIDATED",
+            metadata={"resource_id": str(resource.id), "release_identity": resource.version},
+        )
+        approve_provider_retention(
+            db, organization_id=organization.id, resource_discovery_id=discovery.id,
+            reviewer_id=user.id, permission_scope=["RAW_PROVIDER_RESPONSE_RETENTION"],
+            reason="Reviewed exact provider terms for retention scope.",
+            terms_evidence_artifact_id=terms_artifact.id,
+            terms_evidence_sha256=hashlib.sha256(terms_bytes).hexdigest(),
+        )
     return db, store, case, analysis, variant, resource
 
 
