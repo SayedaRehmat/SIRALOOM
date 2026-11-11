@@ -128,10 +128,15 @@ class Handler(socketserver.StreamRequestHandler):
                     seen.add(str(relative))
                     declared_path = root / relative
                     current = root
-                    for part in relative.parts:
+                    for part in relative.parts[:-1]:
                         current = current / part
                         if current.is_symlink():
                             raise RuntimeError("Release manifest cannot include symbolic links")
+                        if current.stat().st_uid != 0 or current.stat().st_mode & 0o022:
+                            raise RuntimeError("Release directories must be root-owned and not group/world writable")
+                    current = current / relative.parts[-1]
+                    if current.is_symlink():
+                        raise RuntimeError("Release manifest cannot include symbolic links")
                     target = declared_path.resolve(strict=True)
                     if root not in target.parents or not target.is_file():
                         raise RuntimeError("Release manifest file is missing or escapes the installation root")
