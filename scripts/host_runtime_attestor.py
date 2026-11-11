@@ -13,6 +13,8 @@ import json
 import os
 import socket
 import socketserver
+import struct
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -38,11 +40,7 @@ def process_cgroups(pid: int) -> str:
 
 def docker_identity(pid: int) -> tuple[str, str]:
     cgroups = process_cgroups(pid).lower()
-    candidates = set()
-    for token in cgroups.replace("/", " ").replace("-", " ").split():
-        compact = token.replace(".scope", "")
-        if len(compact) == 64 and all(ch in "0123456789abcdef" for ch in compact):
-            candidates.add(compact)
+    candidates = set(re.findall(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", cgroups))
     if len(candidates) != 1:
         raise RuntimeError("Host cgroup metadata does not identify exactly one Docker container")
     container_id = next(iter(candidates))
@@ -62,8 +60,8 @@ def docker_identity(pid: int) -> tuple[str, str]:
 class Handler(socketserver.StreamRequestHandler):
     def handle(self):
         try:
-            peer_pid, peer_uid, _ = self.request.getsockopt(
-                socket.SOL_SOCKET, socket.SO_PEERCRED, 12
+            peer_pid, peer_uid, _ = struct.unpack(
+                "3i", self.request.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
             )
             if peer_pid <= 1:
                 raise RuntimeError("Cannot authenticate the connecting worker process")
@@ -82,9 +80,20 @@ class Handler(socketserver.StreamRequestHandler):
                 identity_version = identity
             else:
                 root = self.server.install_root.resolve(strict=True)
-                executable_path = Path(executable.replace(" (deleted)", "")).resolve(strict=True)
-                if root != executable_path and root not in executable_path.parents:
-                    raise RuntimeError("Connecting process executable is outside the trusted installation root")
+                cwd = Path(f"/proc/{peer_pid}/cwd").resolve(strict=True)
+                if root != cwd and root not in cwd.parents:
+                    raise RuntimeError("Connecting process working directory is outside the trusted installation root")
+                command_line = Path(f"/proc/{peer_pid}/cmdline").read_bytes().split(bytes([0]))
+                script_paths = []
+                for argument in command_line[1:]:
+                    if argument.startswith(b"/"):
+                        candidate = Path(argument.decode(errors="strict"))
+                        if candidate.exists():
+                            resolved = candidate.resolve(strict=True)
+                            if root == resolved or root in resolved.parents:
+                                script_paths.append(resolved)
+                if not script_paths:
+                    raise RuntimeError("Cannot bind the bare-metal worker to a script inside the trusted installation root")
                 manifest = self.server.release_manifest.resolve(strict=True)
                 if root != manifest.parent and root not in manifest.parents:
                     raise RuntimeError("Release manifest is outside the trusted installation root")
