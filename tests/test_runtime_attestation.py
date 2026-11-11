@@ -245,10 +245,12 @@ def test_host_attestor_requires_fresh_signed_challenge_and_returns_immutable_ide
         lambda message, signature: verified.append((json.loads(message), signature)),
     )
 
-    version, digest = runtime._host_runtime_image_identity()
+    version, digest, evidence = runtime._host_runtime_identity_evidence()
 
     assert version == "sha256:" + "e" * 64
     assert digest == "e" * 64
+    assert evidence["payload"]["nonce"] == payload["nonce"]
+    assert evidence["signature"] == "00"
     assert verified[0][0]["nonce"] == payload["nonce"]
     assert verified[0][1] == bytes.fromhex("00")
 
