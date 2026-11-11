@@ -4506,6 +4506,30 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                         organization_id=case.organization_id,
                         observations=population_rows,
                     )
+                    # Verify exact retained response bytes before the evidence engine
+                    # reads annotation or population values. Non-retained states
+                    # remain explicitly unverified; they are never upgraded here.
+                    from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+                    for annotation_row in annotations:
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=annotation_row.resource_id,
+                            request_fingerprint=annotation_row.request_fingerprint,
+                            artifact_id=annotation_row.response_artifact_id,
+                            artifact_sha256=annotation_row.response_artifact_sha256,
+                            artifact_size_bytes=annotation_row.response_artifact_size_bytes,
+                            retention_status=annotation_row.response_retention_status,
+                        )
+                    for population_observation in population_rows:
+                        verify_provider_response_reference(
+                            db, analysis_id=analysis.id, case_id=case.id,
+                            resource_id=population_observation.resource_id,
+                            request_fingerprint=population_observation.request_fingerprint,
+                            artifact_id=population_observation.response_artifact_id,
+                            artifact_sha256=population_observation.response_artifact_sha256,
+                            artifact_size_bytes=population_observation.response_artifact_size_bytes,
+                            retention_status=population_observation.response_retention_status,
+                        )
                     population_by_variant: dict[str, list[dict]] = {}
                     for obs in population_rows:
                         resource = resource_rows.get(obs.resource_id)
