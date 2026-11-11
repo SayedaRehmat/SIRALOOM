@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import re
 import tempfile
+from datetime import UTC, datetime
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -13,7 +14,12 @@ from sqlalchemy.orm import Session
 
 from backend.app.domain.artifact_integrity import validate_integrity_expectations, verify_artifact_file
 from backend.app.domain.storage_profiles import artifact_store_for_organization, artifact_store_for_uri
-from backend.app.infrastructure.db.models import Analysis, Artifact, Case, Evidence, Resource, ResourceDiscovery
+from backend.app.infrastructure.audit.service import AuditService
+from backend.app.infrastructure.db.models import (
+    Analysis, Artifact, Case, Evidence, OrganizationMembership,
+    ProviderRetentionApproval, ProviderRetentionApprovalAction, Resource,
+    ResourceDiscovery, User,
+)
 
 
 @dataclass(frozen=True)
@@ -26,37 +32,171 @@ class ProviderResponseRetention:
     license_status: str = "UNKNOWN"
 
 
-def _retention_permission(db: Session, resource: Resource) -> tuple[str, str, ResourceDiscovery | None]:
-    """Only an exact release with affirmative license/terms review permits raw retention."""
-    discovery = db.scalar(
-        select(ResourceDiscovery)
-        .where(
-            ResourceDiscovery.resource_id == resource.id,
-            ResourceDiscovery.release_identity == resource.version,
-        )
-        .order_by(ResourceDiscovery.created_at.desc(), ResourceDiscovery.id.desc())
-        .limit(1)
-    )
+def _authorized_reviewer(db: Session, *, organization_id: UUID, reviewer_id: UUID) -> User:
+    user = db.get(User, reviewer_id)
+    membership = db.scalar(select(OrganizationMembership).where(
+        OrganizationMembership.organization_id == organization_id,
+        OrganizationMembership.user_id == reviewer_id,
+        OrganizationMembership.status == "ACTIVE",
+    ))
+    allowed_roles = {"LAB_ADMIN", "QUALITY_MANAGER", "COMPLIANCE_OFFICER", "DATA_GOVERNANCE_OFFICER"}
+    if (
+        user is None or user.organization_id != organization_id
+        or str(user.status or "").upper() != "ACTIVE"
+        or membership is None or str(membership.role or "").upper() not in allowed_roles
+    ):
+        raise PermissionError("Provider retention decisions require an active, authorized reviewer in the same organization.")
+    return user
+
+
+def approve_provider_retention(
+    db: Session, *, organization_id: UUID, resource_discovery_id: UUID,
+    reviewer_id: UUID, permission_scope: list[str], reason: str,
+    terms_evidence_artifact_id: UUID, terms_evidence_sha256: str,
+    expires_at: datetime | None = None,
+) -> ProviderRetentionApproval:
+    """Create a versioned approval tied to exact release and immutable terms evidence."""
+    discovery = db.get(ResourceDiscovery, resource_discovery_id)
     if discovery is None:
-        return "REVIEW_REQUIRED", "No source-discovery license record matches the exact resource release.", None
-    status = str(discovery.license_status or "UNKNOWN").strip().upper()
-    if str(discovery.status or "").strip().upper() in {"REJECTED", "WITHDRAWN", "REVOKED", "BLOCKED"}:
-        return "NOT_PERMITTED", "The exact resource discovery record is not approved for use.", discovery
-    if status == "RESTRICTED":
-        return "NOT_PERMITTED", "The source release is marked RESTRICTED; raw response retention is prohibited.", discovery
-    retention_scope = str((discovery.metadata_json or {}).get("raw_response_retention") or "REVIEW_REQUIRED").strip().upper()
-    if retention_scope in {"PROHIBITED", "FORBIDDEN", "DENIED", "NO"}:
-        return "NOT_PERMITTED", "The reviewed source terms prohibit raw response retention.", discovery
-    if retention_scope != "PERMITTED":
-        return "REVIEW_REQUIRED", "Raw response retention permission has not been explicitly approved in the source terms review.", discovery
-    review_metadata = dict(discovery.metadata_json or {})
-    if not str(review_metadata.get("raw_response_retention_reviewed_by") or "").strip() or not str(review_metadata.get("raw_response_retention_reviewed_at") or "").strip():
-        return "REVIEW_REQUIRED", "Raw response retention permission lacks reviewer identity or review timestamp.", discovery
-    if status not in {"VERIFIED", "NOT_REQUIRED"}:
-        return "REVIEW_REQUIRED", f"Raw response retention is not approved for license status {status}.", discovery
-    if status == "VERIFIED" and not (discovery.license_url or discovery.terms_url):
-        return "REVIEW_REQUIRED", "Verified license status has no retained license or terms URL.", discovery
-    return "RETAINED", "Exact resource release has an affirmative retention permission record.", discovery
+        raise ValueError("Provider retention approval requires an existing exact resource discovery.")
+    resource = db.get(Resource, discovery.resource_id)
+    if resource is None or resource.version != discovery.release_identity:
+        raise ValueError("Provider retention approval release identity does not match the resource.")
+    _authorized_reviewer(db, organization_id=organization_id, reviewer_id=reviewer_id)
+    scopes = sorted({str(scope).strip().upper() for scope in permission_scope if str(scope).strip()})
+    if "RAW_PROVIDER_RESPONSE_RETENTION" not in scopes:
+        raise ValueError("Approval scope must explicitly include RAW_PROVIDER_RESPONSE_RETENTION.")
+    if not reason.strip():
+        raise ValueError("Approval requires a documented decision rationale.")
+    if expires_at is not None and expires_at <= datetime.now(UTC):
+        raise ValueError("Approval expiry must be in the future.")
+    evidence = db.get(Artifact, terms_evidence_artifact_id)
+    if evidence is None or evidence.sha256.lower() != terms_evidence_sha256.lower():
+        raise ValueError("Terms evidence artifact and SHA-256 do not match.")
+    evidence_case = db.get(Case, evidence.case_id)
+    if evidence_case is None or evidence_case.organization_id != organization_id:
+        raise PermissionError("Terms evidence must belong to the approving organization.")
+    if not (discovery.license_url or discovery.terms_url):
+        raise ValueError("Exact release has no recorded license or terms URL.")
+    existing = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.organization_id == organization_id,
+        ProviderRetentionApproval.resource_discovery_id == resource_discovery_id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    if existing is not None:
+        raise ValueError("An active approval already exists; revoke it before creating a replacement.")
+    latest_version = db.scalar(select(ProviderRetentionApproval.version).where(
+        ProviderRetentionApproval.organization_id == organization_id,
+        ProviderRetentionApproval.resource_discovery_id == resource_discovery_id,
+    ).order_by(ProviderRetentionApproval.version.desc()).limit(1)) or 0
+    now = datetime.now(UTC)
+    approval = ProviderRetentionApproval(
+        id=__import__("uuid").uuid4(), organization_id=organization_id,
+        resource_id=resource.id, resource_discovery_id=discovery.id,
+        release_identity=discovery.release_identity, permission_scope=scopes,
+        license_url=discovery.license_url, terms_url=discovery.terms_url,
+        terms_evidence_artifact_id=evidence.id, terms_evidence_sha256=evidence.sha256,
+        reviewer_id=reviewer_id, status="APPROVED", approved_at=now,
+        expires_at=expires_at, version=latest_version + 1,
+    )
+    db.add(approval)
+    db.flush()
+    action = ProviderRetentionApprovalAction(
+        id=__import__("uuid").uuid4(), approval_id=approval.id,
+        organization_id=organization_id, actor_id=reviewer_id,
+        action="APPROVE", before_status=None, after_status="APPROVED",
+        reason=reason.strip(), permission_scope=scopes,
+    )
+    db.add(action)
+    AuditService(db).record(
+        event_type="PROVIDER_RETENTION_APPROVED", case_id=None, analysis_id=None,
+        actor_type="USER", actor_id=str(reviewer_id),
+        subject_type="PROVIDER_RETENTION_APPROVAL", subject_id=str(approval.id),
+        operation="APPROVE", after_state={"status": "APPROVED", "version": approval.version},
+        reason=reason.strip(), payload={"organization_id": str(organization_id),
+            "resource_id": str(resource.id), "release_identity": discovery.release_identity,
+            "resource_discovery_id": str(discovery.id), "permission_scope": scopes,
+            "terms_evidence_artifact_id": str(evidence.id), "terms_evidence_sha256": evidence.sha256},
+    )
+    return approval
+
+
+def revoke_provider_retention(
+    db: Session, *, approval_id: UUID, actor_id: UUID, reason: str,
+) -> ProviderRetentionApproval:
+    """Revoke future use without deleting approval or decision history."""
+    approval = db.get(ProviderRetentionApproval, approval_id)
+    if approval is None:
+        raise ValueError("Provider retention approval does not exist.")
+    _authorized_reviewer(db, organization_id=approval.organization_id, reviewer_id=actor_id)
+    if not reason.strip():
+        raise ValueError("Revocation requires a documented reason.")
+    if approval.status != "APPROVED":
+        raise ValueError("Only an active provider retention approval can be revoked.")
+    before = approval.status
+    approval.status = "REVOKED"
+    approval.revoked_at = datetime.now(UTC)
+    approval.revocation_reason = reason.strip()
+    db.flush()
+    db.add(ProviderRetentionApprovalAction(
+        id=__import__("uuid").uuid4(), approval_id=approval.id,
+        organization_id=approval.organization_id, actor_id=actor_id,
+        action="REVOKE", before_status=before, after_status="REVOKED",
+        reason=reason.strip(), permission_scope=list(approval.permission_scope or []),
+    ))
+    AuditService(db).record(
+        event_type="PROVIDER_RETENTION_REVOKED", case_id=None, analysis_id=None,
+        actor_type="USER", actor_id=str(actor_id),
+        subject_type="PROVIDER_RETENTION_APPROVAL", subject_id=str(approval.id),
+        operation="REVOKE", before_state={"status": before},
+        after_state={"status": "REVOKED"}, reason=reason.strip(),
+        payload={"organization_id": str(approval.organization_id),
+            "resource_discovery_id": str(approval.resource_discovery_id),
+            "permission_scope": list(approval.permission_scope or [])},
+    )
+    return approval
+
+
+def _retention_permission(
+    db: Session, resource: Resource, *, organization_id: UUID,
+) -> tuple[str, str, ResourceDiscovery | None, ProviderRetentionApproval | None]:
+    """Authorize raw retention only from a current, scoped, organization approval."""
+    discovery = db.scalar(select(ResourceDiscovery).where(
+        ResourceDiscovery.resource_id == resource.id,
+        ResourceDiscovery.release_identity == resource.version,
+    ).order_by(ResourceDiscovery.created_at.desc(), ResourceDiscovery.id.desc()).limit(1))
+    if discovery is None:
+        return "REVIEW_REQUIRED", "No source-discovery record matches the exact resource release.", None, None
+    if str(discovery.status or "").upper() in {"REJECTED", "WITHDRAWN", "REVOKED", "BLOCKED"}:
+        return "NOT_PERMITTED", "The exact resource release is blocked or withdrawn.", discovery, None
+    if str(discovery.license_status or "").upper() == "RESTRICTED":
+        return "NOT_PERMITTED", "The exact resource release is marked RESTRICTED.", discovery, None
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.organization_id == organization_id,
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.resource_discovery_id == discovery.id,
+        ProviderRetentionApproval.release_identity == resource.version,
+        ProviderRetentionApproval.status == "APPROVED",
+    ).order_by(ProviderRetentionApproval.version.desc()).limit(1))
+    if approval is None:
+        return "REVIEW_REQUIRED", "No active organization-scoped approval exists for this exact release.", discovery, None
+    now = datetime.now(UTC)
+    expires = approval.expires_at
+    if expires is not None:
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        if expires <= now:
+            return "REVIEW_REQUIRED", "The provider retention approval has expired.", discovery, approval
+    if "RAW_PROVIDER_RESPONSE_RETENTION" not in set(approval.permission_scope or []):
+        return "NOT_PERMITTED", "The approval does not include raw provider response retention.", discovery, approval
+    try:
+        _authorized_reviewer(db, organization_id=organization_id, reviewer_id=approval.reviewer_id)
+    except PermissionError:
+        return "REVIEW_REQUIRED", "The approving reviewer is no longer an active authorized organization member.", discovery, approval
+    evidence = db.get(Artifact, approval.terms_evidence_artifact_id)
+    if evidence is None or evidence.sha256.lower() != str(approval.terms_evidence_sha256 or "").lower():
+        return "REVIEW_REQUIRED", "The terms evidence artifact is missing or its digest no longer matches.", discovery, approval
+    return "RETAINED", "Exact release has a current organization approval with verified terms evidence.", discovery, approval
 
 
 def retain_provider_response_bytes(
@@ -76,19 +216,22 @@ def retain_provider_response_bytes(
         return ProviderResponseRetention(
             "NOT_AVAILABLE", "Provider did not supply non-empty raw response bytes."
         )
-    permission, reason, discovery = _retention_permission(db, resource)
+    if analysis.case_id is None or analysis.id is None:
+        raise ValueError("Provider response retention requires persisted analysis and case identity.")
+    case = db.get(Case, analysis.case_id)
+    if case is None or case.organization_id is None:
+        raise ValueError("Provider response retention requires a case with organization identity.")
+    permission, reason, discovery, approval = _retention_permission(
+        db, resource, organization_id=case.organization_id
+    )
     if permission != "RETAINED":
         return ProviderResponseRetention(
             permission, reason, license_status=(
                 str(discovery.license_status).upper() if discovery else "UNKNOWN"
             )
         )
-    if analysis.case_id is None or analysis.id is None:
-        raise ValueError("Provider response retention requires persisted analysis and case identity.")
-    case = db.get(Case, analysis.case_id)
-    if case is None or case.organization_id is None:
-        raise ValueError("Provider response retention requires a case with organization identity.")
-    review_metadata = dict(discovery.metadata_json or {})
+    if approval is None:
+        raise RuntimeError("Provider retention gate returned RETAINED without a persisted approval.")
     digest = hashlib.sha256(raw_response_bytes).hexdigest()
     size = len(raw_response_bytes)
     artifact_id = uuid5(
@@ -114,12 +257,15 @@ def retain_provider_response_bytes(
             artifact_id=artifact_id,
             metadata={
                 "retention_status": "RETAINED",
-                "retention_policy": "RESOURCE_RELEASE_LICENSE_GATE_V1",
+                "retention_policy": "ORG_RELEASE_APPROVAL_V2",
                 "license_status": str(discovery.license_status).upper(),
                 "license_url": discovery.license_url,
                 "terms_url": discovery.terms_url,
-                "raw_response_retention_reviewed_by": review_metadata["raw_response_retention_reviewed_by"],
-                "raw_response_retention_reviewed_at": review_metadata["raw_response_retention_reviewed_at"],
+                "retention_approval_id": str(approval.id),
+                "retention_approval_version": approval.version,
+                "retention_approval_reviewer_id": str(approval.reviewer_id),
+                "retention_approval_terms_evidence_artifact_id": str(approval.terms_evidence_artifact_id),
+                "retention_approval_terms_evidence_sha256": approval.terms_evidence_sha256,
                 "resource_id": str(resource.id),
                 "resource_version": resource.version,
                 "provider_id": provider_id,
