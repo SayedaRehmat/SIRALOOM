@@ -594,6 +594,10 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
         from backend.app.domain.clinical_authorization import (
             assert_analysis_clinical_authorization,
         )
+        from backend.app.domain.runtime_attestation import (
+            RuntimeAttestationError,
+            assert_analysis_runtime_attested,
+        )
 
         assert_analysis_clinical_authorization(
             db,
@@ -606,10 +610,6 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
             analysis_reference_build=analysis.reference_build,
         )
         if analysis.analysis_type != "RESEARCH":
-            from backend.app.domain.runtime_attestation import (
-                RuntimeAttestationError,
-                assert_analysis_runtime_attested,
-            )
             assert_analysis_runtime_attested(db, analysis)
     except (ValueError, RuntimeAttestationError) as exc:
         raise ReportFinalizationError(
