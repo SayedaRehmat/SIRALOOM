@@ -21,6 +21,8 @@ class EvidenceRecord:
     response_sha256: str | None = None
     request_metadata: dict[str, Any] | None = None
     observed_at: str | None = None
+    raw_response_bytes: bytes | None = None
+    response_media_type: str | None = None
 
 
 def evidence_fingerprint(
