@@ -587,6 +587,29 @@ def finalize_report(db: Session, *, report_id: UUID, approver_id: UUID, reason: 
     if report.status != "DRAFT":
         raise ReportFinalizationError(f"Report cannot be finalized from status {report.status}")
 
+    # Recheck clinical authorization under the same Analysis and Case locks used
+    # by sign-out. A long-running analysis cannot be signed out after its request,
+    # assay approval, or intended-use scope has changed.
+    try:
+        from backend.app.domain.clinical_authorization import (
+            assert_analysis_clinical_authorization,
+        )
+
+        assert_analysis_clinical_authorization(
+            db,
+            case=case_lock,
+            analysis_configuration=analysis.configuration,
+            analysis_type=analysis.analysis_type,
+            analysis_assay_id=analysis.assay_id,
+            analysis_workflow_id=analysis.workflow_id,
+            analysis_workflow_version=analysis.workflow_version,
+            analysis_reference_build=analysis.reference_build,
+        )
+    except ValueError as exc:
+        raise ReportFinalizationError(
+            f"Clinical authorization is no longer valid: {exc}"
+        ) from exc
+
     prior = db.scalars(
         select(Report)
         .where(
