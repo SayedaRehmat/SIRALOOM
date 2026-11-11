@@ -145,3 +145,50 @@ def test_runtime_attestation_failure_blocks_analysis_and_records_reason(monkeypa
     assert db.commits == 1
     assert _FakeAudit.events[0]["event_type"] == "CLINICAL_RUNTIME_ATTESTATION_BLOCKED"
     assert _FakeAudit.events[0]["payload"] == {"redelivered": True, "retry": True}
+
+def test_signout_requires_successful_runtime_attestation_and_valid_manifest(monkeypatch):
+    components = [{"name": "bcftools", "version": "1.25", "sha256": "a" * 64}]
+    event = SimpleNamespace(
+        event_type="CLINICAL_RUNTIME_ATTESTED",
+        event_hash="b" * 64,
+        payload={
+            "components": components,
+            "manifest_sha256": runtime.runtime_manifest_sha256(components),
+        },
+    )
+
+    class _ReadDB:
+        def scalars(self, statement):
+            return [event]
+
+    analysis = _analysis()
+    analysis.configuration["assay_validation_snapshot"]["pipeline_components"] = components
+    monkeypatch.setattr(
+        runtime,
+        "assert_pipeline_components_match_runtime",
+        lambda snapshot, observed: None,
+    )
+    runtime.assert_analysis_runtime_attested(_ReadDB(), analysis)
+
+
+def test_signout_rejects_missing_or_modified_runtime_attestation():
+    class _EmptyDB:
+        def scalars(self, statement):
+            return []
+
+    with pytest.raises(runtime.RuntimeAttestationError, match="no persisted worker runtime attestation"):
+        runtime.assert_analysis_runtime_attested(_EmptyDB(), _analysis())
+
+    components = [{"name": "bcftools", "version": "1.25", "sha256": "a" * 64}]
+    event = SimpleNamespace(
+        event_type="CLINICAL_RUNTIME_ATTESTED",
+        event_hash="b" * 64,
+        payload={"components": components, "manifest_sha256": "c" * 64},
+    )
+
+    class _TamperedDB:
+        def scalars(self, statement):
+            return [event]
+
+    with pytest.raises(runtime.RuntimeAttestationError, match="does not match"):
+        runtime.assert_analysis_runtime_attested(_TamperedDB(), _analysis())
