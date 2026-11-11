@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, FiniteFloat
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from backend.app.auth.authorization import (
     CASE_WRITE_ROLES,
@@ -16,6 +16,8 @@ from backend.app.auth.authorization import (
 from backend.app.auth.principal import Principal, get_current_principal
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import Artifact, Assay, TechnicalQCObservation, QCAssessment
+from backend.app.infrastructure.db.assay_validation import AssayValidationDecision, AssayValidationSubmission
+from backend.app.domain.assay_validation import AssayValidationError, current_approved_validation, latest_validation_decision, normalize_validation_submission, validation_payload_sha256
 from backend.app.infrastructure.db.session import get_db
 from backend.app.domain.quality_provenance import qc_observation_snapshot, validate_qc_source_artifact
 from backend.app.quality import assess_metrics, normalize_rules
@@ -29,6 +31,30 @@ class AssayInput(BaseModel):
     assay_type: str = Field(min_length=1, max_length=100)
     configuration: dict = Field(default_factory=dict)
     status: str = Field(default="ACTIVE", max_length=50)
+
+class AssayValidationSubmissionInput(BaseModel):
+    validation_type: str = Field(min_length=1, max_length=20)
+    protocol_identifier: str = Field(min_length=1, max_length=300)
+    protocol_version: str = Field(min_length=1, max_length=100)
+    intended_use: str = Field(min_length=1, max_length=5000)
+    specimen_types: list[str] = Field(min_length=1)
+    variant_classes: list[str] = Field(min_length=1)
+    reference_builds: list[str] = Field(min_length=1)
+    workflow_id: str = Field(min_length=1, max_length=200)
+    workflow_version: str = Field(min_length=1, max_length=100)
+    pipeline_components: list[dict] = Field(min_length=1)
+    performance_specifications: list[dict] = Field(min_length=1)
+    study_design_summary: str = Field(min_length=1, max_length=12000)
+    sample_count: int = Field(gt=0)
+    evidence_manifest: list[dict] = Field(min_length=1)
+
+
+class AssayValidationDecisionInput(BaseModel):
+    decision: str = Field(min_length=1, max_length=20)
+    reason: str = Field(min_length=1, max_length=5000)
+    evidence_reference: str | None = Field(default=None, max_length=2000)
+    effective_at: datetime | None = None
+    expires_at: datetime | None = None
 
 class QCObservationInput(BaseModel):
     artifact_id: UUID | None = None
