@@ -29,7 +29,14 @@ def _payload(result="PASS"):
         "reference_builds": ["GRCh38"],
         "workflow_id": "variant-v1",
         "workflow_version": "2.1",
-        "pipeline_components": [{"name": "SIRALOOM Variant workflow", "version": "2.1", "sha256": "a" * 64}],
+        "pipeline_components": [
+            {"name": "bcftools", "version": "1.25", "sha256": "a" * 64},
+            {"name": "htslib", "version": "1.25", "sha256": "b" * 64},
+            {"name": "native_toolchain_lock", "version": "bcftools-1.25-htslib-1.25-linux-64", "sha256": "c" * 64},
+            {"name": "python_dependency_lock", "version": "uv.lock", "sha256": "d" * 64},
+            {"name": "siraloom_variant_workflow", "version": "2.1", "sha256": "e" * 64},
+            {"name": "container_image", "version": "sha256:" + "f" * 64, "sha256": "f" * 64},
+        ],
         "performance_specifications": [
             {"metric": "analytical_sensitivity", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": result},
             {"metric": "analytical_sensitivity", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
