@@ -552,6 +552,12 @@ def _evidence_summary_row(row: Evidence) -> dict[str, Any]:
             "size_bytes": row.response_artifact_size_bytes,
             "reason": row.response_retention_reason,
         },
+        "source_release": {
+            "status": row.source_release_status,
+            "artifact_id": str(row.source_release_artifact_id) if row.source_release_artifact_id else None,
+            "sha256": row.source_release_sha256,
+            "size_bytes": row.source_release_size_bytes,
+        },
         "payload": payload,
     }
 
@@ -691,6 +697,10 @@ def _evidence_snapshot(db: Session, analysis_id: UUID, variant_id: UUID, automat
             "response_artifact_sha256": evidence.response_artifact_sha256,
             "response_artifact_size_bytes": evidence.response_artifact_size_bytes,
             "response_retention_status": evidence.response_retention_status,
+            "source_release_artifact_id": str(evidence.source_release_artifact_id) if evidence.source_release_artifact_id else None,
+            "source_release_sha256": evidence.source_release_sha256,
+            "source_release_size_bytes": evidence.source_release_size_bytes,
+            "source_release_status": evidence.source_release_status,
             "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
             "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
         })
@@ -708,9 +718,11 @@ def build_report_content(db: Session, analysis: Analysis, language: str, *, repo
     # retained raw response artifact. Unretained responses remain explicitly
     # labeled; they are never upgraded to byte-verified by their parsed hash.
     from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+    from backend.app.domain.resource_release_integrity import verify_evidence_source_release_reference
     for evidence_row in db.scalars(
         select(Evidence).where(Evidence.analysis_id == analysis.id)
     ).all():
+        verify_evidence_source_release_reference(db, evidence_row)
         verify_provider_response_reference(
             db, analysis_id=analysis.id, case_id=case.id,
             resource_id=evidence_row.resource_id,
