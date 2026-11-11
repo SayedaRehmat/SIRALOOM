@@ -180,6 +180,8 @@ def _clinical_fixture():
             "performance_specifications": [
                 {"metric": "analytical_sensitivity", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
                 {"metric": "analytical_sensitivity", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
+                {"metric": "positive_predictive_value", "variant_class": "SNV", "acceptance_criteria": ">=95%", "observed_result": "99%", "unit": "%", "result": "PASS"},
+                {"metric": "positive_predictive_value", "variant_class": "SMALL_INDEL", "acceptance_criteria": ">=95%", "observed_result": "98%", "unit": "%", "result": "PASS"},
             ],
             "study_design_summary": "Representative positive and negative specimens assessed across the declared intended-use scope.",
             "sample_count": 50,
