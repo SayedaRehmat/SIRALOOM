@@ -300,3 +300,99 @@ def test_configured_host_attestor_does_not_fall_back_to_environment_digest(monke
 
     with pytest.raises(runtime.RuntimeAttestationError, match="Cannot obtain authenticated evidence"):
         runtime._host_runtime_image_identity()
+
+
+
+def test_signout_reverifies_persisted_host_signature_and_manifest_binding(monkeypatch):
+    from datetime import datetime, timezone
+    import time
+
+    components = [
+        {"name": "container_image", "version": "sha256:" + "e" * 64, "sha256": "e" * 64},
+    ]
+    signed_payload = {
+        "schema_version": "1",
+        "nonce": "a" * 64,
+        "issued_at_unix": int(time.time()),
+        "peer_pid": 4242,
+        "peer_uid": 10001,
+        "process_start_time": "123456",
+        "process_executable": "/opt/siraloom/.venv/bin/python",
+        "process_executable_sha256": "b" * 64,
+        "process_command_sha256": "c" * 64,
+        "process_cgroup_sha256": "d" * 64,
+        "identity_type": "docker-image-content",
+        "identity_version": "sha256:" + "e" * 64,
+        "image_sha256": "e" * 64,
+    }
+    event = SimpleNamespace(
+        event_type="CLINICAL_RUNTIME_ATTESTED",
+        event_hash="f" * 64,
+        occurred_at=datetime.fromtimestamp(signed_payload["issued_at_unix"], timezone.utc),
+        payload={
+            "components": components,
+            "manifest_sha256": runtime.runtime_manifest_sha256(components),
+            "host_attestation": {"payload": signed_payload, "signature": "00"},
+        },
+    )
+
+    class _ReadDB:
+        def scalars(self, statement):
+            return [event]
+
+    verified = []
+    monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/run/attestor.sock")
+    monkeypatch.setattr(
+        runtime,
+        "_verify_host_attestor_signature",
+        lambda message, signature: verified.append((message, signature)),
+    )
+    monkeypatch.setattr(runtime, "assert_pipeline_components_match_runtime", lambda *_args: None)
+
+    runtime.assert_analysis_runtime_attested(_ReadDB(), _analysis())
+
+    assert len(verified) == 1
+    assert json.loads(verified[0][0]) == signed_payload
+    assert verified[0][1] == bytes.fromhex("00")
+
+
+def test_signout_rejects_persisted_host_proof_for_another_image(monkeypatch):
+    from datetime import datetime, timezone
+    import time
+
+    components = [
+        {"name": "container_image", "version": "sha256:" + "e" * 64, "sha256": "e" * 64},
+    ]
+    signed_payload = {
+        "schema_version": "1",
+        "nonce": "a" * 64,
+        "issued_at_unix": int(time.time()),
+        "peer_pid": 4242,
+        "process_start_time": "123456",
+        "process_executable": "/opt/siraloom/.venv/bin/python",
+        "process_executable_sha256": "b" * 64,
+        "process_command_sha256": "c" * 64,
+        "process_cgroup_sha256": "d" * 64,
+        "identity_type": "docker-image-content",
+        "identity_version": "sha256:" + "1" * 64,
+        "image_sha256": "1" * 64,
+    }
+    event = SimpleNamespace(
+        event_type="CLINICAL_RUNTIME_ATTESTED",
+        event_hash="f" * 64,
+        occurred_at=datetime.fromtimestamp(signed_payload["issued_at_unix"], timezone.utc),
+        payload={
+            "components": components,
+            "manifest_sha256": runtime.runtime_manifest_sha256(components),
+            "host_attestation": {"payload": signed_payload, "signature": "00"},
+        },
+    )
+
+    class _ReadDB:
+        def scalars(self, statement):
+            return [event]
+
+    monkeypatch.setattr(runtime.settings, "host_runtime_attestor_socket", "/run/attestor.sock")
+
+    with pytest.raises(runtime.RuntimeAttestationError, match="does not match"):
+        runtime.assert_analysis_runtime_attested(_ReadDB(), _analysis())
