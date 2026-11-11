@@ -94,6 +94,7 @@ def _db():
         tables=[
             Analysis.__table__,
             Resource.__table__,
+            ResourceDiscovery.__table__,
             ResourceQualification.__table__,
             Annotation.__table__,
         ],
@@ -569,7 +570,7 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         engine,
         tables=[
             Organization.__table__, User.__table__, Case.__table__, Analysis.__table__,
-            Resource.__table__, ResourceQualification.__table__, Artifact.__table__,
+            Resource.__table__, ResourceDiscovery.__table__, ResourceQualification.__table__, Artifact.__table__,
             OrganizationStorageProfile.__table__,
             WorkflowStep.__table__,
         ],
