@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import base64
 import shutil
 import tempfile
 from dataclasses import asdict, dataclass
@@ -520,6 +521,47 @@ def _persist_annotation_response_checkpoint(
         raise ValueError("Annotation response records have inconsistent provider provenance.")
     if not request_fingerprint or not response_sha256:
         raise ValueError("Annotation response is missing its request/response fingerprint.")
+    # Preserve the exact HTTP entity bytes separately from the parsed/replay
+    # checkpoint. The release-specific license gate runs before those bytes
+    # are written to durable storage; unknown/restricted terms never fall back
+    # to raw-response persistence.
+    raw_response_b64 = provenance.pop("raw_response_base64", None)
+    raw_response_media_type = provenance.pop("raw_response_media_type", None)
+    retention = None
+    if raw_response_b64:
+        try:
+            raw_response_bytes = base64.b64decode(raw_response_b64, validate=True)
+        except (ValueError, TypeError) as exc:
+            raise ValueError("Annotation provider raw response encoding is invalid.") from exc
+        from backend.app.domain.evidence_response_retention import retain_provider_response_bytes
+        retention = retain_provider_response_bytes(
+            db,
+            analysis=analysis,
+            resource=resource,
+            provider_id=provider_id,
+            provider_version=provider_version,
+            request_fingerprint=request_fingerprint,
+            raw_response_bytes=raw_response_bytes,
+            media_type=raw_response_media_type,
+        )
+    else:
+        from backend.app.domain.evidence_response_retention import ProviderResponseRetention
+        retention = ProviderResponseRetention(
+            "NOT_AVAILABLE", "Provider adapter did not expose exact raw response bytes."
+        )
+    for payload in payloads:
+        item_provenance = payload.get("_siraloom_annotation_provenance")
+        if isinstance(item_provenance, dict):
+            item_provenance.pop("raw_response_base64", None)
+            item_provenance.pop("raw_response_media_type", None)
+            item_provenance["response_artifact_id"] = (
+                str(retention.artifact_id) if retention.artifact_id else None
+            )
+            item_provenance["response_artifact_sha256"] = retention.sha256
+            item_provenance["response_artifact_size_bytes"] = retention.size_bytes
+            item_provenance["response_retention_status"] = retention.status
+            item_provenance["response_retention_reason"] = retention.reason
+            item_provenance["response_license_status"] = retention.license_status
     response_material = {
         "schema_version": 1,
         "analysis_id": str(analysis.id),
@@ -1260,6 +1302,11 @@ def _persist_annotation_batch_rows(
             resource_version=annotation_resource.version,
             request_fingerprint=provenance.get("request_fingerprint"),
             response_sha256=provenance.get("response_sha256"),
+            response_artifact_id=(UUID(str(provenance["response_artifact_id"])) if provenance.get("response_artifact_id") else None),
+            response_artifact_sha256=provenance.get("response_artifact_sha256"),
+            response_artifact_size_bytes=provenance.get("response_artifact_size_bytes"),
+            response_retention_status=provenance.get("response_retention_status", "NOT_AVAILABLE"),
+            response_retention_reason=provenance.get("response_retention_reason"),
             request_metadata={
                 "endpoint": provenance.get("endpoint"),
                 "genome": provenance.get("genome"),
