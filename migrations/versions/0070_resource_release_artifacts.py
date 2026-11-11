@@ -26,6 +26,7 @@ def upgrade():
         sa.Column("storage_backend", sa.Text(), nullable=False),
         sa.Column("sha256", sa.Text(), nullable=False),
         sa.Column("size_bytes", sa.BigInteger(), nullable=False),
+        sa.Column("integrity_status", sa.Text(), nullable=False),
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.CheckConstraint("length(sha256) = 64", name="ck_resource_release_sha256_length"),
@@ -51,7 +52,7 @@ def upgrade():
             ))
             batch.create_check_constraint(
                 f"ck_{table}_source_release_status",
-                "source_release_status IN ('VERIFIED', 'NOT_AVAILABLE')",
+                "source_release_status IN ('VERIFIED', 'CAPTURED', 'NOT_AVAILABLE')",
             )
             batch.create_check_constraint(
                 f"ck_{table}_source_release_digest",
