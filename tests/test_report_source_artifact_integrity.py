@@ -75,5 +75,5 @@ def test_report_signout_rejects_manifest_digest_substitution(monkeypatch, tmp_pa
     monkeypatch.setattr(finalization, "artifact_store_for_uri", lambda *args, **kwargs: store)
     report.content_json["artifact_manifest"][0]["sha256"] = "0" * 64
 
-    with pytest.raises(finalization.ReportFinalizationError, match="does not match its manifest"):
+    with pytest.raises(finalization.ReportFinalizationError, match="no longer matches its manifest identity"):
         finalization._verify_report_artifact_bytes(db, report)
