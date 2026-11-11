@@ -31,6 +31,23 @@ from backend.app.infrastructure.db.models import (
 )
 
 
+
+def _stub_checkpoint_retention_gate(monkeypatch, db, resource, reviewer_id):
+    """Checkpoint tests isolate retry semantics; approval policy has dedicated tests."""
+    import backend.app.domain.evidence_response_retention as retention
+    discovery = db.scalar(select(ResourceDiscovery).where(ResourceDiscovery.resource_id == resource.id))
+    monkeypatch.setattr(
+        retention, "_retention_permission",
+        lambda _db, _resource, *, organization_id: (
+            "RETAINED", "test-only approval stub", discovery,
+            SimpleNamespace(
+                id=uuid4(), version=1, reviewer_id=reviewer_id,
+                terms_evidence_artifact_id=uuid4(), terms_evidence_sha256="f" * 64,
+            ),
+        ),
+    )
+
+
 def test_annotation_batch_provenance_is_consistent_across_all_payloads():
     from backend.app.workflows.variant import _ensure_annotation_request_fingerprint
 
@@ -604,21 +621,7 @@ def test_annotation_response_checkpoint_replays_exact_payload_after_worker_loss(
         db.add(step)
         db.commit()
 
-        # This test isolates checkpoint/retry semantics. The release approval
-        # gate is exercised against real approval rows in test_evidence_response_retention.
-        import backend.app.domain.evidence_response_retention as retention
-        from types import SimpleNamespace
-        discovery = db.scalar(select(ResourceDiscovery).where(ResourceDiscovery.resource_id == resource.id))
-        monkeypatch.setattr(
-            retention, "_retention_permission",
-            lambda _db, _resource, *, organization_id: (
-                "RETAINED", "test-only governed approval stub", discovery,
-                SimpleNamespace(
-                    id=uuid4(), version=1, reviewer_id=user_id,
-                    terms_evidence_artifact_id=uuid4(), terms_evidence_sha256="f" * 64,
-                ),
-            ),
-        )
+        _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
 
         provider_calls = {"count": 0}
 
@@ -720,6 +723,7 @@ def test_annotation_response_checkpoint_fails_closed_on_resource_release_drift(m
         db.add(analysis)
         resource = _resource(db)
         other_resource = _resource(db)
+        _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
         step = WorkflowStep(
             id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
             status="RUNNING", attempt=1, input_artifacts=[], output_artifacts=[],
@@ -862,6 +866,7 @@ def test_annotation_stage_continuation_recovers_rows_partition_and_evidence_line
             ))
             resource = _resource(db)
             resource_id = resource.id
+            _stub_checkpoint_retention_gate(monkeypatch, db, resource, user_id)
             step = WorkflowStep(
                 id=uuid4(), analysis_id=analysis_id, step_id="annotate", step_order=3,
                 status=StepStatus.RUNNING, attempt=1, input_artifacts=[], output_artifacts=[],
