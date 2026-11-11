@@ -29,6 +29,7 @@ from backend.app.infrastructure.db.models import (
     Artifact,
     Case,
     ConfirmationRecord,
+    Evidence,
     Report,
     User,
 )
@@ -333,6 +334,13 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     raise ReportFinalizationError(
                         f"Report snapshot evidence {evidence_id_raw} is missing"
                     )
+                from backend.app.domain.evidence_response_retention import verify_evidence_response_artifact
+                try:
+                    verify_evidence_response_artifact(db, evidence, require_retained=False)
+                except Exception as exc:
+                    raise ReportFinalizationError(
+                        f"Report source evidence {evidence_id_raw} has an invalid provider response artifact reference."
+                    ) from exc
                 if evidence.response_sha256 is not None and re.fullmatch(r"[0-9a-fA-F]{64}", evidence.response_sha256) is None:
                     raise ReportFinalizationError(
                         f"Report source evidence {evidence_id_raw} has an invalid response SHA-256."
@@ -351,6 +359,10 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     source_record_id=evidence.source_record_id,
                     request_fingerprint=evidence.request_fingerprint,
                     response_sha256=evidence.response_sha256,
+                    response_artifact_id=evidence.response_artifact_id,
+                    response_artifact_sha256=evidence.response_artifact_sha256,
+                    response_artifact_size_bytes=evidence.response_artifact_size_bytes,
+                    response_retention_status=evidence.response_retention_status,
                 )
                 if calculated_evidence_fingerprint != evidence.evidence_fingerprint:
                     raise ReportFinalizationError(
@@ -368,6 +380,10 @@ def _verify_report_snapshot(db: Session, report: Report) -> None:
                     "source_record_id": evidence.source_record_id,
                     "request_fingerprint": evidence.request_fingerprint,
                     "response_sha256": evidence.response_sha256,
+                    "response_artifact_id": str(evidence.response_artifact_id) if evidence.response_artifact_id else None,
+                    "response_artifact_sha256": evidence.response_artifact_sha256,
+                    "response_artifact_size_bytes": evidence.response_artifact_size_bytes,
+                    "response_retention_status": evidence.response_retention_status,
                     "observation_ids": [str(x) for x in (evidence.observation_ids or [])],
                     "payload": phenotype_evidence_display_payload(evidence.evidence_type, evidence.payload),
                 }
