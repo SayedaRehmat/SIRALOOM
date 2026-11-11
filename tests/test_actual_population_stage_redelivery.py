@@ -85,6 +85,18 @@ def test_real_workflow_recovers_population_evidence_and_acmg_after_commits(
 ):
     import importlib
 
+    # This integration test isolates population/evidence worker recovery. The
+    # immutable local-release verification contract is covered by dedicated
+    # source-release integrity tests and is not stubbed in production code.
+    release_integrity = importlib.import_module("backend.app.domain.resource_release_integrity")
+    monkeypatch.setattr(
+        release_integrity, "verify_population_source_release_reference",
+        lambda *_args, **_kwargs: False,
+    )
+    monkeypatch.setattr(
+        release_integrity, "verify_evidence_source_release_reference",
+        lambda *_args, **_kwargs: False,
+    )
     db_module = importlib.import_module("backend.app.infrastructure.db.session")
     workflow = importlib.import_module("backend.app.workflows.variant")
     engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'population-redelivery.db'}")
