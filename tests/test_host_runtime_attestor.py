@@ -20,7 +20,7 @@ def test_docker_identity_uses_container_image_config_and_all_rootfs_layers(monke
     layers = ["sha256:" + "c" * 64, "sha256:" + "d" * 64]
     responses = [
         SimpleNamespace(
-            stdout=json.dumps([{"Id": container_id, "Image": image_id}])
+            stdout=json.dumps([{"Id": container_id, "Image": image_id, "HostConfig": {"ReadonlyRootfs": True}}])
         ),
         SimpleNamespace(
             stdout=json.dumps([{"Id": image_id, "RootFS": {"Layers": layers}}])
@@ -68,4 +68,27 @@ def test_docker_identity_rejects_missing_rootfs_layer_evidence(monkeypatch):
     monkeypatch.setattr(_attestor.subprocess, "run", lambda *_args, **_kwargs: responses.pop(0))
 
     with pytest.raises(RuntimeError, match="root-filesystem layer identity"):
+        _attestor.docker_identity(1234)
+
+
+
+def test_docker_identity_rejects_mutable_container_root_filesystem(monkeypatch):
+    container_id = "a" * 64
+    responses = [
+        SimpleNamespace(
+            stdout=json.dumps([{
+                "Id": container_id,
+                "Image": "sha256:" + "b" * 64,
+                "HostConfig": {"ReadonlyRootfs": False},
+            }])
+        ),
+    ]
+    monkeypatch.setattr(
+        _attestor,
+        "process_cgroups",
+        lambda pid: f"0::/system.slice/docker-{container_id}.scope",
+    )
+    monkeypatch.setattr(_attestor.subprocess, "run", lambda *_args, **_kwargs: responses.pop(0))
+
+    with pytest.raises(RuntimeError, match="read-only container root filesystem"):
         _attestor.docker_identity(1234)
