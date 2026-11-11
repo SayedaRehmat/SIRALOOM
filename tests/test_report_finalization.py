@@ -32,6 +32,19 @@ from backend.app.reporting.finalization import (
 from backend.app.reporting.service import build_report_content, final_report_eligibility
 
 
+@pytest.fixture(autouse=True)
+def _isolate_report_finalization_unit_tests_from_runtime_authorization(monkeypatch):
+    """Exercise report snapshot/sign-out mechanics independently of clinical gates.
+
+    Clinical authorization and worker-runtime attestation have dedicated gate tests;
+    those production checks remain mandatory and are isolated only in this test module.
+    """
+    from backend.app.domain import clinical_authorization, runtime_attestation
+
+    monkeypatch.setattr(clinical_authorization, "assert_analysis_clinical_authorization", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(runtime_attestation, "assert_analysis_runtime_attested", lambda *_args, **_kwargs: None)
+
+
 def make_db():
     engine=create_engine('sqlite+pysqlite:///:memory:'); Base.metadata.create_all(engine); return Session(engine)
 
