@@ -102,7 +102,7 @@ def test_assay_validation_requires_evidence_and_variant_class_performance_covera
     payload["performance_specifications"] = [
         item for item in payload["performance_specifications"] if item["variant_class"] == "SNV"
     ]
-    with pytest.raises(AssayValidationError, match="Each declared variant class"):
+    with pytest.raises(AssayValidationError, match="SMALL_INDEL requires performance specifications"):
         normalize_validation_submission(payload)
 
 
