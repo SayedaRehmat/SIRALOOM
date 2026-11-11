@@ -18,7 +18,11 @@ from backend.app.domain.report_integrity import (
     has_valid_draft_artifact,
     has_valid_signed_artifact,
 )
-from backend.app.domain.storage_profiles import StorageProfileError, artifact_store_for_uri
+from backend.app.domain.storage_profiles import (
+    StorageProfileError,
+    artifact_store_for_organization,
+    artifact_store_for_uri,
+)
 from backend.app.infrastructure.audit.service import AuditService
 from backend.app.infrastructure.db.models import (
     Analysis,
