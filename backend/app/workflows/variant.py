@@ -1409,6 +1409,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
         from backend.app.domain.clinical_authorization import (
             assert_analysis_clinical_authorization,
         )
+        from backend.app.domain.runtime_attestation import (
+            RuntimeAttestationError,
+            assert_analysis_runtime_attested,
+        )
         try:
             assert_analysis_clinical_authorization(
                 db,
@@ -1420,7 +1424,9 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                 analysis_workflow_version=getattr(analysis, "workflow_version", None),
                 analysis_reference_build=getattr(analysis, "reference_build", None),
             )
-        except ValueError as exc:
+            if analysis.analysis_type != "RESEARCH":
+                assert_analysis_runtime_attested(db, analysis)
+        except (ValueError, RuntimeAttestationError) as exc:
             analysis.status = AnalysisStatus.BLOCKED
             analysis.completed_at = datetime.now(timezone.utc)
             blocked_configuration = dict(analysis.configuration or {})
