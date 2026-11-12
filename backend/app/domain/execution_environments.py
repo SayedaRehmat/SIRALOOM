@@ -48,6 +48,30 @@ class ExecutionCapacity:
 
 
 @dataclass(frozen=True)
+class ExecutionJobLimits:
+    """Qualified per-container limits applied to every scientific tool process."""
+
+    cpu_cores: float
+    memory_bytes: int
+    pids_limit: int
+    container_user: str
+
+    def validate(self, capacity: ExecutionCapacity) -> None:
+        if self.cpu_cores <= 0 or self.cpu_cores > capacity.cpu_cores:
+            raise ExecutionEnvironmentError("Per-job CPU limit must be positive and within qualified environment capacity.")
+        if self.memory_bytes <= 0 or self.memory_bytes > capacity.memory_bytes:
+            raise ExecutionEnvironmentError("Per-job memory limit must be positive and within qualified environment capacity.")
+        if not 1 <= self.pids_limit <= 65536:
+            raise ExecutionEnvironmentError("Per-job PID limit must be between 1 and 65536.")
+        user_match = (
+            re.fullmatch(r"([0-9]+):([0-9]+)", self.container_user)
+            if isinstance(self.container_user, str) else None
+        )
+        if user_match is None or int(user_match.group(1)) == 0 or int(user_match.group(2)) == 0:
+            raise ExecutionEnvironmentError("Container user must be an explicit non-root numeric uid:gid pair.")
+
+
+@dataclass(frozen=True)
 class ExecutionEnvironmentProfile:
     environment_id: str
     profile_version: str
@@ -74,6 +98,7 @@ class ExecutionEnvironmentProfile:
     agent_version: str | None = None
     agent_last_seen_at: datetime | None = None
     qualification_status: str = "DISCOVERED"
+    job_limits: ExecutionJobLimits | None = None
 
     def validate(self) -> None:
         if self.owner_scope not in {"SIRALOOM", "LABORATORY"}:
@@ -137,6 +162,14 @@ class ExecutionEnvironmentProfile:
         if not self.workspace_root.startswith("/") or "\\x00" in self.workspace_root:
             raise ExecutionEnvironmentError("Environment workspace_root must be an absolute POSIX path.")
         self.capacity.validate()
+        if self.executor_kind == "CONTAINER":
+            if self.job_limits is None:
+                raise ExecutionEnvironmentError(
+                    "Container environments require explicit qualified per-job CPU, memory, PID and non-root user limits."
+                )
+            self.job_limits.validate(self.capacity)
+        elif self.job_limits is not None:
+            self.job_limits.validate(self.capacity)
         if not self.storage_profile_ids or any(not item.strip() for item in self.storage_profile_ids):
             raise ExecutionEnvironmentError("At least one approved storage profile is required.")
         if len(set(self.storage_profile_ids)) != len(self.storage_profile_ids):
@@ -239,6 +272,15 @@ class ExecutionEnvironmentProfile:
                 "max_concurrency": self.capacity.max_concurrency,
                 "gpu_count": self.capacity.gpu_count,
             },
+            "job_limits": (
+                {
+                    "cpu_cores": self.job_limits.cpu_cores,
+                    "memory_bytes": self.job_limits.memory_bytes,
+                    "pids_limit": self.job_limits.pids_limit,
+                    "container_user": self.job_limits.container_user,
+                }
+                if self.job_limits is not None else None
+            ),
             "workspace_root": self.workspace_root,
             "storage_profile_ids": list(self.storage_profile_ids),
             "supported_tool_profile_ids": list(self.supported_tool_profile_ids),
@@ -286,6 +328,10 @@ def execution_environment_profile_from_snapshot(snapshot: dict) -> ExecutionEnvi
             agent_version=snapshot.get("agent_version"),
             agent_last_seen_at=datetime.fromisoformat(heartbeat) if heartbeat else None,
             qualification_status=snapshot["qualification_status"],
+            job_limits=(
+                ExecutionJobLimits(**snapshot["job_limits"])
+                if snapshot.get("job_limits") else None
+            ),
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise ExecutionEnvironmentError("Persisted execution environment snapshot is incomplete or malformed.") from exc
