@@ -1,4 +1,6 @@
 from datetime import UTC, datetime, timedelta
+import os
+import threading
 from uuid import uuid4
 
 import pytest
@@ -441,3 +443,168 @@ def test_worker_retry_after_approval_expiry_cannot_reuse_retained_response(tmp_p
     assert retry.status == "REVIEW_REQUIRED"
     assert retry.artifact_id is None
     assert approval.status == "EXPIRED"
+
+
+@pytest.mark.integration
+def test_postgres_two_workers_expire_one_approval_once(tmp_path, monkeypatch):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    db, _store, _case, analysis, _variant, resource = _seed(
+        tmp_path, monkeypatch, database_url=database_url
+    )
+    engine = db.get_bind()
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    approval.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    analysis_id, resource_id = analysis.id, resource.id
+    db.commit()
+    db.close()
+
+    barrier = threading.Barrier(2)
+    results = []
+    errors = []
+
+    def worker():
+        try:
+            with Session(engine) as session:
+                local_analysis = session.get(Analysis, analysis_id)
+                local_resource = session.get(Resource, resource_id)
+                barrier.wait(timeout=5)
+                result = retain_provider_response_bytes(
+                    session, analysis=local_analysis, resource=local_resource,
+                    provider_id="TestProvider", provider_version="1",
+                    request_fingerprint="parallel-expiry",
+                    raw_response_bytes=b'{"parallel":"same"}',
+                )
+                results.append(result)
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=15)
+
+    try:
+        assert all(not thread.is_alive() for thread in threads)
+        assert not errors
+        assert len(results) == 2
+        assert all(result.status == "REVIEW_REQUIRED" for result in results)
+        with Session(engine) as session:
+            final_approval = session.get(ProviderRetentionApproval, approval.id)
+            actions = list(session.scalars(select(ProviderRetentionApprovalAction).where(
+                ProviderRetentionApprovalAction.approval_id == approval.id,
+                ProviderRetentionApprovalAction.action == "EXPIRE",
+            )))
+            assert final_approval.status == "EXPIRED"
+            assert len(actions) == 1
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.integration
+def test_postgres_revocation_serializes_with_worker_retry(tmp_path, monkeypatch):
+    database_url = os.environ.get("DATABASE_URL", "")
+    if not database_url.startswith(("postgresql://", "postgresql+psycopg://")):
+        pytest.skip("PostgreSQL integration test requires DATABASE_URL")
+
+    import backend.app.domain.evidence_response_retention as retention
+
+    db, _store, _case, analysis, _variant, resource = _seed(
+        tmp_path, monkeypatch, database_url=database_url
+    )
+    engine = db.get_bind()
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    approval_id, actor_id = approval.id, approval.reviewer_id
+    analysis_id, resource_id = analysis.id, resource.id
+    db.commit()
+    db.close()
+
+    revoker_has_lock = threading.Event()
+    allow_revocation = threading.Event()
+    worker_query_started = threading.Event()
+    original_authorized_reviewer = retention._authorized_reviewer
+
+    def pause_revoker(session, *, organization_id, reviewer_id):
+        if threading.current_thread().name == "approval-revoker":
+            revoker_has_lock.set()
+            if not allow_revocation.wait(timeout=10):
+                raise TimeoutError("revocation test gate was not released")
+        return original_authorized_reviewer(
+            session, organization_id=organization_id, reviewer_id=reviewer_id
+        )
+
+    monkeypatch.setattr(retention, "_authorized_reviewer", pause_revoker)
+
+    from sqlalchemy import event
+
+    def observe_worker_select(_conn, _cursor, statement, _parameters, _context, _many):
+        if (
+            threading.current_thread().name == "retention-worker"
+            and "provider_retention_approvals" in statement.lower()
+        ):
+            worker_query_started.set()
+
+    event.listen(engine, "before_cursor_execute", observe_worker_select)
+    results = []
+    errors = []
+
+    def revoke():
+        try:
+            with Session(engine) as session:
+                retention.revoke_provider_retention(
+                    session, approval_id=approval_id, actor_id=actor_id,
+                    reason="Concurrent revocation integration test",
+                )
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    def retry():
+        try:
+            with Session(engine) as session:
+                local_analysis = session.get(Analysis, analysis_id)
+                local_resource = session.get(Resource, resource_id)
+                result = retain_provider_response_bytes(
+                    session, analysis=local_analysis, resource=local_resource,
+                    provider_id="TestProvider", provider_version="1",
+                    request_fingerprint="retry-racing-revocation",
+                    raw_response_bytes=b'{"must":"not-reuse"}',
+                )
+                results.append(result)
+                session.commit()
+        except Exception as exc:  # surfaced in the main test thread  # noqa: BLE001
+            errors.append(exc)
+
+    revoker = threading.Thread(target=revoke, name="approval-revoker")
+    worker = threading.Thread(target=retry, name="retention-worker")
+    try:
+        revoker.start()
+        assert revoker_has_lock.wait(timeout=5)
+        worker.start()
+        assert worker_query_started.wait(timeout=5)
+        allow_revocation.set()
+        revoker.join(timeout=10)
+        worker.join(timeout=10)
+        assert not revoker.is_alive()
+        assert not worker.is_alive()
+        assert not errors
+        assert len(results) == 1
+        assert results[0].status == "REVIEW_REQUIRED"
+        with Session(engine) as session:
+            assert session.get(ProviderRetentionApproval, approval_id).status == "REVOKED"
+    finally:
+        allow_revocation.set()
+        event.remove(engine, "before_cursor_execute", observe_worker_select)
+        revoker.join(timeout=2)
+        worker.join(timeout=2)
+        engine.dispose()
