@@ -230,7 +230,11 @@ def revoke_provider_retention(
     db: Session, *, approval_id: UUID, actor_id: UUID, reason: str,
 ) -> ProviderRetentionApproval:
     """Revoke future use without deleting approval or decision history."""
-    approval = db.get(ProviderRetentionApproval, approval_id)
+    # Revocation must serialize with retention and verification, which take
+    # the same approval-row lock before authorizing any future use.
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.id == approval_id,
+    ).with_for_update())
     if approval is None:
         raise ValueError("Provider retention approval does not exist.")
     _authorized_reviewer(db, organization_id=approval.organization_id, reviewer_id=actor_id)
