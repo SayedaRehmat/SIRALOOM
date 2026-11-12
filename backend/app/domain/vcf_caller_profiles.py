@@ -115,12 +115,6 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
     },
 }
 
-_PROFILE_ALIASES = {
-    "gatk_haplotypecaller": "gatk_haplotypecaller",
-    "deepvariant_germline": "deepvariant_germline",
-    "dragen_snv_germline": "dragen_snv_germline",
-}
-
 _ID_RE = re.compile(r"(?:^|[<,])ID=([^,>]+)")
 _ATTR_RE = re.compile(r'([A-Za-z][A-Za-z0-9_.-]*)=(?:"((?:\\.|[^"])*)"|([^,>]*))')
 
@@ -316,7 +310,11 @@ def inspect_caller_provenance(
         else None
     )
 
-    definition = _PROFILE_DEFINITIONS.get(profile_id or "")
+    definition = (
+        _PROFILE_DEFINITIONS.get(profile_id or "")
+        if identity_status != "CONFLICTED"
+        else None
+    )
     present_format_semantics = {
         key: definition["documented_format_semantics"][key]
         for key in sorted(format_fields)
@@ -327,6 +325,12 @@ def inspect_caller_provenance(
         for key in sorted(info_fields)
         if definition and key in definition["documented_info_semantics"]
     }
+    unique_models = sorted(set(deepvariant_models))
+    model_status = (
+        "DECLARED" if len(unique_models) == 1
+        else "CONFLICTED" if len(unique_models) > 1
+        else "NOT_DECLARED"
+    )
 
     return {
         "schema_version": 1,
@@ -340,13 +344,15 @@ def inspect_caller_provenance(
         "version_status": version_status,
         "producer_stages": sorted({item["stage"] for item in gatk_stages}),
         "declared_source_values": sorted(source_set),
-        "deepvariant_model_type": sorted(set(deepvariant_models))[0] if len(set(deepvariant_models)) == 1 else None,
-        "deepvariant_model_type_status": "DECLARED" if len(set(deepvariant_models)) == 1 else "NOT_DECLARED_OR_CONFLICTED",
+        "deepvariant_model_type": unique_models[0] if len(unique_models) == 1 else None,
+        "deepvariant_model_type_status": model_status,
         "command_line_header_present": bool(command_lines),
         "command_line_header_sha256": command_line_digest,
         "vcf_specification_version": fileformat,
         "caller_profile_version": definition["profile_version"] if definition else None,
         "caller_profile_source_references": definition["source_references"] if definition else [],
+        "caller_germline_capability": definition["germline_capability"] if definition else None,
+        "documented_gvcf_markers": definition["gvcf_markers"] if definition else [],
         "profile_semantic_scope": "DOCUMENTED_OUTPUT_CONVENTIONS_NOT_RELEASE_QUALIFICATION",
         "documented_example_vcf_versions": definition["documented_example_vcf_versions"] if definition else [],
         "declared_info_fields": sorted(info_fields),
