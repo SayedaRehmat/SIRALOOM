@@ -118,6 +118,20 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
         case = db.get(Case, artifact.case_id)
         if case is None or case.organization_id is None:
             raise RuntimeError("Artifact case/tenant identity is unavailable for validation.")
+        from backend.app.domain.execution_context import (
+            ExecutionEnvironmentAssignmentError,
+            persistent_execution_for_case,
+        )
+        try:
+            persistent_execution = persistent_execution_for_case(
+                db,
+                case=case,
+                worker_id=f"artifact-validation:{artifact.id}",
+            )
+        except ExecutionEnvironmentAssignmentError as exc:
+            from backend.app.domain.ingestion import VCFValidationUnavailable
+            raise VCFValidationUnavailable(str(exc)) from exc
+
         metadata = dict(artifact.metadata_json or {})
         ingestion = dict(metadata.get("ingestion") or {})
         kind = ingestion.get("file_kind")
@@ -135,7 +149,11 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
             _copy_verified_artifact(db, case, artifact, artifact_path)
 
             if kind == "VCF":
-                result = validate_vcf(artifact_path)
+                result = validate_vcf(
+                    artifact_path,
+                    persistent_execution=persistent_execution,
+                    workflow_id=f"vcf-intake:{artifact.id}",
+                )
                 specimen = db.get(Specimen, artifact.specimen_id) if artifact.specimen_id else None
                 if result.sample_names and specimen is None:
                     from backend.app.domain.ingestion import ValidationResult
@@ -189,6 +207,8 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                     primary.filename,
                     primary_path=primary_path,
                     expected_bcftools_version=settings.bcftools_version,
+                    persistent_execution=persistent_execution,
+                    workflow_id=f"vcf-index:{artifact.id}",
                 )
                 metadata["validation"] = {
                     "status": result.status,
