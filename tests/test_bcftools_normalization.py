@@ -325,19 +325,22 @@ def test_dragen_multiallelic_germline_fields_are_remapped_by_vcf_cardinality(tmp
         parsed.append(dict(zip(keys, values)))
 
     assert [item["AD"] for item in parsed] == ["0,5", "0,4"]
-    assert [item["AF"] for item in parsed] == ["0.556", "0.444"]
+    assert [[float(value) for value in item["AF"].split(",")] for item in parsed] == [
+        pytest.approx([0.556]),
+        pytest.approx([0.444]),
+    ]
     assert [item["PL"] for item in parsed] == ["177,144,46", "177,122,72"]
-    assert [item["GL"] for item in parsed] == [
-        "-17.704,-14.420,-4.626",
-        "-17.704,-12.220,-7.244",
+    assert [[float(value) for value in item["GL"].split(",")] for item in parsed] == [
+        pytest.approx([-17.704, -14.420, -4.626]),
+        pytest.approx([-17.704, -12.220, -7.244]),
     ]
-    assert [item["GP"] for item in parsed] == [
-        "107.6,109.6,14.65",
-        "107.6,87.58,40.82",
+    assert [[float(value) for value in item["GP"].split(",")] for item in parsed] == [
+        pytest.approx([107.6, 109.6, 14.65]),
+        pytest.approx([107.6, 87.58, 40.82]),
     ]
-    assert [item["PRI"] for item in parsed] == [
-        "0,34.77,37.77",
-        "0,34.77,37.77",
+    assert [[float(value) for value in item["PRI"].split(",")] for item in parsed] == [
+        pytest.approx([0.00, 34.77, 37.77]),
+        pytest.approx([0.00, 34.77, 37.77]),
     ]
     assert [item["F1R2"] for item in parsed] == ["0,3", "0,2"]
     assert [item["F2R1"] for item in parsed] == ["0,2", "0,2"]
