@@ -3271,6 +3271,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                                 if existing:
                                     continue
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                source_release, source_release_status = find_verified_resource_release(
+                                    db, resource_id=resource.id, resource_version=resource.version,
+                                )
                                 db.add(
                                     PopulationObservation(
                                         id=__import__("uuid").uuid4(),
@@ -3292,6 +3296,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                         ),
                                         availability="AVAILABLE",
                                         quality_status="PROVIDER_DERIVED",
+                                        source_release_artifact_id=source_release.id if source_release else None,
+                                        source_release_sha256=source_release.sha256 if source_release else None,
+                                        source_release_size_bytes=source_release.size_bytes if source_release else None,
+                                        source_release_status=source_release_status,
                                     )
                                 )
                                 created += 1
@@ -3638,6 +3646,11 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 )
                                 if existing:
                                     continue
+                                from backend.app.domain.resource_release_integrity import find_verified_resource_release
+                                secondary_source_release, secondary_source_release_status = find_verified_resource_release(
+                                    db, resource_id=secondary_resource.id,
+                                    resource_version=secondary_resource.version,
+                                )
                                 db.add(
                                     PopulationObservation(
                                         id=__import__("uuid").uuid4(),
@@ -3662,6 +3675,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                             if obs.observed_at
                                             else None
                                         ),
+                                        source_release_artifact_id=secondary_source_release.id if secondary_source_release else None,
+                                        source_release_sha256=secondary_source_release.sha256 if secondary_source_release else None,
+                                        source_release_size_bytes=secondary_source_release.size_bytes if secondary_source_release else None,
+                                        source_release_status=secondary_source_release_status,
                                     )
                                 )
                                 secondary_count += 1
