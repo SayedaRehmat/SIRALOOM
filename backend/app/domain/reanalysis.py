@@ -521,7 +521,7 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 resource_version=row.resource_version,
                 request_fingerprint=row.request_fingerprint,
                 response_sha256=row.response_sha256,
-                response_artifact_id=copy_response_artifact(row.response_artifact_id),
+                response_artifact_id=copied_response_artifact_id,
                 response_artifact_sha256=row.response_artifact_sha256,
                 response_artifact_size_bytes=row.response_artifact_size_bytes,
                 response_retention_status=row.response_retention_status,
@@ -629,6 +629,7 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 raise ValueError(
                     "Reused evidence contains an invalid observation identifier"
                 ) from exc
+            copied_response_artifact_id = copy_response_artifact(row.response_artifact_id)
             copied = Evidence(
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 evidence_type=row.evidence_type, statement=row.statement,
@@ -664,14 +665,14 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                     source_record_id=row.source_record_id,
                     request_fingerprint=row.request_fingerprint,
                     response_sha256=row.response_sha256,
-                    response_artifact_id=copied.response_artifact_id,
-                    response_artifact_sha256=copied.response_artifact_sha256,
-                    response_artifact_size_bytes=copied.response_artifact_size_bytes,
-                    response_retention_status=copied.response_retention_status,
-                    source_release_artifact_id=copied.source_release_artifact_id,
-                    source_release_sha256=copied.source_release_sha256,
-                    source_release_size_bytes=copied.source_release_size_bytes,
-                    source_release_status=copied.source_release_status,
+                    response_artifact_id=copied_response_artifact_id,
+                    response_artifact_sha256=row.response_artifact_sha256,
+                    response_artifact_size_bytes=row.response_artifact_size_bytes,
+                    response_retention_status=row.response_retention_status,
+                    source_release_artifact_id=row.source_release_artifact_id,
+                    source_release_sha256=row.source_release_sha256,
+                    source_release_size_bytes=row.source_release_size_bytes,
+                    source_release_status=row.source_release_status,
                 ),
             )
             evidence_ids[str(row.id)] = str(copied.id)
