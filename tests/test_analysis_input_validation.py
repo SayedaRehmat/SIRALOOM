@@ -81,3 +81,26 @@ def test_analysis_allows_explicitly_mapped_sample_from_multisample_vcf():
 
     with pytest.raises(ValueError, match="Multisample VCF analysis requires"):
         validate_analysis_input_artifact(artifact, "GRCh38")
+
+def test_analysis_rejects_structurally_valid_vcf_with_caller_review_required():
+    artifact = SimpleNamespace(
+        artifact_type="VCF",
+        validation_status="VALID",
+        genome_build="GRCh38",
+        metadata_json={
+            "validation": {
+                "sample_names": ["PROBAND"],
+                "caller_provenance": {
+                    "caller_semantic_compatibility_status": "MISSING_REQUIRED_FORMAT_FIELD",
+                },
+            },
+            "workflow_eligibility": "REVIEW_REQUIRED",
+            "workflow_eligibility_reason": {
+                "code": "CALLER_SEMANTIC_COMPATIBILITY_REVIEW_REQUIRED",
+            },
+        },
+    )
+
+    with pytest.raises(ValueError, match="requires caller semantic compatibility review"):
+        validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
+\n
