@@ -103,6 +103,7 @@ def test_common_format_fields_do_not_identify_an_unknown_caller(tmp_path: Path) 
     assert provenance["profile_match_status"] == "NO_CALLER_PROFILE_MATCH"
     assert provenance["clinical_qualification_status"] == "NOT_ESTABLISHED"
     assert provenance["caller_semantic_compatibility_status"] == "NOT_ASSESSED"
+    assert provenance["caller_semantic_compatibility_review_required"] is False
 
 
 def test_conflicting_caller_family_markers_are_not_resolved_by_precedence(tmp_path: Path) -> None:
