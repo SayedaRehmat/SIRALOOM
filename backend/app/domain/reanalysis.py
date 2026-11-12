@@ -553,7 +553,7 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 availability=row.availability, quality_status=row.quality_status,
                 source_record_id=row.source_record_id, request_fingerprint=row.request_fingerprint,
                 response_sha256=row.response_sha256,
-                response_artifact_id=copy_response_artifact(row.response_artifact_id),
+                response_artifact_id=copied_response_artifact_id,
                 response_artifact_sha256=row.response_artifact_sha256,
                 response_artifact_size_bytes=row.response_artifact_size_bytes,
                 response_retention_status=row.response_retention_status,
