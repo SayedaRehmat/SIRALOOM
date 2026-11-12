@@ -373,7 +373,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
         # that metadata to alter the structural validation decision.
         failure_metadata: dict | None = {}
         try:
-            failure_metadata["caller_provenance"] = inspect_caller_provenance(p)
+            caller_provenance = inspect_caller_provenance(p)
+            if caller_provenance.get("identity_status") != "UNKNOWN":
+                failure_metadata["caller_provenance"] = caller_provenance
         except (OSError, EOFError, gzip.BadGzipFile, UnicodeError):
             pass
         if bcftools_version is not None:
