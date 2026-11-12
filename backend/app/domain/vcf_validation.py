@@ -2076,7 +2076,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                             ploidy=genotype_ploidy,
                             local_allele_count=local_allele_count,
                             base_modification_cardinality=base_modification_cardinality,
-                            caller_profile_id=caller_profile_id,
+                            caller_profile_id=header_caller_profile_id,
                         )
                 if fileformat == "VCFv4.5":
                     _validate_local_field_equivalence(
