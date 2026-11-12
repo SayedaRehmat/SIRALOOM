@@ -102,7 +102,8 @@ def test_security_review_advisories_match_the_exact_upstream_release(
 
 def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     dockerfile = (ROOT / "docker/backend-bcftools-source.Dockerfile").read_text(encoding="utf-8")
-    assert "FROM mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3 AS bcftools-source-build" in dockerfile
+    assert "ARG BCFTOOLS_BUILDER_IMAGE=mambaorg/micromamba:2.3.1@sha256:6113627f42f39d065f116b8649e3f699ed2bbe076a58b64ae50fafb4acb8aaf3" in dockerfile
+    assert "FROM ${BCFTOOLS_BUILDER_IMAGE} AS bcftools-source-build" in dockerfile
     assert "ARG BCFTOOLS_BASE_IMAGE=python:3.12-slim-trixie@sha256:b18b261e1b4974b4f321451ad5251ded85abb22c2b8b262da527dda1d031ab30" in dockerfile
     assert "ARG DEBIAN_SNAPSHOT_TIMESTAMP=20261105T000000Z" in dockerfile
     assert "printf '%s\\n'" in dockerfile
@@ -119,8 +120,11 @@ def test_generic_runtime_dockerfile_pins_both_base_images_by_digest():
     assert "test -s /etc/ssl/certs/ca-certificates.crt" in dockerfile
     assert "ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt SSL_CERT_DIR=/etc/ssl/certs" in dockerfile
     assert "ssl.get_default_verify_paths()" in dockerfile
-    assert "ARG UV_ARCHIVE_SHA256=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
-    assert 'test "$(uname -m)" = "x86_64"' in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256_X86_64=230e328948c92dd1ebad83949c4d56e83813dfe9c6362a4c519e6a227973f1ae" in dockerfile
+    assert "ARG UV_ARCHIVE_SHA256_AARCH64=c300afd5f2d31df039fe6a26a2d68a76b62832098c272a43e1e74ab9efd4fbd7" in dockerfile
+    assert "aarch64:linux-aarch64" in dockerfile
+    assert 'url=f"https://github.com/astral-sh/uv/releases/download/{version}/uv-{target}.tar.gz"' in dockerfile
+    assert "aarch64) uv_target=aarch64-unknown-linux-gnu" in dockerfile
     assert "uv archive SHA-256 mismatch" in dockerfile
 
 
@@ -292,6 +296,37 @@ def test_patched_source_profiles_have_independent_locks_and_exact_version_pairs(
     lock = (ROOT / profile["lock_file"]).read_text(encoding="utf-8")
     assert "@EXPLICIT" in lock
     assert "# platform: linux-64" in lock
+
+
+
+@pytest.mark.parametrize(
+    ("profile_id", "bcftools_version", "htslib_version", "source_id"),
+    [
+        ("bcftools-1.24.1-htslib-1.24.1-linux-aarch64-source", "1.24.1", "1.24.1", "bcftools-1.24.1-htslib-1.24.1-linux-64-source"),
+        ("bcftools-1.23.3-htslib-1.23.3-linux-aarch64-source", "1.23.3", "1.23.3", "bcftools-1.23.3-htslib-1.23.3-linux-64-source"),
+        ("bcftools-1.22.3-htslib-1.22.4-linux-aarch64-source", "1.22.3", "1.22.4", "bcftools-1.22.3-htslib-1.22.4-linux-64-source"),
+    ],
+)
+def test_arm64_profiles_are_distinct_candidates_and_not_production_selectable(
+    profile_id, bcftools_version, htslib_version, source_id
+):
+    payload = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    profile = next(item for item in payload["profiles"] if item["id"] == profile_id)
+    assert profile["status"] == "CANDIDATE"
+    assert profile["platform"] == "linux-aarch64"
+    assert profile["architecture_candidate_for"] == source_id
+    assert profile["bcftools_version"] == bcftools_version
+    assert profile["htslib_version"] == htslib_version
+    assert profile["worker_queue"].endswith(".arm64")
+    assert profile["environment_file"] == "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml"
+    arm_environment = (ROOT / profile["environment_file"]).read_text(encoding="utf-8")
+    assert "sysroot_linux-aarch64=2.28" in arm_environment
+    with pytest.raises(ToolchainProfileError, match="not software-qualified"):
+        resolve_toolchain_profile(
+            profile_id,
+            bcftools_version=bcftools_version,
+            htslib_version=htslib_version,
+        )
 
 
 def test_profile_registry_does_not_allow_candidate_profiles(tmp_path):
