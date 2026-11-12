@@ -39,3 +39,22 @@ The initial clinical Variant workflow is SNV and small-indel interpretation only
 ## Validation boundary
 
 The software matrix is not evidence of ISO 15189 accreditation, regulatory clearance, analytical performance validation or clinical validity. Before patient-care use, a qualified laboratory must validate the complete intended-use workflow on representative samples, document performance characteristics and acceptance criteria, approve procedures, qualify personnel, and maintain ongoing quality management.
+
+## Evidence-byte integrity and source-release lineage
+
+The implementation now treats exact provider response bytes and local scientific source releases as separate provenance objects.
+
+- A successfully staged resource release creates an immutable snapshot containing the registered resource/release identity, storage URI, observed SHA-256 and byte size. The status distinguishes a publisher-checksum match from a locally captured digest; a local digest is not evidence of publisher authenticity.
+- Resource-backed annotations, ClinVar/ClinGen/HPO evidence records and population observations carry the source-release artifact ID, digest, size and integrity status. Local resources without a staged snapshot fail closed when their evidence is verified for use.
+- The annotation, GeneBe-derived population fallback, direct population and secondary local population paths all attach the available source-release snapshot. Reanalysis copies preserve those references and verify the parent lineage before reuse.
+- Evidence response artifacts preserve exact received bytes. Provider retention requires an organization-scoped approval tied to the exact resource release, active reviewer, explicit retention scope, terms evidence and expiry. The terms evidence bytes are rechecked at retention authorization and response verification.
+- ACMG assessment verifies annotation response/source lineage, every population observation, and every persisted evidence response/source reference immediately before assessment. Report sign-out rechecks evidence lineage and report-manifest artifact bytes.
+- Retry identity is deterministic: identical bytes under the same analysis/resource/request identity are idempotent; changed bytes under that identity are rejected. Reanalysis creates child-analysis artifact references to the same immutable response bytes and recomputes evidence fingerprints using child identities.
+
+### Evidence-lineage limitations
+
+- Historical local releases that predate immutable snapshots require controlled restaging/backfill. Their evidence remains unverified and cannot be silently promoted.
+- Local hashes establish byte consistency against the captured snapshot, not upstream authenticity unless a publisher checksum was independently verified.
+- Reviewer credential qualification, configurable dual control, independent legal review of provider terms and externally anchored audit-chain protection remain outstanding.
+- CI and code-level integrity checks do not constitute analytical validation, clinical validation, accreditation or regulatory clearance. Laboratory validation, controlled procedures and qualified human sign-out remain mandatory.
+
