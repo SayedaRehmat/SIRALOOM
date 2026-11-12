@@ -48,13 +48,16 @@ It does not yet provide:
 - agent enrollment, mutual TLS, signed heartbeat, revocation or capability
   attestation;
 - scheduler adapters for Docker Compose, Kubernetes or Slurm;
-- resource leasing, queue routing, capacity reservation or concurrent quota
-  enforcement;
-- cgroup/container CPU, memory, process-count or scratch-disk enforcement;
-- provisioning, image distribution, secrets delivery or network policy
-  enforcement;
-- durable environment snapshots attached to Analysis/ToolRun;
-- production integration of environment resolution into workflow dispatch.
+- durable capacity reservations, queue routing and concurrent lease enforcement;
+- per-job scratch-disk/storage quotas (CPU, memory, PID and non-root container
+  identity limits are now represented and applied by the OCI adapter);
+- provisioning, image distribution, secrets delivery and independently
+  measured host/network policy attestation;
+- a durable environment snapshot attached to the Analysis record itself
+  (the per-tool execution ledger does store the immutable environment snapshot);
+- complete registration/qualification lifecycle operations and verification
+  that every scientific provider, retry, reanalysis and report path uses the
+  case-bound resolver.
 
 Those are separate implementation gates. A profile declaration is not proof
 that the underlying host actually has the declared capacity or security
