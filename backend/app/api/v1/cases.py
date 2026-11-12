@@ -161,6 +161,40 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
                 raise HTTPException(status_code=403, detail="Execution environment belongs to another laboratory.")
             if environment.qualification_status != "ENVIRONMENT_QUALIFIED":
                 raise HTTPException(status_code=409, detail="Only environment-qualified registrations may be assigned.")
+            from backend.app.domain.execution_environments import (
+                ExecutionEnvironmentError,
+                execution_environment_profile_from_snapshot,
+            )
+            try:
+                environment_profile = execution_environment_profile_from_snapshot(
+                    environment.profile_json
+                )
+                environment_profile.assert_tenant_access(case.organization_id)
+            except (ExecutionEnvironmentError, TypeError, ValueError) as exc:
+                raise HTTPException(
+                    status_code=409,
+                    detail="The registered execution environment profile is invalid or no longer compatible.",
+                ) from exc
+            if (
+                environment_profile.environment_id != environment.environment_id
+                or environment_profile.profile_version != environment.profile_version
+                or environment_profile.owner_scope != environment.owner_scope
+                or environment_profile.organization_id != environment.organization_id
+                or environment_profile.qualification_status != "ENVIRONMENT_QUALIFIED"
+                or environment_profile.executor_kind != "CONTAINER"
+                or environment_profile.runtime_kind not in {"DOCKER", "PODMAN"}
+                or environment_profile.operating_system.casefold() != "linux"
+                or environment_profile.scheduler not in {"NONE", "DOCKER_COMPOSE"}
+                or environment_profile.network_policy != "OFFLINE"
+                or environment_profile.job_limits is None
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        "Case execution requires a qualified Linux Docker/Podman container profile "
+                        "with offline networking and explicit per-job resource limits."
+                    ),
+                )
     before = {
         "language": case.language,
         "clinical_context": case.clinical_context or {},
