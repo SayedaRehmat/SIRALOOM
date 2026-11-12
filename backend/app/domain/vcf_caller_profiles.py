@@ -434,10 +434,7 @@ def inspect_caller_provenance(
                     "record_count": sample_records_without_gt,
                 })
 
-    if identity_status == "CONFLICTED":
-        semantic_status = "CONFLICTED_CALLER_METADATA"
-    elif not definition:
-        field_semantic_deviations = (
+    field_semantic_deviations = (
         [{
             "namespace": "FORMAT",
             "field_id": "GP",
@@ -448,7 +445,10 @@ def inspect_caller_provenance(
         else []
     )
 
-    semantic_status = "NOT_ASSESSED"
+    if identity_status == "CONFLICTED":
+        semantic_status = "CONFLICTED_CALLER_METADATA"
+    elif not definition:
+        semantic_status = "NOT_ASSESSED"
     elif required_format_field_violations:
         semantic_status = "MISSING_REQUIRED_FORMAT_FIELD"
     elif field_declaration_mismatches:
