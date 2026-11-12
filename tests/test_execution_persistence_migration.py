@@ -101,6 +101,19 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
                 model.__tablename__, name, database_columns[name]["nullable"], model_column.nullable
             )
 
+    case_columns = {
+        column["name"]: column for column in inspector.get_columns("cases")
+    }
+    assert case_columns["execution_environment_registration_id"]["nullable"] is True
+    case_model_column = Case.__table__.c.execution_environment_registration_id
+    assert case_model_column.nullable is True
+    case_foreign_keys = {
+        item["name"]: item for item in inspector.get_foreign_keys("cases")
+    }
+    assert case_foreign_keys["fk_cases_execution_environment_registration"][
+        "referred_table"
+    ] == "execution_environment_registrations"
+
     environment_indexes = {item["name"] for item in inspector.get_indexes("execution_environment_registrations")}
     assert {"uq_execution_environment_lab_version", "uq_execution_environment_global_version"} <= environment_indexes
     execution_indexes = {item["name"] for item in inspector.get_indexes("tool_execution_records")}
