@@ -332,3 +332,38 @@ def test_worker_staging_destination_must_match_registered_location(tmp_path: Pat
 
     with pytest.raises(ResourceStagingError, match="matches the registered resource location"):
         validate_staging_destination(row, resource, organization_resource_root=tmp_path)
+
+
+def test_historical_source_release_remains_verifiable_after_resource_version_advances(monkeypatch):
+    from backend.app.domain import resource_release_integrity as integrity
+
+    resource_id = uuid4()
+    artifact_id = uuid4()
+    resource = SimpleNamespace(id=resource_id, version="release-v2", access_method="HTTPS")
+    artifact = SimpleNamespace(
+        id=artifact_id, resource_id=resource_id, resource_version="release-v1",
+        sha256="a" * 64, size_bytes=123,
+    )
+
+    class FakeDB:
+        def get(self, model, identifier):
+            if model is Resource:
+                return resource if identifier == resource_id else None
+            if model is ResourceReleaseArtifact:
+                return artifact if identifier == artifact_id else None
+            return None
+
+    monkeypatch.setattr(integrity, "verify_resource_release_artifact", lambda _db, _artifact: "CAPTURED")
+
+    assert integrity._verify_release_reference(
+        FakeDB(), resource_id=resource_id, artifact_id=artifact_id,
+        digest="a" * 64, size_bytes=123, status="CAPTURED",
+        expected_resource_version="release-v1",
+    ) is True
+
+    with pytest.raises(ValueError, match="identity, release, digest, or size"):
+        integrity._verify_release_reference(
+            FakeDB(), resource_id=resource_id, artifact_id=artifact_id,
+            digest="a" * 64, size_bytes=123, status="CAPTURED",
+            expected_resource_version="release-v2",
+        )
