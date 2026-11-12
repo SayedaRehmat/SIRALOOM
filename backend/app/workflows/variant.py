@@ -1311,6 +1311,11 @@ def _persist_annotation_batch_rows(
         )
 
     existing_by_variant = {str(row.variant_id): row for row in existing_rows}
+    from backend.app.domain.resource_release_integrity import find_verified_resource_release
+    source_release, source_release_status = find_verified_resource_release(
+        db, resource_id=annotation_resource.id,
+        resource_version=annotation_resource.version,
+    )
     new_count = 0
     for canonical, row_id in variant_ids.items():
         if str(row_id) in existing_by_variant:
@@ -1334,6 +1339,10 @@ def _persist_annotation_batch_rows(
             response_artifact_size_bytes=provenance.get("response_artifact_size_bytes"),
             response_retention_status=provenance.get("response_retention_status", "NOT_AVAILABLE"),
             response_retention_reason=provenance.get("response_retention_reason"),
+            source_release_artifact_id=source_release.id if source_release else None,
+            source_release_sha256=source_release.sha256 if source_release else None,
+            source_release_size_bytes=source_release.size_bytes if source_release else None,
+            source_release_status=source_release_status,
             request_metadata={
                 "endpoint": provenance.get("endpoint"),
                 "genome": provenance.get("genome"),
@@ -5195,8 +5204,10 @@ def run_variant_analysis(analysis_id: UUID) -> None:
                                 retention_status=population_observation.response_retention_status,
                             )
                         from backend.app.domain.resource_release_integrity import (
+                            verify_annotation_source_release_reference,
                             verify_population_source_release_reference,
                         )
+                        verify_annotation_source_release_reference(db, ann)
                         for population_observation in population_rows_for_variant:
                             verify_population_source_release_reference(db, population_observation)
                         persisted_evidence = db.scalars(select(Evidence).where(
