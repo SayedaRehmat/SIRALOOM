@@ -3,9 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import os
 import re
-import signal
 import stat
 import subprocess
 import tempfile
@@ -72,7 +70,6 @@ class VEPProvider(ScientificResourceProvider):
         self._runtime_checks: dict[str, dict[str, Any]] = {}
         self.persistent_execution_service = None
         self.persistent_artifact_publisher = None
-        self.persistent_execution_required = True
         self._validate_toolchain()
 
     @classmethod
@@ -148,6 +145,10 @@ class VEPProvider(ScientificResourceProvider):
         build = _canonical_assembly(request.payload.get("genome_build") or self.assembly)
         if not build:
             raise VEPProviderError("VEP execution requires an explicit GRCh37/GRCh38 assembly.")
+        if self.persistent_execution_service is None:
+            raise VEPProviderError(
+                "A case-bound qualified execution environment is required for VEP annotation."
+            )
         with tempfile.TemporaryDirectory(prefix="siraloom-vep-") as tmp:
             input_vcf = Path(tmp) / "input.vcf"
             output_json = Path(tmp) / "output.json"
@@ -293,48 +294,6 @@ class VEPProvider(ScientificResourceProvider):
                 stdout = persistent_result.result.stdout
                 stderr = persistent_result.result.stderr
                 execution_record_id = str(persistent_result.record_id)
-            else:
-                if self.persistent_execution_required:
-                    raise VEPProviderError(
-                        "This laboratory workflow requires persistent tool execution, but no qualified execution environment was configured."
-                    )
-                execution_record_id = None
-                try:
-                    # Preserve process-group termination for the legacy unregistered
-                    # execution mode. Qualified lab workflows use the common executor.
-                    completed = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        start_new_session=True,
-                    )
-                    try:
-                        stdout, stderr = completed.communicate(timeout=300)
-                    except subprocess.TimeoutExpired as exc:
-                        try:
-                            os.killpg(completed.pid, signal.SIGKILL)
-                        except ProcessLookupError:
-                            pass
-                        completed.wait()
-                        raise VEPProviderError(
-                            "VEP execution timed out and its process group was terminated.",
-                            retryable=True,
-                        ) from exc
-                except FileNotFoundError as exc:
-                    raise VEPProviderError(
-                        f"VEP executable was not found: {self.binary}",
-                        retryable=False,
-                    ) from exc
-                except subprocess.TimeoutExpired as exc:
-                    raise VEPProviderError("VEP execution timed out.", retryable=True) from exc
-
-            if execution_record_id is None and completed.returncode != 0:
-                message = (stderr or stdout or "VEP failed").strip()[-4000:]
-                raise VEPProviderError(
-                    f"VEP exited with code {completed.returncode}: {message}",
-                    retryable=completed.returncode in {137, 143},
-                )
 
             if not output_json.exists():
                 raise VEPProviderError("VEP completed without producing its governed JSON output.")
@@ -518,14 +477,10 @@ class VEPProvider(ScientificResourceProvider):
         timeout_seconds: int,
         resources: tuple[ScientificResourceBinding, ...] = (),
     ):
-        """Run VEP runtime/cache attestation through the durable executor when assigned."""
+        """Run VEP runtime/cache attestation through the mandatory durable executor."""
         if self.persistent_execution_service is None:
-            if self.persistent_execution_required:
-                raise VEPProviderError(
-                    "A case-bound qualified execution environment is required for VEP runtime checks."
-                )
-            return subprocess.run(
-                command, check=False, capture_output=True, text=True, timeout=timeout_seconds
+            raise VEPProviderError(
+                "A case-bound qualified execution environment is required for VEP runtime checks."
             )
 
         from uuid import uuid4
