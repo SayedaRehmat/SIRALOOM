@@ -16,7 +16,12 @@ from backend.app.domain.container_tool_execution import (
     EnvironmentAwareToolExecutor,
     LinuxContainerToolExecutor,
 )
-from backend.app.domain.execution_environments import ExecutionCapacity, ExecutionEnvironmentError, ExecutionEnvironmentProfile
+from backend.app.domain.execution_environments import (
+    ExecutionCapacity,
+    ExecutionEnvironmentError,
+    ExecutionEnvironmentProfile,
+    ExecutionJobLimits,
+)
 from backend.app.domain.tool_execution import (
     InputArtifact,
     OutputArtifact,
@@ -53,6 +58,15 @@ def _environment(*, runtime_kind: str = "DOCKER", executor_kind: str = "CONTAINE
         agent_id="agent-a" if executor_kind == "REMOTE_AGENT" else None,
         agent_version="1.0.0" if executor_kind == "REMOTE_AGENT" else None,
         qualification_status="ENVIRONMENT_QUALIFIED",
+        job_limits=(
+            ExecutionJobLimits(
+                cpu_cores=2,
+                memory_bytes=4 * 1024**3,
+                pids_limit=1024,
+                container_user="10001:10001",
+            )
+            if executor_kind == "CONTAINER" else None
+        ),
     )
 
 
