@@ -77,10 +77,10 @@ def _refresh_case_intake(db: Session, case: Case) -> None:
         and (metadata or {}).get("workflow_eligibility", "SAMPLE_LEVEL") == "SAMPLE_LEVEL"
         for status, metadata in rows
     )
-    has_review_required_vcf = any(
+    has_analysis_blocked_vcf = any(
         status == "VALID"
         and isinstance(metadata, dict)
-        and metadata.get("workflow_eligibility") == "REVIEW_REQUIRED"
+        and metadata.get("workflow_eligibility") in {"REVIEW_REQUIRED", "INELIGIBLE"}
         for status, metadata in rows
     )
     has_pending_vcf = any(status == "PENDING" for status, _metadata in rows)
@@ -99,9 +99,9 @@ def _refresh_case_intake(db: Session, case: Case) -> None:
     if case.status in {
         "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
         "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
-    } and has_review_required_vcf:
-        # The file is structurally valid but cannot make the case analysis-ready
-        # until caller-semantic compatibility has been reviewed.
+    } and has_analysis_blocked_vcf:
+        # Structural validity is independent of genotype-based workflow
+        # eligibility. A blocked artifact must not make the case analysis-ready.
         case.status = "ARTIFACT_UPLOADED"
         return
     case.status = case_status_after_vcf_upload(
@@ -202,6 +202,15 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                             "field_semantic_deviations": caller_provenance.get(
                                 "field_semantic_deviations", []
                             ),
+                        }
+                    elif int(caller_provenance.get("sample_records_without_gt") or 0) > 0:
+                        metadata["workflow_eligibility"] = "INELIGIBLE"
+                        metadata["workflow_eligibility_reason"] = {
+                            "code": "SAMPLE_GENOTYPE_FIELD_MISSING_FOR_ANALYSIS",
+                            "sample_records_without_gt": int(
+                                caller_provenance["sample_records_without_gt"]
+                            ),
+                            "policy": "SIRALOOM_SAMPLE_LEVEL_GENOTYPE_REQUIREMENT",
                         }
                     else:
                         metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
