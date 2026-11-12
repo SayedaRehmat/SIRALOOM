@@ -245,6 +245,143 @@
       },
       "qualification_scope": "Historical compatibility reference only; not build-qualified and never selectable for production execution.",
       "worker_queue": "bioinformatics.bcftools.legacy_blocked"
+    },
+    {
+      "id": "bcftools-1.24.1-htslib-1.24.1-linux-aarch64-source",
+      "status": "CANDIDATE",
+      "platform": "linux-aarch64",
+      "bcftools_version": "1.24.1",
+      "htslib_version": "1.24.1",
+      "environment_file": "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.24.1-htslib-1.24.1-linux-aarch64-source-build.lock",
+      "executable": "bcftools",
+      "installation_method": "verified_source_build",
+      "build_script": "scripts/build_bcftools_from_profile.sh",
+      "source_archives": [
+        {
+          "name": "htslib-1.24.1.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/htslib-1.24.1.tar.bz2/download",
+          "sha256": "0fa28b8a5395b3ce489d24c79697d81ceb93534907e17b92bb8a5306bebcdeb5"
+        },
+        {
+          "name": "bcftools-1.24.1.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/bcftools-1.24.1.tar.bz2/download",
+          "sha256": "02ccf63e5f478a1374ae6dbcb7cfde9840a96ddf5167fd88f5d47b78f5906a5a"
+        }
+      ],
+      "security_review": {
+        "status": "PATCHED_UPSTREAM_RELEASE",
+        "advisories_reviewed": [
+          "GHSA-38qp-vpxq-r6xc",
+          "GHSA-6qq4-hj39-g6ph",
+          "GHSA-5cvj-m89h-h3cw",
+          "GHSA-x79c-vxf6-6j9c",
+          "GHSA-2r8w-wxh5-c7r8",
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr",
+          "GHSA-644m-mq4p-c7c6"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.24.1/",
+        "reviewed_on": "2026-11-05"
+      },
+      "qualification_scope": "Native ARM64 candidate only. Not production-selectable until its linux-aarch64 lock, source build, OCI image, scientific regression and worker-routing qualification are complete.",
+      "worker_queue": "bioinformatics.bcftools.1_24_1.arm64",
+      "dockerfile": "docker/backend-bcftools-source.Dockerfile",
+      "architecture_candidate_for": "bcftools-1.24.1-htslib-1.24.1-linux-64-source"
+    },
+    {
+      "id": "bcftools-1.23.3-htslib-1.23.3-linux-aarch64-source",
+      "status": "CANDIDATE",
+      "platform": "linux-aarch64",
+      "bcftools_version": "1.23.3",
+      "htslib_version": "1.23.3",
+      "environment_file": "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.23.3-htslib-1.23.3-linux-aarch64-source-build.lock",
+      "executable": "bcftools",
+      "installation_method": "verified_source_build",
+      "build_script": "scripts/build_bcftools_from_profile.sh",
+      "source_archives": [
+        {
+          "name": "htslib-1.23.3.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/htslib-1.23.3.tar.bz2/download",
+          "sha256": "c460ffc5b79ea64d4feacd84f7e98968a66c30fbe34e5602f1384f0892f83c23"
+        },
+        {
+          "name": "bcftools-1.23.3.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/bcftools-1.23.3.tar.bz2/download",
+          "sha256": "b2b6488b71a4086f138f13f26ae4a47cb277690d28d34bc5e4e61c34c4220694"
+        }
+      ],
+      "security_review": {
+        "status": "PATCHED_UPSTREAM_RELEASE",
+        "advisories_reviewed": [
+          "GHSA-38qp-vpxq-r6xc",
+          "GHSA-6qq4-hj39-g6ph",
+          "GHSA-5cvj-m89h-h3cw",
+          "GHSA-x79c-vxf6-6j9c",
+          "GHSA-2r8w-wxh5-c7r8",
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr",
+          "GHSA-644m-mq4p-c7c6"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.23.3/",
+        "reviewed_on": "2026-11-05"
+      },
+      "qualification_scope": "Native ARM64 candidate only. Not production-selectable until its linux-aarch64 lock, source build, OCI image, scientific regression and worker-routing qualification are complete.",
+      "worker_queue": "bioinformatics.bcftools.1_23_3.arm64",
+      "dockerfile": "docker/backend-bcftools-source.Dockerfile",
+      "architecture_candidate_for": "bcftools-1.23.3-htslib-1.23.3-linux-64-source"
+    },
+    {
+      "id": "bcftools-1.22.3-htslib-1.22.4-linux-aarch64-source",
+      "status": "CANDIDATE",
+      "platform": "linux-aarch64",
+      "bcftools_version": "1.22.3",
+      "htslib_version": "1.22.4",
+      "environment_file": "configs/bioinformatics/profiles/bcftools-build-linux-aarch64.yml",
+      "lock_file": "configs/bioinformatics/profiles/bcftools-1.22.3-htslib-1.22.4-linux-aarch64-source-build.lock",
+      "executable": "bcftools",
+      "installation_method": "verified_source_build",
+      "build_script": "scripts/build_bcftools_from_profile.sh",
+      "source_archives": [
+        {
+          "name": "htslib-1.22.4.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.22.4/htslib-1.22.4.tar.bz2/download",
+          "sha256": "f5e860a7dfb8cb4c4a06034956a39b6fa95b6d09757b872001ccc6f0c598537c"
+        },
+        {
+          "name": "bcftools-1.22.3.tar.bz2",
+          "url": "https://sourceforge.net/projects/samtools/files/samtools/1.22.4/bcftools-1.22.3.tar.bz2/download",
+          "sha256": "361d39ea5afcaed2f633e64d572045f4e1a1cd895c7faf4d615102846d028a95"
+        }
+      ],
+      "security_review": {
+        "status": "PATCHED_UPSTREAM_RELEASE",
+        "advisories_reviewed": [
+          "GHSA-38qp-vpxq-r6xc",
+          "GHSA-6qq4-hj39-g6ph",
+          "GHSA-5cvj-m89h-h3cw",
+          "GHSA-x79c-vxf6-6j9c",
+          "GHSA-2r8w-wxh5-c7r8",
+          "GHSA-vhg8-qwm7-cv9m",
+          "GHSA-xj7m-w8mc-xvf2",
+          "GHSA-vh3p-9c59-j3hv",
+          "GHSA-3j6q-r48h-wvm3",
+          "GHSA-f423-v554-fwqr"
+        ],
+        "release_notes_url": "https://sourceforge.net/projects/samtools/files/samtools/1.22.4/",
+        "reviewed_on": "2026-11-05"
+      },
+      "qualification_scope": "Native ARM64 candidate only. Not production-selectable until its linux-aarch64 lock, source build, OCI image, scientific regression and worker-routing qualification are complete.",
+      "worker_queue": "bioinformatics.bcftools.1_22_4.arm64",
+      "dockerfile": "docker/backend-bcftools-source.Dockerfile",
+      "architecture_candidate_for": "bcftools-1.22.3-htslib-1.22.4-linux-64-source"
     }
   ]
 }
