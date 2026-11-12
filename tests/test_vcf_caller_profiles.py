@@ -327,3 +327,37 @@ def test_generic_vcf_gp_retains_vcf_probability_range_validation(tmp_path: Path)
     with pytest.raises(StrictVCFValidationError, match="FORMAT sample 1/GP") as exc_info:
         validate_vcf_strict(path)
     assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
+
+
+@pytest.mark.parametrize(
+    ("version_headers", "expected_override"),
+    [
+        ("##DRAGENVersion=4.3.0\n", True),
+        ("##DRAGENVersion=4.3.1\n", False),
+        ("", False),
+        ("##DRAGENVersion=4.3.0\n##DRAGENVersion=4.4.0\n", False),
+    ],
+)
+def test_dragen_gp_phred_scale_override_requires_exact_unambiguous_release(
+    tmp_path: Path, version_headers: str, expected_override: bool
+) -> None:
+    path = tmp_path / "dragen-gp-release-gate.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\n"
+        "##source=DRAGEN_SNV\n"
+        + version_headers
+        + '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        + '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior values">\n'
+        + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        + "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:107.6,0.152,40.82\n",
+        encoding="utf-8",
+    )
+
+    if expected_override:
+        provenance = validate_vcf_strict(path)["caller_provenance"]
+        assert provenance["dragen_gp_phred_semantics_applicable"] is True
+        assert provenance["caller_semantic_compatibility_status"] == "CALLER_SPEC_SEMANTIC_DEVIATION"
+    else:
+        with pytest.raises(StrictVCFValidationError) as exc_info:
+            validate_vcf_strict(path)
+        assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
