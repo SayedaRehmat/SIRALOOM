@@ -384,16 +384,10 @@ def inspect_caller_provenance(
         if identity_status != "CONFLICTED"
         else None
     )
-    # The documented DRAGEN v4.3 GP scale override is narrow: require
-    # an unambiguous DRAGEN SNV declaration and the exact release represented
-    # by the cited v4.3 documentation. A family marker or conflicting/missing
-    # release must not weaken the VCF-reserved GP probability validation.
-    dragen_gp_phred_semantics_applicable = (
-        profile_id == "dragen_snv_germline"
-        and identity_status == "DECLARED"
-        and version_status == "DECLARED"
-        and caller_version == "4.3.0"
-    )
+    # Header metadata is unauthenticated. This inspection API accepts no
+    # controlled run-manifest attestation, so headers cannot authorize an
+    # exception to reserved FORMAT/GP probability semantics.
+    dragen_gp_phred_semantics_applicable = False
     present_format_semantics = {
         key: definition["documented_format_semantics"][key]
         for key in sorted(format_fields)
@@ -461,11 +455,16 @@ def inspect_caller_provenance(
             "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
             "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
         }]
-        if dragen_gp_phred_semantics_applicable and "GP" in format_fields
+        if (
+            profile_id == "dragen_snv_germline"
+            and version_status == "DECLARED"
+            and caller_version == "4.3.0"
+            and "GP" in format_fields
+        )
         else []
     )
 
-    if identity_status == "CONFLICTED":
+    if identity_status == "CONFLICTED" or model_status == "CONFLICTED":
         semantic_status = "CONFLICTED_CALLER_METADATA"
     elif not definition:
         semantic_status = "NOT_ASSESSED"
@@ -533,7 +532,7 @@ def inspect_caller_provenance(
         "release_qualification_status": "NOT_ESTABLISHED",
         "clinical_qualification_status": "NOT_ESTABLISHED",
         "profile_match_status": (
-            "CONFLICTED_METADATA" if identity_status == "CONFLICTED"
+            "CONFLICTED_METADATA" if identity_status == "CONFLICTED" or model_status == "CONFLICTED"
             else "CALLER_FAMILY_MATCH_VERSION_MISSING" if profile_id and version_status == "MISSING"
             else "METADATA_MATCH_ONLY" if profile_id
             else "NO_CALLER_PROFILE_MATCH"
