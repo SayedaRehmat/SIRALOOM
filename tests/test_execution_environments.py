@@ -9,6 +9,7 @@ from backend.app.domain.execution_environments import (
     ExecutionCapacity,
     ExecutionEnvironmentError,
     ExecutionEnvironmentProfile,
+    ExecutionJobLimits,
     ExecutionEnvironmentRegistry,
     require_fresh_agent_heartbeat,
     execution_environment_profile_from_snapshot,
@@ -72,6 +73,15 @@ def _environment(
         agent_version="1.0.0" if executor_kind == "REMOTE_AGENT" else None,
         agent_last_seen_at=agent_last_seen_at,
         qualification_status=status,
+        job_limits=(
+            ExecutionJobLimits(
+                cpu_cores=2,
+                memory_bytes=8 * 1024**3,
+                pids_limit=1024,
+                container_user="10001:10001",
+            )
+            if executor_kind == "CONTAINER" else None
+        ),
     )
 
 
