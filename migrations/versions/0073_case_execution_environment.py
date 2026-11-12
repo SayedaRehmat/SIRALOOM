@@ -18,13 +18,15 @@ def upgrade():
         "cases",
         sa.Column("execution_environment_registration_id", sa.Uuid(), nullable=True),
     )
-    op.create_foreign_key(
-        "fk_cases_execution_environment_registration",
-        "cases",
-        "execution_environment_registrations",
-        ["execution_environment_registration_id"],
-        ["id"],
-    )
+    # SQLite cannot ALTER TABLE to add/drop a foreign-key constraint. Batch
+    # mode performs a table copy on SQLite and emits native DDL on PostgreSQL.
+    with op.batch_alter_table("cases") as batch:
+        batch.create_foreign_key(
+            "fk_cases_execution_environment_registration",
+            "execution_environment_registrations",
+            ["execution_environment_registration_id"],
+            ["id"],
+        )
     op.create_index(
         "ix_cases_execution_environment_registration",
         "cases",
@@ -34,9 +36,9 @@ def upgrade():
 
 def downgrade():
     op.drop_index("ix_cases_execution_environment_registration", table_name="cases")
-    op.drop_constraint(
-        "fk_cases_execution_environment_registration",
-        "cases",
-        type_="foreignkey",
-    )
-    op.drop_column("cases", "execution_environment_registration_id")
+    with op.batch_alter_table("cases") as batch:
+        batch.drop_constraint(
+            "fk_cases_execution_environment_registration",
+            type_="foreignkey",
+        )
+        batch.drop_column("execution_environment_registration_id")
