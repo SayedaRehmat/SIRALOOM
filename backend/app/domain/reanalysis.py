@@ -455,6 +455,23 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
     segregation_observation_ids: dict[str, str] = {}
     evidence_ids: dict[str, str] = {}
     response_artifact_ids: dict[str, UUID] = {}
+    parent_analysis = db.get(Analysis, parent_id)
+    if parent_analysis is None:
+        raise ValueError("Reanalysis parent analysis is unavailable for evidence lineage verification.")
+
+    def verify_response_reference(
+        *, resource_id: UUID | None, request_fingerprint: str | None,
+        artifact_id: UUID | None, artifact_sha256: str | None,
+        artifact_size_bytes: int | None, retention_status: str,
+    ) -> None:
+        from backend.app.domain.evidence_response_retention import verify_provider_response_reference
+        verify_provider_response_reference(
+            db, analysis_id=parent_id, case_id=parent_analysis.case_id,
+            resource_id=resource_id, request_fingerprint=request_fingerprint,
+            artifact_id=artifact_id, artifact_sha256=artifact_sha256,
+            artifact_size_bytes=artifact_size_bytes,
+            retention_status=retention_status, require_retained=False,
+        )
 
     def copy_response_artifact(source_artifact_id: UUID | None) -> UUID | None:
         if source_artifact_id is None:
@@ -466,7 +483,7 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
         if (
             source_artifact is None
             or source_artifact.analysis_id != parent_id
-            or source_artifact.case_id != db.get(Analysis, parent_id).case_id
+            or source_artifact.case_id != parent_analysis.case_id
             or source_artifact.artifact_type != "PROVIDER_RESPONSE_RAW"
         ):
             raise ValueError("Reused provider response artifact is missing or outside its parent analysis.")
@@ -488,6 +505,15 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
 
     if start > STEP_ORDER["annotate"]:
         for row in db.scalars(select(Annotation).where(Annotation.analysis_id == parent_id)).all():
+            verify_response_reference(
+                resource_id=row.resource_id, request_fingerprint=row.request_fingerprint,
+                artifact_id=row.response_artifact_id,
+                artifact_sha256=row.response_artifact_sha256,
+                artifact_size_bytes=row.response_artifact_size_bytes,
+                retention_status=row.response_retention_status,
+            )
+            from backend.app.domain.resource_release_integrity import verify_annotation_source_release_reference
+            verify_annotation_source_release_reference(db, row)
             db.add(Annotation(
                 id=uuid4(), variant_id=row.variant_id, analysis_id=child_id,
                 provider_name=row.provider_name, provider_version=row.provider_version,
@@ -509,6 +535,15 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
             ))
     if start > STEP_ORDER["population"]:
         for row in db.scalars(select(PopulationObservation).where(PopulationObservation.analysis_id == parent_id)).all():
+            verify_response_reference(
+                resource_id=row.resource_id, request_fingerprint=row.request_fingerprint,
+                artifact_id=row.response_artifact_id,
+                artifact_sha256=row.response_artifact_sha256,
+                artifact_size_bytes=row.response_artifact_size_bytes,
+                retention_status=row.response_retention_status,
+            )
+            from backend.app.domain.resource_release_integrity import verify_population_source_release_reference
+            verify_population_source_release_reference(db, row)
             copied = PopulationObservation(
                 id=uuid4(), analysis_id=child_id, variant_id=row.variant_id,
                 resource_id=row.resource_id, population_level=row.population_level,
@@ -575,6 +610,8 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
             ))
 
         for row in db.scalars(select(Evidence).where(Evidence.analysis_id == parent_id)).all():
+            from backend.app.domain.evidence_response_retention import verify_evidence_response_artifact
+            verify_evidence_response_artifact(db, row, require_retained=False)
             observation_ids = []
             for observation_id in row.observation_ids or []:
                 observation_id = str(observation_id)
