@@ -111,6 +111,8 @@ However, if a file uses a construct outside the supported capability, SIRALOOM m
 
 The VCFv4.0 historical source provenance remains a separate standards-ledger issue. Recognizing VCFv4.0 and testing its reserved FORMAT behavior does not imply that every historical VCFv4.0 normative statement has been independently re-adjudicated.
 
+The focused VCFv4.0 genotype conformance tests now enforce GT for every sample-bearing record, explicit missing-allele representation, the historical biallelic-only GL cardinality, DP/FT/GL reserved definitions, and GQ/HQ numeric semantics (GQ Number=1; HQ Number=2; Integer or Float declarations accepted). The IGSR historical VCFv4.0 guidance describes all-sample GT calls and the numeric GQ/HQ fields; it is not being substituted for the still-open historical source-byte/hash provenance task.
+
 ## 6. Previous PR work: selective recovery decisions
 
 | PR | Work | Decision |
