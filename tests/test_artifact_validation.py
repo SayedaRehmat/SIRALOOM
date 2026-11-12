@@ -220,4 +220,4 @@ def test_worker_persists_caller_review_gate_without_marking_structural_vcf_inval
         assert case.status == "ARTIFACT_UPLOADED"
         assert audit is not None
         assert audit.payload["validation"]["caller_provenance"] == caller_provenance
-\n
+
