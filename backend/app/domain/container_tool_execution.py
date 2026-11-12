@@ -222,6 +222,34 @@ class LinuxContainerToolExecutor:
             target = f"/resources/{name}"
             mounts.extend(["--mount", f"type=bind,src={host},dst={target},readonly"])
             argv = [arg.replace(item.path or "", target) for arg in argv]
+
+            # Indexed VCF resources need their .csi/.tbi sidecar at the exact
+            # sibling path expected by HTSlib. Mount each verified sidecar
+            # read-only beside the primary resource, without exposing its
+            # entire host directory to the scientific container.
+            for sidecar_value in item.sidecar_paths:
+                sidecar = Path(sidecar_value).resolve(strict=True)
+                if sidecar == workspace or sidecar.is_relative_to(workspace):
+                    raise ToolExecutionContractError(
+                        "Scientific resource sidecars inside the writable workspace are not permitted."
+                    )
+                if not sidecar.is_file():
+                    raise ToolExecutionContractError("Scientific resource sidecar is not a regular file.")
+                if not sidecar.name.startswith(host.name):
+                    raise ToolExecutionContractError(
+                        "Indexed resource sidecar must retain the primary filename prefix."
+                    )
+                suffix = sidecar.name[len(host.name):]
+                if suffix not in {".csi", ".tbi", ".gzi"}:
+                    raise ToolExecutionContractError(
+                        "Only recognized HTSlib index sidecars may accompany a file resource."
+                    )
+                sidecar_target = target + suffix
+                mounts.extend([
+                    "--mount",
+                    f"type=bind,src={sidecar},dst={sidecar_target},readonly",
+                ])
+                argv = [arg.replace(sidecar_value, sidecar_target) for arg in argv]
         argv = [arg.replace(str(workspace), "/workspace") for arg in argv]
 
         base = [
