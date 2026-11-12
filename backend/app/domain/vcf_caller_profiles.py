@@ -14,6 +14,11 @@ from typing import Any
 
 _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
     "gatk_haplotypecaller": {
+        "profile_version": "1.0.0",
+        "source_references": [
+            "https://gatk.broadinstitute.org/hc/en-us/articles/360036359552-HaplotypeCaller",
+            "https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format",
+        ],
         "caller_family": "GATK",
         "caller_name": "GATK HaplotypeCaller",
         "documented_example_vcf_versions": ["VCFv4.2"],
@@ -43,6 +48,11 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "cross_caller_comparison": "QUAL, DP, AD and GQ must not be compared to another caller by numeric threshold without an assay- and release-specific validation.",
     },
     "deepvariant_germline": {
+        "profile_version": "1.0.0",
+        "source_references": [
+            "https://github.com/google/deepvariant",
+            "https://github.com/google/deepvariant/blob/r1.10/deepvariant/testdata/golden.postprocess_single_site_output.vcf",
+        ],
         "caller_family": "GOOGLE_DEEPVARIANT",
         "caller_name": "Google DeepVariant",
         "documented_example_vcf_versions": ["VCFv4.2"],
@@ -65,6 +75,10 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "cross_caller_comparison": "QUAL, DP, AD and GQ must not be compared to another caller by numeric threshold without an assay-, model- and release-specific validation.",
     },
     "dragen_snv_germline": {
+        "profile_version": "1.0.0",
+        "source_references": [
+            "https://help.dragen.illumina.com/dragen-v4.3/product-guide/dragen-v4.3/dragen-dna-pipeline/small-variant-calling",
+        ],
         "caller_family": "ILLUMINA_DRAGEN",
         "caller_name": "Illumina DRAGEN Small Variant Caller",
         "documented_example_vcf_versions": ["VCFv4.2"],
@@ -331,6 +345,9 @@ def inspect_caller_provenance(
         "command_line_header_present": bool(command_lines),
         "command_line_header_sha256": command_line_digest,
         "vcf_specification_version": fileformat,
+        "caller_profile_version": definition["profile_version"] if definition else None,
+        "caller_profile_source_references": definition["source_references"] if definition else [],
+        "profile_semantic_scope": "DOCUMENTED_OUTPUT_CONVENTIONS_NOT_RELEASE_QUALIFICATION",
         "documented_example_vcf_versions": definition["documented_example_vcf_versions"] if definition else [],
         "declared_info_fields": sorted(info_fields),
         "declared_format_fields": sorted(format_fields),
