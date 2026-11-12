@@ -405,3 +405,13 @@ def test_tampered_terms_evidence_blocks_new_response_retention(tmp_path, monkeyp
     assert result.status == "REVIEW_REQUIRED"
     assert approval.status == "APPROVED"
 
+def test_local_evidence_source_without_release_snapshot_fails_closed(tmp_path, monkeypatch):
+    db, store, case, analysis, variant, resource = _seed(tmp_path, monkeypatch)
+    resource.access_method = "LOCAL"
+    artifact, digest, size = _persist_raw(store, db, case, analysis, resource, tmp_path)
+    evidence = _evidence(analysis, variant, resource, artifact, digest, size)
+    db.add(evidence)
+    db.flush()
+    with pytest.raises(ValueError, match="missing its immutable source-release artifact"):
+        verify_evidence_response_artifact(db, evidence)
+
