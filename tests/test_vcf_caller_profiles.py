@@ -32,6 +32,9 @@ def test_documented_caller_outputs_are_structurally_valid_and_profiled(
     assert provenance["caller_version"] == version
     assert provenance["version_status"] == "DECLARED"
     assert provenance["profile_match_status"] == "METADATA_MATCH_ONLY"
+    assert provenance["caller_profile_version"] == "1.0.0"
+    assert provenance["field_declaration_mismatches"] == []
+    assert provenance["caller_semantic_compatibility_status"] == "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"
     assert provenance["identity_source"] == "VCF_HEADER_DECLARATION_UNVERIFIED"
     assert provenance["release_qualification_status"] == "NOT_ESTABLISHED"
     assert provenance["clinical_qualification_status"] == "NOT_ESTABLISHED"
@@ -96,6 +99,7 @@ def test_common_format_fields_do_not_identify_an_unknown_caller(tmp_path: Path) 
     assert provenance["caller_profile_id"] is None
     assert provenance["profile_match_status"] == "NO_CALLER_PROFILE_MATCH"
     assert provenance["clinical_qualification_status"] == "NOT_ESTABLISHED"
+    assert provenance["caller_semantic_compatibility_status"] == "NOT_ASSESSED"
 
 
 def test_conflicting_caller_family_markers_are_not_resolved_by_precedence(tmp_path: Path) -> None:
@@ -115,6 +119,7 @@ def test_conflicting_caller_family_markers_are_not_resolved_by_precedence(tmp_pa
     assert provenance["identity_status"] == "CONFLICTED"
     assert provenance["caller_profile_id"] is None
     assert provenance["profile_match_status"] == "CONFLICTED_METADATA"
+    assert provenance["caller_semantic_compatibility_status"] == "CONFLICTED_CALLER_METADATA"
 
 
 def test_conflicting_release_markers_make_caller_identity_unresolved(tmp_path: Path) -> None:
@@ -229,3 +234,41 @@ def test_dragen_caller_specific_evidence_fields_are_preserved_verbatim() -> None
     assert values["PL"] == "177,144,46,122,0,72"
     assert values["GL"] == "-17.704,-14.420,-4.626,-12.220,0.000,-7.244"
     assert values["GP"] == "107.6,109.6,14.65,87.58,0.152,40.82"
+
+
+def test_known_caller_field_declaration_mismatch_is_flagged_without_rejecting_valid_vcf(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "deepvariant-vaf-number-r-mismatch.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##DeepVariant_version=1.10.0\n"
+        '##FILTER=<ID=PASS,Description="All filters passed">\n'
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype quality">\n'
+        '##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">\n'
+        '##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allele depths">\n'
+        '##FORMAT=<ID=VAF,Number=R,Type=Float,Description="Allele fractions">\n'
+        '##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Genotype likelihoods">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GQ:DP:AD:VAF:PL\t0/1:30:20:10,10:0.5,0.5:50,0,50\n",
+        encoding="utf-8",
+    )
+
+    result = validate_vcf_strict(path)
+    provenance = result["caller_provenance"]
+
+    assert result["records"] == 1
+    assert provenance["identity_status"] == "DECLARED"
+    assert provenance["caller_semantic_compatibility_status"] == "DECLARATION_MISMATCH"
+    assert provenance["field_declaration_mismatches"] == [
+        {
+            "namespace": "FORMAT",
+            "field_id": "VAF",
+            "observed_number": "R",
+            "observed_type": "Float",
+            "expected_number": "A",
+            "expected_type": "Float",
+            "status": "MISMATCH",
+        }
+    ]
