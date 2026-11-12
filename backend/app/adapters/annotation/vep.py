@@ -72,7 +72,7 @@ class VEPProvider(ScientificResourceProvider):
         self._runtime_checks: dict[str, dict[str, Any]] = {}
         self.persistent_execution_service = None
         self.persistent_artifact_publisher = None
-        self.persistent_execution_required = False
+        self.persistent_execution_required = True
         self._validate_toolchain()
 
     @classmethod
@@ -520,6 +520,10 @@ class VEPProvider(ScientificResourceProvider):
     ):
         """Run VEP runtime/cache attestation through the durable executor when assigned."""
         if self.persistent_execution_service is None:
+            if self.persistent_execution_required:
+                raise VEPProviderError(
+                    "A case-bound qualified execution environment is required for VEP runtime checks."
+                )
             return subprocess.run(
                 command, check=False, capture_output=True, text=True, timeout=timeout_seconds
             )
