@@ -83,7 +83,7 @@ For each recognized profile it records:
 - a digest of command-line header lines, not the raw command line;
 - explicit statuses for caller identity, release, assay mode and clinical qualification.
 
-A header match is not an authenticated caller identity. A DRAGEN_SNV marker does not prove germline rather than somatic mode. A GATK GenotypeGVCFs stage alone does not prove HaplotypeCaller was the upstream caller. Missing or conflicting metadata is retained as missing or conflicted.
+A header match is not an authenticated caller identity. A DRAGEN_SNV marker does not prove germline rather than somatic mode. A GATK GenotypeGVCFs stage alone does not prove HaplotypeCaller was the upstream caller. Missing or conflicting metadata is retained as missing or conflicted. In particular, DRAGEN's documented Phred-scaled FORMAT/GP deviation is recorded for review, but no header-only declaration can relax the VCF-reserved GP probability range; the current intake path rejects out-of-range values until an authenticated run-manifest policy exists.
 
 ### Important field differences
 
@@ -135,6 +135,7 @@ The branch adds:
 
 - caller-aware provenance inspection and version extraction;
 - family-level documented semantic profiles for GATK HaplotypeCaller, DeepVariant and DRAGEN SNV;
+- a durable intake eligibility gate: recognized caller semantic incompatibilities retain structural VALID status but are marked REVIEW_REQUIRED and cannot enter genotype-based analysis;
 - Number/Type declaration checks for documented INFO/FORMAT fields when present;
 - explicit unknown, partial and conflicting metadata outcomes;
 - persistence of caller provenance in strict validation and ingestion metadata;
