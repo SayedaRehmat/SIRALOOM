@@ -130,14 +130,30 @@ def _migration_lab(session):
     )
     session.add(user)
     session.flush()
-    case = Case(
-        id=uuid4(), organization_id=organization.id, case_identifier=f"MIG-{uuid4().hex[:10]}",
-        status="DRAFT", clinical_context={}, language="en", created_by=user.id,
-    )
-    session.add(case)
-    session.flush()
+
+    # This fixture intentionally represents the supported 0070 database.
+    # The current ORM Case model already includes the later 0073 column, so
+    # reflect and insert only columns that existed in the pre-execution schema.
+    case_id = uuid4()
+    case_table = Table("cases", MetaData(), autoload_with=session.get_bind())
+    case_values = {
+        "id": case_id,
+        "organization_id": organization.id,
+        "case_identifier": f"MIG-{uuid4().hex[:10]}",
+        "status": "DRAFT",
+        "accession_reconciliation_status": "NEW_WORKFLOW",
+        "clinical_context": {},
+        "language": "en",
+        "created_by": user.id,
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+    }
+    session.execute(insert(case_table).values({
+        key: value for key, value in case_values.items() if key in case_table.c
+    }))
+    case = type("PriorReleaseCase", (), {"id": case_id})()
     analysis = Analysis(
-        id=uuid4(), case_id=case.id, analysis_type="GERMLINE",
+        id=uuid4(), case_id=case_id, analysis_type="GERMLINE",
         workflow_id="germline-standard", workflow_version="1", status="QUEUED",
         reference_build="GRCh38", created_by=user.id,
     )
