@@ -22,6 +22,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "GATK",
         "caller_name": "GATK HaplotypeCaller",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "required_format_fields": ["GT"],
         "expected_header_definitions": {
             "INFO": {
                 "AC": ("A", "Integer"), "AF": ("A", "Float"), "AN": ("1", "Integer"),
@@ -71,6 +72,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "GOOGLE_DEEPVARIANT",
         "caller_name": "Google DeepVariant",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "required_format_fields": ["GT"],
         "expected_header_definitions": {
             "INFO": {"END": ("1", "Integer")},
             "FORMAT": {
@@ -107,6 +109,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "caller_family": "ILLUMINA_DRAGEN",
         "caller_name": "Illumina DRAGEN Small Variant Caller",
         "documented_example_vcf_versions": ["VCFv4.2"],
+        "required_format_fields": ["GT"],
         "expected_header_definitions": {
             "INFO": {
                 "AC": ("A", "Integer"), "AF": ("A", "Float"), "AN": ("1", "Integer"),
@@ -278,6 +281,8 @@ def inspect_caller_provenance(
                 alt_ids.add(field_id)
 
     source_set = {value.strip() for value in source_values if value.strip()}
+    chrom_header = next((line for line in lines if line.startswith("#CHROM\t")), None)
+    sample_count = max(0, len(chrom_header.split("\t")) - 9) if chrom_header else 0
     gatk_haplotypecaller = any(
         item["stage"].lower() == "haplotypecaller" for item in gatk_stages
     ) or any(value.lower() == "haplotypecaller" for value in source_set)
@@ -411,10 +416,23 @@ def inspect_caller_provenance(
                 if check["status"] == "MISMATCH":
                     field_declaration_mismatches.append(check)
 
+    required_format_fields = definition["required_format_fields"] if definition else []
+    required_format_field_violations = (
+        [
+            {"field_id": field_id, "reason": "REQUIRED_FOR_SAMPLE_CALLER_OUTPUT"}
+            for field_id in required_format_fields
+            if sample_count > 0 and field_id not in format_fields
+        ]
+        if definition
+        else []
+    )
+
     if identity_status == "CONFLICTED":
         semantic_status = "CONFLICTED_CALLER_METADATA"
     elif not definition:
         semantic_status = "NOT_ASSESSED"
+    elif required_format_field_violations:
+        semantic_status = "MISSING_REQUIRED_FORMAT_FIELD"
     elif field_declaration_mismatches:
         semantic_status = "DECLARATION_MISMATCH"
     elif not field_declaration_checks:
@@ -451,11 +469,18 @@ def inspect_caller_provenance(
         "declared_format_fields": sorted(format_fields),
         "declared_filter_ids": sorted(filter_ids),
         "declared_alt_ids": sorted(alt_ids),
+        "sample_count": sample_count,
+        "required_format_fields": required_format_fields,
+        "required_format_field_violations": required_format_field_violations,
         "documented_format_semantics_for_present_fields": present_format_semantics,
         "documented_info_semantics_for_present_fields": present_info_semantics,
         "field_declaration_checks": field_declaration_checks,
         "field_declaration_mismatches": field_declaration_mismatches,
         "caller_semantic_compatibility_status": semantic_status,
+        "caller_semantic_review_required": semantic_status not in {
+            "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
+            "NO_DOCUMENTED_CALLER_FIELDS_PRESENT",
+        },
         "documented_filter_ids": definition["documented_filter_ids"] if definition else [],
         "gvcf_reference_confidence_markers_present": bool(gvcf_marker_count),
         "gvcf_handling_status": "ROUTE_TO_GVCF_WORKFLOW" if gvcf_marker_count else "NO_GVCF_MARKER_DETECTED",
