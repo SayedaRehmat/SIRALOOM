@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import math
 import re
 from typing import Literal
 from uuid import UUID
@@ -57,11 +58,30 @@ class ExecutionJobLimits:
     container_user: str
 
     def validate(self, capacity: ExecutionCapacity) -> None:
-        if self.cpu_cores <= 0 or self.cpu_cores > capacity.cpu_cores:
-            raise ExecutionEnvironmentError("Per-job CPU limit must be positive and within qualified environment capacity.")
-        if self.memory_bytes <= 0 or self.memory_bytes > capacity.memory_bytes:
-            raise ExecutionEnvironmentError("Per-job memory limit must be positive and within qualified environment capacity.")
-        if not 1 <= self.pids_limit <= 65536:
+        if (
+            isinstance(self.cpu_cores, bool)
+            or not isinstance(self.cpu_cores, (int, float))
+            or not math.isfinite(self.cpu_cores)
+            or self.cpu_cores <= 0
+            or self.cpu_cores > capacity.cpu_cores / capacity.max_concurrency
+        ):
+            raise ExecutionEnvironmentError(
+                "Per-job CPU limit must be finite, positive and within the environment's concurrency-adjusted capacity."
+            )
+        if (
+            isinstance(self.memory_bytes, bool)
+            or not isinstance(self.memory_bytes, int)
+            or self.memory_bytes <= 0
+            or self.memory_bytes > capacity.memory_bytes // capacity.max_concurrency
+        ):
+            raise ExecutionEnvironmentError(
+                "Per-job memory limit must be positive and within the environment's concurrency-adjusted capacity."
+            )
+        if (
+            isinstance(self.pids_limit, bool)
+            or not isinstance(self.pids_limit, int)
+            or not 1 <= self.pids_limit <= 65536
+        ):
             raise ExecutionEnvironmentError("Per-job PID limit must be between 1 and 65536.")
         user_match = (
             re.fullmatch(r"([0-9]+):([0-9]+)", self.container_user)
