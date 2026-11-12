@@ -47,7 +47,7 @@ def test_gatk_haplotypecaller_stage_and_command_line_are_recorded_without_raw_pa
     assert len(provenance["command_line_header_sha256"]) == 64
     assert "HaplotypeCaller --output fixture.vcf" not in str(provenance)
     assert provenance["documented_format_semantics_for_present_fields"]["AD"]
-    assert "unfiltered allele evidence" in provenance["documented_format_semantics_for_present_fields"]["AD"]
+    assert "Unfiltered allele depth" in provenance["documented_format_semantics_for_present_fields"]["AD"]
 
 
 def test_deepvariant_profile_captures_its_documented_fields_and_filters() -> None:
