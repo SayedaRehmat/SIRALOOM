@@ -68,9 +68,11 @@ def test_deepvariant_profile_captures_its_documented_fields_and_filters() -> Non
 
 
 def test_dragen_profile_distinguishes_site_depth_from_informative_sample_depth() -> None:
-    provenance = validate_vcf_strict(
+    # The documentation-derived fixture contains out-of-range reserved GP
+    # values, so inspect provenance separately from strict VCF acceptance.
+    provenance = inspect_caller_provenance(
         FIXTURES / "dragen_snv_v4_3_doc_example.vcf"
-    )["caller_provenance"]
+    )
 
     assert provenance["declared_source_values"] == ["DRAGEN_SNV"]
     assert "DP" in provenance["documented_info_semantics_for_present_fields"]
