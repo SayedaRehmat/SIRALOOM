@@ -14,7 +14,7 @@ from backend.app.domain.evidence_response_retention import (
 from backend.app.infrastructure.artifacts.store import ArtifactStore
 from backend.app.infrastructure.db.base import Base
 from backend.app.infrastructure.db.models import (
-    Analysis, Case, Evidence, Organization, OrganizationMembership, Resource,
+    Analysis, Artifact, Case, Evidence, Organization, OrganizationMembership, Resource,
     ProviderRetentionApproval, ProviderRetentionApprovalAction,
     ResourceDiscovery, User, Variant,
 )
@@ -388,3 +388,20 @@ def test_expired_approval_can_be_replaced_with_audited_new_version(tmp_path, mon
         ProviderRetentionApprovalAction.approval_id == approval.id,
     )).all()
     assert any(action.action == "EXPIRE" for action in actions)
+
+def test_tampered_terms_evidence_blocks_new_response_retention(tmp_path, monkeypatch):
+    db, store, _case, analysis, _variant, resource = _seed(tmp_path, monkeypatch)
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+        ProviderRetentionApproval.status == "APPROVED",
+    ))
+    terms = db.get(Artifact, approval.terms_evidence_artifact_id)
+    store.local_path(terms.storage_uri).write_bytes(b"tampered terms")
+    result = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="tampered-terms",
+        raw_response_bytes=b"must-not-be-retained", store=store,
+    )
+    assert result.status == "REVIEW_REQUIRED"
+    assert approval.status == "APPROVED"
+
