@@ -1574,6 +1574,8 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     chrom_header: list[str] | None = None
     found_header = False
     records = 0
+    sample_record_count = 0
+    sample_records_without_gt = 0
     alternate_allele_count = 0
     multiallelic = 0
     reference_only = 0
@@ -1724,6 +1726,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                     code="VCF_HEADER_INVALID",
                 )
             fields = line.split("\t")
+            if len(fields) > 9:
+                sample_record_count += 1
+                record_format_keys = fields[8].split(":") if fields[8] not in {"", "."} else []
+                if "GT" not in record_format_keys:
+                    sample_records_without_gt += 1
             if chrom_header is None or len(fields) != len(chrom_header):
                 expected = len(chrom_header) if chrom_header is not None else 0
                 raise StrictVCFValidationError(
@@ -2203,7 +2210,11 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
     return {
         "fileformat": fileformat,
         "caller_provenance": inspect_caller_provenance(
-            path, fileformat=fileformat, gvcf_marker_count=gvcf_markers
+            path,
+            fileformat=fileformat,
+            gvcf_marker_count=gvcf_markers,
+            sample_record_count=sample_record_count,
+            sample_records_without_gt=sample_records_without_gt,
         ),
         "records": records,
         "alternate_allele_count": alternate_allele_count,
