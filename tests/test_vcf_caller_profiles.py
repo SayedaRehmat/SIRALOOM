@@ -316,11 +316,11 @@ def test_known_caller_sample_record_without_gt_is_flagged_without_rejecting_vcf(
 def test_generic_vcf_gp_retains_vcf_probability_range_validation(tmp_path: Path) -> None:
     path = tmp_path / "generic-gp-out-of-range.vcf"
     path.write_text(
-        "##fileformat=VCFv4.3\\n"
-        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
-        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\\n'
-        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
-        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\t.\\tGT:GP\\t0/1:10,0,10\\n",
+        "##fileformat=VCFv4.3\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE1\n"
+        "1\t10\t.\tA\tC\t50\tPASS\t.\tGT:GP\t0/1:10,0,10\n",
         encoding="utf-8",
     )
 
