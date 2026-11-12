@@ -13,15 +13,15 @@ FIXTURES = Path(__file__).parent / "fixtures" / "vcf" / "callers"
 
 
 @pytest.mark.parametrize(
-    ("filename", "profile_id", "version"),
+    ("filename", "profile_id", "version", "semantic_status"),
     [
-        ("gatk_haplotypecaller_v4_2_6_1_doc_example.vcf", "gatk_haplotypecaller", "4.2.6.1"),
-        ("deepvariant_1_10_0_golden.vcf", "deepvariant_germline", "1.10.0"),
-        ("dragen_snv_v4_3_doc_example.vcf", "dragen_snv_germline", "4.3.0"),
+        ("gatk_haplotypecaller_v4_2_6_1_doc_example.vcf", "gatk_haplotypecaller", "4.2.6.1", "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"),
+        ("deepvariant_1_10_0_golden.vcf", "deepvariant_germline", "1.10.0", "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"),
+        ("dragen_snv_v4_3_doc_example.vcf", "dragen_snv_germline", "4.3.0", "CALLER_SPEC_SEMANTIC_DEVIATION"),
     ],
 )
 def test_documented_caller_outputs_are_structurally_valid_and_profiled(
-    filename: str, profile_id: str, version: str
+    filename: str, profile_id: str, version: str, semantic_status: str
 ) -> None:
     result = validate_vcf_strict(FIXTURES / filename)
     provenance = result["caller_provenance"]
@@ -34,7 +34,15 @@ def test_documented_caller_outputs_are_structurally_valid_and_profiled(
     assert provenance["profile_match_status"] == "METADATA_MATCH_ONLY"
     assert provenance["caller_profile_version"] == "1.0.0"
     assert provenance["field_declaration_mismatches"] == []
-    assert provenance["caller_semantic_compatibility_status"] == "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED"
+    assert provenance["caller_semantic_compatibility_status"] == semantic_status
+    if profile_id == "dragen_snv_germline":
+        assert provenance["field_semantic_deviations"] == [{
+            "namespace": "FORMAT",
+            "field_id": "GP",
+            "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
+            "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+        }]
+        assert provenance["caller_semantic_compatibility_review_required"] is True
     assert provenance["identity_source"] == "VCF_HEADER_DECLARATION_UNVERIFIED"
     assert provenance["release_qualification_status"] == "NOT_ESTABLISHED"
     assert provenance["clinical_qualification_status"] == "NOT_ESTABLISHED"
@@ -303,3 +311,18 @@ def test_known_caller_sample_record_without_gt_is_flagged_without_rejecting_vcf(
         "reason": "MISSING_FROM_SAMPLE_RECORD_FORMAT",
         "record_count": 1,
     } in provenance["required_format_field_violations"]
+
+
+def test_generic_vcf_gp_retains_vcf_probability_range_validation(tmp_path: Path) -> None:
+    path = tmp_path / "generic-gp-out-of-range.vcf"
+    path.write_text(
+        "##fileformat=VCFv4.3\\n"
+        '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\\n'
+        '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Genotype posterior probabilities">\\n'
+        "#CHROM\\tPOS\\tID\\tREF\\tALT\\tQUAL\\tFILTER\\tINFO\\tFORMAT\\tSAMPLE1\\n"
+        "1\\t10\\t.\\tA\\tC\\t50\\tPASS\\t.\\tGT:GP\\t0/1:10,0,10\\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Exception, match="FORMAT sample 1/GP"):
+        validate_vcf_strict(path)
