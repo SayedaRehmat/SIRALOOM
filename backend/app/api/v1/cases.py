@@ -22,7 +22,7 @@ from backend.app.domain.sample_ploidy_policy import PloidyPolicyValidationError,
 from backend.app.domain.enums import CaseStatus
 from backend.app.domain.schemas import CaseCreate
 from backend.app.infrastructure.audit.service import AuditService
-from backend.app.infrastructure.db.models import Analysis, Assay, Case, CaseAccessGrant, Specimen, SpecimenPloidyEvidenceRevision
+from backend.app.infrastructure.db.models import Analysis, Assay, Case, CaseAccessGrant, ExecutionEnvironmentRegistration, Specimen, SpecimenPloidyEvidenceRevision
 from backend.app.infrastructure.db.session import get_db
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -41,6 +41,7 @@ def _case_payload(db: Session, case: Case) -> dict:
     ).all()
     return {
         "case_id": str(case.id), "case_identifier": case.case_identifier, "organization_id": str(case.organization_id),
+        "execution_environment_registration_id": str(case.execution_environment_registration_id) if case.execution_environment_registration_id else None,
         "status": case.status, "accession_reconciliation_status": case.accession_reconciliation_status, "language": case.language, "clinical_context": case.clinical_context or {},
         "created_by": str(case.created_by), "created_at": case.created_at.isoformat(), "updated_at": case.updated_at.isoformat(),
         "assays": [{
@@ -143,17 +144,51 @@ def update_case(case_id: UUID, payload: CaseUpdate, db: Session = Depends(get_db
         raise HTTPException(status_code=404, detail="Case not found")
     require_case_permission(case, principal, db, "write")
     require_role(principal, CASE_WRITE_ROLES)
-    before = {"language": case.language, "clinical_context": case.clinical_context or {}}
+    environment_field_set = "execution_environment_registration_id" in payload.model_fields_set
+    if environment_field_set:
+        require_role(principal, {"lab_admin"})
+        if payload.execution_environment_registration_id is not None:
+            environment = db.get(
+                ExecutionEnvironmentRegistration,
+                payload.execution_environment_registration_id,
+            )
+            if environment is None:
+                raise HTTPException(status_code=422, detail="Execution environment registration was not found.")
+            if environment.owner_scope == "LABORATORY" and environment.organization_id != case.organization_id:
+                raise HTTPException(status_code=403, detail="Execution environment belongs to another laboratory.")
+            if environment.qualification_status != "ENVIRONMENT_QUALIFIED":
+                raise HTTPException(status_code=409, detail="Only environment-qualified registrations may be assigned.")
+    before = {
+        "language": case.language,
+        "clinical_context": case.clinical_context or {},
+        "execution_environment_registration_id": (
+            str(case.execution_environment_registration_id) if case.execution_environment_registration_id else None
+        ),
+    }
     before_updated_at = case.updated_at.isoformat() if case.updated_at else None
     clinical_context_changed = payload.clinical_context is not None and payload.clinical_context != (case.clinical_context or {})
     if payload.language is not None:
         case.language = payload.language
     if payload.clinical_context is not None:
         case.clinical_context = payload.clinical_context
+    if environment_field_set:
+        case.execution_environment_registration_id = payload.execution_environment_registration_id
     AuditService(db).record(
-        event_type="CASE_UPDATED", case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
-        subject_type="CASE", subject_id=str(case.id), operation="UPDATE", before_state=before,
-        after_state={"language": case.language, "clinical_context": case.clinical_context or {}}, reason="Case metadata updated",
+        event_type="CASE_EXECUTION_ENVIRONMENT_CHANGED" if environment_field_set else "CASE_UPDATED",
+        case_id=case.id, analysis_id=None, actor_type="HUMAN", actor_id=str(principal.user_id),
+        subject_type="CASE", subject_id=str(case.id),
+        operation="ASSIGN_EXECUTION_ENVIRONMENT" if environment_field_set and case.execution_environment_registration_id else (
+            "REVOKE_EXECUTION_ENVIRONMENT" if environment_field_set else "UPDATE"
+        ),
+        before_state=before,
+        after_state={
+            "language": case.language,
+            "clinical_context": case.clinical_context or {},
+            "execution_environment_registration_id": (
+                str(case.execution_environment_registration_id) if case.execution_environment_registration_id else None
+            ),
+        },
+        reason="Case metadata and execution environment assignment updated",
     )
     if clinical_context_changed:
         create_case_change_candidates(
