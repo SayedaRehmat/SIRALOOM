@@ -469,7 +469,7 @@ def test_conflicting_dragen_pipeline_source_markers_do_not_enable_gp_override(
 
 
 @pytest.mark.parametrize("gp_values", ["-1,0,2", "NaN,0,2"])
-def test_dragen_phred_scaled_gp_values_must_remain_nonnegative(
+def test_dragen_header_does_not_allow_negative_or_nan_gp_values(
     tmp_path: Path, gp_values: str
 ) -> None:
     path = tmp_path / "dragen-gp-negative-or-nan.vcf"
