@@ -72,7 +72,17 @@ def _refresh_case_intake(db: Session, case: Case) -> None:
             Artifact.artifact_type == ArtifactType.VCF,
         )
     ).all()
-    has_valid_vcf = any(status == "VALID" for status, _metadata in rows)
+    has_valid_vcf = any(
+        status == "VALID"
+        and (metadata or {}).get("workflow_eligibility", "SAMPLE_LEVEL") == "SAMPLE_LEVEL"
+        for status, metadata in rows
+    )
+    has_review_required_vcf = any(
+        status == "VALID"
+        and isinstance(metadata, dict)
+        and metadata.get("workflow_eligibility") == "REVIEW_REQUIRED"
+        for status, metadata in rows
+    )
     has_pending_vcf = any(status == "PENDING" for status, _metadata in rows)
     if case.status in {
         "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
@@ -85,6 +95,14 @@ def _refresh_case_intake(db: Session, case: Case) -> None:
         "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
     } and has_pending_vcf:
         case.status = "VALIDATING"
+        return
+    if case.status in {
+        "DRAFT", "SPECIMEN_REGISTERED", "ARTIFACT_UPLOADED",
+        "VALIDATING", "READY_FOR_ANALYSIS", "INVALID",
+    } and has_review_required_vcf:
+        # The file is structurally valid but cannot make the case analysis-ready
+        # until caller-semantic compatibility has been reviewed.
+        case.status = "ARTIFACT_UPLOADED"
         return
     case.status = case_status_after_vcf_upload(
         case.status,
@@ -163,7 +181,32 @@ def validate_persisted_artifact(artifact_id: UUID) -> dict:
                     metadata["workflow_eligibility"] = "SITE_LEVEL_ONLY"
                     artifact.validation_status = "VALID_SITE_ONLY"
                 elif result.status == "VALID":
-                    metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
+                    caller_provenance = (result.metadata or {}).get("caller_provenance")
+                    if (
+                        isinstance(caller_provenance, dict)
+                        and caller_provenance.get("caller_semantic_compatibility_review_required")
+                    ):
+                        compatibility_status = caller_provenance.get(
+                            "caller_semantic_compatibility_status", "REVIEW_REQUIRED"
+                        )
+                        metadata["workflow_eligibility"] = "REVIEW_REQUIRED"
+                        metadata["workflow_eligibility_reason"] = {
+                            "code": "CALLER_SEMANTIC_COMPATIBILITY_REVIEW_REQUIRED",
+                            "compatibility_status": compatibility_status,
+                            "required_format_field_violations": caller_provenance.get(
+                                "required_format_field_violations", []
+                            ),
+                            "field_declaration_mismatches": caller_provenance.get(
+                                "field_declaration_mismatches", []
+                            ),
+                            "field_semantic_deviations": caller_provenance.get(
+                                "field_semantic_deviations", []
+                            ),
+                        }
+                    else:
+                        metadata["workflow_eligibility"] = "SAMPLE_LEVEL"
+                    # Structural validity is retained independently of clinical
+                    # workflow eligibility; the analysis gate enforces the latter.
                     artifact.validation_status = "VALID"
                 else:
                     metadata["workflow_eligibility"] = "INELIGIBLE"
