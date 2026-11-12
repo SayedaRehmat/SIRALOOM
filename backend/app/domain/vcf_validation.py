@@ -1612,6 +1612,7 @@ def _verify_dragen_42_gp_attestation(
             )
     source_sha256 = attestation.get("source_sha256")
     artifact_sha256 = attestation.get("artifact_sha256")
+    source_artifact_path = attestation.get("source_artifact_path")
     if not isinstance(source_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
         raise StrictVCFValidationError(
             "DRAGEN GP semantic attestation lacks a valid source SHA-256",
@@ -1622,24 +1623,39 @@ def _verify_dragen_42_gp_attestation(
             "DRAGEN GP semantic attestation lacks a valid artifact SHA-256",
             code="VCF_CALLER_ATTESTATION_INVALID",
         )
-    sha256 = hashlib.sha256()
-    md5 = hashlib.md5(usedforsecurity=False)
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            sha256.update(chunk)
-            md5.update(chunk)
-    observed_sha256 = sha256.hexdigest()
-    observed_md5 = md5.hexdigest()
-    if observed_sha256 != artifact_sha256:
+    if not isinstance(source_artifact_path, str) or not source_artifact_path:
         raise StrictVCFValidationError(
-            "DRAGEN GP semantic attestation artifact SHA-256 does not match the VCF bytes",
-            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+            "DRAGEN GP semantic attestation lacks its source artifact path",
+            code="VCF_CALLER_ATTESTATION_INVALID",
         )
-    if path.name == expected["source_filename"] and (
-        observed_sha256 != source_sha256 or observed_md5 != expected["source_md5"]
+    source_path = Path(source_artifact_path)
+    if not source_path.is_file():
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation source artifact is unavailable",
+            code="VCF_CALLER_ATTESTATION_SOURCE_MISSING",
+        )
+    source_sha = hashlib.sha256()
+    source_md5 = hashlib.md5(usedforsecurity=False)
+    with source_path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            source_sha.update(chunk)
+            source_md5.update(chunk)
+    if (
+        source_sha.hexdigest() != source_sha256
+        or source_md5.hexdigest() != expected["source_md5"]
     ):
         raise StrictVCFValidationError(
             "DRAGEN GP semantic attestation does not match the pinned Zenodo source artifact",
+            code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
+        )
+    artifact_sha = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            artifact_sha.update(chunk)
+    observed_sha256 = artifact_sha.hexdigest()
+    if observed_sha256 != artifact_sha256:
+        raise StrictVCFValidationError(
+            "DRAGEN GP semantic attestation artifact SHA-256 does not match the VCF bytes",
             code="VCF_CALLER_ATTESTATION_DIGEST_MISMATCH",
         )
     provenance = inspect_caller_provenance(path)
