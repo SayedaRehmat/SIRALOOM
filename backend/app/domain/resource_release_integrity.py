@@ -80,6 +80,7 @@ def find_verified_resource_release(
 def _verify_release_reference(
     db: Session, *, resource_id: UUID | None, artifact_id: UUID | None,
     digest: str | None, size_bytes: int | None, status: str,
+    expected_resource_version: str | None = None,
 ) -> bool:
     resource = db.get(Resource, resource_id) if resource_id else None
     normalized = str(status or "NOT_AVAILABLE").upper()
@@ -99,7 +100,7 @@ def _verify_release_reference(
     artifact = db.get(ResourceReleaseArtifact, artifact_id)
     if (
         artifact is None or artifact.resource_id != resource.id
-        or artifact.resource_version != resource.version
+        or (expected_resource_version is not None and artifact.resource_version != expected_resource_version)
         or artifact.sha256 != digest or artifact.size_bytes != size_bytes
     ):
         raise ValueError("Source-release artifact identity, release, digest, or size was substituted.")
@@ -116,6 +117,7 @@ def verify_annotation_source_release_reference(db: Session, annotation: Annotati
         digest=annotation.source_release_sha256,
         size_bytes=annotation.source_release_size_bytes,
         status=annotation.source_release_status,
+        expected_resource_version=annotation.resource_version,
     )
 
 
@@ -126,6 +128,7 @@ def verify_evidence_source_release_reference(db: Session, evidence: Evidence) ->
         digest=evidence.source_release_sha256,
         size_bytes=evidence.source_release_size_bytes,
         status=evidence.source_release_status,
+        expected_resource_version=evidence.source_version,
     )
 
 
