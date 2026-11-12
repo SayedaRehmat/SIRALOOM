@@ -1489,6 +1489,11 @@ def _validate_record(
         keys = fmt.split(":")
         if len(keys) != len(set(keys)) or any(not FORMAT_KEY_RE.fullmatch(k) for k in keys):
             raise StrictVCFValidationError(f"Malformed or duplicate FORMAT key at line {line_no}", code="VCF_FORMAT_INVALID")
+        if fileformat == "VCFv4.0" and len(fields) > 9 and "GT" not in keys:
+            raise StrictVCFValidationError(
+                f"VCFv4.0 sample genotype data require FORMAT/GT at line {line_no}",
+                code="VCF_FORMAT_INVALID",
+            )
         if "GT" in keys and keys[0] != "GT":
             raise StrictVCFValidationError(
                 f"GT must be the first FORMAT key when present at line {line_no}",
