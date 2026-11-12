@@ -545,6 +545,7 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
             )
             from backend.app.domain.resource_release_integrity import verify_population_source_release_reference
             verify_population_source_release_reference(db, row)
+            copied_response_artifact_id = copy_response_artifact(row.response_artifact_id)
             copied = PopulationObservation(
                 id=uuid4(), analysis_id=child_id, variant_id=row.variant_id,
                 resource_id=row.resource_id, population_level=row.population_level,
