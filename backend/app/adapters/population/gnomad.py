@@ -239,6 +239,7 @@ class GnomADGraphQLProvider:
                 source_record_id=source_record_id,
                 request_fingerprint=request_fingerprint,
                 response_sha256=response_sha256,
+                raw_response_bytes=raw_response_bytes,
                 request_metadata=request_metadata,
                 observed_at=observed_at,
             )
@@ -266,6 +267,7 @@ class GnomADGraphQLProvider:
                 source_record_id=source_record_id,
                 request_fingerprint=request_fingerprint,
                 response_sha256=response_sha256,
+                raw_response_bytes=raw_response_bytes,
                 request_metadata=request_metadata,
                 observed_at=observed_at,
             )
@@ -295,6 +297,7 @@ class GnomADGraphQLProvider:
                     source_record_id=source_record_id,
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
+                    raw_response_bytes=raw_response_bytes,
                     request_metadata=request_metadata,
                     observed_at=observed_at,
                 )
@@ -322,6 +325,7 @@ class GnomADGraphQLProvider:
                     source_record_id=source_record_id,
                     request_fingerprint=request_fingerprint,
                     response_sha256=response_sha256,
+                    raw_response_bytes=raw_response_bytes,
                     request_metadata=request_metadata,
                     observed_at=observed_at,
                 )
