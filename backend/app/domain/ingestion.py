@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
+from backend.app.domain.vcf_caller_profiles import inspect_caller_provenance
 from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 PRIMARY_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
@@ -366,16 +367,26 @@ def validate_vcf(path: str | Path) -> ValidationResult:
             validation_metadata,
         )
     except (VCFValidationError, StrictVCFValidationError, OSError, EOFError, gzip.BadGzipFile, UnicodeError) as exc:
-        failure_metadata = None
+        # Strict validation may reject a caller-semantic deviation before it
+        # returns its full profile. Preserve independently inspectable header
+        # provenance for the durable invalid-artifact record without allowing
+        # that metadata to alter the structural validation decision.
+        failure_metadata: dict | None = {}
+        try:
+            failure_metadata["caller_provenance"] = inspect_caller_provenance(p)
+        except (OSError, EOFError, gzip.BadGzipFile, UnicodeError):
+            pass
         if bcftools_version is not None:
-            failure_metadata = {
+            failure_metadata.update({
                 "bcftools_version": bcftools_version,
                 "expected_bcftools_version": settings.bcftools_version,
                 "htslib_version": htslib_version,
                 "expected_htslib_version": settings.htslib_version,
                 "bcftools_profile_id": settings.bcftools_profile_id,
                 "toolchain_validation_status": "PASS",
-            }
+            })
+        if not failure_metadata:
+            failure_metadata = None
         return ValidationResult(
             "INVALID", "VCF", 0, [], None, [str(exc)], [], fileformat,
             failure_metadata,
