@@ -48,6 +48,8 @@ def test_gatk_haplotypecaller_stage_and_command_line_are_recorded_without_raw_pa
     assert "HaplotypeCaller --output fixture.vcf" not in str(provenance)
     assert provenance["documented_format_semantics_for_present_fields"]["AD"]
     assert "Unfiltered allele depth" in provenance["documented_format_semantics_for_present_fields"]["AD"]
+    assert "sample-level" in provenance["documented_format_semantics_for_present_fields"]["DP"]
+    assert "site-level" in provenance["documented_info_semantics_for_present_fields"]["DP"]
 
 
 def test_deepvariant_profile_captures_its_documented_fields_and_filters() -> None:
