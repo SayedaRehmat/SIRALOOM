@@ -1573,12 +1573,12 @@ def _validate_record(
 
 def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None = None) -> dict:
     source = Path(path)
-    # Resolve only an explicitly declared caller profile before record-level
-    # value validation. This is unverified header metadata, not authentication.
-    header_caller_profile_id = inspect_caller_provenance(source).get("caller_profile_id")
     compression: dict[str, int | str | bool] = {"format": "NONE"}
     if source.name.lower().endswith((".vcf.gz", ".vcf.bgz")):
         compression = _verify_bgzf(source)
+    # Resolve only an explicitly declared caller profile before record-level
+    # value validation. This is unverified header metadata, not authentication.
+    header_caller_profile_id = inspect_caller_provenance(source).get("caller_profile_id")
     fileformat: str | None = None
     chrom_header: list[str] | None = None
     found_header = False
