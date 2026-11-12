@@ -15,7 +15,7 @@ from backend.app.domain.vcf_tools import (
     VCFToolError,
     normalize_vcf_with_bcftools,
 )
-from backend.app.domain.vcf_validation import validate_vcf_strict
+from backend.app.domain.vcf_validation import StrictVCFValidationError, validate_vcf_strict
 
 pytestmark = pytest.mark.skipif(shutil.which("bcftools") is None, reason="bcftools is required for production normalization golden tests")
 
@@ -308,7 +308,13 @@ def test_dragen_multiallelic_germline_fields_are_remapped_by_vcf_cardinality(tmp
 
     assert stats["tool"] == "bcftools"
     assert stats["multiallelic_mode"] == MULTIALLELIC_POLICY
-    assert validate_vcf_strict(output)["records"] == 2
+    # Normalization preserves caller-reported DRAGEN GP values verbatim, but
+    # those values exceed the VCF-reserved probability range. The transformed
+    # file is therefore not accepted by strict VCF intake without an
+    # authenticated, separately governed caller-semantic exception.
+    with pytest.raises(StrictVCFValidationError) as exc_info:
+        validate_vcf_strict(output)
+    assert exc_info.value.code == "VCF_FIELD_TYPE_INVALID"
     with gzip.open(output, "rt", encoding="utf-8") as handle:
         rows = [line.rstrip("\n").split("\t") for line in handle if not line.startswith("#")]
 
