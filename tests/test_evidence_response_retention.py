@@ -415,3 +415,29 @@ def test_local_evidence_source_without_release_snapshot_fails_closed(tmp_path, m
     with pytest.raises(ValueError, match="missing its immutable source-release artifact"):
         verify_evidence_response_artifact(db, evidence)
 
+
+
+def test_worker_retry_after_approval_expiry_cannot_reuse_retained_response(tmp_path, monkeypatch):
+    db, _store, _case, analysis, _variant, resource = _seed(tmp_path, monkeypatch)
+    first = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="retry-after-expiry",
+        raw_response_bytes=b'{"immutable":"response"}',
+    )
+    assert first.status == "RETAINED"
+
+    approval = db.scalar(select(ProviderRetentionApproval).where(
+        ProviderRetentionApproval.resource_id == resource.id,
+    ))
+    approval.expires_at = datetime.now(UTC) - timedelta(seconds=1)
+    db.flush()
+
+    retry = retain_provider_response_bytes(
+        db, analysis=analysis, resource=resource, provider_id="TestProvider",
+        provider_version="1", request_fingerprint="retry-after-expiry",
+        raw_response_bytes=b'{"immutable":"response"}',
+    )
+
+    assert retry.status == "REVIEW_REQUIRED"
+    assert retry.artifact_id is None
+    assert approval.status == "EXPIRED"
