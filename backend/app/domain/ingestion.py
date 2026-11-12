@@ -299,6 +299,15 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 "GVCF markers detected. GVCF reference blocks require a genotyping/joint-"
                 "genotyping workflow and are not treated as ordinary Phase 1 variant records."
             )
+        caller_provenance = strict_profile["caller_provenance"]
+        if caller_provenance.get("caller_semantic_compatibility_review_required"):
+            compatibility_status = caller_provenance.get(
+                "caller_semantic_compatibility_status", "REVIEW_REQUIRED"
+            )
+            warnings.append(
+                "Caller semantic compatibility requires review before genotype-based "
+                f"clinical analysis (status={compatibility_status})."
+            )
         unchecked_info_number_g = strict_profile["unchecked_info_number_g_fields"]
         if unchecked_info_number_g:
             warnings.append(
