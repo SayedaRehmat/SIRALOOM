@@ -500,6 +500,10 @@ def _copy_rows(db: Session, parent_id: UUID, child_id: UUID, earliest: str) -> N
                 response_artifact_size_bytes=row.response_artifact_size_bytes,
                 response_retention_status=row.response_retention_status,
                 response_retention_reason=row.response_retention_reason,
+                source_release_artifact_id=row.source_release_artifact_id,
+                source_release_sha256=row.source_release_sha256,
+                source_release_size_bytes=row.source_release_size_bytes,
+                source_release_status=row.source_release_status,
                 request_metadata=dict(row.request_metadata or {}),
                 observed_at=row.observed_at, retry_count=row.retry_count, payload=row.payload,
             ))
