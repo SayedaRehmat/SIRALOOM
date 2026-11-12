@@ -136,7 +136,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
             "GQ": "DRAGEN genotype quality; its interpretation differs between variant and homozygous-reference GVCF calls.",
             "PL": "Phred-scaled genotype likelihoods when emitted.",
             "GL": "Log10 genotype likelihoods when emitted.",
-            "GP": "Genotype posterior probabilities when emitted.",
+            "GP": "DRAGEN-defined Phred-scaled posterior genotype values; this deliberately differs from the VCF-reserved FORMAT/GP probability scale (0–1) and must not be interpreted as normalized probabilities.",
             "PRI": "Genotype prior values when emitted.",
             "SB": "Strand-bias evidence when emitted.",
             "MB": "Mate-bias evidence when emitted.",
@@ -437,11 +437,24 @@ def inspect_caller_provenance(
     if identity_status == "CONFLICTED":
         semantic_status = "CONFLICTED_CALLER_METADATA"
     elif not definition:
-        semantic_status = "NOT_ASSESSED"
+        field_semantic_deviations = (
+        [{
+            "namespace": "FORMAT",
+            "field_id": "GP",
+            "status": "CALLER_SPECIFIC_SCALE_DIFFERS_FROM_VCF_RESERVED_SEMANTICS",
+            "description": "DRAGEN documents FORMAT/GP in Phred scale; VCF reserves FORMAT/GP for posterior probabilities in [0, 1].",
+        }]
+        if profile_id == "dragen_snv_germline" and "GP" in format_fields
+        else []
+    )
+
+    semantic_status = "NOT_ASSESSED"
     elif required_format_field_violations:
         semantic_status = "MISSING_REQUIRED_FORMAT_FIELD"
     elif field_declaration_mismatches:
         semantic_status = "DECLARATION_MISMATCH"
+    elif field_semantic_deviations:
+        semantic_status = "CALLER_SPEC_SEMANTIC_DEVIATION"
     elif not field_declaration_checks:
         semantic_status = "NO_DOCUMENTED_CALLER_FIELDS_PRESENT"
     elif version_status == "DECLARED":
@@ -485,6 +498,7 @@ def inspect_caller_provenance(
         "documented_info_semantics_for_present_fields": present_info_semantics,
         "field_declaration_checks": field_declaration_checks,
         "field_declaration_mismatches": field_declaration_mismatches,
+        "field_semantic_deviations": field_semantic_deviations,
         "caller_semantic_compatibility_status": semantic_status,
         "caller_semantic_compatibility_review_required": semantic_status not in {
             "DOCUMENTED_HEADER_CONVENTIONS_MATCH_RELEASE_NOT_QUALIFIED",
