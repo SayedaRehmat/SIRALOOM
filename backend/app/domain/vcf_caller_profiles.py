@@ -25,8 +25,8 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
         "germline_capability": "GERMLINE_SMALL_VARIANT_CALLER",
         "documented_format_semantics": {
             "GT": "Sample genotype; allele indexes refer to REF followed by ALT order.",
-            "AD": "Allelic depths in REF/ALT order. GATK documentation distinguishes AD from DP: AD is unfiltered allele evidence, while DP is approximate depth after caller read filtering.",
-            "DP": "Approximate sample read depth; GATK documents exclusion of reads with MQ=255 or bad mates.",
+            "AD": "Unfiltered allele depth in REF/ALT order, excluding reads deemed uninformative; this is not interchangeable with DP.",
+            "DP": "Filtered sample-level depth: reads passing caller filters are counted, including uninformative reads; the GATK header documents MQ=255 and bad-mate filtering.",
             "GQ": "Genotype quality derived from genotype likelihoods; GATK documents a cap of 99.",
             "PL": "Normalized Phred-scaled genotype likelihoods; Number=G ordering is defined by VCF genotype ordering.",
             "PS": "Phase-set identifier when emitted.",
@@ -36,6 +36,7 @@ _PROFILE_DEFINITIONS: dict[str, dict[str, Any]] = {
             "RGQ": "Reference genotype quality in GVCF workflows when emitted.",
         },
         "documented_info_semantics": {
+            "DP": "Approximate site-level depth; distinct from sample-level FORMAT/DP.",
             "QD": "Quality by depth; caller-defined calculation and not a universal cross-caller threshold.",
             "FS": "Fisher strand-bias statistic.",
             "SOR": "Symmetric odds-ratio strand-bias statistic.",
