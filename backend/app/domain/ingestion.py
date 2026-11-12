@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from uuid import uuid4
 
 from backend.app.config import settings
 from backend.app.domain.vcf import VCFValidationError, parse_vcf
@@ -97,37 +98,43 @@ def _header_info(path: Path) -> tuple[list[str], str | None, bool, str | None]:
     return headers, detected_build, has_fileformat, fileformat
 
 
-def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
+def _bcftools_validate(
+    path: Path,
+    *,
+    persistent_execution,
+    workflow_id: str,
+) -> tuple[str | None, str, str]:
+    if persistent_execution is None:
+        raise VCFValidationUnavailable(
+            "A case-bound qualified execution environment is required for BCFtools VCF intake."
+        )
     executable = shutil.which(settings.bcftools_executable)
     if executable is None:
         raise VCFValidationUnavailable(
             "bcftools/htslib is required to validate VCF input, but the executable was not found. "
             "The VCF was not accepted; restore the configured laboratory toolchain and retry."
         )
-    expected_version = settings.bcftools_version
+    from backend.app.domain.vcf_tools import _run_bcftools_command, VCFToolError, VCFToolUnavailable
+
     try:
-        version_result = subprocess.run(
+        version_result = _run_bcftools_command(
             [executable, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=15,
-            check=False,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=path.parent,
+            input_paths=[],
+            output_paths=[],
+            timeout_seconds=15,
+            execution_id_override=f"bcftools-intake-version-{uuid4().hex}",
         )
-    except subprocess.TimeoutExpired as exc:
+    except (VCFToolError, VCFToolUnavailable, OSError) as exc:
         raise VCFValidationUnavailable(
-            "bcftools/htslib version attestation timed out. The VCF was not accepted; "
-            "restore the configured laboratory toolchain and retry."
-        ) from exc
-    except OSError as exc:
-        raise VCFValidationUnavailable(
-            "bcftools/htslib could not be executed for version attestation. "
-            "The VCF was not accepted; retry after the laboratory execution issue is resolved."
+            f"Unable to attest the configured BCFtools/HTSlib runtime through governed execution: {exc}"
         ) from exc
     if version_result.returncode != 0:
         detail = (version_result.stderr or version_result.stdout or "unknown bcftools error").strip()
-        raise VCFValidationUnavailable(
-            f"Unable to attest the configured bcftools version: {detail}"
-        )
+        raise VCFValidationUnavailable(f"Unable to attest the configured bcftools version: {detail}")
     version_output = version_result.stdout or version_result.stderr
     version_line = next(
         (line.strip() for line in version_output.splitlines() if line.strip()),
@@ -152,36 +159,31 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
             "Unable to attest the HTSlib version reported by the installed bcftools."
         )
     detected_htslib_version = htslib_line.split()[-1]
-    expected_htslib_version = settings.htslib_version
-    if expected_htslib_version and detected_htslib_version != expected_htslib_version:
+    if settings.htslib_version and detected_htslib_version != settings.htslib_version:
         raise VCFValidationUnavailable(
             "HTSlib version mismatch during VCF intake: "
-            f"expected {expected_htslib_version}, found {detected_htslib_version}. "
-            "The VCF was not accepted; restore the organization-approved toolchain and retry."
+            f"expected {settings.htslib_version}, found {detected_htslib_version}."
         )
-    if expected_version and detected_version != expected_version:
+    if settings.bcftools_version and detected_version != settings.bcftools_version:
         raise VCFValidationUnavailable(
-            "bcftools version mismatch during VCF intake: "
-            f"expected {expected_version}, found {detected_version}. "
-            "The VCF was not accepted; restore the organization-approved toolchain and retry."
+            "BCFtools version mismatch during VCF intake: "
+            f"expected {settings.bcftools_version}, found {detected_version}."
         )
     try:
-        completed = subprocess.run(
+        completed = _run_bcftools_command(
             [executable, "view", "--no-version", "-Ov", "-o", "/dev/null", str(path)],
-            capture_output=True,
-            text=True,
-            timeout=120,
-            check=False,
+            persistent_execution=persistent_execution,
+            workflow_id=workflow_id,
+            operation="validate",
+            workspace=path.parent,
+            input_paths=[path],
+            output_paths=[],
+            timeout_seconds=120,
+            execution_id_override=f"bcftools-intake-validate-{uuid4().hex}",
         )
-    except subprocess.TimeoutExpired as exc:
+    except (VCFToolError, VCFToolUnavailable, OSError) as exc:
         raise VCFValidationUnavailable(
-            "bcftools/htslib validation exceeded its 120-second execution limit. "
-            "The VCF was not accepted; retry after the laboratory execution issue is resolved."
-        ) from exc
-    except OSError as exc:
-        raise VCFValidationUnavailable(
-            "bcftools/htslib could not be executed. The VCF was not accepted; "
-            "retry after the laboratory execution issue is resolved."
+            f"BCFtools/HTSlib could not validate the uploaded VCF through governed execution: {exc}"
         ) from exc
     if completed.returncode != 0:
         return (
@@ -192,7 +194,7 @@ def _bcftools_validate(path: Path) -> tuple[str | None, str, str]:
     return None, version_line, detected_htslib_version
 
 
-def validate_vcf(path: str | Path) -> ValidationResult:
+def validate_vcf(path: str | Path, *, persistent_execution=None, workflow_id: str = "vcf-intake-validation") -> ValidationResult:
     p = Path(path)
     if classify_filename(p.name) != "VCF":
         return ValidationResult("INVALID", "UNSUPPORTED", 0, [], None, ["File is not a supported VCF input."], [])
@@ -234,7 +236,9 @@ def validate_vcf(path: str | Path) -> ValidationResult:
                 f"The first eight VCF columns must be #CHROM, POS, ID, REF, ALT, QUAL, "
                 f"FILTER, INFO in that exact order; found {headers[:8]!r}"
             )
-        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(p)
+        bcftools_error, bcftools_version, htslib_version = _bcftools_validate(
+            p, persistent_execution=persistent_execution, workflow_id=workflow_id
+        )
         if bcftools_error:
             raise VCFValidationError(
                 "VCF structural validation failed in bcftools/htslib: "
@@ -380,6 +384,8 @@ def validate_index(
     *,
     primary_path: str | Path | None = None,
     expected_bcftools_version: str | None = None,
+    persistent_execution=None,
+    workflow_id: str = "vcf-index-validation",
 ) -> ValidationResult:
     p = Path(path)
     kind = classify_filename(p.name)
@@ -429,6 +435,8 @@ def validate_index(
             concordance = validate_vcf_index_concordance(
                 primary,
                 expected_bcftools_version=expected_bcftools_version,
+                persistent_execution=persistent_execution,
+                workflow_id=workflow_id,
             )
         except VCFToolUnavailable as exc:
             raise VCFValidationUnavailable(str(exc)) from exc
