@@ -41,6 +41,7 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
     }
     assert {
         "execution_id",
+        "case_id",
         "idempotency_key",
         "request_fingerprint",
         "organization_id",
@@ -56,6 +57,13 @@ def test_execution_environment_and_tool_ledger_migration_creates_tables_and_guar
         "stdout_sha256",
         "stderr_sha256",
     }.issubset(execution_columns)
+
+    assert inspector.get_columns("tool_execution_records")[
+        [column["name"] for column in inspector.get_columns("tool_execution_records")].index("case_id")
+    ]["nullable"] is False
+    assert inspector.get_columns("tool_execution_records")[
+        [column["name"] for column in inspector.get_columns("tool_execution_records")].index("analysis_id")
+    ]["nullable"] is True
 
     with engine.connect() as connection:
         triggers = {
