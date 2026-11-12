@@ -288,13 +288,17 @@ def inspect_caller_provenance(
     gatk_haplotypecaller = any(
         item["stage"].lower() == "haplotypecaller" for item in gatk_stages
     ) or any(value.lower() == "haplotypecaller" for value in source_set)
-    deepvariant_declared = bool(deepvariant_versions) or any(
+    deepvariant_declared = bool(deepvariant_versions or deepvariant_models) or any(
         value.lower() == "deepvariant" for value in source_set
     )
-    dragen_snv_declared = any(value.upper() == "DRAGEN_SNV" for value in source_set)
-    dragen_other_declared = any(
-        value.upper() in {"DRAGEN_SV", "DRAGEN_CNV"} for value in source_set
-    )
+    dragen_source_markers = {
+        value.upper()
+        for value in source_set
+        if value.upper() in {"DRAGEN_SNV", "DRAGEN_SV", "DRAGEN_CNV"}
+    }
+    dragen_source_markers_conflicted = len(dragen_source_markers) > 1
+    dragen_snv_declared = "DRAGEN_SNV" in dragen_source_markers
+    dragen_other_declared = bool(dragen_source_markers & {"DRAGEN_SV", "DRAGEN_CNV"})
 
     candidates: list[str] = []
     if gatk_haplotypecaller:
@@ -312,9 +316,15 @@ def inspect_caller_provenance(
     version_status = "MISSING"
     identity_evidence: list[str] = []
 
-    if len(set(candidates)) > 1:
+    if len(set(candidates)) > 1 or dragen_source_markers_conflicted:
         identity_status = "CONFLICTED"
-        identity_evidence.append("MULTIPLE_CALLER_FAMILY_MARKERS")
+        if len(set(candidates)) > 1:
+            identity_evidence.append("MULTIPLE_CALLER_FAMILY_MARKERS")
+        if dragen_source_markers_conflicted:
+            identity_evidence.append("MULTIPLE_DRAGEN_PIPELINE_SOURCE_MARKERS")
+            if not candidates or set(candidates) == {"dragen_snv_germline"}:
+                caller_family = "ILLUMINA_DRAGEN"
+                caller_name = "Illumina DRAGEN (conflicting pipeline source markers)"
     elif candidates:
         profile_id = candidates[0]
         definition = _PROFILE_DEFINITIONS[profile_id]
