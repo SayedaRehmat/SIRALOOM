@@ -288,7 +288,10 @@ def inspect_caller_provenance(
     elif len(unique_versions) > 1:
         version_status = "CONFLICTED"
 
-    if profile_id and version_status == "MISSING":
+    if version_status == "CONFLICTED":
+        identity_status = "CONFLICTED"
+        identity_evidence.append("MULTIPLE_CALLER_RELEASE_MARKERS")
+    elif profile_id and version_status == "MISSING":
         identity_status = "PARTIAL"
         identity_evidence.append("CALLER_RELEASE_NOT_DECLARED")
 
@@ -342,5 +345,10 @@ def inspect_caller_provenance(
         "assay_mode_status": "NOT_ATTESTED_BY_VCF_HEADER",
         "release_qualification_status": "NOT_ESTABLISHED",
         "clinical_qualification_status": "NOT_ESTABLISHED",
-        "profile_match_status": "METADATA_MATCH_ONLY" if profile_id else "NO_CALLER_PROFILE_MATCH",
+        "profile_match_status": (
+            "CONFLICTED_METADATA" if identity_status == "CONFLICTED"
+            else "CALLER_FAMILY_MATCH_VERSION_MISSING" if profile_id and version_status == "MISSING"
+            else "METADATA_MATCH_ONLY" if profile_id
+            else "NO_CALLER_PROFILE_MATCH"
+        ),
     }
