@@ -676,7 +676,7 @@ def test_celery_reanalysis_scan_is_registered_on_daily_utc_schedule():
     assert celery_app.conf.timezone == "UTC"
 
 
-def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
+def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent(monkeypatch):
     from unittest.mock import patch
 
     from backend.app.domain.reanalysis import create_reanalysis
@@ -690,6 +690,10 @@ def test_reanalysis_child_reuses_only_upstream_outputs_and_preserves_parent():
     )
     from backend.app.workflows.variant import _apply_reanalysis_reuse, ensure_steps
 
+    monkeypatch.setattr(
+        "backend.app.domain.evidence_response_retention.verify_provider_response_reference",
+        lambda *_args, **_kwargs: True,
+    )
     engine = _engine()
     Base.metadata.create_all(
         engine,
