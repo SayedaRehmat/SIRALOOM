@@ -103,4 +103,4 @@ def test_analysis_rejects_structurally_valid_vcf_with_caller_review_required():
 
     with pytest.raises(ValueError, match="requires caller semantic compatibility review"):
         validate_analysis_input_artifact(artifact, "GRCh38", "PROBAND")
-\n
+
