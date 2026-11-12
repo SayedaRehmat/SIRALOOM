@@ -1827,7 +1827,7 @@ def validate_vcf_strict(path: str | Path, *, reference_contigs: set[str] | None 
                         allow_empty_values=(
                             fileformat == "VCFv4.5" and key in {"MEINFO", "METRANS"}
                         ),
-                        caller_profile_id=caller_profile_id,
+                        caller_profile_id=header_caller_profile_id,
                     )
             if fileformat == "VCFv4.5":
                 _validate_vcf45_structural_info(info_values, alts, line_no)
