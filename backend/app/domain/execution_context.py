@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from backend.app.domain.execution_environments import (
+    ExecutionEnvironmentError,
+    execution_environment_profile_from_snapshot,
+)
 from backend.app.domain.persistent_tool_executor import PersistentToolExecutionService
 from backend.app.infrastructure.db.models import Case, ExecutionEnvironmentRegistration
 
@@ -36,8 +40,42 @@ def persistent_execution_for_case(
         )
     if registration.qualification_status != "ENVIRONMENT_QUALIFIED":
         raise ExecutionEnvironmentAssignmentError(
-            "CASE_EXECUTION_ENVIRONMENT_NOT_QUALIFIED: the assigned environment is not qualified."
+            "CASE_EXECUTION_ENVIRONMENT_NOT_QUALIFIED: the assigned execution environment is not qualified."
         )
+
+    try:
+        profile = execution_environment_profile_from_snapshot(registration.profile_json)
+        profile.assert_tenant_access(case.organization_id)
+    except (ExecutionEnvironmentError, TypeError, ValueError) as exc:
+        raise ExecutionEnvironmentAssignmentError(
+            "CASE_EXECUTION_ENVIRONMENT_PROFILE_INVALID: the registered environment profile is invalid."
+        ) from exc
+
+    if (
+        profile.environment_id != registration.environment_id
+        or profile.profile_version != registration.profile_version
+        or profile.owner_scope != registration.owner_scope
+        or profile.organization_id != registration.organization_id
+        or profile.qualification_status != "ENVIRONMENT_QUALIFIED"
+    ):
+        raise ExecutionEnvironmentAssignmentError(
+            "CASE_EXECUTION_ENVIRONMENT_IDENTITY_MISMATCH: registration columns do not match the immutable profile snapshot."
+        )
+
+    # The first commercial Lab Server release is a customer-owned Linux OCI
+    # worker, not an unrestricted host-process execution mode or remote agent.
+    if (
+        profile.executor_kind != "CONTAINER"
+        or profile.runtime_kind not in {"DOCKER", "PODMAN"}
+        or profile.operating_system.casefold() != "linux"
+        or profile.scheduler not in {"NONE", "DOCKER_COMPOSE"}
+        or profile.network_policy != "OFFLINE"
+    ):
+        raise ExecutionEnvironmentAssignmentError(
+            "CASE_EXECUTION_RUNTIME_UNSUPPORTED: Lab Server scientific execution requires a qualified "
+            "Linux Docker/Podman container profile with offline networking and no remote scheduler."
+        )
+
     return PersistentToolExecutionService(
         db,
         organization_id=case.organization_id,
