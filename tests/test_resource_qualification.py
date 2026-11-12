@@ -237,6 +237,8 @@ def _vep_resource(tmp_path: Path):
                     "cache_manifest_sha256": sha256(manifest.read_bytes()).hexdigest(),
                     "cache_artifact_sha256": cache_sha256,
                     "vep_binary_sha256": sha256(binary.read_bytes()).hexdigest(),
+                    "vep_version": "115.2",
+                    "execution_profile_id": "vep-115-linux-amd64",
                 },
             },
         },
